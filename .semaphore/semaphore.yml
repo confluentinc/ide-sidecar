@@ -37,7 +37,7 @@ blocks:
   - name: "Build and Test"
     dependencies: []
     skip:
-      when: "change_in('/.versions/ide-sidecar-version.txt', {pipeline_file: 'ignore'})"
+      when: "change_in('/.versions/ide-sidecar-version.txt', {pipeline_file: 'ignore', default_branch: 'main'})"
     task:
       jobs:
         - name: "Build JARs and Unit Test"
@@ -51,7 +51,7 @@ blocks:
   - name: "Release"
     dependencies: ["Build and Test"]
     skip:
-      when: "pull_request =~ '.*' or change_in('/.versions/ide-sidecar-version.txt', {pipeline_file: 'ignore'})"
+      when: "pull_request =~ '.*' or change_in('/.versions/ide-sidecar-version.txt', {pipeline_file: 'ignore', default_branch: 'main'})"
     task:
       jobs:
         - name: "Release"
@@ -64,7 +64,7 @@ blocks:
   - name: "Update third party notices PR"
     dependencies: ["Release"]
     run:
-      when: "branch =~ '.*' and change_in('/pom.xml')"
+      when: "branch =~ '.*' and change_in('/pom.xml', {default_branch: 'main'})"
     task:
       prologue:
         commands:
@@ -95,4 +95,4 @@ promotions:
   - name: Multi-Arch Native Executable Builds
     pipeline_file: multi-arch-builds.yml
     auto_promote:
-      when: "result = 'passed' and branch =~ '.*' and change_in('/.versions/ide-sidecar-version.txt')"
+      when: "result = 'passed' and branch =~ '.*' and change_in('/.versions/ide-sidecar-version.txt', {default_branch: 'main'})"
