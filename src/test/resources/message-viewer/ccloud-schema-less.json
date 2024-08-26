@@ -1,0 +1,128 @@
+{
+  "cluster_id": "lkc-abcd123",
+  "topic_name": "orders_json",
+  "partition_data_list": [
+    {
+      "partition_id": 0,
+      "next_offset": 60607,
+      "records": [
+        {
+          "partition_id": 0,
+          "offset": 60606,
+          "timestamp": 1718911829088,
+          "key": "363302",
+          "value": "{\"ordertime\":1497402000262,\"orderid\":363302,\"itemid\":\"Item_7\",\"orderunits\":0.7202503545348564,\"address\":{\"city\":\"City_\",\"state\":\"State_35\",\"zipcode\":94086}}",
+          "timestamp_type": "CREATE_TIME",
+          "headers": [
+            {
+              "key": "task.generation",
+              "value": "MA=="
+            },
+            {
+              "key": "task.id",
+              "value": "MA=="
+            },
+            {
+              "key": "current.iteration",
+              "value": "MzYzMzAy"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "partition_id": 1,
+      "next_offset": 60484,
+      "records": []
+    },
+    {
+      "partition_id": 2,
+      "next_offset": 60722,
+      "records": [
+        {
+          "partition_id": 2,
+          "offset": 60721,
+          "timestamp": 1718911826385,
+          "key": "363298",
+          "value": "{\"ordertime\":1506759733081,\"orderid\":363298,\"itemid\":\"Item_799\",\"orderunits\":4.9555487308365445,\"address\":{\"city\":\"City_88\",\"state\":\"State_6\",\"zipcode\":78731}}",
+          "timestamp_type": "CREATE_TIME",
+          "headers": [
+            {
+              "key": "task.generation",
+              "value": "MA=="
+            },
+            {
+              "key": "task.id",
+              "value": "MA=="
+            },
+            {
+              "key": "current.iteration",
+              "value": "MzYzMjk4"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "partition_id": 3,
+      "next_offset": 60246,
+      "records": []
+    },
+    {
+      "partition_id": 4,
+      "next_offset": 61011,
+      "records": [
+        {
+          "partition_id": 4,
+          "offset": 61010,
+          "timestamp": 1718911827236,
+          "key": "363299",
+          "value": "{\"ordertime\":1500042740828,\"orderid\":363299,\"itemid\":\"Item_2\",\"orderunits\":5.302822390690424,\"address\":{\"city\":\"City_59\",\"state\":\"State_\",\"zipcode\":74778}}",
+          "timestamp_type": "CREATE_TIME",
+          "headers": [
+            {
+              "key": "task.generation",
+              "value": "MA=="
+            },
+            {
+              "key": "task.id",
+              "value": "MA=="
+            },
+            {
+              "key": "current.iteration",
+              "value": "MzYzMjk5"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "partition_id": 5,
+      "next_offset": 60232,
+      "records": [
+        {
+          "partition_id": 5,
+          "offset": 60231,
+          "timestamp": 1718911828346,
+          "key": "363301",
+          "value": "{\"ordertime\":1494878501510,\"orderid\":363301,\"itemid\":\"Item_257\",\"orderunits\":4.991549734373295,\"address\":{\"city\":\"City_\",\"state\":\"State_1\",\"zipcode\":42979}}",
+          "timestamp_type": "CREATE_TIME",
+          "headers": [
+            {
+              "key": "task.generation",
+              "value": "MA=="
+            },
+            {
+              "key": "task.id",
+              "value": "MA=="
+            },
+            {
+              "key": "current.iteration",
+              "value": "MzYzMzAx"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

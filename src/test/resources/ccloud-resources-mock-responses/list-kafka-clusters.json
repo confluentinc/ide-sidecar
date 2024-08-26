@@ -1,0 +1,72 @@
+{
+  "api_version": "cmk/v2",
+  "data": [
+    {
+      "api_version": "cmk/v2",
+      "id": "lkc-123abcd",
+      "kind": "Cluster",
+      "metadata": {
+        "created_at": "2024-05-09T21:15:25.719179Z",
+        "resource_name": "crn://confluent.cloud/organization=23b1185e-d874-4f61-81d6-c9c61aa8969c/environment=env-x7727g/cloud-cluster=lkc-123abcd/kafka=lkc-123abcd",
+        "self": "https://api.confluent.cloud/cmk/v2/clusters/lkc-123abcd",
+        "updated_at": "2024-05-09T21:15:25.719179Z"
+      },
+      "spec": {
+        "api_endpoint": "",
+        "availability": "LOW",
+        "cloud": "GCP",
+        "config": {
+          "kind": "Basic"
+        },
+        "display_name": "kafka-cluster-with-no-topics",
+        "environment": {
+          "id": "env-x7727g",
+          "related": "https://api.confluent.cloud/org/v2/environments/env-x7727g",
+          "resource_name": "crn://confluent.cloud/organization=23b1185e-d874-4f61-81d6-c9c61aa8969c/environment=env-x7727g"
+        },
+        "http_endpoint": "https://pkc-12345z.us-west2.gcp.confluent.cloud:443",
+        "kafka_bootstrap_endpoint": "SASL_SSL://pkc-12345z.us-west2.gcp.confluent.cloud:9092",
+        "region": "us-west2"
+      },
+      "status": {
+        "phase": "PROVISIONED"
+      }
+    },
+    {
+      "api_version": "cmk/v2",
+      "id": "lkc-456xyz",
+      "kind": "Cluster",
+      "metadata": {
+        "created_at": "2024-05-09T21:14:39.970116Z",
+        "resource_name": "crn://confluent.cloud/organization=23b1185e-d874-4f61-81d6-c9c61aa8969c/environment=env-x7727g/cloud-cluster=lkc-456xyz/kafka=lkc-456xyz",
+        "self": "https://api.confluent.cloud/cmk/v2/clusters/lkc-456xyz",
+        "updated_at": "2024-05-09T21:14:39.970116Z"
+      },
+      "spec": {
+        "api_endpoint": "",
+        "availability": "LOW",
+        "cloud": "GCP",
+        "config": {
+          "kind": "Basic"
+        },
+        "display_name": "main-test-kafka-cluster",
+        "environment": {
+          "id": "env-x7727g",
+          "related": "https://api.confluent.cloud/org/v2/environments/env-x7727g",
+          "resource_name": "crn://confluent.cloud/organization=23b1185e-d874-4f61-81d6-c9c61aa8969c/environment=env-x7727g"
+        },
+        "http_endpoint": "https://pkc-6789a.us-east1.gcp.confluent.cloud:443",
+        "kafka_bootstrap_endpoint": "SASL_SSL://pkc-6789a.us-east1.gcp.confluent.cloud:9092",
+        "region": "us-east1"
+      },
+      "status": {
+        "phase": "PROVISIONED"
+      }
+    }
+  ],
+  "kind": "ClusterList",
+  "metadata": {
+    "first": "https://api.confluent.cloud/cmk/v2/clusters",
+    "total_size": 2
+  }
+}

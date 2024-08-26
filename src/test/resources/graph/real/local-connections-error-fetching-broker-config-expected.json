@@ -1,0 +1,38 @@
+{
+  "errors":
+  [
+    {
+      "message": "GET http://localhost:${quarkus.wiremock.devservices.port}/v3/clusters/4L6g3nShT-eMCtK--X86sw/brokers/2/configs/advertised.listeners failed with 404 error: HTTP 404 Not Found",
+      "locations":
+      [
+        {
+          "line": 6,
+          "column": 9
+        }
+      ],
+      "path":
+      [
+        "localConnections",
+        0,
+        "kafkaCluster"
+      ],
+      "extensions":
+      {
+        "classification": "DataFetchingException"
+      }
+    }
+  ],
+  "data":
+  {
+    "localConnections":
+    [
+      {
+        "id": "local-1",
+        "name": "local",
+        "type": "LOCAL",
+        "kafkaCluster": null,
+        "schemaRegistry": null
+      }
+    ]
+  }
+}

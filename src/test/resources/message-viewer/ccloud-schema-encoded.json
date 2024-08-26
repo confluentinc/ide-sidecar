@@ -1,0 +1,41 @@
+{
+  "cluster_id": "lkc-abcd123",
+  "topic_name": "order_json_sr",
+  "partition_data_list": [
+    {
+      "partition_id": 0,
+      "next_offset": 60652,
+      "records": [
+        {
+          "partition_id": 0,
+          "offset": 60602,
+          "timestamp": 1718911799411,
+          "key": "363287",
+          "value": {
+            "__raw__": "AAABhqF7Im9yZGVydGltZSI6MTQ4ODA1MjkzMjEyMywib3JkZXJpZCI6MzYzMjg3LCJpdGVtaWQiOiJJdGVtXzU0MyIsIm9yZGVydW5pdHMiOjQuNzMwMDI5ODkxOTUwODE4LCJhZGRyZXNzIjp7ImNpdHkiOiJDaXR5XyIsInN0YXRlIjoiU3RhdGVfMTgiLCJ6aXBjb2RlIjo3NTA2MH19"
+          },
+          "timestamp_type": "CREATE_TIME",
+          "headers": [
+            {
+              "key": "task.generation",
+              "value": "MA=="
+            },
+            {
+              "key": "task.id",
+              "value": "MA=="
+            },
+            {
+              "key": "current.iteration",
+              "value": "MzYzMjg3"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "partition_id": 5,
+      "next_offset": 60229,
+      "records": []
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+---
+template_api_version: 0.0.1
+name: kafka-streams-simple-example
+display_name: Kafka Streams Application
+description: >
+  A simple Kafka Streams application that reads messages from a Kafka topic, 
+  performs a simple transformation, and writes the transformed text to another topic.
+  Ideal for developers trying to learn about Kafka Streams.
+language: Java
+tags:
+  - kafka streams
+  - getting started
+  - java
+  - jdk
+version: 0.0.1
+options:
+  cc_bootstrap_server:
+    display_name: Kafka Bootstrap Server
+    description: One or more comma-separated host and port pairs that are the addresses where Kafka brokers accept client bootstrap requests.
+    pattern: "^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\\-.]{0,61}[a-zA-Z0-9])[:]([0-9]{2,8}))(,([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\\-.]{0,61}[a-zA-Z0-9])[:]([0-9]{2,8}))*$"
+    examples:
+      - host1:9092
+      - host1:9092,host2:9092
+      - external-broker.hosted.com:9092
+  api_key:
+    display_name: Kafka Cluster API Key
+    description: The API key for accessing the Kafka cluster in Confluent Cloud.
+    pattern: "^[A-Z0-7=]{16}$"
+    examples:
+      - AAAAABBBBBCCCCC5
+  api_secret:
+    display_name: Kafka Cluster API Secret
+    description: The API secret for accessing the Kafka cluster in Confluent Cloud.
+    pattern: "^[A-Z0-7=]{64,72}$"
+    format: password
+    examples:
+      - AAAAABBBBBCCCCC5DDDDDEEEEEFFFFFGGGGGHHHHHIIIIJJJJJKKKKKLLLLLMMMMM
+  input_topic:
+    display_name: Input Topic
+    description: The name of the Kafka topic to consume.
+    pattern: "^([a-zA-Z0-9._-]{1,255})$"
+    examples:
+      - orders
+  output_topic:
+    display_name: Output Topic
+    description: The name of the Kafka topic to write messages.
+    pattern: "^([a-zA-Z0-9._-]{1,255})$"
+    examples:
+      - orders_transformed
+      - super_profitable_orders

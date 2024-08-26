@@ -1,0 +1,11 @@
+template_api_version: 0.0.1
+name: python-consumer
+display_name: Python Consumer
+description: Awesome template for a simple Python consumer application.
+language: python
+# Invalid version
+version: not-a-valid-version
+tags: [ ]
+options: { }
+# Unrecognized field is ignored
+invalid_field: invalid_value

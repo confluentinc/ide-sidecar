@@ -1,0 +1,13 @@
+{
+  "data": {
+    "localConnections": [
+      {
+        "id": "local-1",
+        "name": "local",
+        "type": "LOCAL",
+        "kafkaCluster": null,
+        "schemaRegistry": null
+      }
+    ]
+  }
+}

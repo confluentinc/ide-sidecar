@@ -1,0 +1,36 @@
+{
+  "cluster_id": "lkc-devcky182g",
+  "topic_name": "dtx-test",
+  "partition_data_list": [
+    {
+      "partition_id": 0,
+      "next_offset": 1,
+      "records": [
+        {
+          "partition_id": 0,
+          "offset": 0,
+          "timestamp": 1716936949446,
+          "key": "18",
+          "value": "{\"name\":\"Ravi\",\"id\":18}",
+          "timestamp_type": "CREATE_TIME",
+          "headers": []
+        }
+      ]
+    },
+    {
+      "partition_id": 1,
+      "next_offset": 1,
+      "records": [
+        {
+          "partition_id": 1,
+          "offset": 0,
+          "timestamp": 1717001605216,
+          "key": "19",
+          "value": "{\"name\":\"another-name\",\"id\":20}",
+          "timestamp_type": "CREATE_TIME",
+          "headers": []
+        }
+      ]
+    }
+  ]
+}

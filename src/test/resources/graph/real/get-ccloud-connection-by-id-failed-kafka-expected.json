@@ -1,0 +1,64 @@
+{
+  "errors":
+  [
+    {
+      "message": "GET http://localhost:${quarkus.wiremock.devservices.port}/api/cmk/v2/clusters?environment=env-x7727g failed with 1 error(s): (HTTP 404) Not found",
+      "locations":
+      [
+        {
+          "line": 14,
+          "column": 13
+        }
+      ],
+      "path":
+      [
+        "ccloudConnectionById",
+        "environments",
+        0,
+        "kafkaClusters"
+      ],
+      "extensions":
+      {
+        "classification": "DataFetchingException"
+      }
+    }
+  ],
+  "data":
+  {
+    "ccloudConnectionById":
+    {
+      "id": "ccloud-dev",
+      "name": "CCloud Dev",
+      "type": "CCLOUD",
+      "organizations":
+      [
+        {
+          "id": "23b1185e-d874-4f61-81d6-c9c61aa8969c",
+          "name": "Development Org",
+          "current": true
+        },
+        {
+          "id": "d6fc52f8-ae8a-405c-9692-e997965b730dc",
+          "name": "Test Org",
+          "current": false
+        },
+        {
+          "id": "1a507773-d2cb-4055-917e-ffb205f3c433",
+          "name": "Staging Org",
+          "current": false
+        }
+      ],
+      "environments":
+      [
+        null,
+        {
+          "id": "env-kkk3jg",
+          "name": "env-with-no-kafka-cluster",
+          "kafkaClusters":
+          [],
+          "schemaRegistry": null
+        }
+      ]
+    }
+  }
+}

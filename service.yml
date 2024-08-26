@@ -1,9 +1,28 @@
 name: ide-sidecar
-lang: unknown
-lang_version: unknown
+lang: java
+lang_version: 21
+make:
+  enable: false
 git:
   enable: true
 github:
   enable: true
+semaphore:
+  enable: true
+  pipeline_enable: false
+  # Since we exclude "ci skip" from the chore version bump commit messages,
+  # Semaphore would end up triggering builds for both, the master branch push,
+  # and for the new tag created. We want to skip builds for tags altogether.
+  triggers: ['branches', 'pull_requests']
 codeowners:
   enable: true
+contact:
+  name: DTX BE
+  jira_project_key: DTX
+  slack_team_channel: dtx-eng
+sonarqube:
+  enable: true
+  coverage_exclusions:
+    - "**/*.pb.*"
+    - "**/mk-files/**/*"
+    - "**/test/**/*"

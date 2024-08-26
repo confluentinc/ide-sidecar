@@ -1,0 +1,6 @@
+# Use SDKMAN! to run "sdk env" to initialize with correct JDK version.
+#
+# Enable auto-env through setting sdkman_auto_env=true in ~/.sdkman/etc/config
+# See https://sdkman.io/usage#config
+
+java=21.0.2-graalce

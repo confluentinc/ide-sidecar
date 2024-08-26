@@ -1,0 +1,9 @@
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd">
+    <!--
+    This file is used by the project Makefile targets and Semaphore builds.
+    Intentionally left blank, so the build only uses (public) Maven repositories defined in the pom.xml file.
+    Maven Central is used by default.
+    -->
+</settings>

@@ -1,0 +1,35 @@
+---
+template_api_version: 0.0.1
+name: java-sink-connector
+language: Java
+display_name: Java Sink Connector
+description: A Java Sink Kafka Connector Project
+tags:
+  - connector
+  - sink
+version: 0.0.1
+options:
+  connectorName:
+    display_name: Connector Name
+    description: The name of the connector
+  mavenVersion:
+    display_name: Maven Version
+    description: The version of Maven to be used for building the connector
+    default_value: "3.8.4"
+  javaVersion:
+    display_name: Java Version
+    description: The version of Java to be used for the connector
+    default_value: "17"
+  kafkaVersion:
+    display_name: Kafka Version
+    description: The version of Apache Kafka to be used for the connector
+    default_value: "3.7.0"
+  topics:
+    display_name: Topics
+    description: One or more comma-separated Kafka topic names for the connector to consume.
+  packageName:
+    display_name: Package Name
+    description: The dot-separated name of the package
+  packagePath:
+    display_name: Package Path
+    description: The slash-separated name of the package

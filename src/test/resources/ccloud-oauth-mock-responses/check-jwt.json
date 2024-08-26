@@ -1,0 +1,27 @@
+{
+  "claims": {
+    "organization_id": 536618,
+    "user_id": 3016220,
+    "standard_claims": {
+      "audience": "CONTROL_PLANE",
+      "expires_at": "1715093426",
+      "id": "853f6b0b-fc2b-4f2c-b776-1c4f41ac0b82",
+      "issued_at": "1715093126",
+      "issuer": "Confluent",
+      "not_before": "0",
+      "subject": "u-5nvmd8"
+    },
+    "marketplace_partner": "",
+    "user_resource_id": "u-5nvmd8",
+    "org_resource_id": "5d8bf0dc-212c-5c83-bce6-88f07138c49c",
+    "external_identity_id": "",
+    "scope": "https://api.confluent.cloud/",
+    "act": null,
+    "may_act": {
+      "principals": [
+        "u-5nvmd8"
+      ]
+    }
+  },
+  "error": null
+}

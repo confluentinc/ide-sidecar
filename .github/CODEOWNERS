@@ -1,1 +1,4 @@
 *	@confluentinc/dtx
+
+# Notify vscode-extension folks about any changes to Sidecar's OpenAPI spec
+/src/generated/resources/openapi.yaml @confluentinc/dtx

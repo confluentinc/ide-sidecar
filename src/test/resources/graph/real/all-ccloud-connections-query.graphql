@@ -1,0 +1,50 @@
+query ccloudConnections {
+    ccloudConnections{
+        id
+        name
+        type
+        organizations {
+            id
+            name
+            current
+        }
+        environments {
+            id
+            name
+            organization {
+                id
+                name
+            }
+            kafkaClusters {
+                id
+                name
+                provider
+                region
+                bootstrapServers
+                uri
+                organization {
+                    id
+                    name
+                }
+                environment {
+                    id
+                    name
+                }
+            }
+            schemaRegistry {
+                id
+                provider
+                region
+                uri
+                organization {
+                    id
+                    name
+                }
+                environment {
+                    id
+                    name
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,9 @@
+{
+  "api_version": "cmk/v2",
+  "data": null,
+  "kind": "ClusterList",
+  "metadata": {
+    "first": "https://api.confluent.cloud/cmk/v2/clusters",
+    "total_size": 0
+  }
+}

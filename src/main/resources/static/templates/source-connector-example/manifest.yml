@@ -1,0 +1,17 @@
+---
+template_api_version: 0.0.1
+name: source-connector-example
+display_name: Simple Source Connector
+description: >
+  A simple Kafka Connect source connector that emits records containing incrementing numbers.
+  Ideal for developers that want to build a custom Kafka Connect source connector,
+  with the basics of connector configuration, unit testing, and using state to handle task restarts gracefully.
+version: 0.0.1
+language: Java
+tags:
+  - kafka connect
+  - source connector
+  - getting started
+  - java
+  - jdk
+options: {}

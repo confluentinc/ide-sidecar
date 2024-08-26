@@ -1,0 +1,8 @@
+{
+  "kind": "KafkaClusterList",
+  "metadata": {
+    "self": "http://rest-proxy:8082/v3/clusters",
+    "next": null
+  },
+  "data": []
+}

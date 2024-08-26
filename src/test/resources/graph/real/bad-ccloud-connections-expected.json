@@ -1,0 +1,22 @@
+{
+  "errors": [
+    {
+      "message": "Connection local-1 is not a CCloud connection",
+      "locations": [
+        {
+          "line": 2,
+          "column": 5
+        }
+      ],
+      "path": [
+        "ccloudConnectionById"
+      ],
+      "extensions": {
+        "classification": "DataFetchingException"
+      }
+    }
+  ],
+  "data": {
+    "ccloudConnectionById": null
+  }
+}

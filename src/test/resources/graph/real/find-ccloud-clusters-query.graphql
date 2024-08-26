@@ -1,0 +1,20 @@
+query findCCloudKafkaClusters {
+    findCCloudKafkaClusters(
+        connectionId:"ccloud-dev"
+    ) {
+        id
+        name
+        provider
+        region
+        bootstrapServers
+        uri
+        organization {
+            id
+            name
+        }
+        environment {
+            id
+            name
+        }
+    }
+}

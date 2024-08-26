@@ -1,0 +1,15 @@
+{
+  "api_version": "gateway/v1",
+  "kind": "Connection",
+  "id": "c-1",
+  "metadata": null,
+  "spec": {
+    "id": "c-1",
+    "name": "Connection 1",
+    "type": "CCLOUD"
+  },
+  "status": {
+    "key": "authentication",
+    "value": "ERROR"
+  }
+}

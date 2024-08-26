@@ -1,0 +1,45 @@
+{
+  "properties": {
+    "address": {
+      "connect.index": 4,
+      "properties": {
+        "city": {
+          "connect.index": 0,
+          "type": "string"
+        },
+        "state": {
+          "connect.index": 1,
+          "type": "string"
+        },
+        "zipcode": {
+          "connect.index": 2,
+          "connect.type": "int64",
+          "type": "integer"
+        }
+      },
+      "title": "ksql.address",
+      "type": "object"
+    },
+    "itemid": {
+      "connect.index": 2,
+      "type": "string"
+    },
+    "orderid": {
+      "connect.index": 1,
+      "connect.type": "int32",
+      "type": "integer"
+    },
+    "ordertime": {
+      "connect.index": 0,
+      "connect.type": "int64",
+      "type": "integer"
+    },
+    "orderunits": {
+      "connect.index": 3,
+      "connect.type": "float64",
+      "type": "number"
+    }
+  },
+  "title": "ksql.orders",
+  "type": "object"
+}

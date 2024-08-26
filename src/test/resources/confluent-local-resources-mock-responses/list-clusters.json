@@ -1,0 +1,38 @@
+{
+  "kind": "KafkaClusterList",
+  "metadata": {
+    "self": "http://rest-proxy:8082/v3/clusters",
+    "next": null
+  },
+  "data": [
+    {
+      "kind": "KafkaCluster",
+      "metadata": {
+        "self": "http://rest-proxy:8082/v3/clusters/4L6g3nShT-eMCtK--X86sw",
+        "resource_name": "crn:///kafka=4L6g3nShT-eMCtK--X86sw"
+      },
+      "cluster_id": "4L6g3nShT-eMCtK--X86sw",
+      "controller": {
+        "related": "http://rest-proxy:8082/v3/clusters/4L6g3nShT-eMCtK--X86sw/brokers/1"
+      },
+      "acls": {
+        "related": "http://rest-proxy:8082/v3/clusters/4L6g3nShT-eMCtK--X86sw/acls"
+      },
+      "brokers": {
+        "related": "http://rest-proxy:8082/v3/clusters/4L6g3nShT-eMCtK--X86sw/brokers"
+      },
+      "broker_configs": {
+        "related": "http://rest-proxy:8082/v3/clusters/4L6g3nShT-eMCtK--X86sw/broker-configs"
+      },
+      "consumer_groups": {
+        "related": "http://rest-proxy:8082/v3/clusters/4L6g3nShT-eMCtK--X86sw/consumer-groups"
+      },
+      "topics": {
+        "related": "http://rest-proxy:8082/v3/clusters/4L6g3nShT-eMCtK--X86sw/topics"
+      },
+      "partition_reassignments": {
+        "related": "http://rest-proxy:8082/v3/clusters/4L6g3nShT-eMCtK--X86sw/topics/-/partitions/-/reassignment"
+      }
+    }
+  ]
+}

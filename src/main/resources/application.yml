@@ -1,0 +1,171 @@
+
+---
+"%test":
+  ide-sidecar:
+    connections:
+      ccloud:
+        id-token:
+          exchange-uri: http://localhost:${quarkus.wiremock.devservices.port}/oauth/token
+        control-plane-token:
+          exchange-uri: http://localhost:${quarkus.wiremock.devservices.port}/api/sessions
+          check-jwt-uri: http://localhost:${quarkus.wiremock.devservices.port}/api/check_jwt
+        data-plane-token:
+          exchange-uri: http://localhost:${quarkus.wiremock.devservices.port}/api/access_tokens
+        oauth:
+          login-realm-uri: http://localhost:${quarkus.wiremock.devservices.port}/api/login/realm
+        resources:
+          org-list-uri: http://localhost:${quarkus.wiremock.devservices.port}/api/org/v2/organizations
+          env-list-uri: http://localhost:${quarkus.wiremock.devservices.port}/api/org/v2/environments
+          lkc-list-uri: http://localhost:${quarkus.wiremock.devservices.port}/api/cmk/v2/clusters?environment=%s
+          sr-list-uri: http://localhost:${quarkus.wiremock.devservices.port}/api/srcm/v3/clusters?environment=%s
+      confluent-local:
+        resources:
+          clusters-list-uri: http://localhost:${quarkus.wiremock.devservices.port}/v3/clusters
+          brokers-list-uri: http://localhost:${quarkus.wiremock.devservices.port}/v3/clusters/%s/brokers
+          broker-adv-listeners-config-uri: http://localhost:${quarkus.wiremock.devservices.port}/v3/clusters/%s/brokers/%s/configs/advertised.listeners
+          kafka-topic-uri: http://localhost:${quarkus.wiremock.devservices.port}/v3/clusters/%s/topics/%s
+    grim-reaper:
+      # Should we check for remaining living vs code processes at all, and exit() if none left?
+      enabled: false
+      # How often to check?
+      interval-seconds: 60
+  quarkus:
+    wiremock:
+      devservices:
+        enabled: true
+    http:
+      # 1 higher than the default port, to avoid conflicting with the main application.
+      port: 26637
+      test-port: 26637
+    smallrye-openapi:
+      # Unset the store-schema-directory to avoid storing
+      # OpenAPI schemas with the test port.
+      store-schema-directory: ""
+
+"%dev":
+  ide-sidecar:
+    access_token_filter:
+      enabled: false
+    grim-reaper:
+      # Should we check for remaining living vs code processes at all, and exit() if none left?
+      enabled: false
+      # How often to check?
+      interval-seconds: 60
+
+ide-sidecar:
+  api:
+    group: gateway
+    groupWithVersion: ${ide-sidecar.api.group}/${ide-sidecar.api.version}
+    host: http://localhost:${quarkus.http.port}
+    version: v1
+  connections:
+    # We are using the STAG environment of CCloud for now (available at https://stag.cpdev.cloud/)
+    ccloud:
+      resources:
+        homepage-uri: https://confluent.cloud/
+        org-list-uri: https://confluent.cloud/api/org/v2/organizations
+        env-list-uri: https://confluent.cloud/api/org/v2/environments
+        lkc-list-uri: https://confluent.cloud/api/cmk/v2/clusters?environment=%s
+        sr-list-uri: https://confluent.cloud/api/srcm/v3/clusters?environment=%s
+      oauth:
+        authorize-uri: https://login.confluent.io/oauth/authorize
+        client-id: Q93zdbI3FnltpEa9G1gg6tiMuoDDBkwS
+        login-realm-uri: https://confluent.cloud/api/login/realm
+        redirect-uri: http://127.0.0.1:26636/gateway/v1/callback-vscode-docs
+        # used on successful login instead of redirect-uri
+        vscode-extension-uri: vscode://confluentinc.vscode-confluent/authCallback
+        scope: email openid offline_access
+      check-token-expiration:
+        interval-seconds: 5
+      refresh-token:
+        absolute-lifetime-seconds: 14401
+        max-refresh-attempts: 50
+      id-token:
+        exchange-uri: https://login.confluent.io/oauth/token
+        life-time-seconds: 60
+      control-plane-token:
+        exchange-uri: https://confluent.cloud/api/sessions
+        check-jwt-uri: https://confluent.cloud/api/check_jwt
+        life-time-seconds: 300
+      data-plane-token:
+        exchange-uri: https://confluent.cloud/api/access_tokens
+
+    confluent-local:
+      # We assume that the user is running the confluent-local image with
+      # the configured defaults as follows.
+      # https://github.com/confluentinc/kafka-images/blob/7.4.x/local/include/etc/confluent/docker/configureDefaults
+      default:
+        kafkarest-uri: http://localhost:8082
+        kafkarest-hostname: rest-proxy
+        cluster-name: confluent-local
+      resources:
+        clusters-list-uri: ${ide-sidecar.connections.confluent-local.default.kafkarest-uri}/v3/clusters
+        brokers-list-uri: ${ide-sidecar.connections.confluent-local.default.kafkarest-uri}/v3/clusters/%s/brokers
+        broker-adv-listeners-config-uri: ${ide-sidecar.connections.confluent-local.default.kafkarest-uri}/v3/clusters/%s/brokers/%s/configs/advertised.listeners
+        kafka-topic-uri: ${outpost.connections.confluent-local.default.kafkarest-uri}/v3/clusters/%s/topics/%s
+  template-registries:
+    local:
+      templates-zip-resource: static/templates.zip
+  access_token_filter:
+    excluded_paths:
+      # Following needed by oauth
+      - /api/login/realm
+      - /gateway/v1/callback-vscode-docs
+      # And finally, the handshake route itself.
+      - /gateway/v1/handshake
+  grim-reaper:
+    # Should we check for remaining living vs code processes at all, and exit() if none left?
+    enabled: true
+    # How often to check?
+    interval-seconds: 60
+
+quarkus:
+  application:
+    name: ide-sidecar
+  banner:
+    enabled: false
+  log:
+    min-level: INFO
+  http:
+    host: 127.0.0.1
+    port: 26636
+    cors:
+      ~: true
+      origins: https://login.confluent-dev.io,https://login-stag.confluent-dev.io,https://login.confluent.io
+  jackson:
+    fail-on-unknown-properties: true
+  native:
+    additional-build-args: --initialize-at-run-time=io.confluent.idesidecar.restapi.auth.CCloudOAuthContext\,io.confluent.ide.sidecar.restapi.util.WebClientFactory\,org.apache.kafka.common.security.authenticator.SaslClientAuthenticator
+    resources:
+      includes: templates/callback.html,templates/callback_failure.html,static/templates.zip
+  smallrye-health:
+    root-path: /gateway/v1/health
+  ssl:
+    native: true
+  health:
+    openapi:
+      included: true
+  smallrye-openapi:
+    path: /openapi
+    info-title: Confluent ide-sidecar API
+    store-schema-directory: src/generated/resources/
+    info-version: 1.0.1
+    info-description: API for the Confluent ide-sidecar, part of the Confluent extension for VS Code
+    info-terms-of-service: Your terms here
+    info-contact-email: vscode@confluent.io
+    info-contact-name: Confluent extension for VS Code Support
+    info-contact-url: https://confluent.io/contact
+  smallrye-graphql:
+    print-data-fetcher-exception: true
+    root-path: /gateway/v1/graphql
+    show-runtime-exception-message:
+      -  io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException
+      -  io.confluent.idesidecar.restapi.exceptions.ResourceFetchingException
+  swagger-ui:
+    # By default, enable the Swagger UI in dev and test modes, but not during normal package builds.
+    path: /swagger-ui
+    always-include: false
+  vertx:
+    # Disable file caching in Vert.X since the native executable includes the path of the tmp dir
+    # of the machine where the native image was built.
+    caching: false

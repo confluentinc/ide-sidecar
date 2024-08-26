@@ -1,0 +1,4 @@
+# This file configures Quarkus for running the integration tests against the native executable
+quarkus:
+  http:
+    test-port: 26637

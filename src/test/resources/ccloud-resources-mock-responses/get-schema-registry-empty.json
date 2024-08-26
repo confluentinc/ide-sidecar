@@ -1,0 +1,9 @@
+{
+  "api_version": "srcm/v3",
+  "data": null,
+  "kind": "ClusterList",
+  "metadata": {
+    "first": "https://api.confluent.cloud/srcm/v3/clusters",
+    "total_size": 0
+  }
+}

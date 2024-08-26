@@ -1,0 +1,61 @@
+{
+  "data": {
+    "ccloudConnectionById": {
+      "id": "ccloud-dev",
+      "name": "CCloud Dev",
+      "type": "CCLOUD",
+      "organizations": [
+        {
+          "id": "23b1185e-d874-4f61-81d6-c9c61aa8969c",
+          "name": "Development Org",
+          "current": true
+        },
+        {
+          "id": "d6fc52f8-ae8a-405c-9692-e997965b730dc",
+          "name": "Test Org",
+          "current": false
+        },
+        {
+          "id": "1a507773-d2cb-4055-917e-ffb205f3c433",
+          "name": "Staging Org",
+          "current": false
+        }
+      ],
+      "environments": [
+        {
+          "id": "env-x7727g",
+          "name": "main-test-env",
+          "kafkaClusters": [
+            {
+              "id": "lkc-123abcd",
+              "name": "kafka-cluster-with-no-topics",
+              "provider": "GCP",
+              "region": "us-west2",
+              "bootstrapServers": "SASL_SSL://pkc-12345z.us-west2.gcp.confluent.cloud:9092",
+              "uri": "https://pkc-12345z.us-west2.gcp.confluent.cloud:443"
+            },
+            {
+              "id": "lkc-456xyz",
+              "name": "main-test-kafka-cluster",
+              "provider": "GCP",
+              "region": "us-east1",
+              "bootstrapServers": "SASL_SSL://pkc-6789a.us-east1.gcp.confluent.cloud:9092",
+              "uri": "https://pkc-6789a.us-east1.gcp.confluent.cloud:443"
+            }
+          ],
+          "schemaRegistry": {
+            "provider": "GCP",
+            "region": "us-west2",
+            "uri": "https://psrc-ghijk0.us-west2.gcp.confluent.cloud"
+          }
+        },
+        {
+          "id": "env-kkk3jg",
+          "name": "env-with-no-kafka-cluster",
+          "kafkaClusters": [],
+          "schemaRegistry": null
+        }
+      ]
+    }
+  }
+}

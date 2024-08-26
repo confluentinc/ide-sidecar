@@ -1,0 +1,9 @@
+{
+  "api_version": "org/v2",
+  "data": null,
+  "kind": "EnvironmentList",
+  "metadata": {
+    "first": "https://api.confluent.cloud/org/v2/environments",
+    "total_size": 0
+  }
+}
