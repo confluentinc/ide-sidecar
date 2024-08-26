@@ -1,6 +1,6 @@
 # IDE Sidecar 
 
-[![Build Status](https://semaphore.ci.confluent.io/badges/ide-sidecar/branches/master.svg?style=shields&key=9b059dd9-e898-4637-ad0d-1d9de70a4cf9)](https://semaphore.ci.confluent.io/projects/ide-sidecar) ![Release](release.svg) 
+[![Build Status](https://semaphore.ci.confluent.io/badges/ide-sidecar/branches/main.svg?style=shields&key=201261ed-331f-447a-a58a-90ad092b0d56)](https://semaphore.ci.confluent.io/projects/ide-sidecar) ![Release](release.svg) 
 
 [![Quality Gate Status](https://sonarqube.dp.confluent.io/api/project_badges/measure?project=ide-sidecar&metric=alert_status&token=sqb_030bd6909eb0847e7effeeeaf2c9fade23e5afb9)](https://sonarqube.dp.confluent.io/dashboard?id=ide-sidecar) [![Coverage](https://sonarqube.dp.confluent.io/api/project_badges/measure?project=ide-sidecar&metric=coverage&token=sqb_030bd6909eb0847e7effeeeaf2c9fade23e5afb9)](https://sonarqube.dp.confluent.io/dashboard?id=ide-sidecar) [![Technical Debt](https://sonarqube.dp.confluent.io/api/project_badges/measure?project=ide-sidecar&metric=sqale_index&token=sqb_030bd6909eb0847e7effeeeaf2c9fade23e5afb9)](https://sonarqube.dp.confluent.io/dashboard?id=ide-sidecar) [![Security Hotspots](https://sonarqube.dp.confluent.io/api/project_badges/measure?project=ide-sidecar&metric=security_hotspots&token=sqb_030bd6909eb0847e7effeeeaf2c9fade23e5afb9)](https://sonarqube.dp.confluent.io/dashboard?id=ide-sidecar) [![Lines of Code](https://sonarqube.dp.confluent.io/api/project_badges/measure?project=ide-sidecar&metric=ncloc&token=sqb_030bd6909eb0847e7effeeeaf2c9fade23e5afb9)](https://sonarqube.dp.confluent.io/dashboard?id=ide-sidecar)
 
@@ -497,11 +497,11 @@ format the code according to the Google Java Style Guide:
 
 ## Release process
 
-To release a new version of IDE Sidecar, you need to raise a PR against the `master` branch,
+To release a new version of IDE Sidecar, you need to raise a PR against the `main` branch,
 get it reviewed, and then merge it. Every new commit (except those with `[ci skip]` in the
-description) will cause Semaphore CI/CD to build the `master` branch. For successful builds,
+description) will cause Semaphore CI/CD to build the `main` branch. For successful builds,
 Semaphore will create native executables for all supported operating systems and platforms via
-[promotions](https://github.com/confluentinc/ide-sidecar/blob/master/.semaphore/semaphore.yml#L78).
+[promotions](https://github.com/confluentinc/ide-sidecar/blob/main/.semaphore/semaphore.yml#L78).
 Semaphore stores the native executables on S3, so that the extension's CI job can pull these
 executables.
 
