@@ -18,7 +18,7 @@ else
 	@echo "test results not found at $(TEST_RESULT_FILE)"
 endif
 
-# Only write to the cache from master builds because of security reasons.
+# Only write to the cache from main builds because of security reasons.
 .PHONY: ci-bin-sem-cache-store
 ci-bin-sem-cache-store:
 ifneq ($(SEMAPHORE_GIT_REF_TYPE),pull-request)
