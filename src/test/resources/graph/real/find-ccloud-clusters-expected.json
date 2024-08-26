@@ -1,0 +1,38 @@
+{
+  "data": {
+    "findCCloudKafkaClusters": [
+      {
+        "id": "lkc-123abcd",
+        "name": "kafka-cluster-with-no-topics",
+        "provider": "GCP",
+        "region": "us-west2",
+        "bootstrapServers": "SASL_SSL://pkc-12345z.us-west2.gcp.confluent.cloud:9092",
+        "uri": "https://pkc-12345z.us-west2.gcp.confluent.cloud:443",
+        "organization": {
+          "id": "23b1185e-d874-4f61-81d6-c9c61aa8969c",
+          "name": null
+        },
+        "environment": {
+          "id": "env-x7727g",
+          "name": null
+        }
+      },
+      {
+        "id": "lkc-456xyz",
+        "name": "main-test-kafka-cluster",
+        "provider": "GCP",
+        "region": "us-east1",
+        "bootstrapServers": "SASL_SSL://pkc-6789a.us-east1.gcp.confluent.cloud:9092",
+        "uri": "https://pkc-6789a.us-east1.gcp.confluent.cloud:443",
+        "organization": {
+          "id": "23b1185e-d874-4f61-81d6-c9c61aa8969c",
+          "name": null
+        },
+        "environment": {
+          "id": "env-x7727g",
+          "name": null
+        }
+      }
+    ]
+  }
+}

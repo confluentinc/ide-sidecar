@@ -1,0 +1,6 @@
+{
+  "api_version": "gateway/v1",
+  "kind": "ConnectionsList",
+  "metadata": null,
+  "data": []
+}

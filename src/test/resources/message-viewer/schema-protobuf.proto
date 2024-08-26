@@ -1,0 +1,16 @@
+syntax = "proto3";
+package ksql;
+
+message orders {
+  int64 ordertime = 1;
+  int32 orderid = 2;
+  string itemid = 3;
+  double orderunits = 4;
+  addressMessage address = 5;
+
+  message addressMessage {
+    string city = 1;
+    string state = 2;
+    int64 zipcode = 3;
+  }
+}

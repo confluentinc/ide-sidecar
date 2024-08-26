@@ -1,0 +1,14 @@
+{
+  "data": {
+    "ccloudConnections": [
+      {
+        "id": "ccloud-dev",
+        "name": "CCloud Dev"
+      },
+      {
+        "id": "ccloud-prod",
+        "name": "CCloud Prod"
+      }
+    ]
+  }
+}

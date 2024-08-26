@@ -1,0 +1,28 @@
+{
+  "errors":
+  [
+    {
+      "message": "GET http://localhost:${quarkus.wiremock.devservices.port}/api/org/v2/environments failed with 1 error(s): (HTTP 404) Not found",
+      "locations":
+      [
+        {
+          "line": 11,
+          "column": 9
+        }
+      ],
+      "path":
+      [
+        "ccloudConnectionById",
+        "environments"
+      ],
+      "extensions":
+      {
+        "classification": "DataFetchingException"
+      }
+    }
+  ],
+  "data":
+  {
+    "ccloudConnectionById": null
+  }
+}

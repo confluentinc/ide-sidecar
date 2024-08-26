@@ -1,0 +1,206 @@
+{
+  "api_version": "gateway/v1",
+  "kind": "TemplateList",
+  "metadata": {
+    "self": "http://localhost:26637/gateway/v1/templates",
+    "next": null,
+    "total_size": 4
+  },
+  "data": [
+    {
+      "api_version": "gateway/v1",
+      "kind": "Template",
+      "id": "go-consumer",
+      "metadata": {
+        "self": "http://localhost:26637/gateway/v1/templates/go-consumer",
+        "resource_name": null
+      },
+      "spec": {
+        "name": "go-consumer",
+        "description": "Awesome template for a simple Go consumer application.",
+        "language": "go",
+        "version": "0.0.1",
+        "tags": [
+          "consumer",
+          "getting started"
+        ],
+        "options": {
+          "api_key": {
+            "display_name": "API Key",
+            "description": "The api key"
+          },
+          "api_secret": {
+            "display_name": "API Secret",
+            "description": "The api secret",
+            "format": "password",
+            "pattern": "^[A-Z0-7=]{64,72}$"
+          },
+          "cc_topic": {
+            "display_name": "Topic",
+            "description": "The topic name",
+            "pattern": "^([a-zA-Z0-9._-]{1,255})$"
+          },
+          "group_id": {
+            "display_name": "Consumer Group ID",
+            "description": "The ID of the consumer group"
+          },
+          "cc_bootstrap_server": {
+            "display_name": "Bootstrap Server",
+            "description": "The address ..."
+          },
+          "auto_offset_reset": {
+            "display_name": "Begin from",
+            "description": "Where to start consuming when no offset is available",
+            "enum": [
+              "earliest",
+              "latest"
+            ],
+            "default_value": "earliest"
+          },
+          "cc_schema_registry_url": {
+            "display_name": "SR URL",
+            "description": "The URL for SR",
+            "default_value": "http://localhost:8081"
+          },
+          "TEST_UPPERCASE": {
+            "display_name": "Uppercase Test",
+            "description": "The desc for uppercase test",
+            "pattern": "^[A-Z ]+$",
+            "default_value": "I'M NOT SHOUTING"
+          },
+          "TeSt_WiTh_MiXeD_CaSe": {
+            "display_name": "xyz",
+            "description": "The something",
+            "pattern": "^[A-Za-z ]+$",
+            "default_value": "ThIs Is MiXeD cAsE"
+          },
+          "include_producer": {
+            "display_name": "Include producer",
+            "description": "The boolean attribute",
+            "default_value": false
+          },
+          "sample_list": {
+            "display_name": "List attribute",
+            "description": "The list attribute",
+            "default_value": [
+              "item1",
+              "item2",
+              "item3"
+            ]
+          },
+          "app_name": {
+            "display_name": "Application Name",
+            "description": "The name of the generated application.",
+            "default_value": "go_consumer"
+          }
+        },
+        "template_api_version": "0.0.1",
+        "display_name": "Go Test Consumer"
+      }
+    },
+    {
+      "api_version": "gateway/v1",
+      "kind": "Template",
+      "id": "java-consumer",
+      "metadata": {
+        "self": "http://localhost:26637/gateway/v1/templates/java-consumer",
+        "resource_name": null
+      },
+      "spec": {
+        "name": "java-consumer",
+        "description": "An example Java consumer application that reads messages from a topic in Confluent Cloud. Ideal for developers new to Kafka who want to learn about stream processing with Kafka.\n",
+        "language": "Java",
+        "version": "0.0.1",
+        "tags": [
+          "consumer",
+          "getting started",
+          "java",
+          "jdk",
+          "gradle"
+        ],
+        "options": {
+          "app_name": {
+            "display_name": "Application Name",
+            "description": "The name of the generated application"
+          },
+          "package_path": {
+            "display_name": "Java Package Path",
+            "description": "The Java package the generated code should use"
+          },
+          "package_name": {
+            "display_name": "Java Package Name",
+            "description": "The last part of the Java Package"
+          }
+        },
+        "template_api_version": "0.0.1",
+        "display_name": "Java Consumer Application"
+      }
+    },
+    {
+      "api_version": "gateway/v1",
+      "kind": "Template",
+      "id": "template-with-executable-in-static-dir",
+      "metadata": {
+        "self": "http://localhost:26637/gateway/v1/templates/template-with-executable-in-static-dir",
+        "resource_name": null
+      },
+      "spec": {
+        "name": "template-with-executable-in-static-dir",
+        "description": "Template with a executable in the static directory",
+        "language": "python",
+        "version": "0.0.1",
+        "tags": [
+          "consumer",
+          "gettingstarted"
+        ],
+        "options": {},
+        "template_api_version": "0.0.1",
+        "display_name": "Foo Bar"
+      }
+    },
+    {
+      "api_version": "gateway/v1",
+      "kind": "Template",
+      "id": "template-without-static-dir",
+      "metadata": {
+        "self": "http://localhost:26637/gateway/v1/templates/template-without-static-dir",
+        "resource_name": null
+      },
+      "spec": {
+        "name": "template-without-static-dir",
+        "description": "Awesome template for a Foo Bar service",
+        "language": "python",
+        "version": "0.0.1",
+        "tags": [
+          "consumer",
+          "gettingstarted"
+        ],
+        "options": {
+          "api_key": {
+            "display_name": "API Key",
+            "description": "The api key"
+          },
+          "api_secret": {
+            "display_name": "API Secret",
+            "description": "The api secret"
+          },
+          "topic": {
+            "display_name": "Topic",
+            "description": "The topic name"
+          },
+          "group_id": {
+            "display_name": "Consumer Group ID",
+            "description": "The ID of the consumer group"
+          },
+          "auto_commit_offsets": {
+            "display_name": "Auto Commit Offsets",
+            "description": "Whether to commit offsets automatically",
+            "default_value": true
+          }
+        },
+        "template_api_version": "0.0.1",
+        "display_name": "Foo Bar"
+      }
+    }
+  ]
+}

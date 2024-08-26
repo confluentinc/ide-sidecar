@@ -1,0 +1,46 @@
+{
+  "api_version": "org/v2",
+  "data": [
+    {
+      "api_version": "org/v2",
+      "display_name": "Development Org",
+      "id": "23b1185e-d874-4f61-81d6-c9c61aa8969c",
+      "jit_enabled": false,
+      "kind": "Organization",
+      "metadata": {
+        "created_at": "2024-05-09T20:49:29.189132Z",
+        "resource_name": "crn://confluent.cloud/organization=23b1185e-d874-4f61-81d6-c9c61aa8969c",
+        "self": "https://api.confluent.cloud/org/v2/organizations/23b1185e-d874-4f61-81d6-c9c61aa8969c",
+        "updated_at": "2024-05-09T20:54:18.380268Z"
+      }
+    },
+    {
+      "api_version": "org/v2",
+      "display_name": "Test Org",
+      "id": "d6fc52f8-ae8a-405c-9692-e997965b730dc",
+      "jit_enabled": false,
+      "kind": "Organization",
+      "metadata": {
+        "created_at": "2024-05-09T20:49:29.189132Z",
+        "resource_name": "crn://confluent.cloud/organization=d6fc52f8-ae8a-405c-9692-e997965b730dc",
+        "self": "https://api.confluent.cloud/org/v2/organizations/d6fc52f8-ae8a-405c-9692-e997965b730dc",
+        "updated_at": "2024-05-09T20:54:18.380268Z"
+      }
+    },
+    {
+      "api_version": "org/v2",
+      "display_name": "Staging Org",
+      "id": "1a507773-d2cb-4055-917e-ffb205f3c433",
+      "jit_enabled": false,
+      "kind": "Organization",
+      "metadata": {
+        "created_at": "2024-05-09T20:49:29.189132Z",
+        "resource_name": "crn://confluent.cloud/organization=1a507773-d2cb-4055-917e-ffb205f3c433",
+        "self": "https://api.confluent.cloud/org/v2/organizations/1a507773-d2cb-4055-917e-ffb205f3c433",
+        "updated_at": "2024-05-09T20:54:18.380268Z"
+      }
+    }
+  ],
+  "kind": "OrganizationList",
+  "metadata": {}
+}

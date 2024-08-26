@@ -1,0 +1,12 @@
+[
+  {
+    "id": "1",
+    "name": "Test Connection 1",
+    "type": "PLATFORM"
+  },
+  {
+    "id": "2",
+    "name": "Test Connection 2",
+    "type": "LOCAL"
+  }
+]

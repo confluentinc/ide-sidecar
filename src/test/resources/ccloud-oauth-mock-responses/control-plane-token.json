@@ -1,0 +1,122 @@
+{
+  "token": "foo",
+  "error": null,
+  "user": {
+    "id": 2915467,
+    "email": "ssprenger+test@confluent.io",
+    "first_name": "Stefan",
+    "last_name": "Sprenger",
+    "deactivated": false,
+    "verified": "2024-04-15T09:19:31.483864Z",
+    "created": "2024-04-15T09:19:08.308827Z",
+    "modified": "2024-04-15T09:19:31.488974Z",
+    "service_name": "",
+    "service_description": "",
+    "service_account": false,
+    "preferences": {
+      "cohorts": "csdrTreatment",
+      "firstClusterCreationFlow": "IN PROGRESS",
+      "gettingStarted": "IN_PROGRESS",
+      "gettingStarted_accountId": "env-0d98r9",
+      "gettingStarted_source": "welcome_page",
+      "hasFinishedWelcomeSurvey": "true",
+      "sessionNumber": "4",
+      "showWelcomePageStatus": "COMPLETE",
+      "userReportedGoal": "",
+      "userReportedKafkaFamiliarity": "",
+      "userReportedObjective": "",
+      "userReportedObjective_other": "",
+      "userReportedRole": "",
+      "userReportedRole_other": "",
+      "userReportedUseCase": "",
+      "userReportedUseCase_other": ""
+    },
+    "internal": false,
+    "resource_id": "u-jg9zxp",
+    "deactivated_at": null,
+    "social_connection": "",
+    "auth_type": "AUTH_TYPE_LOCAL"
+  },
+  "organization": {
+    "id": 529160,
+    "name": "Development Org",
+    "deactivated": false,
+    "stripe_customer_id": "",
+    "created": "2024-04-15T09:19:08.122355Z",
+    "modified": "2024-04-15T09:19:39.321908Z",
+    "billing_email": "",
+    "plan": {
+      "tax_address": {
+        "street1": "",
+        "street2": "",
+        "city": "",
+        "state": "",
+        "country": "",
+        "zip": ""
+      },
+      "product_level": "UNIFIED",
+      "trial_start": null,
+      "trial_end": null,
+      "plan_start": null,
+      "plan_end": null,
+      "product": null,
+      "billing": {
+        "method": "STRIPE",
+        "interval": "MONTHLY",
+        "accrued_this_cycle": "0",
+        "stripe_customer_id": "cus_Pvcxk9valcVXvB",
+        "email": "ssprenger+testauthworkflowvscode@confluent.io"
+      },
+      "referral_code": "",
+      "accept_tos": true,
+      "allow_multi_tenant": true,
+      "accept_tos_platform": false
+    },
+    "saml": null,
+    "sso": {
+      "enabled": false,
+      "auth0_connection_name": "",
+      "tenant_id": "",
+      "multi_tenant": false,
+      "mode": "SSO_MODE_UNKNOWN",
+      "connection_name": "",
+      "vendor": "",
+      "jit_enabled": false,
+      "bup_enabled": false
+    },
+    "marketplace": {
+      "partner": "UNKNOWN",
+      "customer_id": "",
+      "customer_state": "CUSTOMER_APPROVAL_PENDING",
+      "console_integrated": false
+    },
+    "resource_id": "23b1185e-d874-4f61-81d6-c9c61aa8969c",
+    "has_entitlement": false,
+    "show_billing": true,
+    "audit_log": {
+      "cluster_id": "",
+      "account_id": "",
+      "service_account_id": 0,
+      "topic_name": "",
+      "service_account_resource_id": ""
+    },
+    "has_commitment": false,
+    "marketplace_subscription": "SUBSCRIPTION_NONE",
+    "deactivated_at": null,
+    "suspension_status": {
+      "suspended": null,
+      "status": "SUSPENSION_UNKNOWN",
+      "event_type": "SUSPENSION_EVENT_UNKNOWN",
+      "scheduled_deactivated_at": null,
+      "version": "0",
+      "error_message": "",
+      "scheduled_resources_deleted_at": null,
+      "resources_deleted_at": null
+    },
+    "display_label": "",
+    "country_code": "DE",
+    "parent_organization_resource_id": ""
+  },
+  "refresh_token": "",
+  "identity_provider": ""
+}

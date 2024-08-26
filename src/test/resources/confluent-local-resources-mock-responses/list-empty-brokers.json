@@ -1,0 +1,8 @@
+{
+  "kind": "KafkaBrokerList",
+  "metadata": {
+    "self": "http://rest-proxy:8082/v3/clusters/4L6g3nShT-eMCtK--X86sw/brokers",
+    "next": null
+  },
+  "data": []
+}

@@ -1,0 +1,36 @@
+{
+  "api_version": "srcm/v3",
+  "data": [
+    {
+      "api_version": "srcm/v3",
+      "id": "lsrc-abcdef9",
+      "kind": "Cluster",
+      "metadata": {
+        "created_at": "2024-03-19T22:35:44.700151Z",
+        "resource_name": "crn://confluent.cloud/organization=23b1185e-d874-4f61-81d6-c9c61aa8969c/environment=env-x7727g/schema-registry=lsrc-abcdef9",
+        "self": "https://api.confluent.cloud/srcm/v3/clusters/lsrc-abcdef9",
+        "updated_at": "2024-03-19T22:35:44.700151Z"
+      },
+      "spec": {
+        "cloud": "GCP",
+        "display_name": "Stream Governance Package",
+        "environment": {
+          "id": "env-x7727g",
+          "related": "https://api.confluent.cloud/org/v3/environments/env-x7727g",
+          "resource_name": "crn://confluent.cloud/organization=23b1185e-d874-4f61-81d6-c9c61aa8969c/environment=env-x7727g"
+        },
+        "http_endpoint": "https://psrc-ghijk0.us-west2.gcp.confluent.cloud",
+        "package": "ESSENTIALS",
+        "region": "us-west2"
+      },
+      "status": {
+        "phase": "PROVISIONED"
+      }
+    }
+  ],
+  "kind": "ClusterList",
+  "metadata": {
+    "first": "https://api.confluent.cloud/srcm/v3/clusters",
+    "total_size": 1
+  }
+}

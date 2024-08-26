@@ -1,0 +1,49 @@
+# Ignore the root bin directory since it generally contains build byproducts. If you want any wrapper scripts, be sure to exclude normal build files in the same directory.
+/bin/*
+
+# but do NOT ignore
+!bin/prepare-prod-release-pr.sh
+
+# Ignore
+.tmp
+.DS_Store
+target
+.quarkus
+.vscode
+
+
+# Other build byproducts
+*.pid
+local_mode_test.log
+coverage.txt
+.idea/*
+*.iml
+
+# ignore the vendor folder
+vendor/*
+!vendor/vendor.json
+
+# ignore pacts folders
+/pact/
+/test/pact/logs/
+
+**/.terraform/*
+
+terraform.d
+
+# .tfstate files
+*.tfstate
+*.tfstate.*
+*.hcl
+**/terraform.tfout
+
+# Chart dependencies
+**/charts/*.tgz
+charts/package/
+
+# servicebot workdir
+.servicebot/
+
+# Ignore the templates.zip file created in main and test resources
+src/main/resources/static/templates.zip
+src/test/resources/static/templates.zip

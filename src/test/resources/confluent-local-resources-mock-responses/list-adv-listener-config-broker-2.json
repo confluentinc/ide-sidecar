@@ -1,0 +1,22 @@
+{
+  "kind": "KafkaBrokerConfig",
+  "metadata": {
+    "self": "http://rest-proxy:8082/v3/clusters/4L6g3nShT-eMCtK--X86sw/brokers/2/configs/advertised.listeners",
+    "resource_name": "crn:///kafka=4L6g3nShT-eMCtK--X86sw/broker=2/config=advertised.listeners"
+  },
+  "cluster_id": "4L6g3nShT-eMCtK--X86sw",
+  "name": "advertised.listeners",
+  "value": "PLAINTEXT://confluent-local-broker-1:50004,PLAINTEXT_HOST://localhost:50001",
+  "is_read_only": false,
+  "is_sensitive": false,
+  "source": "STATIC_BROKER_CONFIG",
+  "synonyms": [
+    {
+      "name": "advertised.listeners",
+      "value": "PLAINTEXT://confluent-local-broker-1:50004,PLAINTEXT_HOST://localhost:50001",
+      "source": "STATIC_BROKER_CONFIG"
+    }
+  ],
+  "broker_id": 2,
+  "is_default": false
+}

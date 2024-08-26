@@ -1,0 +1,19 @@
+{
+  "data": {
+    "localConnections": [
+      {
+        "id": "local-1",
+        "name": "local",
+        "type": "LOCAL",
+        "kafkaCluster": {
+          "id": "4L6g3nShT-eMCtK--X86sw",
+          "name": "confluent-local",
+          "bootstrapServers": "",
+          "uri": "http://localhost:8082",
+          "kafkaRestHostName": "rest-proxy"
+        },
+        "schemaRegistry": null
+      }
+    ]
+  }
+}

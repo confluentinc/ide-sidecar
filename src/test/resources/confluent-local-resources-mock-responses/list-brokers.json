@@ -1,0 +1,45 @@
+{
+  "kind": "KafkaBrokerList",
+  "metadata": {
+    "self": "http://rest-proxy:8082/v3/clusters/4L6g3nShT-eMCtK--X86sw/brokers",
+    "next": null
+  },
+  "data": [
+    {
+      "kind": "KafkaBroker",
+      "metadata": {
+        "self": "http://rest-proxy:8082/v3/clusters/4L6g3nShT-eMCtK--X86sw/brokers/1",
+        "resource_name": "crn:///kafka=4L6g3nShT-eMCtK--X86sw/broker=1"
+      },
+      "cluster_id": "4L6g3nShT-eMCtK--X86sw",
+      "broker_id": 1,
+      "host": "confluent-local-broker-1",
+      "port": 50003,
+      "rack": null,
+      "configs": {
+        "related": "http://rest-proxy:8082/v3/clusters/4L6g3nShT-eMCtK--X86sw/brokers/1/configs"
+      },
+      "partition_replicas": {
+        "related": "http://rest-proxy:8082/v3/clusters/4L6g3nShT-eMCtK--X86sw/brokers/1/partition-replicas"
+      }
+    },
+    {
+      "kind": "KafkaBroker",
+      "metadata": {
+        "self": "http://rest-proxy:8082/v3/clusters/4L6g3nShT-eMCtK--X86sw/brokers/2",
+        "resource_name": "crn:///kafka=4L6g3nShT-eMCtK--X86sw/broker=2"
+      },
+      "cluster_id": "4L6g3nShT-eMCtK--X86sw",
+      "broker_id": 2,
+      "host": "confluent-local-broker-2",
+      "port": 50004,
+      "rack": null,
+      "configs": {
+        "related": "http://rest-proxy:8082/v3/clusters/4L6g3nShT-eMCtK--X86sw/brokers/2/configs"
+      },
+      "partition_replicas": {
+        "related": "http://rest-proxy:8082/v3/clusters/4L6g3nShT-eMCtK--X86sw/brokers/2/partition-replicas"
+      }
+    }
+  ]
+}

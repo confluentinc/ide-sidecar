@@ -1,0 +1,17 @@
+query localConnections {
+    localConnections {
+        id
+        name
+        type
+        kafkaCluster {
+            id
+            name
+            bootstrapServers
+            uri
+            kafkaRestHostName
+        }
+        schemaRegistry {
+            uri
+        }
+    }
+}

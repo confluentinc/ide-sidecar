@@ -1,0 +1,53 @@
+{
+  "kind": "KafkaTopicList",
+  "metadata": {
+    "self": "http://localhost:26637/kafka/v3/clusters/lkc-95w6wy/topics",
+    "next": null
+  },
+  "data": [
+    {
+      "kind": "KafkaTopic",
+      "metadata": {
+        "self": "http://localhost:26637/kafka/v3/clusters/lkc-95w6wy/topics/my_topic",
+        "resource_name": "crn:///kafka=lkc-95w6wy/topic=my_topic"
+      },
+      "cluster_id": "lkc-95w6wy",
+      "topic_name": "my_topic",
+      "is_internal": false,
+      "replication_factor": 3,
+      "partitions_count": 6,
+      "partitions": {
+        "related": "http://localhost:26637/kafka/v3/clusters/lkc-95w6wy/topics/my_topic/partitions"
+      },
+      "configs": {
+        "related": "http://localhost:26637/kafka/v3/clusters/lkc-95w6wy/topics/my_topic/configs"
+      },
+      "partition_reassignments": {
+        "related": "http://localhost:26637/kafka/v3/clusters/lkc-95w6wy/topics/my_topic/partitions/-/reassignment"
+      },
+      "authorized_operations": []
+    },
+    {
+      "kind": "KafkaTopic",
+      "metadata": {
+        "self": "http://localhost:26637/kafka/v3/clusters/lkc-95w6wy/topics/topic_0",
+        "resource_name": "crn:///kafka=lkc-95w6wy/topic=topic_0"
+      },
+      "cluster_id": "lkc-95w6wy",
+      "topic_name": "topic_0",
+      "is_internal": false,
+      "replication_factor": 3,
+      "partitions_count": 6,
+      "partitions": {
+        "related": "http://localhost:26637/kafka/v3/clusters/lkc-95w6wy/topics/topic_0/partitions"
+      },
+      "configs": {
+        "related": "http://localhost:26637/kafka/v3/clusters/lkc-95w6wy/topics/topic_0/configs"
+      },
+      "partition_reassignments": {
+        "related": "http://localhost:26637/kafka/v3/clusters/lkc-95w6wy/topics/topic_0/partitions/-/reassignment"
+      },
+      "authorized_operations": []
+    }
+  ]
+}

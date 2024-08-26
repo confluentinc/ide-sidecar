@@ -1,0 +1,51 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "gradle.plugin.com.github.jengelman.gradle.plugins:shadow:7.0.0"
+    }
+}
+
+plugins {
+    id "java"
+    id "idea"
+    id "eclipse"
+}
+
+sourceCompatibility = "1.21"
+targetCompatibility = "1.21"
+version = "0.0.1"
+
+repositories {
+    mavenCentral()
+
+    maven {
+        url "https://packages.confluent.io/maven"
+    }
+}
+
+apply plugin: "com.github.johnrengelman.shadow"
+
+dependencies {
+    implementation group: 'org.slf4j', name: 'slf4j-nop', version: '2.0.13'
+    implementation group: 'org.apache.kafka', name: 'kafka-clients', version: '3.7.0'
+
+    // needed if OAuth is used; otherwise this can be left out.
+    // See: https://docs.confluent.io/platform/current/kafka/authentication_sasl/authentication_sasl_oauth.html
+    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.17.0'
+}
+
+jar {
+    manifest {
+        attributes(
+                "Class-Path": configurations.compileClasspath.collect { it.getName() }.join(" "),
+                "Main-Class": "examples.ExampleConsumer"
+        )
+    }
+}
+
+shadowJar {
+    archiveBaseName = "java-consumer"
+    archiveClassifier = ''
+}

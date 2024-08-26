@@ -1,0 +1,60 @@
+{
+  "cluster_id": "lkc-abcd123",
+  "topic_name": "orders_avro",
+  "partition_data_list": [
+    {
+      "partition_id": 0,
+      "next_offset": 87482,
+      "records": [
+        {
+          "partition_id": 0,
+          "offset": 87473,
+          "timestamp": 1718991295736,
+          "key": "522116",
+          "value": {
+            "__raw__": "AAABhqL8xZOTn1eI3j8QSXRlbV85NzMmaCzWvuEZQApDaXR5XwxTdGF0ZV/Y6QQ="
+          },
+          "timestamp_type": "CREATE_TIME",
+          "headers": [
+            {
+              "key": "task.generation",
+              "value": "MA=="
+            },
+            {
+              "key": "task.id",
+              "value": "MA=="
+            },
+            {
+              "key": "current.iteration",
+              "value": "NTIyMTE2"
+            }
+          ]
+        },
+        {
+          "partition_id": 0,
+          "offset": 87474,
+          "timestamp": 1718991303712,
+          "key": "522131",
+          "value": {
+            "__raw__": "AAABhqLGjorYg1im3j8QSXRlbV80NDSS6egQc+MXQA5DaXR5XzU5EFN0YXRlXzc3+LAH"
+          },
+          "timestamp_type": "CREATE_TIME",
+          "headers": [
+            {
+              "key": "task.generation",
+              "value": "MA=="
+            },
+            {
+              "key": "task.id",
+              "value": "MA=="
+            },
+            {
+              "key": "current.iteration",
+              "value": "NTIyMTMx"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

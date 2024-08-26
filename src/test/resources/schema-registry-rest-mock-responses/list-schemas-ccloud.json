@@ -1,0 +1,36 @@
+[
+  {
+    "subject": "order_json_sr-value",
+    "version": 1,
+    "id": 100001,
+    "schemaType": "JSON",
+    "schema": "{\"type\":\"object\",\"title\":\"ksql.orders\",\"properties\":{\"itemid\":{\"type\":\"string\",\"connect.index\":2},\"address\":{\"type\":\"object\",\"title\":\"ksql.address\",\"connect.index\":4,\"properties\":{\"zipcode\":{\"type\":\"integer\",\"connect.index\":2,\"connect.type\":\"int64\"},\"city\":{\"type\":\"string\",\"connect.index\":0},\"state\":{\"type\":\"string\",\"connect.index\":1}}},\"orderid\":{\"type\":\"integer\",\"connect.index\":1,\"connect.type\":\"int32\"},\"orderunits\":{\"type\":\"number\",\"connect.index\":3,\"connect.type\":\"float64\"},\"ordertime\":{\"type\":\"integer\",\"connect.index\":0,\"connect.type\":\"int64\"}}}"
+  },
+  {
+    "subject": "orders_avro-value",
+    "version": 1,
+    "id": 100002,
+    "schema": "{\"type\":\"record\",\"name\":\"orders\",\"namespace\":\"ksql\",\"fields\":[{\"name\":\"ordertime\",\"type\":\"long\"},{\"name\":\"orderid\",\"type\":\"int\"},{\"name\":\"itemid\",\"type\":\"string\"},{\"name\":\"orderunits\",\"type\":\"double\"},{\"name\":\"address\",\"type\":{\"type\":\"record\",\"name\":\"address\",\"fields\":[{\"name\":\"city\",\"type\":\"string\"},{\"name\":\"state\",\"type\":\"string\"},{\"name\":\"zipcode\",\"type\":\"long\"}],\"connect.name\":\"ksql.address\"}}],\"connect.name\":\"ksql.orders\"}"
+  },
+  {
+    "subject": "orders_proto-value",
+    "version": 1,
+    "id": 100003,
+    "schemaType": "PROTOBUF",
+    "schema": "syntax = \"proto3\";\npackage ksql;\n\nmessage orders {\n  int64 ordertime = 1;\n  int32 orderid = 2;\n  string itemid = 3;\n  double orderunits = 4;\n  addressMessage address = 5;\n\n  message addressMessage {\n    string city = 1;\n    string state = 2;\n    int64 zipcode = 3;\n  }\n}\n"
+  },
+  {
+    "subject": "sample_data-value",
+    "version": 1,
+    "id": 100001,
+    "schemaType": "JSON",
+    "schema": "{\"type\":\"object\",\"title\":\"ksql.orders\",\"properties\":{\"itemid\":{\"type\":\"string\",\"connect.index\":2},\"address\":{\"type\":\"object\",\"title\":\"ksql.address\",\"connect.index\":4,\"properties\":{\"zipcode\":{\"type\":\"integer\",\"connect.index\":2,\"connect.type\":\"int64\"},\"city\":{\"type\":\"string\",\"connect.index\":0},\"state\":{\"type\":\"string\",\"connect.index\":1}}},\"orderid\":{\"type\":\"integer\",\"connect.index\":1,\"connect.type\":\"int32\"},\"orderunits\":{\"type\":\"number\",\"connect.index\":3,\"connect.type\":\"float64\"},\"ordertime\":{\"type\":\"integer\",\"connect.index\":0,\"connect.type\":\"int64\"}}}"
+  },
+  {
+    "subject": "sample_data_1-value",
+    "version": 1,
+    "id": 100001,
+    "schemaType": "JSON",
+    "schema": "{\"type\":\"object\",\"title\":\"ksql.orders\",\"properties\":{\"itemid\":{\"type\":\"string\",\"connect.index\":2},\"address\":{\"type\":\"object\",\"title\":\"ksql.address\",\"connect.index\":4,\"properties\":{\"zipcode\":{\"type\":\"integer\",\"connect.index\":2,\"connect.type\":\"int64\"},\"city\":{\"type\":\"string\",\"connect.index\":0},\"state\":{\"type\":\"string\",\"connect.index\":1}}},\"orderid\":{\"type\":\"integer\",\"connect.index\":1,\"connect.type\":\"int32\"},\"orderunits\":{\"type\":\"number\",\"connect.index\":3,\"connect.type\":\"float64\"},\"ordertime\":{\"type\":\"integer\",\"connect.index\":0,\"connect.type\":\"int64\"}}}"
+  }
+]
