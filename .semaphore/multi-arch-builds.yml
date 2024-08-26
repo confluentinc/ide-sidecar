@@ -104,7 +104,7 @@ blocks:
 
   - name: "Upload native executables to GitHub Releases"
     run:
-      when: "branch =~ '.*' and change_in('/.versions/ide-sidecar-version.txt', {pipeline_file: 'ignore'})"
+      when: "branch =~ '.*' and change_in('/.versions/ide-sidecar-version.txt', {pipeline_file: 'ignore', default_branch: 'main'})"
     dependencies:
       - "Build Native Executable (MacOS AMD64)"
       - "Build Native Executable (MacOS ARM64)"
