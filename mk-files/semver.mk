@@ -6,8 +6,8 @@ VERSION_POST ?=
 
 # Auto bump by default
 BUMP ?= auto
-# If on master branch bump the minor by default
-ifeq ($(RELEASE_BRANCH),$(MASTER_BRANCH))
+# If on main branch bump the minor by default
+ifeq ($(RELEASE_BRANCH),$(MAIN_BRANCH))
 DEFAULT_BUMP ?= minor
 # Else bump the patch by default
 else
@@ -43,8 +43,8 @@ cut -d'/' -f3)
 LATEST_VERSION := $(if $(LATEST_VERSION),$(LATEST_VERSION),v0.0.0)
 LATEST_VERSION_NO_V := $(shell echo $(LATEST_VERSION) | sed 's,^v,,' )
 
-ifeq ($(BRANCH_NAME),$(MASTER_BRANCH))
-# make sure master branch version bump always use the global latest version
+ifeq ($(BRANCH_NAME),$(MAIN_BRANCH))
+# make sure main branch version bump always use the global latest version
 ifeq ($(CI), true)
 VERSION_SUFFIX := $(shell git describe --tags --always --dirty $(GIT_DESCRIBE_TAG_FILTERS) | rev | cut -d'-' -f 1 | rev)
 ifeq ($(VERSION_SUFFIX),$(DIRTY))

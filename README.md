@@ -497,11 +497,11 @@ format the code according to the Google Java Style Guide:
 
 ## Release process
 
-To release a new version of IDE Sidecar, you need to raise a PR against the `master` branch,
+To release a new version of IDE Sidecar, you need to raise a PR against the `main` branch,
 get it reviewed, and then merge it. Every new commit (except those with `[ci skip]` in the
-description) will cause Semaphore CI/CD to build the `master` branch. For successful builds,
+description) will cause Semaphore CI/CD to build the `main` branch. For successful builds,
 Semaphore will create native executables for all supported operating systems and platforms via
-[promotions](https://github.com/confluentinc/ide-sidecar/blob/master/.semaphore/semaphore.yml#L78).
+[promotions](https://github.com/confluentinc/ide-sidecar/blob/main/.semaphore/semaphore.yml#L78).
 Semaphore stores the native executables on S3, so that the extension's CI job can pull these
 executables.
 
