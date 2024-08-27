@@ -2,16 +2,14 @@
 
 ![Release](release.svg) 
 
-👋 Welcome to an early prototype of **IDE Sidecar**, the sidecar application used by
+👋 Welcome to **IDE Sidecar**, the sidecar application used by
 the [DTX VS Code Extension](https://github.com/confluentinc/vscode-extension).
 
-💡 IDE Sidecar exposes a REST API.
+💡 IDE Sidecar exposes REST and GraphQL APIs.
 It is a Java 21 project that uses [Quarkus](https://quarkus.io), [GraalVM](https://www.graalvm.org/), and
 Maven. We intend to distribute IDE Sidecar as a native executable, which - compared to traditional
 JIT-compiled Java projects - offers a shorter startup time, a smaller container image size,
 and a smaller memory footprint.
-
-
 
 ## Prerequisites
 
@@ -23,13 +21,6 @@ These tools must be installed on your workstation.
 
 Most of these tools can be found in [`brew`](https://brew.sh/) or your favorite package manager.
 
-Before running the below Maven commands, please make sure that you are authenticated with Confluent's Maven
-repository by executing:
-
-```shell script
-maven-login
-```
-
 ## Make commands
 
 The following table documents our custom `make` commands. We manage them in the
@@ -37,12 +28,12 @@ The following table documents our custom `make` commands. We manage them in the
 `make` command to the [Makefile](./Makefile), make sure to not change the file section managed
 by ServiceBot. Otherwise they will be overwritten by the next run of ServiceBot.
 
-| Make command                             | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-|------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `make mvn-package-native`                | Creates a native executable for the project.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| `make mvn-package-native-no-tests`       | Creates a native executable for the project without running the tests.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| `make zip-templates`                     | Creates a zip archive out of the directories [src/main/resources/static](./src/main/resources/static) and [src/test/resources/static](./src/test/resources/static). This command is called by our build and test suite; manual invocations are probably not useful.                                                                                                                                                                                                                                                                                                                                                                          |
-| `make ci-sign-notarize-macos-executable` | [Semaphore CI Only] Used for signing and notarizing macOS executables.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | 
+| Make command                             | Description                                                                                                                                                                                                         |
+|------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `make mvn-package-native`                | Runs the unit and integration tests and creates a native executable for the project.                                                                                                                                |
+| `make mvn-package-native-no-tests`       | Creates a native executable for the project without running the tests.                                                                                                                                              |
+| `make zip-templates`                     | Creates a zip archive out of the directories [src/main/resources/static](./src/main/resources/static) and [src/test/resources/static](./src/test/resources/static). This command is called by our build and test suite; manual invocations are probably not useful. |
+| `make ci-sign-notarize-macos-executable` | [Semaphore CI Only] Used for signing and notarizing macOS executables before releasing them.                                                                                                                        |
 
 You may find the following `make` commands useful during development:
 
@@ -60,7 +51,9 @@ This section shows how to use `curl` to interact with a running Sidecar.
 
 ### Handshake
 
-Sidecar uses authentication to reduce the likelihood that unauthorized clients requires clients provide a shared authorization token. The sidecar returns an authentication token from the first invocation of the `/gateway/v1/handshake` route.
+Sidecar uses authentication to prevent access from unauthorized clients. The sidecar returns an
+authentication token from the first invocation of the `/gateway/v1/handshake` route. Use this
+authentication token to sign API requests.
 
 After starting the Sidecar executable, get the token and store in an environment variable:
 ```shell
@@ -75,7 +68,7 @@ echo $DTX_ACCESS_TOKEN
 ```shell
 curl -s -H "Content-Type:application/json" -H "Authorization: Bearer ${DTX_ACCESS_TOKEN}" http://localhost:26636/gateway/v1/connections | jq -r .
 ```
-After starting, there will be no connections
+Initially, the Sidecar does not hold any connection
 ```json
 {
   "api_version": "gateway/v1",
@@ -121,7 +114,7 @@ Listing connections again:
 ```shell
 curl -s -H "Content-Type:application/json" -H "Authorization: Bearer ${DTX_ACCESS_TOKEN}" http://localhost:26636/gateway/v1/connections | jq -r .
 ```
-will include the CCloud connection and it's `status.authentication.status` will be `VALID_TOKEN`, signifying the session has been authenticated:
+will include the CCloud connection and its `status.authentication.status` will be `VALID_TOKEN`, signifying the session has been authenticated:
 
 ```json
 {
@@ -390,27 +383,8 @@ The Kafka and Schema Registry Proxy APIs are available at the following endpoint
 > [!IMPORTANT] 
 > Pre-requisite conditions for invoking the Kafka and Schema Registry Proxy APIs
 > 1. A connection must be created and authenticated.
-> 1. A cluster listing query must have been issued (see example below) for the sidecar to cache the cluster information for a given connection. (This is necessary for the Kafka and Schema Registry Proxy APIs to work, otherwise, the sidecar will return a `500` error with the message `Failed to find cluster id=... in the cache`.)
-
 
 #### List Kafka topics using the Kafka Proxy API
-
-First, we list the Kafka clusters using GraphQL:
-
-```shell
-curl -s -X POST "http://localhost:26636/gateway/v1/graphql" -H "Content-Type: application/json" -H "Authorization: Bearer ${DTX_ACCESS_TOKEN}" -d '{
-  "query":"query findCCloudKafkaClusters { 
-      findCCloudKafkaClusters(connectionId: \"c1\") {
-        id
-        name
-        provider
-        region
-        bootstrapServers
-        uri
-      }
-    }"
-}' | jq -r .
-```
 
 Assuming the Kafka cluster ID is `lkc-abcd123`, we can list the topics:
 
@@ -423,7 +397,7 @@ curl -s \
 
 #### Create a Kafka topic using the Kafka Proxy API
 
-Assuming you've already listed the Kafka clusters and have the cluster ID `lkc-abcd123`, you can create a Kafka topic with the following command:
+Assuming the cluster ID is `lkc-abcd123`, we can create a Kafka topic with the following command:
 
 ```shell
 curl -s -X POST \
@@ -435,35 +409,6 @@ curl -s -X POST \
 ```
 
 #### List Schemas using the Schema Registry Proxy API
-
-First, we list the Schema Registry clusters using GraphQL:
-
-```shell
-curl -s -X POST "http://localhost:26636/gateway/v1/graphql" -H "Content-Type: application/json" -H "Authorization: Bearer ${DTX_ACCESS_TOKEN}" -d '{
-  "query":"query ccloudConnections {
-  ccloudConnections{
-    id
-    environments {
-      id
-      schemaRegistry {
-        id
-        provider
-        region
-        uri
-        organization {
-          id
-          name
-        }
-        environment {
-          id
-          name
-        }
-      }
-    }
-  }
- }"
-}' | jq -r .
-```
 
 Assuming the Schema Registry cluster ID is `lsrc-defg456`, we can list the schemas with the following command:
 
@@ -505,6 +450,8 @@ executables.
 
 At the moment, we build native executables for the following operating systems and platforms:
 
+* Linux (AMD64)
+* Linux (ARM64)
 * macOS (AMD64)
 * macOS (ARM64)
 
@@ -512,7 +459,7 @@ At the moment, we build native executables for the following operating systems a
 
 ### Port conflicts
 
-Sidecar's http server is at fixed port 26636. A static
+Sidecar's HTTP server is at fixed port 26636. A static
 port is needed for OAuth negotiation. Therefore, you can only have one such process
 running. If you are met with:
 ```
