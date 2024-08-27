@@ -1,8 +1,6 @@
 # IDE Sidecar 
 
-[![Build Status](https://semaphore.ci.confluent.io/badges/ide-sidecar/branches/main.svg?style=shields&key=201261ed-331f-447a-a58a-90ad092b0d56)](https://semaphore.ci.confluent.io/projects/ide-sidecar) ![Release](release.svg) 
-
-[![Quality Gate Status](https://sonarqube.dp.confluent.io/api/project_badges/measure?project=ide-sidecar&metric=alert_status&token=sqb_030bd6909eb0847e7effeeeaf2c9fade23e5afb9)](https://sonarqube.dp.confluent.io/dashboard?id=ide-sidecar) [![Coverage](https://sonarqube.dp.confluent.io/api/project_badges/measure?project=ide-sidecar&metric=coverage&token=sqb_030bd6909eb0847e7effeeeaf2c9fade23e5afb9)](https://sonarqube.dp.confluent.io/dashboard?id=ide-sidecar) [![Technical Debt](https://sonarqube.dp.confluent.io/api/project_badges/measure?project=ide-sidecar&metric=sqale_index&token=sqb_030bd6909eb0847e7effeeeaf2c9fade23e5afb9)](https://sonarqube.dp.confluent.io/dashboard?id=ide-sidecar) [![Security Hotspots](https://sonarqube.dp.confluent.io/api/project_badges/measure?project=ide-sidecar&metric=security_hotspots&token=sqb_030bd6909eb0847e7effeeeaf2c9fade23e5afb9)](https://sonarqube.dp.confluent.io/dashboard?id=ide-sidecar) [![Lines of Code](https://sonarqube.dp.confluent.io/api/project_badges/measure?project=ide-sidecar&metric=ncloc&token=sqb_030bd6909eb0847e7effeeeaf2c9fade23e5afb9)](https://sonarqube.dp.confluent.io/dashboard?id=ide-sidecar)
+![Release](release.svg) 
 
 👋 Welcome to an early prototype of **IDE Sidecar**, the sidecar application used by
 the [DTX VS Code Extension](https://github.com/confluentinc/vscode-extension).
