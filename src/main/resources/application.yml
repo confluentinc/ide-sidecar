@@ -72,7 +72,7 @@ ide-sidecar:
         client-id: Q93zdbI3FnltpEa9G1gg6tiMuoDDBkwS
         login-realm-uri: https://confluent.cloud/api/login/realm
         redirect-uri: http://127.0.0.1:26636/gateway/v1/callback-vscode-docs
-        # used on successful login instead of redirect-uri
+        # URI redirect to tell the VS Code extension if the auth flow completed successfully or not
         vscode-extension-uri: vscode://confluentinc.vscode-confluent/authCallback
         scope: email openid offline_access
       check-token-expiration:
