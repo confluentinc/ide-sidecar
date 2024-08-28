@@ -9,8 +9,8 @@ import java.time.Instant;
  * This record holds auth-related errors for a {@link AuthContext}.
  *
  * @param authStatusCheck Error that occurred when checking the auth status.
- * @param signIn Error that occurred when performing the sign in.
- * @param tokenRefresh Error that occurred when refreshing tokens.
+ * @param signIn          Error that occurred when performing the sign in.
+ * @param tokenRefresh    Error that occurred when refreshing tokens.
  */
 @JsonInclude(Include.NON_NULL)
 public record AuthErrors(
@@ -55,5 +55,6 @@ public record AuthErrors(
       @JsonProperty(value = "created_at") Instant createdAt,
       String message
   ) {
+
   }
 }

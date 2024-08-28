@@ -15,6 +15,9 @@ import jakarta.inject.Named;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 
+/**
+ * Resource that proxies requests to the Kafka REST and Schema Registry APIs.
+ */
 @ApplicationScoped
 public class ClusterRestProxyResource {
 

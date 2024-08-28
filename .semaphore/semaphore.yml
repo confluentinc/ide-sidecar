@@ -27,6 +27,7 @@ global_job_config:
       - sem-version java 21
       - checkout
       - make ci-bin-sem-cache-restore
+      - make docker-login-ci
   epilogue:
     always:
       commands:

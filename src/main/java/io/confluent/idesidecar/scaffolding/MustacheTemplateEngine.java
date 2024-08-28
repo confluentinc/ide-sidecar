@@ -13,6 +13,10 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * Template engine that uses <a href="https://mustache.github.io/">Mustache</a> to expand tags and
+ * replace placeholders.
+ */
 public class MustacheTemplateEngine implements TemplateEngine {
 
   private static final MustacheFactory MUSTACHE_FACTORY = new DefaultMustacheFactory();

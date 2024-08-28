@@ -10,6 +10,10 @@ import io.quarkus.logging.Log;
 import io.vertx.core.Future;
 import jakarta.enterprise.context.ApplicationScoped;
 
+/**
+ * Retrieves information about the Kafka and Schema Registry clusters when processing a request
+ * for the message viewer API.
+ */
 @ApplicationScoped
 public class MessageViewerClusterInfoProcessor extends
     Processor<MessageViewerContext, Future<MessageViewerContext>> {

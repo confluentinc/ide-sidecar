@@ -4,6 +4,9 @@ import io.confluent.idesidecar.restapi.exceptions.ProcessorFailedException;
 import io.confluent.idesidecar.restapi.util.WebClientFactory;
 import io.vertx.core.Future;
 
+/**
+ * HTTP client used when proxying requests to the Kafka REST and Schema Registry APIs.
+ */
 public class ProxyHttpClient<T extends ProxyContext> {
   WebClientFactory webClientFactory;
 

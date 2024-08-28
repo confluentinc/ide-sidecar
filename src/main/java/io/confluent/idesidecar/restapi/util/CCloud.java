@@ -2,6 +2,9 @@ package io.confluent.idesidecar.restapi.util;
 
 import io.quarkus.runtime.annotations.RegisterForReflection;
 
+/**
+ * Utility class for working with Confluent Cloud resources.
+ */
 @RegisterForReflection
 public class CCloud {
 

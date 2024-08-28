@@ -3,6 +3,9 @@ package io.confluent.idesidecar.restapi.proxy;
 import io.confluent.idesidecar.restapi.processors.Processor;
 import io.vertx.core.Future;
 
+/**
+ * No-op processor that is typically called at the end of a processing chain.
+ */
 public class EmptyProcessor<T> extends Processor<T, Future<T>> {
 
   @Override

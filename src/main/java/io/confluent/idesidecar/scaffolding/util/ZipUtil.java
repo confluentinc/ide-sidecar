@@ -14,6 +14,9 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 import org.apache.commons.io.FileUtils;
 
+/**
+ * Utility class for working with ZIP archives.
+ */
 public final class ZipUtil {
 
   private ZipUtil() {

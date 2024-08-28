@@ -1,6 +1,8 @@
 package io.confluent.idesidecar.restapi.exceptions;
 
-
+/**
+ * Exception thrown when a Sidecar connection cannot be created.
+ */
 public class CreateConnectionException extends Exception {
 
   public CreateConnectionException() {

@@ -5,6 +5,10 @@ import io.confluent.idesidecar.restapi.messageviewer.MessageViewerContext;
 import io.confluent.idesidecar.restapi.processors.Processor;
 import io.vertx.core.Future;
 
+/**
+ * Chooses the appropriate {@link ConsumeStrategy} depending on the type of the provided Sidecar
+ * connection.
+ */
 public class ConsumeStrategyProcessor
     extends Processor<MessageViewerContext, Future<MessageViewerContext>> {
   private final ConfluentLocalConsumeStrategy confluentLocalConsumeStrategy;
