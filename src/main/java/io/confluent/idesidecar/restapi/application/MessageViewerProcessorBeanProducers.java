@@ -18,7 +18,9 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
-
+/**
+ * Sets up the Reactive Routes processing chain for the message viewer API.
+ */
 @ApplicationScoped
 public class MessageViewerProcessorBeanProducers {
 
@@ -46,7 +48,7 @@ public class MessageViewerProcessorBeanProducers {
   @Produces
   @Named("messageViewerProcessor")
   public Processor<MessageViewerContext,
-          Future<MessageViewerContext>> messageViewerCCloudProcessor() {
+      Future<MessageViewerContext>> messageViewerCCloudProcessor() {
     return Processor.chain(
         new ConnectionProcessor<>(connectionManager),
         new MessageViewerClusterInfoProcessor(clusterCache),

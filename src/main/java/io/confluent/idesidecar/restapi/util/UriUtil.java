@@ -8,6 +8,9 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.stream.Collectors;
 
+/**
+ * Utility class for working with URIs.
+ */
 @ApplicationScoped
 public class UriUtil {
 

@@ -18,6 +18,10 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import org.eclipse.microprofile.config.ConfigProvider;
 
+/**
+ * The Confluent Cloud UI redirects users to this endpoint, the OAuth <code>redirect_uri</code>,
+ * after a successful authentication.
+ */
 @ApplicationScoped
 @Path("/gateway/v1/callback-vscode-docs")
 public class OAuthCallbackResource {
