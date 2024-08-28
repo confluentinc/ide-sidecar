@@ -36,8 +36,9 @@ import org.apache.commons.codec.binary.Base64;
 
 /**
  * <p>Implementation of an OAuth-based authentication flow with the API of Confluent Cloud. This
- * class manages the ID token, the control plane token, and the data plane token. It can refresh the
- * tokens before they expire. The refreshing of the tokens must be invoked by the caller.</p>
+ * class manages the refresh token, the control plane token, and the data plane token. It can
+ * refresh the tokens before they expire. The refreshing of the tokens must be invoked by the
+ * caller.</p>
  *
  * <p>This class can be configured via several configuration options available under
  * <i>ide-sidecar.connections.ccloud</i>.</p>
@@ -72,8 +73,8 @@ public class CCloudOAuthContext implements AuthContext {
   }
 
   /**
-   * Performs an API call against CCloud's /api/check_jwt endpoint to see if the control plane token
-   * is valid.
+   * Performs an API call against CCloud's <code>/api/check_jwt</code> endpoint to see if the
+   * control plane token is valid.
    *
    * @return Succeeded future holding the boolean value true if the token is valid. Succeeded future
    *         holding the boolean value false if the token is not valid. Failed future holding the
@@ -219,7 +220,8 @@ public class CCloudOAuthContext implements AuthContext {
 
   /**
    * This method can be used to instantiate a fully-authenticated CCloudOAuthContext from the
-   * authorization code passed from Confluent Cloud to the redirect_uri exposed by the sidecar.
+   * authorization code passed from Confluent Cloud to the <code>redirect_uri</code> exposed by the
+   * sidecar.
    *
    * @param authorizationCode    The authorization code passed from Confluent Cloud
    * @param ccloudOrganizationId The Confluent Cloud organization id

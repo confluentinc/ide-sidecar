@@ -23,6 +23,9 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
+/**
+ * API endpoints related to the scaffolding functionality.
+ */
 @Path(TemplateResource.API_RESOURCE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Tag(name = "Templates", description = "Code generation templates")

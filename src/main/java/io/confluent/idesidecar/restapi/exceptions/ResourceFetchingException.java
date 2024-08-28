@@ -5,6 +5,10 @@ import io.smallrye.graphql.api.ErrorCode;
 import java.util.ArrayList;
 import java.util.List;
 
+
+/**
+ * Exception thrown when a resource cannot be fetched when serving a GraphQL query.
+ */
 @ErrorCode("some-business-error-code")
 public class ResourceFetchingException extends RuntimeException {
 

@@ -7,8 +7,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 /**
- * Returns a new Vert.x web client while making sure that a single Vert.x instance is used for the
- * entire application.
+ * Factory class for {@link WebClient}s. Returns a new Vert.x web client while making sure that a
+ * single Vert.x instance is used for the entire application.
  */
 @ApplicationScoped
 public class WebClientFactory {

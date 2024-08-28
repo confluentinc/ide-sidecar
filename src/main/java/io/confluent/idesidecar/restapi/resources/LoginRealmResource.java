@@ -12,6 +12,10 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 import org.eclipse.microprofile.config.ConfigProvider;
 
+/**
+ * Proxy endpoint called by the Confluent Cloud UI to determine the authentication mechanism (SSO or
+ * username/password) used by the principal.
+ */
 @Path("/api/login/realm")
 public class LoginRealmResource {
 

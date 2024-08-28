@@ -1,5 +1,8 @@
 package io.confluent.idesidecar.scaffolding.exceptions;
 
+/**
+ * Exception thrown when the requested template cannot be found.
+ */
 public class TemplateNotFoundException extends TemplateRegistryException {
 
   public TemplateNotFoundException(String message) {

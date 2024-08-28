@@ -28,6 +28,9 @@ import org.apache.avro.io.EncoderFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Utility class for decoding record keys and values.
+ */
 @SuppressWarnings("checkstyle:ClassDataAbstractionCoupling")
 public class DecoderUtil {
   private static final Logger log = LoggerFactory.getLogger(DecoderUtil.class);

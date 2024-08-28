@@ -3,6 +3,9 @@ package io.confluent.idesidecar.restapi.exceptions;
 import io.confluent.idesidecar.restapi.exceptions.Failure.Error;
 import java.util.List;
 
+/**
+ * Exception thrown when the provided input/request payload is not valid.
+ */
 public class InvalidInputException extends RuntimeException {
 
   private final List<Error> errors;
