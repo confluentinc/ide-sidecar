@@ -42,3 +42,4 @@ else
 	@docker login --username $(DOCKERHUB_USER) --password $(DOCKERHUB_APIKEY) || \
 		docker login --username $(DOCKERHUB_USER) --password $(DOCKERHUB_APIKEY)
 endif
+endif
