@@ -18,6 +18,9 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 
+/**
+ * Sets up the Reactive Routes processing chain for proxies, like the Kafka REST Proxy.
+ */
 @ApplicationScoped
 public class ProxyProcessorBeanProducers {
 

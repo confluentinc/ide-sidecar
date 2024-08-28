@@ -16,6 +16,9 @@ import java.util.stream.Collectors;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.eclipse.microprofile.config.ConfigProvider;
 
+/**
+ * Handles consuming from a Confluent Local Kafka topic for the message viewer API.
+ */
 @SuppressWarnings("checkstyle:ClassDataAbstractionCoupling")
 @ApplicationScoped
 public class ConfluentLocalConsumeStrategy implements ConsumeStrategy {

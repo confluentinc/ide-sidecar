@@ -1,5 +1,8 @@
 package io.confluent.idesidecar.scaffolding.exceptions;
 
+/**
+ * Exception thrown when an IO error occurs while interacting with the template registry.
+ */
 public class TemplateRegistryIOException extends RuntimeException {
 
   private final String code;

@@ -4,7 +4,7 @@ import java.time.Duration;
 import org.eclipse.microprofile.config.ConfigProvider;
 
 /**
- * Configuration for the <i>CCloudOAuthContext</i>.
+ * Configuration for the {@link CCloudOAuthContext}.
  */
 public final class CCloudOAuthConfig {
 

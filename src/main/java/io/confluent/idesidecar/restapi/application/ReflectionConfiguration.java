@@ -7,6 +7,13 @@ import org.apache.kafka.clients.consumer.CooperativeStickyAssignor;
 import org.apache.kafka.clients.consumer.RangeAssignor;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 
+/**
+ * Registers external classes for reflection.
+ *
+ * @see <a
+ * href="https://quarkus.io/guides/writing-native-applications-tips#registering-for-reflection">Registering
+ * for reflection</a>
+ */
 @RegisterForReflection(
     targets = {
         ByteArrayDeserializer.class,

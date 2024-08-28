@@ -13,6 +13,9 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 import org.jboss.resteasy.reactive.server.ServerExceptionMapper;
 
+/**
+ * Maps exceptions to instances of {@link Response}.
+ */
 public class ExceptionMappers {
 
   @Inject
