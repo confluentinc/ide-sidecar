@@ -12,7 +12,8 @@ import java.util.stream.Stream;
 import org.eclipse.microprofile.config.ConfigProvider;
 
 /**
- * Automates the refresh of CCloud tokens.
+ * Bean that periodically checks the status of Confluent Cloud API tokens and refreshes them if they
+ * are about to expire.
  */
 @ApplicationScoped
 public class RefreshCCloudTokensBean {

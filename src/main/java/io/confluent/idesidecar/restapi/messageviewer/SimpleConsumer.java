@@ -23,6 +23,9 @@ import org.apache.kafka.clients.consumer.OffsetAndTimestamp;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
 
+/**
+ * Implements consuming records from Confluent Local Kafka topics for the message viewer API.
+ */
 public class SimpleConsumer {
   private static final Duration POLL_TIMEOUT = Duration.ofSeconds(1);
   private static final int MAX_POLLS = 5;

@@ -12,6 +12,11 @@ import java.io.IOException;
 import java.util.Objects;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
+/**
+ * Defines <a
+ * href="https://quarkus.io/guides/cdi-reference#simplified-producer-method-declaration">producer
+ * methods</a> that set up beans for dependency injection.
+ */
 public class BeanProducers {
 
   @Produces

@@ -3,6 +3,9 @@ package io.confluent.idesidecar.restapi.util;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Utility class for working with {@link Duration}s.
+ */
 public class TimeUtil {
 
   public static String humanReadableDuration(Duration duration) {

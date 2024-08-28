@@ -18,7 +18,9 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-
+/**
+ * Template registry that manages templates on the local file system.
+ */
 public class LocalTemplateRegistryService implements TemplateRegistryService {
 
   public static final String TEMPLATES_DIR = "templates";

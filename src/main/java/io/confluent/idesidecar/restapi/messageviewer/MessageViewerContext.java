@@ -12,6 +12,9 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
 import java.util.Map;
 
+/**
+ * Stores the context of a request of the message viewer API.
+ */
 public class MessageViewerContext extends ProxyContext {
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
   private final String clusterId;

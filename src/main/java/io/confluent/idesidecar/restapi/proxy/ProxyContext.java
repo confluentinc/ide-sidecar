@@ -12,6 +12,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Stores the context of a proxy request.
+ */
 public class ProxyContext {
 
   // Current request

@@ -1,5 +1,8 @@
 package io.confluent.idesidecar.restapi.exceptions;
 
+/**
+ * Exception thrown when a requested Sidecar connection cannot be found.
+ */
 public class ConnectionNotFoundException extends RuntimeException {
 
   public ConnectionNotFoundException() {
