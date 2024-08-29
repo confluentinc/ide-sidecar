@@ -22,6 +22,12 @@
       text-align: center;
     }
   </style>
+  <script type="text/javascript">
+    // Redirect to the VS Code extension's URI when the page is loaded
+    window.onload = function() {
+        window.location.href = "{vscode_redirect_uri}?success=false";
+    };
+  </script>
 </head>
 
 <body>

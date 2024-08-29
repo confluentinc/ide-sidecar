@@ -91,6 +91,7 @@ public class OAuthCallbackResource {
     return Future.succeededFuture(
         callbackFailure
             .data("error", error.getMessage())
+            .data("vscode_redirect_uri", CCLOUD_OAUTH_VSCODE_EXTENSION_URI)
             .render());
   }
 }
