@@ -24,16 +24,18 @@ Most of these tools can be found in [`brew`](https://brew.sh/) or your favorite 
 ## Make commands
 
 The following table documents our custom `make` commands. We manage them in the
-[Makefile](./Makefile) at the root directory of this repository. When introducing a new custom
+[Makefile](./Makefile) and in the directory [mk-files](./mk-files) at the root directory of this repository. When introducing a new custom
 `make` command to the [Makefile](./Makefile), make sure to not change the file section managed
-by ServiceBot. Otherwise they will be overwritten by the next run of ServiceBot.
+by ServiceBot. Otherwise, they will be overwritten by the next run of ServiceBot.
 
-| Make command                             | Description                                                                                                                                                                                                         |
-|------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `make mvn-package-native`                | Runs the unit and integration tests and creates a native executable for the project.                                                                                                                                |
-| `make mvn-package-native-no-tests`       | Creates a native executable for the project without running the tests.                                                                                                                                              |
-| `make zip-templates`                     | Creates a zip archive out of the directories [src/main/resources/static](./src/main/resources/static) and [src/test/resources/static](./src/test/resources/static). This command is called by our build and test suite; manual invocations are probably not useful. |
-| `make ci-sign-notarize-macos-executable` | [Semaphore CI Only] Used for signing and notarizing macOS executables before releasing them.                                                                                                                        |
+| Make command        | Description                                                                                                                                                                                                                                                         |
+|---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `make quarkus-dev`  | Runs the application in the [Quarkus dev mode](https://quarkus.io/guides/getting-started#development-mode).                                                                                                                                                         |
+| `make quarkus-test` | Runs the [continuous testing mode of Quarkus](https://quarkus.io/guides/continuous-testing#continuous-testing-without-dev-mode).                                                                                                                                    |
+| `make mvn-package-native`                | Runs the unit and integration tests and creates a native executable for the project.                                                                                                                                                                                |
+| `make mvn-package-native-no-tests`       | Creates a native executable for the project without running the tests.                                                                                                                                                                                              |
+| `make zip-templates`uar                  | Creates a zip archive out of the directories [src/main/resources/static](./src/main/resources/static) and [src/test/resources/static](./src/test/resources/static). This command is called by our build and test suite; manual invocations are probably not useful. |
+| `make ci-sign-notarize-macos-executable` | [Semaphore CI Only] Used for signing and notarizing macOS executables before releasing them.                                                                                                                                                                        |
 
 You may find the following `make` commands useful during development:
 
@@ -479,7 +481,7 @@ Then you should be clear to manually start a new one.
 
 If you see something like,
 ```
-./mvnw clean quarkus:dev
+make quarkus-dev
 ...
 [ERROR] Failed to execute goal io.quarkus.platform:quarkus-maven-plugin:3.10.2:dev (default-cli) on project outpost-scaffolding: Fatal error compiling: error: release version 21 not supported -> [Help 1]
 ```
