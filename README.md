@@ -29,6 +29,8 @@ You may find the following `make` commands useful during development:
 
 | Make command       | Description                                   |
 |--------------------|-----------------------------------------------|
+| `make quarkus-dev`  | Runs the application in the [Quarkus dev mode](https://quarkus.io/guides/getting-started#development-mode).                                                                                                                                                         |
+| `make quarkus-test` | Runs the [continuous testing mode of Quarkus](https://quarkus.io/guides/continuous-testing#continuous-testing-without-dev-mode).                                                                                                                                    |
 | `make build`       | Build, compile, package JARs, and run tests.  |
 | `make clean`       | Clean the project and remove temporary files. |
 | `make test`        | Run the unit tests of the project.            |
@@ -82,7 +84,7 @@ Then you should be clear to manually start a new one.
 
 If you see something like,
 ```
-./mvnw clean quarkus:dev
+make quarkus-dev
 ...
 [ERROR] Failed to execute goal io.quarkus.platform:quarkus-maven-plugin:3.10.2:dev (default-cli) on project outpost-scaffolding: Fatal error compiling: error: release version 21 not supported -> [Help 1]
 ```

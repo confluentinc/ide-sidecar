@@ -65,3 +65,11 @@ mvn-package-native-sources-only:
 .PHONY: mvn-verify-native-executable
 mvn-verify-native-executable:
 	$(MVN) clean verify -Pnative
+
+.PHONY: quarkus-dev
+quarkus-dev:
+	$(MVN) clean quarkus:dev
+
+.PHONY: quarkus-test
+quarkus-test:
+	$(MVN) clean quarkus:test
