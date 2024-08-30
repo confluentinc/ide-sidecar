@@ -20,7 +20,7 @@ Please check if your PR fulfills the following (if applicable):
     - [ ] Deleted existing
 - [ ] Have you validated this change locally against a running instance of the Quarkus dev server?
     ```shell
-    ./mvnw compile quarkus:dev
+    make quarkus-dev
     ```
 - [ ] Have you validated this change against a locally running native executable?
     ```shell

@@ -315,7 +315,7 @@ You can build and run your application in "dev mode", which enables live coding 
 This uses Quarkus' [continuous testing](https://quarkus.io/guides/continuous-testing), so you can get instant feedback on your changes.
 The following command starts "dev mode" to compile the code, and immediately run the relevant tests as soon as you save changes to the code:
 
-    ./mvnw quarkus:test
+    make quarkus-test
 
 Failed tests will be highlighted, but they do not stop "dev mode".
 
