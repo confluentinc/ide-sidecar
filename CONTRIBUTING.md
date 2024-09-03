@@ -354,22 +354,37 @@ The [Quarkus DevUI](http://localhost:26636/q/dev-ui) contains a user interface f
 
 This section shows how to use `curl` to interact with a running Sidecar.
 
+### Running the Sidecar
+
+Running the development version of the Sidecar is as simple as running the following command:
+
+    make quarkus-dev
+
+This will start the Sidecar in development mode, which includes live coding with hot reloads. The Sidecar will be available at http://localhost:26636.
+
+If you want to run the Sidecar as a native executable (production mode), you can build the native executable and run it with:
+
+    make mvn-package-native && ./target/ide-sidecar-*-runner
+
 ### Handshake
 
-Sidecar uses authentication to prevent access from unauthorized clients. The sidecar returns an
+The Sidecar uses authentication to prevent access from unauthorized clients. The Sidecar returns an
 authentication token from the first invocation of the `/gateway/v1/handshake` route. Use this
 authentication token to sign API requests.
 
-After starting the Sidecar executable, get the token and store in an environment variable:
+After starting the Sidecar executable, get the token and store it in an environment variable:
 ```shell
 export DTX_ACCESS_TOKEN=$(curl -s -H "Content-Type:application/json" http://localhost:26636/gateway/v1/handshake | jq -r .auth_secret)
 ```
-and then verify it is set:
+Next, verify that the environment variable is set:
 ```shell
 echo $DTX_ACCESS_TOKEN
 ```
 
 ### List connections
+
+You can list all connections by executing the following command:
+
 ```shell
 curl -s -H "Content-Type:application/json" -H "Authorization: Bearer ${DTX_ACCESS_TOKEN}" http://localhost:26636/gateway/v1/connections | jq -r .
 ```
@@ -385,7 +400,8 @@ Initially, the Sidecar does not hold any connection
 
 ### Create a new CCloud connection and sign in
 
-Create a new CCloud connection with `c1` as the ID (or use a different ID):
+Create a new CCloud connection with the ID `c1` and the name `DTX`:
+
 ```shell
 curl -s -X POST -d'{"id": "c1", "name": "DTX", "type": "CCLOUD"}' -H "Authorization: Bearer ${DTX_ACCESS_TOKEN}" -H "Content-Type:application/json" http://localhost:26636/gateway/v1/connections | jq -r .
 ```
@@ -398,7 +414,7 @@ This should return the new connection details, such as the following (the `sign_
   "metadata": {
     "self": "http://localhost:26636/gateway/v1/connections/c1",
     "resource_name": null,
-    "sign_in_uri": "https://login-stag.confluent-dev.io/..."
+    "sign_in_uri": "https://login.confluent.io/..."
   },
   "spec": {
     "id": "c1",
@@ -414,12 +430,12 @@ This should return the new connection details, such as the following (the `sign_
 ```
 Open the link shown in the `sign_in_uri` in your browser. Hovering your mouse over the link and pressing `Cmd` key may turn it into a clickable link.
 
-Listing connections again:
+After authenticating with Confluent Cloud in your browser, list the connections again:
 
 ```shell
 curl -s -H "Content-Type:application/json" -H "Authorization: Bearer ${DTX_ACCESS_TOKEN}" http://localhost:26636/gateway/v1/connections | jq -r .
 ```
-will include the CCloud connection and its `status.authentication.status` will be `VALID_TOKEN`, signifying the session has been authenticated:
+The response should include the CCloud connection and its `status.authentication.status` should equal `VALID_TOKEN`, signifying the session has been authenticated:
 
 ```json
 {
@@ -434,7 +450,7 @@ will include the CCloud connection and its `status.authentication.status` will b
       "metadata": {
         "self": "http://localhost:26636/gateway/v1/connections/c1",
         "resource_name": null,
-        "sign_in_uri": "https://login-stag.confluent-dev.io/..."
+        "sign_in_uri": "https://login.confluent.io/..."
       },
       "spec": {
         "id": "c1",
@@ -527,7 +543,7 @@ curl -s -X POST "http://localhost:26636/gateway/v1/graphql" -H "Content-Type: ap
 }' | jq -r .
 ```
 
-Example response is as follows. Notice that the `current` field indicates the current organization.
+The following code listing shows an example response. Notice that the `current` field indicates the current organization.
 
 ```json
 {
@@ -560,6 +576,7 @@ Example response is as follows. Notice that the `current` field indicates the cu
 
 ### Issue GraphQL query
 The following `curl` command shows how to issue GraphQL queries:
+
 ```shell
 curl -s -X POST "http://localhost:26636/gateway/v1/graphql" -H "Content-Type: application/json" -H "Authorization: Bearer ${DTX_ACCESS_TOKEN}" -d '{
   "query":"<QUERY>"
@@ -668,6 +685,9 @@ curl -s -H "Content-Type:application/json" -H "Authorization: Bearer ${DTX_ACCES
 ### Invoking the Kafka and Schema Registry Proxy APIs
 
 The Kafka and Schema Registry Proxy APIs are available at the following endpoints:
+
+(See [ce-kafka-rest OpenAPI specification](https://github.com/confluentinc/vscode/blob/main/src/clients/sidecar-openapi-specs/ce-kafka-rest.openapi.yaml) and [Schema Registry OpenAPI specification](https://github.com/confluentinc/vscode/blob/main/src/clients/sidecar-openapi-specs/schema-registry.openapi.yaml) 
+for the full list of available endpoints.)
 
 - Kafka Proxy:
     - `http://localhost:26636/kafka/v3/clusters/{clusterId}*` (e.g., `http://localhost:26636/kafka/v3/clusters/lkc-abcd123/topics`)

@@ -7,7 +7,7 @@ the [Confluent Extension for VS Code](https://github.com/confluentinc/vscode).
 
 💡 IDE Sidecar exposes REST and GraphQL APIs.
 It is a Java 21 project that uses [Quarkus](https://quarkus.io), [GraalVM](https://www.graalvm.org/), and
-Maven. We intend to distribute IDE Sidecar as a native executable, which - compared to traditional
+Maven. We distribute IDE Sidecar as a native executable, which - compared to traditional
 JIT-compiled Java projects - offers a shorter startup time, a smaller container image size,
 and a smaller memory footprint.
 
