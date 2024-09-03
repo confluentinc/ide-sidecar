@@ -306,7 +306,7 @@ To build the native executable and run the integration tests against it:
 
 The native executable runs in the `PROD` profile and does not have access to, for instance,
 Quarkus dev services. The integration tests can be configured in the file
-`./outpost-rest-api/src/test/resources/application-nativeit.yaml`.
+`./src/test/resources/application-nativeit.yaml`.
 
 
 #### Running the Application in dev mode for continuous and manual testing
@@ -350,36 +350,397 @@ The GraphQL Schema for this endpoint is generated as part of the normal build in
 The [Quarkus DevUI](http://localhost:26636/q/dev-ui) contains a user interface for [working with GraphQL](http://localhost:26636/q/graphql-u), and is only enabled in dev mode.
 
 
-#### Advanced topics
+## Using Sidecar
 
-##### Packaging the application as an uber jar
+This section shows how to use `curl` to interact with a running Sidecar.
 
-You can build a self-contained _uber-jar_ that contains all the bytecode and resource files _uber-jar_:
+### Running the Sidecar
 
-    ./mvnw package -Dquarkus.package.type=uber-jar
+Running the development version of the Sidecar is as simple as running the following command:
 
-The application, packaged as an _uber-jar_, is now runnable using `java -jar target/*-runner.jar`.
+    make quarkus-dev
 
-##### Creating a container image for the native executable
+This will start the Sidecar in development mode, which includes live coding with hot reloads. The Sidecar will be available at http://localhost:26636.
 
-Execute the following commands to create the native executable and create a container image (note the usage
-of `-Dquarkus.native.container-build=true` which is needed when creating the executable for the container image on ARM64):
+If you want to run the Sidecar as a native executable (production mode), you can build the native executable and run it with:
 
-```shell script
-$ ./mvnw package -Pnative -Dquarkus.native.container-build=true
-$ docker build -f outpost-rest-api/src/main/docker/Dockerfile.native-micro -t dtx/outpost-prototype outpost-rest-api
+    make mvn-package-native && ./target/ide-sidecar-*-runner
+
+### Handshake
+
+The Sidecar uses authentication to prevent access from unauthorized clients. The Sidecar returns an
+authentication token from the first invocation of the `/gateway/v1/handshake` route. Use this
+authentication token to sign API requests.
+
+After starting the Sidecar executable, get the token and store it in an environment variable:
+```shell
+export DTX_ACCESS_TOKEN=$(curl -s -H "Content-Type:application/json" http://localhost:26636/gateway/v1/handshake | jq -r .auth_secret)
+```
+Next, verify that the environment variable is set:
+```shell
+echo $DTX_ACCESS_TOKEN
 ```
 
-You can start the container by running the following command:
+### List connections
 
-```shell script
-$ docker run -p26636:26636 dtx/outpost-prototype
-__  ____  __  _____   ___  __ ____  ______
- --/ __ \/ / / / _ | / _ \/ //_/ / / / __/
- -/ /_/ / /_/ / __ |/ , _/ ,< / /_/ /\ \
---\___\_\____/_/ |_/_/|_/_/|_|\____/___/
-2024-03-12 21:43:14,750 INFO  [io.quarkus] (main) ide-sidecar 0.1.0 native (powered by Quarkus 3.8.2) started in 0.009s. Listening on: http://0.0.0.0:8080
-2024-03-12 21:43:14,750 INFO  [io.quarkus] (main) Profile prod activated.
-2024-03-12 21:43:14,750 INFO  [io.quarkus] (main) Installed features: [cdi, config-yaml, kafka-client, resteasy-reactive, resteasy-reactive-jackson, smallrye-context-propagation, vertx]
+You can list all connections by executing the following command:
+
+```shell
+curl -s -H "Content-Type:application/json" -H "Authorization: Bearer ${DTX_ACCESS_TOKEN}" http://localhost:26636/gateway/v1/connections | jq -r .
+```
+Initially, the Sidecar does not hold any connection
+```json
+{
+  "api_version": "gateway/v1",
+  "kind": "ConnectionsList",
+  "metadata": null,
+  "data": []
+}
 ```
 
+### Create a new CCloud connection and sign in
+
+Create a new CCloud connection with the ID `c1` and the name `DTX`:
+
+```shell
+curl -s -X POST -d'{"id": "c1", "name": "DTX", "type": "CCLOUD"}' -H "Authorization: Bearer ${DTX_ACCESS_TOKEN}" -H "Content-Type:application/json" http://localhost:26636/gateway/v1/connections | jq -r .
+```
+This should return the new connection details, such as the following (the `sign_in_uri` value has been truncated):
+```json
+{
+  "api_version": "gateway/v1",
+  "kind": "Connection",
+  "id": "c1",
+  "metadata": {
+    "self": "http://localhost:26636/gateway/v1/connections/c1",
+    "resource_name": null,
+    "sign_in_uri": "https://login.confluent.io/..."
+  },
+  "spec": {
+    "id": "c1",
+    "name": "DTX",
+    "type": "CCLOUD"
+  },
+  "status": {
+    "authentication": {
+      "status": "NO_TOKEN"
+    }
+  }
+}
+```
+Open the link shown in the `sign_in_uri` in your browser. Hovering your mouse over the link and pressing `Cmd` key may turn it into a clickable link.
+
+After authenticating with Confluent Cloud in your browser, list the connections again:
+
+```shell
+curl -s -H "Content-Type:application/json" -H "Authorization: Bearer ${DTX_ACCESS_TOKEN}" http://localhost:26636/gateway/v1/connections | jq -r .
+```
+The response should include the CCloud connection and its `status.authentication.status` should equal `VALID_TOKEN`, signifying the session has been authenticated:
+
+```json
+{
+  "api_version": "gateway/v1",
+  "kind": "ConnectionsList",
+  "metadata": null,
+  "data": [
+    {
+      "api_version": "gateway/v1",
+      "kind": "Connection",
+      "id": "c1",
+      "metadata": {
+        "self": "http://localhost:26636/gateway/v1/connections/c1",
+        "resource_name": null,
+        "sign_in_uri": "https://login.confluent.io/..."
+      },
+      "spec": {
+        "id": "c1",
+        "name": "DTX",
+        "type": "CCLOUD"
+      },
+      "status": {
+        "authentication": {
+          "status": "VALID_TOKEN",
+          "requires_authentication_at": "2024-06-12T20:37:14.709390Z"
+        }
+      }
+    }
+  ]
+}
+```
+
+### Create a new Confluent Local connection
+
+Create a new Confluent Local connection with `c2` as the ID (or use a different ID):
+```shell
+curl -s -X POST -d'{"id": "c2", "name": "DTX", "type": "LOCAL"}' -H "Authorization: Bearer ${DTX_ACCESS_TOKEN}" -H "Content-Type:application/json" http://localhost:26636/gateway/v1/connections | jq -r .
+```
+This should return the new connection details, such as the following:
+```json
+{
+  "api_version": "gateway/v1",
+  "kind": "Connection",
+  "id": "c2",
+  "metadata": {
+    "self": "http://localhost:26636/gateway/v1/connections/c2",
+    "resource_name": null
+  },
+  "spec": {
+    "id": "c2",
+    "name": "DTX",
+    "type": "LOCAL"
+  },
+  "status": {
+    "authentication": {
+      "status": "NO_TOKEN"
+    }
+  }
+}
+```
+You don't need to authenticate with Confluent Local but can start using the connection immediately.
+
+### Updating connection details
+
+The `PUT /gateway/v1/connections/{id}` endpoint allows you to update any of the connection's details (except the `id`) by passing
+the full connection object containing any number of updated fields.
+
+For example, to update the name of the `c1` connection to `DTX CCloud`:
+```shell
+curl -s -X PUT -d'{"id": "c1", "name": "DTX CCloud", "type": "CCLOUD"}' -H "Authorization: Bearer ${DTX_ACCESS_TOKEN}" -H "Content-Type:application/json" http://localhost:26636/gateway/v1/connections/c1 | jq -r .
+```
+
+### Switching between CCloud Organizations
+
+To switch to a different CCloud organization, use the `PUT /gateway/v1/connections/{id}` endpoint to
+update the `ccloud_config.organization_id` field. This triggers an authentication refresh allowing you to continue
+querying resources in the new organization.
+
+```shell
+curl -s -X PUT -d'{"id": "c1", "name": "DTX", "type": "CCLOUD", "ccloud_config": {"organization_id": "updated-org-id"}}' -H "Authorization: Bearer ${DTX_ACCESS_TOKEN}" -H "Content-Type:application/json" http://localhost:26636/gateway/v1/connections/c1 | jq -r .
+```
+
+> [!NOTE]
+> By default, when creating a connection the `ccloud_config` field is set to `null` and we rely on the default
+> organization for the user. You may also create the connection with the `ccloud_config.organization_id` field set to the desired
+> organization ID. In this case, the user will be authenticated with the specified organization when they go through the
+> sign-in flow. Switching between orgs on an authenticated connection is as simple as updating the `ccloud_config.organization_id` field.
+
+Here's the GraphQL query to list the organizations for a CCloud connection:
+```shell
+curl -s -X POST "http://localhost:26636/gateway/v1/graphql" -H "Content-Type: application/json" -H "Authorization: Bearer ${DTX_ACCESS_TOKEN}" -d '{
+  "query":"query orgs {
+  ccloudConnectionById (id: \"c1\") {
+    id
+    name
+    type
+    organizations {
+      id
+      name
+      current
+    }
+  }
+}
+"
+}' | jq -r .
+```
+
+The following code listing shows an example response. Notice that the `current` field indicates the current organization.
+
+```json
+{
+  "data": {
+    "ccloudConnectionById": {
+      "id": "c1",
+      "name": "DTX",
+      "type": "CCLOUD",
+      "organizations": [
+        {
+          "id": "a505f57e-658a-40bc-8a2e-3e88883bc4db",
+          "name": "my-main-org",
+          "current": true
+        },
+        {
+          "id": "c909fa11-c942-44df-be10-63ba7d5baf85",
+          "name": "my-other-org",
+          "current": false
+        },
+        {
+          "id": "83ae6822-8cda-4522-8b71-272d7be149f1",
+          "name": "my-third-org",
+          "current": false
+        }
+      ]
+    }
+  }
+}
+```
+
+### Issue GraphQL query
+The following `curl` command shows how to issue GraphQL queries:
+
+```shell
+curl -s -X POST "http://localhost:26636/gateway/v1/graphql" -H "Content-Type: application/json" -H "Authorization: Bearer ${DTX_ACCESS_TOKEN}" -d '{
+  "query":"<QUERY>"
+}' | jq -r .
+```
+where `<QUERY>` should be replaced with the full GraphQL query expression, which typically starts with `query`.
+
+For example, this GraphQL query lists the ID and name of the CCloud connections:
+```graphql
+query ccloudConnections {
+  ccloudConnections{
+    id
+    name
+  }
+}
+```
+This can be submitted with this `curl` command:
+```shell
+curl -s -X POST "http://localhost:26636/gateway/v1/graphql" -H "Content-Type: application/json" -H "Authorization: Bearer ${DTX_ACCESS_TOKEN}" -d '{
+  "query":"query ccloudConnections {
+  ccloudConnections{
+    id
+    name
+  }
+}
+"
+}' | jq -r .
+```
+
+Here is a GraphQL query that returns CCloud connections including all nested resources:
+```graphql
+query ccloudConnections {
+  ccloudConnections{
+    id
+    name
+    type
+    organizations {
+      id
+      name
+      current
+    }
+    environments {
+      id
+      name
+      organization {
+        id
+        name
+      }
+      kafkaClusters {
+        id
+        name
+        provider
+        region
+        bootstrapServers
+        uri
+        organization {
+          id
+          name
+        }
+        environment {
+          id
+          name
+        }
+      }
+      schemaRegistry {
+        provider
+        region
+        uri
+        organization {
+          id
+          name
+        }
+        environment {
+          id
+          name
+        }
+      }
+    }
+  }
+}
+```
+
+Here is a GraphQL query that returns Confluent Local connections including their Kafka clusters:
+
+```graphql
+query localConnections {
+  localConnections{
+    id
+    name
+    type
+    kafkaCluster {
+      id
+      name
+      bootstrapServers
+      uri
+    }
+  }
+}
+```
+
+### View the GraphQL schema
+```shell
+curl -s -H "Content-Type:application/json" -H "Authorization: Bearer ${DTX_ACCESS_TOKEN}" http://localhost:26636/gateway/v1/graphql/schema.graphql
+```
+
+### Invoking the Kafka and Schema Registry Proxy APIs
+
+The Kafka and Schema Registry Proxy APIs are available at the following endpoints:
+
+(See [ce-kafka-rest OpenAPI specification](https://github.com/confluentinc/vscode/blob/main/src/clients/sidecar-openapi-specs/ce-kafka-rest.openapi.yaml) and [Schema Registry OpenAPI specification](https://github.com/confluentinc/vscode/blob/main/src/clients/sidecar-openapi-specs/schema-registry.openapi.yaml) 
+for the full list of available endpoints.)
+
+- Kafka Proxy:
+    - `http://localhost:26636/kafka/v3/clusters/{clusterId}*` (e.g., `http://localhost:26636/kafka/v3/clusters/lkc-abcd123/topics`)
+    - **Required headers**:
+        - `Authorization: Bearer ${DTX_ACCESS_TOKEN}`
+        - `x-connection-id: <connection-id>`
+    - **Optional headers**:
+        - `x-cluster-id: <kafka-cluster-id>` (If provided, it must match the `clusterId` path parameter.)
+- Schema Registry Proxy:
+    - Schemas (v1) API at `http://localhost:26636/schemas*` (e.g., `http://localhost:26636/schemaregistry/v1/schemas/ids/schema-1`)
+    - Subjects (v1) API at `http://localhost:26636/subjects*` (e.g., `http://localhost:26636/schemaregistry/v1/subjects/subject-id/versions`)
+    - **Required headers**:
+        - `Authorization: Bearer ${DTX_ACCESS_TOKEN}`
+        - `x-connection-id: <connection-id>`
+        - `x-cluster-id: <sr-cluster-id>` (Notice the `x-cluster-id` header is only required for the Schema Registry Proxy API.)
+
+
+> [!IMPORTANT]
+> Pre-requisite conditions for invoking the Kafka and Schema Registry Proxy APIs
+> 1. A connection must be created and authenticated.
+
+#### List Kafka topics using the Kafka Proxy API
+
+Assuming the Kafka cluster ID is `lkc-abcd123`, we can list the topics:
+
+```shell
+curl -s \
+  -H "Authorization: Bearer ${DTX_ACCESS_TOKEN}" \
+  -H "x-connection-id: c1" \
+  http://localhost:26636/kafka/v3/clusters/lkc-abcd123/topics | jq -r .
+```
+
+#### Create a Kafka topic using the Kafka Proxy API
+
+Assuming the cluster ID is `lkc-abcd123`, we can create a Kafka topic with the following command:
+
+```shell
+curl -s -X POST \
+  -H "Content-Type:application/json" \
+  -H "Authorization: Bearer ${DTX_ACCESS_TOKEN}" \
+  -H "x-connection-id: c1" \
+  -d '{"topic_name": "foo"}' \
+  http://localhost:26636/kafka/v3/clusters/lkc-abcd123/topics | jq -r .
+```
+
+#### List Schemas using the Schema Registry Proxy API
+
+Assuming the Schema Registry cluster ID is `lsrc-defg456`, we can list the schemas with the following command:
+
+```shell
+curl -s \
+  -H "Authorization: Bearer ${DTX_ACCESS_TOKEN}" \
+  -H "x-connection-id: c1" \
+  -H "x-cluster-id: lsrc-defg456" \
+  http://localhost:26636/schemas?subjectPrefix=:*:&latestOnly=true | jq -r .
+```
