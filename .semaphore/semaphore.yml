@@ -44,6 +44,7 @@ blocks:
         always:
           commands:
             - . publish-test-results
+            - artifact push workflow target/test-results --force
       jobs:
         - name: "Build JARs and Unit Test"
           commands:
