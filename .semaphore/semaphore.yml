@@ -45,6 +45,7 @@ blocks:
           commands:
             - . publish-test-results
             - artifact push workflow target/test-results --force
+            - artifact push workflow target --force
       jobs:
         - name: "Build JARs and Unit Test"
           commands:
@@ -100,7 +101,8 @@ after_pipeline:
         commands:
           - checkout
           - sem-version java 21
-          - emit-sonarqube-data -a test-results
+          - artifact pull workflow target
+          - emit-sonarqube-data --run_only_sonar_scan
 
 promotions:
   - name: Multi-Arch Native Executable Builds
