@@ -40,6 +40,12 @@ blocks:
     skip:
       when: "change_in('/.versions/ide-sidecar-version.txt', {pipeline_file: 'ignore', default_branch: 'main'})"
     task:
+      epilogue:
+        always:
+          commands:
+            - . publish-test-results
+            - artifact push workflow target/test-results --force
+            - artifact push workflow target --force
       jobs:
         - name: "Build JARs and Unit Test"
           commands:
@@ -91,6 +97,12 @@ after_pipeline:
       - name: Publish Test Results to Semaphore
         commands:
           - test-results gen-pipeline-report || echo "Could not publish pipeline test result report due to probably no test results to publish"
+      - name: SonarQube
+        commands:
+          - checkout
+          - sem-version java 21
+          - artifact pull workflow target
+          - emit-sonarqube-data --run_only_sonar_scan
 
 promotions:
   - name: Multi-Arch Native Executable Builds
