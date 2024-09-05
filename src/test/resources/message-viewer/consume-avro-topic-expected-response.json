@@ -38,7 +38,12 @@
             }
           },
           "key_decoding_error": null,
-          "value_decoding_error": null
+          "value_decoding_error": null,
+          "exceeded_fields":
+            {
+              "key" : false,
+              "value": false
+            }
         },
         {
           "partition_id": 0,
@@ -72,7 +77,12 @@
             }
           },
           "key_decoding_error": null,
-          "value_decoding_error": null
+          "value_decoding_error": null,
+          "exceeded_fields":
+            {
+              "key" : false,
+              "value": false
+            }
         }
       ]
     }

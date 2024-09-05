@@ -228,7 +228,8 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
             decodedKey,
             decodedValue,
             keyErrorMessage,
-            valueErrorMessage
+            valueErrorMessage,
+            record.exceededFields()
         );
     int recordIndex = partitionData.records().indexOf(record);
     partitionData.records().set(recordIndex, updatedRecord);

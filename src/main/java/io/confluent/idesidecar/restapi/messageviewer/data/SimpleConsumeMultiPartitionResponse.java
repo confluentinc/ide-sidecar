@@ -1,5 +1,6 @@
 package io.confluent.idesidecar.restapi.messageviewer.data;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.quarkus.runtime.annotations.RegisterForReflection;
@@ -12,6 +13,7 @@ import java.util.List;
  * @param topicName The name of the Kafka topic.
  * @param partitionDataList The list of partition data consumed.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 @RegisterForReflection
 public record SimpleConsumeMultiPartitionResponse(
     @JsonProperty("cluster_id") String clusterId,
@@ -30,6 +32,12 @@ public record SimpleConsumeMultiPartitionResponse(
       @JsonProperty("partition_id") int partitionId,
       @JsonProperty("next_offset") long nextOffset,
       @JsonProperty("records") List<PartitionConsumeRecord> records
+  ) {}
+
+  @RegisterForReflection
+  public record ExceededFields(
+      @JsonProperty("key") boolean key,
+      @JsonProperty("value") boolean value
   ) {}
 
   /**
@@ -57,7 +65,8 @@ public record SimpleConsumeMultiPartitionResponse(
       @JsonProperty("key") JsonNode key,
       @JsonProperty("value") JsonNode value,
       @JsonProperty("key_decoding_error") String keyDecodingError,
-      @JsonProperty("value_decoding_error") String valueDecodingError
+      @JsonProperty("value_decoding_error") String valueDecodingError,
+      @JsonProperty("exceeded_fields") ExceededFields exceededFields
   ) {
     // Initialize key and value decoding errors to null by default
     public PartitionConsumeRecord(
@@ -67,9 +76,19 @@ public record SimpleConsumeMultiPartitionResponse(
         TimestampType timestampType,
         List<PartitionConsumeRecordHeader> headers,
         JsonNode key,
-        JsonNode value
+        JsonNode value,
+        ExceededFields exceededFields
     ) {
-      this(partitionId, offset, timestamp, timestampType, headers, key, value, null, null);
+      this(
+          partitionId,
+          offset,
+          timestamp,
+          timestampType,
+          headers, key, value,
+          null,
+          null,
+          exceededFields == null ? new ExceededFields(false, false) : exceededFields
+      );
     }
   }
 

@@ -16,6 +16,10 @@
           "headers": [],
           "key_decoding_error":null,
           "value_decoding_error":null
+          "exceeded_fields": {
+            "key" : false,
+            "value": false
+          }
         }
       ]
     },
@@ -33,6 +37,10 @@
           "headers": [],
           "key_decoding_error":null,
           "value_decoding_error":null
+          "exceeded_fields": {
+            "key" : false,
+            "value": false
+          }
         }
       ]
     }
