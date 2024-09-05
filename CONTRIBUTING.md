@@ -744,3 +744,68 @@ curl -s \
   -H "x-cluster-id: lsrc-defg456" \
   http://localhost:26636/schemas?subjectPrefix=:*:&latestOnly=true | jq -r .
 ```
+
+## Troubleshooting
+
+### Port conflicts
+
+Sidecar's HTTP server is at fixed port 26636. A static
+port is needed for OAuth negotiation. Therefore, you can only have one such process
+running. If you are met with:
+```
+2024-06-06 10:41:47,189 ERROR [io.qua.run.Application] (main) Port 26636 seems to be in use by another process. Quarkus may already be running or the port is used by another application.
+2024-06-06 10:41:47,189 WARN  [io.qua.run.Application] (main) Use 'netstat -anv | grep 26636' to identify the process occupying the port.
+```
+You can do one better than the suggested pipeline, which does include the server's process
+id, but as space delimited field #9. Use awk to cut just that field out, and feed the result
+into kill to get rid of the old process:
+```shell script
+$ kill $(netstat -anv | grep 26636 | awk '{print $9}')
+```
+
+Then you should be clear to manually start a new one.
+
+### Build failing due to wrong Java version: "release version 21 not supported"
+
+If you see something like,
+```
+make quarkus-dev
+...
+[ERROR] Failed to execute goal io.quarkus.platform:quarkus-maven-plugin:3.10.2:dev (default-cli) on project outpost-scaffolding: Fatal error compiling: error: release version 21 not supported -> [Help 1]
+```
+
+Then, it is likely that your Jenv is activated and pointing to a Java version that is not 21. You might have the following
+in your `.zshrc` or `.bashrc`:
+```shell script
+export PATH="$HOME/.jenv/bin:$PATH"
+eval "$(jenv init -)"
+```
+
+You can deactivate Jenv by commenting out the `eval` line. Restart your shell to make sure you're now using SDKMAN's
+GraalVM 21.
+
+To double check, run `sdk env`. You should see:
+```shell script
+$ sdk env
+Using java version 21.0.2-graalce in this shell.
+```
+
+### Updating NOTICE files
+
+> [!NOTE]
+The LICENSE.txt file contains the full text of the Apache License, Version 2.0. This file will never need to be
+updated.
+
+A Semaphore CI/CD pipeline (See "Update third party notices PR" block in `.semaphore/semaphore.yml`) automatically raises a 
+Pull Request to update the `THIRD_PARTY_NOTICES.txt` and `NOTICE-binary.txt` files,
+on the following conditions (when a PR is merged into the `main` branch or a release branch, e.g., `v1.2.x`):
+
+- Any change to the `pom.xml` file (e.g., adding a new dependency, updating an existing one)
+- Any change to the `NOTICE.txt` file
+
+The pipeline calls the `make update-third-party-notices-pr` target, which in turn calls the following targets:
+
+- `make generate-third-party-notices` to generate the `THIRD_PARTY_NOTICES.txt` file
+- `make collect-notices-binary` to generate the `NOTICE-binary.txt` file: Appends `NOTICE.txt` and `NOTICE*` files from all third-party dependency JARs.
+
+The PR raised must be summarily reviewed and merged by a maintainer.

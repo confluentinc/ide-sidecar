@@ -65,7 +65,7 @@ blocks:
   - name: "Update third party notices PR"
     dependencies: ["Release"]
     run:
-      when: "branch =~ '.*' and change_in('/pom.xml', {default_branch: 'main'})"
+      when: "branch =~ '.*' and change_in(['/pom.xml', '/NOTICE.txt'], {default_branch: 'main', branch_range: '$SEMAPHORE_GIT_COMMIT_RANGE', pipeline_file: 'ignore'})"
     task:
       prologue:
         commands:
