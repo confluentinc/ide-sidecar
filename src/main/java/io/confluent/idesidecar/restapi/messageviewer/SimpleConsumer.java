@@ -1,5 +1,6 @@
 package io.confluent.idesidecar.restapi.messageviewer;
 
+import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.ExceededFields;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeData;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeRecord;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeRecordHeader;
@@ -23,9 +24,6 @@ import org.apache.kafka.clients.consumer.OffsetAndTimestamp;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
 
-/**
- * Implements consuming records from Confluent Local Kafka topics for the message viewer API.
- */
 public class SimpleConsumer {
   private static final Duration POLL_TIMEOUT = Duration.ofSeconds(1);
   private static final int MAX_POLLS = 5;
@@ -310,7 +308,8 @@ public class SimpleConsumer {
         TimestampType.valueOf(consumerRecord.timestampType().name()),
         headers,
         keyNode,
-        valueNode
+        valueNode,
+        new ExceededFields(false, false) // Fix for the local.
     );
   }
 }
