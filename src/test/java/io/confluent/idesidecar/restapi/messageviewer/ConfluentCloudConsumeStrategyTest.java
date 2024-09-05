@@ -60,8 +60,8 @@ public class ConfluentCloudConsumeStrategyTest {
     assertEquals("{\"name\":\"another-name\",\"id\":20}", recordData1.value().asText());
     assertEquals(TimestampType.CREATE_TIME, recordData1.timestampType());
     assertTrue(recordData1.headers().isEmpty());
-    assertTrue(recordData1.exceededFields().key());
-    assertTrue(recordData1.exceededFields().value());
+    assertFalse(recordData1.exceededFields().key());
+    assertFalse(recordData1.exceededFields().value());
   }
 
 }
