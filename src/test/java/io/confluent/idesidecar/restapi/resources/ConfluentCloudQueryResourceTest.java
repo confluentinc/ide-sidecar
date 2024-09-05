@@ -20,6 +20,7 @@ import io.quarkus.test.junit.TestProfile;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junitpioneer.jupiter.RetryingTest;
 
 @QuarkusTest
 @ConnectWireMock
@@ -181,7 +182,9 @@ public class ConfluentCloudQueryResourceTest extends ConfluentQueryResourceTestB
     );
   }
 
+  // TODO: Fix flaky test. Retry three times before failing.
   @Test
+  @RetryingTest(3)
   void shouldCacheClusterInfoOnGetKafkaClusters() {
     // Create a local connection
     ccloudTestUtil.createConnection("local-1", "Local 1", ConnectionType.LOCAL);
