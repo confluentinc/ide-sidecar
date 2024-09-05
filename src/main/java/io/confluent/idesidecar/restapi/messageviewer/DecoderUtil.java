@@ -38,6 +38,24 @@ public class DecoderUtil {
   private static final ObjectMapper avroObjectMapper = new AvroMapper(new AvroFactory());
   public static final byte MAGIC_BYTE = 0x0;
 
+  public static class DecodedResult {
+    private final JsonNode value;
+    private final String errorMessage;
+
+    public DecodedResult(JsonNode value, String errorMessage) {
+      this.value = value;
+      this.errorMessage = errorMessage;
+    }
+
+    public JsonNode getValue() {
+      return value;
+    }
+
+    public String getErrorMessage() {
+      return errorMessage;
+    }
+  }
+
   /**
    * Decodes a Base64-encoded string and deserializes it using the provided SchemaRegistryClient.
    *
@@ -47,7 +65,7 @@ public class DecoderUtil {
    * @return The deserialized JsonNode, or the original rawBase64 string as TextNode if an error
    *        occurs.
    */
-  public static JsonNode decodeAndDeserialize(
+  public static DecodedResult decodeAndDeserialize(
       String rawBase64,
       SchemaRegistryClient schemaRegistryClient,
       String topicName
@@ -58,13 +76,14 @@ public class DecoderUtil {
 
     try {
       byte[] decodedBytes = Base64.getDecoder().decode(rawBase64);
-      return deserializeToJson(decodedBytes, schemaRegistryClient, topicName);
+      JsonNode decodedJson = deserializeToJson(decodedBytes, schemaRegistryClient, topicName);
+      return new DecodedResult(decodedJson, null);
     } catch (IllegalArgumentException e) {
       log.error("Error decoding Base64 string: " + rawBase64, e);
-      return TextNode.valueOf(rawBase64);
+      return new DecodedResult(TextNode.valueOf(rawBase64), e.getMessage());
     } catch (IOException | RestClientException e) {
       log.error("Error deserializing: " + rawBase64, e);
-      return TextNode.valueOf(rawBase64);
+      return new DecodedResult(TextNode.valueOf(rawBase64), e.getMessage());
     }
   }
 
