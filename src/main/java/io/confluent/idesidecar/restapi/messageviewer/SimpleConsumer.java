@@ -24,12 +24,15 @@ import org.apache.kafka.clients.consumer.OffsetAndTimestamp;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
 
+/**
+ * Implements consuming records from Confluent Local Kafka topics for the message viewer API.
+ */
 public class SimpleConsumer {
   private static final Duration POLL_TIMEOUT = Duration.ofSeconds(1);
   private static final int MAX_POLLS = 5;
   private static final int MAX_POLL_RECORDS_LIMIT = 2_000;
   private static final int MAX_RESPONSE_BYTES = 20 * 1024 * 1024; // 20 MB
-  private static final int MESSAGE_MAX_BYTES = 4 * 1024 * 1024; // 4MB
+  private static final int DEFAULT_MESSAGE_MAX_BYTES = 4 * 1024 * 1024; // 4MB
 
   final Properties baseConsumerConfig;
 
@@ -55,7 +58,7 @@ public class SimpleConsumer {
       Integer fetchMaxBytes,
       Integer messageMaxBytes
   ) {
-    messageMaxBytes = messageMaxBytes == null ? MESSAGE_MAX_BYTES : messageMaxBytes;
+    messageMaxBytes = messageMaxBytes == null ? DEFAULT_MESSAGE_MAX_BYTES : messageMaxBytes;
     // maxPollRecords is the number of messages we get for this entire query.
     int recordsLimit = Math.max(
         Optional.ofNullable(maxPollRecords).orElse(MAX_POLL_RECORDS_LIMIT),
@@ -309,14 +312,14 @@ public class SimpleConsumer {
           )
       );
     }
-    var keyNode = DecoderUtil.parseJsonNode(consumerRecord.key());
-    var valueNode = DecoderUtil.parseJsonNode(consumerRecord.value());
 
     // Determine if the key or value exceeds the maximum allowed size
     boolean keyExceeded = consumerRecord.key() != null
         && consumerRecord.key().length > messageMaxBytes;
     boolean valueExceeded = consumerRecord.value() != null
         && consumerRecord.value().length > messageMaxBytes;
+    var keyNode = keyExceeded ? null : DecoderUtil.parseJsonNode(consumerRecord.key());
+    var valueNode = valueExceeded ? null : DecoderUtil.parseJsonNode(consumerRecord.value());
 
     return new PartitionConsumeRecord(
         consumerRecord.partition(),
