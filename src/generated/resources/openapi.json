@@ -922,6 +922,12 @@
           },
           "value" : {
             "$ref" : "#/components/schemas/JsonNode"
+          },
+          "is_key_retrieval_error" : {
+            "type" : "boolean"
+          },
+          "is_value_retrieval_error" : {
+            "type" : "boolean"
           }
         }
       },
