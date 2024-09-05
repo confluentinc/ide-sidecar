@@ -1,6 +1,8 @@
 package io.confluent.idesidecar.restapi.messageviewer.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.quarkus.runtime.annotations.RegisterForReflection;
@@ -14,6 +16,7 @@ import java.util.List;
  * @param partitionDataList The list of partition data consumed.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(Include.NON_NULL)
 @RegisterForReflection
 public record SimpleConsumeMultiPartitionResponse(
     @JsonProperty("cluster_id") String clusterId,

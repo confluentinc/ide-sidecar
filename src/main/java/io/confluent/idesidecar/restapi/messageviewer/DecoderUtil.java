@@ -80,7 +80,7 @@ public class DecoderUtil {
       return new DecodedResult(decodedJson, null);
     } catch (IllegalArgumentException e) {
       log.error("Error decoding Base64 string: " + rawBase64, e);
-      return new DecodedResult(TextNode.valueOf(rawBase64), "Invalid Base64 encoding");
+      return new DecodedResult(TextNode.valueOf(rawBase64), e.getMessage());
     } catch (IOException | RestClientException e) {
       log.error("Error deserializing: " + rawBase64, e);
       return new DecodedResult(TextNode.valueOf(rawBase64), e.getMessage());
