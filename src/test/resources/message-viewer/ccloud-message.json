@@ -15,7 +15,7 @@
           "timestamp_type": "CREATE_TIME",
           "headers": [],
           "key_decoding_error":null,
-          "value_decoding_error":null
+          "value_decoding_error":null,
           "exceeded_fields": {
             "key" : false,
             "value": false
@@ -36,7 +36,7 @@
           "timestamp_type": "CREATE_TIME",
           "headers": [],
           "key_decoding_error":null,
-          "value_decoding_error":null
+          "value_decoding_error":null,
           "exceeded_fields": {
             "key" : false,
             "value": false
