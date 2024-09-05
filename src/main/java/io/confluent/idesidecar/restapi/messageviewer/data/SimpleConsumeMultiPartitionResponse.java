@@ -1,6 +1,8 @@
 package io.confluent.idesidecar.restapi.messageviewer.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.quarkus.runtime.annotations.RegisterForReflection;
@@ -14,6 +16,7 @@ import java.util.List;
  * @param partitionDataList The list of partition data consumed.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(Include.NON_NULL)
 @RegisterForReflection
 public record SimpleConsumeMultiPartitionResponse(
     @JsonProperty("cluster_id") String clusterId,
@@ -48,8 +51,12 @@ public record SimpleConsumeMultiPartitionResponse(
    * @param timestamp The timestamp of the record.
    * @param timestampType The type of the timestamp (e.g., CREATE_TIME).
    * @param headers The list of headers associated with the record.
-   * @param key The key of the record.
-   * @param value The value of the record.
+   * @param key The key of the record, decoded if applicable.
+   * @param value The value of the record, decoded if applicable.
+   * @param keyDecodingError A string containing an error message if key decoding failed;
+   *                         null if decoding was successful or not attempted.
+   * @param valueDecodingError A string containing an error message if value decoding failed;
+   *                           null if decoding was successful or not attempted.
    */
   @RegisterForReflection
   public record PartitionConsumeRecord(
@@ -60,13 +67,31 @@ public record SimpleConsumeMultiPartitionResponse(
       @JsonProperty("headers") List<PartitionConsumeRecordHeader> headers,
       @JsonProperty("key") JsonNode key,
       @JsonProperty("value") JsonNode value,
+      @JsonProperty("key_decoding_error") String keyDecodingError,
+      @JsonProperty("value_decoding_error") String valueDecodingError,
       @JsonProperty("exceeded_fields") ExceededFields exceededFields
   ) {
-    public PartitionConsumeRecord {
-      // If exceededFields is null, assign default values
-      if (exceededFields == null) {
-        exceededFields = new ExceededFields(false, false);
-      }
+    // Initialize key and value decoding errors to null by default
+    public PartitionConsumeRecord(
+        int partitionId,
+        long offset,
+        long timestamp,
+        TimestampType timestampType,
+        List<PartitionConsumeRecordHeader> headers,
+        JsonNode key,
+        JsonNode value,
+        ExceededFields exceededFields
+    ) {
+      this(
+          partitionId,
+          offset,
+          timestamp,
+          timestampType,
+          headers, key, value,
+          null,
+          null,
+          exceededFields == null ? new ExceededFields(false, false) : exceededFields
+      );
     }
   }
 

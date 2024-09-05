@@ -655,6 +655,10 @@ components:
           $ref: "#/components/schemas/JsonNode"
         value:
           $ref: "#/components/schemas/JsonNode"
+        key_decoding_error:
+          type: string
+        value_decoding_error:
+          type: string
     PartitionConsumeRecordHeader:
       type: object
       properties:
@@ -825,11 +829,11 @@ components:
       properties:
         name:
           type: string
+        data:
+          type: object
+          nullable: true
         status:
           enum:
           - UP
           - DOWN
           type: string
-        data:
-          type: object
-          nullable: true
