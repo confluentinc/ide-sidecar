@@ -29,6 +29,7 @@ public class SimpleConsumer {
   private static final int MAX_POLLS = 5;
   private static final int MAX_POLL_RECORDS_LIMIT = 2_000;
   private static final int MAX_RESPONSE_BYTES = 20 * 1024 * 1024; // 20 MB
+  private static final int MESSAGE_MAX_BYTES = 4 * 1024 * 1024; // 4MB
 
   final Properties baseConsumerConfig;
 
@@ -51,8 +52,10 @@ public class SimpleConsumer {
       Boolean fromBeginning,
       Long timestamp,
       Integer maxPollRecords,
-      Integer fetchMaxBytes
+      Integer fetchMaxBytes,
+      Integer messageMaxBytes
   ) {
+    messageMaxBytes = messageMaxBytes == null ? MESSAGE_MAX_BYTES : messageMaxBytes;
     // maxPollRecords is the number of messages we get for this entire query.
     int recordsLimit = Math.max(
         Optional.ofNullable(maxPollRecords).orElse(MAX_POLL_RECORDS_LIMIT),
@@ -102,7 +105,9 @@ public class SimpleConsumer {
     var result = new ArrayList<PartitionConsumeData>();
     for (var partition : partitions) {
       var kafkaRecords = partitionRecordsMap.get(partition);
-      result.add(getPartitionConsumeData(kafkaRecords, partition, offsets, endOffsets));
+      result.add(
+          getPartitionConsumeData(kafkaRecords, partition, offsets, endOffsets, messageMaxBytes)
+      );
     }
 
     return result;
@@ -258,7 +263,8 @@ public class SimpleConsumer {
       List<ConsumerRecord<byte[], byte[]>> singlePartitionRecords,
       TopicPartition partition,
       Map<Integer, Long> offsets,
-      Map<TopicPartition, Long> endOffsets
+      Map<TopicPartition, Long> endOffsets,
+      Integer messageMaxBytes
   ) {
     final var partitionId = partition.partition();
     // Initialize the next offset with the currently known end offset for the partition.
@@ -276,19 +282,24 @@ public class SimpleConsumer {
     return new PartitionConsumeData(
         partitionId,
         nextOffset,
-        listFromConsumerRecordList(singlePartitionRecords)
+        listFromConsumerRecordList(singlePartitionRecords, messageMaxBytes)
     );
   }
 
   List<PartitionConsumeRecord> listFromConsumerRecordList(
-      List<ConsumerRecord<byte[], byte[]>> consumerRecords
+      List<ConsumerRecord<byte[], byte[]>> consumerRecords,
+      Integer messageMaxBytes
   ) {
     return consumerRecords == null
         ? Collections.emptyList()
-        : consumerRecords.stream().map(this::mapConsumerRecord).toList();
+        : consumerRecords.stream()
+            .map(consumerRecord -> mapConsumerRecord(consumerRecord, messageMaxBytes))
+            .toList();
   }
 
-  PartitionConsumeRecord mapConsumerRecord(ConsumerRecord<byte[], byte[]> consumerRecord) {
+  PartitionConsumeRecord mapConsumerRecord(
+      ConsumerRecord<byte[], byte[]> consumerRecord,
+      Integer messageMaxBytes) {
     var headers = new ArrayList<PartitionConsumeRecordHeader>();
     for (var header : consumerRecord.headers()) {
       headers.add(
@@ -301,6 +312,12 @@ public class SimpleConsumer {
     var keyNode = DecoderUtil.parseJsonNode(consumerRecord.key());
     var valueNode = DecoderUtil.parseJsonNode(consumerRecord.value());
 
+    // Determine if the key or value exceeds the maximum allowed size
+    boolean keyExceeded = consumerRecord.key() != null
+        && consumerRecord.key().length > messageMaxBytes;
+    boolean valueExceeded = consumerRecord.value() != null
+        && consumerRecord.value().length > messageMaxBytes;
+
     return new PartitionConsumeRecord(
         consumerRecord.partition(),
         consumerRecord.offset(),
@@ -309,7 +326,7 @@ public class SimpleConsumer {
         headers,
         keyNode,
         valueNode,
-        new ExceededFields(false, false) // Fix for the local.
+        new ExceededFields(keyExceeded, valueExceeded)
     );
   }
 }
