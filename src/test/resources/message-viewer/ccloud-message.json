@@ -14,8 +14,8 @@
           "value": "{\"name\":\"Ravi\",\"id\":18}",
           "timestamp_type": "CREATE_TIME",
           "headers": [],
-          "is_key_retrieval_error":false,
-          "is_value_retrieval_error":false
+          "key_decoding_error":null,
+          "value_decoding_error":null
         }
       ]
     },
@@ -31,8 +31,8 @@
           "value": "{\"name\":\"another-name\",\"id\":20}",
           "timestamp_type": "CREATE_TIME",
           "headers": [],
-          "is_key_retrieval_error":false,
-          "is_value_retrieval_error":false
+          "key_decoding_error":null,
+          "value_decoding_error":null
         }
       ]
     }

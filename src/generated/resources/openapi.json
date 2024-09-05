@@ -923,11 +923,11 @@
           "value" : {
             "$ref" : "#/components/schemas/JsonNode"
           },
-          "is_key_retrieval_error" : {
-            "type" : "boolean"
+          "key_decoding_error" : {
+            "type" : "string"
           },
-          "is_value_retrieval_error" : {
-            "type" : "boolean"
+          "value_decoding_error" : {
+            "type" : "string"
           }
         }
       },
@@ -1148,13 +1148,13 @@
           "name" : {
             "type" : "string"
           },
-          "status" : {
-            "enum" : [ "UP", "DOWN" ],
-            "type" : "string"
-          },
           "data" : {
             "type" : "object",
             "nullable" : true
+          },
+          "status" : {
+            "enum" : [ "UP", "DOWN" ],
+            "type" : "string"
           }
         }
       }
