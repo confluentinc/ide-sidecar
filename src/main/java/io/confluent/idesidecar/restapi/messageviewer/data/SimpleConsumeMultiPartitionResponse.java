@@ -51,7 +51,9 @@ public record SimpleConsumeMultiPartitionResponse(
       @JsonProperty("timestamp_type") TimestampType timestampType,
       @JsonProperty("headers") List<PartitionConsumeRecordHeader> headers,
       @JsonProperty("key") JsonNode key,
-      @JsonProperty("value") JsonNode value
+      @JsonProperty("value") JsonNode value,
+      @JsonProperty("is_key_retrieval_error") boolean isKeyRetrievalError,
+      @JsonProperty("is_value_retrieval_error") boolean isValueRetrievalError
   ) {}
 
   /**

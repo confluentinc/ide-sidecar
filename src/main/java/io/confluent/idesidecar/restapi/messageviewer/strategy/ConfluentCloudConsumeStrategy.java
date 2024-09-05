@@ -154,18 +154,37 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
     if (schemaRegistryClient != null) {
       for (var partitionData : data.partitionDataList()) {
         for (var record : partitionData.records()) {
-          JsonNode decodedKey = decodeValue(
+          // Decode the key
+          DecoderUtil.DecodedResult decodedKeyResult = decodeValue(
               record.key(),
               schemaRegistryClient,
               context.getTopicName()
           );
-          JsonNode decodedValue = decodeValue(
+
+          // Decode the value
+          DecoderUtil.DecodedResult decodedValueResult = decodeValue(
               record.value(),
               schemaRegistryClient,
               context.getTopicName()
           );
-          if (decodedKey != record.key() || decodedValue != record.value()) {
-            updateRecord(partitionData, record, decodedKey, decodedValue);
+
+          // Extract the decoded key, value, and whether decoding was successful
+          JsonNode decodedKey = decodedKeyResult.getValue();
+          boolean isKeyDecoded = decodedKeyResult.wasSuccessful();
+
+          JsonNode decodedValue = decodedValueResult.getValue();
+          boolean isValueDecoded = decodedValueResult.wasSuccessful();
+
+          // Update the record if either the key or value was successfully decoded
+          if (isKeyDecoded || isValueDecoded) {
+            updateRecord(
+                partitionData,
+                record,
+                decodedKey,
+                decodedValue,
+                isKeyDecoded,
+                isValueDecoded
+            );
           }
         }
       }
@@ -180,7 +199,7 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
    * @param topicName  The name of the topic.
    * @return The decoded value.
    */
-  private JsonNode decodeValue(
+  private DecoderUtil.DecodedResult decodeValue(
       JsonNode value,
       SchemaRegistryClient schemaRegistryClient,
       String topicName) {
@@ -188,7 +207,7 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
       String rawValue = value.get("__raw__").asText();
       return DecoderUtil.decodeAndDeserialize(rawValue, schemaRegistryClient, topicName);
     }
-    return value;
+    return new DecoderUtil.DecodedResult(value, true);
   }
 
   /**
@@ -203,7 +222,9 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
       SimpleConsumeMultiPartitionResponse.PartitionConsumeData partitionData,
       SimpleConsumeMultiPartitionResponse.PartitionConsumeRecord record,
       JsonNode decodedKey,
-      JsonNode decodedValue
+      JsonNode decodedValue,
+      boolean isKeyDecoded,
+      boolean isValueDecoded
   ) {
     SimpleConsumeMultiPartitionResponse.PartitionConsumeRecord updatedRecord =
         new SimpleConsumeMultiPartitionResponse.PartitionConsumeRecord(
@@ -213,7 +234,9 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
             record.timestampType(),
             record.headers(),
             decodedKey,
-            decodedValue
+            decodedValue,
+            !isKeyDecoded /*is_key_retrieval_error*/,
+            !isValueDecoded /*is_key_retrieval_error*/
         );
     int recordIndex = partitionData.records().indexOf(record);
     partitionData.records().set(recordIndex, updatedRecord);
