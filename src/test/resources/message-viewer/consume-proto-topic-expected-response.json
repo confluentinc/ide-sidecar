@@ -1,1 +1,36 @@
-{"cluster_id":"lkc-stgcj76rd8","topic_name":"orders_proto","partition_data_list":[{"partition_id":0,"next_offset":87498,"records":[{"partition_id":0,"offset":87489,"timestamp":1718991244031,"timestamp_type":"CREATE_TIME","headers":[{"key":"task.generation","value":"MA=="},{"key":"task.id","value":"MA=="},{"key":"current.iteration","value":"NTIyMjMz"}],"key":"522233","value":"AAABhqMACM6Dq5SbLBD57x8aBkl0ZW1fMyGvInPlMg0hQCoVCgVDaXR5XxIIU3RhdGVfNzcYzKgC","is_key_retrieval_error":false,"is_value_retrieval_error":true}]}]}
+{
+  "cluster_id": "lkc-stgcj76rd8",
+  "topic_name": "orders_proto",
+  "partition_data_list": [
+    {
+      "partition_id": 0,
+      "next_offset": 87498,
+      "records": [
+        {
+          "partition_id": 0,
+          "offset": 87489,
+          "timestamp": 1718991244031,
+          "timestamp_type": "CREATE_TIME",
+          "headers": [
+            {
+              "key": "task.generation",
+              "value": "MA=="
+            },
+            {
+              "key": "task.id",
+              "value": "MA=="
+            },
+            {
+              "key": "current.iteration",
+              "value": "NTIyMjMz"
+            }
+          ],
+          "key": "522233",
+          "value": "AAABhqMACM6Dq5SbLBD57x8aBkl0ZW1fMyGvInPlMg0hQCoVCgVDaXR5XxIIU3RhdGVfNzcYzKgC",
+          "key_decoding_error": null,
+          "value_decoding_error": "Unrecognized token 'syntax': was expecting (JSON String, Number (or 'NaN'/'+INF'/'-INF'), Array, Object or token 'null', 'true' or 'false')\n at [Source: REDACTED (`StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION` disabled); line: 1, column: 8]"
+        }
+      ]
+    }
+  ]
+}

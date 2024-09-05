@@ -78,7 +78,7 @@ public class DecoderUtilTest {
     assertNotNull(record);
     // Asserts for the top-level fields
     assertEquals(1518951552659L, record.getValue().get("ordertime").asLong(), "ordertime does not match");
-    assertTrue(record.wasSuccessful());
+    assertNull(record.getErrorMessage());
     assertEquals(3, record.getValue().get("orderid").asInt(), "orderid does not match");
     assertEquals("Item_86", record.getValue().get("itemid").asText(), "itemid does not match");
     assertEquals(8.651492932024759, record.getValue().get("orderunits").asDouble(), "orderunits does not match");
@@ -113,7 +113,7 @@ public class DecoderUtilTest {
         "test-subject");
     assertNotNull(record);
     // Asserts for the top-level fields
-    assertFalse(record.wasSuccessful());
+    assertNotNull(record.getErrorMessage());
   }
 
   @Test
