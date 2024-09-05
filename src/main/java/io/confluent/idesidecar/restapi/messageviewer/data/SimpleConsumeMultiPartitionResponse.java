@@ -1,5 +1,6 @@
 package io.confluent.idesidecar.restapi.messageviewer.data;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.quarkus.runtime.annotations.RegisterForReflection;
@@ -12,6 +13,7 @@ import java.util.List;
  * @param topicName The name of the Kafka topic.
  * @param partitionDataList The list of partition data consumed.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 @RegisterForReflection
 public record SimpleConsumeMultiPartitionResponse(
     @JsonProperty("cluster_id") String clusterId,
@@ -30,6 +32,12 @@ public record SimpleConsumeMultiPartitionResponse(
       @JsonProperty("partition_id") int partitionId,
       @JsonProperty("next_offset") long nextOffset,
       @JsonProperty("records") List<PartitionConsumeRecord> records
+  ) {}
+
+  @RegisterForReflection
+  public record ExceededFields(
+      @JsonProperty("key") boolean key,
+      @JsonProperty("value") boolean value
   ) {}
 
   /**
@@ -51,8 +59,16 @@ public record SimpleConsumeMultiPartitionResponse(
       @JsonProperty("timestamp_type") TimestampType timestampType,
       @JsonProperty("headers") List<PartitionConsumeRecordHeader> headers,
       @JsonProperty("key") JsonNode key,
-      @JsonProperty("value") JsonNode value
-  ) {}
+      @JsonProperty("value") JsonNode value,
+      @JsonProperty("exceeded_fields") ExceededFields exceededFields
+  ) {
+    public PartitionConsumeRecord {
+      // If exceededFields is null, assign default values
+      if (exceededFields == null) {
+        exceededFields = new ExceededFields(false, false);
+      }
+    }
+  }
 
   /**
    * Represents a header of a record.

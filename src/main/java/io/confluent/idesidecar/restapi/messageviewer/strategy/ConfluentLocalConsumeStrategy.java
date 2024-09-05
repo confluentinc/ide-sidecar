@@ -92,7 +92,8 @@ public class ConfluentLocalConsumeStrategy implements ConsumeStrategy {
             request.fromBeginning(),
             request.timestamp(),
             request.maxPollRecords(),
-            request.fetchMaxBytes()
+            request.fetchMaxBytes(),
+            request.messageMaxBytes()
         )
     );
     context.setConsumeResponse(simpleConsumeResp);

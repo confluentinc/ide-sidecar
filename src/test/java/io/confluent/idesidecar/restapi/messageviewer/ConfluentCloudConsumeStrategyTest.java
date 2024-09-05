@@ -1,6 +1,7 @@
 package io.confluent.idesidecar.restapi.messageviewer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.wildfly.common.Assert.assertNotNull;
 import static org.wildfly.common.Assert.assertTrue;
 
@@ -43,6 +44,8 @@ public class ConfluentCloudConsumeStrategyTest {
     assertEquals("{\"name\":\"Ravi\",\"id\":18}", recordData0.value().asText());
     assertEquals(TimestampType.CREATE_TIME, recordData0.timestampType());
     assertTrue(recordData0.headers().isEmpty());
+    assertFalse(recordData0.exceededFields().key());
+    assertFalse(recordData0.exceededFields().value());
 
     var partitionData1 = partitionDataList.get(1);
     assertEquals(1, partitionData1.partitionId());
@@ -57,6 +60,8 @@ public class ConfluentCloudConsumeStrategyTest {
     assertEquals("{\"name\":\"another-name\",\"id\":20}", recordData1.value().asText());
     assertEquals(TimestampType.CREATE_TIME, recordData1.timestampType());
     assertTrue(recordData1.headers().isEmpty());
+    assertTrue(recordData1.exceededFields().key());
+    assertTrue(recordData1.exceededFields().value());
   }
 
 }
