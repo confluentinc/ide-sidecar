@@ -40,19 +40,19 @@ public class DecoderUtil {
 
   public static class DecodedResult {
     private final JsonNode value;
-    private final boolean wasSuccessful;
+    private final String errorMessage;
 
-    public DecodedResult(JsonNode value, boolean wasSuccessful) {
+    public DecodedResult(JsonNode value, String errorMessage) {
       this.value = value;
-      this.wasSuccessful = wasSuccessful;
+      this.errorMessage = errorMessage;
     }
 
     public JsonNode getValue() {
       return value;
     }
 
-    public boolean wasSuccessful() {
-      return wasSuccessful;
+    public String getErrorMessage() {
+      return errorMessage;
     }
   }
 
@@ -77,13 +77,13 @@ public class DecoderUtil {
     try {
       byte[] decodedBytes = Base64.getDecoder().decode(rawBase64);
       JsonNode decodedJson = deserializeToJson(decodedBytes, schemaRegistryClient, topicName);
-      return new DecodedResult(decodedJson, true);
+      return new DecodedResult(decodedJson, null);
     } catch (IllegalArgumentException e) {
       log.error("Error decoding Base64 string: " + rawBase64, e);
-      return new DecodedResult(TextNode.valueOf(rawBase64), false);
+      return new DecodedResult(TextNode.valueOf(rawBase64), "Invalid Base64 encoding");
     } catch (IOException | RestClientException e) {
       log.error("Error deserializing: " + rawBase64, e);
-      return new DecodedResult(TextNode.valueOf(rawBase64), false);
+      return new DecodedResult(TextNode.valueOf(rawBase64), e.getMessage());
     }
   }
 

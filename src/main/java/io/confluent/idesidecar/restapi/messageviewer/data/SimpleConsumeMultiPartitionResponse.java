@@ -40,8 +40,12 @@ public record SimpleConsumeMultiPartitionResponse(
    * @param timestamp The timestamp of the record.
    * @param timestampType The type of the timestamp (e.g., CREATE_TIME).
    * @param headers The list of headers associated with the record.
-   * @param key The key of the record.
-   * @param value The value of the record.
+   * @param key The key of the record, decoded if applicable.
+   * @param value The value of the record, decoded if applicable.
+   * @param keyDecodingError A string containing an error message if key decoding failed;
+   *                         null if decoding was successful or not attempted.
+   * @param valueDecodingError A string containing an error message if value decoding failed;
+   *                           null if decoding was successful or not attempted.
    */
   @RegisterForReflection
   public record PartitionConsumeRecord(
@@ -52,9 +56,22 @@ public record SimpleConsumeMultiPartitionResponse(
       @JsonProperty("headers") List<PartitionConsumeRecordHeader> headers,
       @JsonProperty("key") JsonNode key,
       @JsonProperty("value") JsonNode value,
-      @JsonProperty("is_key_retrieval_error") boolean isKeyRetrievalError,
-      @JsonProperty("is_value_retrieval_error") boolean isValueRetrievalError
-  ) {}
+      @JsonProperty("key_decoding_error") String keyDecodingError,
+      @JsonProperty("value_decoding_error") String valueDecodingError
+  ) {
+    // Initialize key and value decoding errors to null by default
+    public PartitionConsumeRecord(
+        int partitionId,
+        long offset,
+        long timestamp,
+        TimestampType timestampType,
+        List<PartitionConsumeRecordHeader> headers,
+        JsonNode key,
+        JsonNode value
+    ) {
+      this(partitionId, offset, timestamp, timestampType, headers, key, value, null, null);
+    }
+  }
 
   /**
    * Represents a header of a record.

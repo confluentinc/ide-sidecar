@@ -168,24 +168,14 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
               context.getTopicName()
           );
 
-          // Extract the decoded key, value, and whether decoding was successful
-          JsonNode decodedKey = decodedKeyResult.getValue();
-          boolean isKeyDecoded = decodedKeyResult.wasSuccessful();
-
-          JsonNode decodedValue = decodedValueResult.getValue();
-          boolean isValueDecoded = decodedValueResult.wasSuccessful();
-
-          // Update the record if either the key or value was successfully decoded
-          if (isKeyDecoded || isValueDecoded) {
-            updateRecord(
-                partitionData,
-                record,
-                decodedKey,
-                decodedValue,
-                isKeyDecoded,
-                isValueDecoded
-            );
-          }
+          updateRecord(
+              partitionData,
+              record,
+              decodedKeyResult.getValue(),
+              decodedValueResult.getValue(),
+              decodedKeyResult.getErrorMessage(),
+              decodedValueResult.getErrorMessage()
+          );
         }
       }
     }
@@ -207,7 +197,7 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
       String rawValue = value.get("__raw__").asText();
       return DecoderUtil.decodeAndDeserialize(rawValue, schemaRegistryClient, topicName);
     }
-    return new DecoderUtil.DecodedResult(value, true);
+    return new DecoderUtil.DecodedResult(value, null);
   }
 
   /**
@@ -215,16 +205,18 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
    *
    * @param partitionData The PartitionConsumeData containing the record to update.
    * @param record        The PartitionConsumeRecord to update.
-   * @param decodedKey    The decoded key.
-   * @param decodedValue  The decoded value.
+   * @param decodedKey    The decoded key if decoding is successful else null
+   * @param decodedValue  The decoded value if decoding is successful else null.
+   * @param keyErrorMessage The error message for key decoding if it failed, else null.
+   * @param valueErrorMessage The error message for value decoding if it failed, else null.
    */
   private void updateRecord(
       SimpleConsumeMultiPartitionResponse.PartitionConsumeData partitionData,
       SimpleConsumeMultiPartitionResponse.PartitionConsumeRecord record,
       JsonNode decodedKey,
       JsonNode decodedValue,
-      boolean isKeyDecoded,
-      boolean isValueDecoded
+      String keyErrorMessage,
+      String valueErrorMessage
   ) {
     SimpleConsumeMultiPartitionResponse.PartitionConsumeRecord updatedRecord =
         new SimpleConsumeMultiPartitionResponse.PartitionConsumeRecord(
@@ -235,8 +227,8 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
             record.headers(),
             decodedKey,
             decodedValue,
-            !isKeyDecoded /*is_key_retrieval_error*/,
-            !isValueDecoded /*is_key_retrieval_error*/
+            keyErrorMessage,
+            valueErrorMessage
         );
     int recordIndex = partitionData.records().indexOf(record);
     partitionData.records().set(recordIndex, updatedRecord);

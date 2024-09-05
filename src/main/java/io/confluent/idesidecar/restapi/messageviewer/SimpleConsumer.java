@@ -311,8 +311,8 @@ public class SimpleConsumer {
         headers,
         keyNode,
         valueNode,
-        false /*is_key_retrieval_error*/, // Fix when local SR is supported.
-        false /*is_value_retrieval_error*/ // Fix when local SR is supported.
+        null,  // Fix when local SR is supported.
+        null  // Fix when local SR is supported.
     );
   }
 }
