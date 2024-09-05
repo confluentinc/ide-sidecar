@@ -154,19 +154,28 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
     if (schemaRegistryClient != null) {
       for (var partitionData : data.partitionDataList()) {
         for (var record : partitionData.records()) {
-          JsonNode decodedKey = decodeValue(
+          // Decode the key
+          DecoderUtil.DecodedResult decodedKeyResult = decodeValue(
               record.key(),
               schemaRegistryClient,
               context.getTopicName()
           );
-          JsonNode decodedValue = decodeValue(
+
+          // Decode the value
+          DecoderUtil.DecodedResult decodedValueResult = decodeValue(
               record.value(),
               schemaRegistryClient,
               context.getTopicName()
           );
-          if (decodedKey != record.key() || decodedValue != record.value()) {
-            updateRecord(partitionData, record, decodedKey, decodedValue);
-          }
+
+          updateRecord(
+              partitionData,
+              record,
+              decodedKeyResult.getValue(),
+              decodedValueResult.getValue(),
+              decodedKeyResult.getErrorMessage(),
+              decodedValueResult.getErrorMessage()
+          );
         }
       }
     }
@@ -180,7 +189,7 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
    * @param topicName  The name of the topic.
    * @return The decoded value.
    */
-  private JsonNode decodeValue(
+  private DecoderUtil.DecodedResult decodeValue(
       JsonNode value,
       SchemaRegistryClient schemaRegistryClient,
       String topicName) {
@@ -188,7 +197,7 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
       String rawValue = value.get("__raw__").asText();
       return DecoderUtil.decodeAndDeserialize(rawValue, schemaRegistryClient, topicName);
     }
-    return value;
+    return new DecoderUtil.DecodedResult(value, null);
   }
 
   /**
@@ -196,14 +205,18 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
    *
    * @param partitionData The PartitionConsumeData containing the record to update.
    * @param record        The PartitionConsumeRecord to update.
-   * @param decodedKey    The decoded key.
-   * @param decodedValue  The decoded value.
+   * @param decodedKey    The decoded key if decoding is successful else null
+   * @param decodedValue  The decoded value if decoding is successful else null.
+   * @param keyErrorMessage The error message for key decoding if it failed, else null.
+   * @param valueErrorMessage The error message for value decoding if it failed, else null.
    */
   private void updateRecord(
       SimpleConsumeMultiPartitionResponse.PartitionConsumeData partitionData,
       SimpleConsumeMultiPartitionResponse.PartitionConsumeRecord record,
       JsonNode decodedKey,
-      JsonNode decodedValue
+      JsonNode decodedValue,
+      String keyErrorMessage,
+      String valueErrorMessage
   ) {
     SimpleConsumeMultiPartitionResponse.PartitionConsumeRecord updatedRecord =
         new SimpleConsumeMultiPartitionResponse.PartitionConsumeRecord(
@@ -213,7 +226,9 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
             record.timestampType(),
             record.headers(),
             decodedKey,
-            decodedValue
+            decodedValue,
+            keyErrorMessage,
+            valueErrorMessage
         );
     int recordIndex = partitionData.records().indexOf(record);
     partitionData.records().set(recordIndex, updatedRecord);
