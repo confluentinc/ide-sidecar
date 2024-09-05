@@ -2,9 +2,11 @@ package io.confluent.idesidecar.restapi.messageviewer;
 
 import static io.confluent.idesidecar.restapi.messageviewer.DecoderUtil.getSchemaIdFromRawBytes;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.TextNode;
@@ -75,17 +77,43 @@ public class DecoderUtilTest {
         "test-subject");
     assertNotNull(record);
     // Asserts for the top-level fields
-    assertEquals(1518951552659L, record.get("ordertime").asLong(), "ordertime does not match");
-    assertEquals(3, record.get("orderid").asInt(), "orderid does not match");
-    assertEquals("Item_86", record.get("itemid").asText(), "itemid does not match");
-    assertEquals(8.651492932024759, record.get("orderunits").asDouble(), "orderunits does not match");
+    assertEquals(1518951552659L, record.getValue().get("ordertime").asLong(), "ordertime does not match");
+    assertNull(record.getErrorMessage());
+    assertEquals(3, record.getValue().get("orderid").asInt(), "orderid does not match");
+    assertEquals("Item_86", record.getValue().get("itemid").asText(), "itemid does not match");
+    assertEquals(8.651492932024759, record.getValue().get("orderunits").asDouble(), "orderunits does not match");
 
     // Asserts for the nested 'address' object
-    JsonNode addressNode = record.get("address");
+    JsonNode addressNode = record.getValue().get("address");
     assertNotNull(addressNode, "address is null");
     assertEquals("City_9", addressNode.get("city").asText(), "city does not match");
     assertEquals("State_9", addressNode.get("state").asText(), "state does not match");
     assertEquals(89599, addressNode.get("zipcode").asInt(), "zipcode does not match");
+  }
+
+  @Test
+  public void testDecodeAndDeserialize_InValidBase64() throws IOException, RestClientException {
+    var schemaStr = new String(Objects.requireNonNull(
+        Thread
+            .currentThread()
+            .getContextClassLoader()
+            .getResourceAsStream(
+                "message-viewer/schema-avro.json")).readAllBytes());
+    ParsedSchema parsedSchema = new AvroSchema(schemaStr);
+    SimpleMockSchemaRegistryClient smsrc = (SimpleMockSchemaRegistryClient) schemaRegistryClient;
+    // This is raw text of actual record from the stag cluster which is prefixed with 100002 schemaId.
+    String raw = "AAABhqKm2oqJtVgGDkl0ZW1fODY0Pkl7kE0hQAxDaXR5XzkOU3RhdGVfOf73Cg==";
+    int schemaId = smsrc.register(100002, "test-subject-value", parsedSchema);
+    byte[] decodedBytes = Base64.getDecoder().decode(raw);
+    int actualSchemaId = DecoderUtil.getSchemaIdFromRawBytes(decodedBytes);
+    assertEquals(schemaId, actualSchemaId);
+    var record = DecoderUtil.decodeAndDeserialize(
+        raw+"FOO",
+        schemaRegistryClient,
+        "test-subject");
+    assertNotNull(record);
+    // Asserts for the top-level fields
+    assertNotNull(record.getErrorMessage());
   }
 
   @Test
@@ -110,13 +138,13 @@ public class DecoderUtilTest {
         "test-subject");
     assertNotNull(record);
     // Asserts for the top-level fields
-    assertEquals("1516663762964", record.get("ordertime").asText(), "ordertime does not match");
-    assertEquals(522239, record.get("orderid").asInt(), "orderid does not match");
-    assertEquals("Item_3", record.get("itemid").asText(), "itemid does not match");
-    assertEquals(5.10471887276063, record.get("orderunits").asDouble(), "orderunits does not match");
+    assertEquals("1516663762964", record.getValue().get("ordertime").asText(), "ordertime does not match");
+    assertEquals(522239, record.getValue().get("orderid").asInt(), "orderid does not match");
+    assertEquals("Item_3", record.getValue().get("itemid").asText(), "itemid does not match");
+    assertEquals(5.10471887276063, record.getValue().get("orderunits").asDouble(), "orderunits does not match");
 
     // Asserts for the nested 'address' object
-    JsonNode addressNode = record.get("address");
+    JsonNode addressNode = record.getValue().get("address");
     assertNotNull(addressNode, "address is null");
     assertEquals("City_83", addressNode.get("city").asText(), "city does not match");
     assertEquals("State_54", addressNode.get("state").asText(), "state does not match");
@@ -147,13 +175,13 @@ public class DecoderUtilTest {
     assertNotNull(record);
 
     // Asserts for the top-level fields
-    assertEquals(1517970126869L, record.get("ordertime").asLong(), "ordertime does not match");
-    assertEquals(114, record.get("orderid").asInt(), "orderid does not match");
-    assertEquals("Item_7", record.get("itemid").asText(), "itemid does not match");
-    assertEquals(8.701786628112965, record.get("orderunits").asDouble(), "orderunits does not match");
+    assertEquals(1517970126869L, record.getValue().get("ordertime").asLong(), "ordertime does not match");
+    assertEquals(114, record.getValue().get("orderid").asInt(), "orderid does not match");
+    assertEquals("Item_7", record.getValue().get("itemid").asText(), "itemid does not match");
+    assertEquals(8.701786628112965, record.getValue().get("orderunits").asDouble(), "orderunits does not match");
 
     // Asserts for the nested 'address' object
-    JsonNode addressNode = record.get("address");
+    JsonNode addressNode = record.getValue().get("address");
     assertNotNull(addressNode, "address is null");
     assertEquals("City_", addressNode.get("city").asText(), "city does not match");
     assertEquals("State_26", addressNode.get("state").asText(), "state does not match");

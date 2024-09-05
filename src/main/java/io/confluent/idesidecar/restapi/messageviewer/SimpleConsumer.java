@@ -310,7 +310,9 @@ public class SimpleConsumer {
         TimestampType.valueOf(consumerRecord.timestampType().name()),
         headers,
         keyNode,
-        valueNode
+        valueNode,
+        null,  // Fix when local SR is supported.
+        null  // Fix when local SR is supported.
     );
   }
 }
