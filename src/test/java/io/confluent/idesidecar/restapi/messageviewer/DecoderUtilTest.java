@@ -8,8 +8,11 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.TextNode;
+import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
 import io.confluent.kafka.schemaregistry.ParsedSchema;
 import io.confluent.kafka.schemaregistry.avro.AvroSchema;
 import io.confluent.kafka.schemaregistry.avro.AvroSchemaProvider;
@@ -23,6 +26,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,6 +35,7 @@ import org.junit.jupiter.api.Test;
 
 public class DecoderUtilTest {
 
+  private final ObjectMapper objectMapper = new ObjectMapper();
   private static final String VALID_BASE64 = "valid_base64_string";
   private static final String INVALID_BASE64 = "invalid_base64_string";
   private static final byte[] VALID_BYTES = new byte[]{0, 1, 2, 3, 4};
@@ -232,5 +238,60 @@ public class DecoderUtilTest {
     assertEquals(
         new TextNode(magicByteAsString + rawString),
         DecoderUtil.parseJsonNode(byteArrayWithMagicByte));
+  }
+
+  @Test
+  public void testKeyDecodingErrorAndValueDecodingErrorAreNotSerializedWhenNull() throws JsonProcessingException {
+    // Given
+    JsonNode keyNode = objectMapper.nullNode();
+    JsonNode valueNode = objectMapper.nullNode();
+
+    // Create a PartitionConsumeRecord with null keyDecodingError and valueDecodingError
+    SimpleConsumeMultiPartitionResponse.PartitionConsumeRecord record = new SimpleConsumeMultiPartitionResponse.PartitionConsumeRecord(
+        0, 100L, System.currentTimeMillis(),
+        SimpleConsumeMultiPartitionResponse.TimestampType.CREATE_TIME,
+        Collections.emptyList(),
+        keyNode, valueNode, null // No decoding errors
+    );
+
+    // Create PartitionConsumeData with the record
+    SimpleConsumeMultiPartitionResponse.PartitionConsumeData partitionConsumeData = new SimpleConsumeMultiPartitionResponse.PartitionConsumeData(
+        0, 101L, List.of(record)
+    );
+
+    // Construct the full SimpleConsumeMultiPartitionResponse object
+    SimpleConsumeMultiPartitionResponse response = new SimpleConsumeMultiPartitionResponse(
+        "test-cluster",
+        "test-topic",
+        List.of(partitionConsumeData)
+    );
+
+    // When
+    String serializedResponse = objectMapper.writeValueAsString(response);
+
+    // Then
+    assertFalse(serializedResponse.contains("key_decoding_error"), "keyDecodingError should not be present in the serialized JSON");
+    assertFalse(serializedResponse.contains("value_decoding_error"), "valueDecodingError should not be present in the serialized JSON");
+  }
+
+  @Test
+  public void testKeyDecodingErrorAndValueDecodingErrorAreSerializedWhenNotNull() throws JsonProcessingException {
+    // Given
+    JsonNode keyNode = objectMapper.nullNode();
+    JsonNode valueNode = objectMapper.nullNode();
+    SimpleConsumeMultiPartitionResponse.PartitionConsumeRecord record = new SimpleConsumeMultiPartitionResponse.PartitionConsumeRecord(
+        0, 100L, System.currentTimeMillis(),
+        SimpleConsumeMultiPartitionResponse.TimestampType.CREATE_TIME,
+        Collections.emptyList(),
+        keyNode, valueNode, "Key decoding failed", "Value decoding failed",
+        new SimpleConsumeMultiPartitionResponse.ExceededFields(false, false)
+    );
+
+    // When
+    String serializedRecord = objectMapper.writeValueAsString(record);
+
+    // Then
+    assertTrue(serializedRecord.contains("key_decoding_error"), "keyDecodingError should be present in the serialized JSON");
+    assertTrue(serializedRecord.contains("value_decoding_error"), "valueDecodingError should be present in the serialized JSON");
   }
 }
