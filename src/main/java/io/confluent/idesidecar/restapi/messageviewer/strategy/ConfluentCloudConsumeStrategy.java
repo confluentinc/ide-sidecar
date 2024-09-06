@@ -44,7 +44,7 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
 
   private static final int SR_CACHE_SIZE = 10;
 
-  static final Map<String, SchemaRegistryClient> SR_CLIENT_CACHE = new ConcurrentHashMap<>();
+  static final Map<String, SchemaRegistryClient> SR_CLIENTS_BY_SR_ID = new ConcurrentHashMap<>();
 
   @Inject
   WebClientFactory webClientFactory;
@@ -157,7 +157,7 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
     if (schemaRegistry == null) {
       return;
     }
-    var schemaRegistryClient = SR_CLIENT_CACHE.computeIfAbsent(
+    var schemaRegistryClient = SR_CLIENTS_BY_SR_ID.computeIfAbsent(
         schemaRegistry.id(),
         k -> createSchemaRegistryClient(context)
     );
