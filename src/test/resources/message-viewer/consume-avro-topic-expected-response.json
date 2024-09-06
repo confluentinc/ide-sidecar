@@ -37,8 +37,6 @@
               "zipcode": 39532
             }
           },
-          "key_decoding_error": null,
-          "value_decoding_error": null,
           "exceeded_fields": null
         },
         {
@@ -72,8 +70,6 @@
               "zipcode": 60476
             }
           },
-          "key_decoding_error": null,
-          "value_decoding_error": null,
           "exceeded_fields": null
         }
       ]
