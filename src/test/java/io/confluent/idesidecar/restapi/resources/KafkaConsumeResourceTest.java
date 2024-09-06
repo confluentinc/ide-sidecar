@@ -16,6 +16,9 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.matching.EqualToPattern;
 import io.confluent.idesidecar.restapi.cache.ClusterCache;
@@ -23,6 +26,7 @@ import io.confluent.idesidecar.restapi.connections.CCloudConnectionState;
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
 import io.confluent.idesidecar.restapi.models.ClusterType;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
+import io.confluent.idesidecar.restapi.testutil.JsonMatcher;
 import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
 import io.confluent.idesidecar.restapi.util.CCloudTestUtil;
 import io.quarkiverse.wiremock.devservice.ConnectWireMock;
@@ -274,9 +278,12 @@ public class KafkaConsumeResourceTest {
   }
 
   @Test
-  void testConsumeRecordsAvroSchemaTopic() {
+  void testConsumeRecordsAvroSchemaTopic() throws JsonProcessingException {
     var avroResponseFromCCloud = loadResource("message-viewer/ccloud-records-consume-avro.json");
     var expectedAvroResponse = loadResource("message-viewer/consume-avro-topic-expected-response.json");
+    ObjectMapper objectMapper = new ObjectMapper();
+    JsonNode expectedNode = objectMapper.readTree(expectedAvroResponse);
+
     setupSimpleConsumeApi();
     given()
         .when()
@@ -291,9 +298,9 @@ public class KafkaConsumeResourceTest {
         .statusCode(200)
         .header(
             KafkaConsumeResource.KAFKA_CONSUMED_BYTES_RESPONSE_HEADER,
-            String.valueOf(expectedAvroResponse.length())
+            String.valueOf(expectedNode.toString().length())
         )
-        .body(is(loadResource("message-viewer/consume-avro-topic-expected-response.json")));
+        .body(JsonMatcher.matchesJson(expectedAvroResponse));
 
     // It's not only enough to check for 200 since we simply fall back to returning
     // raw bytes if we fail to deserialize the message.
@@ -308,10 +315,13 @@ public class KafkaConsumeResourceTest {
   }
 
   @Test
-  void testConsumeRecordsProtoSchemaTopic() {
+  void testConsumeRecordsProtoSchemaTopic() throws JsonProcessingException {
     var protobufResponseFromCCloud = loadResource(
         "message-viewer/ccloud-records-consume-proto.json");
     var expectedProtoResponse = loadResource("message-viewer/consume-proto-topic-expected-response.json");
+    ObjectMapper objectMapper = new ObjectMapper();
+    JsonNode expectedNode = objectMapper.readTree(expectedProtoResponse);
+
     setupSimpleConsumeApi();
     given()
         .when()
@@ -324,12 +334,12 @@ public class KafkaConsumeResourceTest {
         )
         .then()
         .statusCode(200)
-        .body(is(expectedProtoResponse))
+        .body(JsonMatcher.matchesJson(expectedProtoResponse))
         .header(
             KafkaConsumeResource.KAFKA_CONSUMED_BYTES_RESPONSE_HEADER,
-            String.valueOf(expectedProtoResponse.length())
+            String.valueOf(expectedNode.toString().length())
         )
-        .body(is(expectedProtoResponse));
+        .body(JsonMatcher.matchesJson(expectedProtoResponse));
 
     // It's not only enough to check for 200 since we simply fall back to returning
     // raw bytes if we fail to deserialize the message.
