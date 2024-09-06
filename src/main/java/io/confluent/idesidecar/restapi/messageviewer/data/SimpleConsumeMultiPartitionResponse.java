@@ -15,7 +15,6 @@ import java.util.List;
  * @param topicName The name of the Kafka topic.
  * @param partitionDataList The list of partition data consumed.
  */
-@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(Include.NON_NULL)
 @RegisterForReflection
 public record SimpleConsumeMultiPartitionResponse(
@@ -67,7 +66,9 @@ public record SimpleConsumeMultiPartitionResponse(
       @JsonProperty("headers") List<PartitionConsumeRecordHeader> headers,
       @JsonProperty("key") JsonNode key,
       @JsonProperty("value") JsonNode value,
+      @JsonInclude(JsonInclude.Include.NON_NULL)
       @JsonProperty("key_decoding_error") String keyDecodingError,
+      @JsonInclude(JsonInclude.Include.NON_NULL)
       @JsonProperty("value_decoding_error") String valueDecodingError,
       @JsonProperty("exceeded_fields") ExceededFields exceededFields
   ) {
