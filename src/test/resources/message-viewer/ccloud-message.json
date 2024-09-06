@@ -14,6 +14,8 @@
           "value": "{\"name\":\"Ravi\",\"id\":18}",
           "timestamp_type": "CREATE_TIME",
           "headers": [],
+          "key_decoding_error":null,
+          "value_decoding_error":null,
           "exceeded_fields": {
             "key" : false,
             "value": false
@@ -33,6 +35,8 @@
           "value": "{\"name\":\"another-name\",\"id\":20}",
           "timestamp_type": "CREATE_TIME",
           "headers": [],
+          "key_decoding_error":null,
+          "value_decoding_error":null,
           "exceeded_fields": {
             "key" : false,
             "value": false
