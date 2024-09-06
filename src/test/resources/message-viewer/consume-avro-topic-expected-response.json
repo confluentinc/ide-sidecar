@@ -36,10 +36,7 @@
               "state": "State_",
               "zipcode": 39532
             }
-          },
-          "key_decoding_error": null,
-          "value_decoding_error": null,
-          "exceeded_fields": null
+          }
         },
         {
           "partition_id": 0,
@@ -71,10 +68,7 @@
               "state": "State_77",
               "zipcode": 60476
             }
-          },
-          "key_decoding_error": null,
-          "value_decoding_error": null,
-          "exceeded_fields": null
+          }
         }
       ]
     }
