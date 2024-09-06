@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
@@ -42,6 +43,8 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
 
   private static final int SR_CACHE_SIZE = 10;
+
+  static final Map<String, SchemaRegistryClient> SR_CLIENTS_BY_SR_ID = new ConcurrentHashMap<>();
 
   @Inject
   WebClientFactory webClientFactory;
@@ -150,7 +153,15 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
       MessageViewerContext context,
       SimpleConsumeMultiPartitionResponse data
   ) {
-    SchemaRegistryClient schemaRegistryClient = createSchemaRegistryClient(context);
+    var schemaRegistry = context.getSchemaRegistryInfo();
+    if (schemaRegistry == null) {
+      return;
+    }
+    var schemaRegistryClient = SR_CLIENTS_BY_SR_ID.computeIfAbsent(
+        schemaRegistry.id(),
+        k -> createSchemaRegistryClient(context)
+    );
+
     if (schemaRegistryClient != null) {
       for (var partitionData : data.partitionDataList()) {
         for (var record : partitionData.records()) {
