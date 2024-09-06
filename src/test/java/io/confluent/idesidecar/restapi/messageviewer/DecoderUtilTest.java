@@ -251,7 +251,7 @@ public class DecoderUtilTest {
         0, 100L, System.currentTimeMillis(),
         SimpleConsumeMultiPartitionResponse.TimestampType.CREATE_TIME,
         Collections.emptyList(),
-        keyNode, valueNode, null // No decoding errors
+        keyNode, valueNode, null // NULL exceeding fields
     );
 
     // Create PartitionConsumeData with the record
