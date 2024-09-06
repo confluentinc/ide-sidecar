@@ -384,7 +384,7 @@ public class KafkaConsumeResourceTest {
         .body("{\"from_beginning\": true,\"max_poll_records\":5}")
         .post(
             "/gateway/v1/clusters/%s/topics/%s/partitions/-/consume"
-                .formatted(KAFKA_CLUSTER_ID, AVRO_SCHEMA_TOPIC_NAME)
+                .formatted(KAFKA_CLUSTER_ID, SCHEMA_LESS_TOPIC_NAME)
         )
         .then()
         .statusCode(200);
@@ -392,7 +392,7 @@ public class KafkaConsumeResourceTest {
     wireMock.verifyThat(
         exactly(1),
         postRequestedFor(urlEqualTo(
-            CCLOUD_SIMPLE_CONSUME_API_PATH.formatted(KAFKA_CLUSTER_ID, AVRO_SCHEMA_TOPIC_NAME))
+            CCLOUD_SIMPLE_CONSUME_API_PATH.formatted(KAFKA_CLUSTER_ID, SCHEMA_LESS_TOPIC_NAME))
         ).withRequestBody(equalToJson("{\"from_beginning\": true,\"max_poll_records\":5}"))
     );
   }
