@@ -208,26 +208,32 @@ public class DecoderUtilTest {
 
   @Test
   void parseJsonNodeShouldReturnEmptyStringWhenReceivingNullValue() {
-    assertEquals(new TextNode(""), DecoderUtil.parseJsonNode(null));
+    var resp = DecoderUtil.parseJsonNode(null, null, "foo");
+    assertEquals(new TextNode(""), resp.getValue());
+    assertNull(resp.getErrorMessage());
   }
 
   @Test
   void parseJsonNodeShouldReturnEmptyStringWhenReceivingEmptyByteArray() {
     var emptyArray = new byte[0];
-    assertEquals(new TextNode(""), DecoderUtil.parseJsonNode(emptyArray));
+    var resp = DecoderUtil.parseJsonNode(emptyArray, null, "foo");
+    assertEquals(new TextNode(""), resp.getValue());
+    assertNull(resp.getErrorMessage());
   }
 
   @Test
   void parseJsonNodeShouldReturnStringIfByteArrayDoesNotStartWithMagicByte() {
     var rawString = "Team DTX";
     var byteArray = rawString.getBytes(StandardCharsets.UTF_8);
-    assertEquals(new TextNode(rawString), DecoderUtil.parseJsonNode(byteArray));
+    var resp = DecoderUtil.parseJsonNode(byteArray, null, "foo");
+    assertEquals(new TextNode(rawString), resp.getValue());
+    assertNull(resp.getErrorMessage());
   }
 
   @Test
   void parseJsonNodeShouldReturnStringIfParsingByteArrayWithMagicByteFails() {
     // Build byte array with magic byte as prefix
-    var rawString = "Team DTX";
+    var rawString = "{\"Team\" : \"DTX\"}";
     var byteArray = rawString.getBytes(StandardCharsets.UTF_8);
     var byteArrayWithMagicByte = new byte[1 + byteArray.length];
     byteArrayWithMagicByte[0] = DecoderUtil.MAGIC_BYTE;
@@ -235,9 +241,9 @@ public class DecoderUtilTest {
 
     // Expect parsing to fail, should return byte array as string
     var magicByteAsString = new String(new byte[]{DecoderUtil.MAGIC_BYTE}, StandardCharsets.UTF_8);
-    assertEquals(
-        new TextNode(magicByteAsString + rawString),
-        DecoderUtil.parseJsonNode(byteArrayWithMagicByte));
+    var resp = DecoderUtil.parseJsonNode(byteArrayWithMagicByte, null, "foo");
+    assertEquals(new TextNode(magicByteAsString + rawString), resp.getValue());
+    assertEquals("schema-registry is null", resp.getErrorMessage());
   }
 
   @Test
