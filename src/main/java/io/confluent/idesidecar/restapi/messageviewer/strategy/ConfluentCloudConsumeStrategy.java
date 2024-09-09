@@ -11,6 +11,8 @@ import io.confluent.idesidecar.restapi.exceptions.ProcessorFailedException;
 import io.confluent.idesidecar.restapi.messageviewer.DecoderUtil;
 import io.confluent.idesidecar.restapi.messageviewer.MessageViewerContext;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
+import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeData;
+import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeRecord;
 import io.confluent.idesidecar.restapi.proxy.ProxyHttpClient;
 import io.confluent.idesidecar.restapi.util.RequestHeadersConstants;
 import io.confluent.idesidecar.restapi.util.WebClientFactory;
@@ -46,6 +48,8 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
 
   static final Map<String, SchemaRegistryClient> SCHEMA_REGISTRY_CLIENTS_BY_ID =
       new ConcurrentHashMap<>();
+
+  static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   @Inject
   WebClientFactory webClientFactory;
@@ -103,14 +107,13 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
       return handleEmptyOrNullResponseFromCCloud(context);
     }
 
-    ObjectMapper objectMapper = new ObjectMapper();
     try {
-      SimpleConsumeMultiPartitionResponse data = objectMapper.readValue(
+      SimpleConsumeMultiPartitionResponse data = OBJECT_MAPPER.readValue(
           rawTopicRowsResponse,
           SimpleConsumeMultiPartitionResponse.class
       );
-      decodeSchemaEncodedValues(context, data);
-      context.setConsumeResponse(data);
+      var processedPartitionResponse = decodeSchemaEncodedValues(context, data);
+      context.setConsumeResponse(processedPartitionResponse);
       return context;
     } catch (JsonProcessingException e) {
       LOGGER.error("Error parsing the messages from ccloud : \n message ='"
@@ -147,50 +150,86 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
   /**
    * Decodes schema-encoded values in the MultiPartitionConsumeResponse.
    *
-   * @param context The MessageViewerContext.
-   * @param data    The MultiPartitionConsumeResponse to decode.
+   * @param context     The MessageViewerContext.
+   * @param rawResponse The MultiPartitionConsumeResponse to decode.
    */
-  private void decodeSchemaEncodedValues(
+  private SimpleConsumeMultiPartitionResponse decodeSchemaEncodedValues(
       MessageViewerContext context,
-      SimpleConsumeMultiPartitionResponse data
+      SimpleConsumeMultiPartitionResponse rawResponse
   ) {
     var schemaRegistry = context.getSchemaRegistryInfo();
     if (schemaRegistry == null) {
-      return;
+      return rawResponse;
     }
+
     var schemaRegistryClient = SCHEMA_REGISTRY_CLIENTS_BY_ID.computeIfAbsent(
         schemaRegistry.id(),
         k -> createSchemaRegistryClient(context)
     );
+    if (schemaRegistryClient == null) {
+      return rawResponse;
+    }
 
-    if (schemaRegistryClient != null) {
-      for (var partitionData : data.partitionDataList()) {
-        for (var record : partitionData.records()) {
-          // Decode the key
-          DecoderUtil.DecodedResult decodedKeyResult = decodeValue(
+    var processedPartitions = rawResponse
+        .partitionDataList().stream()
+        .map(partitionData -> processPartition(partitionData, context, schemaRegistryClient))
+        .toList();
+
+    return new SimpleConsumeMultiPartitionResponse(
+        rawResponse.clusterId(),
+        rawResponse.topicName(),
+        processedPartitions
+    );
+  }
+
+  /**
+   * Decodes the keys and the values of all records of a specific partition.
+   *
+   * @param partitionConsumeData The unprocessed data of the partition.
+   * @param context              The context of the message viewer API.
+   * @param schemaRegistryClient The schema registry client to use for decoding the keys/values.
+   * @return All records of the partition with decoded keys and values.
+   */
+  private PartitionConsumeData processPartition(
+      PartitionConsumeData partitionConsumeData,
+      MessageViewerContext context,
+      SchemaRegistryClient schemaRegistryClient
+  ) {
+
+    var processedRecords = partitionConsumeData
+        .records().stream()
+        .map(record -> {
+          var decodedRecordKey = decodeValue(
               record.key(),
               schemaRegistryClient,
               context.getTopicName()
           );
-
-          // Decode the value
-          DecoderUtil.DecodedResult decodedValueResult = decodeValue(
+          var decodedRecordValue = decodeValue(
               record.value(),
               schemaRegistryClient,
               context.getTopicName()
           );
 
-          updateRecord(
-              partitionData,
-              record,
-              decodedKeyResult.getValue(),
-              decodedValueResult.getValue(),
-              decodedKeyResult.getErrorMessage(),
-              decodedValueResult.getErrorMessage()
+          return new PartitionConsumeRecord(
+              record.partitionId(),
+              record.offset(),
+              record.timestamp(),
+              record.timestampType(),
+              record.headers(),
+              decodedRecordKey.getValue(),
+              decodedRecordValue.getValue(),
+              decodedRecordKey.getErrorMessage(),
+              decodedRecordValue.getErrorMessage(),
+              record.exceededFields()
           );
-        }
-      }
-    }
+        })
+        .toList();
+
+    return new PartitionConsumeData(
+        partitionConsumeData.partitionId(),
+        partitionConsumeData.nextOffset(),
+        processedRecords
+    );
   }
 
   /**
@@ -210,41 +249,6 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
       return DecoderUtil.decodeAndDeserialize(rawValue, schemaRegistryClient, topicName);
     }
     return new DecoderUtil.DecodedResult(value, null);
-  }
-
-  /**
-   * Updates a PartitionConsumeRecord with the decoded key and value.
-   *
-   * @param partitionData The PartitionConsumeData containing the record to update.
-   * @param record        The PartitionConsumeRecord to update.
-   * @param decodedKey    The decoded key if decoding is successful else null
-   * @param decodedValue  The decoded value if decoding is successful else null.
-   * @param keyErrorMessage The error message for key decoding if it failed, else null.
-   * @param valueErrorMessage The error message for value decoding if it failed, else null.
-   */
-  private void updateRecord(
-      SimpleConsumeMultiPartitionResponse.PartitionConsumeData partitionData,
-      SimpleConsumeMultiPartitionResponse.PartitionConsumeRecord record,
-      JsonNode decodedKey,
-      JsonNode decodedValue,
-      String keyErrorMessage,
-      String valueErrorMessage
-  ) {
-    SimpleConsumeMultiPartitionResponse.PartitionConsumeRecord updatedRecord =
-        new SimpleConsumeMultiPartitionResponse.PartitionConsumeRecord(
-            record.partitionId(),
-            record.offset(),
-            record.timestamp(),
-            record.timestampType(),
-            record.headers(),
-            decodedKey,
-            decodedValue,
-            keyErrorMessage,
-            valueErrorMessage,
-            record.exceededFields()
-        );
-    int recordIndex = partitionData.records().indexOf(record);
-    partitionData.records().set(recordIndex, updatedRecord);
   }
 
   /**
