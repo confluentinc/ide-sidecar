@@ -37,8 +37,6 @@ global_job_config:
 blocks:
   - name: "Build and Test"
     dependencies: []
-    skip:
-      when: "change_in('/.versions/ide-sidecar-version.txt', {pipeline_file: 'ignore', default_branch: 'main'})"
     task:
       jobs:
         - name: "Build JARs and Unit Test"
@@ -51,16 +49,14 @@ blocks:
 
   - name: "Release"
     dependencies: ["Build and Test"]
-    skip:
-      when: "pull_request =~ '.*' or change_in('/.versions/ide-sidecar-version.txt', {pipeline_file: 'ignore', default_branch: 'main'})"
+    run:
+      when: "branch =~ '.*'"
     task:
       jobs:
         - name: "Release"
           commands:
-            # Normally, the chore bump version commits have "[ci skip]" in the commit message to prevent
-            # running builds for just a version bump, BUT, here we unset the CI_SKIP so that Semaphore
-            # does trigger a build for the commit and the tag that is created from it.
-            - make CI_SKIP="" release-ci
+            - make release-ci
+            - sem-context put release_version=$(cat .versions/ide-sidecar-version.txt)
 
   - name: "Update third party notices PR"
     dependencies: ["Release"]
@@ -85,15 +81,125 @@ blocks:
                 make update-third-party-notices-pr
               fi
 
+  - name: "Build Native Executable (MacOS AMD64)"
+    dependencies: ["Release"]
+    run:
+      when: "branch =~ '.*'"
+    task:
+      agent:
+        machine:
+          type: s1-prod-macos-13-5-amd64
+      prologue:
+        commands_file: build_native_executable_prologue.sh
+      env_vars:
+        - name: OS
+          value: macos
+        - name: ARCH
+          value: amd64
+      jobs:
+        - name: "Build Native Executable (MacOS AMD64)"
+          commands:
+            - make mvn-package-native
+            - make ci-sign-notarize-macos-executable
+      epilogue:
+        on_pass:
+          commands_file: build_native_executable_epilogue.sh
+
+  - name: "Build Native Executable (MacOS ARM64)"
+    dependencies: ["Release"]
+    run:
+      when: "branch =~ '.*'"
+    task:
+      agent:
+        machine:
+          type: s1-prod-macos-13-5-arm64
+      prologue:
+        commands_file: build_native_executable_prologue.sh
+      env_vars:
+        - name: OS
+          value: macos
+        - name: ARCH
+          value: arm64
+      jobs:
+        - name: "Build Native Executable (MacOS ARM64)"
+          commands:
+            - make mvn-package-native
+            - make ci-sign-notarize-macos-executable
+      epilogue:
+        on_pass:
+          commands_file: build_native_executable_epilogue.sh
+
+  - name: "Build Native Executable (Linux AMD64)"
+    dependencies: ["Release"]
+    run:
+      when: "branch =~ '.*'"
+    task:
+      agent:
+        machine:
+          type: s1-prod-ubuntu20-04-amd64-1
+      prologue:
+        commands_file: build_native_executable_prologue.sh
+      env_vars:
+        - name: OS
+          value: linux
+        - name: ARCH
+          value: amd64
+      jobs:
+        - name: "Build Native Executable (Linux AMD64)"
+          commands:
+            - make mvn-package-native
+      epilogue:
+        on_pass:
+          commands_file: build_native_executable_epilogue.sh
+
+  - name: "Build Native Executable (Linux ARM64)"
+    dependencies: ["Release"]
+    run:
+      when: "branch =~ '.*'"
+    task:
+      agent:
+        machine:
+          type: s1-prod-ubuntu20-04-arm64-1
+      prologue:
+        commands_file: build_native_executable_prologue.sh
+      env_vars:
+        - name: OS
+          value: linux
+        - name: ARCH
+          value: arm64
+      jobs:
+        - name: "Build Native Executable (Linux ARM64)"
+          commands:
+            - make mvn-package-native
+      epilogue:
+        on_pass:
+          commands_file: build_native_executable_epilogue.sh
+
+  - name: "Upload native executables to GitHub Releases"
+    run:
+      when: "branch =~ '.*'"
+    dependencies:
+      - "Build Native Executable (MacOS AMD64)"
+      - "Build Native Executable (MacOS ARM64)"
+      - "Build Native Executable (Linux AMD64)"
+      - "Build Native Executable (Linux ARM64)"
+    task:
+      prologue:
+        commands:
+          - checkout
+          - git fetch --unshallow
+          - git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'
+          - git fetch --all --tags
+          - git checkout $(sem-context get release_version)
+          - artifact pull workflow native-executables/
+      jobs:
+        - name: "Upload native executables to GitHub Releases"
+          commands:
+            - make upload-artifacts-to-github-release
+
 after_pipeline:
   task:
     jobs:
       - name: Publish Test Results to Semaphore
         commands:
           - test-results gen-pipeline-report || echo "Could not publish pipeline test result report due to probably no test results to publish"
-
-promotions:
-  - name: Multi-Arch Native Executable Builds
-    pipeline_file: multi-arch-builds.yml
-    auto_promote:
-      when: "result = 'passed' and branch =~ '.*' and change_in('/.versions/ide-sidecar-version.txt', {default_branch: 'main'})"
