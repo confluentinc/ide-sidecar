@@ -45,7 +45,8 @@ blocks:
             - make test
             # TODO: Remove this
             - sem-context put foo=bar
-            - echo "Got: $(sem-context get foo)"
+            - |
+              echo "Got: $(sem-context get foo)"
         - name: "Build Native Executable and Test"
           commands:
             - make mvn-verify-native-executable
