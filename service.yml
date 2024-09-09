@@ -5,6 +5,8 @@ make:
   enable: false
 git:
   enable: true
+  hook:
+    enable: true
 github:
   enable: true
 semaphore:
