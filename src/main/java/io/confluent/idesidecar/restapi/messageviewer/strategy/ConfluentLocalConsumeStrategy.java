@@ -6,6 +6,7 @@ import io.confluent.idesidecar.restapi.messageviewer.SimpleConsumer;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequest;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
 import io.confluent.idesidecar.restapi.util.WebClientFactory;
+import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -80,6 +81,9 @@ public class ConfluentLocalConsumeStrategy implements ConsumeStrategy {
     Properties props = new Properties();
     props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
         context.getKafkaClusterInfo().bootstrapServers());
+    props.put(
+        AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,
+        context.getSchemaRegistryInfo().uri());
 
     SimpleConsumer simpleConsumer = new SimpleConsumer(props);
     SimpleConsumeMultiPartitionResponse simpleConsumeResp =
