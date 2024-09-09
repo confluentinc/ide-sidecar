@@ -5,7 +5,7 @@ make:
   enable: false
 git:
   enable: true
-  hook:
+  hooks:
     enable: true
 github:
   enable: true
