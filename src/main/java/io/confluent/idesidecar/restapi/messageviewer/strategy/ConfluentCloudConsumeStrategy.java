@@ -47,6 +47,8 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
   static final Map<String, SchemaRegistryClient> SCHEMA_REGISTRY_CLIENTS_BY_ID =
       new ConcurrentHashMap<>();
 
+  static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
   @Inject
   WebClientFactory webClientFactory;
 
@@ -103,9 +105,8 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
       return handleEmptyOrNullResponseFromCCloud(context);
     }
 
-    ObjectMapper objectMapper = new ObjectMapper();
     try {
-      SimpleConsumeMultiPartitionResponse data = objectMapper.readValue(
+      SimpleConsumeMultiPartitionResponse data = OBJECT_MAPPER.readValue(
           rawTopicRowsResponse,
           SimpleConsumeMultiPartitionResponse.class
       );
