@@ -43,7 +43,7 @@ You may find the following `make` commands useful during development:
 All contributions are welcome! Please refer to the [Contribution Guidelines](CONTRIBUTING.md) for more information
 on how to contribute to this project.
 
-## Release process
+## Release Process
 
 To release a new version of IDE Sidecar, you need to raise a PR against the `main` branch,
 get it reviewed, and then merge it. Every new commit (except those with `[ci skip]` in the
