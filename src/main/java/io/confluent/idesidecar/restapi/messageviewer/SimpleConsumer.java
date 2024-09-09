@@ -5,6 +5,8 @@ import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPart
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeRecord;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeRecordHeader;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.TimestampType;
+import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
+import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -27,12 +29,14 @@ import org.apache.kafka.common.TopicPartition;
 /**
  * Implements consuming records from Confluent Local Kafka topics for the message viewer API.
  */
+// CHECKSTYLE:OFF: ClassDataAbstractionCoupling
 public class SimpleConsumer {
   private static final Duration POLL_TIMEOUT = Duration.ofSeconds(1);
   private static final int MAX_POLLS = 5;
   private static final int MAX_POLL_RECORDS_LIMIT = 2_000;
   private static final int MAX_RESPONSE_BYTES = 20 * 1024 * 1024; // 20 MB
   private static final int DEFAULT_MESSAGE_MAX_BYTES = 4 * 1024 * 1024; // 4MB
+  private SchemaRegistryClient schemaRegistryClient;
 
   final Properties baseConsumerConfig;
 
@@ -40,6 +44,13 @@ public class SimpleConsumer {
     var props = new Properties();
     // Custom properties
     props.putAll(baseConfig);
+
+    // Create Schema Registry client
+    String schemaRegistryUrl = (String) props.getOrDefault("schema.registry.url", null);
+    if (schemaRegistryUrl != null && !schemaRegistryUrl.isEmpty()) {
+      this.schemaRegistryClient = new CachedSchemaRegistryClient(schemaRegistryUrl, 100);
+    }
+
     // Default properties
     props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
         "org.apache.kafka.common.serialization.ByteArrayDeserializer");
@@ -318,8 +329,15 @@ public class SimpleConsumer {
         && consumerRecord.key().length > messageMaxBytes;
     boolean valueExceeded = consumerRecord.value() != null
         && consumerRecord.value().length > messageMaxBytes;
-    var keyNode = keyExceeded ? null : DecoderUtil.parseJsonNode(consumerRecord.key());
-    var valueNode = valueExceeded ? null : DecoderUtil.parseJsonNode(consumerRecord.value());
+
+    var keyResult = keyExceeded ? null : DecoderUtil.parseJsonNode(
+        consumerRecord.key(),
+        schemaRegistryClient,
+        consumerRecord.topic());
+    var valueResult = valueExceeded ? null : DecoderUtil.parseJsonNode(
+        consumerRecord.value(),
+        schemaRegistryClient,
+        consumerRecord.topic());
 
     return new PartitionConsumeRecord(
         consumerRecord.partition(),
@@ -327,9 +345,12 @@ public class SimpleConsumer {
         consumerRecord.timestamp(),
         TimestampType.valueOf(consumerRecord.timestampType().name()),
         headers,
-        keyNode,
-        valueNode,
+        keyResult == null ? null : keyResult.getValue(),
+        valueResult == null ? null : valueResult.getValue(),
+        keyResult == null ? null : keyResult.getErrorMessage(),
+        valueResult == null ? null : valueResult.getErrorMessage(),
         new ExceededFields(keyExceeded, valueExceeded)
     );
   }
 }
+// CHECKSTYLE:ON: ClassDataAbstractionCoupling
