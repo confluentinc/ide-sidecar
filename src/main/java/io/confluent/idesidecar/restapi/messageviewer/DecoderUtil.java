@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.fasterxml.jackson.dataformat.avro.AvroFactory;
 import com.fasterxml.jackson.dataformat.avro.AvroMapper;
+import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.JsonFormat;
@@ -15,12 +16,13 @@ import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientExcept
 import io.confluent.kafka.serializers.KafkaAvroDeserializer;
 import io.confluent.kafka.serializers.json.KafkaJsonSchemaDeserializer;
 import io.confluent.kafka.serializers.protobuf.KafkaProtobufDeserializer;
-import io.quarkus.logging.Log;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.Collections;
+import java.util.Set;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.io.Encoder;
@@ -122,6 +124,8 @@ public class DecoderUtil {
   ) throws IOException, RestClientException {
     if (bytes == null || bytes.length == 0) {
       return OBJECT_MAPPER.nullNode();
+    } else if (schemaRegistryClient == null) {
+      return OBJECT_MAPPER.readTree(new String(bytes, StandardCharsets.UTF_8));
     }
 
     final int schemaId = getSchemaIdFromRawBytes(bytes);
@@ -177,7 +181,7 @@ public class DecoderUtil {
     KafkaProtobufDeserializer<?> protobufDeserializer = new KafkaProtobufDeserializer<>(sr);
     DynamicMessage protobufMessage = (DynamicMessage) protobufDeserializer.deserialize(
         topicName, bytes);
-
+    // Get a set of all field descriptors (empty in this case, as you want to print all fields)
     JsonFormat.Printer printer = JsonFormat.printer()
         .includingDefaultValueFields()
         .preservingProtoFieldNames();
@@ -203,27 +207,43 @@ public class DecoderUtil {
   }
 
   /**
-   * Parses a JSON byte array into a JsonNode. If the byte array cannot be parsed as JSON,
-   * it is returned as a TextNode containing the original string representation of the byte array.
+   * Parses a byte array into a JsonNode, handling various data formats:
+   * 1. Schema Registry encoded data
+   * 2. Plain string data
+   * If the byte array is Schema Registry encoded (starts with the MAGIC_BYTE),
+   * it is decoded and deserialized using the provided SchemaRegistryClient.
+   * Otherwise, it is treated as a plain string and wrapped in a TextNode.
    *
-   * @param bytes the JSON byte array to parse
-   * @return the parsed JsonNode, or a TextNode containing the original string if parsing fails
+   * @param bytes The byte array to parse
+   * @param schemaRegistryClient The SchemaRegistryClient used for deserialization of
+   *                             Schema Registry encoded data
+   * @param topic The name of the topic, used for Schema Registry deserialization
+   * @return A DecodedResult containing either:
+   *         - A JsonNode representing the decoded and deserialized data (for Schema Registry
+   *           encoded data)
+   *         - A TextNode containing the original string representation of the byte array (
+   *           for other cases)
+   *         The DecodedResult also includes any error message encountered during processing
    */
-  public static JsonNode parseJsonNode(byte[] bytes) {
+  public static DecodedResult parseJsonNode(
+      byte[] bytes,
+      SchemaRegistryClient schemaRegistryClient,
+      String topic) {
     if (bytes == null || bytes.length == 0) {
-      return new TextNode("");
+      return new DecodedResult(new TextNode(""), null);
     }
     if (bytes[0] == MAGIC_BYTE) {
-      // Jackson will automatically encode the map as a simple JSON object and the byte array value
-      // into a Base64-encoded string.
-      // TODO(Ravi) Deserialize the encoded bytes into JsonNode object.
-      try {
-        return OBJECT_MAPPER.readTree(bytes);
-      } catch (IOException e) {
-        Log.errorf("Error while converting bytes to Json. '%s'", e.getMessage());
-        return new TextNode(new String(bytes, StandardCharsets.UTF_8));
+      if (schemaRegistryClient != null) {
+        return decodeAndDeserialize(
+            Base64.getEncoder().encodeToString(bytes),
+            schemaRegistryClient,
+            topic
+        );
+      } else {
+        return new DecodedResult(new TextNode(new String(bytes, StandardCharsets.UTF_8)),
+            "schema-registry is null");
       }
     }
-    return new TextNode(new String(bytes, StandardCharsets.UTF_8));
+    return new DecodedResult(new TextNode(new String(bytes, StandardCharsets.UTF_8)), null);
   }
 }
