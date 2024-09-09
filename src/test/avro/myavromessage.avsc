@@ -1,0 +1,10 @@
+{
+  "type": "record",
+  "name": "MyAvroMessage",
+  "namespace": "io.confluent.idesidecar.restapi.avro",
+  "fields": [
+    {"name": "id", "type": "string"},
+    {"name": "value", "type": "string"}
+  ],
+  "javaPackage": "io.confluent.idesidecar.restapi.avro"
+}
