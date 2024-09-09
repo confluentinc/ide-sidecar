@@ -1,9 +1,16 @@
 repos:
-  -   repo: https://github.com/confluentinc/gitleaks
-      rev: v7.5.0
-      hooks:
-        -   id: gitleaks
-            name: default-rules
-            args:
-              - --verbose
+  - repo: https://github.com/confluentinc/gitleaks
+    rev: v7.6.1.1
+    hooks:
+      - id: gitleaks
+        args:
+          - --verbose
 
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v2.2.3
+    hooks:
+      - id: check-merge-conflict
+      - id: check-yaml
+        exclude: ^mk-include/|^charts/
+
+fail_fast: false
