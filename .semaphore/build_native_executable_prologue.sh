@@ -1,5 +1,4 @@
 checkout
-git fetch --unshallow
 git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'
 git fetch --all --tags
 git checkout $(sem-context get release_version)
