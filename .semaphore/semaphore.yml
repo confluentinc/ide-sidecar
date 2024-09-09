@@ -24,7 +24,6 @@ queue:
 global_job_config:
   prologue:
     commands:
-      - sem-version java 21
       - checkout
       - make ci-bin-sem-cache-restore
       - make docker-login-ci
@@ -38,6 +37,9 @@ blocks:
   - name: "Build and Test"
     dependencies: []
     task:
+      prologue:
+        commands:
+          - sem-version java 21
       jobs:
         - name: "Build JARs and Unit Test"
           commands:
@@ -65,6 +67,7 @@ blocks:
     task:
       prologue:
         commands:
+          - sem-version java 21
           - . vault-setup
       jobs:
         - name: "Update Third Party Notices PR"
