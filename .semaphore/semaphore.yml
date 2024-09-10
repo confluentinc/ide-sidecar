@@ -212,4 +212,4 @@ after_pipeline:
 
 promotions:
   - name: "Windows Build Test Release"
-    pipeline_file: .semaphore/windows.yml
+    pipeline_file: windows.yml
