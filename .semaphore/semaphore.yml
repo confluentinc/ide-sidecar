@@ -36,6 +36,9 @@ global_job_config:
 blocks:
   - name: "Build and Test"
     dependencies: []
+    # TODO: Remove me
+    skip:
+      when: true
     task:
       prologue:
         commands:
@@ -51,8 +54,9 @@ blocks:
 
   - name: "Release"
     dependencies: ["Build and Test"]
-    run:
-      when: "branch =~ '.*'"
+    # TODO: Remove me
+    skip:
+      when: true
     task:
       jobs:
         - name: "Release"
@@ -205,3 +209,7 @@ after_pipeline:
       - name: Publish Test Results to Semaphore
         commands:
           - test-results gen-pipeline-report || echo "Could not publish pipeline test result report due to probably no test results to publish"
+
+promotions:
+  - name: "Windows Build Test Release"
+    pipeline_file: .semaphore/windows.yml
