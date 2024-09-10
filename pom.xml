@@ -453,7 +453,7 @@
                   <workingDirectory>${maven.multiModuleProjectDirectory}</workingDirectory>
                   <arguments>
                     <argument>/c</argument>
-                    <argument>Compress-Archive src/main/resources/static/templates src/main/resources/static/templates.zip &amp;&amp; Compress-Archive src/test/resources/static/templates src/test/resources/static/templates.zip</argument>
+                    <argument>make zip-templates-windows</argument>
                   </arguments>
                 </configuration>
               </execution>
