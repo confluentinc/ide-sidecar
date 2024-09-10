@@ -33,7 +33,10 @@ global_job_config:
 blocks:
   - name: "Build Native Executable (Windows AMD64)"
     task:
+      env_vars:
+        - name: MAVEN_PROFILES
+          value: "!unix,windows"
       jobs:
         - name: "Build Native Executable (MacOS AMD64)"
           commands:
-            - MAVEN_PROFILES=!unix,windows make mvn-package-native
+            - make mvn-package-native
