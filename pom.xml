@@ -395,9 +395,13 @@
       </build>
     </profile>
     <profile>
+      <!-- The "unix" profile holds common configuration across Linux and MacOS. Can be disabled on Windows with
+       -DskipUnix -->
       <id>unix</id>
       <activation>
-        <activeByDefault>true</activeByDefault>
+        <property>
+          <name>!skipUnix</name>
+        </property>
       </activation>
       <build>
         <plugins>
