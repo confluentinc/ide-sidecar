@@ -23,6 +23,7 @@ import io.confluent.kafka.schemaregistry.json.JsonSchemaProvider;
 import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchema;
 import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchemaProvider;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Base64;
@@ -31,6 +32,8 @@ import java.util.List;
 import java.util.Objects;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import org.apache.avro.Schema.Parser;
 
 
 public class DecoderUtilTest {
@@ -41,6 +44,8 @@ public class DecoderUtilTest {
   private static final byte[] VALID_BYTES = new byte[]{0, 1, 2, 3, 4};
   private static final byte[] INVALID_BYTES = new byte[]{0, 1, 2};
   private static final int SCHEMA_ID = 1;
+  private final String topicName = "test-topic";
+
 
   private SchemaRegistryClient schemaRegistryClient;
 
@@ -293,5 +298,43 @@ public class DecoderUtilTest {
     // Then
     assertTrue(serializedRecord.contains("key_decoding_error"), "keyDecodingError should be present in the serialized JSON");
     assertTrue(serializedRecord.contains("value_decoding_error"), "valueDecodingError should be present in the serialized JSON");
+  }
+
+
+  @Test
+  public void testDeserializeToJson_SchemaFetchFailure_403Unauthorized_ThenCacheFailure() throws IOException, RestClientException {
+    // Register an unauthenticated schema ID (403 Unauthorized)
+    SimpleMockSchemaRegistryClient smc = new SimpleMockSchemaRegistryClient();
+    var avroSchema = new Parser().parse("{\"type\": \"record\", \"name\": \"TestRecord\", \"fields\": [{\"name\": \"testField\", \"type\": \"string\"}]}");
+    int schemaId = smc.register(100003, topicName + "-value", new AvroSchema(avroSchema));
+    smc.registerUnAuthenticated(schemaId);
+    byte[] rawBytes = createRawBytes(schemaId); // Mock the bytes with schema ID
+
+    // First attempt - will return error message due to unauthorized schema
+    DecoderUtil.DecodedResult firstResult = DecoderUtil.decodeAndDeserialize(Base64.getEncoder().encodeToString(rawBytes), smc, topicName);
+    assertNotNull(firstResult.getErrorMessage());
+    System.out.println(firstResult.getErrorMessage());
+    assertTrue(firstResult.getErrorMessage().contains("error code: 40301"));
+
+    // Second attempt - should skip schema fetching and return the same error message
+    DecoderUtil.DecodedResult secondResult = DecoderUtil.decodeAndDeserialize(Base64.getEncoder().encodeToString(rawBytes), smc, topicName);
+    assertNotNull(secondResult.getErrorMessage());
+    assertTrue(secondResult.getErrorMessage().contains("Skipping decoding until"));
+    assertTrue(secondResult.getErrorMessage().contains("due to a previous schema fetch failure"));
+  }
+
+  /**
+   * Helper method to create raw bytes with schema ID.
+   */
+  private byte[] createRawBytes(int schemaId) {
+    byte[] schemaIdBytes = ByteBuffer.allocate(5).put(DecoderUtil.MAGIC_BYTE).putInt(schemaId).array();
+    String sampleData = "{\"testField\":\"testValue\"}";
+    byte[] dataBytes = sampleData.getBytes(StandardCharsets.UTF_8);
+
+    // Combine schema ID and data bytes
+    byte[] combinedBytes = new byte[schemaIdBytes.length + dataBytes.length];
+    System.arraycopy(schemaIdBytes, 0, combinedBytes, 0, schemaIdBytes.length);
+    System.arraycopy(dataBytes, 0, combinedBytes, schemaIdBytes.length, dataBytes.length);
+    return combinedBytes;
   }
 }
