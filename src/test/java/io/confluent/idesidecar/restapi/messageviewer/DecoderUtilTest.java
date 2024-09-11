@@ -312,13 +312,11 @@ public class DecoderUtilTest {
 
     // First attempt - will return error message due to unauthorized schema
     DecoderUtil.DecodedResult firstResult = DecoderUtil.decodeAndDeserialize(Base64.getEncoder().encodeToString(rawBytes), smc, topicName);
-    System.out.println(firstResult.getErrorMessage());
     assertNotNull(firstResult.getErrorMessage());
     assertTrue(firstResult.getErrorMessage().contains("error code: 40301"));
 
     // Second attempt - should skip schema fetching and return the same error message
     DecoderUtil.DecodedResult secondResult = DecoderUtil.decodeAndDeserialize(Base64.getEncoder().encodeToString(rawBytes), smc, topicName);
-    System.out.println(secondResult.getErrorMessage());
     assertNotNull(secondResult.getErrorMessage());
     assertTrue(secondResult.getErrorMessage().contains("Failed to retrieve schema"));
   }
