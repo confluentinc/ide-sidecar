@@ -72,9 +72,13 @@ public final class ZipUtil {
       while ((entry = zipInputStream.getNextEntry()) != null) {
         Path entryFile = outputDir.resolve(entry.getName());
         if (entry.isDirectory()) {
-          createDirectoriesWithRetry(entryFile);
+          Files.createDirectories(entryFile);
         } else {
-          createDirectoriesWithRetry(entryFile);
+          Path parentDir = entryFile.getParent();
+          if (parentDir != null && !Files.exists(parentDir)) {
+            Files.createDirectories(parentDir);
+          }
+
           try (FileOutputStream outputStream = new FileOutputStream(entryFile.toFile())) {
             byte[] buffer = new byte[1024];
             int length;
@@ -85,22 +89,6 @@ public final class ZipUtil {
         }
         zipInputStream.closeEntry();
       }
-    }
-  }
-
-  private static void createDirectoriesWithRetry(Path entryFile) throws IOException {
-    try {
-      Files.createDirectories(entryFile.getParent());
-    } catch (FileAlreadyExistsException ignored) {
-      Log.errorf(
-          "File already exists: %s (isFile: %s)",
-          entryFile.getParent(),
-          entryFile.toFile().isFile()
-      );
-      // Try deleting the file if it already exists
-      FileUtils.forceDelete(entryFile.getParent().toFile());
-      // Try creating the directories again
-      Files.createDirectories(entryFile.getParent());
     }
   }
 
