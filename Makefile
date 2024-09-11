@@ -98,7 +98,6 @@ collect-notices-binary: clean mvn-package-native-sources-only
 
 .PHONY: prepend-native-image-cmd-windows
 prepend-native-image-cmd-windows:
-	# Define the path using the JAVA_HOME environment variable
     $$filePath = "$Env:JAVA_HOME\bin\native-image.cmd" \
     $$prependText = "call \"C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat\"`r`n" \
     $$fileContent = Get-Content -Raw -Path $$filePath \

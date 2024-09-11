@@ -39,6 +39,8 @@ blocks:
       env_vars:
         - name: MAVEN_PROFILES
           value: "!unix,windows"
+        - name: QUARKUS_NATIVE_ADDITIONAL_BUILD_ARGS
+          value: "-H:-CheckToolchain"
       jobs:
         - name: "Build Native Executable (MacOS AMD64)"
           commands:
