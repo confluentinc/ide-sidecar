@@ -318,6 +318,40 @@ public class DecoderUtilTest {
     assertTrue(secondResult.getErrorMessage().contains("Failed to retrieve schema"));
   }
 
+  @Test
+  public void testDecodeAndDeserializeProtobuf_UnauthorizedSchemaRegistry() throws IOException, RestClientException {
+    var schemaStr = new String(Objects.requireNonNull(
+        Thread
+            .currentThread()
+            .getContextClassLoader()
+            .getResourceAsStream(
+                "message-viewer/schema-protobuf.proto")).readAllBytes());
+
+    SimpleMockSchemaRegistryClient smc = new SimpleMockSchemaRegistryClient();
+    String raw = "AAABhqMACJTg0YGSLBD/7x8aBkl0ZW1fMyGiH5dsO2sUQCoXCgdDaXR5XzgzEghTdGF0ZV81NBiO/wQ=";
+    byte[] decodedBytes = Base64.getDecoder().decode(raw);
+    int actualSchemaId = DecoderUtil.getSchemaIdFromRawBytes(decodedBytes);
+    smc.registerUnAuthenticated(actualSchemaId);
+
+    // An error to fetch schema, should result in response containing the original base64 string.
+    var resp = DecoderUtil.decodeAndDeserialize(
+        raw,
+        smc,
+        "test-subject");
+    assertNotNull(resp.getErrorMessage());
+    assertTrue(resp.getErrorMessage().contains("error code: 40301"));
+    assertEquals(raw, resp.getValue().asText());
+
+    // The second fetch from cache should also return original rawBase64 String.
+    var resp2 = DecoderUtil.decodeAndDeserialize(
+        raw,
+        smc,
+        "test-subject");
+    assertNotNull(resp2.getErrorMessage());
+    assertTrue(resp2.getErrorMessage().contains("Failed to retrieve schema"));
+    assertEquals(raw, resp2.getValue().asText());
+  }
+
   /**
    * Helper method to create raw bytes with schema ID.
    */

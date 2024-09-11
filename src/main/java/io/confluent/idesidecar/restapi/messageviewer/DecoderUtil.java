@@ -134,8 +134,11 @@ public class DecoderUtil {
     // Check if schema retrieval has failed recently
     String cachedError = schemaFetchErrorCache.getIfPresent(schemaId);
     if (cachedError != null) {
+      // If an error occurred, return the original Base64-encoded string
+      // from the message in the topic.
+      final String rawBase64 = Base64.getEncoder().encodeToString(bytes);
       return new DecodedResult(
-          TextNode.valueOf(new String(bytes, StandardCharsets.UTF_8)),
+          TextNode.valueOf(rawBase64),
           cachedError
       );
     }
