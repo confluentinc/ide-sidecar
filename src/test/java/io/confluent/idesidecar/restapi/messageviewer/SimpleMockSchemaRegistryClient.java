@@ -64,7 +64,7 @@ public class SimpleMockSchemaRegistryClient extends MockSchemaRegistryClient {
   @Override
   public ParsedSchema getSchemaById(int id) throws IOException, RestClientException {
     if (unauthenticated.contains(id)) {
-      throw new RestClientException("User is denied operation on this server.", 403, 40301);
+      throw new RestClientException("User is denied operation on this server (mock).", 403, 40301);
     }
     return idCache.get(id);
   }

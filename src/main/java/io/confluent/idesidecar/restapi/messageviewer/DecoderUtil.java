@@ -87,10 +87,10 @@ public class DecoderUtil {
       byte[] decodedBytes = Base64.getDecoder().decode(rawBase64);
       return deserializeToJson(decodedBytes, schemaRegistryClient, topicName);
     } catch (IllegalArgumentException e) {
-      Log.error("Error decoding Base64 string: " + rawBase64, e);
+      Log.error("Error decoding Base64 string: %s", rawBase64, e);
       return new DecodedResult(TextNode.valueOf(rawBase64), e.getMessage());
     } catch (IOException | RestClientException e) {
-      Log.error("Error deserializing: " + rawBase64, e);
+      Log.error("Error deserializing: %s", rawBase64, e);
       return new DecodedResult(TextNode.valueOf(rawBase64), e.getMessage());
     }
   }
@@ -157,7 +157,6 @@ public class DecoderUtil {
       Instant retryTime = Instant.now().plus(CACHE_FAILED_SCHEMA_ID_FETCH_DURATION);
       DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
           .withZone(ZoneId.systemDefault());
-
       Log.errorf(
           "Failed to retrieve schema with ID %d. Will try again in %d seconds at %s. Error: %s",
           schemaId,
@@ -166,7 +165,6 @@ public class DecoderUtil {
           e.getMessage(),
           e
       );
-
       String errorMessage = String.format(
           "Failed to retrieve schema with ID %d: %s",
           schemaId,
