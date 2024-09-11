@@ -39,11 +39,9 @@ global_job_config:
       - choco install visualstudio2022-workload-vctools -y --verbose
       # Is this crazy? Yes. Am I going to do it anyway? Also yes.
       - ls "C:\VS 2022 BT\"
-      - ls "C:\VS 2022 BT\2022\"
-      - ls "C:\VS 2022 BT\2022\Community\"
-      - ls "C:\VS 2022 BT\2022\Community\VC\"
-      - ls "C:\VS 2022 BT\2022\Community\VC\Auxiliary\"
-      - ls "C:\VS 2022 BT\2022\Community\VC\Auxiliary\Build\"
+      - ls "C:\VS 2022 BT\VC\"
+      - ls "C:\VS 2022 BT\VC\Auxiliary\"
+      - ls "C:\VS 2022 BT\VC\Auxiliary\Build\"
       - Get-Content -Raw -Path "C:\VS 2022 BT\2022\Community\VC\Auxiliary\Build\vcvars64.bat"
       - |
         $filePath = "$Env:JAVA_HOME\bin\native-image.cmd"
