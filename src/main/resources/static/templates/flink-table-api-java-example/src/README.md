@@ -95,6 +95,7 @@ build on top of each other.
 Use Maven to build a JAR file of the project. Make sure you have at least Java 11 installed.
 The included Maven wrapper `mvnw` is useful for a consistent Maven version, you don't need to install Maven. 
 ```bash
+chmod +x mvnw
 ./mvnw clean package
 ```
 
