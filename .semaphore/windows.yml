@@ -30,8 +30,8 @@ global_job_config:
       - echo $Env:PATH
       - echo $Env:JAVA_HOME
       # https://community.chocolatey.org/packages/visualstudio2022buildtools#individual
-      - choco install visualstudio2022buildtools -y
-      - call "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat"
+      - choco install visualstudio2022buildtools -y --package-parameters "--locale en-US"
+      - make prepend-native-image-cmd-windows
 
 blocks:
   - name: "Build Native Executable (Windows AMD64)"

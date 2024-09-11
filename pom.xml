@@ -436,6 +436,9 @@
           <family>windows</family>
         </os>
       </activation>
+      <properties>
+        <quarkus.native.additional-build-args>-H:-CheckToolchain</quarkus.native.additional-build-args>
+      </properties>
       <build>
         <plugins>
           <plugin>
