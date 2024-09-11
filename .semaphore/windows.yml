@@ -23,7 +23,12 @@ global_job_config:
       - $Env:PATH += ";C:\Program Files\Git\bin"
       - $Env:VAULT_ADDR = "https://vault.cireops.gcp.internal.confluent.cloud"
       - vault login -no-print token=$(vault write -field=token "auth/semaphore_self_hosted/login" role="default" jwt="$Env:SEMAPHORE_OIDC_TOKEN")
-      - Invoke-WebRequest -OutFile graalvm-community-jdk-21.0.2_windows-x64_bin.zip -Uri https://github.com/graalvm/graalvm-ce-builds/releases/download/jdk-21.0.2/graalvm-community-jdk-21.0.2_windows-x64_bin.zip
+      - cache restore graal_download_zip
+      - |
+        if (-not (Test-Path graalvm-community-jdk-21.0.2_windows-x64_bin.zip)) {
+          Invoke-WebRequest -OutFile graalvm-community-jdk-21.0.2_windows-x64_bin.zip -Uri https://github.com/graalvm/graalvm-ce-builds/releases/download/jdk-21.0.2/graalvm-community-jdk-21.0.2_windows-x64_bin.zip
+        }
+      - cache store graal_download_zip graalvm-community-jdk-21.0.2_windows-x64_bin.zip
       - expand-archive -path .\graalvm-community-jdk-21.0.2_windows-x64_bin.zip -destinationpath C:\semaphore-agent\graalvm
       - $Env:JAVA_HOME = "C:\semaphore-agent\graalvm\graalvm-community-openjdk-21.0.2+13.1"
       - $Env:PATH += ";C:\semaphore-agent\graalvm\graalvm-community-openjdk-21.0.2+13.1\bin"
@@ -52,6 +57,13 @@ global_job_config:
 blocks:
   - name: "Build Native Executable (Windows AMD64)"
     task:
+      prologue:
+        commands:
+          - cache restore windows_maven_cache
+      epilogue:
+        always:
+          commands:
+            - cache store windows_maven_cache "$Env:USERPROFILE\.m2\repository"
       env_vars:
         - name: MAVEN_PROFILES
           value: "!unix,windows"
