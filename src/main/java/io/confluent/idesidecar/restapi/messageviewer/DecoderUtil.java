@@ -24,27 +24,26 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.io.Encoder;
 import org.apache.avro.io.EncoderFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Utility class for decoding record keys and values.
  */
 @SuppressWarnings("checkstyle:ClassDataAbstractionCoupling")
 public class DecoderUtil {
-  private static final Logger log = LoggerFactory.getLogger(DecoderUtil.class);
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
   private static final ObjectMapper avroObjectMapper = new AvroMapper(new AvroFactory());
   public static final byte MAGIC_BYTE = 0x0;
 
   private static final Duration CACHE_FAILED_SCHEMA_ID_FETCH_DURATION = Duration.ofSeconds(30);
 
-  private static final Cache<Integer, String> schemaFetchFailureCache = Caffeine.newBuilder()
+  private static final Cache<Integer, String> schemaFetchErrorCache = Caffeine.newBuilder()
       .expireAfterWrite(CACHE_FAILED_SCHEMA_ID_FETCH_DURATION)
       .build();
 
@@ -88,10 +87,10 @@ public class DecoderUtil {
       byte[] decodedBytes = Base64.getDecoder().decode(rawBase64);
       return deserializeToJson(decodedBytes, schemaRegistryClient, topicName);
     } catch (IllegalArgumentException e) {
-      log.error("Error decoding Base64 string: " + rawBase64, e);
+      Log.error("Error decoding Base64 string: " + rawBase64, e);
       return new DecodedResult(TextNode.valueOf(rawBase64), e.getMessage());
     } catch (IOException | RestClientException e) {
-      log.error("Error deserializing: " + rawBase64, e);
+      Log.error("Error deserializing: " + rawBase64, e);
       return new DecodedResult(TextNode.valueOf(rawBase64), e.getMessage());
     }
   }
@@ -136,11 +135,11 @@ public class DecoderUtil {
     final int schemaId = getSchemaIdFromRawBytes(bytes);
 
     // Check if schema retrieval has failed recently
-    String cachedError = schemaFetchFailureCache.getIfPresent(schemaId);
+    String cachedError = schemaFetchErrorCache.getIfPresent(schemaId);
     if (cachedError != null) {
       return new DecodedResult(
           TextNode.valueOf(new String(bytes, StandardCharsets.UTF_8)),
-         cachedError
+          cachedError
       );
     }
 
@@ -155,17 +154,25 @@ public class DecoderUtil {
       };
       return new DecodedResult(decodedJson, null);
     } catch (RestClientException e) {
+      Instant retryTime = Instant.now().plus(CACHE_FAILED_SCHEMA_ID_FETCH_DURATION);
+      DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
+          .withZone(ZoneId.systemDefault());
+
+      Log.errorf(
+          "Failed to retrieve schema with ID %d. Will try again in %d seconds at %s. Error: %s",
+          schemaId,
+          CACHE_FAILED_SCHEMA_ID_FETCH_DURATION.getSeconds(),
+          timeFormatter.format(retryTime),
+          e.getMessage(),
+          e
+      );
+
       String errorMessage = String.format(
           "Failed to retrieve schema with ID %d: %s",
           schemaId,
-          e.getMessage());
-      Instant retryTime = Instant.now().plus(CACHE_FAILED_SCHEMA_ID_FETCH_DURATION);
-      log.error(String.format(
-          "Failed to retrieve schema with ID %d. Will try again at %s. Error: %s",
-          schemaId,
-          retryTime,
-          errorMessage), e);
-      schemaFetchFailureCache.put(schemaId, errorMessage);
+          e.getMessage()
+      );
+      schemaFetchErrorCache.put(schemaId, errorMessage);
       throw e;
     }
   }
