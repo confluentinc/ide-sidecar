@@ -68,7 +68,11 @@ public final class ZipUtil {
         var zipInputStream = new ZipInputStream(byteArrayInputStream)) {
       ZipEntry entry;
       while ((entry = zipInputStream.getNextEntry()) != null) {
-        Path entryFile = outputDir.resolve(entry.getName());
+        // Normalize separators, required for Windows compatibility
+        String entryName = entry.getName().replace('\\', '/');
+        // Resolve and normalize path
+        Path entryFile = outputDir.resolve(entryName).normalize();
+
         if (entry.isDirectory()) {
           Files.createDirectories(entryFile);
         } else {
