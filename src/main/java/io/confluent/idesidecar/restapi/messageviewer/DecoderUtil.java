@@ -40,9 +40,7 @@ public class DecoderUtil {
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
   private static final ObjectMapper avroObjectMapper = new AvroMapper(new AvroFactory());
   public static final byte MAGIC_BYTE = 0x0;
-
   private static final Duration CACHE_FAILED_SCHEMA_ID_FETCH_DURATION = Duration.ofSeconds(30);
-
   private static final Cache<Integer, String> schemaFetchErrorCache = Caffeine.newBuilder()
       .expireAfterWrite(CACHE_FAILED_SCHEMA_ID_FETCH_DURATION)
       .build();
@@ -133,7 +131,6 @@ public class DecoderUtil {
     }
 
     final int schemaId = getSchemaIdFromRawBytes(bytes);
-
     // Check if schema retrieval has failed recently
     String cachedError = schemaFetchErrorCache.getIfPresent(schemaId);
     if (cachedError != null) {

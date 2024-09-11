@@ -35,7 +35,6 @@ import org.junit.jupiter.api.Test;
 
 import org.apache.avro.Schema.Parser;
 
-
 public class DecoderUtilTest {
 
   private final ObjectMapper objectMapper = new ObjectMapper();
@@ -45,7 +44,6 @@ public class DecoderUtilTest {
   private static final byte[] INVALID_BYTES = new byte[]{0, 1, 2};
   private static final int SCHEMA_ID = 1;
   private final String topicName = "test-topic";
-
 
   private SchemaRegistryClient schemaRegistryClient;
 
@@ -299,7 +297,6 @@ public class DecoderUtilTest {
     assertTrue(serializedRecord.contains("key_decoding_error"), "keyDecodingError should be present in the serialized JSON");
     assertTrue(serializedRecord.contains("value_decoding_error"), "valueDecodingError should be present in the serialized JSON");
   }
-
 
   @Test
   public void testDeserializeToJson_SchemaFetchFailure_403Unauthorized_ThenCacheFailure() throws IOException, RestClientException {
