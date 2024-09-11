@@ -32,16 +32,22 @@ global_job_config:
       # https://community.chocolatey.org/packages/visualstudio2022buildtools#individual
       - choco install visualstudio2022buildtools -y --verbose --package-parameters "--locale en-US --path install=C:\VS 2022 BT --path shared=C:\VS 2022 Shared --path cache=C:\VS 2022 Cache"
       - choco install visualstudio2022-workload-vctools -y --verbose
-      - ls C:\
-#      - Get-Content -Raw -Path "C:\VS 2022 BT\2022\Community\VC\Auxiliary\Build\vcvars64.bat"
-#      - |
-#        $filePath = "$Env:JAVA_HOME\bin\native-image.cmd"
-#        $prependText = "call `"C:\VS 2022 BT\2022\Community\VC\Auxiliary\Build\vcvars64.bat`"`r`n"
-#        $fileContent = Get-Content -Raw -Path $filePath
-#        $newContent = $prependText + $fileContent
-#        Set-Content -Path $filePath -Value $newContent
-#        Write-Host "Prepended the native-image.cmd file with the Visual Studio 2022 Community Edition vcvars64.bat path."
-#        Get-Content -Path $filePath
+      # Is this crazy? Yes. Am I going to do it anyway? Also yes.
+      - ls C:\VS 2022 BT\
+      - ls C:\VS 2022 BT\2022\
+      - ls C:\VS 2022 BT\2022\Community\
+      - ls C:\VS 2022 BT\2022\Community\VC\
+      - ls C:\VS 2022 BT\2022\Community\VC\Auxiliary\
+      - ls C:\VS 2022 BT\2022\Community\VC\Auxiliary\Build\
+      - Get-Content -Raw -Path "C:\VS 2022 BT\2022\Community\VC\Auxiliary\Build\vcvars64.bat"
+      - |
+        $filePath = "$Env:JAVA_HOME\bin\native-image.cmd"
+        $prependText = "call `"C:\VS 2022 BT\2022\Community\VC\Auxiliary\Build\vcvars64.bat`"`r`n"
+        $fileContent = Get-Content -Raw -Path $filePath
+        $newContent = $prependText + $fileContent
+        Set-Content -Path $filePath -Value $newContent
+        Write-Host "Prepended the native-image.cmd file with the Visual Studio 2022 Community Edition vcvars64.bat path."
+        Get-Content -Path $filePath
 
 blocks:
   - name: "Build Native Executable (Windows AMD64)"
@@ -49,8 +55,8 @@ blocks:
       env_vars:
         - name: MAVEN_PROFILES
           value: "!unix,windows"
-        - name: QUARKUS_NATIVE_ADDITIONAL_BUILD_ARGS
-          value: "-H:-CheckToolchain"
+#        - name: QUARKUS_NATIVE_ADDITIONAL_BUILD_ARGS
+#          value: "-H:-CheckToolchain"
       jobs:
         - name: "Build Native Executable (MacOS AMD64)"
           commands:
