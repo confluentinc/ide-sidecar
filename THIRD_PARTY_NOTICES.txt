@@ -7,9 +7,9 @@
 
 The following 3rd-party software packages may be used by or distributed with git@github.com:confluentinc/ide-sidecar.git. Any information relevant to third-party vendors listed below are collected using common, reasonable means.
 
-Date generated: 2024-8-26
+Date generated: 2024-9-11
 
-Revision ID: a5f5cafb3ec2c1a4a1b857bc7007d7c822b0d24f
+Revision ID: 9152fcefe5560ce2e2d8b62202aaa309503c02f9
 
 ================================================================================
 ================================================================================
@@ -1983,6 +1983,62 @@ SOFTWARE.
 * Package Info *
 
 Package Download URL: https://repo1.maven.org/maven2/com/aayushatharva/brotli4j/brotli4j/1.16.0/brotli4j-1.16.0-sources.jar
+
+--------------------------------------------------------------------------------
+Package Title: Caffeine cache (3.1.8)
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+Apache-2.0
+
+
+Copyright 2014 Ben Manes. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+See the License for the specific language governing permissions and limitations under the License.
+
+
+* Other Licenses *
+CC0-1.0
+
+
+<<endOptional>>
+CC0 1.0 Universal<<endOptional>>
+Statement of Purpose
+The laws of most jurisdictions throughout the world automatically confer exclusive Copyright and Related Rights (defined below) upon the creator and subsequent owner(s) (each and all, an "owner") of an original work of authorship and/or a database (each, a "Work").
+Certain owners wish to permanently relinquish those rights to a Work for the purpose of contributing to a commons of creative, cultural and scientific works ("Commons") that the public can reliably and without fear of later claims of infringement build upon, modify, incorporate in other works, reuse and redistribute as freely as possible in any form whatsoever and for any purposes, including without limitation commercial purposes. These owners may contribute to the Commons to promote the ideal of a free culture and the further production of creative, cultural and scientific works, or to gain reputation or greater distribution for their Work in part through the use and efforts of others.
+For these and/or other purposes and motivations, and without any expectation of additional consideration or compensation, the person associating CC0 with a Work (the "Affirmer"), to the extent that he or she is an owner of Copyright and Related Rights in the Work, voluntarily elects to apply CC0 to the Work and publicly distribute the Work under its terms, with knowledge of his or her Copyright and Related Rights in the Work and the meaning and intended legal effect of CC0 on those rights.
+   1. Copyright and Related Rights. A Work made available under CC0 may be protected by copyright and related or neighboring rights ("Copyright and Related Rights"). Copyright and Related Rights include, but are not limited to, the following:
+      i. the right to reproduce, adapt, distribute, perform, display, communicate, and translate a Work;
+      ii. moral rights retained by the original author(s) and/or performer(s);
+      iii. publicity and privacy rights pertaining to a person's image or likeness depicted in a Work;
+      iv. rights protecting against unfair competition in regards to a Work, subject to the limitations in paragraph 4(a), below;
+      v. rights protecting the extraction, dissemination, use and reuse of data in a Work;
+      vi. database rights (such as those arising under Directive 96/9/EC of the European Parliament and of the Council of 11 March 1996 on the legal protection of databases, and under any national implementation thereof, including any amended or successor version of such directive); and
+      vii. other similar, equivalent or corresponding rights throughout the world based on applicable law or treaty, and any national implementations thereof.
+   2. Waiver. To the greatest extent permitted by, but not in contravention of, applicable law, Affirmer hereby overtly, fully, permanently, irrevocably and unconditionally waives, abandons, and surrenders all of Affirmer's Copyright and Related Rights and associated claims and causes of action, whether now known or unknown (including existing as well as future claims and causes of action), in the Work (i) in all territories worldwide, (ii) for the maximum duration provided by applicable law or treaty (including future time extensions), (iii) in any current or future medium and for any number of copies, and (iv) for any purpose whatsoever, including without limitation commercial, advertising or promotional purposes (the "Waiver"). Affirmer makes the Waiver for the benefit of each member of the public at large and to the detriment of Affirmer's heirs and successors, fully intending that such Waiver shall not be subject to revocation, rescission, cancellation, termination, or any other legal or equitable action to disrupt the quiet enjoyment of the Work by the public as contemplated by Affirmer's express Statement of Purpose.
+   3. Public License Fallback. Should any part of the Waiver for any reason be judged legally invalid or ineffective under applicable law, then the Waiver shall be preserved to the maximum extent permitted taking into account Affirmer's express Statement of Purpose. In addition, to the extent the Waiver is so judged Affirmer hereby grants to each affected person a royalty-free, non transferable, non sublicensable, non exclusive, irrevocable and unconditional license to exercise Affirmer's Copyright and Related Rights in the Work (i) in all territories worldwide, (ii) for the maximum duration provided by applicable law or treaty (including future time extensions), (iii) in any current or future medium and for any number of copies, and (iv) for any purpose whatsoever, including without limitation commercial, advertising or promotional purposes (the "License"). The License shall be deemed effective as of the date CC0 was applied by Affirmer to the Work. Should any part of the License for any reason be judged legally invalid or ineffective under applicable law, such partial invalidity or ineffectiveness shall not invalidate the remainder of the License, and in such case Affirmer hereby affirms that he or she will not (i) exercise any of his or her remaining Copyright and Related Rights in the Work or (ii) assert any associated claims and causes of action with respect to the Work, in either case contrary to Affirmer's express Statement of Purpose.
+   4. Limitations and Disclaimers.
+      a. No trademark or patent rights held by Affirmer are waived, abandoned, surrendered, licensed or otherwise affected by this document.
+      b. Affirmer offers the Work as-is and makes no representations or warranties of any kind concerning the Work, express, implied, statutory or otherwise, including without limitation warranties of title, merchantability, fitness for a particular purpose, non infringement, or the absence of latent or other defects, accuracy, or the present or absence of errors, whether or not discoverable, all to the greatest extent permissible under applicable law.
+      c. Affirmer disclaims responsibility for clearing rights of other persons that may apply to the Work or any use thereof, including without limitation any person's Copyright and Related Rights in the Work. Further, Affirmer disclaims responsibility for obtaining any necessary consents, permissions or other rights required for any use of the Work.
+      d. Affirmer understands and acknowledges that Creative Commons is not a party to this document and has no duty or obligation with respect to this CC0 or use of the Work.
+
+
+* Package Info *
+
+Authors: Ben Manes
+
+Package Download URL: https://repo1.maven.org/maven2/com/github/ben-manes/caffeine/caffeine/3.1.8/caffeine-3.1.8-sources.jar
 
 --------------------------------------------------------------------------------
 Package Title: CDI APIs (4.1.0)
@@ -10394,40 +10450,7 @@ Package Title: Jakarta XML Binding API (4.0.2)
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
-BSD-3-Clause, GPL-2.0-with-classpath-exception
-
-* BSD-3-Clause *
-
-
-    Copyright (c) 2017, 2018 Oracle and/or its affiliates. All rights reserved.
-   
-    Redistribution and use in source and binary forms, with or without
-    modification, are permitted provided that the following conditions
-    are met:
-   
-      - Redistributions of source code must retain the above copyright
-        notice, this list of conditions and the following disclaimer.
-   
-      - Redistributions in binary form must reproduce the above copyright
-        notice, this list of conditions and the following disclaimer in the
-        documentation and/or other materials provided with the distribution.
-   
-      - Neither the name of the Eclipse Foundation, Inc. nor the names of its
-        contributors may be used to endorse or promote products derived
-        from this software without specific prior written permission.
-   
-    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
-    IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-    THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-    PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
-    CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-    EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-    PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-    PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-    LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-    NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
+GPL-2.0-with-classpath-exception, BSD-3-Clause
 
 * GPL-2.0-with-classpath-exception *
 
@@ -10488,6 +10511,39 @@ Yoyodyne, Inc., hereby disclaims all copyright interest in the program `Gnomovis
 Class Path Exception
 Linking this library statically or dynamically with other modules is making a combined work based on this library. Thus, the terms and conditions of the GNU General Public License cover the whole combination.
 As a special exception, the copyright holders of this library give you permission to link this library with independent modules to produce an executable, regardless of the license terms of these independent modules, and to copy and distribute the resulting executable under terms of your choice, provided that you also meet, for each linked independent module, the terms and conditions of the license of that module. An independent module is a module which is not derived from or based on this library. If you modify this library, you may extend this exception to your version of the library, but you are not obligated to do so. If you do not wish to do so, delete this exception statement from your version.
+
+* BSD-3-Clause *
+
+
+    Copyright (c) 2017, 2018 Oracle and/or its affiliates. All rights reserved.
+   
+    Redistribution and use in source and binary forms, with or without
+    modification, are permitted provided that the following conditions
+    are met:
+   
+      - Redistributions of source code must retain the above copyright
+        notice, this list of conditions and the following disclaimer.
+   
+      - Redistributions in binary form must reproduce the above copyright
+        notice, this list of conditions and the following disclaimer in the
+        documentation and/or other materials provided with the distribution.
+   
+      - Neither the name of the Eclipse Foundation, Inc. nor the names of its
+        contributors may be used to endorse or promote products derived
+        from this software without specific prior written permission.
+   
+    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+    IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+    THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+    PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+    CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+    EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+    PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+    PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+    LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+    NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 
 
 * Other Licenses *
@@ -16034,7 +16090,28 @@ See the License for the specific language governing permissions and limitations 
 
 
 * Other Licenses *
-CC0-1.0, MIT
+MIT, CC0-1.0
+
+* MIT *
+
+Copyright (c) 2012 The Netty Project
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 
 * CC0-1.0 *
 
@@ -16059,27 +16136,6 @@ For these and/or other purposes and motivations, and without any expectation of 
       b. Affirmer offers the Work as-is and makes no representations or warranties of any kind concerning the Work, express, implied, statutory or otherwise, including without limitation warranties of title, merchantability, fitness for a particular purpose, non infringement, or the absence of latent or other defects, accuracy, or the present or absence of errors, whether or not discoverable, all to the greatest extent permissible under applicable law.
       c. Affirmer disclaims responsibility for clearing rights of other persons that may apply to the Work or any use thereof, including without limitation any person's Copyright and Related Rights in the Work. Further, Affirmer disclaims responsibility for obtaining any necessary consents, permissions or other rights required for any use of the Work.
       d. Affirmer understands and acknowledges that Creative Commons is not a party to this document and has no duty or obligation with respect to this CC0 or use of the Work.
-
-* MIT *
-
-Copyright (c) 2012 The Netty Project
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
 
 
 * Package Info *
@@ -25192,6 +25248,8 @@ Copyright (c) 2018,2020 Contributors to the Eclipse Foundation
 
 Copyright (c) 2021 Confluent Inc.
 
+Copyright (c) 2014 Ben Manes. All Rights Reserved.
+
 Copyright (c) 2023 Red Hat, Inc.
 
 Copyright (c) 2017 Confluent Inc.
@@ -25403,25 +25461,31 @@ BSD 3-Clause "New" or "Revised" License
 
 Copyright (c) 2018, 2024 Oracle and/or its affiliates. All rights reserved.
 
+Copyright (c) 2006, 2024 Oracle and/or its affiliates. All rights reserved.
+
+Copyright (c) 2004, 2021 Oracle and/or its affiliates. All rights reserved.
+
 Copyright (c) 2004, 2024 Oracle and/or its affiliates. All rights reserved.
 
 Copyright (c) 2005, 2024 Oracle and/or its affiliates. All rights reserved.
 
-Copyright (c) 2004, 2021 Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2005, 2021 Oracle and/or its affiliates. All rights reserved.
 
 Copyright (c) 2007, 2021 Oracle and/or its affiliates. All rights reserved.
 
-Copyright (c) 2018, 2023 Oracle and/or its affiliates. All rights reserved.
-
-Copyright (c) 2019 current.year} Eclipse Foundation. All rights reserved.<br>
+Copyright (c) 2003, 2024 Oracle and/or its affiliates. All rights reserved.
 
 Copyright (c) 2003, 2021 Oracle and/or its affiliates. All rights reserved.
 
-Copyright (c) 2003, 2024 Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2015, 2024 Oracle and/or its affiliates. All rights reserved.
 
-Copyright (c) 2005, 2021 Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2017, 2024 Oracle and/or its affiliates. All rights reserved.
 
-Copyright (c) 2006, 2024 Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2007, 2024 Oracle and/or its affiliates. All rights reserved.
+
+Copyright (c) 2006, 2021 Oracle and/or its affiliates. All rights reserved.
+
+Copyright (c) 2005, 2023 Oracle and/or its affiliates. All rights reserved.
 
 Copyright (c) 1997, 2024 Oracle and/or its affiliates. All rights reserved.
 
@@ -25463,19 +25527,13 @@ Copyright (c)  update}</update>
 
 Copyright (c)  ignoreyear}</ignoreYear>
 
-Copyright (c) 2007, 2024 Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2018, 2023 Oracle and/or its affiliates. All rights reserved.
 
-Copyright (c) 2006, 2021 Oracle and/or its affiliates. All rights reserved.
-
-Copyright (c) 2015, 2024 Oracle and/or its affiliates. All rights reserved.
-
-Copyright (c) 2017, 2024 Oracle and/or its affiliates. All rights reserved.
-
-Copyright (c) 2009, 2021 Oracle and/or its affiliates. All rights reserved.
-
-Copyright (c) 2005, 2023 Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2019 current.year} Eclipse Foundation. All rights reserved.<br>
 
 Copyright (c) 2020, 2021 Oracle and/or its affiliates. All rights reserved.
+
+Copyright (c) 2009, 2021 Oracle and/or its affiliates. All rights reserved.
 
 Copyright (c) 2021 Oracle and/or its affiliates. All rights reserved.
 
@@ -25491,13 +25549,13 @@ Copyright (c)  ignoreyear>false</copyright.ignoreyear>
 
 Copyright (c) 2016, 2024 Oracle and/or its affiliates. All rights reserved.
 
-Copyright (c) 2016, 2022 Oracle and/or its affiliates. All rights reserved.
-
 Copyright (c) 2019, 2020 Oracle and/or its affiliates. All rights reserved.
 
 Copyright (c) 2021, 2022 Oracle and/or its affiliates. All rights reserved.
 
 Copyright (c) 2015, 2022 Oracle and/or its affiliates. All rights reserved.
+
+Copyright (c) 2016, 2022 Oracle and/or its affiliates. All rights reserved.
 
 Copyright (c) 2015, 2020 Oracle and/or its affiliates. All rights reserved.
 
@@ -25675,6 +25733,8 @@ Creative Commons may be contacted at http://creativecommons.org/.
 
 --------------------------------------------------------------------------------
 Creative Commons Zero v1.0 Universal
+
+Copyright (c) 2015 Ben Manes. All Rights Reserved.
 
 Copyright (c) 2014 The Netty Project
 Creative Commons Legal Code
@@ -26416,4 +26476,4 @@ Public Domain
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
-Report Generated by FOSSA on 2024-8-26
+Report Generated by FOSSA on 2024-9-11
