@@ -1,11 +1,13 @@
 package io.confluent.idesidecar.scaffolding.util;
 
 import io.confluent.idesidecar.scaffolding.exceptions.TemplateRegistryIOException;
+import io.quarkus.logging.Log;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
@@ -72,7 +74,11 @@ public final class ZipUtil {
         if (entry.isDirectory()) {
           Files.createDirectories(entryFile);
         } else {
-          Files.createDirectories(entryFile.getParent());
+          Path parentDir = entryFile.getParent();
+          if (parentDir != null && !Files.exists(parentDir)) {
+            Files.createDirectories(parentDir);
+          }
+
           try (FileOutputStream outputStream = new FileOutputStream(entryFile.toFile())) {
             byte[] buffer = new byte[1024];
             int length;
