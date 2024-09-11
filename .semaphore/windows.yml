@@ -1,0 +1,69 @@
+version: v1.0
+name: windows-build-test-release
+agent:
+  machine:
+    type: s1-prod-windows
+
+auto_cancel:
+  running:
+    when: "branch != 'main'"
+
+execution_time_limit:
+  hours: 1
+
+queue:
+  - when: "branch != 'main'"
+    processing: parallel
+
+global_job_config:
+  prologue:
+    commands:
+      - checkout
+      - $Env:PATH += ";C:\Program Files (x86)\Windows Kits\10\bin\10.0.19041.0\x64"
+      - $Env:PATH += ";C:\Program Files\Git\bin"
+      - $Env:VAULT_ADDR = "https://vault.cireops.gcp.internal.confluent.cloud"
+      - vault login -no-print token=$(vault write -field=token "auth/semaphore_self_hosted/login" role="default" jwt="$Env:SEMAPHORE_OIDC_TOKEN")
+      - cache restore graal_download_zip
+      - |
+        if (-not (Test-Path graalvm-community-jdk-21.0.2_windows-x64_bin.zip)) {
+          Invoke-WebRequest -OutFile graalvm-community-jdk-21.0.2_windows-x64_bin.zip -Uri https://github.com/graalvm/graalvm-ce-builds/releases/download/jdk-21.0.2/graalvm-community-jdk-21.0.2_windows-x64_bin.zip
+        }
+      - cache store graal_download_zip graalvm-community-jdk-21.0.2_windows-x64_bin.zip
+      - expand-archive -path .\graalvm-community-jdk-21.0.2_windows-x64_bin.zip -destinationpath C:\semaphore-agent\graalvm
+      - $Env:JAVA_HOME = "C:\semaphore-agent\graalvm\graalvm-community-openjdk-21.0.2+13.1"
+      - $Env:PATH += ";C:\semaphore-agent\graalvm\graalvm-community-openjdk-21.0.2+13.1\bin"
+      - echo $Env:PATH
+      - echo $Env:JAVA_HOME
+      # https://community.chocolatey.org/packages/visualstudio2022buildtools#individual
+      - choco install visualstudio2022buildtools -y --verbose --package-parameters "--locale en-US --path install=C:\VS 2022 BT --path shared=C:\VS 2022 Shared --path cache=C:\VS 2022 Cache"
+      - choco install visualstudio2022-workload-vctools -y --verbose
+      - Get-Content -Raw -Path "C:\VS 2022 BT\VC\Auxiliary\Build\vcvars64.bat"
+      - |
+        $filePath = "$Env:JAVA_HOME\bin\native-image.cmd"
+        $prependText = "call `"C:\VS 2022 BT\VC\Auxiliary\Build\vcvars64.bat`"`r`n"
+        $fileContent = Get-Content -Raw -Path $filePath
+        $newContent = $prependText + $fileContent
+        Set-Content -Path $filePath -Value $newContent
+        Write-Host "Prepended the native-image.cmd file with the Visual Studio 2022 Community Edition vcvars64.bat path."
+        Get-Content -Path $filePath
+
+blocks:
+  - name: "Build Native Executable (Windows AMD64)"
+    task:
+      prologue:
+        commands:
+          - cache restore windows_maven_cache
+      epilogue:
+        always:
+          commands:
+            - cache store windows_maven_cache "$Env:USERPROFILE\.m2\repository"
+      env_vars:
+        - name: MAVEN_PROFILES
+          value: "!unix,windows"
+#        - name: QUARKUS_NATIVE_ADDITIONAL_BUILD_ARGS
+#          value: "-H:-CheckToolchain"
+      jobs:
+        - name: "Build Native Executable (MacOS AMD64)"
+          commands:
+            - make mvn-package-native-no-tests
+            - make mvn-package-native
