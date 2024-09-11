@@ -1,13 +1,11 @@
 package io.confluent.idesidecar.scaffolding.util;
 
 import io.confluent.idesidecar.scaffolding.exceptions.TemplateRegistryIOException;
-import io.quarkus.logging.Log;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
