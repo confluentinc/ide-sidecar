@@ -31,7 +31,14 @@ global_job_config:
       - echo $Env:JAVA_HOME
       # https://community.chocolatey.org/packages/visualstudio2022buildtools#individual
       - choco install visualstudio2022buildtools -y --package-parameters "--locale en-US"
-      - make prepend-native-image-cmd-windows
+      - |
+        $filePath = "$Env:JAVA_HOME\bin\native-image.cmd"
+        $prependText = "call `"C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat`"`r`n"
+        $fileContent = Get-Content -Raw -Path $filePath
+        $newContent = $prependText + $fileContent
+        Set-Content -Path $filePath -Value $newContent
+        Write-Host "Prepended the native-image.cmd file with the Visual Studio 2022 Community Edition vcvars64.bat path."
+        Get-Content -Path $filePath
 
 blocks:
   - name: "Build Native Executable (Windows AMD64)"

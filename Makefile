@@ -95,13 +95,3 @@ upload-artifacts-to-github-release:
 .PHONY: collect-notices-binary
 collect-notices-binary: clean mvn-package-native-sources-only
 	$(IDE_SIDECAR_SCRIPTS)/collect-notices-binary.sh target/native-sources/lib
-
-.PHONY: prepend-native-image-cmd-windows
-prepend-native-image-cmd-windows:
-    $$filePath = "$Env:JAVA_HOME\bin\native-image.cmd" \
-    $$prependText = "call \"C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat\"`r`n" \
-    $$fileContent = Get-Content -Raw -Path $$filePath \
-    $$newContent = $$prependText + $$fileContent \
-    Set-Content -Path $$filePath -Value $$newContent \
-    Write-Host "Prepended the native-image.cmd file with the Visual Studio 2022 Community Edition vcvars64.bat path." \
-    Get-Content -Path $$filePath
