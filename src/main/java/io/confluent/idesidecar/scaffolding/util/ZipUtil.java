@@ -72,7 +72,11 @@ public final class ZipUtil {
         if (entry.isDirectory()) {
           Files.createDirectories(entryFile);
         } else {
-          Files.createDirectories(entryFile.getParent());
+          Path parentDir = entryFile.getParent();
+          if (parentDir != null && !Files.exists(parentDir)) {
+            Files.createDirectories(parentDir);
+          }
+
           try (FileOutputStream outputStream = new FileOutputStream(entryFile.toFile())) {
             byte[] buffer = new byte[1024];
             int length;
