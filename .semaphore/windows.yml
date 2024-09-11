@@ -29,6 +29,8 @@ global_job_config:
       - $Env:PATH += ";C:\semaphore-agent\graalvm\graalvm-community-openjdk-21.0.2+13.1\bin"
       - echo $Env:PATH
       - echo $Env:JAVA_HOME
+      # https://community.chocolatey.org/packages/visualstudio2022buildtools#individual
+      - choco install visualstudio2022buildtools --package-parameters "--allWorkloads --includeRecommended --includeOptional --passive --locale en-US"
 
 blocks:
   - name: "Build Native Executable (Windows AMD64)"
@@ -39,5 +41,5 @@ blocks:
       jobs:
         - name: "Build Native Executable (MacOS AMD64)"
           commands:
-            - (make mvn-package-native) -or $true
             - make mvn-package-native-no-tests
+            - make mvn-package-native
