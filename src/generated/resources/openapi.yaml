@@ -836,6 +836,9 @@ components:
     HealthCheck:
       type: object
       properties:
+        data:
+          type: object
+          nullable: true
         status:
           enum:
           - UP
@@ -843,6 +846,3 @@ components:
           type: string
         name:
           type: string
-        data:
-          type: object
-          nullable: true

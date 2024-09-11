@@ -24,8 +24,6 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumWriter;
@@ -44,13 +42,9 @@ public class DecoderUtil {
   private static final ObjectMapper avroObjectMapper = new AvroMapper(new AvroFactory());
   public static final byte MAGIC_BYTE = 0x0;
 
-  private static final DateTimeFormatter formatter =
-      DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-      .withZone(ZoneId.systemDefault());
-
   private static final Duration CACHE_FAILED_SCHEMA_ID_FETCH_DURATION = Duration.ofSeconds(30);
 
-  private static final Cache<Integer, Boolean> schemaFetchFailureCache = Caffeine.newBuilder()
+  private static final Cache<Integer, String> schemaFetchFailureCache = Caffeine.newBuilder()
       .expireAfterWrite(CACHE_FAILED_SCHEMA_ID_FETCH_DURATION)
       .build();
 
@@ -142,14 +136,12 @@ public class DecoderUtil {
     final int schemaId = getSchemaIdFromRawBytes(bytes);
 
     // Check if schema retrieval has failed recently
-    if (Boolean.TRUE.equals(schemaFetchFailureCache.getIfPresent(schemaId))) {
-      String errorMessage = String.format(
-          "Skipping decoding until %s due to a previous schema fetch failure",
-          formatter.format(Instant.now().plus(Duration.ofMinutes(1)))
-      );
+    String cachedError = schemaFetchFailureCache.getIfPresent(schemaId);
+    if (cachedError != null) {
       return new DecodedResult(
           TextNode.valueOf(new String(bytes, StandardCharsets.UTF_8)),
-          errorMessage);
+         cachedError
+      );
     }
 
     try {
@@ -163,8 +155,17 @@ public class DecoderUtil {
       };
       return new DecodedResult(decodedJson, null);
     } catch (RestClientException e) {
-      log.error("Error retrieving schema by ID: " + schemaId, e);
-      schemaFetchFailureCache.put(schemaId, true);
+      String errorMessage = String.format(
+          "Failed to retrieve schema with ID %d: %s",
+          schemaId,
+          e.getMessage());
+      Instant retryTime = Instant.now().plus(CACHE_FAILED_SCHEMA_ID_FETCH_DURATION);
+      log.error(String.format(
+          "Failed to retrieve schema with ID %d. Will try again at %s. Error: %s",
+          schemaId,
+          retryTime,
+          errorMessage), e);
+      schemaFetchFailureCache.put(schemaId, errorMessage);
       throw e;
     }
   }
