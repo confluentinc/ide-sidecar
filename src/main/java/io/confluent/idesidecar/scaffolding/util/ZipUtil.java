@@ -1,11 +1,13 @@
 package io.confluent.idesidecar.scaffolding.util;
 
 import io.confluent.idesidecar.scaffolding.exceptions.TemplateRegistryIOException;
+import io.quarkus.logging.Log;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
@@ -70,9 +72,9 @@ public final class ZipUtil {
       while ((entry = zipInputStream.getNextEntry()) != null) {
         Path entryFile = outputDir.resolve(entry.getName());
         if (entry.isDirectory()) {
-          Files.createDirectories(entryFile);
+          createDirectoriesWithRetry(entryFile);
         } else {
-          Files.createDirectories(entryFile.getParent());
+          createDirectoriesWithRetry(entryFile);
           try (FileOutputStream outputStream = new FileOutputStream(entryFile.toFile())) {
             byte[] buffer = new byte[1024];
             int length;
@@ -83,6 +85,22 @@ public final class ZipUtil {
         }
         zipInputStream.closeEntry();
       }
+    }
+  }
+
+  private static void createDirectoriesWithRetry(Path entryFile) throws IOException {
+    try {
+      Files.createDirectories(entryFile.getParent());
+    } catch (FileAlreadyExistsException ignored) {
+      Log.errorf(
+          "File already exists: %s (isFile: %s)",
+          entryFile.getParent(),
+          entryFile.toFile().isFile()
+      );
+      // Try deleting the file if it already exists
+      FileUtils.forceDelete(entryFile.getParent().toFile());
+      // Try creating the directories again
+      Files.createDirectories(entryFile.getParent());
     }
   }
 
