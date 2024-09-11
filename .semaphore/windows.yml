@@ -32,12 +32,9 @@ global_job_config:
       - expand-archive -path .\graalvm-community-jdk-21.0.2_windows-x64_bin.zip -destinationpath C:\semaphore-agent\graalvm
       - $Env:JAVA_HOME = "C:\semaphore-agent\graalvm\graalvm-community-openjdk-21.0.2+13.1"
       - $Env:PATH += ";C:\semaphore-agent\graalvm\graalvm-community-openjdk-21.0.2+13.1\bin"
-      - echo $Env:PATH
-      - echo $Env:JAVA_HOME
-      # https://community.chocolatey.org/packages/visualstudio2022buildtools#individual
+      # GraalVM native-image builds require Visual Studio 2022 Build Tools and VC++ tools
       - choco install visualstudio2022buildtools -y --verbose --package-parameters "--locale en-US --path install=C:\VS 2022 BT --path shared=C:\VS 2022 Shared --path cache=C:\VS 2022 Cache"
       - choco install visualstudio2022-workload-vctools -y --verbose
-      - Get-Content -Raw -Path "C:\VS 2022 BT\VC\Auxiliary\Build\vcvars64.bat"
       - |
         $filePath = "$Env:JAVA_HOME\bin\native-image.cmd"
         $prependText = "call `"C:\VS 2022 BT\VC\Auxiliary\Build\vcvars64.bat`"`r`n"
@@ -45,10 +42,9 @@ global_job_config:
         $newContent = $prependText + $fileContent
         Set-Content -Path $filePath -Value $newContent
         Write-Host "Prepended the native-image.cmd file with the Visual Studio 2022 Community Edition vcvars64.bat path."
-        Get-Content -Path $filePath
 
 blocks:
-  - name: "Build Native Executable (Windows AMD64)"
+  - name: "Build and Test Native Executable (Windows AMD64)"
     task:
       prologue:
         commands:
@@ -60,10 +56,19 @@ blocks:
       env_vars:
         - name: MAVEN_PROFILES
           value: "!unix,windows"
-#        - name: QUARKUS_NATIVE_ADDITIONAL_BUILD_ARGS
-#          value: "-H:-CheckToolchain"
+        - name: OS
+          value: "windows"
+        - name: ARCH
+          value: "amd64"
       jobs:
-        - name: "Build Native Executable (MacOS AMD64)"
+        - name: "Build and Test Native Executable (Windows AMD64)"
           commands:
-            - make mvn-package-native-no-tests
-            - make mvn-package-native
+            # Builds native executable for Windows AMD64, runs unit and integration tests
+            - make mvn-verify-native-executable
+            # Push executable to semaphore
+            - |
+              $executable = Get-ChildItem -Recurse target -Filter "*-runner" | Select-Object -ExpandProperty FullName
+              $destination = "native-executables/$($executable | Split-Path -Leaf)-$($env:OS)-$($env:ARCH)"
+              artifact push workflow $executable --destination $destination
+            # Push executable to GH release
+            - gh release upload $(Get-Content .versions/ide-sidecar-version.txt) $executable --clobber
