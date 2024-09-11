@@ -34,6 +34,11 @@ zip-templates:
 	(cd src/main/resources/static && zip -r templates.zip templates/)
 	(cd src/test/resources/static && zip -r templates.zip templates/)
 
+.PHONY: zip-templates-windows
+zip-templates-windows:
+	powershell -Command Compress-Archive -Path src/main/resources/static/templates -DestinationPath src/main/resources/static/templates.zip
+	powershell -Command Compress-Archive -Path src/test/resources/static/templates -DestinationPath src/test/resources/static/templates.zip
+
 IDE_SIDECAR_SCRIPTS := $(CURDIR)/scripts
 IDE_SIDECAR_STATIC_RESOURCE_DIR := $(CURDIR)/src/main/resources/static
 GIT_REMOTE_NAME := origin
@@ -90,3 +95,14 @@ upload-artifacts-to-github-release:
 .PHONY: collect-notices-binary
 collect-notices-binary: clean mvn-package-native-sources-only
 	$(IDE_SIDECAR_SCRIPTS)/collect-notices-binary.sh target/native-sources/lib
+
+.PHONY: prepend-native-image-cmd-windows
+prepend-native-image-cmd-windows:
+	# Define the path using the JAVA_HOME environment variable
+    $$filePath = "$Env:JAVA_HOME\bin\native-image.cmd" \
+    $$prependText = "call \"C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat\"`r`n" \
+    $$fileContent = Get-Content -Raw -Path $$filePath \
+    $$newContent = $$prependText + $$fileContent \
+    Set-Content -Path $$filePath -Value $$newContent \
+    Write-Host "Prepended the native-image.cmd file with the Visual Studio 2022 Community Edition vcvars64.bat path." \
+    Get-Content -Path $$filePath
