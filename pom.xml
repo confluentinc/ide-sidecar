@@ -399,6 +399,74 @@
         </plugins>
       </build>
     </profile>
+    <profile>
+      <!-- The "unix" profile holds common configuration across Linux and MacOS. Can be disabled on Windows with
+       -DskipUnix -->
+      <id>unix</id>
+      <activation>
+        <property>
+          <name>!skipUnix</name>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>zip-templates</id>
+                <phase>initialize</phase>
+                <goals>
+                  <goal>exec</goal>
+                </goals>
+                <configuration>
+                  <executable>/bin/bash</executable>
+                  <workingDirectory>${maven.multiModuleProjectDirectory}</workingDirectory>
+                  <arguments>
+                    <argument>-c</argument>
+                    <argument>make zip-templates</argument>
+                  </arguments>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>windows</id>
+      <activation>
+        <os>
+          <family>windows</family>
+        </os>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>zip-templates</id>
+                <phase>initialize</phase>
+                <goals>
+                  <goal>exec</goal>
+                </goals>
+                <configuration>
+                  <executable>cmd.exe</executable>
+                  <workingDirectory>${maven.multiModuleProjectDirectory}</workingDirectory>
+                  <arguments>
+                    <argument>/c</argument>
+                    <argument>make zip-templates-windows</argument>
+                  </arguments>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
   </profiles>
 
   <build>
@@ -663,27 +731,6 @@
             <arg>-Aproject=${project.groupId}/${project.artifactId}</arg>
           </compilerArgs>
         </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>exec-maven-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>zip-templates</id>
-            <phase>initialize</phase>
-            <goals>
-              <goal>exec</goal>
-            </goals>
-            <configuration>
-              <executable>/bin/bash</executable>
-              <workingDirectory>${maven.multiModuleProjectDirectory}</workingDirectory>
-              <arguments>
-                <argument>-c</argument>
-                <argument>make zip-templates</argument>
-              </arguments>
-            </configuration>
-          </execution>
-        </executions>
       </plugin>
       <plugin>
         <!-- https://github.com/smallrye/smallrye-graphql/tree/main/tools/maven-plugin -->
