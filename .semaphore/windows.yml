@@ -30,11 +30,11 @@ global_job_config:
       - echo $Env:PATH
       - echo $Env:JAVA_HOME
       # https://community.chocolatey.org/packages/visualstudio2022buildtools#individual
-      - choco install visualstudio2022buildtools -y --package-parameters "--locale en-US"
-      - Get-Content -Raw -Path "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat"
+      - choco install visualstudio2022buildtools -y --package-parameters "--locale en-US --path install=C:\VS 2022 BT --path shared=C:\VS 2022 Shared --path cache=C:\VS 2022 Cache"
+      - Get-Content -Raw -Path "C:\VS 2022 BT\2022\Community\VC\Auxiliary\Build\vcvars64.bat"
       - |
         $filePath = "$Env:JAVA_HOME\bin\native-image.cmd"
-        $prependText = "call `"C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat`"`r`n"
+        $prependText = "call `"C:\VS 2022 BT\2022\Community\VC\Auxiliary\Build\vcvars64.bat`"`r`n"
         $fileContent = Get-Content -Raw -Path $filePath
         $newContent = $prependText + $fileContent
         Set-Content -Path $filePath -Value $newContent
