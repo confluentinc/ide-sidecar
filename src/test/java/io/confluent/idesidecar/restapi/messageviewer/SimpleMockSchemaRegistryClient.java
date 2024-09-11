@@ -12,8 +12,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 
@@ -21,11 +23,13 @@ public class SimpleMockSchemaRegistryClient extends MockSchemaRegistryClient {
   private final Map<String, Map<ParsedSchema, Integer>> schemaCache;
   private final Map<Integer, ParsedSchema> idCache;
   private final AtomicInteger idCounter;
+  private Set<Integer> unauthenticated;
 
   public SimpleMockSchemaRegistryClient() {
     schemaCache = new HashMap<>();
     idCache = new HashMap<>();
     idCounter = new AtomicInteger(100001);
+    unauthenticated = new HashSet<>();
   }
 
   public SimpleMockSchemaRegistryClient(List<SchemaProvider> list) {
@@ -33,6 +37,7 @@ public class SimpleMockSchemaRegistryClient extends MockSchemaRegistryClient {
     schemaCache = new HashMap<>();
     idCache = new HashMap<>();
     idCounter = new AtomicInteger(100001);
+    unauthenticated = new HashSet<>();
   }
 
   public int register(int requiredSchemaId, String subject, ParsedSchema schema)
@@ -42,6 +47,10 @@ public class SimpleMockSchemaRegistryClient extends MockSchemaRegistryClient {
     // Update the id counter to next number.
     idCounter.set(requiredSchemaId + 1);
     return requiredSchemaId;
+  }
+
+  public void registerUnAuthenticated(int schemaId) {
+    unauthenticated.add(schemaId);
   }
 
   @Override
@@ -54,6 +63,9 @@ public class SimpleMockSchemaRegistryClient extends MockSchemaRegistryClient {
 
   @Override
   public ParsedSchema getSchemaById(int id) throws IOException, RestClientException {
+    if (unauthenticated.contains(id)) {
+      throw new RestClientException("User is denied operation on this server.", 403, 40301);
+    }
     return idCache.get(id);
   }
 
