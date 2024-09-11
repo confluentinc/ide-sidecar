@@ -1,10 +1,10 @@
 package io.confluent.idesidecar.scaffolding.util;
 
 import io.confluent.idesidecar.scaffolding.exceptions.TemplateRegistryIOException;
+import io.quarkus.logging.Log;
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -14,6 +14,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.SystemUtils;
 
 /**
  * Utility class for working with ZIP archives.
@@ -62,54 +63,67 @@ public final class ZipUtil {
 
   /**
    * Extract a zip archive from the provided byte array to the provided output directory.
-   *
+   * This is the default implementation for all platforms except Windows.
    * @throws IOException if the extraction fails
    */
-  public static void extractZipFromBytes(byte[] zipBytes, Path outputDir) throws IOException {
-    var tempZipFile = Files.createTempFile("templates", ".zip");
-    try (var fos = new FileOutputStream(tempZipFile.toFile())) {
-      fos.write(zipBytes);
-    }
-    FileUtils.forceDeleteOnExit(tempZipFile.toFile());
-
-    var buffer = new byte[1024];
-    var zis = new ZipInputStream(new FileInputStream(tempZipFile.toFile()));
-    var zipEntry = zis.getNextEntry();
-    while (zipEntry != null) {
-      var newFile = newFile(outputDir.toFile(), zipEntry);
-      if (zipEntry.isDirectory()) {
-        if (!newFile.isDirectory() && !newFile.mkdirs()) {
-          throw new IOException("Failed to create directory " + newFile);
+  public static void extractZipDefault(byte[] zipBytes, Path outputDir) throws IOException {
+    try (var byteArrayInputStream = new ByteArrayInputStream(zipBytes);
+        var zipInputStream = new ZipInputStream(byteArrayInputStream)) {
+      ZipEntry entry;
+      while ((entry = zipInputStream.getNextEntry()) != null) {
+        Path entryFile = outputDir.resolve(entry.getName());
+        if (entry.isDirectory()) {
+          Files.createDirectories(entryFile);
+        } else {
+          Files.createDirectories(entryFile.getParent());
+          try (FileOutputStream outputStream = new FileOutputStream(entryFile.toFile())) {
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = zipInputStream.read(buffer)) > 0) {
+              outputStream.write(buffer, 0, length);
+            }
+          }
         }
-      } else {
-        var parent = newFile.getParentFile();
-        if (!parent.isDirectory() && !parent.mkdirs()) {
-          throw new IOException("Failed to create directory " + parent);
-        }
-
-        var fos = new FileOutputStream(newFile);
-        int len;
-        while ((len = zis.read(buffer)) > 0) {
-          fos.write(buffer, 0, len);
-        }
-        fos.close();
+        zipInputStream.closeEntry();
       }
-      zipEntry = zis.getNextEntry();
     }
-    zis.closeEntry();
-    zis.close();
   }
 
-  public static File newFile(File destinationDir, ZipEntry zipEntry) throws IOException {
-    var destFile = new File(destinationDir, zipEntry.getName());
-    var destDirPath = destinationDir.getCanonicalPath();
-    var destFilePath = destFile.getCanonicalPath();
-    if (!destFilePath.startsWith(destDirPath + File.separator)) {
-      // Prevent "Zip Slip" vulnerability
-      throw new IOException("Entry is outside of the target dir: " + zipEntry.getName());
-    }
+  /**
+   * On Windows, use PowerShell to extract the contents of a ZIP file. This method is used as a
+   * workaround for the limitations of the Java ZIP API on Windows. PowerShell is expected
+   * to be available on Windows 10 and higher.
+   * @param zipFile The path to the ZIP file to extract
+   * @param outputDir The path to the output directory
+   */
+  public static void extractZipWindows(Path zipFile, Path outputDir) {
+    var pb = new ProcessBuilder(
+        "powershell",
+        "-Command",
+        "Expand-Archive",
+        "\"%s\"".formatted(zipFile.toAbsolutePath()),
+        "\"%s\"".formatted(outputDir.toAbsolutePath())
+    );
 
-    return destFile;
+    pb.redirectErrorStream(true); // Redirects error stream to standard output for easier debugging
+
+    try {
+      var process = pb.start();
+      int exitCode = process.waitFor();
+
+      if (exitCode == 0) {
+        Log.info("Extracted templates successfully.");
+      } else {
+        Log.error("Extracting templates failed with exit code: " + exitCode);
+      }
+    } catch (IOException e) {
+      Log.error("IO exception occurred while starting the process", e);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      Log.error("The process was interrupted", e);
+    } catch (Exception e) {
+      Log.error("An unexpected error occurred", e);
+    }
   }
 
   /**
@@ -122,8 +136,18 @@ public final class ZipUtil {
   public static Path extractZipContentsToTempDir(byte[] zipBytes) throws IOException {
     var tmpDir = Files.createTempDirectory(null);
 
-    extractZipFromBytes(zipBytes, tmpDir);
-
+    if (SystemUtils.OS_NAME.toLowerCase().contains("win")) {
+      // Write the zip bytes to a temp file
+      var tempZipFile = Files.createTempFile("templates", ".zip");
+      FileUtils.forceDeleteOnExit(tempZipFile.toFile());
+      try (var fos = new FileOutputStream(tempZipFile.toFile())) {
+        fos.write(zipBytes);
+      }
+      // Extract temp zip file to temp dir
+      extractZipWindows(tempZipFile, tmpDir);
+    } else {
+      extractZipDefault(zipBytes, tmpDir);
+    }
     // Register a JVM shutdown hook to delete the temporary directory.
     // Known limitation: This only works if NO additional files
     // and/or folders are created inside the directory after forceDeleteOnExit was called.
