@@ -2,8 +2,9 @@ package io.confluent.idesidecar.scaffolding.util;
 
 import io.confluent.idesidecar.scaffolding.exceptions.TemplateRegistryIOException;
 import java.io.BufferedOutputStream;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -17,6 +18,7 @@ import org.apache.commons.io.FileUtils;
 /**
  * Utility class for working with ZIP archives.
  */
+@SuppressWarnings("checkstyle:ClassDataAbstractionCoupling")
 public final class ZipUtil {
 
   private ZipUtil() {
@@ -64,34 +66,50 @@ public final class ZipUtil {
    * @throws IOException if the extraction fails
    */
   public static void extractZipFromBytes(byte[] zipBytes, Path outputDir) throws IOException {
-    try (var byteArrayInputStream = new ByteArrayInputStream(zipBytes);
-        var zipInputStream = new ZipInputStream(byteArrayInputStream)) {
-      ZipEntry entry;
-      while ((entry = zipInputStream.getNextEntry()) != null) {
-        // Normalize separators, required for Windows compatibility
-        String entryName = entry.getName().replace('\\', '/');
-        // Resolve and normalize path
-        Path entryFile = outputDir.resolve(entryName).normalize();
-
-        if (entry.isDirectory()) {
-          Files.createDirectories(entryFile);
-        } else {
-          Path parentDir = entryFile.getParent();
-          if (parentDir != null && !Files.exists(parentDir)) {
-            Files.createDirectories(parentDir);
-          }
-
-          try (FileOutputStream outputStream = new FileOutputStream(entryFile.toFile())) {
-            byte[] buffer = new byte[1024];
-            int length;
-            while ((length = zipInputStream.read(buffer)) > 0) {
-              outputStream.write(buffer, 0, length);
-            }
-          }
-        }
-        zipInputStream.closeEntry();
-      }
+    var tempZipFile = Files.createTempFile("templates", ".zip");
+    try (var fos = new FileOutputStream(tempZipFile.toFile())) {
+      fos.write(zipBytes);
     }
+    FileUtils.forceDeleteOnExit(tempZipFile.toFile());
+
+    var buffer = new byte[1024];
+    var zis = new ZipInputStream(new FileInputStream(tempZipFile.toFile()));
+    var zipEntry = zis.getNextEntry();
+    while (zipEntry != null) {
+      var newFile = newFile(outputDir.toFile(), zipEntry);
+      if (zipEntry.isDirectory()) {
+        if (!newFile.isDirectory() && !newFile.mkdirs()) {
+          throw new IOException("Failed to create directory " + newFile);
+        }
+      } else {
+        var parent = newFile.getParentFile();
+        if (!parent.isDirectory() && !parent.mkdirs()) {
+          throw new IOException("Failed to create directory " + parent);
+        }
+
+        var fos = new FileOutputStream(newFile);
+        int len;
+        while ((len = zis.read(buffer)) > 0) {
+          fos.write(buffer, 0, len);
+        }
+        fos.close();
+      }
+      zipEntry = zis.getNextEntry();
+    }
+    zis.closeEntry();
+    zis.close();
+  }
+
+  public static File newFile(File destinationDir, ZipEntry zipEntry) throws IOException {
+    var destFile = new File(destinationDir, zipEntry.getName());
+    var destDirPath = destinationDir.getCanonicalPath();
+    var destFilePath = destFile.getCanonicalPath();
+    if (!destFilePath.startsWith(destDirPath + File.separator)) {
+      // Prevent "Zip Slip" vulnerability
+      throw new IOException("Entry is outside of the target dir: " + zipEntry.getName());
+    }
+
+    return destFile;
   }
 
   /**
