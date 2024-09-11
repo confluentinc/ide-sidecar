@@ -7,6 +7,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.fasterxml.jackson.dataformat.avro.AvroFactory;
 import com.fasterxml.jackson.dataformat.avro.AvroMapper;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.JsonFormat;
@@ -20,23 +22,30 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.io.Encoder;
 import org.apache.avro.io.EncoderFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Utility class for decoding record keys and values.
  */
 @SuppressWarnings("checkstyle:ClassDataAbstractionCoupling")
 public class DecoderUtil {
-  private static final Logger log = LoggerFactory.getLogger(DecoderUtil.class);
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
   private static final ObjectMapper avroObjectMapper = new AvroMapper(new AvroFactory());
   public static final byte MAGIC_BYTE = 0x0;
+
+  private static final Duration CACHE_FAILED_SCHEMA_ID_FETCH_DURATION = Duration.ofSeconds(30);
+
+  private static final Cache<Integer, String> schemaFetchErrorCache = Caffeine.newBuilder()
+      .expireAfterWrite(CACHE_FAILED_SCHEMA_ID_FETCH_DURATION)
+      .build();
 
   public static class DecodedResult {
     private final JsonNode value;
@@ -76,13 +85,12 @@ public class DecoderUtil {
 
     try {
       byte[] decodedBytes = Base64.getDecoder().decode(rawBase64);
-      JsonNode decodedJson = deserializeToJson(decodedBytes, schemaRegistryClient, topicName);
-      return new DecodedResult(decodedJson, null);
+      return deserializeToJson(decodedBytes, schemaRegistryClient, topicName);
     } catch (IllegalArgumentException e) {
-      log.error("Error decoding Base64 string: " + rawBase64, e);
+      Log.error("Error decoding Base64 string: %s", rawBase64, e);
       return new DecodedResult(TextNode.valueOf(rawBase64), e.getMessage());
     } catch (IOException | RestClientException e) {
-      log.error("Error deserializing: " + rawBase64, e);
+      Log.error("Error deserializing: %s", rawBase64, e);
       return new DecodedResult(TextNode.valueOf(rawBase64), e.getMessage());
     }
   }
@@ -115,23 +123,56 @@ public class DecoderUtil {
    * @throws RestClientException If an error occurs while communicating with the Schema Registry.
    */
   @SuppressWarnings("checkstyle:NPathComplexity")
-  public static JsonNode deserializeToJson(
+  public static DecodedResult deserializeToJson(
       byte[] bytes,
       SchemaRegistryClient schemaRegistryClient,
       String topicName
   ) throws IOException, RestClientException {
     if (bytes == null || bytes.length == 0) {
-      return OBJECT_MAPPER.nullNode();
+      return new DecodedResult(OBJECT_MAPPER.nullNode(), null);
     }
 
     final int schemaId = getSchemaIdFromRawBytes(bytes);
-    String schemaType = schemaRegistryClient.getSchemaById(schemaId).schemaType();
-    return switch (schemaType) {
-      case "AVRO" -> handleAvro(bytes, topicName, schemaRegistryClient);
-      case "PROTOBUF" -> handleProtobuf(bytes, topicName, schemaRegistryClient);
-      case "JSON" -> handleJson(bytes, topicName, schemaRegistryClient);
-      default -> OBJECT_MAPPER.readTree(new String(bytes, StandardCharsets.UTF_8));
-    };
+
+    // Check if schema retrieval has failed recently
+    String cachedError = schemaFetchErrorCache.getIfPresent(schemaId);
+    if (cachedError != null) {
+      return new DecodedResult(
+          TextNode.valueOf(new String(bytes, StandardCharsets.UTF_8)),
+          cachedError
+      );
+    }
+
+    try {
+      // Attempt to get the schema from the schema registry
+      String schemaType = schemaRegistryClient.getSchemaById(schemaId).schemaType();
+      JsonNode decodedJson = switch (schemaType) {
+        case "AVRO" -> handleAvro(bytes, topicName, schemaRegistryClient);
+        case "PROTOBUF" -> handleProtobuf(bytes, topicName, schemaRegistryClient);
+        case "JSON" -> handleJson(bytes, topicName, schemaRegistryClient);
+        default -> OBJECT_MAPPER.readTree(new String(bytes, StandardCharsets.UTF_8));
+      };
+      return new DecodedResult(decodedJson, null);
+    } catch (RestClientException e) {
+      Instant retryTime = Instant.now().plus(CACHE_FAILED_SCHEMA_ID_FETCH_DURATION);
+      DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
+          .withZone(ZoneId.systemDefault());
+      Log.errorf(
+          "Failed to retrieve schema with ID %d. Will try again in %d seconds at %s. Error: %s",
+          schemaId,
+          CACHE_FAILED_SCHEMA_ID_FETCH_DURATION.getSeconds(),
+          timeFormatter.format(retryTime),
+          e.getMessage(),
+          e
+      );
+      String errorMessage = String.format(
+          "Failed to retrieve schema with ID %d: %s",
+          schemaId,
+          e.getMessage()
+      );
+      schemaFetchErrorCache.put(schemaId, errorMessage);
+      throw e;
+    }
   }
 
   /**
