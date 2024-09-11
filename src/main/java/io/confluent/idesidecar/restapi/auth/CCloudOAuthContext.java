@@ -31,6 +31,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 import java.util.stream.Stream;
 import org.apache.commons.codec.binary.Base64;
 
@@ -59,6 +62,9 @@ public class CCloudOAuthContext implements AuthContext {
   private final AtomicReference<Tokens> tokens = new AtomicReference<>(new Tokens());
   private final UriUtil uriUtil = new UriUtil();
   private final WebClientFactory webClientFactory = new WebClientFactory();
+  private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
+  private final WriteLock writeLock = readWriteLock.writeLock();
+  private final ReadLock readLock = readWriteLock.readLock();
 
   /**
    * Initializes an instance of the CCloudOAuthContext with a unique OAuth state parameter, code
@@ -83,51 +89,56 @@ public class CCloudOAuthContext implements AuthContext {
    */
   @Override
   public Future<Boolean> checkAuthenticationStatus() {
-    final var controlPlaneToken = tokens.get().controlPlaneToken;
-    // This context can't be authenticated if it does not hold a control plane token
-    if (isTokenMissing(controlPlaneToken)) {
-      var errorMessage =
-          "Cannot verify authentication status because no control plane token is available. It's "
-          + "likely that this connection has not yet completed the authentication with CCloud.";
-      tokens.updateAndGet(oldTokens ->
-          oldTokens.withErrors(
-              oldTokens.errors.withAuthStatusCheck(errorMessage)));
-      return Future.failedFuture(new CCloudAuthenticationFailedException(errorMessage));
-    }
+    writeLock.lock();
+    try {
+      final var controlPlaneToken = tokens.get().controlPlaneToken;
+      // This context can't be authenticated if it does not hold a control plane token
+      if (isTokenMissing(controlPlaneToken)) {
+        var errorMessage =
+            "Cannot verify authentication status because no control plane token is available. It's "
+            + "likely that this connection has not yet completed the authentication with CCloud.";
+        tokens.updateAndGet(oldTokens ->
+            oldTokens.withErrors(
+                oldTokens.errors.withAuthStatusCheck(errorMessage)));
+        return Future.failedFuture(new CCloudAuthenticationFailedException(errorMessage));
+      }
 
-    return webClientFactory.getWebClient()
-        .getAbs(CCloudOAuthConfig.CCLOUD_CONTROL_PLANE_CHECK_JWT_URI)
-        .putHeaders(getControlPlaneAuthenticationHeaders())
-        .send()
-        .map(result -> {
-          try {
-            var response = OBJECT_MAPPER.readValue(result.bodyAsString(), CheckJwtResponse.class);
-            if (response.error() != null && !response.error().isNull()) {
-              Log.errorf("Error in CCloud response while verifying the auth status "
-                  + "of this connection: %s", response.error());
-              // depending on what kinds of errors we get from CCloud, we might want to
-              // throw a different exception here (e.g. 429 Too Many Requests)
+      return webClientFactory.getWebClient()
+          .getAbs(CCloudOAuthConfig.CCLOUD_CONTROL_PLANE_CHECK_JWT_URI)
+          .putHeaders(getControlPlaneAuthenticationHeaders())
+          .send()
+          .map(result -> {
+            try {
+              var response = OBJECT_MAPPER.readValue(result.bodyAsString(), CheckJwtResponse.class);
+              if (response.error() != null && !response.error().isNull()) {
+                Log.errorf("Error in CCloud response while verifying the auth status "
+                    + "of this connection: %s", response.error());
+                // depending on what kinds of errors we get from CCloud, we might want to
+                // throw a different exception here (e.g. 429 Too Many Requests)
+              }
+              // If the response does not return any error, we can assume that we are successfully
+              // authenticated with the CCloud API.
+              return response.error().isNull();
+            } catch (JsonProcessingException e) {
+              throw new CCloudAuthenticationFailedException(
+                  "Could not parse the response from Confluent Cloud when verifying the "
+                  + "authentication status of this connection.", e);
             }
-            // If the response does not return any error, we can assume that we are successfully
-            // authenticated with the CCloud API.
-            return response.error().isNull();
-          } catch (JsonProcessingException e) {
-            throw new CCloudAuthenticationFailedException(
-                "Could not parse the response from Confluent Cloud when verifying the "
-                + "authentication status of this connection.", e);
-          }
-        })
-        .onSuccess(result ->
-          // Reset any existing error related to auth status check
-          tokens.updateAndGet(oldTokens ->
-              oldTokens.withErrors(
-                  oldTokens.errors.withoutAuthStatusCheck()))
-        )
-        .onFailure(failure ->
-            tokens.updateAndGet(oldTokens ->
-                oldTokens.withErrors(
-                    oldTokens.errors.withAuthStatusCheck(failure.getMessage())))
-        );
+          })
+          .onSuccess(result ->
+              // Reset any existing error related to auth status check
+              tokens.updateAndGet(oldTokens ->
+                  oldTokens.withErrors(
+                      oldTokens.errors.withoutAuthStatusCheck()))
+          )
+          .onFailure(failure ->
+              tokens.updateAndGet(oldTokens ->
+                  oldTokens.withErrors(
+                      oldTokens.errors.withAuthStatusCheck(failure.getMessage())))
+          );
+    } finally {
+      writeLock.unlock();
+    }
   }
 
   /**
@@ -138,7 +149,12 @@ public class CCloudOAuthContext implements AuthContext {
    */
   @Override
   public Optional<Instant> expiresAt() {
-    return tokens.get().expiresAt();
+    readLock.lock();
+    try {
+      return tokens.get().expiresAt();
+    } finally {
+      readLock.unlock();
+    }
   }
 
   /**
@@ -156,32 +172,26 @@ public class CCloudOAuthContext implements AuthContext {
    */
   @Override
   public Future<AuthContext> refresh(String organizationId) {
-    return bareRefresh(organizationId)
-        // Reset any existing error related to token refresh flow
-        .onSuccess(onSuccessfulTokenRefresh())
-        // Persist error related to token refresh flow
-        .onFailure(onFailedTokenRefresh());
+    writeLock.lock();
+    try {
+      return bareRefresh(organizationId)
+          // Reset any existing error related to token refresh flow
+          .onSuccess(onSuccessfulTokenRefresh())
+          // Persist error related to token refresh flow
+          .onFailure(onFailedTokenRefresh());
+    } finally {
+      writeLock.unlock();
+    }
   }
 
   public Future<AuthContext> refreshIgnoreFailures(String organizationId) {
-    return bareRefresh(organizationId)
-        .onSuccess(onSuccessfulTokenRefresh());
-  }
-
-  private Handler<Throwable> onFailedTokenRefresh() {
-    return failure ->
-        tokens.updateAndGet(oldTokens -> oldTokens.withFailedTokenRefreshAttempt(failure));
-  }
-
-  private Handler<AuthContext> onSuccessfulTokenRefresh() {
-    return result -> tokens.updateAndGet(Tokens::withSuccessfulTokenRefreshAttempt);
-  }
-
-  private Future<AuthContext> bareRefresh(String organizationId) {
-    return createTokensFromRefreshToken()
-        .compose(
-            idTokenExchangeResponse ->
-                processTokenExchangeResponse(idTokenExchangeResponse, organizationId));
+    writeLock.lock();
+    try {
+      return bareRefresh(organizationId)
+          .onSuccess(onSuccessfulTokenRefresh());
+    } finally {
+      writeLock.unlock();
+    }
   }
 
   /**
@@ -189,7 +199,12 @@ public class CCloudOAuthContext implements AuthContext {
    */
   @Override
   public void reset() {
-    tokens.updateAndGet(oldTokens -> new Tokens());
+    writeLock.lock();
+    try {
+      tokens.updateAndGet(oldTokens -> new Tokens());
+    } finally {
+      writeLock.unlock();
+    }
   }
 
   /**
@@ -233,23 +248,28 @@ public class CCloudOAuthContext implements AuthContext {
       String authorizationCode,
       String ccloudOrganizationId
   ) {
-    return exchangeAuthorizationCode(authorizationCode)
-        .compose(response -> this.processTokenExchangeResponse(response, ccloudOrganizationId))
-        .map(CCloudOAuthContext.class::cast)
-        .onSuccess(result -> {
-          // Reset any existing errors related to the sign-in flow
-          tokens.updateAndGet(oldTokens ->
-              oldTokens.withErrors(
-                  oldTokens.errors.withoutSignIn()));
-          Log.infof(
-              "User has successfully authenticated with CCloud (email=%s,organization_id=%s).",
-              getUserEmail(), ccloudOrganizationId);
-        })
-        .onFailure(failure ->
+    writeLock.lock();
+    try {
+      return exchangeAuthorizationCode(authorizationCode)
+          .compose(response -> this.processTokenExchangeResponse(response, ccloudOrganizationId))
+          .map(CCloudOAuthContext.class::cast)
+          .onSuccess(result -> {
+            // Reset any existing errors related to the sign-in flow
             tokens.updateAndGet(oldTokens ->
                 oldTokens.withErrors(
-                    oldTokens.errors.withSignIn(failure.getMessage())))
-        );
+                    oldTokens.errors.withoutSignIn()));
+            Log.infof(
+                "User has successfully authenticated with CCloud (email=%s,organization_id=%s).",
+                getUserEmail(), ccloudOrganizationId);
+          })
+          .onFailure(failure ->
+              tokens.updateAndGet(oldTokens ->
+                  oldTokens.withErrors(
+                      oldTokens.errors.withSignIn(failure.getMessage())))
+          );
+    } finally {
+      writeLock.unlock();
+    }
   }
 
   /**
@@ -263,29 +283,34 @@ public class CCloudOAuthContext implements AuthContext {
    * @return if we should attempt the token refresh.
    */
   public boolean shouldAttemptTokenRefresh() {
-    final var now = Instant.now();
-    var validRefreshToken =
-        // Do not attempt the token refresh if getEndOfLifetime() is null, i.e., we have
-        // not yet authenticated successfully
-        getEndOfLifetime() != null
-        // Do not attempt the token refresh if the absolute lifetime of the refresh token
-        // has been reached, in which case the user must re-authenticate with CCloud
-        && now.compareTo(getEndOfLifetime()) < 0;
+    readLock.lock();
+    try {
+      final var now = Instant.now();
+      var validRefreshToken =
+          // Do not attempt the token refresh if getEndOfLifetime() is null, i.e., we have
+          // not yet authenticated successfully
+          getEndOfLifetime() != null
+              // Do not attempt the token refresh if the absolute lifetime of the refresh token
+              // has been reached, in which case the user must re-authenticate with CCloud
+              && now.compareTo(getEndOfLifetime()) < 0;
 
-    // Do not perform the token refresh if we have already tried it
-    // MAX_TOKEN_REFRESH_ATTEMPTS times but failed
-    var lessThanMaxTokenRefreshAttempts =
-        getFailedTokenRefreshAttempts() < CCloudOAuthConfig.MAX_TOKEN_REFRESH_ATTEMPTS;
+      // Do not perform the token refresh if we have already tried it
+      // MAX_TOKEN_REFRESH_ATTEMPTS times but failed
+      var lessThanMaxTokenRefreshAttempts =
+          getFailedTokenRefreshAttempts() < CCloudOAuthConfig.MAX_TOKEN_REFRESH_ATTEMPTS;
 
-    // Perform token refresh only if auth context will expire before next run of this job
-    var expiresAt = expiresAt();
-    var nextExecution = now.plus(CCloudOAuthConfig.TOKEN_REFRESH_INTERVAL_SECONDS);
-    var atLeastOneTokenWillExpireBeforeNextRun = expiresAt.isPresent()
-        && expiresAt.get().compareTo(nextExecution) < 0;
+      // Perform token refresh only if auth context will expire before next run of this job
+      var expiresAt = expiresAt();
+      var nextExecution = now.plus(CCloudOAuthConfig.TOKEN_REFRESH_INTERVAL_SECONDS);
+      var atLeastOneTokenWillExpireBeforeNextRun = expiresAt.isPresent()
+          && expiresAt.get().compareTo(nextExecution) < 0;
 
-    return validRefreshToken
-        && lessThanMaxTokenRefreshAttempts
-        && atLeastOneTokenWillExpireBeforeNextRun;
+      return validRefreshToken
+          && lessThanMaxTokenRefreshAttempts
+          && atLeastOneTokenWillExpireBeforeNextRun;
+    } finally {
+      readLock.unlock();
+    }
   }
 
   public Token getRefreshToken() {
@@ -335,6 +360,22 @@ public class CCloudOAuthContext implements AuthContext {
 
   public Integer getFailedTokenRefreshAttempts() {
     return tokens.get().failedTokenRefreshAttempts;
+  }
+
+  private Handler<Throwable> onFailedTokenRefresh() {
+    return failure ->
+        tokens.updateAndGet(oldTokens -> oldTokens.withFailedTokenRefreshAttempt(failure));
+  }
+
+  private Handler<AuthContext> onSuccessfulTokenRefresh() {
+    return result -> tokens.updateAndGet(Tokens::withSuccessfulTokenRefreshAttempt);
+  }
+
+  private Future<AuthContext> bareRefresh(String organizationId) {
+    return createTokensFromRefreshToken()
+        .compose(
+            idTokenExchangeResponse ->
+                processTokenExchangeResponse(idTokenExchangeResponse, organizationId));
   }
 
   private MultiMap getAuthenticationHeaders(
