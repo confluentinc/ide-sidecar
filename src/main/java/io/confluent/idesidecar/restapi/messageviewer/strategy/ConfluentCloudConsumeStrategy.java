@@ -10,6 +10,7 @@ import io.confluent.idesidecar.restapi.connections.CCloudConnectionState;
 import io.confluent.idesidecar.restapi.exceptions.ProcessorFailedException;
 import io.confluent.idesidecar.restapi.messageviewer.DecoderUtil;
 import io.confluent.idesidecar.restapi.messageviewer.MessageViewerContext;
+import io.confluent.idesidecar.restapi.messageviewer.SchemaRegistryClients;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeData;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeRecord;
@@ -34,7 +35,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
@@ -46,13 +46,13 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
 
   private static final int SR_CACHE_SIZE = 10;
 
-  static final Map<String, SchemaRegistryClient> SCHEMA_REGISTRY_CLIENTS_BY_ID =
-      new ConcurrentHashMap<>();
-
   static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   @Inject
   WebClientFactory webClientFactory;
+
+  @Inject
+  SchemaRegistryClients schemaRegistryClients;
 
   @Inject
   SidecarAccessTokenBean accessTokenBean;
@@ -162,9 +162,11 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
       return rawResponse;
     }
 
-    var schemaRegistryClient = SCHEMA_REGISTRY_CLIENTS_BY_ID.computeIfAbsent(
+    var connectionId = context.getConnectionState().getId();
+    var schemaRegistryClient = schemaRegistryClients.getCCloudClient(
+        connectionId,
         schemaRegistry.id(),
-        k -> createSchemaRegistryClient(context)
+        () -> createSchemaRegistryClient(context)
     );
     if (schemaRegistryClient == null) {
       return rawResponse;

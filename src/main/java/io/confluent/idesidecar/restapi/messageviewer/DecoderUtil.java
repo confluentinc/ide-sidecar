@@ -63,6 +63,10 @@ public class DecoderUtil {
     }
   }
 
+  static void clearCachedFailures() {
+    schemaFetchErrorCache.invalidateAll();
+  }
+
   /**
    * Decodes a Base64-encoded string and deserializes it using the provided SchemaRegistryClient.
    *
