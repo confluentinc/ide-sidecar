@@ -27,9 +27,9 @@ public final class PortablePathUtil {
    * @return the portable path
    */
   public static String portablePath(String... paths) {
-    return portablePath(Stream
+    return Stream
         .of(paths)
         .map(PortablePathUtil::portablePath)
-        .collect(Collectors.joining(File.separator)));
+        .collect(Collectors.joining(File.separator));
   }
 }
