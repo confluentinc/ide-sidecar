@@ -21,6 +21,9 @@ global_job_config:
       - checkout
       - $Env:PATH += ";C:\Program Files (x86)\Windows Kits\10\bin\10.0.19041.0\x64"
       - $Env:PATH += ";C:\Program Files\Git\bin"
+      # Restore caches for GraalVM and Chocolatey
+      - cache restore graal_download_zip
+      - cache restore choco_temp_dir
       # Install openssl
       - choco install openssl -y
       - $Env:PATH += ";C:\Program Files\OpenSSL-Win64\bin"
@@ -30,9 +33,6 @@ global_job_config:
       # Fetch Azure certificate from Vault and create the PFX file
       - $azure_certificate = vault kv get -field=azure_certificate v1/ci/kv/cli/release;
       - $azure_certificate | openssl base64 -d -A > certificate.pfx;
-      # Restore caches for GraalVM and Chocolatey
-      - cache restore graal_download_zip
-      - cache restore choco_temp_dir
       # Install GraalVM
       - |
         if (-not (Test-Path graalvm-community-jdk-21.0.2_windows-x64_bin.zip)) {
