@@ -51,6 +51,8 @@ blocks:
 
   - name: "Release"
     dependencies: ["Build and Test"]
+    run:
+      when: "branch =~ '.*'"
     task:
       jobs:
         - name: "Release"
