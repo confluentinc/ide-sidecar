@@ -1,5 +1,7 @@
 package io.confluent.idesidecar.scaffolding;
 
+import static io.confluent.idesidecar.scaffolding.util.PortablePathUtil.portablePath;
+
 import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.MustacheFactory;
 import io.confluent.idesidecar.scaffolding.exceptions.TemplateRegistryException;
@@ -78,7 +80,9 @@ public class MustacheTemplateEngine implements TemplateEngine {
       // Render content
       mustacheContent.execute(writerContent, templateOptions);
 
-      renderedTemplates.put(writerFilename.toString(), writerContent.toString().getBytes(CHARSET));
+      renderedTemplates.put(
+          portablePath(writerFilename.toString()),
+          writerContent.toString().getBytes(CHARSET));
     }
     return renderedTemplates;
   }
