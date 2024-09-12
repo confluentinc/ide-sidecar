@@ -383,9 +383,7 @@
                     </java.util.logging.manager>
                   </systemPropertyVariables>
                   <environmentVariables>
-                    <QUARKUS_CONFIG_LOCATIONS>
-                      ${project.build.directory}/../src/test/resources/application-nativeit.yaml
-                    </QUARKUS_CONFIG_LOCATIONS>
+                    <QUARKUS_CONFIG_LOCATIONS>src/test/resources/application-nativeit.yaml</QUARKUS_CONFIG_LOCATIONS>
                   </environmentVariables>
                 </configuration>
               </execution>
@@ -674,9 +672,7 @@
             <quarkus.jacoco.report-location>${project.build.directory}/target/coverage</quarkus.jacoco.report-location>
           </systemPropertyVariables>
           <environmentVariables>
-            <QUARKUS_CONFIG_LOCATIONS>
-              ${project.build.directory}/../src/test/resources/application-nativeit.yaml
-            </QUARKUS_CONFIG_LOCATIONS>
+            <QUARKUS_CONFIG_LOCATIONS>src/test/resources/application-nativeit.yaml</QUARKUS_CONFIG_LOCATIONS>
           </environmentVariables>
         </configuration>
       </plugin>
