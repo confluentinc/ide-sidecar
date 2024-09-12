@@ -36,15 +36,15 @@ class PortablePathUtilTest {
   Stream<Arguments> testPortablePathFragments() {
     return Stream.of(
         Arguments.of("foo/bar", new String[]{"foo", "bar"}),
-        Arguments.of("foo/bar", new String[]{"foo", "bar/"}),
+        Arguments.of("foo/bar/", new String[]{"foo", "bar/"}),
         Arguments.of("foo/bar", new String[]{"foo/", "bar"}),
-        Arguments.of("foo/bar", new String[]{"foo/", "bar/"}),
-        Arguments.of("foo/bar", new String[]{"foo/", "/bar/"}),
+        Arguments.of("foo/bar/", new String[]{"foo/", "bar/"}),
+        Arguments.of("foo/bar/", new String[]{"foo/", "/bar/"}),
         Arguments.of("foo/bar", new String[]{"foo", "bar"}),
-        Arguments.of("foo/bar", new String[]{"foo", "bar\\"}),
+        Arguments.of("foo/bar/", new String[]{"foo", "bar\\"}),
         Arguments.of("foo/bar", new String[]{"foo\\", "bar"}),
-        Arguments.of("foo/bar", new String[]{"foo\\", "bar\\"}),
-        Arguments.of("foo/bar", new String[]{"foo\\", "\\bar\\"})
+        Arguments.of("foo/bar/", new String[]{"foo\\", "bar\\"}),
+        Arguments.of("foo/bar/", new String[]{"foo\\", "\\bar\\"})
     );
   }
 
