@@ -36,9 +36,6 @@ global_job_config:
 blocks:
   - name: "Build and Test"
     dependencies: []
-    # TODO: Remove me
-    skip:
-      when: true
     task:
       prologue:
         commands:
@@ -54,9 +51,6 @@ blocks:
 
   - name: "Release"
     dependencies: ["Build and Test"]
-    # TODO: Remove me
-    skip:
-      when: true
     task:
       jobs:
         - name: "Release"
@@ -213,3 +207,5 @@ after_pipeline:
 promotions:
   - name: "Windows Build Test Release"
     pipeline_file: windows.yml
+    auto_promote:
+      when: "result = 'passed' and branch =~ '.*'"
