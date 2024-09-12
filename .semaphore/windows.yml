@@ -37,9 +37,8 @@ global_job_config:
       - choco install visualstudio2022-workload-vctools -y --verbose
       - choco install openssl -y
       - choco install gh -y
-      # These commands are needed to ensure that the above choco installations are available in the PATH
-      - Import-Module $env:ChocolateyInstall\helpers\chocolateyProfile.psm1
-      - refreshenv
+      - $Env:PATH += ";C:\Program Files\OpenSSL-Win64\bin"
+      - $Env:PATH += ";C:\Program Files\GitHub CLI\"
       - |
         $filePath = "$Env:JAVA_HOME\bin\native-image.cmd"
         $prependText = "call `"C:\VS 2022 BT\VC\Auxiliary\Build\vcvars64.bat`"`r`n"
