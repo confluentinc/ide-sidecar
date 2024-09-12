@@ -23,6 +23,10 @@ global_job_config:
       - $Env:PATH += ";C:\Program Files\Git\bin"
       - $Env:VAULT_ADDR = "https://vault.cireops.gcp.internal.confluent.cloud"
       - vault login -no-print token=$(vault write -field=token "auth/semaphore_self_hosted/login" role="default" jwt="$Env:SEMAPHORE_OIDC_TOKEN")
+      - $azure_certificate = vault kv get -field=azure_certificate v1/ci/kv/cli/release;
+      - $azure_certificate | openssl base64 -d -A > certificate.pfx;
+      - Test-Path certificate.pfx;
+      - ls
       - cache restore graal_download_zip
       - |
         if (-not (Test-Path graalvm-community-jdk-21.0.2_windows-x64_bin.zip)) {
@@ -33,8 +37,8 @@ global_job_config:
       - $Env:JAVA_HOME = "C:\semaphore-agent\graalvm\graalvm-community-openjdk-21.0.2+13.1"
       - $Env:PATH += ";C:\semaphore-agent\graalvm\graalvm-community-openjdk-21.0.2+13.1\bin"
       # GraalVM native-image builds require Visual Studio 2022 Build Tools and VC++ tools
-      - choco install visualstudio2022buildtools -y --verbose --package-parameters "--locale en-US --path install=C:\VS 2022 BT --path shared=C:\VS 2022 Shared --path cache=C:\VS 2022 Cache"
-      - choco install visualstudio2022-workload-vctools -y --verbose
+      - choco install visualstudio2022buildtools -y --package-parameters "--locale en-US --path install=C:\VS 2022 BT --path shared=C:\VS 2022 Shared --path cache=C:\VS 2022 Cache"
+      - choco install visualstudio2022-workload-vctools -y
       - choco install openssl -y
       - choco install gh -y
       - $Env:PATH += ";C:\Program Files\OpenSSL-Win64\bin"
@@ -49,8 +53,8 @@ global_job_config:
 
 blocks:
   - name: "Build and Test Native Executable (Windows AMD64)"
-    run:
-      when: "branch =~ '.*'"
+#    run:
+#      when: "branch =~ '.*'"
     task:
       prologue:
         commands:
@@ -73,12 +77,12 @@ blocks:
             # TODO: Temporarily disable running tests while we investigate why they fail randomly
             - make mvn-package-native-no-tests
             # Push signed executable to semaphore
+            - ls target
             - |
-              $azure_certificate = vault kv get -field=azure_certificate v1/ci/kv/cli/release
-              $azure_certificate | openssl base64 -d -A > certificate.pfx
-              $executable = Get-ChildItem -Recurse target -Filter "*-runner" | Select-Object -ExpandProperty FullName
-              signtool sign /f certificate.pfx $executable
-              $destination = "native-executables/$($executable | Split-Path -Leaf)-$($env:OS)-$($env:ARCH)"
-              artifact push workflow $executable --destination $destination
+              $executable = (Get-ChildItem -Recurse target -Filter "*-runner" | Select-Object -ExpandProperty FullName);
+            - signtool sign /f certificate.pfx $executable;
+            - |
+              $destination = "native-executables/$($executable | Split-Path -Leaf)-$($env:OS)-$($env:ARCH)";
+            - artifact push workflow $executable --destination $destination;
             # Push executable to GH release
             - gh release upload $(Get-Content .versions/ide-sidecar-version.txt) $executable --clobber
