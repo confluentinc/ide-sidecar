@@ -1,7 +1,6 @@
 package io.confluent.idesidecar.scaffolding.util;
 
 import java.io.File;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -12,14 +11,11 @@ public final class PortablePathUtil {
   }
 
   private static String portablePath(String path) {
-    var regexQuotedFileSeparator = Pattern.quote(File.separator);
     return path
         // Replace both forward and backward slashes with the platform-specific separator
         .replaceAll("[/\\\\]+", File.separator)
-        // Strip leading and trailing separators
-        .replaceAll(
-            "^[" + regexQuotedFileSeparator + "]+|[" + regexQuotedFileSeparator + "]+$",
-            "");
+        // Strip leading and trailing forward and backward slashes
+        .replaceAll("^[/\\\\]+|[/\\\\]+$", "");
   }
 
   /**
