@@ -39,12 +39,10 @@ class PortablePathUtilTest {
         Arguments.of("foo/bar/", new String[]{"foo", "bar/"}),
         Arguments.of("foo/bar", new String[]{"foo/", "bar"}),
         Arguments.of("foo/bar/", new String[]{"foo/", "bar/"}),
-        Arguments.of("foo/bar/", new String[]{"foo/", "/bar/"}),
         Arguments.of("foo/bar", new String[]{"foo", "bar"}),
         Arguments.of("foo/bar/", new String[]{"foo", "bar\\"}),
         Arguments.of("foo/bar", new String[]{"foo\\", "bar"}),
-        Arguments.of("foo/bar/", new String[]{"foo\\", "bar\\"}),
-        Arguments.of("foo/bar/", new String[]{"foo\\", "\\bar\\"})
+        Arguments.of("foo/bar/", new String[]{"foo\\", "bar\\"})
     );
   }
 

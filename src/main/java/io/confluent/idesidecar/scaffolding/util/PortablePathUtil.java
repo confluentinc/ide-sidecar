@@ -12,7 +12,11 @@ public final class PortablePathUtil {
 
   private static String portablePath(String path) {
     // Replace both forward and backward slashes with the platform-specific separator
-    return path.replaceAll("[/\\\\]+", File.separator);
+    return path
+        .replace("\\\\", File.separator)
+        .replace("//", File.separator)
+        .replace("/", File.separator)
+        .replace("\\", File.separator);
   }
 
   /**
