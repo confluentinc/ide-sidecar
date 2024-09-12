@@ -6,7 +6,6 @@ package io.confluent.idesidecar.restapi.messageviewer;
 
 import io.confluent.idesidecar.restapi.connections.ConnectionState;
 import io.confluent.idesidecar.restapi.events.Lifecycle;
-import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.ObservesAsync;
