@@ -34,6 +34,11 @@ zip-templates:
 	(cd src/main/resources/static && zip -r templates.zip templates/)
 	(cd src/test/resources/static && zip -r templates.zip templates/)
 
+.PHONY: zip-templates-windows
+zip-templates-windows:
+	powershell -Command Compress-Archive -Path src/main/resources/static/templates -DestinationPath src/main/resources/static/templates.zip
+	powershell -Command Compress-Archive -Path src/test/resources/static/templates -DestinationPath src/test/resources/static/templates.zip
+
 IDE_SIDECAR_SCRIPTS := $(CURDIR)/scripts
 IDE_SIDECAR_STATIC_RESOURCE_DIR := $(CURDIR)/src/main/resources/static
 GIT_REMOTE_NAME := origin
