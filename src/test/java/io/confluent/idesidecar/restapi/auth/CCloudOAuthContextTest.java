@@ -356,7 +356,7 @@ class CCloudOAuthContextTest {
 
   @Test
   // TODO: Figure out why this consistently fails on Windows
-  @DisabledIfSystemProperty(named ="os.name", matches = ".*Windows.*")
+  @DisabledIfSystemProperty(named = "os.name", matches = ".*Windows.*")
   void shouldAttemptTokenRefreshShouldReturnTrueForConnectionsEligibleForATokenRefreshAttempt() {
     var authContext = Mockito.spy(CCloudOAuthContext.class);
 

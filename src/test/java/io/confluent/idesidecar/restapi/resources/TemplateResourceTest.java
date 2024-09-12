@@ -202,7 +202,7 @@ public class TemplateResourceTest {
           Ok, fine, here's a joke: Why did the tomato turn red? Because it saw the salad dressing.
 
           Oh, also a test for the api_key: fake-api-key. That's all, goodbye!
-          """, contentMap.get("deeply/nested/folder/nested_file"));
+          """, contentMap.get(portablePath("deeply/nested/folder/nested_file")));
 
       // .gitignore
       assertEquals("""
@@ -217,7 +217,7 @@ public class TemplateResourceTest {
       // deeply/nested/folder/nested_file_2
       assertEquals("""
           I will always win. I have the power of static directories on my side.
-          """, contentMap.get("deeply/nested/folder/nested_file_2"));
+          """, contentMap.get(portablePath("deeply/nested/folder/nested_file_2")));
     }
 
     @Test
@@ -302,7 +302,7 @@ public class TemplateResourceTest {
       var contentMap = unzip(response);
 
       assertEquals(Set.of(
-          portablePath("src", "main", "java", "com", "foo", "bar", "baz", "MyAwesomeApp.java")
+          portablePath("src/main/java/com/foo/bar/baz/MyAwesomeApp.java")
       ), contentMap.keySet());
 
       assertEquals("""
@@ -313,7 +313,8 @@ public class TemplateResourceTest {
                   System.out.println("Hello, World!");
               }
           }
-          """, contentMap.get("src/main/java/com/foo/bar/baz/MyAwesomeApp.java"));
+          """, contentMap.get(
+              portablePath("src/main/java/com/foo/bar/baz/MyAwesomeApp.java")));
     }
 
     @Test

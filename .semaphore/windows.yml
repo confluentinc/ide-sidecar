@@ -35,6 +35,8 @@ global_job_config:
       # GraalVM native-image builds require Visual Studio 2022 Build Tools and VC++ tools
       - choco install visualstudio2022buildtools -y --verbose --package-parameters "--locale en-US --path install=C:\VS 2022 BT --path shared=C:\VS 2022 Shared --path cache=C:\VS 2022 Cache"
       - choco install visualstudio2022-workload-vctools -y --verbose
+      - choco install openssl
+      - choco install gh
       - |
         $filePath = "$Env:JAVA_HOME\bin\native-image.cmd"
         $prependText = "call `"C:\VS 2022 BT\VC\Auxiliary\Build\vcvars64.bat`"`r`n"
@@ -65,9 +67,12 @@ blocks:
           commands:
             # Builds native executable for Windows AMD64, runs unit and integration tests
             - make mvn-verify-native-executable
-            # Push executable to semaphore
+            # Push signed executable to semaphore
             - |
+              $azure_certificate = vault kv get -field=azure_certificate v1/ci/kv/cli/release
+              $azure_certificate | openssl base64 -d -A > certificate.pfx
               $executable = Get-ChildItem -Recurse target -Filter "*-runner" | Select-Object -ExpandProperty FullName
+              signtool sign /f certificate.pfx $executable
               $destination = "native-executables/$($executable | Split-Path -Leaf)-$($env:OS)-$($env:ARCH)"
               artifact push workflow $executable --destination $destination
             # Push executable to GH release
