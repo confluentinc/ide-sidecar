@@ -19,6 +19,8 @@ global_job_config:
   prologue:
     commands:
       - checkout
+      - choco install openssl -y
+      - $Env:PATH += ";C:\Program Files\OpenSSL-Win64\bin"
       - $Env:PATH += ";C:\Program Files (x86)\Windows Kits\10\bin\10.0.19041.0\x64"
       - $Env:PATH += ";C:\Program Files\Git\bin"
       - $Env:VAULT_ADDR = "https://vault.cireops.gcp.internal.confluent.cloud"
@@ -28,20 +30,18 @@ global_job_config:
       - Test-Path certificate.pfx;
       - ls
       - cache restore graal_download_zip
+      - cache restore choco_temp_dir
       - |
         if (-not (Test-Path graalvm-community-jdk-21.0.2_windows-x64_bin.zip)) {
           Invoke-WebRequest -OutFile graalvm-community-jdk-21.0.2_windows-x64_bin.zip -Uri https://github.com/graalvm/graalvm-ce-builds/releases/download/jdk-21.0.2/graalvm-community-jdk-21.0.2_windows-x64_bin.zip
         }
-      - cache store graal_download_zip graalvm-community-jdk-21.0.2_windows-x64_bin.zip
       - expand-archive -path .\graalvm-community-jdk-21.0.2_windows-x64_bin.zip -destinationpath C:\semaphore-agent\graalvm
       - $Env:JAVA_HOME = "C:\semaphore-agent\graalvm\graalvm-community-openjdk-21.0.2+13.1"
       - $Env:PATH += ";C:\semaphore-agent\graalvm\graalvm-community-openjdk-21.0.2+13.1\bin"
       # GraalVM native-image builds require Visual Studio 2022 Build Tools and VC++ tools
       - choco install visualstudio2022buildtools -y --package-parameters "--locale en-US --path install=C:\VS 2022 BT --path shared=C:\VS 2022 Shared --path cache=C:\VS 2022 Cache"
       - choco install visualstudio2022-workload-vctools -y
-      - choco install openssl -y
       - choco install gh -y
-      - $Env:PATH += ";C:\Program Files\OpenSSL-Win64\bin"
       - $Env:PATH += ";C:\Program Files\GitHub CLI\"
       - |
         $filePath = "$Env:JAVA_HOME\bin\native-image.cmd"
@@ -50,6 +50,11 @@ global_job_config:
         $newContent = $prependText + $fileContent
         Set-Content -Path $filePath -Value $newContent
         Write-Host "Prepended the native-image.cmd file with the Visual Studio 2022 Community Edition vcvars64.bat path."
+  epilogue:
+    always:
+      commands:
+        - cache store graal_download_zip graalvm-community-jdk-21.0.2_windows-x64_bin.zip
+        - cache store choco_temp_dir "$Env:USERPROFILE\AppData\Local\Temp\chocolatey"
 
 blocks:
   - name: "Build and Test Native Executable (Windows AMD64)"
