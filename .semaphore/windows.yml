@@ -35,8 +35,8 @@ global_job_config:
       # GraalVM native-image builds require Visual Studio 2022 Build Tools and VC++ tools
       - choco install visualstudio2022buildtools -y --verbose --package-parameters "--locale en-US --path install=C:\VS 2022 BT --path shared=C:\VS 2022 Shared --path cache=C:\VS 2022 Cache"
       - choco install visualstudio2022-workload-vctools -y --verbose
-      - choco install openssl
-      - choco install gh
+      - choco install openssl -y
+      - choco install gh -y
       - |
         $filePath = "$Env:JAVA_HOME\bin\native-image.cmd"
         $prependText = "call `"C:\VS 2022 BT\VC\Auxiliary\Build\vcvars64.bat`"`r`n"
