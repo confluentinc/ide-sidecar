@@ -3,6 +3,7 @@ package io.confluent.idesidecar.restapi.resources;
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.asJson;
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResourceAsBytes;
+import static io.confluent.idesidecar.scaffolding.util.PortablePathUtil.portablePath;
 import static io.restassured.RestAssured.given;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -131,16 +132,17 @@ public class TemplateResourceTest {
 
       var contentMap = unzip(response);
       // -- Assert that the list of files in the zip file is as expected
+      // Compare Paths not strings to avoid platform-specific issues
       assertEquals(Set.of(
           // From src/ directory
-          "config.properties",
-          "go_consumer_from_api.md",
-          "deeply/nested/folder/nested_file",
+          portablePath("config.properties"),
+          portablePath("go_consumer_from_api.md"),
+          portablePath("deeply", "nested", "folder", "nested_file"),
           // These must come from static/ directory, contents will be asserted
           // later in this test
-          ".gitignore",
-          "README.md",
-          "deeply/nested/folder/nested_file_2"
+          portablePath(".gitignore"),
+          portablePath("README.md"),
+          portablePath("deeply", "nested", "folder", "nested_file_2")
       ), contentMap.keySet());
 
       // -- Assert contents of each file
@@ -200,7 +202,7 @@ public class TemplateResourceTest {
           Ok, fine, here's a joke: Why did the tomato turn red? Because it saw the salad dressing.
 
           Oh, also a test for the api_key: fake-api-key. That's all, goodbye!
-          """, contentMap.get("deeply/nested/folder/nested_file"));
+          """, contentMap.get(portablePath("deeply/nested/folder/nested_file")));
 
       // .gitignore
       assertEquals("""
@@ -215,7 +217,7 @@ public class TemplateResourceTest {
       // deeply/nested/folder/nested_file_2
       assertEquals("""
           I will always win. I have the power of static directories on my side.
-          """, contentMap.get("deeply/nested/folder/nested_file_2"));
+          """, contentMap.get(portablePath("deeply/nested/folder/nested_file_2")));
     }
 
     @Test
@@ -242,7 +244,7 @@ public class TemplateResourceTest {
       var contentMap = unzip(response);
 
       // -- Assert that the list of files in the zip file is as expected
-      assertEquals(Set.of("README.md"), contentMap.keySet());
+      assertEquals(Set.of(portablePath("README.md")), contentMap.keySet());
     }
 
     @Test
@@ -300,7 +302,7 @@ public class TemplateResourceTest {
       var contentMap = unzip(response);
 
       assertEquals(Set.of(
-          "src/main/java/com/foo/bar/baz/MyAwesomeApp.java"
+          portablePath("src/main/java/com/foo/bar/baz/MyAwesomeApp.java")
       ), contentMap.keySet());
 
       assertEquals("""
@@ -311,7 +313,8 @@ public class TemplateResourceTest {
                   System.out.println("Hello, World!");
               }
           }
-          """, contentMap.get("src/main/java/com/foo/bar/baz/MyAwesomeApp.java"));
+          """, contentMap.get(
+              portablePath("src/main/java/com/foo/bar/baz/MyAwesomeApp.java")));
     }
 
     @Test
@@ -406,7 +409,10 @@ public class TemplateResourceTest {
       return unzipAsBytes(zippedContents).entrySet().stream()
           .collect(
               HashMap::new,
-              (map, entry) -> map.put(entry.getKey(), new String(entry.getValue(), Charset.defaultCharset())),
+              (map, entry) -> map.put(
+                  portablePath(entry.getKey()),
+                  new String(entry.getValue(), Charset.defaultCharset())
+              ),
               HashMap::putAll
           );
     }

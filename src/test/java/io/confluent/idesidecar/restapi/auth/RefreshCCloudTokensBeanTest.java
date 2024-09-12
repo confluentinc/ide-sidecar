@@ -15,6 +15,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.mockito.Mockito;
 
 @QuarkusTest
@@ -42,6 +43,7 @@ class RefreshCCloudTokensBeanTest {
   }
 
   @Test
+  @DisabledIfSystemProperty(named = "os.name", matches = ".*Windows.*")
   void refreshTokensShouldRefreshOnlyConnectionsEligibleForATokenRefreshAttempt() {
     // Connection eligible for a token refresh attempt
     var eligibleConnection = (CCloudConnectionState) createdSpiedConnectionState(

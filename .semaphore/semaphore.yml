@@ -205,3 +205,9 @@ after_pipeline:
       - name: Publish Test Results to Semaphore
         commands:
           - test-results gen-pipeline-report || echo "Could not publish pipeline test result report due to probably no test results to publish"
+
+promotions:
+  - name: "Windows Build Test Release"
+    pipeline_file: windows.yml
+    auto_promote:
+      when: "result = 'passed' and branch =~ '.*'"
