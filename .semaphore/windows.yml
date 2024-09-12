@@ -19,14 +19,14 @@ global_job_config:
   prologue:
     commands:
       - checkout
-      - $azure_certificate = vault kv get -field=azure_certificate v1/ci/kv/cli/release;
-      - $azure_certificate | openssl base64 -d -A > certificate.pfx;
-      - Test-Path certificate.pfx;
-      - ls
       - $Env:PATH += ";C:\Program Files (x86)\Windows Kits\10\bin\10.0.19041.0\x64"
       - $Env:PATH += ";C:\Program Files\Git\bin"
       - $Env:VAULT_ADDR = "https://vault.cireops.gcp.internal.confluent.cloud"
       - vault login -no-print token=$(vault write -field=token "auth/semaphore_self_hosted/login" role="default" jwt="$Env:SEMAPHORE_OIDC_TOKEN")
+      - $azure_certificate = vault kv get -field=azure_certificate v1/ci/kv/cli/release;
+      - $azure_certificate | openssl base64 -d -A > certificate.pfx;
+      - Test-Path certificate.pfx;
+      - ls
       - cache restore graal_download_zip
       - |
         if (-not (Test-Path graalvm-community-jdk-21.0.2_windows-x64_bin.zip)) {
