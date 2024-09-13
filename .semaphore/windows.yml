@@ -21,24 +21,31 @@ global_job_config:
       - checkout
       - $Env:PATH += ";C:\Program Files (x86)\Windows Kits\10\bin\10.0.19041.0\x64"
       - $Env:PATH += ";C:\Program Files\Git\bin"
+      # Restore caches for GraalVM and Chocolatey
+      - cache restore graal_download_zip
+      - cache restore choco_temp_dir
+      # Login to Vault
       - $Env:VAULT_ADDR = "https://vault.cireops.gcp.internal.confluent.cloud"
       - vault login -no-print token=$(vault write -field=token "auth/semaphore_self_hosted/login" role="default" jwt="$Env:SEMAPHORE_OIDC_TOKEN")
-      - cache restore graal_download_zip
+      # Fetch Azure certificate from Vault and create the PFX file
+      - vault kv get -field=azure_certificate v1/ci/kv/cli/release > certificate_base64.txt
+      - certutil -decode certificate_base64.txt certificate.pfx
+      # Install GraalVM
       - |
         if (-not (Test-Path graalvm-community-jdk-21.0.2_windows-x64_bin.zip)) {
           Invoke-WebRequest -OutFile graalvm-community-jdk-21.0.2_windows-x64_bin.zip -Uri https://github.com/graalvm/graalvm-ce-builds/releases/download/jdk-21.0.2/graalvm-community-jdk-21.0.2_windows-x64_bin.zip
         }
-      - cache store graal_download_zip graalvm-community-jdk-21.0.2_windows-x64_bin.zip
       - expand-archive -path .\graalvm-community-jdk-21.0.2_windows-x64_bin.zip -destinationpath C:\semaphore-agent\graalvm
       - $Env:JAVA_HOME = "C:\semaphore-agent\graalvm\graalvm-community-openjdk-21.0.2+13.1"
       - $Env:PATH += ";C:\semaphore-agent\graalvm\graalvm-community-openjdk-21.0.2+13.1\bin"
-      # GraalVM native-image builds require Visual Studio 2022 Build Tools and VC++ tools
-      - choco install visualstudio2022buildtools -y --verbose --package-parameters "--locale en-US --path install=C:\VS 2022 BT --path shared=C:\VS 2022 Shared --path cache=C:\VS 2022 Cache"
-      - choco install visualstudio2022-workload-vctools -y --verbose
-      - choco install openssl -y
+      # Install VS 2022 build tools and VC++ tools, required by GraalVM native-image build
+      - choco install visualstudio2022buildtools -y --package-parameters "--locale en-US --path install=C:\VS 2022 BT --path shared=C:\VS 2022 Shared --path cache=C:\VS 2022 Cache"
+      - choco install visualstudio2022-workload-vctools -y
+      # Install GitHub CLI for uploading the native executable to the GitHub release
       - choco install gh -y
-      - $Env:PATH += ";C:\Program Files\OpenSSL-Win64\bin"
       - $Env:PATH += ";C:\Program Files\GitHub CLI\"
+      # This ensures native-image.cmd is able to find the local installation
+      # of VC++ tools and VS Build Tools.
       - |
         $filePath = "$Env:JAVA_HOME\bin\native-image.cmd"
         $prependText = "call `"C:\VS 2022 BT\VC\Auxiliary\Build\vcvars64.bat`"`r`n"
@@ -46,11 +53,16 @@ global_job_config:
         $newContent = $prependText + $fileContent
         Set-Content -Path $filePath -Value $newContent
         Write-Host "Prepended the native-image.cmd file with the Visual Studio 2022 Community Edition vcvars64.bat path."
+  epilogue:
+    always:
+      commands:
+        - cache store graal_download_zip graalvm-community-jdk-21.0.2_windows-x64_bin.zip
+        - cache store choco_temp_dir "$Env:USERPROFILE\AppData\Local\Temp\chocolatey"
 
 blocks:
   - name: "Build and Test Native Executable (Windows AMD64)"
-    run:
-      when: "branch =~ '.*'"
+#    run:
+#      when: "branch =~ '.*'"
     task:
       prologue:
         commands:
@@ -72,13 +84,14 @@ blocks:
             # Builds native executable for Windows AMD64
             # TODO: Temporarily disable running tests while we investigate why they fail randomly
             - make mvn-package-native-no-tests
-            # Push signed executable to semaphore
+            # Push unsigned executable to GH release and Semaphore
             - |
-              $azure_certificate = vault kv get -field=azure_certificate v1/ci/kv/cli/release
-              $azure_certificate | openssl base64 -d -A > certificate.pfx
-              $executable = Get-ChildItem -Recurse target -Filter "*-runner" | Select-Object -ExpandProperty FullName
-              signtool sign /f certificate.pfx $executable
-              $destination = "native-executables/$($executable | Split-Path -Leaf)-$($env:OS)-$($env:ARCH)"
-              artifact push workflow $executable --destination $destination
-            # Push executable to GH release
-            - gh release upload $(Get-Content .versions/ide-sidecar-version.txt) $executable --clobber
+              $executable = Get-ChildItem -Recurse ".\target\" -Filter "*-runner.exe" | Select-Object -ExpandProperty FullName
+              $executable_with_os_arch = (Split-Path -Leaf $executable) -replace "-runner", "-runner-$($Env:OS)-$($Env:ARCH)"
+              $destination = "native-executables/$executable_with_os_arch"
+              artifact push workflow $executable --destination $destination;
+              Write-Host "Signing executable $executable";
+              signtool sign /debug /v /f certificate.pfx "$executable";
+              $signed_executable = $executable -replace "-runner", "-signed-runner-$($Env:OS)-$($Env:ARCH)"
+              $destination_signed = "native-executables/$($signed_executable | Split-Path -Leaf)"
+              artifact push workflow $executable --destination $destination_signed;
