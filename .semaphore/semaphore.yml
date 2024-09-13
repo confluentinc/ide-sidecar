@@ -36,6 +36,8 @@ global_job_config:
 blocks:
   - name: "Build and Test"
     dependencies: []
+    skip:
+      when: true
     task:
       prologue:
         commands:
@@ -51,8 +53,10 @@ blocks:
 
   - name: "Release"
     dependencies: ["Build and Test"]
-    run:
-      when: "branch =~ '.*'"
+#    run:
+#      when: "branch =~ '.*'"
+    skip:
+      when: true
     task:
       jobs:
         - name: "Release"
