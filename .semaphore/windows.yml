@@ -61,8 +61,8 @@ global_job_config:
 
 blocks:
   - name: "Build and Test Native Executable (Windows AMD64)"
-#    run:
-#      when: "branch =~ '.*'"
+    run:
+      when: "branch =~ '.*'"
     task:
       prologue:
         commands:
@@ -87,9 +87,9 @@ blocks:
             # Push unsigned executable to GH release and Semaphore
             - |
               $executable = Get-ChildItem -Recurse ".\target\" -Filter "*-runner.exe" | Select-Object -ExpandProperty FullName
-              $executable_with_os_arch = (Split-Path -Leaf $executable) -replace "-runner", "-runner-$($Env:OS)-$($Env:ARCH)"
-              Rename-Item -Path $executable -NewName $executable_with_os_arch
+              $executable_with_os_arch = $executable -replace "-runner", "-runner-$($Env:OS)-$($Env:ARCH)"
+              Rename-Item -Path $executable -NewName (Split-Path -Leaf $executable_with_os_arch)
               Write-Host "Signing executable $executable_with_os_arch";
               signtool sign /debug /v /f certificate.pfx "$executable_with_os_arch";
-              artifact push workflow $executable_with_os_arch --destination "native-executables/$executable_with_os_arch";
+              artifact push workflow $executable_with_os_arch --destination "native-executables/$(Split-Path -Leaf $executable_with_os_arch)";
               gh release upload $executable_with_os_arch --clobber --repo
