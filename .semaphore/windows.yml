@@ -89,7 +89,6 @@ blocks:
             # Push unsigned executable to GH release and Semaphore
             - |
               $executable = Get-ChildItem -Recurse ".\target\" -Filter "*-runner.exe" | Select-Object -ExpandProperty FullName
-            # Make this *-runner-$OS-$ARCH.exe
               $executable_with_os_arch = (Split-Path -Leaf $executable) -replace "-runner", "-runner-$($Env:OS)-$($Env:ARCH)"
               $destination = "native-executables/$executable_with_os_arch"
               artifact push workflow $executable --destination $destination;
@@ -98,5 +97,3 @@ blocks:
               $signed_executable = $executable -replace "-runner", "-signed-runner-$($Env:OS)-$($Env:ARCH)"
               $destination_signed = "native-executables/$($signed_executable | Split-Path -Leaf)"
               artifact push workflow $executable --destination $destination_signed;
-            # Push unsigned executable to GH release
-            # gh release upload $(Get-Content ".\.versions\ide-sidecar-version.txt") $executable --clobber
