@@ -24,14 +24,12 @@ global_job_config:
       # Restore caches for GraalVM and Chocolatey
       - cache restore graal_download_zip
       - cache restore choco_temp_dir
-      # Install openssl
-      - choco install openssl -y
-      - $Env:PATH += ";C:\Program Files\OpenSSL-Win64\bin"
       # Login to Vault
       - $Env:VAULT_ADDR = "https://vault.cireops.gcp.internal.confluent.cloud"
       - vault login -no-print token=$(vault write -field=token "auth/semaphore_self_hosted/login" role="default" jwt="$Env:SEMAPHORE_OIDC_TOKEN")
       # Fetch Azure certificate from Vault and create the PFX file
-      - vault kv get -field=azure_certificate v1/ci/kv/cli/release | openssl base64 -d -A > certificate.pfx;
+      - vault kv get -field=azure_certificate v1/ci/kv/cli/release > certificate_base64.txt
+      - certutil -decode certificate_base64.txt certificate.pfx
       # Install GraalVM
       - |
         if (-not (Test-Path graalvm-community-jdk-21.0.2_windows-x64_bin.zip)) {
@@ -93,7 +91,7 @@ blocks:
               $destination = "native-executables/$executable_with_os_arch"
               artifact push workflow $executable --destination $destination;
               Write-Host "Signing executable $executable";
-              signtool sign /debug /v /f certificate.pfx /fd certHash "$executable";
+              signtool sign /debug /v /f certificate.pfx "$executable";
               $signed_executable = $executable -replace "-runner", "-signed-runner-$($Env:OS)-$($Env:ARCH)"
               $destination_signed = "native-executables/$($signed_executable | Split-Path -Leaf)"
               artifact push workflow $executable --destination $destination_signed;
