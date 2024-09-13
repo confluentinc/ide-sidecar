@@ -89,10 +89,10 @@ blocks:
             - make mvn-package-native-no-tests
             # Push signed executable to semaphore
             - |
-              $executable = (Get-ChildItem -Recurse target -Filter "*-runner.exe" | Select-Object -ExpandProperty FullName | Resolve-Path -Relative).Path;
+              $executable = Get-ChildItem -Recurse ".\target\" -Filter "*-runner.exe" | Select-Object -ExpandProperty FullName
               Write-Host "Signing executable $executable";
               signtool sign /f certificate.pfx "$executable";
               $destination = "native-executables/$($executable | Split-Path -Leaf)-$($env:OS)-$($env:ARCH).exe";
             - artifact push workflow $executable --destination $destination;
             # Push executable to GH release
-            - gh release upload $(Get-Content .versions/ide-sidecar-version.txt) $executable --clobber
+            - gh release upload $(Get-Content ".\.versions\ide-sidecar-version.txt") $executable --clobber
