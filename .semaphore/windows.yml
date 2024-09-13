@@ -88,10 +88,8 @@ blocks:
             - |
               $executable = Get-ChildItem -Recurse ".\target\" -Filter "*-runner.exe" | Select-Object -ExpandProperty FullName
               $executable_with_os_arch = (Split-Path -Leaf $executable) -replace "-runner", "-runner-$($Env:OS)-$($Env:ARCH)"
-              $destination = "native-executables/$executable_with_os_arch"
-              artifact push workflow $executable --destination $destination;
-              Write-Host "Signing executable $executable";
-              signtool sign /debug /v /f certificate.pfx "$executable";
-              $signed_executable = $executable -replace "-runner", "-signed-runner-$($Env:OS)-$($Env:ARCH)"
-              $destination_signed = "native-executables/$($signed_executable | Split-Path -Leaf)"
-              artifact push workflow $executable --destination $destination_signed;
+              Rename-Item -Path $executable -NewName $executable_with_os_arch
+              Write-Host "Signing executable $executable_with_os_arch";
+              signtool sign /debug /v /f certificate.pfx "$executable_with_os_arch";
+              artifact push workflow $executable_with_os_arch --destination "native-executables/$executable_with_os_arch";
+              gh release upload $executable_with_os_arch --clobber --repo
