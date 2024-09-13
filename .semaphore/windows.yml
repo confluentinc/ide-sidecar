@@ -95,4 +95,5 @@ blocks:
               $destination = "native-executables/$($executable | Split-Path -Leaf)-$($env:OS)-$($env:ARCH).exe";
             - artifact push workflow $executable --destination $destination;
             # Push executable to GH release
-            - gh release upload $(Get-Content ".\.versions\ide-sidecar-version.txt") $executable --clobber
+            - |
+              gh release upload $(Get-Content ".\.versions\ide-sidecar-version.txt") $executable --clobber
