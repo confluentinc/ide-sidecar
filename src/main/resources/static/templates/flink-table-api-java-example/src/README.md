@@ -1,8 +1,8 @@
-# Apache Flink® Table API on Confluent Cloud - Examples for Java
+# Apache Flink® Table API on Confluent Cloud - Examples
 
 This project contains examples for running Apache Flink's Table API on Confluent Cloud.
 
-## Introduction to Table API
+## Introduction to Table API for Java
 
 The [Table API](https://nightlies.apache.org/flink/flink-docs-stable/docs/dev/table/overview/) enables a programmatic
 way of developing, testing, and submitting Flink pipelines for processing data streams.
@@ -26,7 +26,7 @@ for a local Flink cluster. By adding the `confluent-flink-table-api-java-plugin`
 `CatalogStore`, `Catalog`, `Planner`, `Executor`, and configuration are managed by the plugin and fully integrate with
 Confluent Cloud. Including access to Apache Kafka®, Schema Registry, and Flink Compute Pools.
 
-Note: The Table API plugin is in Open Preview stage. Take a look at the *Known Limitation* section below.
+Note: The Table API plugin is in Open Preview stage. Take a look at the [Known Limitation](#known-limitations) section below.
 
 ### Motivating Example
 
@@ -99,22 +99,15 @@ chmod +x mvnw
 ./mvnw clean package
 ```
 
-Run an example from the JAR file. No worries the program is read-only so it won't affect your existing
+Run an example from the JAR file. No worries the program is read-only, so it won't affect your existing
 Kafka clusters. All results will be printed to the console.
 ```bash
-cd target
-java -jar flink-table-api-java-examples-1.0.jar io.confluent.flink.examples.table.Example_00_HelloWorld
+java -jar target/flink-table-api-java-examples-1.0.jar io.confluent.flink.examples.table.Example_00_HelloWorld
 ```
-
-An output similar to the following means that you are able to run the examples:
-```text
-Exception in thread "main" io.confluent.flink.plugin.ConfluentFlinkException: Parameter 'client.organization-id' not found.
-```
-Configuration will be covered in the next section.
 
 #### Via IDE
 
-Import this project into your IDE (preferably [IntelliJ IDEA](https://www.jetbrains.com/idea/)). Make sure to select
+Import this repository into your IDE (preferably [IntelliJ IDEA](https://www.jetbrains.com/idea/)). Make sure to select
 the `pom.xml` file during import to treat it as a Maven project, this ensures that all dependencies will be loaded
 automatically.
 
@@ -123,12 +116,6 @@ Take a look at the `Example_00_HelloWorld` class to get started.
 
 Run the `main()` method of `Example_00_HelloWorld`. No worries the program is read only so it won't affect your existing
 Kafka clusters. All results will be printed to the console.
-
-An output similar to the following means that you are able to run the examples:
-```text
-Exception in thread "main" io.confluent.flink.plugin.ConfluentFlinkException: Parameter 'client.organization-id' not found.
-```
-Configuration will be covered in the next section.
 
 ### Configure the `cloud.properties` File
 
@@ -146,6 +133,21 @@ All required information can be found in the web UI of Confluent's Cloud Console
 - `client.flink-api-key`, `client.flink-api-secret` from [**Menu** → **Settings** → **API keys**](https://confluent.cloud/settings/api-keys)
 
 Examples should be runnable after setting all configuration options correctly.
+
+### Table API Playground using JShell
+
+For convenience, the repository also contains a [JShell](https://openjdk.org/jeps/222) init script for playing around with
+Table API in an interactive manner.
+
+1. Run `mvn clean package` to build a JAR file.
+
+2. Point to the `cloud.properties` file: `export FLINK_PROPERTIES=./src/main/resources/cloud.properties` 
+
+3. Start the shell with `jshell --class-path ./target/flink-table-api-java-examples-1.0.jar --startup ./jshell-init.jsh`
+
+4. The `TableEnvironment` is pre-initialized from environment variables and available under `env`.
+
+5. Run your first "Hello world!" using `env.executeSql("SELECT 'Hello world!'").print();`
 
 ### How to Continue
 
@@ -208,14 +210,14 @@ Store options (or some options) in a `cloud.properties` file:
 ```properties
 # Cloud region
 client.cloud=aws
-client.region=eu-west-1
+client.region=us-east-1
 
 # Access & compute resources
-client.flink-api-key=XXXXXXXXXXXXXXXX
-client.flink-api-secret=XxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXx
-client.organization-id=00000000-0000-0000-0000-000000000000
-client.environment-id=env-xxxxx
-client.compute-pool-id=lfcp-xxxxxxxxxx
+client.flink-api-key=key
+client.flink-api-secret=secret
+client.organization-id=b0b21724-4586-4a07-b787-d0bb5aacbf87
+client.environment-id=env-z3y2x1
+client.compute-pool-id=lfcp-8m03rm
 ```
 
 Reference the `cloud.properties` file:
@@ -226,6 +228,8 @@ ConfluentSettings settings = ConfluentSettings.fromFile("/path/to/cloud.properti
 // Part of the JAR package (in src/main/resources)
 ConfluentSettings settings = ConfluentSettings.fromResource("/cloud.properties");
 ```
+
+A path to a properties file can also be specified by setting the environment variable `FLINK_PROPERTIES`.
 
 ### Via Command-Line arguments
 
@@ -286,6 +290,8 @@ In code call:
 ```java
 ConfluentSettings settings = ConfluentSettingsfromGlobalVariables();
 ```
+
+A path to a properties file can also be specified by setting the environment variable `FLINK_PROPERTIES`.
 
 ### Configuration Options
 
@@ -381,6 +387,20 @@ ConfluentTools.collectMaterialized(table);
 ConfluentTools.printMaterialized(table);
 ```
 
+### `ConfluentTools.getStatementName` / `ConfluentTools.stopStatement`
+
+Additional lifecycle methods are available to control statements on Confluent Cloud after they have been submitted.
+
+```java
+// On TableResult object
+TableResult tableResult = env.executeSql("SELECT * FROM examples.marketplace.customers");
+String statementName = ConfluentTools.getStatementName(tableResult);
+ConfluentTools.stopStatement(tableResult);
+
+// Based on statement name
+ConfluentTools.stopStatement(env, "table-api-2024-03-21-150457-36e0dbb2e366-sql");
+```
+
 ### Confluent Table Descriptor
 
 A table descriptor for creating tables located in Confluent Cloud programmatically.
@@ -455,7 +475,6 @@ TableEnvironment.listFunctions()
 TableEnvironment.listTables()
 TableEnvironment.listTables(String, String)
 TableEnvironment.listViews()
-TableEnvironment.sqlQuery(String)
 TableEnvironment.sqlQuery(String)
 TableEnvironment.useCatalog(String)
 TableEnvironment.useDatabase(String)
