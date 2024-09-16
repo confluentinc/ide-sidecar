@@ -16,7 +16,7 @@ target
 *.pid
 local_mode_test.log
 coverage.txt
-.idea/*
+.idea
 *.iml
 
 # ignore the vendor folder
