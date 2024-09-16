@@ -19,6 +19,10 @@ global_job_config:
   prologue:
     commands:
       - checkout
+      - git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'
+      - git fetch --all --tags
+      - |
+        git checkout "$(sem-context get release_version)"
       - $Env:PATH += ";C:\Program Files (x86)\Windows Kits\10\bin\10.0.19041.0\x64"
       - $Env:PATH += ";C:\Program Files\Git\bin"
       # Restore caches for GraalVM and Chocolatey
@@ -92,4 +96,4 @@ blocks:
               Write-Host "Signing executable $executable_with_os_arch";
               signtool sign /debug /v /f certificate.pfx "$executable_with_os_arch";
               artifact push workflow $executable_with_os_arch --destination "native-executables/$(Split-Path -Leaf $executable_with_os_arch)";
-              gh release upload $executable_with_os_arch --clobber --repo
+              gh release upload "$(sem-context get release_version)" $executable_with_os_arch --clobber
