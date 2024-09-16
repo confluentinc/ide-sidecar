@@ -11,7 +11,7 @@
 
     <properties>
         <flink.version>1.20.0</flink.version>
-        <confluent-plugin.version>0.104.0</confluent-plugin.version>
+        <confluent-plugin.version>1.20-42</confluent-plugin.version>
         <target.java.version>11</target.java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>${target.java.version}</maven.compiler.source>
@@ -21,6 +21,10 @@
     </properties>
 
     <repositories>
+        <repository>
+            <id>confluent</id>
+            <url>https://packages.confluent.io/maven/</url>
+        </repository>
         <repository>
             <id>apache.snapshots</id>
             <name>Apache Development Snapshot Repository</name>
@@ -96,13 +100,12 @@
                             <version>1.23.0</version>
                             <style>AOSP</style>
                         </googleJavaFormat>
-
                         <!-- \# refers to the static imports -->
                         <importOrder>
                             <order>io.confluent,org.apache.flink,,javax,java,scala,\#</order>
                         </importOrder>
-
                         <removeUnusedImports/>
+                        <toggleOffOn />
                     </java>
                 </configuration>
                 <executions>
