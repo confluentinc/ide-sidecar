@@ -48,6 +48,8 @@ global_job_config:
       # Install GitHub CLI for uploading the native executable to the GitHub release
       - choco install gh -y
       - $Env:PATH += ";C:\Program Files\GitHub CLI\"
+      # Usage of GH cli in automation (when "CI" is set) requires us to set the GH_TOKEN environment variable.
+      - $Env:GH_TOKEN = $Env:GITHUB_TOKEN
       # This ensures native-image.cmd is able to find the local installation
       # of VC++ tools and VS Build Tools.
       - |
@@ -64,7 +66,7 @@ global_job_config:
         - cache store choco_temp_dir "$Env:USERPROFILE\AppData\Local\Temp\chocolatey"
 
 blocks:
-  - name: "Build and Test Native Executable (Windows AMD64)"
+  - name: "Build and Test Native Executable (Windows x64)"
     run:
       when: "branch =~ '.*'"
     task:
@@ -81,11 +83,11 @@ blocks:
         - name: OS
           value: "windows"
         - name: ARCH
-          value: "amd64"
+          value: "x64"
       jobs:
-        - name: "Build and Test Native Executable (Windows AMD64)"
+        - name: "Build and Test Native Executable (Windows x64)"
           commands:
-            # Builds native executable for Windows AMD64
+            # Builds native executable for Windows x64
             # TODO: Temporarily disable running tests while we investigate why they fail randomly
             - make mvn-package-native-no-tests
             # Push unsigned executable to GH release and Semaphore
