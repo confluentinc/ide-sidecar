@@ -1,7 +1,7 @@
 # Welcome to the Confluent ide-sidecar contributing guide
 
-Thanks for your interest in contributing to this project, which is part of the Confluent extension for VS Code!
-Our goal for the [Confluent extension for VS Code project](https://github.com/confluentinc/vscode) 
+Thanks for your interest in contributing to this project, which is part of Confluent for VS Code!
+Our goal for the [Confluent for VS Code project](https://github.com/confluentinc/vscode)
 is to help make it very easy for developers to build stream processing applications using Confluent.
 
 Anyone can contribute, and here are some ways to do so:
@@ -87,7 +87,7 @@ Most development occurs on the `main` branch. Therefore, most PRs will target th
 If we need to patch a previously-released major or minor release, we will create a `v.MAJOR.MINOR.x` branch (e.g., `v1.2.x`), and we create PRs against this branch for all fixes and changes. When the patch is ready, we'll release the first `v.MAJOR.MINOR.1` patch version (e.g., `v1.2.1`). If we need to make additional fixes, we'll continue to do so against this same branch and release subsequent patch versions (e.g., `v1.2.2`, `v1.2.3`, etc).
 
 This project's releases will be published to https://github.com/confluentinc/ide-sidecar/releases, 
-and those releases will be used by the [Confluent extension for VS Code project](https://github.com/confluentinc/vscode).
+and those releases will be used by the [Confluent for VS Code project](https://github.com/confluentinc/vscode).
 
 ## Our codebase
 
