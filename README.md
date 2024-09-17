@@ -3,7 +3,7 @@
 ![Release](release.svg) 
 
 👋 Welcome to **IDE Sidecar**, the sidecar application used by
-the [Confluent Extension for VS Code](https://github.com/confluentinc/vscode).
+[Confluent for VS Code](https://github.com/confluentinc/vscode).
 
 💡 IDE Sidecar exposes REST and GraphQL APIs.
 It is a Java 21 project that uses [Quarkus](https://quarkus.io), [GraalVM](https://www.graalvm.org/), and
