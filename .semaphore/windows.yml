@@ -49,7 +49,6 @@ global_job_config:
       - choco install gh -y
       - $Env:PATH += ";C:\Program Files\GitHub CLI\"
       # Usage of GH cli in automation (when "CI" is set) requires us to set the GH_TOKEN environment variable.
-      - $Env:GH_TOKEN = $Env:GITHUB_TOKEN
       - gh --version
       # This ensures native-image.cmd is able to find the local installation
       # of VC++ tools and VS Build Tools.
@@ -99,5 +98,8 @@ blocks:
               Write-Host "Signing executable $executable_with_os_arch";
               signtool sign /debug /v /f certificate.pfx "$executable_with_os_arch";
               try {artifact push workflow $executable_with_os_arch --destination "native-executables/$(Split-Path -Leaf $executable_with_os_arch)"} catch {Write-Host "Artifact push failed"}
-              $Env:GH_TOKEN = $Env:GITHUB_TOKEN
+              $Env:GH_TOKEN = [Environment]::GetEnvironmentVariable('GITHUB_TOKEN', 'Machine')
+              gh config set prompt disabled
+              gh auth login
+              gh auth status
               gh release upload "$(sem-context get release_version)" $executable_with_os_arch --clobber
