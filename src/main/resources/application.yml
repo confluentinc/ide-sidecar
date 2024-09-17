@@ -150,10 +150,10 @@ quarkus:
     info-title: Confluent ide-sidecar API
     store-schema-directory: src/generated/resources/
     info-version: 1.0.1
-    info-description: API for the Confluent ide-sidecar, part of the Confluent extension for VS Code
+    info-description: API for the Confluent ide-sidecar, part of Confluent for VS Code
     info-terms-of-service: Your terms here
     info-contact-email: vscode@confluent.io
-    info-contact-name: Confluent extension for VS Code Support
+    info-contact-name: Confluent for VS Code Support
     info-contact-url: https://confluent.io/contact
   smallrye-graphql:
     print-data-fetcher-exception: true

@@ -2,11 +2,10 @@
 openapi: 3.0.3
 info:
   title: Confluent ide-sidecar API
-  description: "API for the Confluent ide-sidecar, part of the Confluent extension\
-    \ for VS Code"
+  description: "API for the Confluent ide-sidecar, part of Confluent for VS Code"
   termsOfService: Your terms here
   contact:
-    name: Confluent extension for VS Code Support
+    name: Confluent for VS Code Support
     url: https://confluent.io/contact
     email: vscode@confluent.io
   version: 1.0.1
@@ -841,8 +840,8 @@ components:
           - UP
           - DOWN
           type: string
-        name:
-          type: string
         data:
           type: object
           nullable: true
+        name:
+          type: string
