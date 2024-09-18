@@ -60,7 +60,7 @@ public class SimpleConsumer {
   ) {
     messageMaxBytes = messageMaxBytes == null ? DEFAULT_MESSAGE_MAX_BYTES : messageMaxBytes;
     // maxPollRecords is the number of messages we get for this entire query.
-    int recordsLimit = Math.max(
+    int recordsLimit = Math.min(
         Optional.ofNullable(maxPollRecords).orElse(MAX_POLL_RECORDS_LIMIT),
         MAX_POLL_RECORDS_LIMIT
     );
