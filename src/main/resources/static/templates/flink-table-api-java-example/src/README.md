@@ -31,7 +31,7 @@ Note: The Table API plugin is in Open Preview stage. Take a look at the [Known L
 ### Motivating Example
 
 The following code shows how a Table API program is structured. Subsequent sections will go into more details how you
-can use the examples of this repository to play around with Flink on Confluent Cloud.
+can use the examples of this project to play around with Flink on Confluent Cloud.
 
 ```java
 import io.confluent.flink.plugin.*;
@@ -105,26 +105,25 @@ Kafka clusters. All results will be printed to the console.
 java -jar target/flink-table-api-java-examples-1.0.jar io.confluent.flink.examples.table.Example_00_HelloWorld
 ```
 
-#### Via IDE
+#### Via VS Code
 
-Import this repository into your IDE (preferably [IntelliJ IDEA](https://www.jetbrains.com/idea/)). Make sure to select
-the `pom.xml` file during import to treat it as a Maven project, this ensures that all dependencies will be loaded
-automatically.
-
-All examples are runnable from within the IDE. You simply need to execute the `main()` method of any example class.
-Take a look at the `Example_00_HelloWorld` class to get started.
-
-Run the `main()` method of `Example_00_HelloWorld`. No worries the program is read only so it won't affect your existing
+You can find the Java classes implementing the examples in the
+directory `src/main/java/io/confluent/flink/examples/table`.
+Open one of the files, e.g., `Example_00_HelloWorld.java`, in VS Code and click
+on `Run` next to the `main()` method of the example class.
+No worries - the program is read only so it won't affect your existing
 Kafka clusters. All results will be printed to the console.
 
 ### Configure the `cloud.properties` File
 
 The Table API plugin needs a set of configuration options for establishing a connection to Confluent Cloud.
 
-For experimenting with Table API, configuration with a properties file might be the most convenient option.
-The examples read from this file by default.
+For experimenting with the Table API, providing the configuration via the file
+`src/main/resources/cloud.properties` might be the most convenient option.
+The examples read from this file by default. We pre-populated the file with the values that you've
+provided when generating the project. 
 
-Update the file under `src/main/resources/cloud.properties` with your Confluent Cloud information.
+If needed, update the file under `src/main/resources/cloud.properties` with your Confluent Cloud information.
 
 All required information can be found in the web UI of Confluent's Cloud Console:
 - `client.organization-id` from [**Menu** → **Settings** → **Organizations**](https://confluent.cloud/settings/organizations)
@@ -136,7 +135,7 @@ Examples should be runnable after setting all configuration options correctly.
 
 ### Table API Playground using JShell
 
-For convenience, the repository also contains a [JShell](https://openjdk.org/jeps/222) init script for playing around with
+For convenience, the project also contains a [JShell](https://openjdk.org/jeps/222) init script for playing around with
 Table API in an interactive manner.
 
 1. Run `mvn clean package` to build a JAR file.
@@ -151,7 +150,7 @@ Table API in an interactive manner.
 
 ### How to Continue
 
-This repository can be used as a starting point for your own project and how to handle Maven dependencies correctly.
+This project can be used as a starting point for your own project and how to handle Maven dependencies correctly.
 
 If you want to add the Table API to an existing project, make sure to include the following dependencies in the `<dependencies>`
 section of your `pom.xml` file.
