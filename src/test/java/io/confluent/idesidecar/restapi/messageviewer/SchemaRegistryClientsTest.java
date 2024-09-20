@@ -81,7 +81,7 @@ public class SchemaRegistryClientsTest {
     SchemaRegistryClient assertClientAdded(String id) {
       AtomicBoolean called = new AtomicBoolean(false);
       var preCount = clients.clientCount();
-      var result = clients.getCCloudClient(CONNECTION_ID, id, () -> {
+      var result = clients.getClient(CONNECTION_ID, id, () -> {
         called.set(true);
         return new MockSchemaRegistryClient();
       });
@@ -91,7 +91,7 @@ public class SchemaRegistryClientsTest {
     }
 
     void assertClientExists(String id, SchemaRegistryClient expected) {
-      var result = clients.getCCloudClient(
+      var result = clients.getClient(
           CONNECTION_ID,
           id,
           () -> fail("Did not expect to create a new client")
