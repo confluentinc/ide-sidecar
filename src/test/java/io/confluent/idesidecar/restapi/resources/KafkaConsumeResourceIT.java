@@ -10,7 +10,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequest;
 import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
-import io.confluent.idesidecar.restapi.util.ConfluentLocalContainer;
+import io.confluent.idesidecar.restapi.util.ConfluentLocalKafkaWithRestProxyContainer;
 import io.confluent.idesidecar.restapi.util.ResourceIOUtil;
 import io.quarkus.test.junit.QuarkusIntegrationTest;
 import io.quarkus.test.junit.TestProfile;
@@ -29,7 +29,8 @@ import org.junit.jupiter.api.Test;
 public class KafkaConsumeResourceIT {
   public record KafkaClusterDetails(String id, String name, String bootstrapServers, String uri) {}
 
-  private KafkaClusterDetails setupTestEnvironment(ConfluentLocalContainer confluentLocal, String connectionId, String topicName, int partitions, String[][] sampleRecords) {
+  private KafkaClusterDetails setupTestEnvironment(
+      ConfluentLocalKafkaWithRestProxyContainer confluentLocal, String connectionId, String topicName, int partitions, String[][] sampleRecords) {
     confluentLocal.start();
     createLocalConnection(connectionId, connectionId);
     var localKafkaClusterDetails = getLocalKafkaClusterId();
@@ -58,7 +59,7 @@ public class KafkaConsumeResourceIT {
 
   @Test
   void testConfluentLocalContainer() {
-    try (var confluentLocal = new ConfluentLocalContainer()) {
+    try (var confluentLocal = new ConfluentLocalKafkaWithRestProxyContainer()) {
       var connectionId = "local-connection";
       var topicName = "test_topic";
       var sampleRecords = new String[][]{
@@ -90,7 +91,7 @@ public class KafkaConsumeResourceIT {
     // Test that the Kafka consumer respects the "max_poll_records" limit
     // and returns only the specified number of records when consuming
     // from multiple partitions in a Kafka topic. The max limit is 2000 (MAX_POLL_RECORDS_LIMIT)
-    try (var confluentLocal = new ConfluentLocalContainer()) {
+    try (var confluentLocal = new ConfluentLocalKafkaWithRestProxyContainer()) {
       var connectionId = "local-connection3";
       var topicName = "test_topic_max_poll";
       var sampleRecords = new String[][]{
@@ -129,7 +130,7 @@ public class KafkaConsumeResourceIT {
     // across multiple partitions, ensuring that the total number of records
     // returned does not exceed the specified limit, regardless of how
     // many partitions the records are consumed from.
-    try (var confluentLocal = new ConfluentLocalContainer()) {
+    try (var confluentLocal = new ConfluentLocalKafkaWithRestProxyContainer()) {
       var connectionId = "local-connection9";
       var topicName = "test_topic_max_poll";
       var sampleRecords = new String[][]{
@@ -173,7 +174,7 @@ public class KafkaConsumeResourceIT {
     // Test that the Kafka consumer, when provided with a null value for
     // "max_poll_records", retrieves all available records  from the
     // topic (with default size limits). Here, it should retrieve four records.
-    try (var confluentLocal = new ConfluentLocalContainer()) {
+    try (var confluentLocal = new ConfluentLocalKafkaWithRestProxyContainer()) {
       var connectionId = "local-connection4";
       var topicName = "test_topic_null_max_poll";
       var sampleRecords = new String[][]{
@@ -208,7 +209,7 @@ public class KafkaConsumeResourceIT {
     // for a specific partition. Then, issue a new consume request starting from a specified
     // offset (in this case, offset 2) and verify that the correct records are retrieved
     // from that offset onwards.
-    try (var confluentLocal = new ConfluentLocalContainer()) {
+    try (var confluentLocal = new ConfluentLocalKafkaWithRestProxyContainer()) {
       // Set up Kafka Cluster
       var connectionId = "local-connection6";
       var topicName = "test_topic_next_offset_query";
@@ -290,7 +291,7 @@ public class KafkaConsumeResourceIT {
 
   @Test
   void testConsumeFromMultiplePartitions_fromBeginningTrue() {
-    try (var confluentLocal = new ConfluentLocalContainer()) {
+    try (var confluentLocal = new ConfluentLocalKafkaWithRestProxyContainer()) {
       var connectionId = "local-connection5";
       var topicName = "test_topic_from_beginning_true";
       var sampleRecords = new String[][]{
@@ -320,7 +321,7 @@ public class KafkaConsumeResourceIT {
 
   @Test
   void testConsumeFromMultiplePartitions_withNullFetchMaxBytes() {
-    try (var confluentLocal = new ConfluentLocalContainer()) {
+    try (var confluentLocal = new ConfluentLocalKafkaWithRestProxyContainer()) {
       var connectionId = "local-connection1";
       var topicName = "test_topic_null_fetch_max_bytes";
       var sampleRecords = new String[][]{
@@ -349,7 +350,7 @@ public class KafkaConsumeResourceIT {
 
   @Test
   void testConsumeFromMultiplePartitions_withFetchMaxBytesLimit() {
-    try (var confluentLocal = new ConfluentLocalContainer()) {
+    try (var confluentLocal = new ConfluentLocalKafkaWithRestProxyContainer()) {
       var connectionId = "local-connection8";
       var topicName = "test_topic_fetch_max_bytes";
       var sampleRecords = new String[][]{
@@ -383,7 +384,7 @@ public class KafkaConsumeResourceIT {
     // limit are partially consumed, with their values being omitted and marked as
     // exceeding the limit. It validates that smaller messages are fully retrieved, while larger
     // ones are marked as exceeding the allowed size.
-    try (var confluentLocal = new ConfluentLocalContainer()) {
+    try (var confluentLocal = new ConfluentLocalKafkaWithRestProxyContainer()) {
       var connectionId = "local-connection2";
       var topicName = "test_topic_fetch_max_bytes";
       var sampleRecords = new String[][]{

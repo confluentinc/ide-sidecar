@@ -3,6 +3,7 @@ package io.confluent.idesidecar.restapi.messageviewer;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.fasterxml.jackson.dataformat.avro.AvroFactory;
@@ -248,27 +249,50 @@ public class DecoderUtil {
   }
 
   /**
-   * Parses a JSON byte array into a JsonNode. If the byte array cannot be parsed as JSON,
-   * it is returned as a TextNode containing the original string representation of the byte array.
+   * Parses a byte array into a JsonNode, handling various data formats:
+   * 1. Schema Registry encoded data, supported formats: protobuf, avro, & JsonSchema.
+   * 2. Plain string data
+   * If the byte array is Schema Registry encoded (starts with the MAGIC_BYTE),
+   * it is decoded and deserialized using the provided SchemaRegistryClient.
+   * Otherwise, it is treated as a plain string and wrapped in a TextNode.
    *
-   * @param bytes the JSON byte array to parse
-   * @return the parsed JsonNode, or a TextNode containing the original string if parsing fails
+   * @param bytes The byte array to parse
+   * @param schemaRegistryClient The SchemaRegistryClient used for deserialization of
+   *                             Schema Registry encoded data
+   * @param topic The name of the topic, used for Schema Registry deserialization
+   * @return A DecodedResult containing either:
+   *         - A JsonNode representing the decoded and deserialized data (for Schema Registry
+   *           encoded data)
+   *         - A TextNode containing the original string representation of the byte array (
+   *           for other cases)
+   *         The DecodedResult also includes any error message encountered during processing
    */
-  public static JsonNode parseJsonNode(byte[] bytes) {
-    if (bytes == null || bytes.length == 0) {
-      return new TextNode("");
+  public static DecodedResult parseJsonNode(
+      byte[] bytes,
+      SchemaRegistryClient schemaRegistryClient,
+      String topic) {
+    if (bytes == null) {
+      return new DecodedResult(NullNode.getInstance(), null);
+    }
+    if (bytes.length == 0) {
+      return new DecodedResult(new TextNode(""), null);
     }
     if (bytes[0] == MAGIC_BYTE) {
-      // Jackson will automatically encode the map as a simple JSON object and the byte array value
-      // into a Base64-encoded string.
-      // TODO(Ravi) Deserialize the encoded bytes into JsonNode object.
-      try {
-        return OBJECT_MAPPER.readTree(bytes);
-      } catch (IOException e) {
-        Log.errorf("Error while converting bytes to Json. '%s'", e.getMessage());
-        return new TextNode(new String(bytes, StandardCharsets.UTF_8));
+      if (schemaRegistryClient != null) {
+        return decodeAndDeserialize(
+            Base64.getEncoder().encodeToString(bytes),
+            schemaRegistryClient,
+            topic
+        );
+      } else {
+        return new DecodedResult(
+            new TextNode(new String(bytes, StandardCharsets.UTF_8)),
+            "The value references a schema but we can't find the schema registry");
       }
     }
-    return new TextNode(new String(bytes, StandardCharsets.UTF_8));
+    return new DecodedResult(
+        new TextNode(new String(bytes, StandardCharsets.UTF_8)),
+        null
+    );
   }
 }

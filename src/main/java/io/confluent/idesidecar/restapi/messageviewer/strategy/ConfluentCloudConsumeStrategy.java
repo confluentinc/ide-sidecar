@@ -163,7 +163,7 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
     }
 
     var connectionId = context.getConnectionState().getId();
-    var schemaRegistryClient = schemaRegistryClients.getCCloudClient(
+    var schemaRegistryClient = schemaRegistryClients.getClient(
         connectionId,
         schemaRegistry.id(),
         () -> createSchemaRegistryClient(context)

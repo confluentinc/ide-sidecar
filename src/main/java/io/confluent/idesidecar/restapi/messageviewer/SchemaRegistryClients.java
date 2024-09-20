@@ -23,14 +23,14 @@ public class SchemaRegistryClients {
       new ConcurrentHashMap<>();
 
   /**
-   * Get a client for the Schema Registry in CCloud with the given identifier.
+   * Get a client for the Schema Registry with the given identifier.
    *
    * @param connectionId     the ID of the connection
    * @param schemaRegistryId the identifier of the Schema Registry
    * @param factory          the method that will create the client if there is not already one
    * @return the Schema Registry client
    */
-  public SchemaRegistryClient getCCloudClient(
+  public SchemaRegistryClient getClient(
       String connectionId,
       String schemaRegistryId,
       Supplier<SchemaRegistryClient> factory
