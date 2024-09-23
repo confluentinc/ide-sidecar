@@ -4,6 +4,7 @@ package io.confluent.idesidecar.restapi.messageviewer;
 import io.confluent.idesidecar.restapi.avro.MyAvroMessage;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeData;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeRecord;
+import io.confluent.idesidecar.restapi.proto.Message.MyMessage;
 import io.confluent.idesidecar.restapi.util.ConfluentLocalTestBed;
 import io.confluent.kafka.schemaregistry.avro.AvroSchemaProvider;
 import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
