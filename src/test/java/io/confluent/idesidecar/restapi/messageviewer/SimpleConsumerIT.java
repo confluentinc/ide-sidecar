@@ -10,6 +10,7 @@ import io.confluent.kafka.schemaregistry.avro.AvroSchemaProvider;
 import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.json.JsonSchemaProvider;
 import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchemaProvider;
+import io.quarkus.test.junit.QuarkusIntegrationTest;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -23,6 +24,7 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.json.JSONObject;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -34,7 +36,9 @@ import java.util.concurrent.TimeoutException;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class SimpleConsumerTest {
+@QuarkusIntegrationTest
+@Tag("io.confluent.common.utils.IntegrationTest")
+public class SimpleConsumerIT {
 
   private static ConfluentLocalTestBed testBed;
   private static SimpleConsumer simpleConsumer;
