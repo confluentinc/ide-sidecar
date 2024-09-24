@@ -464,7 +464,7 @@ public class ConnectionsResourceTest {
 
     var badSpec = new ConnectionSpec(
         "c3", "Connection name changed!", ConnectionType.PLATFORM,
-        new CCloudConfig("org-id"));
+        new CCloudConfig("org-id"), null);
     given()
         .contentType(ContentType.JSON)
         .body(badSpec)

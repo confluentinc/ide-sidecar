@@ -11,6 +11,8 @@ import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
 import io.confluent.idesidecar.restapi.exceptions.ResourceFetchingException;
 import io.confluent.idesidecar.restapi.models.Connection;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
+import io.confluent.idesidecar.restapi.models.ConnectionSpec.LocalConfig;
+import io.quarkus.logging.Log;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -19,6 +21,7 @@ import jakarta.inject.Inject;
 import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Pattern;
 import org.eclipse.microprofile.config.ConfigProvider;
 
@@ -72,6 +75,13 @@ public class RealLocalFetcher extends ConfluentLocalRestClient implements LocalF
       .getConfig()
       .getValue(
           "ide-sidecar.connections.confluent-local.resources.broker-adv-listeners-config-uri",
+          String.class
+      );
+
+  static final String CONFLUENT_LOCAL_DEFAULT_SCHEMA_REGISTRY_URI = ConfigProvider
+      .getConfig()
+      .getValue(
+          "ide-sidecar.connections.confluent-local.default.schema-registry-uri",
           String.class
       );
 
@@ -142,11 +152,37 @@ public class RealLocalFetcher extends ConfluentLocalRestClient implements LocalF
     }
   }
 
-  public Uni<LocalSchemaRegistry> getSchemaRegistry(String connectionId) {
-    // NOTE: Confluent CLI does not support "local" SR yet. It does have a
-    //       `confluent local services schema-registry` command, but this requires
-    //       Confluent Platform to be installed and configured locally.
-    return Uni.createFrom().nullItem();
+  public Uni<LocalSchemaRegistry> getSchemaRegistry(
+      String connectionId
+  ) {
+    var localConfig = connections.getConnectionSpec(connectionId).localConfig();
+    String uri = Optional.ofNullable(localConfig)
+        .map(LocalConfig::schemaRegistryUri)
+        .filter(url -> !url.isBlank())
+        .orElse(CONFLUENT_LOCAL_DEFAULT_SCHEMA_REGISTRY_URI);
+
+    if (uri == null || uri.isBlank()) {
+      Log.warnf("Schema Registry URL is missing or blank for connection: %s", connectionId);
+      return Uni.createFrom().nullItem();
+    }
+
+    final String configUri = uri + "/config";
+    return getItem(connectionId, configUri, this::parseSchemaRegistryConfig)
+        .onFailure(ConnectException.class).recoverWithItem(throwable -> null)
+        .onItem()
+        .transformToUni(response -> {
+          // Verify the compatibility level exists
+          if (response == null || response.compatibilityLevel() == null) {
+            Log.infof("Request to schema-registry '%s' failed.", configUri);
+            return Uni.createFrom().nullItem();
+          }
+          return Uni.createFrom().item(() -> new LocalSchemaRegistry(uri, connectionId));
+        })
+        .map(localSchemaRegistry -> onLoad(connectionId, localSchemaRegistry));
+  }
+
+  SchemaRegistryConfigResponse parseSchemaRegistryConfig(String url, String json) {
+    return parseRawItem(url, json, SchemaRegistryConfigResponse.class);
   }
 
   PageOfResults<ConfluentLocalKafkaCluster> parseKafkaClusterList(
@@ -290,5 +326,12 @@ public class RealLocalFetcher extends ConfluentLocalRestClient implements LocalF
     public KafkaBrokerConfigResponse toRepresentation() {
       return this;
     }
+  }
+
+  @RegisterForReflection
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  protected record SchemaRegistryConfigResponse(
+      @JsonProperty(value = "compatibilityLevel", required = true) String compatibilityLevel
+  ) {
   }
 }

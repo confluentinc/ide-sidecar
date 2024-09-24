@@ -11,10 +11,10 @@ public record LocalSchemaRegistry(
     String connectionId
 ) implements Cluster, SchemaRegistry {
 
-  LocalSchemaRegistry(String connectionId) {
+  LocalSchemaRegistry(String uri, String connectionId) {
     this(
         "local-sr",
-        "http://localhost:8080",
+        uri,
         connectionId
     );
   }
