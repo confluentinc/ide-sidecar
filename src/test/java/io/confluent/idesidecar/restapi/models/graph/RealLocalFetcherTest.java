@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import io.confluent.idesidecar.restapi.exceptions.ResourceFetchingException;
 import io.confluent.idesidecar.restapi.models.graph.ConfluentRestClient.PaginationState;
 import io.confluent.idesidecar.restapi.models.graph.RealLocalFetcher.KafkaBrokerConfigResponse;
+import io.confluent.idesidecar.restapi.models.graph.RealLocalFetcher.SchemaRegistryConfigResponse;
 import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
@@ -191,4 +192,23 @@ class RealLocalFetcherTest {
     assertEquals(Arrays.asList(expectedAddresses), addresses);
   }
 
+  @Test
+  void schemaRegistryFetch_shouldParseConfigResponseFromValidJson() {
+    var json = loadResource(
+        "confluent-local-resources-mock-responses/get-schema-registry-response.json"
+    );
+    SchemaRegistryConfigResponse config = localFetcher.parseSchemaRegistryConfig(URL, json);
+    assertEquals("BACKWARD", config.compatibilityLevel());
+
+  }
+
+  @Test
+  void sadfouldFailToParseConfigResponseFromError() {
+    var exception = assertThrows(
+        ResourceFetchingException.class,
+        () -> localFetcher.parseSchemaRegistryConfig(URL, ERROR_JSON)
+    );
+    assertTrue(exception.getMessage().contains("HTTP 404 Not Found"));
+    assertTrue(exception.getMessage().contains(URL));
+  }
 }
