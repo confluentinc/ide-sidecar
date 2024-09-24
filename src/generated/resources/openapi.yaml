@@ -464,6 +464,8 @@ components:
           $ref: "#/components/schemas/ConnectionType"
         ccloud_config:
           $ref: "#/components/schemas/CCloudConfig"
+        local_config:
+          $ref: "#/components/schemas/LocalConfig"
     ConnectionStatus:
       required:
       - authentication
@@ -598,6 +600,12 @@ components:
       - POJO
       - STRING
       type: string
+    LocalConfig:
+      description: Configuration for local cluster
+      type: object
+      properties:
+        schema-registry-uri:
+          type: string
     ObjectMetadata:
       type: object
       properties:
