@@ -229,7 +229,9 @@ public class CCloudTestUtil {
                 connectionName,
                 connectionType,
                 ccloudConfig,
-                null))
+                null
+            )
+        )
         .contentType(MediaType.APPLICATION_JSON)
         .post("/gateway/v1/connections")
         .then()

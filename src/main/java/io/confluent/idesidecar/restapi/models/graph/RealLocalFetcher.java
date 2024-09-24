@@ -176,7 +176,7 @@ public class RealLocalFetcher extends ConfluentLocalRestClient implements LocalF
             Log.infof("Request to schema-registry '%s' failed.", configUri);
             return Uni.createFrom().nullItem();
           }
-          return Uni.createFrom().item(() -> new LocalSchemaRegistry(uri, connectionId));
+          return Uni.createFrom().item(() -> new LocalSchemaRegistry(connectionId, uri));
         })
         .map(localSchemaRegistry -> onLoad(connectionId, localSchemaRegistry));
   }

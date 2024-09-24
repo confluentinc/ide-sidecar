@@ -34,6 +34,6 @@ public class FakeLocalFetcher implements LocalFetcher {
 
   @Override
   public Uni<LocalSchemaRegistry> getSchemaRegistry(String connectionId) {
-    return Uni.createFrom().item(new LocalSchemaRegistry("http://localhost:8081", connectionId));
+    return Uni.createFrom().item(new LocalSchemaRegistry(connectionId, "http://localhost:8081"));
   }
 }

@@ -47,6 +47,6 @@ class FakeLocalFetcherTest {
         .withSubscriber(UniAssertSubscriber.create())
         .assertCompleted()
         .getItem();
-    assertEquals("http://localhost:8080", cluster.uri());
+    assertEquals("http://localhost:8081", cluster.uri());
   }
 }

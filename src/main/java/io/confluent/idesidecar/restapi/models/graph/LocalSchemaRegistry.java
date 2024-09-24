@@ -11,7 +11,7 @@ public record LocalSchemaRegistry(
     String connectionId
 ) implements Cluster, SchemaRegistry {
 
-  LocalSchemaRegistry(String uri, String connectionId) {
+  LocalSchemaRegistry(String connectionId, String uri) {
     this(
         "local-sr",
         uri,
