@@ -13,7 +13,8 @@ public record ConnectionSpec(
     String id,
     String name,
     ConnectionType type,
-    @JsonProperty("ccloud_config") CCloudConfig ccloudConfig
+    @JsonProperty("ccloud_config") CCloudConfig ccloudConfig,
+    @JsonProperty("local_config") LocalConfig localConfig
 ) {
 
   public enum ConnectionType {
@@ -23,15 +24,15 @@ public record ConnectionSpec(
   }
 
   public ConnectionSpec(String id, String name, ConnectionType type) {
-    this(id, name, type, null);
+    this(id, name, type, null, null);
   }
 
   public ConnectionSpec withId(String id) {
-    return new ConnectionSpec(id, name, type, ccloudConfig);
+    return new ConnectionSpec(id, name, type, ccloudConfig, localConfig);
   }
 
   public ConnectionSpec withName(String name) {
-    return new ConnectionSpec(id, name, type, ccloudConfig);
+    return new ConnectionSpec(id, name, type, ccloudConfig, localConfig);
   }
 
   /**
@@ -39,7 +40,7 @@ public record ConnectionSpec(
    * Confluent Cloud organization ID set in the CCloudConfig.
    */
   public ConnectionSpec withCCloudOrganizationId(String ccloudOrganizationId) {
-    return new ConnectionSpec(id, name, type, new CCloudConfig(ccloudOrganizationId));
+    return new ConnectionSpec(id, name, type, new CCloudConfig(ccloudOrganizationId), localConfig);
   }
 
   public String ccloudOrganizationId() {
@@ -51,6 +52,12 @@ public record ConnectionSpec(
       @JsonProperty(value = "organization_id", required = true) String organizationId
   ) {
 
+  }
+
+  @Schema(description = "Configuration for local cluster")
+  public record LocalConfig(
+      @JsonProperty(value = "schema-registry-uri") String schemaRegistryUri
+  ) {
   }
 
   /**
