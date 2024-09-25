@@ -231,7 +231,7 @@ class RealLocalFetcherTest {
     manager.createConnectionState(connectionSpec);
 
     String uri = localFetcher.resolveSchemaRegistryUri("3");
-    assertEquals("", uri); // No Schema Registry
+    assertNull(uri); // No Schema Registry
   }
 
   @Test

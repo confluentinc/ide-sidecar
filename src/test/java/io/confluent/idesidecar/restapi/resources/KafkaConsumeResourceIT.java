@@ -534,6 +534,15 @@ public class KafkaConsumeResourceIT {
         .statusCode(204);
   }
 
+  void deleteLocalConnection(String id) {
+    given()
+        .when()
+        .header("Content-Type", "application/json")
+        .delete("/gateway/v1/connections/" + id)
+        .then()
+        .statusCode(204);
+  }
+
   void createLocalConnection(String id, String name) {
     given()
         .when()
