@@ -670,6 +670,9 @@
           },
           "ccloud_config" : {
             "$ref" : "#/components/schemas/CCloudConfig"
+          },
+          "local_config" : {
+            "$ref" : "#/components/schemas/LocalConfig"
           }
         }
       },
@@ -845,6 +848,15 @@
       "JsonNodeType" : {
         "enum" : [ "ARRAY", "BINARY", "BOOLEAN", "MISSING", "NULL", "NUMBER", "OBJECT", "POJO", "STRING" ],
         "type" : "string"
+      },
+      "LocalConfig" : {
+        "description" : "Configuration for local cluster",
+        "type" : "object",
+        "properties" : {
+          "schema-registry-uri" : {
+            "type" : "string"
+          }
+        }
       },
       "ObjectMetadata" : {
         "type" : "object",
