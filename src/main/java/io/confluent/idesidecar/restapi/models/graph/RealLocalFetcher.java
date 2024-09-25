@@ -11,7 +11,6 @@ import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
 import io.confluent.idesidecar.restapi.exceptions.ResourceFetchingException;
 import io.confluent.idesidecar.restapi.models.Connection;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
-import io.confluent.idesidecar.restapi.models.ConnectionSpec.LocalConfig;
 import io.quarkus.logging.Log;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import io.smallrye.mutiny.Uni;
@@ -21,7 +20,6 @@ import jakarta.inject.Inject;
 import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.regex.Pattern;
 import org.eclipse.microprofile.config.ConfigProvider;
 
@@ -154,15 +152,10 @@ public class RealLocalFetcher extends ConfluentLocalRestClient implements LocalF
 
   public String resolveSchemaRegistryUri(String connectionId) {
     var localConfig = connections.getConnectionSpec(connectionId).localConfig();
-    // Null -> discover local SR, Blank -> no SR (return null for blank)
-    String uri = Optional.ofNullable(localConfig)
-        .map(LocalConfig::schemaRegistryUri)
-        .orElse(CONFLUENT_LOCAL_DEFAULT_SCHEMA_REGISTRY_URI);
-    if (uri.isBlank()) {
-      Log.warnf("Schema Registry URI is blank for connection: %s", connectionId);
-      return null;
+    if (localConfig == null || localConfig.schemaRegistryUri() == null) {
+      return CONFLUENT_LOCAL_DEFAULT_SCHEMA_REGISTRY_URI;
     }
-    return uri;
+    return localConfig.schemaRegistryUri(); // may be null if no SR is to be used
   }
 
 
@@ -172,6 +165,7 @@ public class RealLocalFetcher extends ConfluentLocalRestClient implements LocalF
       return Uni.createFrom().nullItem();
     }
 
+    Log.infof("Looking for Schema Registry at %s for connection %s", uri, connectionId);
     final String configUri = uri + "/config";
     return getItem(connectionId, configUri, this::parseSchemaRegistryConfig)
         .onFailure(ConnectException.class).recoverWithItem(throwable -> null)
@@ -179,7 +173,7 @@ public class RealLocalFetcher extends ConfluentLocalRestClient implements LocalF
         .transformToUni(response -> {
           // Verify the compatibility level exists
           if (response == null || response.compatibilityLevel() == null) {
-            Log.infof("Request to schema-registry '%s' failed.", configUri);
+            Log.infof("Unable to find Schema Registry at %s for connection %s", uri, connectionId);
             return Uni.createFrom().nullItem();
           }
           return Uni.createFrom().item(() -> new LocalSchemaRegistry(connectionId, uri));
