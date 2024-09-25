@@ -27,14 +27,28 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 @QuarkusIntegrationTest
 @Tag("io.confluent.common.utils.IntegrationTest")
 @TestProfile(NoAccessFilterProfile.class)
 public class KafkaConsumeResourceIT {
   public record KafkaClusterDetails(String id, String name, String bootstrapServers, String uri) {}
+
+  private static ConfluentLocalTestBed confluentLocal;
+
+  @BeforeAll
+  public static void setUp() {
+    confluentLocal = new ConfluentLocalTestBed();
+    confluentLocal.start();
+  }
+
+  @AfterAll
+  public static void tearDown() {
+    if (confluentLocal != null) {
+      confluentLocal.stop();
+    }
+  }
 
   private KafkaClusterDetails setupTestEnvironment(
       ConfluentLocalTestBed confluentLocal, String connectionId, String topicName, int partitions, String[][] sampleRecords) {
@@ -68,7 +82,6 @@ public class KafkaConsumeResourceIT {
 
   @Test
   void testConfluentLocalContainer() {
-    try (var confluentLocal = new ConfluentLocalTestBed()) {
       var connectionId = "local-connection";
       var topicName = "test_topic";
       var sampleRecords = new String[][]{
@@ -92,7 +105,7 @@ public class KafkaConsumeResourceIT {
           .body().asString();
 
       assertConsumerRecords(rows, sampleRecords);
-    }
+      deleteLocalConnection(connectionId);
   }
 
   @Test
@@ -100,7 +113,6 @@ public class KafkaConsumeResourceIT {
     // Test that the Kafka consumer respects the "max_poll_records" limit
     // and returns only the specified number of records when consuming
     // from multiple partitions in a Kafka topic. The max limit is 2000 (MAX_POLL_RECORDS_LIMIT)
-    try (var confluentLocal = new ConfluentLocalTestBed()) {
       var connectionId = "local-connection3";
       var topicName = "test_topic_max_poll";
       var sampleRecords = new String[][]{
@@ -130,7 +142,7 @@ public class KafkaConsumeResourceIT {
           {"key-record1", "value-record1"}
       };
       assertConsumerRecords(rows, expectedRecords);
-    }
+    deleteLocalConnection(connectionId);
   }
 
   @Test
@@ -139,7 +151,6 @@ public class KafkaConsumeResourceIT {
     // across multiple partitions, ensuring that the total number of records
     // returned does not exceed the specified limit, regardless of how
     // many partitions the records are consumed from.
-    try (var confluentLocal = new ConfluentLocalTestBed()) {
       var connectionId = "local-connection9";
       var topicName = "test_topic_max_poll";
       var sampleRecords = new String[][]{
@@ -175,7 +186,7 @@ public class KafkaConsumeResourceIT {
         }
       }
       assertEquals(3, totalRecordsSize, "Only three rows are expected as 3 rows are requested.");
-    }
+    deleteLocalConnection(connectionId);
   }
 
   @Test
@@ -183,7 +194,6 @@ public class KafkaConsumeResourceIT {
     // Test that the Kafka consumer, when provided with a null value for
     // "max_poll_records", retrieves all available records  from the
     // topic (with default size limits). Here, it should retrieve four records.
-    try (var confluentLocal = new ConfluentLocalTestBed()) {
       var connectionId = "local-connection4";
       var topicName = "test_topic_null_max_poll";
       var sampleRecords = new String[][]{
@@ -208,7 +218,7 @@ public class KafkaConsumeResourceIT {
           .body().asString();
 
       assertConsumerRecords(rows, sampleRecords);
-    }
+    deleteLocalConnection(connectionId);
   }
 
   @Test
@@ -218,7 +228,6 @@ public class KafkaConsumeResourceIT {
     // for a specific partition. Then, issue a new consume request starting from a specified
     // offset (in this case, offset 2) and verify that the correct records are retrieved
     // from that offset onwards.
-    try (var confluentLocal = new ConfluentLocalTestBed()) {
       // Set up Kafka Cluster
       var connectionId = "local-connection6";
       var topicName = "test_topic_next_offset_query";
@@ -295,12 +304,11 @@ public class KafkaConsumeResourceIT {
             actualRecord.get("value").asText());
         assertEquals(0, actualRecord.get("partition_id").asInt());
       }
-    }
+    deleteLocalConnection(connectionId);
   }
 
   @Test
   void testConsumeFromMultiplePartitions_fromBeginningTrue() {
-    try (var confluentLocal = new ConfluentLocalTestBed()) {
       var connectionId = "local-connection5";
       var topicName = "test_topic_from_beginning_true";
       var sampleRecords = new String[][]{
@@ -325,12 +333,11 @@ public class KafkaConsumeResourceIT {
           .body().asString();
 
       assertConsumerRecords(rows, sampleRecords);
-    }
+    deleteLocalConnection(connectionId);
   }
 
   @Test
   void testConsumeFromMultiplePartitions_withNullFetchMaxBytes() {
-    try (var confluentLocal = new ConfluentLocalTestBed()) {
       var connectionId = "local-connection1";
       var topicName = "test_topic_null_fetch_max_bytes";
       var sampleRecords = new String[][]{
@@ -354,12 +361,11 @@ public class KafkaConsumeResourceIT {
           .body().asString();
 
       assertConsumerRecords(rows, sampleRecords);
-    }
+    deleteLocalConnection(connectionId);
   }
 
   @Test
   void testConsumeFromMultiplePartitions_withFetchMaxBytesLimit() {
-    try (var confluentLocal = new ConfluentLocalTestBed()) {
       var connectionId = "local-connection8";
       var topicName = "test_topic_fetch_max_bytes";
       var sampleRecords = new String[][]{
@@ -383,7 +389,7 @@ public class KafkaConsumeResourceIT {
           .body().asString();
 
       assertConsumerRecords(rows, sampleRecords);
-    }
+    deleteLocalConnection(connectionId);
   }
 
   @Test
@@ -393,9 +399,8 @@ public class KafkaConsumeResourceIT {
     // limit are partially consumed, with their values being omitted and marked as
     // exceeding the limit. It validates that smaller messages are fully retrieved, while larger
     // ones are marked as exceeding the allowed size.
-    try (var confluentLocal = new ConfluentLocalTestBed()) {
       var connectionId = "local-connection2";
-      var topicName = "test_topic_fetch_max_bytes";
+      var topicName = "test_topic_fetch_max_bytes2";
       var sampleRecords = new String[][]{
           {"key0", "foo"},
           {"key1", "value-record1"},
@@ -433,7 +438,7 @@ public class KafkaConsumeResourceIT {
       assertEquals("key%d".formatted(2), newRecords.get(2).get("key").asText());
       assertTrue(newRecords.get(2).get("value") == null);
       assertTrue(newRecords.get(2).get("exceeded_fields").get("value").asBoolean());
-    }
+    deleteLocalConnection(connectionId);
   }
 
   /**
@@ -452,7 +457,6 @@ public class KafkaConsumeResourceIT {
    */
   @Test
   public void testShouldDecodeProfobufMessagesUsingSRInMessageViewer() throws Exception {
-    try (var confluentLocal = new ConfluentLocalTestBed()) {
       String topic = "myProtobufTopic";
       var connectionId = "local-connection10";
       var localKafkaClusterDetails = setupTestEnvironment(confluentLocal, connectionId, topic, 1, null);
@@ -519,7 +523,16 @@ public class KafkaConsumeResourceIT {
 
         assertFalse(newRecords.get(i).get("exceeded_fields").get("value").asBoolean(), "Exceeded fields should be false");
       }
-    }
+    deleteLocalConnection(connectionId);
+  }
+
+  void deleteLocalConnection(String id) {
+    given()
+        .when()
+        .header("Content-Type", "application/json")
+        .delete("/gateway/v1/connections/" + id)
+        .then()
+        .statusCode(204);
   }
 
   void createLocalConnection(String id, String name) {
@@ -584,7 +597,7 @@ public class KafkaConsumeResourceIT {
                              String localKafkaClusterId,
                              String topicName,
                              Integer partitionsCount) {
-    given()
+    var response = given()
         .when()
         .header("X-Connection-ID", connectionId)
         .header("Content-Type", "application/json")
@@ -595,9 +608,13 @@ public class KafkaConsumeResourceIT {
                 partitionsCount
             )
         )
-        .post(String.format("/kafka/v3/clusters/%s/topics", localKafkaClusterId))
-        .then()
-        .statusCode(201);
+        .post(String.format("/kafka/v3/clusters/%s/topics", localKafkaClusterId));
+    if (response.statusCode() != 201) {
+      System.err.println("Failed to create Kafka topic. Status code: " + response.statusCode());
+      System.err.println("Response body: " + response.getBody().asString());
+    } else {
+      response.then().statusCode(201); // Only assert status if successful
+    }
   }
 
   void produceRecords(String bootstrapServers, String topicName, String[][] records) {

@@ -28,11 +28,11 @@ public record ConnectionSpec(
   }
 
   public ConnectionSpec withId(String id) {
-    return new ConnectionSpec(id, name, type, ccloudConfig, null);
+    return new ConnectionSpec(id, name, type, ccloudConfig, localConfig);
   }
 
   public ConnectionSpec withName(String name) {
-    return new ConnectionSpec(id, name, type, ccloudConfig, null);
+    return new ConnectionSpec(id, name, type, ccloudConfig, localConfig);
   }
 
   /**
@@ -40,7 +40,7 @@ public record ConnectionSpec(
    * Confluent Cloud organization ID set in the CCloudConfig.
    */
   public ConnectionSpec withCCloudOrganizationId(String ccloudOrganizationId) {
-    return new ConnectionSpec(id, name, type, new CCloudConfig(ccloudOrganizationId), null);
+    return new ConnectionSpec(id, name, type, new CCloudConfig(ccloudOrganizationId), localConfig);
   }
 
   public String ccloudOrganizationId() {
@@ -58,9 +58,6 @@ public record ConnectionSpec(
   public record LocalConfig(
       @JsonProperty(value = "schema-registry-uri") String schemaRegistryUri
   ) {
-    public String schemaRegistryUri() {
-      return this.schemaRegistryUri;
-    }
   }
 
   /**

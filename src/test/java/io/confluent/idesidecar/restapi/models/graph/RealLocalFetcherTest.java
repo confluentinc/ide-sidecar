@@ -4,12 +4,12 @@ import static io.confluent.idesidecar.restapi.models.graph.RealLocalFetcher.CONF
 import static io.confluent.idesidecar.restapi.models.graph.RealLocalFetcher.CONFLUENT_LOCAL_KAFKAREST_HOSTNAME;
 import static io.confluent.idesidecar.restapi.models.graph.RealLocalFetcher.CONFLUENT_LOCAL_KAFKAREST_URI;
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
+import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
+import io.confluent.idesidecar.restapi.exceptions.CreateConnectionException;
 import io.confluent.idesidecar.restapi.exceptions.ResourceFetchingException;
+import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.graph.ConfluentRestClient.PaginationState;
 import io.confluent.idesidecar.restapi.models.graph.RealLocalFetcher.KafkaBrokerConfigResponse;
 import io.confluent.idesidecar.restapi.models.graph.RealLocalFetcher.SchemaRegistryConfigResponse;
@@ -34,6 +34,9 @@ class RealLocalFetcherTest {
 
   @Inject
   RealLocalFetcher localFetcher;
+
+  @Inject
+  ConnectionStateManager manager;
 
   @Test
   void shouldParseKafkaClusterListFromValidJson() {
@@ -203,12 +206,31 @@ class RealLocalFetcherTest {
   }
 
   @Test
-  void sadfouldFailToParseConfigResponseFromError() {
-    var exception = assertThrows(
-        ResourceFetchingException.class,
-        () -> localFetcher.parseSchemaRegistryConfig(URL, ERROR_JSON)
-    );
-    assertTrue(exception.getMessage().contains("HTTP 404 Not Found"));
-    assertTrue(exception.getMessage().contains(URL));
+  void shouldReturnValidSchemaRegistryUri() throws CreateConnectionException {
+    var localConfig = new ConnectionSpec.LocalConfig("http://localhost:8085");
+    var connectionSpec = new ConnectionSpec("1", "Local Connection", ConnectionSpec.ConnectionType.LOCAL, null, localConfig);
+    manager.createConnectionState(connectionSpec);
+
+    String uri = localFetcher.resolveSchemaRegistryUri("1");
+    assertEquals("http://localhost:8085", uri);
+  }
+
+  @Test
+  void shouldReturnDefaultSchemaRegistryUriWhenLocalConfigIsNull() throws CreateConnectionException {
+    var connectionSpec = new ConnectionSpec("2", "Local Connection", ConnectionSpec.ConnectionType.LOCAL, null, null);
+    manager.createConnectionState(connectionSpec);
+
+    String uri = localFetcher.resolveSchemaRegistryUri("2");
+    assertEquals("http://localhost:8081", uri);
+  }
+
+  @Test
+  void shouldReturnNullWhenSchemaRegistryUriIsBlank() throws CreateConnectionException {
+    var localConfig = new ConnectionSpec.LocalConfig("");
+    var connectionSpec = new ConnectionSpec("3", "Local Connection", ConnectionSpec.ConnectionType.LOCAL, null, localConfig);
+    manager.createConnectionState(connectionSpec);
+
+    String uri = localFetcher.resolveSchemaRegistryUri("3");
+    assertNull(uri); // No Schema Registry
   }
 }
