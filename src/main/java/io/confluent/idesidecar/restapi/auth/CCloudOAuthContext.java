@@ -13,6 +13,7 @@ import io.confluent.idesidecar.restapi.models.ConnectionStatus;
 import io.confluent.idesidecar.restapi.util.CCloud;
 import io.confluent.idesidecar.restapi.util.UriUtil;
 import io.confluent.idesidecar.restapi.util.WebClientFactory;
+import io.quarkus.arc.Arc;
 import io.quarkus.logging.Log;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import io.vertx.core.Future;
@@ -61,7 +62,7 @@ public class CCloudOAuthContext implements AuthContext {
   private final String oauthState;
   private final AtomicReference<Tokens> tokens = new AtomicReference<>(new Tokens());
   private final UriUtil uriUtil = new UriUtil();
-  private final WebClientFactory webClientFactory = new WebClientFactory();
+  private final WebClientFactory webClientFactory;
   private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
   private final WriteLock writeLock = readWriteLock.writeLock();
   private final ReadLock readLock = readWriteLock.readLock();
@@ -76,6 +77,14 @@ public class CCloudOAuthContext implements AuthContext {
     oauthState = createRandomEncodedString(OAUTH_STATE_PARAMETER_LENGTH);
     codeVerifier = createRandomEncodedString(CODE_VERIFIER_LENGTH);
     codeChallenge = createCodeChallenge();
+
+    // If the ArC container is available, select the application-scoped instance of the
+    // `WebClientFactory` so that we can re-use it; otherwise, create a new instance without
+    // dependency injection
+    var container = Arc.container();
+    webClientFactory = (container != null)
+        ? container.select(WebClientFactory.class).get()
+        : new WebClientFactory();
   }
 
   /**

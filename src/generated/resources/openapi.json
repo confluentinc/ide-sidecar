@@ -273,6 +273,47 @@
         }
       }
     },
+    "/gateway/v1/preferences" : {
+      "get" : {
+        "tags" : [ "Preferences Resource" ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Preferences"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put" : {
+        "tags" : [ "Preferences Resource" ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Preferences"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Preferences"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/gateway/v1/templates" : {
       "get" : {
         "tags" : [ "Templates" ],
@@ -966,6 +1007,47 @@
           "offset" : {
             "format" : "int64",
             "type" : "integer"
+          }
+        }
+      },
+      "Preferences" : {
+        "required" : [ "api_version", "kind", "spec" ],
+        "type" : "object",
+        "properties" : {
+          "api_version" : {
+            "type" : "string"
+          },
+          "kind" : {
+            "type" : "string"
+          },
+          "metadata" : {
+            "$ref" : "#/components/schemas/PreferencesMetadata"
+          },
+          "spec" : {
+            "$ref" : "#/components/schemas/PreferencesSpec"
+          }
+        }
+      },
+      "PreferencesMetadata" : {
+        "required" : [ "self" ],
+        "type" : "object",
+        "properties" : {
+          "self" : {
+            "type" : "string"
+          }
+        }
+      },
+      "PreferencesSpec" : {
+        "type" : "object",
+        "properties" : {
+          "tls_pem_paths" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "trust_all_certificates" : {
+            "type" : "boolean"
           }
         }
       },

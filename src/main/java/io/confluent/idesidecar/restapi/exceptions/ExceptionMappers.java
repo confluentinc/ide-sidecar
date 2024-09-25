@@ -32,6 +32,25 @@ public class ExceptionMappers {
   }
 
   @ServerExceptionMapper
+  public Response mapInvalidPreferencesException(InvalidPreferencesException exception) {
+    var failure = new Failure(
+        Status.BAD_REQUEST,
+        "invalid_preferences",
+        "Provided preferences are not valid",
+        uuidFactory.getRandomUuid(),
+        exception.errors()
+    );
+
+    return Response
+        .status(Status.BAD_REQUEST)
+        .entity(failure)
+        // Explicitly set the content type to JSON here
+        // since the resource method may have set it to something else
+        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+        .build();
+  }
+
+  @ServerExceptionMapper
   public Response mapTemplateNotFoundException(
       TemplateNotFoundException exception) {
 
