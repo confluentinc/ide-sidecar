@@ -4,6 +4,7 @@ import static io.confluent.idesidecar.scaffolding.util.PortablePathUtil.portable
 
 import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.MustacheFactory;
+import io.confluent.idesidecar.scaffolding.exceptions.InvalidTemplateOptionsProvided;
 import io.confluent.idesidecar.scaffolding.exceptions.TemplateRegistryException;
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -28,14 +29,19 @@ public class MustacheTemplateEngine implements TemplateEngine {
   public Map<String, byte[]> renderTemplateFromRegistry(
       TemplateRegistryService templateRegistryService,
       String templateName,
-      Map<String, Object> options
+      Map<String, Object> values
   ) throws TemplateRegistryException {
 
     var templateManifest = templateRegistryService.getTemplate(templateName);
-    var templateOptions = templateManifest.populateOptionsWithDefaults(options);
+
+    // Validate the values provided for the template
+    var errors = templateManifest.validateValues(values);
+    if (!errors.isEmpty()) {
+      throw new InvalidTemplateOptionsProvided(errors);
+    }
 
     var templateSrcContents = templateRegistryService.getTemplateSrcContents(templateName);
-    var renderedSrcContents = renderTemplate(templateSrcContents, templateOptions);
+    var renderedSrcContents = renderTemplate(templateSrcContents, values);
     var templateStaticContents = templateRegistryService.getTemplateStaticContents(templateName);
 
     return Stream
