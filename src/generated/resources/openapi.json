@@ -310,6 +310,16 @@
                 }
               }
             }
+          },
+          "400" : {
+            "description" : "Provided preferences are not valid",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Failure"
+                }
+              }
+            }
           }
         }
       }

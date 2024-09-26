@@ -16,6 +16,7 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
+import javax.net.ssl.SSLHandshakeException;
 import org.eclipse.microprofile.config.ConfigProvider;
 
 /**
@@ -37,6 +38,10 @@ public class OAuthCallbackResource {
       .getOptionalValue("ide-sidecar.connections.ccloud.oauth.vscode-extension-uri", String.class)
       .orElse("https://marketplace.visualstudio.com/items?itemName=confluentinc.vscode-confluent");
 
+  static final String TLS_HANDSHAKE_ERROR_MESSAGE =
+      "Failed to perform the SSL/TLS handshake. Consider configuring custom certificates in "
+      + "Confluent for VS Code if you are behind a firewall that performs SSL inspection.";
+
   @Inject
   ConnectionStateManager mgr;
 
@@ -56,8 +61,10 @@ public class OAuthCallbackResource {
       if (connectionState instanceof CCloudConnectionState cCloudConnectionState) {
         var response = cCloudConnectionState
             .getOauthContext()
-            .createTokensFromAuthorizationCode(authorizationCode,
-                cCloudConnectionState.getSpec().ccloudOrganizationId())
+            .createTokensFromAuthorizationCode(
+                authorizationCode,
+                cCloudConnectionState.getSpec().ccloudOrganizationId()
+            )
             .map(authContext ->
                 callback
                     .data("email", authContext.getUserEmail())
@@ -66,32 +73,47 @@ public class OAuthCallbackResource {
                     .render()
             )
             .recover(this::renderFailure);
-        return Uni.createFrom().completionStage(response.toCompletionStage());
+        return Uni
+            .createFrom()
+            .completionStage(
+                response.toCompletionStage()
+            );
       } else {
         throw new CCloudAuthenticationFailedException(
             String.format(
                 "Called callback page for non-CCloud connection (ID=%s).",
-                connectionState.getId()));
+                connectionState.getId()
+            )
+        );
       }
     } catch (CCloudAuthenticationFailedException e) {
       return Uni
           .createFrom()
-          .completionStage(renderFailure(e).toCompletionStage());
+          .completionStage(
+              renderFailure(e).toCompletionStage()
+          );
     } catch (ConnectionNotFoundException e) {
       var failure = new ConnectionNotFoundException(
-          "Invalid or expired state %s".formatted(oauthState));
+          "Invalid or expired state %s".formatted(oauthState)
+      );
       return Uni
           .createFrom()
-          .completionStage(renderFailure(failure).toCompletionStage());
+          .completionStage(
+              renderFailure(failure).toCompletionStage()
+          );
     }
   }
 
   private Future<String> renderFailure(Throwable error) {
     Log.error(error);
+    var errorMessage = error instanceof SSLHandshakeException
+        ? TLS_HANDSHAKE_ERROR_MESSAGE
+        : error.getMessage();
     return Future.succeededFuture(
         callbackFailure
-            .data("error", error.getMessage())
+            .data("error", errorMessage)
             .data("vscode_redirect_uri", CCLOUD_OAUTH_VSCODE_EXTENSION_URI)
-            .render());
+            .render()
+    );
   }
 }
