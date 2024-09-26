@@ -1,0 +1,11 @@
+{
+  "api_version": "gateway/v1",
+  "kind": "Preferences",
+  "metadata": {
+    "self": "http://localhost:26637/gateway/v1/preferences"
+  },
+  "spec": {
+    "tls_pem_paths": [],
+    "trust_all_certificates": true
+  }
+}
