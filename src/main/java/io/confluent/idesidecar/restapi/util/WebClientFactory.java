@@ -56,11 +56,14 @@ public class WebClientFactory {
   public synchronized void updateWebClientOptions(@Observes PreferencesSpec preferences) {
     var clientOptions = new WebClientOptions();
 
-    clientOptions.setTrustAll(Boolean.TRUE.equals(preferences.trustAllCertificates()));
+    if (Boolean.TRUE.equals(preferences.trustAllCertificates())) {
+      clientOptions.setTrustAll(true);
+    }
 
-    if (preferences.tlsPemPaths() != null) {
+    var tlsPemPaths = preferences.tlsPemPaths();
+    if (tlsPemPaths != null && !tlsPemPaths.isEmpty()) {
       var pemTrustOptions = new PemTrustOptions();
-      for (var pemPath : preferences.tlsPemPaths()) {
+      for (var pemPath : tlsPemPaths) {
         pemTrustOptions.addCertPath(pemPath);
       }
       clientOptions.setPemTrustOptions(pemTrustOptions);

@@ -6,6 +6,6 @@
   },
   "spec": {
     "tls_pem_paths": [],
-    "trust_all_certificates": true
+    "trust_all_certificates": false
   }
 }
