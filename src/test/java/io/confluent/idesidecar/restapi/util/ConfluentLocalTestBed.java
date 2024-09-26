@@ -48,7 +48,7 @@ public class ConfluentLocalTestBed implements AutoCloseable {
 
     this.schemaRegistry = new SchemaRegistryContainer(KAFKA_INTERNAL_LISTENER)
         .withNetwork(network)
-        .withExposedPorts(8085)
+        .withExposedPorts(8081)
         .withNetworkAliases("schema-registry")
         .dependsOn(confluent)
         .waitingFor(Wait.forHttp("/subjects").forStatusCode(200).withStartupTimeout(Duration.ofMinutes(2)));

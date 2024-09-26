@@ -98,6 +98,7 @@ ide-sidecar:
         kafkarest-uri: http://localhost:8082
         kafkarest-hostname: rest-proxy
         cluster-name: confluent-local
+        schema-registry-uri: http://localhost:8081
       resources:
         clusters-list-uri: ${ide-sidecar.connections.confluent-local.default.kafkarest-uri}/v3/clusters
         brokers-list-uri: ${ide-sidecar.connections.confluent-local.default.kafkarest-uri}/v3/clusters/%s/brokers
