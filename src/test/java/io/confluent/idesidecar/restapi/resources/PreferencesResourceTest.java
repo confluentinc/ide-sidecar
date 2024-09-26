@@ -145,7 +145,7 @@ public class PreferencesResourceTest {
     assertEquals(expectedResponseJson, responseJson);
 
     // Reset the preferences
-    var expectedResponseWithoutPreferences = asJson(
+    var expectedResponseWithDefaultValues = asJson(
         loadResource("preferences/get-preferences-initial-response.json")
     );
 
@@ -172,7 +172,7 @@ public class PreferencesResourceTest {
         .asString();
     responseJson = asJson(responseBody);
 
-    assertEquals(expectedResponseWithoutPreferences, responseJson);
+    assertEquals(expectedResponseWithDefaultValues, responseJson);
   }
 
   @Test
