@@ -36,7 +36,7 @@ public class KafkaConsumeResourceIT {
   public record KafkaClusterDetails(String id, String name, String bootstrapServers, String uri) {}
 
   private static ConfluentLocalTestBed confluentLocal;
-
+  
   private String connectionId;
 
   @BeforeAll
@@ -534,15 +534,6 @@ public class KafkaConsumeResourceIT {
         .statusCode(204);
   }
 
-  void deleteLocalConnection(String id) {
-    given()
-        .when()
-        .header("Content-Type", "application/json")
-        .delete("/gateway/v1/connections/" + id)
-        .then()
-        .statusCode(204);
-  }
-
   void createLocalConnection(String id, String name) {
     given()
         .when()
@@ -624,6 +615,7 @@ public class KafkaConsumeResourceIT {
       response.then().statusCode(201); // Only assert status if successful
     }
   }
+
 
   void produceRecords(String bootstrapServers, String topicName, String[][] records) {
     // Configure the Producer
