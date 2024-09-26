@@ -50,7 +50,7 @@ public record Preferences(
         Boolean trustAllCertificates
     ) {
       this.tlsPemPaths = tlsPemPaths != null ? tlsPemPaths : List.of();
-      this.trustAllCertificates = trustAllCertificates != null ? trustAllCertificates : true;
+      this.trustAllCertificates = trustAllCertificates != null ? trustAllCertificates : false;
     }
 
     /**
