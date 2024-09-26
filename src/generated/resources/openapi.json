@@ -935,7 +935,13 @@
               "type" : "string"
             }
           },
-          "default_value" : { }
+          "initial_value" : {
+            "type" : "string"
+          },
+          "min_length" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
         }
       },
       "PartitionConsumeData" : {

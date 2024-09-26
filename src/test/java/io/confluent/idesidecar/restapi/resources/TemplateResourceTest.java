@@ -114,6 +114,9 @@ public class TemplateResourceTest {
               "cc_topic": "fake-topic",
               "group_id": "fake-group-id",
               "include_producer": true,
+              "TeSt_WiTh_MiXeD_CaSe": "ThIs Is MiXeD cAsE",
+              "TEST_UPPERCASE": "I'M NOT SHOUTING",
+              "cc_schema_registry_url": "http://localhost:8081",
               "sample_list": ["item1", "item2", "item3", "item4"],
               "app_name": "go_consumer_from_api"
             }
@@ -228,7 +231,8 @@ public class TemplateResourceTest {
                 "api_key": "fake-api-key",
                 "api_secret": "fake-api-secret",
                 "topic": "fake-topic",
-                "group_id": "fake-group-id"
+                "group_id": "fake-group-id",
+                "auto_commit_offsets": "true"
               }
             }
           """;
@@ -318,7 +322,7 @@ public class TemplateResourceTest {
     }
 
     @Test
-    void applyTemplateShouldReturnErrorWhenAccessingNonexistentTemplate() throws IOException {
+    void applyTemplateShouldReturnErrorWhenAccessingNonexistentTemplate() {
       var expectedResponse = asJson(
           loadResource("templates-api-responses/apply-template/nonexistent-template-response.json")
       );
@@ -342,7 +346,7 @@ public class TemplateResourceTest {
     }
 
     @Test
-    void applyTemplateShouldReturnErrorWhenUnsupportedOptionsAreProvided() throws IOException {
+    void applyTemplateShouldReturnErrorWhenUnsupportedOptionsAreProvided() {
       var expectedResponse = asJson(
           loadResource("templates-api-responses/apply-template/unsupported-options-response.json")
       );
@@ -356,7 +360,14 @@ public class TemplateResourceTest {
               "cc_topic": "fake-topic",
               "group_id": "fake-group-id",
               "unsupported_option": "unsupported-value",
-              "foo": "spam"
+              "foo": "spam",
+              "auto_offset_reset": "earliest",
+              "cc_schema_registry_url": "http://localhost:8081",
+              "TEST_UPPERCASE": "",
+              "TeSt_WiTh_MiXeD_CaSe": "",
+              "include_producer": "false",
+              "sample_list": ["foo"],
+              "app_name": "go_consumer"
             }
           }
           """;
@@ -375,7 +386,7 @@ public class TemplateResourceTest {
 
 
     @Test
-    void applyTemplateShouldReturnErrorWhenMissingOptionsAreProvided() throws IOException {
+    void applyTemplateShouldReturnErrorWhenOptionsAreMissing() {
       var expectedResponse = asJson(
           loadResource("templates-api-responses/apply-template/missing-options-response.json")
       );
@@ -395,6 +406,35 @@ public class TemplateResourceTest {
           .body(requestBodyString)
           .contentType("application/json")
           .when().post("go-consumer/apply")
+          .then().statusCode(400)
+          .contentType("application/json")
+          .extract().body().asString();
+
+      // Use Junit assertEquals instead of RestAssured's body(is()) to
+      // get the diff output in case of a failure
+      var actual = asJson(response);
+      assertEquals(expectedResponse, actual);
+    }
+
+    @Test
+    void applyTemplateShouldReturnErrorWhenOptionViolatesMinLengthConstraint() {
+      var expectedResponse = asJson(
+          loadResource("templates-api-responses/apply-template/option-violates-min-length-constraint-response.json")
+      );
+
+      var requestBodyString = """
+          {
+            "options": {
+              "app_name": "fast-java-app",
+              "package_path": "io.confluent.dtx",
+              "package_name": ""
+            }
+          }
+          """;
+      var response = given()
+          .body(requestBodyString)
+          .contentType("application/json")
+          .when().post("java-consumer/apply")
           .then().statusCode(400)
           .contentType("application/json")
           .extract().body().asString();

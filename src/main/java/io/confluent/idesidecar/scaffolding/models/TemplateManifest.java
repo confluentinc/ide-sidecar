@@ -5,12 +5,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.vdurmont.semver4j.Semver;
 import com.vdurmont.semver4j.SemverException;
-import io.confluent.idesidecar.scaffolding.exceptions.InvalidTemplateOptionsProvided;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -78,93 +76,119 @@ public record TemplateManifest(
       @JsonProperty(value = "enum")
       List<String> enums,
 
-      @JsonProperty(value = "default_value")
-      Object defaultValue
+      @JsonProperty(value = "initial_value")
+      String initialValue,
+
+      @JsonProperty(value = "min_length")
+      Integer minLength
   ) {
   }
 
   /**
-   * Merge the provided options with the unprovided options that have default values in the template
-   * manifest.
+   * Validates if a set of values can be used to apply this template.
    *
-   * <p>
-   * For example, if the template manifest defines the following options:
-   * <pre>
-   * # file: manifest.yml
-   * options:
-   *   foo:
-   *     default_value: foo-default
-   *   bar:
-   *     default_value: bar-default
-   * </pre>
-   * and the user provides only "bar", the resulting map will be:
-   * <pre>
-   * {
-   *   "foo": "foo-default",
-   *   "bar": "eggs"
-   * }
-   * </pre>
-   * </p>
-   *
-   * @param providedOptions the options provided by the user
-   * @return the populated options
+   * @param values The provided values
+   * @return the list of errors that occurred when validating the values; empty list if all values
+   *         are valid
    */
-  public Map<String, Object> populateOptionsWithDefaults(Map<String, Object> providedOptions)
-      throws InvalidTemplateOptionsProvided {
-    var errors = validateProvidedOptions(providedOptions);
-    if (!errors.isEmpty()) {
-      throw new InvalidTemplateOptionsProvided(errors);
-    }
+  public List<Error> validateValues(Map<String, Object> values) {
+    var errors = valuesReferenceAllOptions(values);
+    errors = Stream.concat(errors, valuesReferenceOnlySupportedOptions(values));
+    errors = Stream.concat(errors, valuesComplyWithMinLengthConstraint(values));
 
-    return options.entrySet().stream().collect(Collectors.toMap(
-        Map.Entry::getKey,
-        entry -> providedOptions.getOrDefault(entry.getKey(), entry.getValue().defaultValue())
-    ));
-  }
-
-  private List<Error> validateProvidedOptions(Map<String, Object> providedOptions) {
-    return Stream.concat(
-            validateProvidedOptionsAreSupported(providedOptions).stream(),
-            validateProvidedOptionsHaveDefaultValues(providedOptions).stream())
-        .collect(Collectors.toList());
+    return errors.collect(Collectors.toList());
   }
 
   /**
-   * Validate that all provided options are supported by the template.
+   * Validates if a set of values references all options of this template.
    *
-   * @param providedOptions the options provided by the user
-   * @return a list of error messages
+   * @param values The provided values
+   * @return the list of errors containing one error for each option that is not referenced by a
+   *         value; empty list if all options are referenced
    */
-  private List<Error> validateProvidedOptionsAreSupported(Map<String, Object> providedOptions) {
-    return providedOptions.keySet().stream()
-        .filter(key -> !options.containsKey(key))
-        .map(key -> new Error(
-            "unsupported_template_option",
-            "Unsupported template option",
-            "Provided option is not supported by the template manifest.",
-            key
-        )).collect(Collectors.toList());
+  private Stream<Error> valuesReferenceAllOptions(Map<String, Object> values) {
+    return options
+        .keySet().stream()
+        .flatMap(option -> {
+          if (values.containsKey(option)) {
+            return Stream.empty();
+          } else {
+            return Stream.of(
+                new Error(
+                    "missing_template_option",
+                    "Missing template option",
+                    "Required option %s is not provided.".formatted(option),
+                    option
+                )
+            );
+          }
+        });
   }
 
   /**
-   * Validate that all options are provided or have default values configured in the template
-   * manifest.
+   * Validates if a set of values references only supported options of this template.
    *
-   * @param providedOptions the options provided by the user
-   * @return a list of error messages
+   * @param values The provided values
+   * @return the list of errors containing one error for each value that references an option not
+   *         supported by this template; empty list if values reference only known options
    */
-  private List<Error> validateProvidedOptionsHaveDefaultValues(
-      Map<String, Object> providedOptions) {
-    return options.entrySet().stream()
-        .filter(entry ->
-            !providedOptions.containsKey(entry.getKey())
-                && Objects.isNull(entry.getValue().defaultValue()))
-        .map(entry -> new Error(
-            "missing_template_option",
-            "Missing template option",
-            "Template option not provided and has no default value in the manifest.",
-            entry.getKey()))
-        .collect(Collectors.toList());
+  private Stream<Error> valuesReferenceOnlySupportedOptions(Map<String, Object> values) {
+    return values
+        .keySet().stream()
+        .flatMap(option -> {
+          if (options.containsKey(option)) {
+            return Stream.empty();
+          } else {
+            return Stream.of(
+                new Error(
+                    "unsupported_template_option",
+                    "Unsupported template option",
+                    "Provided option %s is not supported by the template.".formatted(option),
+                    option
+                )
+            );
+          }
+        });
+  }
+
+  /**
+   * Validates if a set of values complies with the <code>min_length</code> constraints of the
+   * options of this template.
+   *
+   * @param values The provided values
+   * @return the list of errors containing one error for each value that violates the
+   *         <code>min_length</code> constraint of the referenced option
+   */
+  private Stream<Error> valuesComplyWithMinLengthConstraint(Map<String, Object> values) {
+    return values
+        .entrySet().stream()
+        .flatMap(entry -> {
+          var optionName = entry.getKey();
+          var option = options.get(optionName);
+          var valueLength = entry.getValue().toString().length();
+          if (
+              option != null
+              && option.minLength != null
+              && valueLength < option.minLength
+          ) {
+            return Stream.of(
+                new Error(
+                    "template_option_violates_min_length",
+                    "Template option violates min_length constraint",
+                    String.format(
+                        "The provided value has %d characters but the option %s requires at least"
+                        + " %d character(s).",
+                        valueLength,
+                        optionName,
+                        option.minLength
+                    ),
+                    optionName
+                )
+            );
+          } else {
+            return Stream.empty();
+          }
+        });
   }
 
   public record Error(String code, String title, String detail, String source) implements

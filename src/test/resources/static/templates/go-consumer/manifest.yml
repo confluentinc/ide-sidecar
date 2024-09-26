@@ -29,36 +29,32 @@ options:
   auto_offset_reset:
     display_name: Begin from
     description: Where to start consuming when no offset is available
-    default_value: earliest
+    initial_value: earliest
     enum:
       - earliest
       - latest
   cc_schema_registry_url:
     display_name: SR URL
     description: The URL for SR
-    default_value: http://localhost:8081
+    initial_value: http://localhost:8081
   TEST_UPPERCASE:
     display_name: Uppercase Test
     description: The desc for uppercase test
-    default_value: I'M NOT SHOUTING
+    initial_value: I'M NOT SHOUTING
     pattern: "^[A-Z ]+$"
   TeSt_WiTh_MiXeD_CaSe:
     display_name: xyz
     description: The something
-    default_value: ThIs Is MiXeD cAsE
+    initial_value: ThIs Is MiXeD cAsE
     pattern: "^[A-Za-z ]+$"
   include_producer:
     display_name: Include producer
     description: The boolean attribute
-    default_value: false
+    initial_value: "false"
   sample_list:
     display_name: List attribute
     description: The list attribute
-    default_value:
-      - item1
-      - item2
-      - item3
   app_name:
     display_name: Application Name
     description: The name of the generated application.
-    default_value: go_consumer
+    initial_value: go_consumer

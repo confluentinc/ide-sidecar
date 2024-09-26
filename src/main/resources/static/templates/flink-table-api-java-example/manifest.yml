@@ -18,7 +18,7 @@ options:
   cloud_provider:
     display_name: Cloud Provider
     description: The name of the cloud provider.
-    default_value: AWS
+    initial_value: AWS
     enum:
       - AWS
       - GCP
