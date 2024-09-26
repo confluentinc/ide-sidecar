@@ -136,7 +136,7 @@ quarkus:
   jackson:
     fail-on-unknown-properties: true
   native:
-    additional-build-args: --initialize-at-run-time=io.confluent.idesidecar.restapi.auth.CCloudOAuthContext\,io.confluent.ide.sidecar.restapi.util.WebClientFactory\,org.apache.kafka.common.security.authenticator.SaslClientAuthenticator\,org.apache.avro.file.DataFileWriter
+    additional-build-args: --initialize-at-run-time=io.confluent.idesidecar.restapi.auth.CCloudOAuthConfig\,io.confluent.idesidecar.restapi.auth.CCloudOAuthContext\,io.confluent.ide.sidecar.restapi.util.WebClientFactory\,org.apache.kafka.common.security.authenticator.SaslClientAuthenticator\,org.apache.avro.file.DataFileWriter
     resources:
       includes: templates/callback.html,templates/callback_failure.html,static/templates.zip
   smallrye-health:
