@@ -72,4 +72,4 @@ quarkus-dev:
 
 .PHONY: quarkus-test
 quarkus-test:
-	$(MVN) clean quarkus:test
+	$(MVN) clean test-compile quarkus:test

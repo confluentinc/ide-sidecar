@@ -17,9 +17,12 @@ options:
   app_name:
     display_name: Application Name
     description: The name of the generated application
+    min_length: 1
   package_path:
     display_name: Java Package Path
     description: The Java package the generated code should use
+    min_length: 1
   package_name:
     display_name: Java Package Name
     description: "The last part of the Java Package"
+    min_length: 1

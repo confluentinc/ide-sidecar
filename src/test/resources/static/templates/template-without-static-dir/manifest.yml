@@ -23,4 +23,4 @@ options:
   auto_commit_offsets:
     display_name: Auto Commit Offsets
     description: Whether to commit offsets automatically
-    default_value: true
+    initial_value: "true"

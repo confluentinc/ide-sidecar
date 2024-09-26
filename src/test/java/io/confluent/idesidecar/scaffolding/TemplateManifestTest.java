@@ -2,6 +2,7 @@ package io.confluent.idesidecar.scaffolding;
 
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -14,7 +15,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import com.fasterxml.jackson.databind.exc.ValueInstantiationException;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import io.confluent.idesidecar.scaffolding.exceptions.InvalidTemplateOptionsProvided;
 import io.confluent.idesidecar.scaffolding.models.TemplateManifest;
 import java.io.IOException;
 import java.util.List;
@@ -50,17 +50,17 @@ class TemplateManifestTest {
     assertEquals("0.0.1", manifest.version());
 
     var manifestOptions = manifest.options();
-    assertNull(manifestOptions.get("api_key").defaultValue());
-    assertNull(manifestOptions.get("api_secret").defaultValue());
-    assertNull(manifestOptions.get("topic").defaultValue());
-    assertNull(manifestOptions.get("group_id").defaultValue());
+    assertNull(manifestOptions.get("api_key").initialValue());
+    assertNull(manifestOptions.get("api_secret").initialValue());
+    assertNull(manifestOptions.get("topic").initialValue());
+    assertNull(manifestOptions.get("group_id").initialValue());
     assertEquals(
         "earliest",
-        manifestOptions.get("auto_offset_reset").defaultValue()
+        manifestOptions.get("auto_offset_reset").initialValue()
     );
     assertEquals(
-        List.of("localhost:9092", "localhost:9093", "localhost:9094"),
-        manifestOptions.get("bootstrap_server").defaultValue()
+        "localhost:9092,localhost:9093,localhost:9094",
+        manifestOptions.get("bootstrap_server").initialValue()
     );
   }
 
@@ -166,67 +166,7 @@ class TemplateManifestTest {
   }
 
   @Test
-  void shouldParseManifestWithOptionsAndPopulateOptionsWithDefaults() {
-
-    // When a manifest is valid
-    String manifestFileContents = """
-        template_api_version: 0.0.1
-        name: python-consumer
-        display_name: Python Consumer
-        description: Awesome template for a simple Python consumer application.
-        language: python
-        version: 0.0.1
-        tags:
-          - consumer
-          - getting started
-          - python
-        options:
-          api_key:
-            display_name: API Key
-            description: The CCloud API Key
-            default_value: api-key-default
-          api_secret:
-            display_name: API Secret
-            description: The CCloud API Secret
-            default_value: api-secret-default
-          topic:
-            display_name: Topic Name
-            description: The topic name
-            default_value: topic-default
-          group_id:
-            display_name: Consumer Group ID
-            description: ID of the consumer group
-            default_value: group-id-default
-          auto_commit_offsets:
-            display_name: Begin Consuming From
-            description: What to do when there is no initial offset in the Kafka topic ...
-            default_value: earliest
-            enum:
-              - earliest
-              - latest
-        """;
-
-    // Then the template can be loaded
-    TemplateManifest manifest = parseManifest(manifestFileContents);
-
-    // And we can populate with a subset of options
-    assertPopulatedOptions(
-        manifest,
-        Map.of(
-            "api_key", "api-key-provided"
-        ),
-        Map.of(
-            "api_key", "api-key-provided",
-            "api_secret", "api-secret-default",
-            "topic", "topic-default",
-            "group_id", "group-id-default",
-            "auto_commit_offsets", "earliest"
-        )
-    );
-  }
-
-  @Test
-  void shouldParseManifestWithoutOptionsAndPopulateOptions() {
+  void shouldParseManifestWithoutOptions() {
 
     // When a manifest has no options
     String manifestFileContents = """
@@ -245,27 +185,102 @@ class TemplateManifestTest {
     // Then the template can be loaded
     TemplateManifest manifest = parseManifest(manifestFileContents);
 
-    // And we can populate with no options
-    assertPopulatedOptions(
-        manifest,
-        Map.of(),
+    assertEquals(
+        manifest.options(),
         Map.of()
     );
   }
 
-  void assertPopulatedOptions(
-      TemplateManifest manifest,
-      Map<String, Object> inputs,
-      Map<String, Object> expected
-  ) {
-    try {
-      assertEquals(
-          expected,
-          manifest.populateOptionsWithDefaults(inputs)
-      );
-    } catch (InvalidTemplateOptionsProvided e) {
-      fail("Unexpected options error", e);
-    }
+  @Test
+  void validateValuesShouldReturnNoErrorIfAllValuesAreValid() {
+    // When a valid manifest is loaded
+    var validManifest = loadResource("static/valid-manifest.yml");
+
+    // Then parsing it results in expected fields
+    var manifest = parseManifest(validManifest);
+    Map<String, Object> values = Map.of(
+        "bootstrap_server", "localhost:9092",
+        "api_key", "key",
+        "api_secret", "secret",
+        "topic", "dtx",
+        "group_id", "",
+        "auto_offset_reset", "earliest"
+    );
+
+    assertTrue(manifest.validateValues(values).isEmpty());
+  }
+
+  @Test
+  void validateValuesShouldReturnErrorIfValueIsMissing() {
+    // When a valid manifest is loaded
+    var validManifest = loadResource("static/valid-manifest.yml");
+
+    // Then parsing it results in expected fields
+    var manifest = parseManifest(validManifest);
+    Map<String, Object> values = Map.of(
+        "bootstrap_server", "localhost:9092",
+        "api_key", "key",
+        "api_secret", "secret",
+        "topic", "dtx",
+        "group_id", ""
+    );
+    var errors = manifest.validateValues(values);
+
+    assertFalse(errors.isEmpty());
+    assertEquals(
+        "Required option auto_offset_reset is not provided.",
+        errors.getFirst().detail()
+    );
+  }
+
+  @Test
+  void validateValuesShouldReturnErrorIfOptionIsUnsupported() {
+    // When a valid manifest is loaded
+    var validManifest = loadResource("static/valid-manifest.yml");
+
+    // Then parsing it results in expected fields
+    var manifest = parseManifest(validManifest);
+    Map<String, Object> values = Map.of(
+        "bootstrap_server", "localhost:9092",
+        "api_key", "key",
+        "api_secret", "secret",
+        "topic", "dtx",
+        "group_id", "",
+        "auto_offset_reset", "earliest",
+        "unsupported_option", ""
+    );
+    var errors = manifest.validateValues(values);
+
+    assertFalse(errors.isEmpty());
+    assertEquals(
+        "Provided option unsupported_option is not supported by the template.",
+        errors.getFirst().detail()
+    );
+  }
+
+  @Test
+  void validateValuesShouldReturnErrorIfValueViolatesMinLengthConstraint() {
+    // When a valid manifest is loaded
+    var validManifest = loadResource("static/valid-manifest.yml");
+
+    // Then parsing it results in expected fields
+    var manifest = parseManifest(validManifest);
+    Map<String, Object> values = Map.of(
+        "bootstrap_server", "",
+        "api_key", "key",
+        "api_secret", "secret",
+        "topic", "dtx",
+        "group_id", "",
+        "auto_offset_reset", "earliest"
+    );
+    var errors = manifest.validateValues(values);
+
+    assertFalse(errors.isEmpty());
+    assertEquals(
+        "The provided value has 0 characters but the option bootstrap_server requires at "
+        + "least 1 character(s).",
+        errors.getFirst().detail()
+    );
   }
 
   String loadResource(String path) {

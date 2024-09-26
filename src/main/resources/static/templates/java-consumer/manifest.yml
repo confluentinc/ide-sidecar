@@ -56,7 +56,7 @@ options:
   auto_offset_reset:
     display_name: Begin Consuming From
     description: What to do when there is no initial offset in the Kafka topic or if the current offset does not exist any more on the server (e.g. because that data has been deleted).
-    default_value: earliest
+    initial_value: earliest
     enum:
       - earliest
       - latest

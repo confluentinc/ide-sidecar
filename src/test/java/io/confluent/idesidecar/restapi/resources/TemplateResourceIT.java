@@ -14,6 +14,7 @@ import io.quarkus.test.junit.QuarkusIntegrationTest;
 import io.quarkus.test.junit.TestProfile;
 import java.security.SecureRandom;
 import java.util.HashMap;
+import java.util.Optional;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -84,13 +85,17 @@ public class TemplateResourceIT {
     for (var option : manifest.options().entrySet()) {
       var name = option.getKey();
       var properties = option.getValue();
+      var minLength = Optional.ofNullable(properties.minLength()).orElse(0);
 
-      if (properties.defaultValue() != null) {
-        options.put(name, properties.defaultValue());
+      if (properties.initialValue() != null) {
+        options.put(name, properties.initialValue());
       } else if (properties.enums() != null && !properties.enums().isEmpty()) {
         options.put(name, properties.enums().getFirst());
       } else {
-        options.put(name, generateRandomAlphabeticString(RANDOM_STRING_LENGTH));
+        options.put(
+            name,
+            generateRandomAlphabeticString(Math.max(minLength, RANDOM_STRING_LENGTH))
+        );
       }
     }
 
