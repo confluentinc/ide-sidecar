@@ -31,8 +31,8 @@ if __name__ == '__main__':
             else:
                 # Extract the (optional) key and value, and print.
                 print((f'topic: {record.topic()} '
-                       f'key: {record.key().decode('utf-8')} '
-                       f'value: {record.value().decode('utf-8')}'))
+                       f'key: {record.key().decode("utf-8")} '
+                       f'value: {record.value().decode("utf-8")}'))
     except KeyboardInterrupt:
         pass
     finally:
