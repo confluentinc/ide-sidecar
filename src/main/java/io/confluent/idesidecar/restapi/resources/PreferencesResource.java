@@ -1,5 +1,6 @@
 package io.confluent.idesidecar.restapi.resources;
 
+import io.confluent.idesidecar.restapi.exceptions.Failure;
 import io.confluent.idesidecar.restapi.exceptions.InvalidPreferencesException;
 import io.confluent.idesidecar.restapi.models.Preferences;
 import io.confluent.idesidecar.restapi.models.Preferences.PreferencesSpec;
@@ -12,6 +13,10 @@ import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
+import org.eclipse.microprofile.openapi.annotations.media.Content;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 
 @Path(PreferencesResource.API_RESOURCE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
@@ -37,6 +42,30 @@ public class PreferencesResource {
 
   @PUT
   @Consumes(MediaType.APPLICATION_JSON)
+  @APIResponses(
+      value = {
+          @APIResponse(
+              responseCode = "200",
+              description = "OK",
+              content = {
+                  @Content(
+                      mediaType = "application/json",
+                      schema = @Schema(implementation = Preferences.class)
+                  )
+              }
+          ),
+          @APIResponse(
+              responseCode = "400",
+              description = "Provided preferences are not valid",
+              content = {
+                  @Content(
+                      mediaType = "application/json",
+                      schema = @Schema(implementation = Failure.class)
+                  )
+              }
+          )
+      }
+  )
   public Preferences updatePreferences(Preferences updatedPreferences)
       throws InvalidPreferencesException {
     updatedPreferences.spec().validate();

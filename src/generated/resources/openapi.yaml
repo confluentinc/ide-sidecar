@@ -209,6 +209,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Preferences"
+        "400":
+          description: Provided preferences are not valid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Failure"
   /gateway/v1/templates:
     get:
       tags:
