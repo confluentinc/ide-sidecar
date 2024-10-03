@@ -33,178 +33,6 @@
         }
       }
     },
-    "/clusters/{cluster_id}/topics" : {
-      "get" : {
-        "parameters" : [ {
-          "name" : "cluster_id",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/TopicDataList"
-                }
-              },
-              "text/html" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/TopicDataList"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post" : {
-        "parameters" : [ {
-          "name" : "cluster_id",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/CreateTopicRequestData"
-              }
-            }
-          }
-        },
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/TopicData"
-                }
-              },
-              "text/html" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/TopicData"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/clusters/{cluster_id}/topics/{topic_name}" : {
-      "get" : {
-        "parameters" : [ {
-          "name" : "cluster_id",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "name" : "topic_name",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "name" : "include_authorized_operations",
-          "in" : "query",
-          "schema" : {
-            "type" : "boolean"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/TopicData"
-                }
-              },
-              "text/html" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/TopicData"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete" : {
-        "parameters" : [ {
-          "name" : "cluster_id",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "name" : "topic_name",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "204" : {
-            "description" : "No Content"
-          }
-        }
-      },
-      "patch" : {
-        "parameters" : [ {
-          "name" : "cluster_id",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "name" : "topic_name",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/UpdatePartitionCountRequestData"
-              }
-            }
-          }
-        },
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/TopicData"
-                }
-              },
-              "text/html" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/TopicData"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/gateway/v1/callback-vscode-docs" : {
       "get" : {
         "tags" : [ "O Auth Callback Resource" ],
@@ -585,6 +413,178 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/SidecarVersionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/kafka/v3/clusters/{cluster_id}/topics" : {
+      "get" : {
+        "parameters" : [ {
+          "name" : "cluster_id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TopicDataList"
+                }
+              },
+              "text/html" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TopicDataList"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "parameters" : [ {
+          "name" : "cluster_id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CreateTopicRequestData"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TopicData"
+                }
+              },
+              "text/html" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TopicData"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/kafka/v3/clusters/{cluster_id}/topics/{topic_name}" : {
+      "get" : {
+        "parameters" : [ {
+          "name" : "cluster_id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "topic_name",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "include_authorized_operations",
+          "in" : "query",
+          "schema" : {
+            "type" : "boolean"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TopicData"
+                }
+              },
+              "text/html" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TopicData"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "parameters" : [ {
+          "name" : "cluster_id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "topic_name",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        }
+      },
+      "patch" : {
+        "parameters" : [ {
+          "name" : "cluster_id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "topic_name",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/UpdatePartitionCountRequestData"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TopicData"
+                }
+              },
+              "text/html" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TopicData"
                 }
               }
             }
@@ -1606,16 +1606,16 @@
       "HealthCheck" : {
         "type" : "object",
         "properties" : {
+          "status" : {
+            "enum" : [ "UP", "DOWN" ],
+            "type" : "string"
+          },
           "name" : {
             "type" : "string"
           },
           "data" : {
             "type" : "object",
             "nullable" : true
-          },
-          "status" : {
-            "enum" : [ "UP", "DOWN" ],
-            "type" : "string"
           }
         }
       }
