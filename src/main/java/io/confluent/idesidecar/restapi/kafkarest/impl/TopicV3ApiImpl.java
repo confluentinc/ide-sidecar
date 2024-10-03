@@ -17,6 +17,7 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.DescribeTopicsOptions;
 import org.apache.kafka.clients.admin.NewTopic;
@@ -72,7 +73,9 @@ public class TopicV3ApiImpl implements TopicV3Api {
       String clusterId, String topicName, Boolean includeAuthorizedOperations
   ) {
     var describeTopicsOptions = new DescribeTopicsOptions()
-        .includeAuthorizedOperations(includeAuthorizedOperations);
+        .includeAuthorizedOperations(
+            Optional.ofNullable(includeAuthorizedOperations).orElse(false)
+        );
     return MutinyUtil.uniStage(
         adminClient
             .describeTopics(List.of(topicName), describeTopicsOptions)
@@ -117,7 +120,8 @@ public class TopicV3ApiImpl implements TopicV3Api {
         .replicationFactor(topicDescription.partitions().getFirst().replicas().size())
         .isInternal(topicDescription.isInternal())
         .authorizedOperations(
-            topicDescription.authorizedOperations().stream().map(Enum::name).toList()
+            Optional.ofNullable(topicDescription.authorizedOperations()).orElse(Set.of())
+                .stream().map(Enum::name).toList()
         ).build();
   }
 
