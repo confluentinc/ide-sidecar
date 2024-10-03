@@ -280,6 +280,36 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SidecarVersionResponse"
+  /internal/kafka/v3/clusters:
+    get:
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClusterDataList"
+            text/html:
+              schema:
+                $ref: "#/components/schemas/ClusterDataList"
+  /internal/kafka/v3/clusters/{cluster_id}:
+    get:
+      parameters:
+      - name: cluster_id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClusterData"
+            text/html:
+              schema:
+                $ref: "#/components/schemas/ClusterData"
   /internal/kafka/v3/clusters/{cluster_id}/topics:
     get:
       parameters:
@@ -553,6 +583,54 @@ components:
       properties:
         organization_id:
           type: string
+    ClusterData:
+      required:
+      - kind
+      - metadata
+      - cluster_id
+      - acls
+      - brokers
+      - broker_configs
+      - consumer_groups
+      - topics
+      - partition_reassignments
+      type: object
+      properties:
+        kind:
+          type: string
+        metadata:
+          $ref: "#/components/schemas/ResourceMetadata"
+        cluster_id:
+          type: string
+        controller:
+          $ref: "#/components/schemas/Relationship"
+        acls:
+          $ref: "#/components/schemas/Relationship"
+        brokers:
+          $ref: "#/components/schemas/Relationship"
+        broker_configs:
+          $ref: "#/components/schemas/Relationship"
+        consumer_groups:
+          $ref: "#/components/schemas/Relationship"
+        topics:
+          $ref: "#/components/schemas/Relationship"
+        partition_reassignments:
+          $ref: "#/components/schemas/Relationship"
+    ClusterDataList:
+      required:
+      - kind
+      - metadata
+      - data
+      type: object
+      properties:
+        kind:
+          type: string
+        metadata:
+          $ref: "#/components/schemas/ResourceCollectionMetadata"
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/ClusterData"
     CollectionMetadata:
       type: object
       properties:
@@ -563,12 +641,6 @@ components:
         total_size:
           format: int32
           type: integer
-    ConfluentPlatformConfig:
-      description: Configuration for Confluence Platform connections
-      type: object
-      properties:
-        bootstrap_servers:
-          type: string
     Connection:
       required:
       - api_version
@@ -613,8 +685,6 @@ components:
           $ref: "#/components/schemas/CCloudConfig"
         local_config:
           $ref: "#/components/schemas/LocalConfig"
-        cp_config:
-          $ref: "#/components/schemas/ConfluentPlatformConfig"
     ConnectionStatus:
       required:
       - authentication
@@ -1138,24 +1208,24 @@ components:
     HealthResponse:
       type: object
       properties:
+        status:
+          enum:
+          - UP
+          - DOWN
+          type: string
         checks:
           type: array
           items:
             $ref: "#/components/schemas/HealthCheck"
-        status:
-          enum:
-          - UP
-          - DOWN
-          type: string
     HealthCheck:
       type: object
       properties:
+        name:
+          type: string
         status:
           enum:
           - UP
           - DOWN
-          type: string
-        name:
           type: string
         data:
           type: object

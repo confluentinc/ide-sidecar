@@ -805,7 +805,7 @@
               <generatorName>jaxrs-spec</generatorName>
               <generateSupportingFiles>false</generateSupportingFiles>
               <addCompileSourceRoot>true</addCompileSourceRoot>
-              <apisToGenerate>TopicV3,PartitionV3</apisToGenerate>
+              <apisToGenerate>ClusterV3,TopicV3,PartitionV3</apisToGenerate>
               <configOptions>
                 <interfaceOnly>true</interfaceOnly>
                 <generatePom>false</generatePom>
