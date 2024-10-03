@@ -33,6 +33,178 @@
         }
       }
     },
+    "/clusters/{cluster_id}/topics" : {
+      "get" : {
+        "parameters" : [ {
+          "name" : "cluster_id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TopicDataList"
+                }
+              },
+              "text/html" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TopicDataList"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "parameters" : [ {
+          "name" : "cluster_id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CreateTopicRequestData"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TopicData"
+                }
+              },
+              "text/html" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TopicData"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/clusters/{cluster_id}/topics/{topic_name}" : {
+      "get" : {
+        "parameters" : [ {
+          "name" : "cluster_id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "topic_name",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "include_authorized_operations",
+          "in" : "query",
+          "schema" : {
+            "type" : "boolean"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TopicData"
+                }
+              },
+              "text/html" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TopicData"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "parameters" : [ {
+          "name" : "cluster_id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "topic_name",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        }
+      },
+      "patch" : {
+        "parameters" : [ {
+          "name" : "cluster_id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "topic_name",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/UpdatePartitionCountRequestData"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TopicData"
+                }
+              },
+              "text/html" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TopicData"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/gateway/v1/callback-vscode-docs" : {
       "get" : {
         "tags" : [ "O Auth Callback Resource" ],
@@ -669,6 +841,15 @@
           }
         }
       },
+      "ConfluentPlatformConfig" : {
+        "description" : "Configuration for Confluence Platform connections",
+        "type" : "object",
+        "properties" : {
+          "bootstrap_servers" : {
+            "type" : "string"
+          }
+        }
+      },
       "Connection" : {
         "required" : [ "api_version", "kind", "id", "metadata", "spec", "status" ],
         "type" : "object",
@@ -724,6 +905,9 @@
           },
           "local_config" : {
             "$ref" : "#/components/schemas/LocalConfig"
+          },
+          "cp_config" : {
+            "$ref" : "#/components/schemas/ConfluentPlatformConfig"
           }
         }
       },
@@ -758,6 +942,54 @@
             "items" : {
               "$ref" : "#/components/schemas/Connection"
             }
+          }
+        }
+      },
+      "CreateTopicRequestData" : {
+        "required" : [ "topic_name" ],
+        "type" : "object",
+        "properties" : {
+          "topic_name" : {
+            "type" : "string"
+          },
+          "partitions_count" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "replication_factor" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "replicas_assignments" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "array",
+              "items" : {
+                "format" : "int32",
+                "type" : "integer"
+              }
+            }
+          },
+          "configs" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CreateTopicRequestDataConfigsInner"
+            }
+          },
+          "validate_only" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "CreateTopicRequestDataConfigsInner" : {
+        "required" : [ "name" ],
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "value" : {
+            "type" : "string"
           }
         }
       },
@@ -1079,6 +1311,39 @@
           }
         }
       },
+      "Relationship" : {
+        "required" : [ "related" ],
+        "type" : "object",
+        "properties" : {
+          "related" : {
+            "type" : "string"
+          }
+        }
+      },
+      "ResourceCollectionMetadata" : {
+        "required" : [ "self" ],
+        "type" : "object",
+        "properties" : {
+          "self" : {
+            "type" : "string"
+          },
+          "next" : {
+            "type" : "string"
+          }
+        }
+      },
+      "ResourceMetadata" : {
+        "required" : [ "self" ],
+        "type" : "object",
+        "properties" : {
+          "self" : {
+            "type" : "string"
+          },
+          "resource_name" : {
+            "type" : "string"
+          }
+        }
+      },
       "SidecarAccessToken" : {
         "type" : "object",
         "properties" : {
@@ -1228,6 +1493,78 @@
         "enum" : [ "NO_TIMESTAMP_TYPE", "CREATE_TIME", "LOG_APPEND_TIME" ],
         "type" : "string"
       },
+      "TopicData" : {
+        "required" : [ "kind", "metadata", "cluster_id", "topic_name", "is_internal", "replication_factor", "partitions_count", "partitions", "configs", "partition_reassignments" ],
+        "type" : "object",
+        "properties" : {
+          "kind" : {
+            "type" : "string"
+          },
+          "metadata" : {
+            "$ref" : "#/components/schemas/ResourceMetadata"
+          },
+          "cluster_id" : {
+            "type" : "string"
+          },
+          "topic_name" : {
+            "type" : "string"
+          },
+          "is_internal" : {
+            "type" : "boolean"
+          },
+          "replication_factor" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "partitions_count" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "partitions" : {
+            "$ref" : "#/components/schemas/Relationship"
+          },
+          "configs" : {
+            "$ref" : "#/components/schemas/Relationship"
+          },
+          "partition_reassignments" : {
+            "$ref" : "#/components/schemas/Relationship"
+          },
+          "authorized_operations" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        }
+      },
+      "TopicDataList" : {
+        "required" : [ "kind", "metadata", "data" ],
+        "type" : "object",
+        "properties" : {
+          "kind" : {
+            "type" : "string"
+          },
+          "metadata" : {
+            "$ref" : "#/components/schemas/ResourceCollectionMetadata"
+          },
+          "data" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/TopicData"
+            }
+          }
+        }
+      },
+      "UpdatePartitionCountRequestData" : {
+        "required" : [ "partitions_count" ],
+        "type" : "object",
+        "properties" : {
+          "partitions_count" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }
+      },
       "UserInfo" : {
         "type" : "object",
         "properties" : {
@@ -1269,15 +1606,15 @@
       "HealthCheck" : {
         "type" : "object",
         "properties" : {
-          "status" : {
-            "enum" : [ "UP", "DOWN" ],
+          "name" : {
             "type" : "string"
           },
           "data" : {
             "type" : "object",
             "nullable" : true
           },
-          "name" : {
+          "status" : {
+            "enum" : [ "UP", "DOWN" ],
             "type" : "string"
           }
         }
