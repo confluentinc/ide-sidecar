@@ -10,47 +10,8 @@ info:
   x-audience: external-public
   x-tag-group: Kafka API (%s)
 
-servers:
-  - url: "{protocol}://{address}:{port}/v3"
-    x-audience: component-internal
-    description: Kafka REST Proxy. See https://docs.confluent.io/current/kafka-rest/index.html.
-    variables:
-      address:
-        default: localhost
-        description: Address of the server
-      port:
-        default: "8082"
-        description: Port of the server
-      protocol:
-        default: http
-        description: Protocol for interacting with server
-        enum:
-          - http
-          - https
-
-  - url: "{protocol}://{address}:{port}/kafka/v3"
-    x-audience: component-internal
-    description: Kafka REST Proxy as part of Confluent Server.
-    variables:
-      protocol:
-        default: http
-        enum:
-          - http
-          - https
-        description: Protocol to communicate with the server
-      address:
-        default: localhost
-        description: Address of the server
-      port:
-        default: "8090"
-        description: Port of the server
-
-  - url: https://pkc-00000.region.provider.confluent.cloud/kafka/v3
-    x-audience: business-unit-internal
-    description: Confluent Cloud REST Endpoint. For example https://pkc-00000.region.provider.confluent.cloud
-
 paths:
-  /clusters:
+  /internal/kafka/v3/clusters:
     x-audience: component-internal
     get:
       summary: 'List Clusters'
@@ -78,7 +39,7 @@ paths:
         '5XX':
           $ref: '#/components/responses/ServerErrorResponse'
 
-  /clusters/{cluster_id}:
+  /internal/kafka/v3/clusters/{cluster_id}:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
 
@@ -105,7 +66,7 @@ paths:
         '5XX':
           $ref: '#/components/responses/ServerErrorResponse'
 
-  /clusters/{cluster_id}/acls:batch:
+  /internal/kafka/v3/clusters/{cluster_id}/acls:batch:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
 
@@ -134,7 +95,7 @@ paths:
         '5XX':
           $ref: '#/components/responses/ServerErrorResponse'
 
-  /clusters/{cluster_id}/acls:
+  /internal/kafka/v3/clusters/{cluster_id}/acls:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
 
@@ -225,7 +186,7 @@ paths:
         '5XX':
           $ref: '#/components/responses/ServerErrorResponse'
 
-  /clusters/{cluster_id}/broker-configs:
+  /internal/kafka/v3/clusters/{cluster_id}/broker-configs:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
 
@@ -254,7 +215,7 @@ paths:
         '5XX':
           $ref: '#/components/responses/ServerErrorResponse'
 
-  /clusters/{cluster_id}/broker-configs:alter:
+  /internal/kafka/v3/clusters/{cluster_id}/broker-configs:alter:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
 
@@ -283,7 +244,7 @@ paths:
         '5XX':
           $ref: '#/components/responses/ServerErrorResponse'
 
-  /clusters/{cluster_id}/broker-configs/{name}:
+  /internal/kafka/v3/clusters/{cluster_id}/broker-configs/{name}:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/ConfigName'
@@ -360,7 +321,7 @@ paths:
         '5XX':
           $ref: '#/components/responses/ServerErrorResponse'
 
-  /clusters/{cluster_id}/brokers:
+  /internal/kafka/v3/clusters/{cluster_id}/brokers:
     x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
@@ -388,7 +349,7 @@ paths:
         '5XX':
           $ref: '#/components/responses/ServerErrorResponse'
 
-  /clusters/{cluster_id}/brokers/{broker_id}:
+  /internal/kafka/v3/clusters/{cluster_id}/brokers/{broker_id}:
     x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
@@ -416,7 +377,7 @@ paths:
         '5XX':
           $ref: '#/components/responses/ServerErrorResponse'
 
-  /clusters/{cluster_id}/brokers/-/configs:
+  /internal/kafka/v3/clusters/{cluster_id}/brokers/-/configs:
     x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
@@ -443,7 +404,7 @@ paths:
         '5XX':
           $ref: '#/components/responses/ServerErrorResponse'
 
-  /clusters/{cluster_id}/brokers/{broker_id}/configs:
+  /internal/kafka/v3/clusters/{cluster_id}/brokers/{broker_id}/configs:
     x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
@@ -471,7 +432,7 @@ paths:
         '5XX':
           $ref: '#/components/responses/ServerErrorResponse'
 
-  /clusters/{cluster_id}/brokers/{broker_id}/configs:alter:
+  /internal/kafka/v3/clusters/{cluster_id}/brokers/{broker_id}/configs:alter:
     x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
@@ -501,7 +462,7 @@ paths:
         '5XX':
           $ref: '#/components/responses/ServerErrorResponse'
 
-  /clusters/{cluster_id}/brokers/{broker_id}/configs/{name}:
+  /internal/kafka/v3/clusters/{cluster_id}/brokers/{broker_id}/configs/{name}:
     x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
@@ -576,7 +537,7 @@ paths:
         '5XX':
           $ref: '#/components/responses/ServerErrorResponse'
 
-  /clusters/{cluster_id}/brokers/{broker_id}/partition-replicas:
+  /internal/kafka/v3/clusters/{cluster_id}/brokers/{broker_id}/partition-replicas:
     x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
@@ -605,7 +566,7 @@ paths:
         '5XX':
           $ref: '#/components/responses/ServerErrorResponse'
 
-  /clusters/{cluster_id}/consumer-groups:
+  /internal/kafka/v3/clusters/{cluster_id}/consumer-groups:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
 
@@ -633,7 +594,7 @@ paths:
         '5XX':
           $ref: '#/components/responses/ServerErrorResponse'
 
-  /clusters/{cluster_id}/consumer-groups/{consumer_group_id}:
+  /internal/kafka/v3/clusters/{cluster_id}/consumer-groups/{consumer_group_id}:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/ConsumerGroupId'
@@ -661,7 +622,7 @@ paths:
         '5XX':
           $ref: '#/components/responses/ServerErrorResponse'
 
-  /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/consumers:
+  /internal/kafka/v3/clusters/{cluster_id}/consumer-groups/{consumer_group_id}/consumers:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/ConsumerGroupId'
@@ -690,7 +651,7 @@ paths:
         '5XX':
           $ref: '#/components/responses/ServerErrorResponse'
 
-  /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/lag-summary:
+  /internal/kafka/v3/clusters/{cluster_id}/consumer-groups/{consumer_group_id}/lag-summary:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/ConsumerGroupId'
@@ -719,7 +680,7 @@ paths:
         '5XX':
           $ref: '#/components/responses/ServerErrorResponse'
 
-  /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/lags:
+  /internal/kafka/v3/clusters/{cluster_id}/consumer-groups/{consumer_group_id}/lags:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/ConsumerGroupId'
@@ -748,7 +709,7 @@ paths:
         '5XX':
           $ref: '#/components/responses/ServerErrorResponse'
 
-  /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/lags/{topic_name}/partitions/{partition_id}:
+  /internal/kafka/v3/clusters/{cluster_id}/consumer-groups/{consumer_group_id}/lags/{topic_name}/partitions/{partition_id}:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/ConsumerGroupId'
@@ -778,7 +739,7 @@ paths:
         '5XX':
           $ref: '#/components/responses/ServerErrorResponse'
 
-  /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/consumers/{consumer_id}:
+  /internal/kafka/v3/clusters/{cluster_id}/consumer-groups/{consumer_group_id}/consumers/{consumer_id}:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/ConsumerGroupId'
@@ -807,7 +768,7 @@ paths:
         '5XX':
           $ref: '#/components/responses/ServerErrorResponse'
 
-  /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/consumers/{consumer_id}/assignments:
+  /internal/kafka/v3/clusters/{cluster_id}/consumer-groups/{consumer_group_id}/consumers/{consumer_id}/assignments:
     x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
@@ -837,7 +798,7 @@ paths:
         '5XX':
           $ref: '#/components/responses/ServerErrorResponse'
 
-  /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/consumers/{consumer_id}/assignments/{topic_name}/partitions/{partition_id}:
+  /internal/kafka/v3/clusters/{cluster_id}/consumer-groups/{consumer_group_id}/consumers/{consumer_id}/assignments/{topic_name}/partitions/{partition_id}:
     x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
@@ -870,7 +831,7 @@ paths:
         '5XX':
           $ref: '#/components/responses/ServerErrorResponse'
 
-  /clusters/{cluster_id}/topics:
+  /internal/kafka/v3/clusters/{cluster_id}/topics:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
 
@@ -928,7 +889,7 @@ paths:
         '5XX':
           $ref: '#/components/responses/ServerErrorResponse'
 
-  /clusters/{cluster_id}/topics/{topic_name}:
+  /internal/kafka/v3/clusters/{cluster_id}/topics/{topic_name}:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/TopicName'
@@ -1010,7 +971,7 @@ paths:
         '5XX':
           $ref: '#/components/responses/ServerErrorResponse'
 
-  /clusters/{cluster_id}/topics/{topic_name}/configs:
+  /internal/kafka/v3/clusters/{cluster_id}/topics/{topic_name}/configs:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/TopicName'
@@ -1040,7 +1001,7 @@ paths:
         '5XX':
           $ref: '#/components/responses/ServerErrorResponse'
 
-  /clusters/{cluster_id}/topics/{topic_name}/configs:alter:
+  /internal/kafka/v3/clusters/{cluster_id}/topics/{topic_name}/configs:alter:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/TopicName'
@@ -1075,7 +1036,7 @@ paths:
         '5XX':
           $ref: '#/components/responses/ServerErrorResponse'
 
-  /clusters/{cluster_id}/topics/{topic_name}/configs/{name}:
+  /internal/kafka/v3/clusters/{cluster_id}/topics/{topic_name}/configs/{name}:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/TopicName'
@@ -1158,7 +1119,7 @@ paths:
         '5XX':
           $ref: '#/components/responses/ServerErrorResponse'
 
-  /clusters/{cluster_id}/topics/{topic_name}/partitions:
+  /internal/kafka/v3/clusters/{cluster_id}/topics/{topic_name}/partitions:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/TopicName'
@@ -1188,7 +1149,7 @@ paths:
         '5XX':
           $ref: '#/components/responses/ServerErrorResponse'
 
-  /clusters/{cluster_id}/topics/{topic_name}/partitions/{partition_id}:
+  /internal/kafka/v3/clusters/{cluster_id}/topics/{topic_name}/partitions/{partition_id}:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/TopicName'
@@ -1219,7 +1180,7 @@ paths:
         '5XX':
           $ref: '#/components/responses/ServerErrorResponse'
 
-  /clusters/{cluster_id}/topics/-/partitions/-/reassignment:
+  /internal/kafka/v3/clusters/{cluster_id}/topics/-/partitions/-/reassignment:
     x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
@@ -1248,7 +1209,7 @@ paths:
         '5XX':
           $ref: '#/components/responses/ServerErrorResponse'
 
-  /clusters/{cluster_id}/topics/{topic_name}/partitions/-/reassignment:
+  /internal/kafka/v3/clusters/{cluster_id}/topics/{topic_name}/partitions/-/reassignment:
     x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
@@ -1278,7 +1239,7 @@ paths:
         '5XX':
           $ref: '#/components/responses/ServerErrorResponse'
 
-  /clusters/{cluster_id}/topics/{topic_name}/partitions/{partition_id}/reassignment:
+  /internal/kafka/v3/clusters/{cluster_id}/topics/{topic_name}/partitions/{partition_id}/reassignment:
     x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
@@ -1309,7 +1270,7 @@ paths:
         '5XX':
           $ref: '#/components/responses/ServerErrorResponse'
 
-  /clusters/{cluster_id}/topics/{topic_name}/partitions/{partition_id}/replicas:
+  /internal/kafka/v3/clusters/{cluster_id}/topics/{topic_name}/partitions/{partition_id}/replicas:
     x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
@@ -1340,7 +1301,7 @@ paths:
         '5XX':
           $ref: '#/components/responses/ServerErrorResponse'
 
-  /clusters/{cluster_id}/topics/{topic_name}/partitions/{partition_id}/replicas/{broker_id}:
+  /internal/kafka/v3/clusters/{cluster_id}/topics/{topic_name}/partitions/{partition_id}/replicas/{broker_id}:
     x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
@@ -1372,7 +1333,7 @@ paths:
         '5XX':
           $ref: '#/components/responses/ServerErrorResponse'
 
-  /clusters/{cluster_id}/topics/-/configs:
+  /internal/kafka/v3/clusters/{cluster_id}/topics/-/configs:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
 
@@ -1400,7 +1361,7 @@ paths:
         '5XX':
           $ref: '#/components/responses/ServerErrorResponse'
 
-  /clusters/{cluster_id}/topics/{topic_name}/records:
+  /internal/kafka/v3/clusters/{cluster_id}/topics/{topic_name}/records:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/TopicName'
@@ -1450,7 +1411,7 @@ paths:
         '5XX':
           $ref: '#/components/responses/ServerErrorResponse'
 
-  /clusters/{cluster_id}/topics/{topic_name}/records:batch:
+  /internal/kafka/v3/clusters/{cluster_id}/topics/{topic_name}/records:batch:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/TopicName'
