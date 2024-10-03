@@ -1,12 +1,22 @@
 package io.confluent.idesidecar.restapi.kafkarest.impl;
 
+import static io.confluent.idesidecar.restapi.kafkarest.impl.RelationshipUtil.forPartitionReassignments;
+import static io.confluent.idesidecar.restapi.kafkarest.impl.RelationshipUtil.forPartitions;
+import static io.confluent.idesidecar.restapi.kafkarest.impl.RelationshipUtil.forTopic;
+import static io.confluent.idesidecar.restapi.kafkarest.impl.RelationshipUtil.forTopicConfigs;
+import static io.confluent.idesidecar.restapi.kafkarest.impl.RelationshipUtil.forTopics;
+import static io.confluent.idesidecar.restapi.kafkarest.impl.RelationshipUtil.getTopicCrn;
+import static io.confluent.idesidecar.restapi.util.MutinyUtil.uniItem;
+import static io.confluent.idesidecar.restapi.util.MutinyUtil.uniStage;
+
 import io.confluent.idesidecar.restapi.kafkarest.api.TopicV3Api;
 import io.confluent.idesidecar.restapi.kafkarest.model.CreateTopicRequestData;
 import io.confluent.idesidecar.restapi.kafkarest.model.Error;
+import io.confluent.idesidecar.restapi.kafkarest.model.ResourceCollectionMetadata;
+import io.confluent.idesidecar.restapi.kafkarest.model.ResourceMetadata;
 import io.confluent.idesidecar.restapi.kafkarest.model.TopicData;
 import io.confluent.idesidecar.restapi.kafkarest.model.TopicDataList;
 import io.confluent.idesidecar.restapi.kafkarest.model.UpdatePartitionCountRequestData;
-import io.confluent.idesidecar.restapi.util.MutinyUtil;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
@@ -40,32 +50,21 @@ public class TopicV3ApiImpl implements TopicV3Api {
   @Override
   public Uni<TopicData> createKafkaTopic(String clusterId,
       CreateTopicRequestData createTopicRequestData) {
-    // Basic create with just topic name and partitions
-    var partitionsCount = Optional.ofNullable(
-        createTopicRequestData.getPartitionsCount()).orElse(1);
-    var replicationFactor = Optional.ofNullable(
-        createTopicRequestData.getReplicationFactor()).orElse(1).shortValue();
-    return MutinyUtil.uniStage(
+    // TODO: Support creating topic using all CreateTopicRequestData fields
+    return uniStage(
         adminClient.createTopics(List.of(new NewTopic(
             createTopicRequestData.getTopicName(),
-            partitionsCount,
-            replicationFactor
+            Optional.ofNullable(createTopicRequestData.getPartitionsCount())
+                .orElse(1),
+            Optional.ofNullable(createTopicRequestData.getReplicationFactor())
+                .orElse(1).shortValue()
         ))).all().toCompletionStage())
-        .chain(v -> Uni.createFrom().item(TopicData
-            .builder()
-            .kind("KafkaTopic")
-            .topicName(createTopicRequestData.getTopicName())
-            .clusterId(clusterId)
-            .partitionsCount(partitionsCount)
-            .replicationFactor((int) replicationFactor)
-            .build()));
+        .chain(v -> getKafkaTopic(clusterId, createTopicRequestData.getTopicName(), false));
   }
 
   @Override
   public Uni<Void> deleteKafkaTopic(String clusterId, String topicName) {
-    return MutinyUtil.uniStage(
-        adminClient.deleteTopics(List.of(topicName)).all().toCompletionStage()
-    ).chain(v -> Uni.createFrom().voidItem());
+    return uniStage(adminClient.deleteTopics(List.of(topicName)).all().toCompletionStage());
   }
 
   @Override
@@ -76,7 +75,7 @@ public class TopicV3ApiImpl implements TopicV3Api {
         .includeAuthorizedOperations(
             Optional.ofNullable(includeAuthorizedOperations).orElse(false)
         );
-    return MutinyUtil.uniStage(
+    return uniStage(
         adminClient
             .describeTopics(List.of(topicName), describeTopicsOptions)
             .allTopicNames()
@@ -88,13 +87,19 @@ public class TopicV3ApiImpl implements TopicV3Api {
 
   @Override
   public Uni<TopicDataList> listKafkaTopics(String clusterId) {
-    return MutinyUtil.uniStage(adminClient.listTopics().names().toCompletionStage())
-        .chain(topicNames -> MutinyUtil.uniStage(
+    return uniStage(adminClient.listTopics().names().toCompletionStage())
+        .chain(topicNames -> uniStage(
             adminClient.describeTopics(topicNames).allTopicNames().toCompletionStage()))
         .onItem()
-        .transformToUni(topicDescriptionMap -> MutinyUtil.uniItem(TopicDataList
+        .transformToUni(topicDescriptionMap -> uniItem(TopicDataList
                 .builder()
                 .kind("KafkaTopicList")
+                .metadata(ResourceCollectionMetadata
+                    .builder()
+                    .next(null)
+                    .self(forTopics(clusterId).getRelated())
+                    .build()
+                )
                 .data(topicDescriptionMap
                     .values()
                     .stream()
@@ -122,7 +127,19 @@ public class TopicV3ApiImpl implements TopicV3Api {
         .authorizedOperations(
             Optional.ofNullable(topicDescription.authorizedOperations()).orElse(Set.of())
                 .stream().map(Enum::name).toList()
-        ).build();
+        )
+        .partitionReassignments(forPartitionReassignments(clusterId, topicDescription.name()))
+        .partitions(forPartitions(clusterId, topicDescription.name()))
+        .configs(forTopicConfigs(clusterId, topicDescription.name()))
+        .metadata(getTopicMetadata(clusterId, topicDescription.name())).build();
+  }
+
+  private ResourceMetadata getTopicMetadata(String clusterId, String topicName) {
+    return ResourceMetadata
+        .builder()
+        .resourceName(getTopicCrn(clusterId, topicName).toString())
+        .self(forTopic(clusterId, topicName).getRelated())
+        .build();
   }
 
   @ServerExceptionMapper
