@@ -18,6 +18,7 @@ public class AdminClientService {
   public AdminClient createAdminClient(HttpServerRequest request) {
     var props = new Properties();
     props.put("bootstrap.servers", request.getHeader("X-bootstrap-servers"));
+    // TODO: Handle case where client is not able to connect
     return AdminClient.create(props);
   }
 
