@@ -1,47 +1,41 @@
-/*
- * Copyright [2024 - 2024] Confluent Inc.
- */
-
-package io.confluent.idesidecar.restapi.messageviewer;
+package io.confluent.idesidecar.restapi.cache;
 
 import io.confluent.idesidecar.restapi.connections.ConnectionState;
 import io.confluent.idesidecar.restapi.events.Lifecycle;
-import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
-import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.ObservesAsync;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
 /**
- * Utilities to obtain and cache Schema Registry clients.
+ * Utilities to obtain and cache clients for a given connection and client ID.
  */
-@ApplicationScoped
-public class SchemaRegistryClients {
+public abstract class Clients<T extends AutoCloseable> {
 
-  private final Map<String, Map<String, SchemaRegistryClient>> clientsByIdByConnections =
+  private final Map<String, Map<String, T>> clientsByIdByConnections =
       new ConcurrentHashMap<>();
 
   /**
-   * Get a client for the Schema Registry with the given identifier.
+   * Get a client for the given connection and client ID. If the client does not
+   * already exist, it will be created using the provided factory.
    *
    * @param connectionId     the ID of the connection
-   * @param schemaRegistryId the identifier of the Schema Registry
+   * @param clientId         the identifier of the client
    * @param factory          the method that will create the client if there is not already one
-   * @return the Schema Registry client
+   * @return the client
    */
-  public SchemaRegistryClient getClient(
+  public T getClient(
       String connectionId,
-      String schemaRegistryId,
-      Supplier<SchemaRegistryClient> factory
+      String clientId,
+      Supplier<T> factory
   ) {
     return clientsForConnection(connectionId).computeIfAbsent(
-        schemaRegistryId,
+        clientId,
         k -> factory.get()
     );
   }
 
-  private Map<String, SchemaRegistryClient> clientsForConnection(String connectionId) {
+  private Map<String, T> clientsForConnection(String connectionId) {
     return clientsByIdByConnections.computeIfAbsent(
         connectionId,
         k -> new ConcurrentHashMap<>()
@@ -77,7 +71,7 @@ public class SchemaRegistryClients {
 
   /**
    * Respond to the connection being disconnected by clearing and closing the
-   * Schema Registry clients that were cached for that connection.
+   * clients that were cached for that connection.
    *
    * @param connection the connection that was disconnected
    */

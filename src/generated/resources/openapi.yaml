@@ -575,6 +575,20 @@ components:
           $ref: "#/components/schemas/UserInfo"
         errors:
           $ref: "#/components/schemas/AuthErrors"
+    BrokerConfig:
+      description: Configuration for broker
+      required:
+      - bootstrap_servers
+      type: object
+      properties:
+        bootstrap_servers:
+          type: string
+        security_protocol:
+          type: string
+        sasl_mechanism:
+          type: string
+        sasl_jaas_config:
+          type: string
     CCloudConfig:
       description: Configuration for Confluent Cloud connections
       required:
@@ -685,6 +699,8 @@ components:
           $ref: "#/components/schemas/CCloudConfig"
         local_config:
           $ref: "#/components/schemas/LocalConfig"
+        broker_config:
+          $ref: "#/components/schemas/BrokerConfig"
     ConnectionStatus:
       required:
       - authentication
@@ -1222,11 +1238,11 @@ components:
       properties:
         name:
           type: string
+        data:
+          type: object
+          nullable: true
         status:
           enum:
           - UP
           - DOWN
           type: string
-        data:
-          type: object
-          nullable: true
