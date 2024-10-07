@@ -12,15 +12,15 @@ public class AdminClients extends Clients<AdminClient> {
   @Inject
   ConnectionStateManager manager;
 
-  public AdminClient getAdminClient(String connectionId) {
+  public AdminClient getAdminClient(String connectionId, String clusterId) {
     return getClient(
         connectionId,
-        "default",
+        clusterId,
         () -> AdminClient.create(getAdminClientConfig(connectionId))
     );
   }
 
-  private Properties getAdminClientConfig(String connectionId) {
+  public Properties getAdminClientConfig(String connectionId) {
     var spec = manager.getConnectionSpec(connectionId);
     if (spec.bootstrapServers() == null) {
       throw new IllegalArgumentException("No bootstrap servers for connection " + connectionId);
@@ -30,4 +30,6 @@ public class AdminClients extends Clients<AdminClient> {
     props.put("bootstrap.servers", spec.bootstrapServers());
     return props;
   }
+
+  // TODO: Set up a TTL on cached clients, say 5 minutes
 }

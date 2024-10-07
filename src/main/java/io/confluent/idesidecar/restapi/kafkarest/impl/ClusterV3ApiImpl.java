@@ -3,7 +3,7 @@ package io.confluent.idesidecar.restapi.kafkarest.impl;
 import static io.confluent.idesidecar.restapi.util.RequestHeadersConstants.CONNECTION_ID_HEADER;
 
 import io.confluent.idesidecar.restapi.kafkarest.api.ClusterV3Api;
-import io.confluent.idesidecar.restapi.kafkarest.controllers.ClusterManager;
+import io.confluent.idesidecar.restapi.kafkarest.controllers.ClusterManagerImpl;
 import io.confluent.idesidecar.restapi.kafkarest.model.ClusterData;
 import io.confluent.idesidecar.restapi.kafkarest.model.ClusterDataList;
 import io.smallrye.mutiny.Uni;
@@ -18,7 +18,7 @@ public class ClusterV3ApiImpl implements ClusterV3Api {
   private String connectionId;
 
   @Inject
-  ClusterManager clusterManager;
+  ClusterManagerImpl clusterManager;
 
   @Override
   public Uni<ClusterData> getKafkaCluster(String clusterId) {

@@ -38,7 +38,7 @@ public class TopicManagerImpl implements TopicManager {
       CreateTopicRequestData createTopicRequestData) {
     return clusterManager.getKafkaCluster(connectionId, clusterId)
         .chain(ignored -> uniStage(
-            adminClients.getAdminClient(connectionId).createTopics(List.of(new NewTopic(
+            adminClients.getAdminClient(connectionId, clusterId).createTopics(List.of(new NewTopic(
             createTopicRequestData.getTopicName(),
             Optional.ofNullable(createTopicRequestData.getPartitionsCount())
                 .orElse(1),
@@ -58,7 +58,7 @@ public class TopicManagerImpl implements TopicManager {
     return clusterManager.getKafkaCluster(connectionId, clusterId).chain(ignored ->
         uniStage(
         adminClients
-            .getAdminClient(connectionId)
+            .getAdminClient(connectionId, clusterId)
             .deleteTopics(List.of(topicName))
             .all()
             .toCompletionStage())
@@ -74,7 +74,7 @@ public class TopicManagerImpl implements TopicManager {
             Optional.ofNullable(includeAuthorizedOperations).orElse(false)
         );
     return clusterManager.getKafkaCluster(connectionId, clusterId).chain(ignored -> uniStage(
-        adminClients.getAdminClient(connectionId)
+        adminClients.getAdminClient(connectionId, clusterId)
             .describeTopics(List.of(topicName), describeTopicsOptions)
             .allTopicNames()
             .toCompletionStage()
@@ -86,10 +86,10 @@ public class TopicManagerImpl implements TopicManager {
   @Override
   public Uni<TopicDataList> listKafkaTopics(String connectionId, String clusterId) {
     return clusterManager.getKafkaCluster(connectionId, clusterId).chain(ignored -> uniStage(
-        adminClients.getAdminClient(connectionId).listTopics().names().toCompletionStage()
+        adminClients.getAdminClient(connectionId, clusterId).listTopics().names().toCompletionStage()
     ).chain(topicNames -> uniStage(
             adminClients
-                .getAdminClient(connectionId)
+                .getAdminClient(connectionId, clusterId)
                 .describeTopics(topicNames)
                 .allTopicNames()
                 .toCompletionStage())
