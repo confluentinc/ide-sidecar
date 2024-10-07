@@ -229,6 +229,7 @@ public class CCloudTestUtil {
                 connectionName,
                 connectionType,
                 ccloudConfig,
+                null,
                 null
             )
         )

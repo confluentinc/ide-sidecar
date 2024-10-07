@@ -866,6 +866,25 @@
           }
         }
       },
+      "BrokerConfig" : {
+        "description" : "Configuration for broker",
+        "required" : [ "bootstrap_servers" ],
+        "type" : "object",
+        "properties" : {
+          "bootstrap_servers" : {
+            "type" : "string"
+          },
+          "security_protocol" : {
+            "type" : "string"
+          },
+          "sasl_mechanism" : {
+            "type" : "string"
+          },
+          "sasl_jaas_config" : {
+            "type" : "string"
+          }
+        }
+      },
       "CCloudConfig" : {
         "description" : "Configuration for Confluent Cloud connections",
         "required" : [ "organization_id" ],
@@ -1000,6 +1019,9 @@
           },
           "local_config" : {
             "$ref" : "#/components/schemas/LocalConfig"
+          },
+          "broker_config" : {
+            "$ref" : "#/components/schemas/BrokerConfig"
           }
         }
       },
@@ -1701,13 +1723,13 @@
           "name" : {
             "type" : "string"
           },
-          "status" : {
-            "enum" : [ "UP", "DOWN" ],
-            "type" : "string"
-          },
           "data" : {
             "type" : "object",
             "nullable" : true
+          },
+          "status" : {
+            "enum" : [ "UP", "DOWN" ],
+            "type" : "string"
           }
         }
       }

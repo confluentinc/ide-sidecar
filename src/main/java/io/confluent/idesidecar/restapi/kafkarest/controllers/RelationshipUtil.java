@@ -1,4 +1,4 @@
-package io.confluent.idesidecar.restapi.kafkarest.impl;
+package io.confluent.idesidecar.restapi.kafkarest.controllers;
 
 import io.confluent.idesidecar.restapi.kafkarest.model.Relationship;
 import io.confluent.idesidecar.restapi.util.Crn;
