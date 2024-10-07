@@ -2,7 +2,10 @@ package io.confluent.idesidecar.restapi.kafkarest.filters;
 
 import static io.confluent.idesidecar.restapi.util.RequestHeadersConstants.CONNECTION_ID_HEADER;
 
+import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
 import io.confluent.idesidecar.restapi.kafkarest.model.Error;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.core.Response;
@@ -12,7 +15,11 @@ import java.io.IOException;
 import java.util.Optional;
 
 @Provider
+@ApplicationScoped
 public class ConnectionIdHeaderFilter implements ContainerRequestFilter {
+
+  @Inject
+  ConnectionStateManager manager;
 
   @Override
   public void filter(ContainerRequestContext requestContext) throws IOException {
@@ -31,6 +38,9 @@ public class ConnectionIdHeaderFilter implements ContainerRequestFilter {
                     .message("Missing required header: " + CONNECTION_ID_HEADER).build()
                 ).build()
         );
+      } else {
+        // Check that the connectionId exists
+        manager.getConnectionState(connectionId.get());
       }
     }
   }

@@ -86,31 +86,7 @@ public record ConnectionSpec(
           servers (you may want more than one, though, in case a server is down).
           """)
       @JsonProperty(value = "bootstrap_servers", required = true)
-      String bootstrapServers,
-
-      @JsonPropertyDescription("""
-          Protocol used to communicate with brokers.
-          Valid values are: PLAINTEXT, SSL, SASL_PLAINTEXT, SASL_SSL.
-          """)
-      @JsonProperty(value = "security_protocol")
-      String securityProtocol,
-
-      @JsonPropertyDescription("""
-          SASL mechanism used for client connections. This may be any mechanism for which a
-          security provider is available. GSSAPI is the default mechanism.
-          """)
-      @JsonProperty(value = "sasl_mechanism")
-      String saslMechanism,
-
-      @JsonPropertyDescription("""
-          JAAS login context parameters for SASL connections in the format used by JAAS
-          configuration files. JAAS configuration file format is described here.
-          The format for the value is: loginModuleClass controlFlag (optionName=optionValue)*;.
-          For brokers, the config must be prefixed with listener prefix and SASL mechanism name in
-          lower-case. For example, listener.name.sasl_ssl.scram-sha-256.sasl.jaas.config=
-          com.example.ScramLoginModule required;
-          """)
-      @JsonProperty(value = "sasl_jaas_config") String saslJaasConfig
+      String bootstrapServers
   ) {
   }
 
