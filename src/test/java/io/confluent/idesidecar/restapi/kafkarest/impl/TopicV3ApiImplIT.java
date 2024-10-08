@@ -146,6 +146,44 @@ class TopicV3ApiImplIT extends KafkaTestBed {
     deleteTopic("test-topic-2");
   }
 
+  @Test
+  void shouldRaise404OnNonExistentCluster() {
+    given()
+        .header("X-connection-id", CONNECTION_ID)
+        .when()
+        .get("/internal/kafka/v3/clusters/non-existent-cluster/topics")
+        .then()
+        .statusCode(404)
+        .body("error_code", equalTo(404))
+        .body("message", equalTo("Kafka cluster 'non-existent-cluster' not found."));
+  }
+
+  @Test
+  void shouldRaise404OnNonExistentConnection() {
+    given()
+        .header("X-connection-id", "non-existent-connection")
+        .when()
+        .get("/internal/kafka/v3/clusters/{cluster_id}/topics",
+            Map.of("cluster_id", ConfluentLocalKafkaWithRestProxyContainer.CLUSTER_ID))
+        .then()
+        .statusCode(404)
+        .body("error_code", equalTo(404))
+        .body("message", equalTo("Connection not found: non-existent-connection"));
+  }
+
+  @Test
+  void shouldRaise400OnAbsentConnectionIdHeader() {
+    given()
+        // No connection ID header
+        .when()
+        .get("/internal/kafka/v3/clusters/{cluster_id}/topics",
+            Map.of("cluster_id", ConfluentLocalKafkaWithRestProxyContainer.CLUSTER_ID))
+        .then()
+        .statusCode(400)
+        .body("error_code", equalTo(400))
+        .body("message", equalTo("Missing required header: x-connection-id"));
+  }
+
   @Override
   protected Properties getKafkaProperties() {
     Properties properties = new Properties();

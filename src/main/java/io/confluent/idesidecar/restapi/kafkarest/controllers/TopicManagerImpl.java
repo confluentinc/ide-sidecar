@@ -9,36 +9,36 @@ import static io.confluent.idesidecar.restapi.kafkarest.controllers.Relationship
 import static io.confluent.idesidecar.restapi.util.MutinyUtil.uniItem;
 import static io.confluent.idesidecar.restapi.util.MutinyUtil.uniStage;
 
-import io.confluent.idesidecar.restapi.cache.AdminClients;
 import io.confluent.idesidecar.restapi.kafkarest.model.CreateTopicRequestData;
 import io.confluent.idesidecar.restapi.kafkarest.model.ResourceCollectionMetadata;
 import io.confluent.idesidecar.restapi.kafkarest.model.ResourceMetadata;
 import io.confluent.idesidecar.restapi.kafkarest.model.TopicData;
 import io.confluent.idesidecar.restapi.kafkarest.model.TopicDataList;
 import io.smallrye.mutiny.Uni;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
 import java.util.List;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.Set;
+import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.DescribeTopicsOptions;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.admin.TopicDescription;
 
-@ApplicationScoped
 public class TopicManagerImpl implements TopicManager {
-  @Inject
-  ClusterManager clusterManager;
+  private final ClusterManager clusterManager;
+  private final AdminClient adminClient;
 
-  @Inject
-  AdminClients adminClients;
+  public TopicManagerImpl(Properties adminClientConfig) {
+    this.adminClient = AdminClient.create(adminClientConfig);
+    this.clusterManager = new ClusterManagerImpl(adminClient);
+  }
 
   @Override
-  public Uni<TopicData> createKafkaTopic(String connectionId, String clusterId,
+  public Uni<TopicData> createKafkaTopic(String clusterId,
       CreateTopicRequestData createTopicRequestData) {
-    return clusterManager.getKafkaCluster(connectionId, clusterId)
+    return clusterManager.getKafkaCluster(clusterId)
         .chain(ignored -> uniStage(
-            adminClients.getAdminClient(connectionId, clusterId).createTopics(List.of(new NewTopic(
+            adminClient.createTopics(List.of(new NewTopic(
             createTopicRequestData.getTopicName(),
             Optional.ofNullable(createTopicRequestData.getPartitionsCount())
                 .orElse(1),
@@ -46,19 +46,17 @@ public class TopicManagerImpl implements TopicManager {
                 .orElse(1).shortValue()
         ))).all().toCompletionStage()))
         .chain(v -> getKafkaTopic(
-            connectionId,
             clusterId,
             createTopicRequestData.getTopicName(),
             false
-            ));
+        ));
   }
 
   @Override
-  public Uni<Void> deleteKafkaTopic(String connectionId, String clusterId, String topicName) {
-    return clusterManager.getKafkaCluster(connectionId, clusterId).chain(ignored ->
+  public Uni<Void> deleteKafkaTopic(String clusterId, String topicName) {
+    return clusterManager.getKafkaCluster(clusterId).chain(ignored ->
         uniStage(
-        adminClients
-            .getAdminClient(connectionId, clusterId)
+        adminClient
             .deleteTopics(List.of(topicName))
             .all()
             .toCompletionStage())
@@ -67,14 +65,14 @@ public class TopicManagerImpl implements TopicManager {
 
   @Override
   public Uni<TopicData> getKafkaTopic(
-      String connectionId, String clusterId, String topicName, Boolean includeAuthorizedOperations
+      String clusterId, String topicName, Boolean includeAuthorizedOperations
   ) {
     var describeTopicsOptions = new DescribeTopicsOptions()
         .includeAuthorizedOperations(
             Optional.ofNullable(includeAuthorizedOperations).orElse(false)
         );
-    return clusterManager.getKafkaCluster(connectionId, clusterId).chain(ignored -> uniStage(
-        adminClients.getAdminClient(connectionId, clusterId)
+    return clusterManager.getKafkaCluster(clusterId).chain(ignored -> uniStage(
+        adminClient
             .describeTopics(List.of(topicName), describeTopicsOptions)
             .allTopicNames()
             .toCompletionStage()
@@ -84,12 +82,11 @@ public class TopicManagerImpl implements TopicManager {
   }
 
   @Override
-  public Uni<TopicDataList> listKafkaTopics(String connectionId, String clusterId) {
-    return clusterManager.getKafkaCluster(connectionId, clusterId).chain(ignored -> uniStage(
-        adminClients.getAdminClient(connectionId, clusterId).listTopics().names().toCompletionStage()
+  public Uni<TopicDataList> listKafkaTopics(String clusterId) {
+    return clusterManager.getKafkaCluster(clusterId).chain(ignored -> uniStage(
+        adminClient.listTopics().names().toCompletionStage()
     ).chain(topicNames -> uniStage(
-            adminClients
-                .getAdminClient(connectionId, clusterId)
+            adminClient
                 .describeTopics(topicNames)
                 .allTopicNames()
                 .toCompletionStage())

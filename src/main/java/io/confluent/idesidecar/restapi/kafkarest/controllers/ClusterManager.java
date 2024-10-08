@@ -6,7 +6,7 @@ import io.smallrye.mutiny.Uni;
 
 public interface ClusterManager {
 
-  Uni<ClusterData> getKafkaCluster(String connectionId, String clusterId);
+  Uni<ClusterData> getKafkaCluster(String clusterId);
 
-  Uni<ClusterDataList> listKafkaClusters(String connectionId);
+  Uni<ClusterDataList> listKafkaClusters();
 }
