@@ -23,7 +23,12 @@ public class KafkaRestTestBed extends KafkaTestBed {
   @BeforeAll
   static void setup() {
     confluentLocal = new ConfluentLocalKafkaWithRestProxyContainer()
-        .waitingFor(Wait.forLogMessage(".*started.*\\n", 1));
+        .waitingFor(Wait.forLogMessage(
+            ".*Server started, listening for requests.*\\n", 1))
+        // Kafka REST server port
+        .waitingFor(Wait.forListeningPorts(
+            ConfluentLocalKafkaWithRestProxyContainer.REST_PROXY_PORT
+        ));
     confluentLocal.start();
 
     // Create a connection

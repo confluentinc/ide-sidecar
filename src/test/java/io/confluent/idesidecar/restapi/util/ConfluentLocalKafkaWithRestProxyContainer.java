@@ -67,10 +67,10 @@ public class ConfluentLocalKafkaWithRestProxyContainer
     extends GenericContainer<ConfluentLocalKafkaWithRestProxyContainer>
     implements AutoCloseable {
   private static final int KAFKA_PORT = 9092;
-  private static final int REST_PROXY_PORT = 8082;
   private static final String DEFAULT_IMAGE = "confluentinc/confluent-local:7.6.0";
   private static final String CONTAINER_NAME = "confluent-local-broker-1";
   private static final String REST_PROXY_HOST_NAME = "rest-proxy";
+  public static final int REST_PROXY_PORT = 8082;
   public static final String CLUSTER_ID = "oh-sxaDRTcyAr6pFRbXyzA";
 
   public ConfluentLocalKafkaWithRestProxyContainer() {

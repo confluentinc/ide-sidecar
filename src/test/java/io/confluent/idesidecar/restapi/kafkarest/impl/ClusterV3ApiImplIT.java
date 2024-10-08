@@ -1,7 +1,10 @@
 package io.confluent.idesidecar.restapi.kafkarest.impl;
 
+import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
 import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
+import static io.confluent.idesidecar.restapi.testutil.QueryResourceUtil.queryGraphQLRaw;
 
 import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
 import io.confluent.idesidecar.restapi.util.ConfluentLocalKafkaWithRestProxyContainer;
@@ -15,6 +18,30 @@ import org.junit.jupiter.api.Test;
 public class ClusterV3ApiImplIT extends KafkaRestTestBed {
   @Test
   void shouldListKafkaClusters() {
+    // Try to list Kafka clusters when none are available
+    given()
+        .header("X-connection-id", CONNECTION_ID)
+        .when()
+        .get("/internal/kafka/v3/clusters")
+        .then()
+        .statusCode(400)
+        .body("error_code", equalTo(400))
+        .body("message", containsString("No Kafka clusters found"));
+
+    // Issue GraphQL query to create a Kafka cluster
+    // The internal Kafka REST implementation _intentionally_ does not have
+    // the ability to discover and fetch metadata about Kafka clusters that it
+    // does not already know about.
+
+    // Issue a get local connections GraphQL query. We don't care about the response.
+    // By issuing the query, GraphQL will try and discover the
+    // Confluent local Kafka cluster by hitting its kafka-rest server running at
+    // http://localhost:8082, upon which the cluster details get cached in the ClusterCache.
+    // The internal Kafka REST implementation then looks in the ClusterCache to fetch
+    // metadata about Kafka clusters.
+    queryGraphQLRaw(loadResource("graph/real/local-connections-query.graphql"));
+
+    // And now, we should be able to list the Kafka cluster
     given()
         .header("X-connection-id", CONNECTION_ID)
         .when()
