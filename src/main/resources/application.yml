@@ -119,6 +119,11 @@ ide-sidecar:
     enabled: true
     # How often to check?
     interval-seconds: 60
+  admin-client-defaults:
+    # The default timeout for the AdminClient
+    # Corresponds to
+    "default.api.timeout.ms": 3000
+    "request.timeout.ms": 3000
 
 quarkus:
   application:
@@ -127,6 +132,11 @@ quarkus:
     enabled: false
   log:
     min-level: INFO
+    category:
+      "org.apache.kafka.clients":
+        level: ERROR
+      "org.apache.kafka.common":
+        level: ERROR
   http:
     host: 127.0.0.1
     port: 26636

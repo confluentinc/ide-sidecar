@@ -1,8 +1,4 @@
-/*
- * Copyright [2024 - 2024] Confluent Inc.
- */
-
-package io.confluent.idesidecar.restapi.messageviewer;
+package io.confluent.idesidecar.restapi.cache;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
