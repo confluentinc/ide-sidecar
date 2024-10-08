@@ -39,9 +39,8 @@ public class ConnectionIdHeaderFilter implements ContainerRequestFilter {
                     .message("Missing required header: " + CONNECTION_ID_HEADER).build()
                 ).build()
         );
-      }
-      else {
-        // Check that the connectionId exists
+      } else {
+        // Check that the connection exists
         try {
           manager.getConnectionState(connectionId.get());
         } catch (ConnectionNotFoundException e) {
