@@ -9,6 +9,8 @@ import org.apache.kafka.clients.admin.AdminClient;
 @ApplicationScoped
 public class AdminClients extends Clients<AdminClient> {
 
+  private static final String DEFAULT_CLIENT_ID = "default";
+
   @Inject
   ConnectionStateManager manager;
 
@@ -16,7 +18,7 @@ public class AdminClients extends Clients<AdminClient> {
     return getClient(
         connectionId,
         // We expect to have only one AdminClient per connection
-        "default",
+        DEFAULT_CLIENT_ID,
         () -> AdminClient.create(getAdminClientConfig(connectionId)));
   }
 
