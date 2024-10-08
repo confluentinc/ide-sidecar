@@ -208,8 +208,7 @@ class RealLocalFetcherTest {
   @Test
   void shouldReturnValidSchemaRegistryUri() throws CreateConnectionException {
     var localConfig = new ConnectionSpec.LocalConfig("http://localhost:8085");
-    var connectionSpec = new ConnectionSpec(
-        "1", "Local Connection", ConnectionSpec.ConnectionType.LOCAL, null, localConfig);
+    var connectionSpec = new ConnectionSpec("1", "Local Connection", ConnectionSpec.ConnectionType.LOCAL, null, localConfig);
     manager.createConnectionState(connectionSpec);
 
     String uri = localFetcher.resolveSchemaRegistryUri("1");
