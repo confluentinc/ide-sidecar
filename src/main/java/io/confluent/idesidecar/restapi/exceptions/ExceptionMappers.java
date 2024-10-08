@@ -251,4 +251,17 @@ public class ExceptionMappers {
         .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
         .build();
   }
+
+  @ServerExceptionMapper
+  public Response mapUnsupportedException(UnsupportedOperationException exception) {
+    var error = io.confluent.idesidecar.restapi.kafkarest.model.Error
+        .builder()
+        .errorCode(Status.NOT_IMPLEMENTED.getStatusCode())
+        .message(exception.getMessage()).build();
+    return Response
+        .status(Status.NOT_IMPLEMENTED)
+        .entity(error)
+        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+        .build();
+  }
 }
