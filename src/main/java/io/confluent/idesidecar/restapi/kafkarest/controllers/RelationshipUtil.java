@@ -4,7 +4,13 @@ import io.confluent.idesidecar.restapi.kafkarest.model.Relationship;
 import io.confluent.idesidecar.restapi.util.Crn;
 import org.eclipse.microprofile.config.ConfigProvider;
 
+/**
+ * Utility class for generating {@code related} links for Kafka resources.
+ */
 public final class RelationshipUtil {
+
+  private RelationshipUtil() {
+  }
 
   private static final String CRN_AUTHORITY = "";
   private static final String SIDECAR_HOST = ConfigProvider.getConfig().getValue(

@@ -28,8 +28,13 @@ import org.apache.kafka.clients.admin.DescribeTopicsOptions;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.admin.TopicDescription;
 
+/**
+ * RequestScoped bean for managing Kafka topics. Creating the bean as {@link RequestScoped} allows
+ * us to inject the {@link HttpServerRequest} which is used to get the connection ID from the
+ * request headers.
+ */
 @RequestScoped
-public class TopicManagerImpl {
+public class TopicManagerImpl implements TopicManager {
 
   @Inject
   AdminClients adminClients;
@@ -42,6 +47,7 @@ public class TopicManagerImpl {
 
   Supplier<String> connectionId = () -> request.getHeader(CONNECTION_ID_HEADER);
 
+  @Override
   public Uni<TopicData> createKafkaTopic(String clusterId,
       CreateTopicRequestData createTopicRequestData) {
     return clusterManager.getKafkaCluster(clusterId)
@@ -62,6 +68,7 @@ public class TopicManagerImpl {
         ));
   }
 
+  @Override
   public Uni<Void> deleteKafkaTopic(String clusterId, String topicName) {
     return clusterManager.getKafkaCluster(clusterId).chain(ignored ->
         uniStage(
@@ -72,6 +79,7 @@ public class TopicManagerImpl {
     );
   }
 
+  @Override
   public Uni<TopicData> getKafkaTopic(
       String clusterId, String topicName, Boolean includeAuthorizedOperations
   ) {
@@ -89,6 +97,7 @@ public class TopicManagerImpl {
         .onItem().transform(topicDescription -> fromTopicDescription(clusterId, topicDescription)));
   }
 
+  @Override
   public Uni<TopicDataList> listKafkaTopics(String clusterId) {
     return clusterManager.getKafkaCluster(clusterId).chain(ignored -> uniStage(
         adminClients

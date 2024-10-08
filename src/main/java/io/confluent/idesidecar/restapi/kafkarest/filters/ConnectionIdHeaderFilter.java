@@ -15,6 +15,10 @@ import jakarta.ws.rs.ext.Provider;
 import java.io.IOException;
 import java.util.Optional;
 
+/**
+ * Filter to check for the presence of the connection ID header in requests to the internal Kafka
+ * REST endpoints, and to ensure that the connection ID corresponds to an existing connection.
+ */
 @Provider
 @ApplicationScoped
 public class ConnectionIdHeaderFilter implements ContainerRequestFilter {
