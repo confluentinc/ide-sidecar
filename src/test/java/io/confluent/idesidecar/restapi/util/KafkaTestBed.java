@@ -11,7 +11,6 @@ import org.apache.kafka.clients.admin.ListTopicsResult;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.testcontainers.shaded.org.awaitility.Awaitility;
 
-// TODO: Make this a concrete composable class
 public abstract class KafkaTestBed {
 
   public void createTopic(String topicName, int partitions, short replicationFactor)
