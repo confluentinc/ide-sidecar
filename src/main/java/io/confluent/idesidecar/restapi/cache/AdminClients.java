@@ -1,11 +1,15 @@
 package io.confluent.idesidecar.restapi.cache;
 
+import io.confluent.idesidecar.restapi.kafkarest.exceptions.AdminClientInstantiationException;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.util.Properties;
 import org.apache.kafka.clients.admin.AdminClient;
 
+/**
+ * Create an ApplicationScoped bean to cache AdminClient instances by connection ID and client ID.
+ */
 @ApplicationScoped
 public class AdminClients extends Clients<AdminClient> {
 
@@ -14,6 +18,14 @@ public class AdminClients extends Clients<AdminClient> {
   @Inject
   ClusterCache cache;
 
+  /**
+   * Get an AdminClient for the given connection ID and Kafka cluster ID.
+   * If the client does not already exist, it will be created.
+   * If the cluster ID is null, the default client ID will be used.
+   * @param connectionId The connection ID
+   * @param clusterId The cluster ID
+   * @return The AdminClient
+   */
   public AdminClient getAdminClient(String connectionId, @Nullable String clusterId) {
     if (clusterId != null) {
       return getClient(
@@ -44,7 +56,6 @@ public class AdminClients extends Clients<AdminClient> {
    * @return The AdminClient configuration
    */
   public Properties getAdminClientConfig(String connectionId) {
-    // TODO: Define custom exception classes
     var cluster = cache
         .forConnection(connectionId)
         // Accessing a ConcurrentHashMap _may_ be a blocking operation
@@ -53,13 +64,13 @@ public class AdminClients extends Clients<AdminClient> {
         .stream()
         .findFirst()
         .orElseThrow(
-            () -> new IllegalArgumentException(
+            () -> new AdminClientInstantiationException(
                 "No Kafka clusters found for connection " + connectionId
             )
         ).spec();
 
     if (cluster.bootstrapServers() == null) {
-      throw new IllegalArgumentException(
+      throw new AdminClientInstantiationException(
           "No bootstrap servers found for Kafka cluster " + cluster.id()
       );
     }

@@ -3,6 +3,9 @@ package io.confluent.idesidecar.restapi.util;
 import io.smallrye.mutiny.Uni;
 import java.util.concurrent.CompletionStage;
 
+/**
+ * Helper methods for working with the Mutiny library.
+ */
 public final class MutinyUtil {
 
   private MutinyUtil() {

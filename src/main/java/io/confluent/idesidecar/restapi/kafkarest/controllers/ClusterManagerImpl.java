@@ -31,8 +31,13 @@ import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.DescribeClusterResult;
 import org.apache.kafka.common.Node;
 
+/**
+ * RequestScoped bean for managing Kafka clusters. Creating the bean as {@link RequestScoped} allows
+ * us to inject the {@link HttpServerRequest} which is used to get the connection ID from the
+ * request headers.
+ */
 @RequestScoped
-public class ClusterManagerImpl {
+public class ClusterManagerImpl implements ClusterManager {
 
   @Inject
   AdminClients adminClients;
@@ -42,6 +47,7 @@ public class ClusterManagerImpl {
 
   Supplier<String> connectionId = () -> request.getHeader(CONNECTION_ID_HEADER);
 
+  @Override
   public Uni<ClusterData> getKafkaCluster(String clusterId) {
     return describeCluster(clusterId)
         .chain(cid -> {
@@ -55,6 +61,7 @@ public class ClusterManagerImpl {
         .map(this::fromClusterId);
   }
 
+  @Override
   public Uni<ClusterDataList> listKafkaClusters() {
     return describeCluster(null)
         .chain(cluster -> uniItem(ClusterDataList
@@ -108,7 +115,10 @@ public class ClusterManagerImpl {
         .build();
   }
 
-
+  /**
+   * Record to hold the KafkaFuture results of the describeCluster operation.
+   * Used to pass the results between the various stages of the Uni chain.
+   */
   private record ClusterDescribe(
       DescribeClusterResult result,
       String id,
