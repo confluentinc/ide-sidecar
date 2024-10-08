@@ -40,13 +40,7 @@ public record ConnectionSpec(
    * Confluent Cloud organization ID set in the CCloudConfig.
    */
   public ConnectionSpec withCCloudOrganizationId(String ccloudOrganizationId) {
-    return new ConnectionSpec(
-        id,
-        name,
-        type,
-        new CCloudConfig(ccloudOrganizationId),
-        localConfig
-    );
+    return new ConnectionSpec(id, name, type, new CCloudConfig(ccloudOrganizationId), localConfig);
   }
 
   public String ccloudOrganizationId() {
