@@ -3,7 +3,6 @@ package io.confluent.idesidecar.restapi.kafkarest.impl;
 import static io.restassured.RestAssured.given;
 
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
-import io.confluent.idesidecar.restapi.models.ConnectionSpec.BrokerConfig;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
 import io.confluent.idesidecar.restapi.util.ConfluentLocalKafkaWithRestProxyContainer;
 import io.confluent.idesidecar.restapi.util.KafkaTestBed;
@@ -40,8 +39,7 @@ public class KafkaRestTestBed extends KafkaTestBed {
             // Connection type does not matter for this test... yet
             ConnectionType.LOCAL,
             null,
-            null,
-            new BrokerConfig(confluentLocal.getKafkaBootstrapServers())
+            null
         ))
         .when().post("http://localhost:%s/gateway/v1/connections".formatted(
             testPort))

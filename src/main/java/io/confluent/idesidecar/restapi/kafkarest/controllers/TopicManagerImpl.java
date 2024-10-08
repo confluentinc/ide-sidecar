@@ -46,13 +46,15 @@ public class TopicManagerImpl {
       CreateTopicRequestData createTopicRequestData) {
     return clusterManager.getKafkaCluster(clusterId)
         .chain(ignored -> uniStage(
-            adminClients.getAdminClient(connectionId.get()).createTopics(List.of(new NewTopic(
-                createTopicRequestData.getTopicName(),
-                Optional.ofNullable(createTopicRequestData.getPartitionsCount())
-                    .orElse(1),
-                Optional.ofNullable(createTopicRequestData.getReplicationFactor())
-                    .orElse(1).shortValue()
-            ))).all().toCompletionStage()))
+            adminClients
+                .getAdminClient(connectionId.get(), clusterId)
+                .createTopics(List.of(new NewTopic(
+                    createTopicRequestData.getTopicName(),
+                    Optional.ofNullable(createTopicRequestData.getPartitionsCount())
+                        .orElse(1),
+                    Optional.ofNullable(createTopicRequestData.getReplicationFactor())
+                        .orElse(1).shortValue())
+                )).all().toCompletionStage()))
         .chain(v -> getKafkaTopic(
             clusterId,
             createTopicRequestData.getTopicName(),
@@ -63,7 +65,7 @@ public class TopicManagerImpl {
   public Uni<Void> deleteKafkaTopic(String clusterId, String topicName) {
     return clusterManager.getKafkaCluster(clusterId).chain(ignored ->
         uniStage(
-            adminClients.getAdminClient(connectionId.get())
+            adminClients.getAdminClient(connectionId.get(), clusterId)
                 .deleteTopics(List.of(topicName))
                 .all()
                 .toCompletionStage())
@@ -78,7 +80,7 @@ public class TopicManagerImpl {
             Optional.ofNullable(includeAuthorizedOperations).orElse(false)
         );
     return clusterManager.getKafkaCluster(clusterId).chain(ignored -> uniStage(
-        adminClients.getAdminClient(connectionId.get())
+        adminClients.getAdminClient(connectionId.get(), clusterId)
             .describeTopics(List.of(topicName), describeTopicsOptions)
             .allTopicNames()
             .toCompletionStage()
@@ -89,9 +91,10 @@ public class TopicManagerImpl {
 
   public Uni<TopicDataList> listKafkaTopics(String clusterId) {
     return clusterManager.getKafkaCluster(clusterId).chain(ignored -> uniStage(
-        adminClients.getAdminClient(connectionId.get()).listTopics().names().toCompletionStage()
+        adminClients
+            .getAdminClient(connectionId.get(), clusterId).listTopics().names().toCompletionStage()
     ).chain(topicNames -> uniStage(
-            adminClients.getAdminClient(connectionId.get())
+            adminClients.getAdminClient(connectionId.get(), clusterId)
                 .describeTopics(topicNames)
                 .allTopicNames()
                 .toCompletionStage())

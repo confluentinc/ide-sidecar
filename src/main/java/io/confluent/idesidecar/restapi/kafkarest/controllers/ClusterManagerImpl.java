@@ -20,12 +20,15 @@ import io.confluent.idesidecar.restapi.kafkarest.model.ClusterDataList;
 import io.confluent.idesidecar.restapi.kafkarest.model.ResourceCollectionMetadata;
 import io.confluent.idesidecar.restapi.kafkarest.model.ResourceMetadata;
 import io.smallrye.mutiny.Uni;
+import io.smallrye.mutiny.infrastructure.Infrastructure;
 import io.vertx.core.http.HttpServerRequest;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Supplier;
+import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.admin.DescribeClusterResult;
 import org.apache.kafka.common.Node;
 
 @RequestScoped
@@ -40,7 +43,7 @@ public class ClusterManagerImpl {
   Supplier<String> connectionId = () -> request.getHeader(CONNECTION_ID_HEADER);
 
   public Uni<ClusterData> getKafkaCluster(String clusterId) {
-    return describeCluster()
+    return describeCluster(clusterId)
         .chain(cid -> {
           if (!cid.id().equals(clusterId)) {
             return Uni.createFrom().failure(new ClusterNotFoundException(
@@ -53,7 +56,7 @@ public class ClusterManagerImpl {
   }
 
   public Uni<ClusterDataList> listKafkaClusters() {
-    return describeCluster()
+    return describeCluster(null)
         .chain(cluster -> uniItem(ClusterDataList
             .builder()
             .metadata(ResourceCollectionMetadata
@@ -69,14 +72,17 @@ public class ClusterManagerImpl {
         );
   }
 
-  private Uni<ClusterDescribe> describeCluster() {
-    var describeCluster = adminClients.getAdminClient(connectionId.get()).describeCluster();
-    return uniItem(new ClusterDescribe())
-        .chain(
-            cid -> uniStage(describeCluster.clusterId().toCompletionStage()).map(cid::withId))
-        .chain(cid -> uniStage(describeCluster.controller().toCompletionStage()).map(Node::id)
+  private Uni<ClusterDescribe> describeCluster(String clusterId) {
+    return uniItem((Supplier<AdminClient>)
+        () -> adminClients.getAdminClient(connectionId.get(), clusterId))
+        .runSubscriptionOn(Infrastructure.getDefaultWorkerPool())
+        .map(supplier -> supplier.get().describeCluster())
+        .chain(describeClusterResult ->
+            uniStage(describeClusterResult.clusterId().toCompletionStage())
+                .map(id -> new ClusterDescribe(describeClusterResult).withId(id)))
+        .chain(cid -> uniStage(cid.result.controller().toCompletionStage()).map(Node::id)
             .map(cid::withControllerId)
-        ).chain(cid -> uniStage(describeCluster.nodes().toCompletionStage())
+        ).chain(cid -> uniStage(cid.result.nodes().toCompletionStage())
             .map(cid::withNodes)
         );
   }
@@ -103,21 +109,26 @@ public class ClusterManagerImpl {
   }
 
 
-  private record ClusterDescribe(String id, Integer controllerId, Collection<Node> nodes) {
-    ClusterDescribe() {
-      this(null, null, null);
+  private record ClusterDescribe(
+      DescribeClusterResult result,
+      String id,
+      Integer controllerId,
+      Collection<Node> nodes
+  ) {
+    ClusterDescribe(DescribeClusterResult result) {
+      this(result, null, null, null);
     }
 
     ClusterDescribe withId(String id) {
-      return new ClusterDescribe(id, controllerId, nodes);
+      return new ClusterDescribe(result, id, controllerId, nodes);
     }
 
     ClusterDescribe withControllerId(Integer controllerId) {
-      return new ClusterDescribe(id, controllerId, nodes);
+      return new ClusterDescribe(result, id, controllerId, nodes);
     }
 
     ClusterDescribe withNodes(Collection<Node> nodes) {
-      return new ClusterDescribe(id, controllerId, nodes);
+      return new ClusterDescribe(result, id, controllerId, nodes);
     }
   }
 }
