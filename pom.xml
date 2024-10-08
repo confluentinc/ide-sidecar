@@ -789,6 +789,62 @@
           </execution>
         </executions>
       </plugin>
+      <plugin>
+        <groupId>org.openapitools</groupId>
+        <artifactId>openapi-generator-maven-plugin</artifactId>
+        <version>7.8.0</version>
+        <executions>
+          <execution>
+            <id>kafka-rest-spec</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <configuration>
+              <inputSpec>kafka-rest.openapi.yaml</inputSpec>
+              <generatorName>jaxrs-spec</generatorName>
+              <generateSupportingFiles>false</generateSupportingFiles>
+              <addCompileSourceRoot>true</addCompileSourceRoot>
+              <apisToGenerate>ClusterV3,TopicV3,PartitionV3</apisToGenerate>
+              <configOptions>
+                <interfaceOnly>true</interfaceOnly>
+                <generatePom>false</generatePom>
+                <library>quarkus</library>
+                <useMicroProfileOpenAPIAnnotations>false</useMicroProfileOpenAPIAnnotations>
+                <apiPackage>io.confluent.idesidecar.restapi.kafkarest.api</apiPackage>
+                <modelPackage>io.confluent.idesidecar.restapi.kafkarest.model</modelPackage>
+                <generateBuilders>true</generateBuilders>
+                <useMutiny>true</useMutiny>
+                <supportAsync>true</supportAsync>
+                <useJakartaEe>true</useJakartaEe>
+                <useSwaggerAnnotations>false</useSwaggerAnnotations>
+                <openApiNullable>false</openApiNullable>
+                <useTags>true</useTags>
+              </configOptions>
+              <enablePostProcessFile>true</enablePostProcessFile>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>3.2.0</version>
+        <executions>
+          <execution>
+            <id>add-source</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>${project.build.directory}/generated-sources/openapi/src/gen/java</source>
+              </sources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 
