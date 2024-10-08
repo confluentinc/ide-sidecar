@@ -225,7 +225,8 @@ public class ExceptionMappers {
   }
 
   @ServerExceptionMapper
-  public Response mapAdminClientInstantiationException(AdminClientInstantiationException exception) {
+  public Response mapAdminClientInstantiationException(
+      AdminClientInstantiationException exception) {
     var error = io.confluent.idesidecar.restapi.kafkarest.model.Error
         .builder()
         .errorCode(Status.BAD_REQUEST.getStatusCode())
