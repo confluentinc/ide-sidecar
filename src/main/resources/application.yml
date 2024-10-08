@@ -122,8 +122,8 @@ ide-sidecar:
   admin-client-defaults:
     # The default timeout for the AdminClient
     # Corresponds to
-    "default.api.timeout.ms": 10000
-    "request.timeout.ms": 10000
+    "default.api.timeout.ms": 3000
+    "request.timeout.ms": 3000
 
 quarkus:
   application:
