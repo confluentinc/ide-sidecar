@@ -575,14 +575,6 @@ components:
           $ref: "#/components/schemas/UserInfo"
         errors:
           $ref: "#/components/schemas/AuthErrors"
-    BrokerConfig:
-      description: Configuration for broker
-      required:
-      - bootstrap_servers
-      type: object
-      properties:
-        bootstrap_servers:
-          type: string
     CCloudConfig:
       description: Configuration for Confluent Cloud connections
       required:
@@ -693,8 +685,6 @@ components:
           $ref: "#/components/schemas/CCloudConfig"
         local_config:
           $ref: "#/components/schemas/LocalConfig"
-        broker_config:
-          $ref: "#/components/schemas/BrokerConfig"
     ConnectionStatus:
       required:
       - authentication
@@ -1218,25 +1208,25 @@ components:
     HealthResponse:
       type: object
       properties:
+        status:
+          enum:
+          - UP
+          - DOWN
+          type: string
         checks:
           type: array
           items:
             $ref: "#/components/schemas/HealthCheck"
-        status:
-          enum:
-          - UP
-          - DOWN
-          type: string
     HealthCheck:
       type: object
       properties:
-        status:
-          enum:
-          - UP
-          - DOWN
-          type: string
         data:
           type: object
           nullable: true
         name:
+          type: string
+        status:
+          enum:
+          - UP
+          - DOWN
           type: string

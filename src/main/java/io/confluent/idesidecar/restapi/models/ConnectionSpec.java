@@ -2,7 +2,6 @@ package io.confluent.idesidecar.restapi.models;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import io.confluent.idesidecar.restapi.exceptions.Failure.Error;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,8 +14,7 @@ public record ConnectionSpec(
     String name,
     ConnectionType type,
     @JsonProperty("ccloud_config") CCloudConfig ccloudConfig,
-    @JsonProperty("local_config") LocalConfig localConfig,
-    @JsonProperty("broker_config") BrokerConfig brokerConfig
+    @JsonProperty("local_config") LocalConfig localConfig
 ) {
 
   public enum ConnectionType {
@@ -26,15 +24,15 @@ public record ConnectionSpec(
   }
 
   public ConnectionSpec(String id, String name, ConnectionType type) {
-    this(id, name, type, null, null, null);
+    this(id, name, type, null, null);
   }
 
   public ConnectionSpec withId(String id) {
-    return new ConnectionSpec(id, name, type, ccloudConfig, localConfig, brokerConfig);
+    return new ConnectionSpec(id, name, type, ccloudConfig, localConfig);
   }
 
   public ConnectionSpec withName(String name) {
-    return new ConnectionSpec(id, name, type, ccloudConfig, localConfig, brokerConfig);
+    return new ConnectionSpec(id, name, type, ccloudConfig, localConfig);
   }
 
   /**
@@ -47,17 +45,12 @@ public record ConnectionSpec(
         name,
         type,
         new CCloudConfig(ccloudOrganizationId),
-        localConfig,
-        brokerConfig
+        localConfig
     );
   }
 
   public String ccloudOrganizationId() {
     return ccloudConfig != null ? ccloudConfig.organizationId() : null;
-  }
-
-  public String bootstrapServers() {
-    return brokerConfig != null ? brokerConfig.bootstrapServers() : null;
   }
 
   @Schema(description = "Configuration for Confluent Cloud connections")
@@ -72,24 +65,6 @@ public record ConnectionSpec(
       @JsonProperty(value = "schema-registry-uri") String schemaRegistryUri
   ) {
   }
-
-  @Schema(description = "Configuration for broker")
-  public record BrokerConfig(
-      // Descriptions from https://kafka.apache.org/documentation/
-      @JsonPropertyDescription("""
-          A list of host/port pairs to use for establishing the initial connection to the
-          Kafka cluster. The client will make use of all servers irrespective of which servers are
-          specified here for bootstrapping—this list only impacts the initial hosts used to discover
-          the full set of servers. This list should be in the form host1:port1,host2:port2,....
-          Since these servers are just used for the initial connection to discover the full cluster
-          membership (which may change dynamically), this list need not contain the full set of
-          servers (you may want more than one, though, in case a server is down).
-          """)
-      @JsonProperty(value = "bootstrap_servers", required = true)
-      String bootstrapServers
-  ) {
-  }
-
 
   /**
    * Validate that the provided ConnectionSpec is a valid update from

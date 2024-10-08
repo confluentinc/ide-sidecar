@@ -4,7 +4,7 @@ import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
 import io.confluent.idesidecar.restapi.util.UriUtil;
 import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpHeaders;
-import java.util.regex.Pattern;
+import org.eclipse.microprofile.config.ConfigProvider;
 
 /**
  * Holds default implementations for processing constructing the proxy URI, headers before
@@ -17,6 +17,8 @@ import java.util.regex.Pattern;
 public abstract class ClusterStrategy {
 
   static UriUtil uriUtil = new UriUtil();
+  static final String sidecarHost = ConfigProvider.getConfig()
+      .getValue("ide-sidecar.api.host", String.class);
 
   public MultiMap constructProxyHeaders(ClusterProxyContext context) {
     return HttpHeaders.headers();
@@ -27,15 +29,10 @@ public abstract class ClusterStrategy {
   }
 
   /**
-   * Process the proxy response by replacing the cluster URI with the sidecar URI. Accept sidecar
-   * URI as a parameter to ease writing tests.
+   * Process the proxy response from the cluster.
    */
-  public String processProxyResponse(String proxyResponse,
-      String clusterUri,
-      String sidecarUri) {
-    var clusterHost = uriUtil.getHost(clusterUri);
-    String clusterPattern = "(http|https):\\/\\/(%s)(:\\d+)?".formatted(
-        Pattern.quote(clusterHost));
-    return proxyResponse.replaceAll(clusterPattern, sidecarUri);
+  public String processProxyResponse(String proxyResponse) {
+    var clusterPattern = "(http|https)://[\\w\\-.]+(:\\d+)?";
+    return proxyResponse.replaceAll(clusterPattern, sidecarHost);
   }
 }

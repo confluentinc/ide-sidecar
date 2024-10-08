@@ -52,9 +52,8 @@ public class ClusterProxyProcessor extends
         processedContext -> {
           if (processedContext.getProxyResponseBody() != null) {
             var processedResponseBody = requestStrategy.processProxyResponse(
-                processedContext.getProxyResponseBody().toString(),
-                context.getClusterInfo().uri(),
-                sidecarHost);
+                context.getProxyResponseBody().toString()
+            );
             context.setProxyResponseBody(Buffer.buffer(processedResponseBody));
           }
           return processedContext;
