@@ -6,8 +6,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
 import java.util.Objects;
 import org.opentest4j.AssertionFailedError;
+import wiremock.com.github.jknack.handlebars.internal.Files;
 
 public class ResourceIOUtil {
 
@@ -38,7 +42,23 @@ public class ResourceIOUtil {
   }
 
   public static String loadResource(String resourcePath) {
-    return new String(Objects.requireNonNull(loadResourceAsBytes(resourcePath)));
+    return new String(
+        Objects.requireNonNull(
+            loadResourceAsBytes(resourcePath)
+        )
+    );
+  }
+
+  public static String loadFile(String relativePath) {
+    var path = Path.of(relativePath).toAbsolutePath();
+    try {
+      return Objects.requireNonNull(
+          Files.read(path.toFile(), StandardCharsets.UTF_8)
+      );
+    } catch (IOException e) {
+      fail("Error loading file " + path, e);
+      return null;
+    }
   }
 
   /**
