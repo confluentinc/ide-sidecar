@@ -11,7 +11,6 @@ import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.HeaderParam;
-import org.apache.kafka.clients.admin.AdminClient;
 
 @RequestScoped
 public class ClusterV3ApiImpl implements ClusterV3Api {

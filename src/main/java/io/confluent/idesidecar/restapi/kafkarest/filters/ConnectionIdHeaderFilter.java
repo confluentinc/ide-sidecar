@@ -40,22 +40,22 @@ public class ConnectionIdHeaderFilter implements ContainerRequestFilter {
                 ).build()
         );
       }
-//      else {
-//        // Check that the connectionId exists
-//        try {
-//          manager.getConnectionState(connectionId.get());
-//        } catch (ConnectionNotFoundException e) {
-//          requestContext.abortWith(
-//              Response
-//                  .status(Status.NOT_FOUND)
-//                  .entity(Error
-//                      .builder()
-//                      .errorCode(404)
-//                      .message("Connection not found: " + connectionId.get()).build()
-//                  ).build()
-//          );
-//        }
-//      }
+      else {
+        // Check that the connectionId exists
+        try {
+          manager.getConnectionState(connectionId.get());
+        } catch (ConnectionNotFoundException e) {
+          requestContext.abortWith(
+              Response
+                  .status(Status.NOT_FOUND)
+                  .entity(Error
+                      .builder()
+                      .errorCode(404)
+                      .message("Connection not found: " + connectionId.get()).build()
+                  ).build()
+          );
+        }
+      }
     }
   }
 }

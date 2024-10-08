@@ -4,7 +4,7 @@ import static io.confluent.idesidecar.restapi.util.RequestHeadersConstants.CONNE
 
 import io.confluent.idesidecar.restapi.kafkarest.api.TopicV3Api;
 import io.confluent.idesidecar.restapi.kafkarest.controllers.AdminClientService;
-import io.confluent.idesidecar.restapi.kafkarest.controllers.TopicManagerImpl;
+import io.confluent.idesidecar.restapi.kafkarest.controllers.ClusterManagerImpl;
 import io.confluent.idesidecar.restapi.kafkarest.model.CreateTopicRequestData;
 import io.confluent.idesidecar.restapi.kafkarest.model.TopicData;
 import io.confluent.idesidecar.restapi.kafkarest.model.TopicDataList;
@@ -14,7 +14,6 @@ import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.HeaderParam;
 import jakarta.ws.rs.PathParam;
-import org.apache.kafka.clients.admin.AdminClient;
 
 @RequestScoped
 public class TopicV3ApiImpl implements TopicV3Api {
@@ -31,27 +30,33 @@ public class TopicV3ApiImpl implements TopicV3Api {
   @Override
   public Uni<TopicData> createKafkaTopic(String clusterId,
       CreateTopicRequestData createTopicRequestData) {
-      return new TopicManagerImpl(adminClientService.getAdminClientConfig(connectionId)).createKafkaTopic(clusterId, createTopicRequestData);
+      return new ClusterManagerImpl(
+          adminClientService.getAdminClientConfig(connectionId)
+      ).createKafkaTopic(clusterId, createTopicRequestData);
   }
 
   @Override
   public Uni<Void> deleteKafkaTopic(String clusterId, String topicName) {
-      return new TopicManagerImpl(adminClientService.getAdminClientConfig(connectionId)).deleteKafkaTopic(clusterId, topicName);
-
+      return new ClusterManagerImpl(
+          adminClientService.getAdminClientConfig(connectionId)
+      ).deleteKafkaTopic(clusterId, topicName);
   }
 
   @Override
   public Uni<TopicData> getKafkaTopic(
       String clusterId, String topicName, Boolean includeAuthorizedOperations
   ) {
-      return new TopicManagerImpl(adminClientService.getAdminClientConfig(connectionId))
-          .getKafkaTopic(clusterId, topicName, includeAuthorizedOperations);
+      return new ClusterManagerImpl(
+          adminClientService.getAdminClientConfig(connectionId)
+      ).getKafkaTopic(clusterId, topicName, includeAuthorizedOperations);
 
   }
 
   @Override
   public Uni<TopicDataList> listKafkaTopics(String clusterId) {
-      return new TopicManagerImpl(adminClientService.getAdminClientConfig(connectionId)).listKafkaTopics(clusterId);
+      return new ClusterManagerImpl(
+          adminClientService.getAdminClientConfig(connectionId)
+      ).listKafkaTopics(clusterId);
 
   }
 
