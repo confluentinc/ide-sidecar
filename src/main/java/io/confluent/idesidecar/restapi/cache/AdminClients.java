@@ -1,8 +1,12 @@
 package io.confluent.idesidecar.restapi.cache;
 
+import com.github.benmanes.caffeine.cache.CaffeineSpec;
+import io.confluent.idesidecar.restapi.connections.ConnectionState;
+import io.confluent.idesidecar.restapi.events.Lifecycle;
 import io.confluent.idesidecar.restapi.kafkarest.exceptions.AdminClientInstantiationException;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.ObservesAsync;
 import jakarta.inject.Inject;
 import java.util.Map;
 import java.util.Properties;
@@ -16,6 +20,8 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 public class AdminClients extends Clients<AdminClient> {
 
   private static final String DEFAULT_CLIENT_ID = "default";
+  // Evict cached AdminClient client after 5 minutes of inactivity
+  private static final String CAFFEINE_SPEC = "expireAfterAccess=5m";
 
   @Inject
   ClusterCache cache;
@@ -85,5 +91,15 @@ public class AdminClients extends Clients<AdminClient> {
     props.put("bootstrap.servers", cluster.bootstrapServers());
     props.putAll(adminClientDefaults);
     return props;
+  }
+
+  @Override
+  protected CaffeineSpec getCaffeineSpec() {
+    return CaffeineSpec.parse(CAFFEINE_SPEC);
+  }
+
+  @Override
+  void onConnectionUpdated(@ObservesAsync @Lifecycle.Updated ConnectionState connection) {
+    clearClients(connection.getId());
   }
 }
