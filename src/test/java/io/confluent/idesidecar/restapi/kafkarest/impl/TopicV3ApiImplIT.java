@@ -23,44 +23,7 @@ import org.testcontainers.containers.wait.strategy.Wait;
 
 @QuarkusIntegrationTest
 @TestProfile(NoAccessFilterProfile.class)
-class TopicV3ApiImplIT extends KafkaTestBed {
-  private static ConfluentLocalKafkaWithRestProxyContainer confluentLocal;
-  private static final String CONNECTION_ID = "test-connection";
-
-  private static final Integer testPort = ConfigProvider.getConfig()
-      .getValue("quarkus.http.test-port", Integer.class);
-
-  @BeforeAll
-  static void setup() {
-    confluentLocal = new ConfluentLocalKafkaWithRestProxyContainer()
-        .waitingFor(Wait.forLogMessage(".*started.*\\n", 1));
-    confluentLocal.start();
-
-    // Create a connection
-    createConnection();
-  }
-
-  private static void createConnection() {
-    given()
-        .contentType(ContentType.JSON)
-        .body(new ConnectionSpec(
-            CONNECTION_ID,
-            CONNECTION_ID,
-            // Connection type does not matter for this test... yet
-             ConnectionType.LOCAL,
-            null,
-            null,
-            new BrokerConfig(confluentLocal.getKafkaBootstrapServers())
-        ))
-        .when().post("http://localhost:%s/gateway/v1/connections".formatted(testPort))
-        .then()
-        .statusCode(200);
-  }
-
-  @AfterAll
-  static void teardown() {
-    confluentLocal.stop();
-  }
+class TopicV3ApiImplIT extends KafkaRestTestBed {
 
   private static RequestSpecification spec() {
     var clusterId = ConfluentLocalKafkaWithRestProxyContainer.CLUSTER_ID;
@@ -182,12 +145,5 @@ class TopicV3ApiImplIT extends KafkaTestBed {
         .statusCode(400)
         .body("error_code", equalTo(400))
         .body("message", equalTo("Missing required header: x-connection-id"));
-  }
-
-  @Override
-  protected Properties getKafkaProperties() {
-    Properties properties = new Properties();
-    properties.put("bootstrap.servers", confluentLocal.getKafkaBootstrapServers());
-    return properties;
   }
 }

@@ -18,8 +18,7 @@ public class TopicV3ApiImpl implements TopicV3Api {
 
   @Override
   public Uni<TopicData> createKafkaTopic(
-      String clusterId,
-      CreateTopicRequestData createTopicRequestData
+      String clusterId, CreateTopicRequestData createTopicRequestData
   ) {
     return topicManager.createKafkaTopic(clusterId, createTopicRequestData);
   }
