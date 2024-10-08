@@ -12,35 +12,47 @@ import static io.confluent.idesidecar.restapi.kafkarest.controllers.Relationship
 import static io.confluent.idesidecar.restapi.util.MutinyUtil.uniItem;
 import static io.confluent.idesidecar.restapi.util.MutinyUtil.uniStage;
 
-import io.confluent.idesidecar.restapi.cache.AdminClients;
 import io.confluent.idesidecar.restapi.exceptions.ClusterNotFoundException;
 import io.confluent.idesidecar.restapi.kafkarest.model.ClusterData;
 import io.confluent.idesidecar.restapi.kafkarest.model.ClusterDataList;
 import io.confluent.idesidecar.restapi.kafkarest.model.ResourceCollectionMetadata;
 import io.confluent.idesidecar.restapi.kafkarest.model.ResourceMetadata;
-import io.quarkus.logging.Log;
 import io.smallrye.mutiny.Uni;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
 import java.util.Collection;
 import java.util.List;
+import java.util.Properties;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.common.Node;
 
-@ApplicationScoped
 public class ClusterManagerImpl implements ClusterManager {
 
-  @Inject
-  AdminClients adminClients;
+  private final AdminClient adminClient;
 
-  @Override
-  public Uni<ClusterData> getKafkaCluster(String connectionId, String clusterId) {
-    return describeCluster(connectionId, clusterId).map(this::fromClusterId);
+  public ClusterManagerImpl(Properties adminClientConfig) {
+    this.adminClient = AdminClient.create(adminClientConfig);
+  }
+
+  public ClusterManagerImpl(AdminClient adminClient) {
+    this.adminClient = adminClient;
   }
 
   @Override
-  public Uni<ClusterDataList> listKafkaClusters(String connectionId) {
-    return describeCluster(connectionId)
+  public Uni<ClusterData> getKafkaCluster(String clusterId) {
+    return describeCluster()
+        .chain(cid -> {
+          if (!cid.id().equals(clusterId)) {
+            return Uni.createFrom().failure(new ClusterNotFoundException(
+                "Kafka cluster '%s' not found.".formatted(clusterId)
+            ));
+          }
+          return uniItem(cid);
+        })
+        .map(this::fromClusterId);
+  }
+
+  @Override
+  public Uni<ClusterDataList> listKafkaClusters() {
+    return describeCluster()
         .chain(cluster -> uniItem(ClusterDataList
             .builder()
             .metadata(ResourceCollectionMetadata
@@ -56,39 +68,16 @@ public class ClusterManagerImpl implements ClusterManager {
         );
   }
 
-  private Uni<ClusterDescribe> describeCluster(String connectionId, String clusterId) {
-      var adminClient = adminClients.getAdminClient(connectionId, clusterId);
+  private Uni<ClusterDescribe> describeCluster() {
       var describeCluster = adminClient.describeCluster();
       return uniItem(new ClusterDescribe())
-          .chain(cid -> uniStage(describeCluster.clusterId().toCompletionStage()).map(cid::withId))
-          // Check whether the discovered cluster ID matches the requested one
-          .chain(cid -> {
-            if (!cid.id().equals(clusterId)) {
-              return Uni.createFrom().failure(new ClusterNotFoundException(
-                  "Kafka cluster '%s' not found.".formatted(clusterId)
-              ));
-            }
-            return uniItem(cid);
-          })
+          .chain(
+              cid -> uniStage(describeCluster.clusterId().toCompletionStage()).map(cid::withId))
           .chain(cid -> uniStage(describeCluster.controller().toCompletionStage()).map(Node::id)
               .map(cid::withControllerId)
           ).chain(cid -> uniStage(describeCluster.nodes().toCompletionStage())
               .map(cid::withNodes)
           ).invoke(ignored -> adminClient.close());
-  }
-
-  private Uni<ClusterDescribe> describeCluster(String connectionId) {
-    try (var adminClient = AdminClient.create(adminClients.getAdminClientConfig(connectionId))) {
-      var describeCluster = adminClient.describeCluster();
-      return uniItem(new ClusterDescribe())
-          .chain(cid -> uniStage(describeCluster.clusterId().toCompletionStage())
-              .map(cid::withId)
-          ).chain(cid -> uniStage(describeCluster.controller().toCompletionStage()).map(Node::id)
-              .map(cid::withControllerId)
-          ).chain(cid -> uniStage(describeCluster.nodes().toCompletionStage())
-              .map(cid::withNodes)
-          ).invoke(ignored -> adminClient.close());
-    }
   }
 
   private ClusterData fromClusterId(ClusterDescribe cluster) {
@@ -129,6 +118,4 @@ public class ClusterManagerImpl implements ClusterManager {
       return new ClusterDescribe(id, controllerId, nodes);
     }
   }
-
 }
-

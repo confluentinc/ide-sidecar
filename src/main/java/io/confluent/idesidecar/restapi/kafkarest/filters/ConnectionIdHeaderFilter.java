@@ -3,6 +3,7 @@ package io.confluent.idesidecar.restapi.kafkarest.filters;
 import static io.confluent.idesidecar.restapi.util.RequestHeadersConstants.CONNECTION_ID_HEADER;
 
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
+import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
 import io.confluent.idesidecar.restapi.kafkarest.model.Error;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -38,10 +39,23 @@ public class ConnectionIdHeaderFilter implements ContainerRequestFilter {
                     .message("Missing required header: " + CONNECTION_ID_HEADER).build()
                 ).build()
         );
-      } else {
-        // Check that the connectionId exists
-        manager.getConnectionState(connectionId.get());
       }
+//      else {
+//        // Check that the connectionId exists
+//        try {
+//          manager.getConnectionState(connectionId.get());
+//        } catch (ConnectionNotFoundException e) {
+//          requestContext.abortWith(
+//              Response
+//                  .status(Status.NOT_FOUND)
+//                  .entity(Error
+//                      .builder()
+//                      .errorCode(404)
+//                      .message("Connection not found: " + connectionId.get()).build()
+//                  ).build()
+//          );
+//        }
+//      }
     }
   }
 }

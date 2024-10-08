@@ -583,12 +583,6 @@ components:
       properties:
         bootstrap_servers:
           type: string
-        security_protocol:
-          type: string
-        sasl_mechanism:
-          type: string
-        sasl_jaas_config:
-          type: string
     CCloudConfig:
       description: Configuration for Confluent Cloud connections
       required:
@@ -1236,11 +1230,11 @@ components:
     HealthCheck:
       type: object
       properties:
-        name:
-          type: string
         data:
           type: object
           nullable: true
+        name:
+          type: string
         status:
           enum:
           - UP
