@@ -7,11 +7,13 @@ import io.confluent.idesidecar.scaffolding.exceptions.InvalidTemplateOptionsProv
 import io.confluent.idesidecar.scaffolding.exceptions.TemplateNotFoundException;
 import io.confluent.idesidecar.scaffolding.exceptions.TemplateRegistryException;
 import io.confluent.idesidecar.scaffolding.exceptions.TemplateRegistryIOException;
+import io.quarkus.logging.Log;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
+import org.apache.kafka.common.errors.TimeoutException;
 import org.apache.kafka.common.errors.TopicExistsException;
 import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
 import org.jboss.resteasy.reactive.server.ServerExceptionMapper;
@@ -233,6 +235,19 @@ public class ExceptionMappers {
         .message(exception.getMessage()).build();
     return Response
         .status(Status.BAD_REQUEST)
+        .entity(error)
+        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+        .build();
+  }
+
+  @ServerExceptionMapper
+  public Response mapKafkaTimeoutException(TimeoutException exception) {
+    var error = io.confluent.idesidecar.restapi.kafkarest.model.Error
+        .builder()
+        .errorCode(Status.REQUEST_TIMEOUT.getStatusCode())
+        .message(exception.getMessage()).build();
+    return Response
+        .status(Status.REQUEST_TIMEOUT)
         .entity(error)
         .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
         .build();

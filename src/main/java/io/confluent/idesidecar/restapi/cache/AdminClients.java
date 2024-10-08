@@ -4,8 +4,10 @@ import io.confluent.idesidecar.restapi.kafkarest.exceptions.AdminClientInstantia
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import java.util.Map;
 import java.util.Properties;
 import org.apache.kafka.clients.admin.AdminClient;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
  * Create an ApplicationScoped bean to cache AdminClient instances by connection ID and client ID.
@@ -17,6 +19,9 @@ public class AdminClients extends Clients<AdminClient> {
 
   @Inject
   ClusterCache cache;
+
+  @ConfigProperty(name = "ide-sidecar.admin-client-defaults")
+  Map<String, String> adminClientDefaults;
 
   /**
    * Get an AdminClient for the given connection ID and Kafka cluster ID.
@@ -46,6 +51,7 @@ public class AdminClients extends Clients<AdminClient> {
     var props = new Properties();
     var cluster = cache.getKafkaCluster(connectionId, clusterId);
     props.put("bootstrap.servers", cluster.bootstrapServers());
+    props.putAll(adminClientDefaults);
     return props;
   }
 
@@ -77,6 +83,7 @@ public class AdminClients extends Clients<AdminClient> {
 
     var props = new Properties();
     props.put("bootstrap.servers", cluster.bootstrapServers());
+    props.putAll(adminClientDefaults);
     return props;
   }
 }
