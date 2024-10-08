@@ -7,7 +7,6 @@ import io.confluent.idesidecar.scaffolding.exceptions.InvalidTemplateOptionsProv
 import io.confluent.idesidecar.scaffolding.exceptions.TemplateNotFoundException;
 import io.confluent.idesidecar.scaffolding.exceptions.TemplateRegistryException;
 import io.confluent.idesidecar.scaffolding.exceptions.TemplateRegistryIOException;
-import io.quarkus.logging.Log;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
