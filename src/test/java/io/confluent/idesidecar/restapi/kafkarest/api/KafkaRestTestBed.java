@@ -52,9 +52,18 @@ public class KafkaRestTestBed extends KafkaTestBed {
         .statusCode(200);
   }
 
+  private static void deleteConnection() {
+    given()
+        .when().delete("http://localhost:%s/gateway/v1/connections/%s".formatted(
+            testPort, CONNECTION_ID))
+        .then()
+        .statusCode(204);
+  }
+
   @AfterAll
   static void teardown() {
     confluentLocal.stop();
+    deleteConnection();
   }
 
   @Override
