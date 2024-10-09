@@ -130,7 +130,7 @@ public class WebClientFactory {
     try {
       // Load certs from trust store baked into native executable so that we don't lose access to
       // them
-      Log.info("Loading certificates from build-time trust store.");
+      Log.debug("Loading certificates from build-time trust store.");
       var trustManagerFactory = TrustManagerFactory
           .getInstance(TrustManagerFactory.getDefaultAlgorithm());
       trustManagerFactory.init((KeyStore) null);
@@ -162,14 +162,14 @@ public class WebClientFactory {
   void addCertsFromSystemKeyStore(String keyStoreType, PemTrustOptions pemTrustOptions) {
     try {
       // Load certs from provided trust store
-      Log.info("Loading certificates from system key store.");
+      Log.debug("Loading certificates from system key store.");
       var keyStore = KeyStore.getInstance(keyStoreType);
       keyStore.load(null, null);
       var it = keyStore.aliases().asIterator();
       while (it.hasNext()) {
         var certAlias = it.next();
         var cert = keyStore.getCertificate(certAlias);
-        Log.infof(
+        Log.debugf(
             "Adding certificate %s of type %s",
             certAlias,
             cert.getClass().getCanonicalName()
