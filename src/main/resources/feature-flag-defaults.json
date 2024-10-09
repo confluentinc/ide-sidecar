@@ -1,0 +1,14 @@
+{
+  "ide.global.enable": {
+    "value": true
+  },
+  "ide.global.notices": {
+    "value": []
+  },
+  "ide.ccloud.enable": {
+    "value": true
+  },
+  "ide.sentry.enabled": {
+    "value": true
+  }
+}
