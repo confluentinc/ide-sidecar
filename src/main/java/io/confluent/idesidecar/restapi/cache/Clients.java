@@ -3,7 +3,7 @@ package io.confluent.idesidecar.restapi.cache;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.CaffeineSpec;
-import com.github.benmanes.caffeine.cache.RemovalListener;
+import com.github.benmanes.caffeine.cache.RemovalCause;
 import io.confluent.idesidecar.restapi.connections.ConnectionState;
 import io.confluent.idesidecar.restapi.events.Lifecycle;
 import io.quarkus.logging.Log;
@@ -18,23 +18,28 @@ import java.util.function.Supplier;
 public abstract class Clients<T extends AutoCloseable> {
 
   /**
+   * Caffeine spec to use for the client cache. By default, this will be an empty spec.
+   * See the
+   * <a href="https://github.com/ben-manes/caffeine/wiki/Specification">Caffeine Spec</a>
+   * for more information on the format. Inherited classes may override this method
+   * and return a different spec.
+   */
+  private final CaffeineSpec caffeineSpec;
+
+  /**
    * Store an instance of a Caffeine cache for each connection. The cache will store
-   * clients by client ID and its policy may be configured by the {@link #getCaffeineSpec()}
-   * method.
+   * clients by client ID and its policy may be configured by the {@link #caffeineSpec}.
    */
   private final Map<String, Cache<String, T>> clientsByIdByConnections =
       new ConcurrentHashMap<>();
 
-  RemovalListener<String, T> removalListener = (key, value, cause) -> {
-    try {
-      if (value != null) {
-        Log.debugf("Closing client %s", value);
-        value.close();
-      }
-    } catch (Throwable t) {
-      // Ignore these as we don't care
-    }
-  };
+  protected Clients(CaffeineSpec caffeineSpec) {
+    this.caffeineSpec = caffeineSpec;
+  }
+
+  protected Clients() {
+    this.caffeineSpec = CaffeineSpec.parse("");
+  }
 
   /**
    * Get a client for the given connection and client ID. If the client does not
@@ -82,22 +87,22 @@ public abstract class Clients<T extends AutoCloseable> {
     }
   }
 
-  /**
-   * Get the Caffeine spec to use for the caches. By default, this will be an empty spec.
-   * See the
-   * <a href="https://github.com/ben-manes/caffeine/wiki/Specification">Caffeine Spec</a>
-   * for more information on the format. Inherited classes may override this method
-   * and return a different spec.
-   * @return the Caffeine spec
-   */
-  protected CaffeineSpec getCaffeineSpec() {
-    return CaffeineSpec.parse("");
+  void handleRemoval(String key, T value, RemovalCause cause) {
+    try {
+      if (value != null) {
+        Log.debugf("Closing client %s", value);
+        value.close();
+      }
+    } catch (Throwable t) {
+      Log.debugf("Error closing client %s: %s", value, t);
+      // Ignore these as we don't care
+    }
   }
 
   private Cache<String, T> createCache() {
     return Caffeine
-        .from(getCaffeineSpec())
-        .removalListener(removalListener)
+        .from(caffeineSpec)
+        .removalListener(this::handleRemoval)
         .build();
   }
 

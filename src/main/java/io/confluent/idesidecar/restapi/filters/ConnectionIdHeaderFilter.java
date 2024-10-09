@@ -1,4 +1,4 @@
-package io.confluent.idesidecar.restapi.kafkarest.filters;
+package io.confluent.idesidecar.restapi.filters;
 
 import static io.confluent.idesidecar.restapi.util.RequestHeadersConstants.CONNECTION_ID_HEADER;
 

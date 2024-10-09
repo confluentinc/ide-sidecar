@@ -1,4 +1,4 @@
-package io.confluent.idesidecar.restapi.kafkarest.impl;
+package io.confluent.idesidecar.restapi.kafkarest.api;
 
 import static io.restassured.RestAssured.given;
 

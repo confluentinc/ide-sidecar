@@ -1,4 +1,4 @@
-package io.confluent.idesidecar.restapi.kafkarest.controllers;
+package io.confluent.idesidecar.restapi.kafkarest;
 
 import io.confluent.idesidecar.restapi.kafkarest.model.ClusterData;
 import io.confluent.idesidecar.restapi.kafkarest.model.ClusterDataList;

@@ -1,7 +1,6 @@
-package io.confluent.idesidecar.restapi.kafkarest.controllers;
+package io.confluent.idesidecar.restapi.kafkarest;
 
 import io.confluent.idesidecar.restapi.kafkarest.model.Relationship;
-import io.confluent.idesidecar.restapi.util.Crn;
 import org.eclipse.microprofile.config.ConfigProvider;
 
 /**
@@ -12,7 +11,6 @@ public final class RelationshipUtil {
   private RelationshipUtil() {
   }
 
-  private static final String CRN_AUTHORITY = "";
   private static final String SIDECAR_HOST = ConfigProvider.getConfig().getValue(
       "ide-sidecar.api.host", String.class);
 
@@ -100,19 +98,10 @@ public final class RelationshipUtil {
         )).build();
   }
 
-  public static Crn getClusterCrn(String clusterId) {
-    return new Crn(
-        CRN_AUTHORITY,
-        Crn.newElements("kafka", clusterId),
-        false
-    );
-  }
-
-  public static Crn getTopicCrn(String clusterId, String topicName) {
-    return new Crn(
-        CRN_AUTHORITY,
-        Crn.newElements("kafka", clusterId, "topic", topicName),
-        false
-    );
+  public static Relationship forCluster(String clusterId) {
+    return Relationship.builder().related(
+        "%s/internal/kafka/v3/clusters/%s".formatted(
+            SIDECAR_HOST, clusterId
+        )).build();
   }
 }

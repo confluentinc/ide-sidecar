@@ -1,32 +1,36 @@
-package io.confluent.idesidecar.restapi.kafkarest.controllers;
+package io.confluent.idesidecar.restapi.kafkarest;
 
-import static io.confluent.idesidecar.restapi.kafkarest.controllers.RelationshipUtil.forAcls;
-import static io.confluent.idesidecar.restapi.kafkarest.controllers.RelationshipUtil.forAllPartitionReassignments;
-import static io.confluent.idesidecar.restapi.kafkarest.controllers.RelationshipUtil.forBrokerConfigs;
-import static io.confluent.idesidecar.restapi.kafkarest.controllers.RelationshipUtil.forBrokers;
-import static io.confluent.idesidecar.restapi.kafkarest.controllers.RelationshipUtil.forClusters;
-import static io.confluent.idesidecar.restapi.kafkarest.controllers.RelationshipUtil.forConsumerGroups;
-import static io.confluent.idesidecar.restapi.kafkarest.controllers.RelationshipUtil.forController;
-import static io.confluent.idesidecar.restapi.kafkarest.controllers.RelationshipUtil.forTopics;
-import static io.confluent.idesidecar.restapi.kafkarest.controllers.RelationshipUtil.getClusterCrn;
+import static io.confluent.idesidecar.restapi.kafkarest.RelationshipUtil.forAcls;
+import static io.confluent.idesidecar.restapi.kafkarest.RelationshipUtil.forAllPartitionReassignments;
+import static io.confluent.idesidecar.restapi.kafkarest.RelationshipUtil.forBrokerConfigs;
+import static io.confluent.idesidecar.restapi.kafkarest.RelationshipUtil.forBrokers;
+import static io.confluent.idesidecar.restapi.kafkarest.RelationshipUtil.forCluster;
+import static io.confluent.idesidecar.restapi.kafkarest.RelationshipUtil.forClusters;
+import static io.confluent.idesidecar.restapi.kafkarest.RelationshipUtil.forConsumerGroups;
+import static io.confluent.idesidecar.restapi.kafkarest.RelationshipUtil.forController;
+import static io.confluent.idesidecar.restapi.kafkarest.RelationshipUtil.forTopics;
 import static io.confluent.idesidecar.restapi.util.MutinyUtil.uniItem;
 import static io.confluent.idesidecar.restapi.util.MutinyUtil.uniStage;
 import static io.confluent.idesidecar.restapi.util.RequestHeadersConstants.CONNECTION_ID_HEADER;
 
 import io.confluent.idesidecar.restapi.cache.AdminClients;
+import io.confluent.idesidecar.restapi.cache.ClusterCache;
+import io.confluent.idesidecar.restapi.cache.ClusterCache.ClusterInfo;
 import io.confluent.idesidecar.restapi.exceptions.ClusterNotFoundException;
 import io.confluent.idesidecar.restapi.kafkarest.model.ClusterData;
 import io.confluent.idesidecar.restapi.kafkarest.model.ClusterDataList;
 import io.confluent.idesidecar.restapi.kafkarest.model.ResourceCollectionMetadata;
 import io.confluent.idesidecar.restapi.kafkarest.model.ResourceMetadata;
+import io.confluent.idesidecar.restapi.models.graph.KafkaCluster;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.infrastructure.Infrastructure;
 import io.vertx.core.http.HttpServerRequest;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import java.util.Collection;
-import java.util.List;
+import java.util.Optional;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.DescribeClusterResult;
 import org.apache.kafka.common.Node;
@@ -41,6 +45,9 @@ public class ClusterManagerImpl implements ClusterManager {
 
   @Inject
   AdminClients adminClients;
+
+  @Inject
+  ClusterCache clusterCache;
 
   @Inject
   HttpServerRequest request;
@@ -63,25 +70,45 @@ public class ClusterManagerImpl implements ClusterManager {
 
   @Override
   public Uni<ClusterDataList> listKafkaClusters() {
-    return describeCluster(null)
-        .chain(cluster -> uniItem(ClusterDataList
+    return uniItem(
+        // Get the first Kafka cluster for the connection
+        (Supplier<Optional<ClusterInfo<KafkaCluster>>>)
+            () -> clusterCache.getKafkaClusterForConnection(connectionId.get()))
+        // Run the supplier on the default worker pool since it may block
+        .runSubscriptionOn(Infrastructure.getDefaultWorkerPool())
+        .map(Supplier::get)
+        // Call describeCluster if the cluster info is present
+        // else return null
+        .chain(clusterInfo -> clusterInfo
+            .map(kafkaClusterInfo -> this.describeCluster(kafkaClusterInfo.spec().id()))
+            .orElse(Uni.createFrom().nullItem())
+        )
+        // Call describeCluster on each cluster ID
+        .chain(clusterId -> uniItem(getClusterDataList(clusterId)));
+  }
+
+  private ClusterDataList getClusterDataList(ClusterDescribe cluster) {
+    return ClusterDataList
+        .builder()
+        .metadata(ResourceCollectionMetadata
             .builder()
-            .metadata(ResourceCollectionMetadata
-                .builder()
-                .self(forClusters().getRelated())
-                // We don't support pagination
-                .next(null)
-                .build()
-            )
-            .kind("KafkaClusterList")
-            .data(List.of(fromClusterId(cluster)))
-            .build())
-        );
+            .self(forClusters().getRelated())
+            // We don't support pagination
+            .next(null)
+            .build()
+        )
+        .kind("KafkaClusterList")
+        .data(Optional
+            .ofNullable(cluster)
+            .stream()
+            .map(this::fromClusterId)
+            .collect(Collectors.toList())
+        ).build();
   }
 
   private Uni<ClusterDescribe> describeCluster(String clusterId) {
     return uniItem((Supplier<AdminClient>)
-        () -> adminClients.getAdminClient(connectionId.get(), clusterId))
+        () -> adminClients.getClient(connectionId.get(), clusterId))
         .runSubscriptionOn(Infrastructure.getDefaultWorkerPool())
         .map(supplier -> supplier.get().describeCluster())
         .chain(describeClusterResult ->
@@ -100,8 +127,9 @@ public class ClusterManagerImpl implements ClusterManager {
         .kind("KafkaCluster")
         .metadata(ResourceMetadata
             .builder()
-            .self(getClusterCrn(cluster.id()).toString())
-            .resourceName(cluster.id())
+            .self(forCluster(cluster.id()).toString())
+            // TODO: Construct resource name based on the connection/cluster type
+            .resourceName(null)
             .build()
         )
         .clusterId(cluster.id())

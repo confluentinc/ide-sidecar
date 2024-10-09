@@ -1,4 +1,4 @@
-package io.confluent.idesidecar.restapi.kafkarest.impl;
+package io.confluent.idesidecar.restapi.kafkarest.api;
 
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
 import static io.restassured.RestAssured.given;
@@ -10,23 +10,24 @@ import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
 import io.confluent.idesidecar.restapi.util.ConfluentLocalKafkaWithRestProxyContainer;
 import io.quarkus.test.junit.QuarkusIntegrationTest;
 import io.quarkus.test.junit.TestProfile;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 
 @QuarkusIntegrationTest
+@Tag("io.confluent.common.utils.IntegrationTest")
 @TestProfile(NoAccessFilterProfile.class)
 public class ClusterV3ApiImplIT extends KafkaRestTestBed {
   @Test
   void shouldListKafkaClusters() {
-    // Try to list Kafka clusters when none are available
+    // Try to list Kafka clusters when none are available, we should get an empty list
     given()
         .header("X-connection-id", CONNECTION_ID)
         .when()
         .get("/internal/kafka/v3/clusters")
         .then()
-        .statusCode(400)
-        .body("error_code", equalTo(400))
-        .body("message", containsString("No Kafka clusters found"));
+        .statusCode(200)
+        .body("data.size()", equalTo(0));
 
     // Issue GraphQL query to create a Kafka cluster
     // The internal Kafka REST implementation _intentionally_ does not have

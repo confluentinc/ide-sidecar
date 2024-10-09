@@ -1,7 +1,6 @@
 package io.confluent.idesidecar.restapi.exceptions;
 
 import io.confluent.idesidecar.restapi.exceptions.Failure.Error;
-import io.confluent.idesidecar.restapi.kafkarest.exceptions.AdminClientInstantiationException;
 import io.confluent.idesidecar.restapi.util.UuidFactory;
 import io.confluent.idesidecar.scaffolding.exceptions.InvalidTemplateOptionsProvided;
 import io.confluent.idesidecar.scaffolding.exceptions.TemplateNotFoundException;
@@ -220,20 +219,6 @@ public class ExceptionMappers {
         .message(exception.getMessage()).build();
     return Response
         .status(Status.NOT_FOUND)
-        .entity(error)
-        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-        .build();
-  }
-
-  @ServerExceptionMapper
-  public Response mapAdminClientInstantiationException(
-      AdminClientInstantiationException exception) {
-    var error = io.confluent.idesidecar.restapi.kafkarest.model.Error
-        .builder()
-        .errorCode(Status.BAD_REQUEST.getStatusCode())
-        .message(exception.getMessage()).build();
-    return Response
-        .status(Status.BAD_REQUEST)
         .entity(error)
         .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
         .build();

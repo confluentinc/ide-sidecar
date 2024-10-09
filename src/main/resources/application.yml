@@ -119,9 +119,9 @@ ide-sidecar:
     enabled: true
     # How often to check?
     interval-seconds: 60
-  admin-client-defaults:
-    # The default timeout for the AdminClient
-    # Corresponds to
+  # Configuration set by the sidecar when instantiating the Kafka Admin client
+  # (We may choose to allow connection-specific overrides in the future)
+  admin-client-configs:
     "default.api.timeout.ms": 3000
     "request.timeout.ms": 3000
 

@@ -2,10 +2,12 @@ package io.confluent.idesidecar.restapi.proxy.clusters.strategy;
 
 import static io.confluent.idesidecar.restapi.util.RequestHeadersConstants.CONNECTION_ID_HEADER;
 
+import io.confluent.idesidecar.restapi.application.SidecarAccessTokenBean;
 import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
 import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpHeaders;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
@@ -17,10 +19,13 @@ public class ConfluentLocalKafkaClusterStrategy extends ClusterStrategy {
   @ConfigProperty(name = "ide-sidecar.api.host")
   String sidecarHost;
 
+  @Inject
+  SidecarAccessTokenBean accessToken;
+
   /**
    * We require the connection ID header to be passed to our implementation of the Kafka REST API
    * at the /internal/kafka path. This is used to identify the connection that the request is
-   * associated with.
+   * associated with. We also pass the access token as a Bearer token in the Authorization header.
    * @param context The context of the proxy request.
    * @return The headers to be passed to our implementation of the Kafka REST API.
    */
@@ -28,7 +33,8 @@ public class ConfluentLocalKafkaClusterStrategy extends ClusterStrategy {
   public MultiMap constructProxyHeaders(ClusterProxyContext context) {
     return HttpHeaders
         .headers()
-        .add(CONNECTION_ID_HEADER, context.getConnectionId());
+        .add(CONNECTION_ID_HEADER, context.getConnectionId())
+        .add(HttpHeaders.AUTHORIZATION, "Bearer %s".formatted(accessToken.getToken()));
   }
 
   /**
@@ -59,6 +65,6 @@ public class ConfluentLocalKafkaClusterStrategy extends ClusterStrategy {
   public String processProxyResponse(String proxyResponseBody) {
     return super
         .processProxyResponse(proxyResponseBody)
-        .replaceAll("/internal/kafka", "/kafka");
+        .replaceAll("%s/internal/kafka".formatted(sidecarHost), "%s/kafka".formatted(sidecarHost));
   }
 }

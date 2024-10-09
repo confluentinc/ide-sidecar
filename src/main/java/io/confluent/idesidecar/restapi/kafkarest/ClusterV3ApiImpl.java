@@ -1,7 +1,6 @@
-package io.confluent.idesidecar.restapi.kafkarest.impl;
+package io.confluent.idesidecar.restapi.kafkarest;
 
 import io.confluent.idesidecar.restapi.kafkarest.api.ClusterV3Api;
-import io.confluent.idesidecar.restapi.kafkarest.controllers.ClusterManagerImpl;
 import io.confluent.idesidecar.restapi.kafkarest.model.ClusterData;
 import io.confluent.idesidecar.restapi.kafkarest.model.ClusterDataList;
 import io.smallrye.mutiny.Uni;

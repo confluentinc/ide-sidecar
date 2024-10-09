@@ -1,11 +1,10 @@
-package io.confluent.idesidecar.restapi.kafkarest.controllers;
+package io.confluent.idesidecar.restapi.kafkarest;
 
-import static io.confluent.idesidecar.restapi.kafkarest.controllers.RelationshipUtil.forPartitionReassignments;
-import static io.confluent.idesidecar.restapi.kafkarest.controllers.RelationshipUtil.forPartitions;
-import static io.confluent.idesidecar.restapi.kafkarest.controllers.RelationshipUtil.forTopic;
-import static io.confluent.idesidecar.restapi.kafkarest.controllers.RelationshipUtil.forTopicConfigs;
-import static io.confluent.idesidecar.restapi.kafkarest.controllers.RelationshipUtil.forTopics;
-import static io.confluent.idesidecar.restapi.kafkarest.controllers.RelationshipUtil.getTopicCrn;
+import static io.confluent.idesidecar.restapi.kafkarest.RelationshipUtil.forPartitionReassignments;
+import static io.confluent.idesidecar.restapi.kafkarest.RelationshipUtil.forPartitions;
+import static io.confluent.idesidecar.restapi.kafkarest.RelationshipUtil.forTopic;
+import static io.confluent.idesidecar.restapi.kafkarest.RelationshipUtil.forTopicConfigs;
+import static io.confluent.idesidecar.restapi.kafkarest.RelationshipUtil.forTopics;
 import static io.confluent.idesidecar.restapi.util.MutinyUtil.uniItem;
 import static io.confluent.idesidecar.restapi.util.MutinyUtil.uniStage;
 import static io.confluent.idesidecar.restapi.util.RequestHeadersConstants.CONNECTION_ID_HEADER;
@@ -53,7 +52,7 @@ public class TopicManagerImpl implements TopicManager {
     return clusterManager.getKafkaCluster(clusterId)
         .chain(ignored -> uniStage(
             adminClients
-                .getAdminClient(connectionId.get(), clusterId)
+                .getClient(connectionId.get(), clusterId)
                 .createTopics(List.of(new NewTopic(
                     createTopicRequestData.getTopicName(),
                     Optional.ofNullable(createTopicRequestData.getPartitionsCount())
@@ -72,7 +71,7 @@ public class TopicManagerImpl implements TopicManager {
   public Uni<Void> deleteKafkaTopic(String clusterId, String topicName) {
     return clusterManager.getKafkaCluster(clusterId).chain(ignored ->
         uniStage(
-            adminClients.getAdminClient(connectionId.get(), clusterId)
+            adminClients.getClient(connectionId.get(), clusterId)
                 .deleteTopics(List.of(topicName))
                 .all()
                 .toCompletionStage())
@@ -87,23 +86,29 @@ public class TopicManagerImpl implements TopicManager {
         .includeAuthorizedOperations(
             Optional.ofNullable(includeAuthorizedOperations).orElse(false)
         );
-    return clusterManager.getKafkaCluster(clusterId).chain(ignored -> uniStage(
-        adminClients.getAdminClient(connectionId.get(), clusterId)
-            .describeTopics(List.of(topicName), describeTopicsOptions)
-            .allTopicNames()
-            .toCompletionStage()
-    )
-        .map(topicDescriptions -> topicDescriptions.values().iterator().next())
-        .onItem().transform(topicDescription -> fromTopicDescription(clusterId, topicDescription)));
+    return clusterManager
+        .getKafkaCluster(clusterId)
+        .chain(ignored ->
+            uniStage(
+                adminClients
+                    .getClient(connectionId.get(), clusterId)
+                    .describeTopics(List.of(topicName), describeTopicsOptions)
+                    .allTopicNames()
+                    .toCompletionStage()
+            )
+                .map(topicDescriptions -> topicDescriptions.values().iterator().next())
+                .onItem()
+                .transform(topicDescription -> fromTopicDescription(clusterId, topicDescription))
+        );
   }
 
   @Override
   public Uni<TopicDataList> listKafkaTopics(String clusterId) {
     return clusterManager.getKafkaCluster(clusterId).chain(ignored -> uniStage(
         adminClients
-            .getAdminClient(connectionId.get(), clusterId).listTopics().names().toCompletionStage()
+            .getClient(connectionId.get(), clusterId).listTopics().names().toCompletionStage()
     ).chain(topicNames -> uniStage(
-            adminClients.getAdminClient(connectionId.get(), clusterId)
+            adminClients.getClient(connectionId.get(), clusterId)
                 .describeTopics(topicNames)
                 .allTopicNames()
                 .toCompletionStage())
@@ -148,7 +153,8 @@ public class TopicManagerImpl implements TopicManager {
   private ResourceMetadata getTopicMetadata(String clusterId, String topicName) {
     return ResourceMetadata
         .builder()
-        .resourceName(getTopicCrn(clusterId, topicName).toString())
+        // TODO: Construct resource name based on the connection/cluster type
+        .resourceName(null)
         .self(forTopic(clusterId, topicName).getRelated())
         .build();
   }

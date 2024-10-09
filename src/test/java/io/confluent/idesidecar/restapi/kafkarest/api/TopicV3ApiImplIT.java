@@ -1,4 +1,4 @@
-package io.confluent.idesidecar.restapi.kafkarest.impl;
+package io.confluent.idesidecar.restapi.kafkarest.api;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
@@ -9,9 +9,11 @@ import io.quarkus.test.junit.QuarkusIntegrationTest;
 import io.quarkus.test.junit.TestProfile;
 import io.restassured.specification.RequestSpecification;
 import java.util.Map;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 @QuarkusIntegrationTest
+@Tag("io.confluent.common.utils.IntegrationTest")
 @TestProfile(NoAccessFilterProfile.class)
 class TopicV3ApiImplIT extends KafkaRestTestBed {
 
