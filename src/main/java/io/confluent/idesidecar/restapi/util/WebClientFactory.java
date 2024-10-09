@@ -36,6 +36,7 @@ public class WebClientFactory {
   static final String LINE_SEPARATOR = System.lineSeparator();
   static final String CERT_HEADER = "-----BEGIN CERTIFICATE-----" + LINE_SEPARATOR;
   static final String CERT_FOOTER = LINE_SEPARATOR + "-----END CERTIFICATE-----" + LINE_SEPARATOR;
+  static final String WINDOWS_TRUST_STORE_NAME = "WINDOWS-MY";
 
   /**
    * It's important that we use the Quarkus-managed Vertx instance here
@@ -101,7 +102,7 @@ public class WebClientFactory {
     if (OsUtil.getOperatingSystem() == OS.WINDOWS) {
       var pemTrustOptions = new PemTrustOptions();
       addCertsFromBuiltInTrustStore(pemTrustOptions);
-      addCertsFromSystemKeyStore("WINDOWS-MY", pemTrustOptions);
+      addCertsFromSystemKeyStore(WINDOWS_TRUST_STORE_NAME, pemTrustOptions);
       // We should not update the WebClient's PEM trust options if we haven't been able to read
       // certs from the baked-in or system trust store.
       if (!pemTrustOptions.getCertValues().isEmpty()) {
