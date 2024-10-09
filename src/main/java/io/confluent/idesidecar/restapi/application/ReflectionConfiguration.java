@@ -1,9 +1,5 @@
 package io.confluent.idesidecar.restapi.application;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.CaffeineSpec;
-import com.github.benmanes.caffeine.cache.RemovalCause;
 import io.confluent.idesidecar.scaffolding.models.TemplateManifest;
 import io.confluent.kafka.schemaregistry.client.rest.entities.SchemaString;
 import io.quarkus.runtime.annotations.RegisterForReflection;
@@ -24,11 +20,7 @@ import org.apache.kafka.common.serialization.ByteArrayDeserializer;
         CooperativeStickyAssignor.class,
         RangeAssignor.class,
         SchemaString.class,
-        TemplateManifest.class,
-        Caffeine.class,
-        CaffeineSpec.class,
-        Cache.class,
-        RemovalCause.class
+        TemplateManifest.class
     }
 )
 public class ReflectionConfiguration {
