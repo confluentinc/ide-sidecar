@@ -74,10 +74,6 @@ class FeatureFlagsResourceTest extends BaseFeatureFlagsTest implements FeatureFl
         getFlag(FlagId.IDE_SENTRY_ENABLED)
     );
     assertEquals(
-        BooleanNode.getFalse(),
-        getFlag(FlagId.IDE_SCAFFOLDING_SERVICE_ENABLED)
-    );
-    assertEquals(
         FeatureFlags.OBJECT_MAPPER.createArrayNode(),
         getFlag(FlagId.IDE_GLOBAL_NOTICES)
     );

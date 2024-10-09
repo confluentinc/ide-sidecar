@@ -10,8 +10,5 @@
   },
   "ide.sentry.enabled": {
     "value": true
-  },
-  "ide.scaffolding_service.enable": {
-    "value": false
   }
 }

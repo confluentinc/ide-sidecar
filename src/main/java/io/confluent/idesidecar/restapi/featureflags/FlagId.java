@@ -11,8 +11,7 @@ public enum FlagId {
   IDE_GLOBAL_ENABLE("ide.global.enable"),
   IDE_GLOBAL_NOTICES("ide.global.notices"),
   IDE_CCLOUD_ENABLE("ide.ccloud.enable"),
-  IDE_SENTRY_ENABLED("ide.sentry.enabled"),
-  IDE_SCAFFOLDING_SERVICE_ENABLED("ide.scaffolding_service.enable");
+  IDE_SENTRY_ENABLED("ide.sentry.enabled");
 
   private final String id;
 

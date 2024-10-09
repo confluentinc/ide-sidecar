@@ -3,7 +3,6 @@ package io.confluent.idesidecar.restapi.featureflags;
 import static io.confluent.idesidecar.restapi.featureflags.FlagId.IDE_CCLOUD_ENABLE;
 import static io.confluent.idesidecar.restapi.featureflags.FlagId.IDE_GLOBAL_ENABLE;
 import static io.confluent.idesidecar.restapi.featureflags.FlagId.IDE_GLOBAL_NOTICES;
-import static io.confluent.idesidecar.restapi.featureflags.FlagId.IDE_SCAFFOLDING_SERVICE_ENABLED;
 import static io.confluent.idesidecar.restapi.featureflags.FlagId.IDE_SENTRY_ENABLED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -115,9 +114,6 @@ class FeatureFlagsTest extends BaseFeatureFlagsTest implements FeatureFlagTestCo
     assertFlag(IDE_SENTRY_ENABLED)
         .hasValue(false)
         .hasDefaultValue(true);
-    assertFlag(IDE_SCAFFOLDING_SERVICE_ENABLED)
-        .hasValue(true)
-        .hasDefaultValue(false);
     assertFlag(IDE_GLOBAL_NOTICES)
         .hasDefaultValues(List.of())
         .hasValues(
