@@ -4,10 +4,11 @@
 
 package io.confluent.idesidecar.restapi.application;
 
+import io.confluent.idesidecar.restapi.util.OperatingSystemType;
+import io.confluent.idesidecar.restapi.util.OperatingSystemType.Properties;
 import io.quarkus.logging.Log;
 import io.smallrye.common.constraint.NotNull;
 import jakarta.inject.Singleton;
-import java.util.Locale;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import org.eclipse.microprofile.config.ConfigProvider;
@@ -44,21 +45,10 @@ public class SidecarInfo {
       .getOptionalValue("quarkus.application.version", String.class)
       .orElse(UNSET_VERSION);
 
-  public enum OperatingSystemType {
-    Windows,
-    MacOS,
-    Linux,
-    Other
-  }
-
   public record VsCode(
       String version,
       String extensionVersion
   ) {
-  }
-
-  interface Properties {
-    String getProperty(String key, String def);
   }
 
   static final Pattern SEMANTIC_VERSION_FROM = Pattern.compile("(\\d+[.]\\d+([.]\\d+)?)");
@@ -94,10 +84,6 @@ public class SidecarInfo {
     );
   }
 
-  @SuppressWarnings({
-      "checkstyle:CyclomaticComplexity",
-      "BooleanExpressionComplexity"
-  })
   SidecarInfo(@NotNull Properties system, @NotNull Properties env) {
 
     // Get the OS information
@@ -105,22 +91,7 @@ public class SidecarInfo {
     osVersion = system.getProperty(OS_VERSION_KEY, "unknown");
 
     // Determine the best-matching OS type
-    var lowerName = osName.toLowerCase(Locale.US);
-    if (lowerName.contains("windows")) {
-      osType = OperatingSystemType.Windows;
-    } else if (lowerName.contains("mac") || lowerName.contains("darwin")) {
-      osType = OperatingSystemType.MacOS;
-    } else if (
-        lowerName.contains("nix")
-        || lowerName.contains("nux")
-        || lowerName.contains("ubuntu")
-        || lowerName.contains("centos")
-        || lowerName.contains("aix")
-    ) {
-      osType = OperatingSystemType.Linux;
-    } else  {
-      osType = OperatingSystemType.Other;
-    }
+    osType = OperatingSystemType.from(system);
 
     // Set the VS Code information if available
     var vscodeVersion = semanticVersionWithin(system, VSCODE_VERSION_KEY, null);
