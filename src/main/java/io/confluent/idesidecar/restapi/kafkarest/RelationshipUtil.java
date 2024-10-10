@@ -15,93 +15,121 @@ public final class RelationshipUtil {
       "ide-sidecar.api.host", String.class);
 
   public static Relationship forPartitions(String clusterId, String topicId) {
-    return Relationship.builder().related(
-        "%s/internal/kafka/v3/clusters/%s/topics/%s/partitions".formatted(
+    return createRelationship("%s/internal/kafka/v3/clusters/%s/topics/%s/partitions".formatted(
             SIDECAR_HOST, clusterId, topicId
-        )).build();
+        ));
   }
 
   public static Relationship forPartitionReassignments(String clusterId, String topicId) {
-    return Relationship.builder().related(
-        "%s/internal/kafka/v3/clusters/%s/topics/%s/partitions/-/reassignment".formatted(
+    return createRelationship("%s/internal/kafka/v3/clusters/%s/topics/%s/partitions/-/reassignment".formatted(
             SIDECAR_HOST, clusterId, topicId
-        )).build();
+        ));
   }
 
   public static Relationship forAllPartitionReassignments(String clusterId) {
-    return Relationship.builder().related(
-        "%s/internal/kafka/v3/clusters/%s/topics/-/partitions/-/reassignment".formatted(
+    return createRelationship("%s/internal/kafka/v3/clusters/%s/topics/-/partitions/-/reassignment".formatted(
             SIDECAR_HOST, clusterId
-        )).build();
+        ));
   }
 
   public static Relationship forTopicConfigs(String clusterId, String topicId) {
-    return Relationship.builder().related(
-        "%s/internal/kafka/v3/clusters/%s/topics/%s/configs".formatted(
+    return createRelationship("%s/internal/kafka/v3/clusters/%s/topics/%s/configs".formatted(
             SIDECAR_HOST, clusterId, topicId
-        )).build();
+        ));
   }
 
   public static Relationship forController(String clusterId, int brokerId) {
-    return Relationship.builder().related(
-        "%s/internal/kafka/v3/clusters/%s/brokers/%d".formatted(
+    return createRelationship("%s/internal/kafka/v3/clusters/%s/brokers/%d".formatted(
             SIDECAR_HOST, clusterId, brokerId
-        )).build();
+        ));
   }
 
   public static Relationship forAcls(String clusterId) {
-    return Relationship.builder().related(
-        "%s/internal/kafka/v3/clusters/%s/acls".formatted(
+    return createRelationship("%s/internal/kafka/v3/clusters/%s/acls".formatted(
             SIDECAR_HOST, clusterId
-        )).build();
+        ));
   }
 
   public static Relationship forBrokers(String clusterId) {
-    return Relationship.builder().related(
-        "%s/internal/kafka/v3/clusters/%s/brokers".formatted(
+    return createRelationship("%s/internal/kafka/v3/clusters/%s/brokers".formatted(
             SIDECAR_HOST, clusterId
-        )).build();
+        ));
   }
 
   public static Relationship forBrokerConfigs(String clusterId) {
-    return Relationship.builder().related(
-        "%s/internal/kafka/v3/clusters/%s/broker-configs".formatted(
+    return createRelationship("%s/internal/kafka/v3/clusters/%s/broker-configs".formatted(
             SIDECAR_HOST, clusterId
-        )).build();
+        ));
   }
 
   public static Relationship forConsumerGroups(String clusterId) {
-    return Relationship.builder().related(
-        "%s/internal/kafka/v3/clusters/%s/consumer-groups".formatted(
+    return createRelationship("%s/internal/kafka/v3/clusters/%s/consumer-groups".formatted(
             SIDECAR_HOST, clusterId
-        )).build();
+        ));
   }
 
   public static Relationship forTopics(String clusterId) {
-    return Relationship.builder().related(
-        "%s/internal/kafka/v3/clusters/%s/topics".formatted(
+    return createRelationship("%s/internal/kafka/v3/clusters/%s/topics".formatted(
             SIDECAR_HOST, clusterId
-        )).build();
+        ));
   }
 
   public static Relationship forTopic(String clusterId, String topicId) {
-    return Relationship.builder().related(
-        "%s/internal/kafka/v3/clusters/%s/topics/%s".formatted(
+    return createRelationship("%s/internal/kafka/v3/clusters/%s/topics/%s".formatted(
             SIDECAR_HOST, clusterId, topicId
-        )).build();
+        ));
   }
 
   public static Relationship forClusters() {
-    return Relationship.builder().related(
-        "%s/internal/kafka/v3/clusters".formatted(
+    return createRelationship("%s/internal/kafka/v3/clusters".formatted(
             SIDECAR_HOST
-        )).build();
+        ));
   }
 
   public static Relationship forCluster(String clusterId) {
-    return Relationship.builder().related(
-        "%s/internal/kafka/v3/clusters/%s".formatted(
+    return createRelationship("%s/internal/kafka/v3/clusters/%s".formatted(
             SIDECAR_HOST, clusterId
-        )).build();
+        ));
+  }
+
+  public static Relationship forPartition(
+      String clusterId, String topicName, Integer partitionId
+  ) {
+    return createRelationship("%s/internal/kafka/v3/clusters/%s/topics/%s/partitions/%d".formatted(
+            SIDECAR_HOST, clusterId, topicName, partitionId));
+  }
+
+  public static Relationship forTopicPartitions(
+      String clusterId, String topicName
+  ) {
+    return createRelationship("%s/v3/clusters/%s/topics/%s/partitions".formatted(
+            SIDECAR_HOST, clusterId, topicName));
+  }
+
+  public static Relationship forLeader(
+      String clusterId, String topicName, Integer partitionId, Integer leaderId
+  ) {
+    return createRelationship("/v3/clusters/%s/topics/%s/partitions/%d/replicas/%d"
+            .formatted(clusterId, topicName, partitionId, leaderId));
+  }
+
+  public static Relationship forReplicas(
+      String clusterId, String topicName, Integer partitionId
+  ) {
+    return createRelationship("/v3/clusters/%s/topics/%s/partitions/%d/replicas"
+            .formatted(clusterId, topicName, partitionId));
+  }
+
+  public static Relationship forReassignment(
+      String clusterId,
+      String topicName,
+      Integer partitionId
+  ) {
+    return createRelationship("/v3/clusters/%s/topics/%s/partitions/%d/reassignment"
+            .formatted(clusterId, topicName, partitionId));
+  }
+
+  private static Relationship createRelationship(String related) {
+    return Relationship.builder().related(related).build();
   }
 }
