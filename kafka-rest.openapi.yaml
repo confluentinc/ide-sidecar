@@ -1595,7 +1595,7 @@ components:
     # NOTE: Kafka-rest's OpenAPI spec has a known undocumented inconsistency where
     #       the list topics operation expects the includeAuthorizedOperations query parameter
     #       whereas the get topic operation expects the include_authorized_operations query parameter.
-    #       We declare both here in our version of the spec to at least ensure that it is at least documented.
+    #       We declare both here in our version of the spec to ensure that it is at least documented.
     #       The inconsistency has been set in stone for a while and is unlikely to change in the near future.
     IncludeAuthorizedOperationsCamelCase:
       name: 'includeAuthorizedOperations'
