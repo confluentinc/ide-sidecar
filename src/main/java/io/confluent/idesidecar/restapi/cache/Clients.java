@@ -38,7 +38,7 @@ public abstract class Clients<T extends AutoCloseable> {
   }
 
   protected Clients() {
-    this.caffeineSpec = CaffeineSpec.parse("");
+    this(CaffeineSpec.parse(""));
   }
 
   /**
@@ -128,7 +128,13 @@ public abstract class Clients<T extends AutoCloseable> {
     clearClients(connection.getId());
   }
 
+  /**
+   * Respond to the connection being updated by clearing and closing the
+   * clients that were cached for that connection. This ensures that the clients
+   * don't use stale connection information.
+   * @param connection the connection that was updated
+   */
   void onConnectionUpdated(@ObservesAsync @Lifecycle.Updated ConnectionState connection) {
-    // Do nothing
+    clearClients(connection.getId());
   }
 }

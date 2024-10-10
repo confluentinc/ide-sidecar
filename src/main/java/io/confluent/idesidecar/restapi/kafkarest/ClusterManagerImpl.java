@@ -15,7 +15,6 @@ import static io.confluent.idesidecar.restapi.util.RequestHeadersConstants.CONNE
 
 import io.confluent.idesidecar.restapi.cache.AdminClients;
 import io.confluent.idesidecar.restapi.cache.ClusterCache;
-import io.confluent.idesidecar.restapi.cache.ClusterCache.ClusterInfo;
 import io.confluent.idesidecar.restapi.exceptions.ClusterNotFoundException;
 import io.confluent.idesidecar.restapi.kafkarest.model.ClusterData;
 import io.confluent.idesidecar.restapi.kafkarest.model.ClusterDataList;
@@ -72,7 +71,7 @@ public class ClusterManagerImpl implements ClusterManager {
   public Uni<ClusterDataList> listKafkaClusters() {
     return uniItem(
         // Get the first Kafka cluster for the connection
-        (Supplier<Optional<ClusterInfo<KafkaCluster>>>)
+        (Supplier<Optional<KafkaCluster>>)
             () -> clusterCache.getKafkaClusterForConnection(connectionId.get()))
         // Run the supplier on the default worker pool since it may block
         .runSubscriptionOn(Infrastructure.getDefaultWorkerPool())
@@ -80,7 +79,7 @@ public class ClusterManagerImpl implements ClusterManager {
         // Call describeCluster if the cluster info is present
         // else return null
         .chain(clusterInfo -> clusterInfo
-            .map(kafkaClusterInfo -> this.describeCluster(kafkaClusterInfo.spec().id()))
+            .map(kafkaClusterInfo -> this.describeCluster(kafkaClusterInfo.id()))
             .orElse(Uni.createFrom().nullItem())
         )
         // Call describeCluster on each cluster ID

@@ -1,10 +1,7 @@
 package io.confluent.idesidecar.restapi.cache;
 
 import com.github.benmanes.caffeine.cache.CaffeineSpec;
-import io.confluent.idesidecar.restapi.connections.ConnectionState;
-import io.confluent.idesidecar.restapi.events.Lifecycle;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.event.ObservesAsync;
 import jakarta.inject.Inject;
 import java.util.Map;
 import java.util.Properties;
@@ -34,7 +31,7 @@ public class AdminClients extends Clients<AdminClient> {
    * Get an AdminClient for the given connection ID and Kafka cluster ID.
    * If the client does not already exist, it will be created.
    * @param connectionId The connection ID
-   * @param clusterId The cluster ID
+   * @param clusterId    The cluster ID
    * @return The AdminClient
    */
   public AdminClient getClient(String connectionId, String clusterId) {
@@ -52,10 +49,5 @@ public class AdminClients extends Clients<AdminClient> {
     props.putAll(adminClientSidecarConfigs);
     props.put("bootstrap.servers", cluster.bootstrapServers());
     return props;
-  }
-
-  @Override
-  void onConnectionUpdated(@ObservesAsync @Lifecycle.Updated ConnectionState connection) {
-    clearClients(connection.getId());
   }
 }

@@ -98,12 +98,13 @@ public class ClusterCache {
    * @param connectionId the ID of the connection
    * @return the info for the first Kafka cluster, or null if none found
    */
-  public Optional<ClusterInfo<KafkaCluster>> getKafkaClusterForConnection(String connectionId) {
+  public Optional<KafkaCluster> getKafkaClusterForConnection(String connectionId) {
     return forConnection(connectionId)
         .kafkaClusters
         .values()
         .stream()
-        .findFirst();
+        .findFirst()
+        .map(ClusterInfo::spec);
   }
 
 
@@ -225,7 +226,7 @@ public class ClusterCache {
     );
   }
 
-  public record ClusterInfo<SpecT extends Cluster>(
+  record ClusterInfo<SpecT extends Cluster>(
       String id,
       ClusterType type,
       SpecT spec,
@@ -235,7 +236,7 @@ public class ClusterCache {
     public static final String BLANK_PATH = "";
   }
 
-  public class Clusters {
+  class Clusters {
 
     private final String connectionId;
     private final ConnectionType connectionType;
