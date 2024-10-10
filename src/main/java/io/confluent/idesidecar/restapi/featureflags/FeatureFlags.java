@@ -15,6 +15,7 @@ import io.confluent.idesidecar.restapi.resources.FeatureFlagsResource;
 import io.confluent.idesidecar.restapi.util.Predicates;
 import io.confluent.idesidecar.restapi.util.WebClientFactory;
 import io.quarkus.logging.Log;
+import io.quarkus.runtime.Startup;
 import io.quarkus.scheduler.Scheduled;
 import io.smallrye.common.constraint.NotNull;
 import jakarta.annotation.PostConstruct;
@@ -139,6 +140,7 @@ import org.eclipse.microprofile.config.ConfigProvider;
  * <a href="https://docs.launchdarkly.com/sdk/concepts/client-side-server-side#client-side-id">LaunchDarkly client-side ID</a>
  * and evaluation URL. Note that the client-side ID is <i>not</i> a secret.
  */
+@Startup
 @ApplicationScoped
 public class FeatureFlags {
 

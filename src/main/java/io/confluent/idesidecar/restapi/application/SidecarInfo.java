@@ -7,6 +7,7 @@ package io.confluent.idesidecar.restapi.application;
 import io.confluent.idesidecar.restapi.util.OperatingSystemType;
 import io.confluent.idesidecar.restapi.util.OperatingSystemType.Properties;
 import io.quarkus.logging.Log;
+import io.quarkus.runtime.Startup;
 import io.smallrye.common.constraint.NotNull;
 import jakarta.inject.Singleton;
 import java.util.Optional;
@@ -34,6 +35,7 @@ import org.eclipse.microprofile.config.ConfigProvider;
  *     from the {@value #VSCODE_EXTENSION_VERSION_ENV} environment variable</li>
  * </ul>
  */
+@Startup
 @Singleton
 public class SidecarInfo {
 
