@@ -352,7 +352,6 @@ public class ClusterCache {
       return result.spec();
     }
 
-
     protected ClusterInfo<KafkaCluster> findKafkaCluster(
         String kafkaClusterId,
         boolean loadIfMissing
