@@ -7,12 +7,12 @@ import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
 import io.confluent.idesidecar.restapi.util.RequestHeadersConstants;
 import io.quarkus.vertx.web.Route;
 import io.smallrye.common.annotation.Blocking;
+import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.Future;
 import io.vertx.ext.web.RoutingContext;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 
 /**
@@ -50,10 +50,13 @@ public class ClusterRestProxyResource {
           if (context.getProxyResponseBody() != null) {
             // Set content-length header to the length of the response body
             // so that the client knows when the response is complete.
-            routingContext.response().putHeader(
-                HttpHeaders.CONTENT_LENGTH,
-                String.valueOf(context.getProxyResponseBody().getBytes().length)
-            );
+            // Set only if transfer-encoding is not set, as it takes precedence.
+            if (context.getProxyResponseHeaders().get(HttpHeaders.TRANSFER_ENCODING) == null) {
+              routingContext.response().putHeader(
+                  HttpHeaders.CONTENT_LENGTH,
+                  String.valueOf(context.getProxyResponseBody().getBytes().length)
+              );
+            }
             routingContext.response().end(context.getProxyResponseBody());
           } else {
             routingContext.response().end();

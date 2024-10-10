@@ -59,5 +59,4 @@ public class ClusterProxyProcessor extends
           return processedContext;
         });
   }
-
 }

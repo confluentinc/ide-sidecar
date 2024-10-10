@@ -29,12 +29,9 @@ public abstract class ClusterStrategy {
   }
 
   /**
-   * Process the proxy response from the cluster. Replace any HTTP URLs with the sidecar host.
-   * We might run the risk of replacing URLs that are not pointing to the target cluster, but
-   * we don't expect this to be a problem in the context of the Kafka REST API responses.
+   * Process the proxy response from the cluster. By default, this method does nothing.
    */
   public String processProxyResponse(String proxyResponse) {
-    var clusterPattern = "(http|https)://[\\w\\-.]+(:\\d+)?";
-    return proxyResponse.replaceAll(clusterPattern, sidecarHost);
+    return proxyResponse;
   }
 }
