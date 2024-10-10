@@ -1,30 +1,17 @@
 package io.confluent.idesidecar.restapi.kafkarest;
 
-import static io.confluent.idesidecar.restapi.kafkarest.RelationshipUtil.forPartitionReassignments;
-import static io.confluent.idesidecar.restapi.kafkarest.RelationshipUtil.forPartitions;
-import static io.confluent.idesidecar.restapi.kafkarest.RelationshipUtil.forTopic;
-import static io.confluent.idesidecar.restapi.kafkarest.RelationshipUtil.forTopicConfigs;
-import static io.confluent.idesidecar.restapi.kafkarest.RelationshipUtil.forTopics;
-import static io.confluent.idesidecar.restapi.util.MutinyUtil.uniItem;
 import static io.confluent.idesidecar.restapi.util.MutinyUtil.uniStage;
 
 import io.confluent.idesidecar.restapi.kafkarest.model.CreateTopicRequestData;
-import io.confluent.idesidecar.restapi.kafkarest.model.ResourceCollectionMetadata;
-import io.confluent.idesidecar.restapi.kafkarest.model.ResourceMetadata;
-import io.confluent.idesidecar.restapi.kafkarest.model.TopicData;
-import io.confluent.idesidecar.restapi.kafkarest.model.TopicDataList;
 import io.smallrye.mutiny.Uni;
 import io.vertx.core.http.HttpServerRequest;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
-
 import org.apache.kafka.clients.admin.DescribeTopicsOptions;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.admin.TopicDescription;
-import org.apache.kafka.common.internals.Topic;
 
 /**
  * RequestScoped bean for managing Kafka topics. Creating the bean as {@link RequestScoped} allows
@@ -98,14 +85,18 @@ public class TopicManagerImpl extends Manager implements TopicManager {
         );
   }
 
-  public Uni<List<TopicDescription>> listKafkaTopics(String clusterId, Boolean includeAuthorizedOperations) {
+  public Uni<List<TopicDescription>> listKafkaTopics(
+      String clusterId, Boolean includeAuthorizedOperations
+  ) {
     return clusterManager
         .getKafkaCluster(clusterId)
         .chain(ignored -> uniStage(
-            adminClients.getClient(connectionId.get(), clusterId).listTopics().names().toCompletionStage()
+            adminClients
+                .getClient(connectionId.get(), clusterId).listTopics().names().toCompletionStage()
         ))
         .chain(topicNames -> uniStage(
-            adminClients.getClient(connectionId.get(), clusterId)
+            adminClients
+                .getClient(connectionId.get(), clusterId)
                 .describeTopics(topicNames, getDescribeTopicsOptions(includeAuthorizedOperations))
                 .allTopicNames()
                 .toCompletionStage())

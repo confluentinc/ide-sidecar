@@ -1,22 +1,22 @@
 package io.confluent.idesidecar.restapi.kafkarest;
 
-import io.confluent.idesidecar.restapi.kafkarest.api.PartitionV3Api;
-import io.confluent.idesidecar.restapi.kafkarest.model.PartitionData;
-import io.confluent.idesidecar.restapi.kafkarest.model.PartitionDataList;
-import io.confluent.idesidecar.restapi.kafkarest.model.ReassignmentData;
-import io.confluent.idesidecar.restapi.kafkarest.model.ReassignmentDataList;
-import io.confluent.idesidecar.restapi.kafkarest.model.ResourceMetadata;
-import io.confluent.idesidecar.restapi.kafkarest.model.ResourceCollectionMetadata;
-import io.smallrye.mutiny.Uni;
-import jakarta.enterprise.context.RequestScoped;
-import jakarta.inject.Inject;
-import org.apache.kafka.common.TopicPartitionInfo;
-
 import static io.confluent.idesidecar.restapi.kafkarest.RelationshipUtil.forLeader;
 import static io.confluent.idesidecar.restapi.kafkarest.RelationshipUtil.forPartition;
 import static io.confluent.idesidecar.restapi.kafkarest.RelationshipUtil.forReassignment;
 import static io.confluent.idesidecar.restapi.kafkarest.RelationshipUtil.forReplicas;
 import static io.confluent.idesidecar.restapi.kafkarest.RelationshipUtil.forTopicPartitions;
+
+import io.confluent.idesidecar.restapi.kafkarest.api.PartitionV3Api;
+import io.confluent.idesidecar.restapi.kafkarest.model.PartitionData;
+import io.confluent.idesidecar.restapi.kafkarest.model.PartitionDataList;
+import io.confluent.idesidecar.restapi.kafkarest.model.ReassignmentData;
+import io.confluent.idesidecar.restapi.kafkarest.model.ReassignmentDataList;
+import io.confluent.idesidecar.restapi.kafkarest.model.ResourceCollectionMetadata;
+import io.confluent.idesidecar.restapi.kafkarest.model.ResourceMetadata;
+import io.smallrye.mutiny.Uni;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
+import org.apache.kafka.common.TopicPartitionInfo;
 
 @RequestScoped
 public class PartitionV3ApiImpl implements PartitionV3Api {
@@ -25,7 +25,9 @@ public class PartitionV3ApiImpl implements PartitionV3Api {
   PartitionManagerImpl partitionManager;
 
   @Override
-  public Uni<PartitionData> getKafkaPartition(String clusterId, String topicName, Integer partitionId) {
+  public Uni<PartitionData> getKafkaPartition(
+      String clusterId, String topicName, Integer partitionId
+  ) {
     return partitionManager
         .getKafkaPartition(clusterId, topicName, partitionId)
         .onItem()
@@ -80,17 +82,25 @@ public class PartitionV3ApiImpl implements PartitionV3Api {
   }
 
   @Override
-  public Uni<ReassignmentDataList> internalKafkaV3ClustersClusterIdTopicsPartitionsReassignmentGet(String clusterId) {
+  public Uni<ReassignmentDataList> internalKafkaV3ClustersClusterIdTopicsPartitionsReassignmentGet(
+      String clusterId
+  ) {
     throw new UnsupportedOperationException("Not implemented yet");
   }
 
   @Override
-  public Uni<ReassignmentData> internalKafkaV3ClustersClusterIdTopicsTopicNamePartitionsPartitionIdReassignmentGet(String clusterId, String topicName, Integer partitionId) {
+  public Uni<ReassignmentData>
+        internalKafkaV3ClustersClusterIdTopicsTopicNamePartitionsPartitionIdReassignmentGet(
+      String clusterId, String topicName, Integer partitionId
+  ) {
     throw new UnsupportedOperationException("Not implemented yet");
   }
 
   @Override
-  public Uni<ReassignmentDataList> internalKafkaV3ClustersClusterIdTopicsTopicNamePartitionsReassignmentGet(String clusterId, String topicName) {
+  public Uni<ReassignmentDataList>
+        internalKafkaV3ClustersClusterIdTopicsTopicNamePartitionsReassignmentGet(
+      String clusterId, String topicName
+  ) {
     throw new UnsupportedOperationException("Not implemented yet");
   }
 }

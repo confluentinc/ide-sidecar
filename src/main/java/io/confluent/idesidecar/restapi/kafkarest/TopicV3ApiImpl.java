@@ -1,18 +1,25 @@
 package io.confluent.idesidecar.restapi.kafkarest;
 
+import static io.confluent.idesidecar.restapi.kafkarest.RelationshipUtil.forPartitionReassignments;
+import static io.confluent.idesidecar.restapi.kafkarest.RelationshipUtil.forPartitions;
+import static io.confluent.idesidecar.restapi.kafkarest.RelationshipUtil.forTopic;
+import static io.confluent.idesidecar.restapi.kafkarest.RelationshipUtil.forTopicConfigs;
+import static io.confluent.idesidecar.restapi.kafkarest.RelationshipUtil.forTopics;
+import static io.confluent.idesidecar.restapi.util.MutinyUtil.uniItem;
+
 import io.confluent.idesidecar.restapi.kafkarest.api.TopicV3Api;
-import io.confluent.idesidecar.restapi.kafkarest.model.*;
+import io.confluent.idesidecar.restapi.kafkarest.model.CreateTopicRequestData;
+import io.confluent.idesidecar.restapi.kafkarest.model.ResourceCollectionMetadata;
+import io.confluent.idesidecar.restapi.kafkarest.model.ResourceMetadata;
+import io.confluent.idesidecar.restapi.kafkarest.model.TopicData;
+import io.confluent.idesidecar.restapi.kafkarest.model.TopicDataList;
+import io.confluent.idesidecar.restapi.kafkarest.model.UpdatePartitionCountRequestData;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
-import org.apache.kafka.clients.admin.TopicDescription;
-
 import java.util.Optional;
 import java.util.Set;
-
-import static io.confluent.idesidecar.restapi.kafkarest.RelationshipUtil.*;
-import static io.confluent.idesidecar.restapi.kafkarest.RelationshipUtil.forTopic;
-import static io.confluent.idesidecar.restapi.util.MutinyUtil.uniItem;
+import org.apache.kafka.clients.admin.TopicDescription;
 
 @RequestScoped
 public class TopicV3ApiImpl implements TopicV3Api {
@@ -75,7 +82,9 @@ public class TopicV3ApiImpl implements TopicV3Api {
   }
 
 
-  private static TopicData fromTopicDescription(String clusterId, TopicDescription topicDescription) {
+  private static TopicData fromTopicDescription(
+      String clusterId, TopicDescription topicDescription
+  ) {
     return TopicData
         .builder()
         .kind("KafkaTopic")

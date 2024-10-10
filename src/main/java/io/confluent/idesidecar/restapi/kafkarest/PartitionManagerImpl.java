@@ -1,15 +1,12 @@
 package io.confluent.idesidecar.restapi.kafkarest;
 
-import io.confluent.idesidecar.restapi.kafkarest.model.PartitionData;
-import io.confluent.idesidecar.restapi.kafkarest.model.PartitionDataList;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
+import java.util.List;
 import org.apache.kafka.clients.admin.TopicDescription;
 import org.apache.kafka.common.TopicPartitionInfo;
 import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
-
-import java.util.List;
 
 @RequestScoped
 public class PartitionManagerImpl extends Manager {

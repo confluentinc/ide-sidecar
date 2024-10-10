@@ -21,13 +21,15 @@ public final class RelationshipUtil {
   }
 
   public static Relationship forPartitionReassignments(String clusterId, String topicId) {
-    return createRelationship("%s/internal/kafka/v3/clusters/%s/topics/%s/partitions/-/reassignment".formatted(
+    return createRelationship("%s/internal/kafka/v3/clusters/%s/topics/%s/partitions/-/reassignment"
+        .formatted(
             SIDECAR_HOST, clusterId, topicId
         ));
   }
 
   public static Relationship forAllPartitionReassignments(String clusterId) {
-    return createRelationship("%s/internal/kafka/v3/clusters/%s/topics/-/partitions/-/reassignment".formatted(
+    return createRelationship("%s/internal/kafka/v3/clusters/%s/topics/-/partitions/-/reassignment"
+        .formatted(
             SIDECAR_HOST, clusterId
         ));
   }
