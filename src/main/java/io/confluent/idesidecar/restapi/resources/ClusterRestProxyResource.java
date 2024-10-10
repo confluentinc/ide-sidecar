@@ -48,6 +48,12 @@ public class ClusterRestProxyResource {
           routingContext.response().setStatusCode(context.getProxyResponseStatusCode());
           routingContext.response().headers().addAll(context.getProxyResponseHeaders());
           if (context.getProxyResponseBody() != null) {
+            // Set content-length header to the length of the response body
+            // so that the client knows when the response is complete.
+            routingContext.response().putHeader(
+                HttpHeaders.CONTENT_LENGTH,
+                String.valueOf(context.getProxyResponseBody().getBytes().length)
+            );
             routingContext.response().end(context.getProxyResponseBody());
           } else {
             routingContext.response().end();
