@@ -3,9 +3,9 @@ package io.confluent.idesidecar.restapi.proxy.clusters.strategy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.quarkus.test.junit.QuarkusTest;
+import jakarta.inject.Inject;
 import java.util.stream.Stream;
 import org.eclipse.microprofile.config.ConfigProvider;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -13,16 +13,11 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 @QuarkusTest
 class ConfluentLocalKafkaClusterStrategyTest {
-  private static final String CONFLUENT_LOCAL_KAFKAREST_HOSTNAME = ConfigProvider
-      .getConfig()
-      .getValue("ide-sidecar.connections.confluent-local.default.kafkarest-hostname", String.class);
+  private static final int TEST_PORT = ConfigProvider.getConfig()
+      .getValue("quarkus.http.test-port", Integer.class);
 
-  ClusterStrategy strategy;
-
-  @BeforeEach
-  void setUp() {
-    strategy = new ConfluentLocalKafkaClusterStrategy(CONFLUENT_LOCAL_KAFKAREST_HOSTNAME);
-  }
+  @Inject
+  ConfluentLocalKafkaClusterStrategy strategy;
 
   @ParameterizedTest
   @MethodSource
@@ -40,26 +35,26 @@ class ConfluentLocalKafkaClusterStrategyTest {
         Arguments.of(
 
             "/kafka/v3/clusters/my-cluster/topics",
-            "http://localhost:8082",
-            "http://localhost:8082/v3/clusters/my-cluster/topics"
+            "http://localhost:%s".formatted(TEST_PORT),
+            "http://localhost:%s/internal/kafka/v3/clusters/my-cluster/topics".formatted(TEST_PORT)
         ),
         Arguments.of(
 
             "kafka/v3/clusters/my-cluster/topics",
-            "http://localhost:8082",
-            "http://localhost:8082/v3/clusters/my-cluster/topics"
+            "http://localhost:%s".formatted(TEST_PORT),
+            "http://localhost:%s/internal/kafka/v3/clusters/my-cluster/topics".formatted(TEST_PORT)
         ),
         Arguments.of(
 
             "kafka/v3/clusters/my-cluster/topics",
-            "http://localhost:8082/",
-            "http://localhost:8082/v3/clusters/my-cluster/topics"
+            "http://localhost:%s/".formatted(TEST_PORT),
+            "http://localhost:%s/internal/kafka/v3/clusters/my-cluster/topics".formatted(TEST_PORT)
         ),
         Arguments.of(
 
             "/kafka/v3/clusters/my-cluster/topics",
-            "http://localhost:8082/",
-            "http://localhost:8082/v3/clusters/my-cluster/topics"
+            "http://localhost:%s/".formatted(TEST_PORT),
+            "http://localhost:%s/internal/kafka/v3/clusters/my-cluster/topics".formatted(TEST_PORT)
         )
     );
   }
@@ -69,11 +64,11 @@ class ConfluentLocalKafkaClusterStrategyTest {
     String proxyResponse = """
         {
           "partitions": {
-            "related": "http://rest-proxy:8082/v3/clusters/lkc-95w6wy/topics/my_topic/partitions"
+            "related": "http://localhost:%s/internal/kafka/v3/clusters/lkc-95w6wy/topics/my_topic/partitions"
           }
         }
-        """;
-    String clusterUri = "http://rest-proxy:8082";
+        """.formatted(TEST_PORT);
+    String clusterUri = "http://localhost:%s".formatted(TEST_PORT);
     String expectedResponse = """
         {
           "partitions": {
@@ -84,7 +79,7 @@ class ConfluentLocalKafkaClusterStrategyTest {
     var actualResponse = strategy.processProxyResponse(
         proxyResponse,
         clusterUri,
-        "http://localhost:26637"
+        "http://localhost:%s".formatted(TEST_PORT)
     );
     assertEquals(expectedResponse, actualResponse);
   }

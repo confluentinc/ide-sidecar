@@ -25,6 +25,7 @@ import jakarta.inject.Inject;
 import java.time.Duration;
 import java.util.Deque;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
@@ -90,6 +91,22 @@ public class ClusterCache {
   public KafkaCluster getKafkaCluster(String connectionId, String clusterId) {
     return forConnection(connectionId).getKafkaCluster(clusterId);
   }
+
+  /**
+   * Find the first Kafka cluster accessible over the specified connection. This is useful when
+   * it is known that there is only one Kafka cluster per connection.
+   * @param connectionId the ID of the connection
+   * @return the info for the first Kafka cluster, or null if none found
+   */
+  public Optional<KafkaCluster> getKafkaClusterForConnection(String connectionId) {
+    return forConnection(connectionId)
+        .kafkaClusters
+        .values()
+        .stream()
+        .findFirst()
+        .map(ClusterInfo::spec);
+  }
+
 
   /**
    * Find the cluster info for the schema registry that is associated with the given Kafka cluster,
