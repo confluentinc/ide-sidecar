@@ -8,29 +8,19 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
 @RegisterForReflection
 public class FeatureFlagFailureException extends RuntimeException {
 
-  private final ParsingFeatureFlagsFailedException error;
+  private final String code;
 
-  public FeatureFlagFailureException(String message) {
-    super(message);
-    this.error = null;
-  }
-
-  public FeatureFlagFailureException(ParsingFeatureFlagsFailedException error) {
-    super(error.message());
-    this.error = error;
+  public FeatureFlagFailureException(String message, String code, Throwable t) {
+    super(message, t);
+    this.code = code;
   }
 
   public FeatureFlagFailureException(Throwable t) {
     super(t);
-    this.error = null;
+    this.code = null;
   }
 
-  public FeatureFlagFailureException(String message, Throwable t) {
-    super(message, t);
-    this.error = null;
-  }
-
-  public ParsingFeatureFlagsFailedException getError() {
-    return error;
+  public String getCode() {
+    return code;
   }
 }

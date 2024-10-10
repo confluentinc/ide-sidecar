@@ -5,9 +5,11 @@ import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
+import io.confluent.idesidecar.restapi.util.WebClientFactory;
 import io.quarkiverse.wiremock.devservice.ConnectWireMock;
 import io.quarkus.logging.Log;
 import io.quarkus.test.junit.QuarkusTest;
+import jakarta.inject.Inject;
 import java.util.Set;
 import java.util.function.Consumer;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -25,6 +27,9 @@ class FeatureProjectTest extends BaseFeatureFlagsTest {
 
   @ConfigProperty(name = "ide-sidecar.feature-flags.ide-project.eval-uri")
   String httpUrl;
+
+  @Inject
+  WebClientFactory webClientFactory;
 
   @BeforeEach
   void setup() {
@@ -57,7 +62,7 @@ class FeatureProjectTest extends BaseFeatureFlagsTest {
         200,
         loadResource(LAUNCH_DARKLY_RESPONSE_RESOURCE_PATH)
     );
-    assertProjectRefresh(project, CONTEXT);
+    assertProjectRefresh(project, CONTEXT, webClientFactory);
 
     // Then the project's evaluations will match expected results
     var expected = loadEvaluationsFromResourceFile(
@@ -74,7 +79,7 @@ class FeatureProjectTest extends BaseFeatureFlagsTest {
         400,
         loadResource(LAUNCH_DARKLY_ERROR_RESOURCE_PATH)
     );
-    assertProjectRefresh(project, CONTEXT);
+    assertProjectRefresh(project, CONTEXT, webClientFactory);
 
     // Then the project's evaluations will unchanged
     assertEvaluationsMatch(expected, project);
@@ -87,7 +92,7 @@ class FeatureProjectTest extends BaseFeatureFlagsTest {
         200,
         loadResource(LAUNCH_DARKLY_EMPTY_RESOURCE_PATH)
     );
-    assertProjectRefresh(project, CONTEXT);
+    assertProjectRefresh(project, CONTEXT, webClientFactory);
 
     // Then the project's evaluations will be empty
     assertEvaluationsMatch(Set.of(), project);

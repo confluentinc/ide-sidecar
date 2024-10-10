@@ -11,13 +11,14 @@ import io.confluent.idesidecar.restapi.connections.ConnectionState;
 import io.confluent.idesidecar.restapi.events.Lifecycle;
 import io.confluent.idesidecar.restapi.exceptions.ExceptionMappers;
 import io.confluent.idesidecar.restapi.exceptions.FlagNotFoundException;
+import io.confluent.idesidecar.restapi.resources.FeatureFlagsResource;
 import io.confluent.idesidecar.restapi.util.Predicates;
+import io.confluent.idesidecar.restapi.util.WebClientFactory;
 import io.quarkus.logging.Log;
-import io.quarkus.runtime.StartupEvent;
 import io.quarkus.scheduler.Scheduled;
 import io.smallrye.common.constraint.NotNull;
+import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.event.Observes;
 import jakarta.enterprise.event.ObservesAsync;
 import jakarta.inject.Inject;
 import java.time.Duration;
@@ -241,6 +242,9 @@ public class FeatureFlags {
   @Inject
   SidecarInfo sidecar;
 
+  @Inject
+  WebClientFactory webClientFactory;
+
   /**
    * Create a {@link FeatureFlags} instance that uses the {@link #IDE} and {@link #CCLOUD} projects.
    */
@@ -260,7 +264,7 @@ public class FeatureFlags {
       Duration scheduledInterval,
       Consumer<FlagMutations<?>> defaultInitializer
   ) {
-    // Configure the projects
+    // Configure the projects, and make sure to initialize them with our web client factory
     this.deviceProjects = List.copyOf(deviceProjects);
     this.ccloudProjects = List.copyOf(ccloudProjects);
     this.allProjects = Stream
@@ -279,13 +283,17 @@ public class FeatureFlags {
   }
 
   /**
-   * Hook to be called after this bean starts up and after the {@link Inject @Injected} fields
+   * Hook to be called after this bean is initialized, after the {@link Inject @Injected} fields
    * have been set.
-   *
-   * @param event the startup event
-   * @return the latch that can be used to wait for all projects' flags to be evaluated; never null
    */
-  CountDownLatch startup(@Observes StartupEvent event) {
+  @PostConstruct
+  void initialize() {
+    // Perform the initialization, but we don't need to wait
+    initializeAndWait();
+  }
+
+  @VisibleForTesting
+  CountDownLatch initializeAndWait() {
     // Configure the contexts with the device information
     updateDeviceContext();
     updateCCloudContext(null);
@@ -339,7 +347,11 @@ public class FeatureFlags {
 
   /**
    * Get the JSON representation of the current value of the flag with the given ID
-   * from any of the projects.
+   * from any of the projects. This is called by the {@link FeatureFlagsResource} method(s)
+   * that are used by the extension, and generally should not otherwise be used from within the
+   * sidecar, which should always use the {@code evaluateAs*()} methods that take a {@link FlagId}.
+   *
+   * <p>This method differs from other {@code evaluateAs*()} methods.
    *
    * @param id the ID of the flag to find
    * @return the current value of the flag, or empty if the flag does not exist
@@ -604,13 +616,13 @@ public class FeatureFlags {
         // Evaluate the project(s) using the device context.
         // The cached evaluations are updated asynchronously.
         deviceProjects.forEach(
-            project -> project.refresh(deviceContext(), latch)
+            project -> project.refresh(deviceContext(), webClientFactory, latch::countDown)
         );
 
         // Evaluate the project(s) using the CCloud context.
         // The cached evaluations are updated asynchronously.
         ccloudProjects.forEach(
-            project -> project.refresh(ccloudContext(), latch)
+            project -> project.refresh(ccloudContext(), webClientFactory, latch::countDown)
         );
 
         // Set the next minimum time the flags CAN be run, using "almost" the interval

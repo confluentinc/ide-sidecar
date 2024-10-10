@@ -25,7 +25,6 @@ class HttpFlagEvaluationProvider implements FeatureProject.Provider {
   final ObjectMapper objectMapper;
   final String clientId;
   final String fetchUri;
-  final WebClientFactory webClientFactory = new WebClientFactory();
 
   HttpFlagEvaluationProvider(
       @NotNull String projectName,
@@ -42,6 +41,7 @@ class HttpFlagEvaluationProvider implements FeatureProject.Provider {
   @Override
   public void evaluateFlags(
       @NotNull LDContext context,
+      @NotNull WebClientFactory webClientFactory,
       @NotNull Consumer<Collection<FlagEvaluation>> callback
   ) {
     var client = webClientFactory.getWebClient();

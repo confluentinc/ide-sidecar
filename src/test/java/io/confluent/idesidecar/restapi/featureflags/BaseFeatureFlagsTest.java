@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.matching.UrlPattern;
 import com.launchdarkly.sdk.LDContext;
+import io.confluent.idesidecar.restapi.util.WebClientFactory;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -30,23 +31,25 @@ public abstract class BaseFeatureFlagsTest {
 
   Collection<FlagEvaluation> assertProjectRefresh(
       FeatureProject project,
-      LDContext context
+      LDContext context,
+      WebClientFactory webClientFactory
   ) {
     var latch = new CountDownLatch(1);
 
-    project.refresh(context, latch);
+    project.refresh(context, webClientFactory, latch::countDown);
     await(latch);
     return project.evaluations().evaluations();
   }
 
   Collection<FlagEvaluation> assertProviderRefresh(
       FeatureProject.Provider provider,
-      LDContext context
+      LDContext context,
+      WebClientFactory webClientFactory
   ) {
     var latch = new CountDownLatch(1);
     var results = new AtomicReference<Collection<FlagEvaluation>>();
 
-    provider.evaluateFlags(context, evaluations -> {
+    provider.evaluateFlags(context, webClientFactory, evaluations -> {
       latch.countDown();
       results.set(evaluations);
     });

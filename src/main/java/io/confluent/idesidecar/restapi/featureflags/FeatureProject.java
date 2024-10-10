@@ -2,9 +2,9 @@ package io.confluent.idesidecar.restapi.featureflags;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.launchdarkly.sdk.LDContext;
+import io.confluent.idesidecar.restapi.util.WebClientFactory;
 import io.smallrye.common.constraint.NotNull;
 import java.util.Collection;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
@@ -21,11 +21,14 @@ public class FeatureProject {
      * Evaluate the feature flags given the supplied context, returning the evaluations using the
      * supplied callback.
      *
-     * @param context  the LaunchDarkly context for which the flags should be evaluated
-     * @param callback the function to be called with the resulting set of {@link FlagEvaluation}s
+     * @param context          the LaunchDarkly context for which the flags should be evaluated
+     * @param webClientFactory the factory for web clients; may not be null
+     * @param callback         the function to be called with the resulting set of
+     *                         {@link FlagEvaluation}s
      */
     void evaluateFlags(
         @NotNull LDContext context,
+        @NotNull WebClientFactory webClientFactory,
         @NotNull Consumer<Collection<FlagEvaluation>> callback
     );
   }
@@ -45,24 +48,37 @@ public class FeatureProject {
     this.name = name;
     this.clientId = clientId;
     this.fetchUri = fetchUri;
-    this.provider = new HttpFlagEvaluationProvider(name, clientId, this.fetchUri, OBJECT_MAPPER);
+    this.provider = new HttpFlagEvaluationProvider(
+        name,
+        clientId,
+        this.fetchUri,
+        OBJECT_MAPPER
+    );
   }
 
   public FlagEvaluations evaluations() {
     return evaluations.get();
   }
 
-  void refresh(LDContext context, CountDownLatch latch) {
+  /**
+   * Refresh the {@link #evaluations() feature flag evaluations} for this project.
+   *
+   * @param context          the context for evaluation
+   * @param webClientFactory the factory for web clients; may not be null
+   * @param completion       the function that should be called when the refresh is completed
+   */
+  void refresh(LDContext context, WebClientFactory webClientFactory, Runnable completion) {
     provider.evaluateFlags(
         context,
+        webClientFactory,
         latestEvaluations -> {
           // Only set the evaluations if the latest are non-null
           if (latestEvaluations != null) {
             evaluations.set(new FlagEvaluations(latestEvaluations));
           }
           // But always call the latch
-          if (latch != null) {
-            latch.countDown();
+          if (completion != null) {
+            completion.run();
           }
         }
     );

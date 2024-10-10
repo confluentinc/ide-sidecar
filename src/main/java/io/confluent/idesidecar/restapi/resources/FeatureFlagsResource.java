@@ -3,6 +3,7 @@ package io.confluent.idesidecar.restapi.resources;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.confluent.idesidecar.restapi.exceptions.ExceptionMappers;
 import io.confluent.idesidecar.restapi.exceptions.Failure;
+import io.confluent.idesidecar.restapi.exceptions.FeatureFlagFailureException;
 import io.confluent.idesidecar.restapi.exceptions.FlagNotFoundException;
 import io.confluent.idesidecar.restapi.featureflags.FeatureFlags;
 import io.quarkus.logging.Log;
@@ -68,8 +69,16 @@ public class FeatureFlagsResource {
               @Content(mediaType = "application/json",
                   schema = @Schema(implementation = Failure.class))
           }),
+      @APIResponse(
+          responseCode = "500",
+          description = "Internal error parsing feature flags",
+          content = {
+              @Content(mediaType = "application/json",
+                  schema = @Schema(implementation = Failure.class))
+          }),
   })
-  public JsonNode evaluateFlag(String id) throws FlagNotFoundException {
+  public JsonNode evaluateFlag(String id)
+      throws FlagNotFoundException, FeatureFlagFailureException {
     Log.debugf("Evaluating feature flag '%s'", id);
     return featureFlags
         .evaluateAsJson(id)

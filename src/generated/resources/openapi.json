@@ -300,6 +300,16 @@
                 }
               }
             }
+          },
+          "500" : {
+            "description" : "Internal error parsing feature flags",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Failure"
+                }
+              }
+            }
           }
         }
       }

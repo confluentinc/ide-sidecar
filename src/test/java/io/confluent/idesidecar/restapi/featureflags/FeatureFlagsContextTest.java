@@ -11,10 +11,12 @@ import com.launchdarkly.sdk.LDContext;
 import io.confluent.idesidecar.restapi.application.SidecarInfo;
 import io.confluent.idesidecar.restapi.auth.CCloudOAuthContext;
 import io.confluent.idesidecar.restapi.connections.CCloudConnectionState;
+import io.confluent.idesidecar.restapi.util.WebClientFactory;
 import io.quarkiverse.wiremock.devservice.ConnectWireMock;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.MockitoConfig;
+import jakarta.inject.Inject;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -24,13 +26,16 @@ import org.junit.jupiter.api.Test;
 
 @QuarkusTest
 @ConnectWireMock
-class FeatureFlagsContextTest implements FeatureFlagTestConstants {
+class FeatureFlagsContextTest extends BaseFeatureFlagsTest implements FeatureFlagTestConstants {
 
   @InjectMock
   @MockitoConfig(convertScopes = true)
   SidecarInfo sidecar;
 
   CCloudConnectionState ccloudState;
+
+  @Inject
+  WebClientFactory webClientFactory;
 
   @BeforeEach
   void beforeEach() {
@@ -40,6 +45,7 @@ class FeatureFlagsContextTest implements FeatureFlagTestConstants {
   void shouldInitializeWithDeviceContext() {
     // When newly initialized without a sidecar
     var flags = new FeatureFlags();
+    flags.webClientFactory = webClientFactory;
     flags.sidecar = null;
 
     // Then the device context should be minimal
@@ -51,7 +57,9 @@ class FeatureFlagsContextTest implements FeatureFlagTestConstants {
     // When we set the sidecar info and the startup event method is called
     flags.sidecar = sidecar;
     expectSidecarInfo();
-    flags.startup(null);
+    await(
+        flags.initializeAndWait()
+    );
 
     // Then the device context should contain the sidecar information
     assertDeviceContextMatchesSidecar(flags);
@@ -64,9 +72,12 @@ class FeatureFlagsContextTest implements FeatureFlagTestConstants {
   void shouldUpdateWithCCloudContext() {
     // When newly initialized with a sidecar and the startup event method is called
     var flags = new FeatureFlags();
+    flags.webClientFactory = webClientFactory;
     flags.sidecar = this.sidecar;
     expectSidecarInfo();
-    flags.startup(null);
+    await(
+        flags.initializeAndWait()
+    );
 
     // And a connection to CCloud is established
     expectCCloudState();

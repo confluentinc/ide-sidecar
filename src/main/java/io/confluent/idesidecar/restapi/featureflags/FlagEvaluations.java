@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.idesidecar.restapi.exceptions.FeatureFlagFailureException;
-import io.confluent.idesidecar.restapi.exceptions.ParsingFeatureFlagsFailedException;
 import io.quarkus.logging.Log;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import io.smallrye.common.constraint.NotNull;
@@ -83,12 +82,24 @@ class FlagEvaluations implements Iterable<FlagEvaluation> {
                    .toList();
     } catch (JsonProcessingException e) {
       try {
-        var error = objectMapper.readValue(json, ParsingFeatureFlagsFailedException.class);
-        throw new FeatureFlagFailureException(error);
+        // Try to read the error returned from LD
+        var error = objectMapper.readValue(json, ParsingError.class);
+        if (error != null) {
+          throw new FeatureFlagFailureException(error.message, error.code, e);
+        } else {
+          throw new FeatureFlagFailureException(e);
+        }
       } catch (JsonProcessingException e2) {
         throw new FeatureFlagFailureException(e2);
       }
     }
+  }
+
+  @RegisterForReflection
+  record ParsingError(
+      String code,
+      String message
+  ){
   }
 
   final Map<String, FlagEvaluation> byId = new ConcurrentHashMap<>();

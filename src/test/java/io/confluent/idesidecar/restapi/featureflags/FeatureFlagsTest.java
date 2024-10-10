@@ -17,10 +17,12 @@ import com.fasterxml.jackson.databind.node.LongNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import io.confluent.idesidecar.restapi.application.SidecarInfo;
+import io.confluent.idesidecar.restapi.util.WebClientFactory;
 import io.quarkiverse.wiremock.devservice.ConnectWireMock;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.MockitoConfig;
+import jakarta.inject.Inject;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -42,6 +44,9 @@ class FeatureFlagsTest extends BaseFeatureFlagsTest implements FeatureFlagTestCo
   @MockitoConfig(convertScopes = true)
   SidecarInfo sidecar;
 
+  @Inject
+  WebClientFactory webClientFactory;
+
   FeatureFlags flags;
 
   WireMock wireMock;
@@ -58,6 +63,7 @@ class FeatureFlagsTest extends BaseFeatureFlagsTest implements FeatureFlagTestCo
     // Set up the feature flags but do not call startup(...)
     flags = new FeatureFlags();
     flags.sidecar = sidecar;
+    flags.webClientFactory = webClientFactory;
   }
 
   @AfterEach
@@ -82,7 +88,7 @@ class FeatureFlagsTest extends BaseFeatureFlagsTest implements FeatureFlagTestCo
 
     // When we initialize the feature flags and startup fetches the flags
     await(
-        flags.startup(null)
+        flags.initializeAndWait()
     );
 
     // Then the default flags will exist
@@ -98,7 +104,7 @@ class FeatureFlagsTest extends BaseFeatureFlagsTest implements FeatureFlagTestCo
 
     // When we initialize the feature flags and startup fetches the flags
     await(
-        flags.startup(null)
+        flags.initializeAndWait()
     );
 
     // Then the default flags will exist
@@ -142,7 +148,7 @@ class FeatureFlagsTest extends BaseFeatureFlagsTest implements FeatureFlagTestCo
 
     // When we initialize the feature flags and startup fetches the flags
     await(
-        flags.startup(null)
+        flags.initializeAndWait()
     );
 
     // Then the default flags will exist

@@ -7,8 +7,10 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
+import io.confluent.idesidecar.restapi.util.WebClientFactory;
 import io.quarkiverse.wiremock.devservice.ConnectWireMock;
 import io.quarkus.test.junit.QuarkusTest;
+import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,6 +23,9 @@ class HttpFlagEvaluationProviderTest extends BaseFeatureFlagsTest {
   HttpFlagEvaluationProvider provider;
 
   WireMock wireMock;
+
+  @Inject
+  WebClientFactory webClientFactory;
 
   @ConfigProperty(name = "quarkus.wiremock.devservices.port")
   int wireMockPort;
@@ -52,7 +57,7 @@ class HttpFlagEvaluationProviderTest extends BaseFeatureFlagsTest {
         200,
         loadResource(LAUNCH_DARKLY_RESPONSE_RESOURCE_PATH)
     );
-    var evaluations = assertProviderRefresh(provider, CONTEXT);
+    var evaluations = assertProviderRefresh(provider, CONTEXT, webClientFactory);
 
     // Then the resulting evaluations should match the expected results
     var expected = loadEvaluationsFromResourceFile(
@@ -72,7 +77,7 @@ class HttpFlagEvaluationProviderTest extends BaseFeatureFlagsTest {
         200,
         loadResource(LAUNCH_DARKLY_EMPTY_RESOURCE_PATH)
     );
-    var evaluations = assertProviderRefresh(provider, CONTEXT);
+    var evaluations = assertProviderRefresh(provider, CONTEXT, webClientFactory);
 
     // Then the resulting evaluations should match the expected results
     assertTrue(evaluations.isEmpty());
@@ -87,7 +92,7 @@ class HttpFlagEvaluationProviderTest extends BaseFeatureFlagsTest {
         400,
         loadResource(LAUNCH_DARKLY_ERROR_RESOURCE_PATH)
     );
-    var evaluations = assertProviderRefresh(provider, CONTEXT);
+    var evaluations = assertProviderRefresh(provider, CONTEXT, webClientFactory);
 
     // Then the resulting evaluations should match the expected results
     assertNull(evaluations);
@@ -102,7 +107,7 @@ class HttpFlagEvaluationProviderTest extends BaseFeatureFlagsTest {
         400,
         "This is not a valid JSON response"
     );
-    var evaluations = assertProviderRefresh(provider, CONTEXT);
+    var evaluations = assertProviderRefresh(provider, CONTEXT, webClientFactory);
 
     // Then the resulting evaluations should match the expected results
     assertNull(evaluations);
