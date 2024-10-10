@@ -1,13 +1,13 @@
 package io.confluent.idesidecar.restapi.kafkarest;
 
+import static io.confluent.idesidecar.restapi.util.RequestHeadersConstants.CONNECTION_ID_HEADER;
+
 import io.confluent.idesidecar.restapi.cache.AdminClients;
 import io.confluent.idesidecar.restapi.cache.ClusterCache;
 import io.vertx.core.http.HttpServerRequest;
 import jakarta.inject.Inject;
-
 import java.util.function.Supplier;
 
-import static io.confluent.idesidecar.restapi.util.RequestHeadersConstants.CONNECTION_ID_HEADER;
 
 /**
  * Abstract base class for all managers. Contains common dependencies and methods. Inheritors must
