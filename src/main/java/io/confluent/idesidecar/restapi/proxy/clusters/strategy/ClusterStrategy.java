@@ -4,7 +4,6 @@ import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
 import io.confluent.idesidecar.restapi.util.UriUtil;
 import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpHeaders;
-import org.eclipse.microprofile.config.ConfigProvider;
 
 /**
  * Holds default implementations for processing constructing the proxy URI, headers before
@@ -17,8 +16,6 @@ import org.eclipse.microprofile.config.ConfigProvider;
 public abstract class ClusterStrategy {
 
   static UriUtil uriUtil = new UriUtil();
-  static final String sidecarHost = ConfigProvider.getConfig()
-      .getValue("ide-sidecar.api.host", String.class);
 
   public MultiMap constructProxyHeaders(ClusterProxyContext context) {
     return HttpHeaders.headers();
