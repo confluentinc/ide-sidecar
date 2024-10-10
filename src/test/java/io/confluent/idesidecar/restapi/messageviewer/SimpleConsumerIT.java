@@ -71,7 +71,7 @@ public class SimpleConsumerIT {
     testBed.stop();
   }
 
-  void recreateTopic(String topic) throws ExecutionException, InterruptedException, TimeoutException {
+  void recreateTopic(String topic) throws Exception {
     if (testBed.topicExists(topic)) {
       testBed.deleteTopic(topic);
       testBed.waitForTopicCreation(topic, Duration.ofSeconds(30));
@@ -81,7 +81,7 @@ public class SimpleConsumerIT {
   }
 
   @Test
-  void testAvroProduceAndConsume() throws ExecutionException, InterruptedException, TimeoutException {
+  void testAvroProduceAndConsume() throws Exception {
     String topic = "myavromessage1";
     recreateTopic(topic);
 
