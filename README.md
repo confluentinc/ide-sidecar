@@ -59,6 +59,7 @@ At the moment, we build native executables for the following operating systems a
 * Linux (ARM64)
 * macOS (AMD64)
 * macOS (ARM64)
+* Windows (x64)
 
 ## License
 
