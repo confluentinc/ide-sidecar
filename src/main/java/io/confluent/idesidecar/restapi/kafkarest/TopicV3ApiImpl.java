@@ -35,8 +35,8 @@ public class TopicV3ApiImpl implements TopicV3Api {
   }
 
   @Override
-  public Uni<TopicDataList> listKafkaTopics(String clusterId) {
-    return topicManager.listKafkaTopics(clusterId);
+  public Uni<TopicDataList> listKafkaTopics(String clusterId, Boolean includeAuthorizedOperations) {
+    return topicManager.listKafkaTopics(clusterId, includeAuthorizedOperations);
   }
 
   @Override

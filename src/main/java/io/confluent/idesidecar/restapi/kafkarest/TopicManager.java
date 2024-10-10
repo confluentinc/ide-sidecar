@@ -19,5 +19,5 @@ public interface TopicManager {
       String clusterId, String topicName, Boolean includeAuthorizedOperations
   );
 
-  Uni<TopicDataList> listKafkaTopics(String clusterId);
+  Uni<TopicDataList> listKafkaTopics(String clusterId, Boolean includeAuthorizedOperations);
 }

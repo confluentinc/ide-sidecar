@@ -82,17 +82,14 @@ public class TopicManagerImpl implements TopicManager {
   public Uni<TopicData> getKafkaTopic(
       String clusterId, String topicName, Boolean includeAuthorizedOperations
   ) {
-    var describeTopicsOptions = new DescribeTopicsOptions()
-        .includeAuthorizedOperations(
-            Optional.ofNullable(includeAuthorizedOperations).orElse(false)
-        );
     return clusterManager
         .getKafkaCluster(clusterId)
         .chain(ignored ->
             uniStage(
                 adminClients
                     .getClient(connectionId.get(), clusterId)
-                    .describeTopics(List.of(topicName), describeTopicsOptions)
+                    .describeTopics(
+                        List.of(topicName), getDescribeTopicsOptions(includeAuthorizedOperations))
                     .allTopicNames()
                     .toCompletionStage()
             )
@@ -102,14 +99,23 @@ public class TopicManagerImpl implements TopicManager {
         );
   }
 
+  private static DescribeTopicsOptions getDescribeTopicsOptions(
+      Boolean includeAuthorizedOperations
+  ) {
+    return new DescribeTopicsOptions()
+        .includeAuthorizedOperations(
+            Optional.ofNullable(includeAuthorizedOperations).orElse(false)
+        );
+  }
+
   @Override
-  public Uni<TopicDataList> listKafkaTopics(String clusterId) {
+  public Uni<TopicDataList> listKafkaTopics(String clusterId, Boolean includeAuthorizedOperations) {
     return clusterManager.getKafkaCluster(clusterId).chain(ignored -> uniStage(
         adminClients
             .getClient(connectionId.get(), clusterId).listTopics().names().toCompletionStage()
     ).chain(topicNames -> uniStage(
             adminClients.getClient(connectionId.get(), clusterId)
-                .describeTopics(topicNames)
+                .describeTopics(topicNames, getDescribeTopicsOptions(includeAuthorizedOperations))
                 .allTopicNames()
                 .toCompletionStage())
         ).onItem()
