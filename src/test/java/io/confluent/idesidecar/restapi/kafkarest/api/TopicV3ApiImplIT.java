@@ -1,14 +1,11 @@
 package io.confluent.idesidecar.restapi.kafkarest.api;
 
-import static io.restassured.RestAssured.given;
+import static io.confluent.idesidecar.restapi.util.ConfluentLocalKafkaWithRestProxyContainer.CLUSTER_ID;
 import static org.hamcrest.Matchers.equalTo;
 
 import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
-import io.confluent.idesidecar.restapi.util.ConfluentLocalKafkaWithRestProxyContainer;
 import io.quarkus.test.junit.QuarkusIntegrationTest;
 import io.quarkus.test.junit.TestProfile;
-import io.restassured.specification.RequestSpecification;
-import java.util.Map;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -17,27 +14,19 @@ import org.junit.jupiter.api.Test;
 @TestProfile(NoAccessFilterProfile.class)
 class TopicV3ApiImplIT extends KafkaRestTestBed {
 
-  private static RequestSpecification spec() {
-    var clusterId = ConfluentLocalKafkaWithRestProxyContainer.CLUSTER_ID;
-    return given()
-        .header("X-connection-id", CONNECTION_ID)
-        .when()
-        .pathParams(Map.of("cluster_id", clusterId));
-  }
-
   @Test
   void shouldCreateKafkaTopic() throws Exception {
     createTopic("test-topic-1");
 
     // Get topic should contain the topic name
-    spec()
+    givenDefault()
         .get("/internal/kafka/v3/clusters/{cluster_id}/topics/test-topic-1")
         .then()
         .statusCode(200)
         .body("topic_name", equalTo("test-topic-1"));
 
     // List topics should contain the topic name
-    spec()
+    givenDefault()
         .get("/internal/kafka/v3/clusters/{cluster_id}/topics")
         .then()
         .statusCode(200)
@@ -52,13 +41,13 @@ class TopicV3ApiImplIT extends KafkaRestTestBed {
     createTopic("test-topic-delete-me");
 
     // Delete topic should return 204
-    spec()
+    givenDefault()
         .delete("/internal/kafka/v3/clusters/{cluster_id}/topics/test-topic-delete-me")
         .then()
         .statusCode(204);
 
     // List topics should not contain the topic name
-    spec()
+    givenDefault()
         .get("/internal/kafka/v3/clusters/{cluster_id}/topics")
         .then()
         .statusCode(200)
@@ -67,7 +56,7 @@ class TopicV3ApiImplIT extends KafkaRestTestBed {
 
   @Test
   void shouldRaise404WhenGettingNonExistentTopic() {
-    spec()
+    givenDefault()
         .get("/internal/kafka/v3/clusters/{cluster_id}/topics/non-existent-topic")
         .then()
         .statusCode(404)
@@ -77,7 +66,7 @@ class TopicV3ApiImplIT extends KafkaRestTestBed {
 
   @Test
   void shouldRaise404WhenDeletingNonExistentTopic() {
-    spec()
+    givenDefault()
         .delete("/internal/kafka/v3/clusters/{cluster_id}/topics/non-existent-topic")
         .then()
         .statusCode(404)
@@ -89,7 +78,7 @@ class TopicV3ApiImplIT extends KafkaRestTestBed {
   void shouldRaise409WhenCreatingExistingTopic() throws Exception {
     createTopic("test-topic-2");
 
-    spec()
+    givenDefault()
         .body("{\"topic_name\":\"test-topic-2\"}")
         .header("Content-Type", "application/json")
         .post("/internal/kafka/v3/clusters/{cluster_id}/topics")
@@ -103,8 +92,7 @@ class TopicV3ApiImplIT extends KafkaRestTestBed {
 
   @Test
   void shouldRaise404OnNonExistentCluster() {
-    given()
-        .header("X-connection-id", CONNECTION_ID)
+    givenConnectionId()
         .when()
         .get("/internal/kafka/v3/clusters/non-existent-cluster/topics")
         .then()
@@ -114,28 +102,16 @@ class TopicV3ApiImplIT extends KafkaRestTestBed {
   }
 
   @Test
-  void shouldRaise404OnNonExistentConnection() {
-    given()
-        .header("X-connection-id", "non-existent-connection")
-        .when()
-        .get("/internal/kafka/v3/clusters/{cluster_id}/topics",
-            Map.of("cluster_id", ConfluentLocalKafkaWithRestProxyContainer.CLUSTER_ID))
-        .then()
-        .statusCode(404)
-        .body("error_code", equalTo(404))
-        .body("message", equalTo("Connection not found: non-existent-connection"));
+  void shouldRaiseErrorWhenConnectionNotFound() {
+    shouldRaiseErrorWhenConnectionNotFound(
+        "/internal/kafka/v3/clusters/%s/topics".formatted(CLUSTER_ID)
+    );
   }
 
   @Test
-  void shouldRaise400OnAbsentConnectionIdHeader() {
-    given()
-        // No connection ID header
-        .when()
-        .get("/internal/kafka/v3/clusters/{cluster_id}/topics",
-            Map.of("cluster_id", ConfluentLocalKafkaWithRestProxyContainer.CLUSTER_ID))
-        .then()
-        .statusCode(400)
-        .body("error_code", equalTo(400))
-        .body("message", equalTo("Missing required header: x-connection-id"));
+  void shouldRaiseErrorWhenConnectionIdIsMissing() {
+    shouldRaiseErrorWhenConnectionIdIsMissing(
+        "/internal/kafka/v3/clusters/%s/topics".formatted(CLUSTER_ID)
+    );
   }
 }
