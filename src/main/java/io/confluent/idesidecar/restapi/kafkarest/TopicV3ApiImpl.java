@@ -75,7 +75,7 @@ public class TopicV3ApiImpl implements TopicV3Api {
   }
 
 
-  private TopicData fromTopicDescription(String clusterId, TopicDescription topicDescription) {
+  private static TopicData fromTopicDescription(String clusterId, TopicDescription topicDescription) {
     return TopicData
         .builder()
         .kind("KafkaTopic")
@@ -94,7 +94,7 @@ public class TopicV3ApiImpl implements TopicV3Api {
         .metadata(getTopicMetadata(clusterId, topicDescription.name())).build();
   }
 
-  private ResourceMetadata getTopicMetadata(String clusterId, String topicName) {
+  private static ResourceMetadata getTopicMetadata(String clusterId, String topicName) {
     return ResourceMetadata
         .builder()
         // TODO: Construct resource name based on the connection/cluster type
