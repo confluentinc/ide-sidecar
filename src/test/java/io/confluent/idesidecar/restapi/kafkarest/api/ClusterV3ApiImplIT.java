@@ -1,7 +1,6 @@
 package io.confluent.idesidecar.restapi.kafkarest.api;
 
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
-import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 import static io.confluent.idesidecar.restapi.testutil.QueryResourceUtil.queryGraphQLRaw;
 
@@ -20,8 +19,7 @@ public class ClusterV3ApiImplIT extends KafkaRestTestBed {
   @Test
   void shouldListKafkaClusters() {
     // Try to list Kafka clusters when none are available, we should get an empty list
-    given()
-        .header("X-connection-id", CONNECTION_ID)
+    givenConnectionId()
         .when()
         .get("/internal/kafka/v3/clusters")
         .then()
@@ -42,8 +40,7 @@ public class ClusterV3ApiImplIT extends KafkaRestTestBed {
     queryGraphQLRaw(loadResource("graph/real/local-connections-query.graphql"));
 
     // And now, we should be able to list the Kafka cluster
-    given()
-        .header("X-connection-id", CONNECTION_ID)
+    givenConnectionId()
         .when()
         .get("/internal/kafka/v3/clusters")
         .then()
@@ -55,8 +52,7 @@ public class ClusterV3ApiImplIT extends KafkaRestTestBed {
 
   @Test
   void shouldGetKafkaCluster() {
-    given()
-        .header("X-connection-id", CONNECTION_ID)
+    givenConnectionId()
         .when()
         .get("/internal/kafka/v3/clusters/{cluster_id}",
             ConfluentLocalKafkaWithRestProxyContainer.CLUSTER_ID)
@@ -67,8 +63,7 @@ public class ClusterV3ApiImplIT extends KafkaRestTestBed {
 
   @Test
   void shouldReturn404WhenClusterNotFound() {
-    given()
-        .header("X-connection-id", CONNECTION_ID)
+    givenConnectionId()
         .when()
         .get("/internal/kafka/v3/clusters/{cluster_id}",
             "non-existent-cluster")
@@ -80,24 +75,11 @@ public class ClusterV3ApiImplIT extends KafkaRestTestBed {
 
   @Test
   void shouldRaiseErrorWhenConnectionIdIsMissing() {
-    given()
-        .when()
-        .get("/internal/kafka/v3/clusters")
-        .then()
-        .statusCode(400)
-        .body("error_code", equalTo(400))
-        .body("message", equalTo("Missing required header: x-connection-id"));
+    shouldRaiseErrorWhenConnectionIdIsMissing("/internal/kafka/v3/clusters");
   }
 
   @Test
   void shouldRaiseErrorWhenConnectionNotFound() {
-    given()
-        .header("X-connection-id", "non-existent-connection")
-        .when()
-        .get("/internal/kafka/v3/clusters")
-        .then()
-        .statusCode(404)
-        .body("error_code", equalTo(404))
-        .body("message", equalTo("Connection not found: non-existent-connection"));
+    shouldRaiseErrorWhenConnectionNotFound("/internal/kafka/v3/clusters");
   }
 }
