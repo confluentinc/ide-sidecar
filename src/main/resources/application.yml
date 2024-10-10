@@ -78,7 +78,7 @@ ide-sidecar:
       check-token-expiration:
         interval-seconds: 5
       refresh-token:
-        absolute-lifetime-seconds: 14401
+        absolute-lifetime-seconds: 28800
         max-refresh-attempts: 50
       id-token:
         exchange-uri: https://login.confluent.io/oauth/token
