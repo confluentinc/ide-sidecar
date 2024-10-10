@@ -35,25 +35,25 @@ class ConfluentLocalKafkaClusterStrategyTest {
         Arguments.of(
 
             "/kafka/v3/clusters/my-cluster/topics",
-            "http://localhost:8082",
+            "http://localhost:%s".formatted(TEST_PORT),
             "http://localhost:%s/internal/kafka/v3/clusters/my-cluster/topics".formatted(TEST_PORT)
         ),
         Arguments.of(
 
             "kafka/v3/clusters/my-cluster/topics",
-            "http://localhost:8082",
+            "http://localhost:%s".formatted(TEST_PORT),
             "http://localhost:%s/internal/kafka/v3/clusters/my-cluster/topics".formatted(TEST_PORT)
         ),
         Arguments.of(
 
             "kafka/v3/clusters/my-cluster/topics",
-            "http://localhost:8082/",
+            "http://localhost:%s/".formatted(TEST_PORT),
             "http://localhost:%s/internal/kafka/v3/clusters/my-cluster/topics".formatted(TEST_PORT)
         ),
         Arguments.of(
 
             "/kafka/v3/clusters/my-cluster/topics",
-            "http://localhost:8082/",
+            "http://localhost:%s/".formatted(TEST_PORT),
             "http://localhost:%s/internal/kafka/v3/clusters/my-cluster/topics".formatted(TEST_PORT)
         )
     );
@@ -64,10 +64,11 @@ class ConfluentLocalKafkaClusterStrategyTest {
     String proxyResponse = """
         {
           "partitions": {
-            "related": "http://localhost:26637/internal/kafka/v3/clusters/lkc-95w6wy/topics/my_topic/partitions"
+            "related": "http://localhost:%s/internal/kafka/v3/clusters/lkc-95w6wy/topics/my_topic/partitions"
           }
         }
-        """;
+        """.formatted(TEST_PORT);
+    String clusterUri = "http://localhost:%s".formatted(TEST_PORT);
     String expectedResponse = """
         {
           "partitions": {
@@ -75,7 +76,11 @@ class ConfluentLocalKafkaClusterStrategyTest {
           }
         }
         """;
-    var actualResponse = strategy.processProxyResponse(proxyResponse);
+    var actualResponse = strategy.processProxyResponse(
+        proxyResponse,
+        clusterUri,
+        "http://localhost:%s".formatted(TEST_PORT)
+    );
     assertEquals(expectedResponse, actualResponse);
   }
 }

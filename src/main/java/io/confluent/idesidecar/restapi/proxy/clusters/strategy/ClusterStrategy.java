@@ -4,6 +4,7 @@ import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
 import io.confluent.idesidecar.restapi.util.UriUtil;
 import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpHeaders;
+import java.util.regex.Pattern;
 
 /**
  * Holds default implementations for processing constructing the proxy URI, headers before
@@ -26,9 +27,15 @@ public abstract class ClusterStrategy {
   }
 
   /**
-   * Process the proxy response from the cluster. By default, this method does nothing.
+   * Process the proxy response by replacing the cluster URI with the sidecar URI. Accept sidecar
+   * URI as a parameter to ease writing tests.
    */
-  public String processProxyResponse(String proxyResponse) {
-    return proxyResponse;
+  public String processProxyResponse(String proxyResponse,
+      String clusterUri,
+      String sidecarUri) {
+    var clusterHost = uriUtil.getHost(clusterUri);
+    String clusterPattern = "(http|https):\\/\\/(%s)(:\\d+)?".formatted(
+        Pattern.quote(clusterHost));
+    return proxyResponse.replaceAll(clusterPattern, sidecarUri);
   }
 }

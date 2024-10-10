@@ -27,9 +27,14 @@ class ClusterStrategyTest {
   @MethodSource
   void testProcessProxyResponse(
       String proxyResponse,
+      String clusterUri,
       String expectedResponse
   ) {
-    var actualResponse = baseClusterStrategy.processProxyResponse(proxyResponse);
+    var actualResponse = baseClusterStrategy.processProxyResponse(
+        proxyResponse,
+        clusterUri,
+        "http://localhost:%s".formatted(TEST_PORT)
+    );
     assertEquals(expectedResponse, actualResponse);
   }
 
@@ -44,6 +49,7 @@ class ClusterStrategyTest {
                   }
                 }
                 """,
+            "https://pkc-1234.us-west-2.aws.confluent.cloud",
             // http://localhost:26637 is the default sidecar URL
             """
                 {
@@ -63,6 +69,7 @@ class ClusterStrategyTest {
                   }
                 }
                 """,
+            "https://pkc-1234.us-west-2.aws.confluent.cloud",
             """
                 {
                   "partitions": {
@@ -81,6 +88,7 @@ class ClusterStrategyTest {
                   }
                 }
                 """,
+            "https://pkc-1234.us-west-2.aws.confluent.cloud:443",
             """
                 {
                   "partitions": {
@@ -99,6 +107,8 @@ class ClusterStrategyTest {
                   }
                 }
                 """,
+
+            "https://pkc-1234.us-west-2.aws.confluent.cloud:443",
             """
                 {
                   "partitions": {

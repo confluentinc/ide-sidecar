@@ -58,13 +58,16 @@ public class ConfluentLocalKafkaClusterStrategy extends ClusterStrategy {
   /**
    * In addition to replacing the cluster URLs with the sidecar host, we also need to replace
    * the internal Kafka REST path /internal/kafka with the external facing /kafka path.
-   * @param proxyResponseBody The response body from the Kafka cluster.
+   * @param proxyResponse The response body from the Kafka REST API.
+   * @param clusterUri The URI of the Kafka REST API running alongside the Kafka cluster.
+   *                   (unused here)
+   * @param sidecarHost The host of the sidecar.
    * @return The response body with the internal Kafka REST path replaced with the external path.
    */
   @Override
-  public String processProxyResponse(String proxyResponseBody) {
+  public String processProxyResponse(String proxyResponse, String clusterUri, String sidecarHost) {
     return super
-        .processProxyResponse(proxyResponseBody)
+        .processProxyResponse(proxyResponse, sidecarHost, sidecarHost)
         .replaceAll("%s/internal/kafka".formatted(sidecarHost), "%s/kafka".formatted(sidecarHost));
   }
 }
