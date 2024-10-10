@@ -11,6 +11,7 @@ import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
+import org.apache.kafka.common.errors.ApiException;
 import org.apache.kafka.common.errors.TimeoutException;
 import org.apache.kafka.common.errors.TopicExistsException;
 import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
@@ -245,6 +246,19 @@ public class ExceptionMappers {
         .message(exception.getMessage()).build();
     return Response
         .status(Status.NOT_IMPLEMENTED)
+        .entity(error)
+        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+        .build();
+  }
+
+  @ServerExceptionMapper
+  public Response mapApiException(ApiException exception) {
+    var error = io.confluent.idesidecar.restapi.kafkarest.model.Error
+        .builder()
+        .errorCode(Status.INTERNAL_SERVER_ERROR.getStatusCode())
+        .message(exception.getMessage()).build();
+    return Response
+        .status(Status.INTERNAL_SERVER_ERROR)
         .entity(error)
         .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
         .build();
