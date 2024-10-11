@@ -124,6 +124,7 @@ ide-sidecar:
   admin-client-configs:
     "default.api.timeout.ms": 3000
     "request.timeout.ms": 3000
+    "client.id": Confluent for VS Code sidecar ${quarkus.application.version}
 
 quarkus:
   application:
