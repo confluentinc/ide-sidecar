@@ -24,6 +24,14 @@
           brokers-list-uri: http://localhost:${quarkus.wiremock.devservices.port}/v3/clusters/%s/brokers
           broker-adv-listeners-config-uri: http://localhost:${quarkus.wiremock.devservices.port}/v3/clusters/%s/brokers/%s/configs/advertised.listeners
           kafka-topic-uri: http://localhost:${quarkus.wiremock.devservices.port}/v3/clusters/%s/topics/%s
+    feature-flags:
+      refresh-interval-seconds: 0 # disables the scheduled refresh during testing
+      ide-project:
+        client-id: mock-ide-ld-client-id
+        eval-uri: http://localhost:${quarkus.wiremock.devservices.port}/api/flags/%s/contexts/%s
+      ccloud-project:
+        client-id: mock-ccloud-ld-client-id
+        eval-uri: http://localhost:${quarkus.wiremock.devservices.port}/api/flags/%s/contexts/%s
     grim-reaper:
       # Should we check for remaining living vs code processes at all, and exit() if none left?
       enabled: false
@@ -104,6 +112,14 @@ ide-sidecar:
         brokers-list-uri: ${ide-sidecar.connections.confluent-local.default.kafkarest-uri}/v3/clusters/%s/brokers
         broker-adv-listeners-config-uri: ${ide-sidecar.connections.confluent-local.default.kafkarest-uri}/v3/clusters/%s/brokers/%s/configs/advertised.listeners
         kafka-topic-uri: ${outpost.connections.confluent-local.default.kafkarest-uri}/v3/clusters/%s/topics/%s
+  feature-flags:
+    refresh-interval-seconds: 60
+    ide-project:
+      client-id: 66f5797143c600083425a930
+      eval-uri: https://confluent.cloud/ldapi/sdk/evalx/%s/contexts/%s
+    ccloud-project:
+      client-id: 5c636508aa445d32c86f26b1
+      eval-uri: https://confluent.cloud/ldapi/sdk/evalx/%s/contexts/%s
   template-registries:
     local:
       templates-zip-resource: static/templates.zip
@@ -149,7 +165,7 @@ quarkus:
   native:
     additional-build-args: --initialize-at-run-time=io.confluent.idesidecar.restapi.auth.CCloudOAuthConfig\,io.confluent.idesidecar.restapi.auth.CCloudOAuthContext\,io.confluent.ide.sidecar.restapi.util.WebClientFactory\,org.apache.kafka.common.security.authenticator.SaslClientAuthenticator\,org.apache.avro.file.DataFileWriter
     resources:
-      includes: templates/callback.html,templates/callback_failure.html,static/templates.zip
+      includes: templates/callback.html,templates/callback_failure.html,static/templates.zip,feature-flag-defaults.json
   smallrye-health:
     root-path: /gateway/v1/health
   ssl:
@@ -173,6 +189,8 @@ quarkus:
     show-runtime-exception-message:
       -  io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException
       -  io.confluent.idesidecar.restapi.exceptions.ResourceFetchingException
+  scheduler:
+    start-mode: forced
   swagger-ui:
     # By default, enable the Swagger UI in dev and test modes, but not during normal package builds.
     path: /swagger-ui
