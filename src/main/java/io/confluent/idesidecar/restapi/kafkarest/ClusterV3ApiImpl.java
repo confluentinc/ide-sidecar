@@ -11,7 +11,7 @@ import jakarta.inject.Inject;
 public class ClusterV3ApiImpl implements ClusterV3Api {
 
   @Inject
-  ClusterManagerImpl clusterManager;
+  ClusterManager clusterManager;
 
   @Override
   public Uni<ClusterData> getKafkaCluster(String clusterId) {
