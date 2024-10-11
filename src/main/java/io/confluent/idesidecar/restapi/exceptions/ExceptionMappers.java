@@ -88,28 +88,6 @@ public class ExceptionMappers {
   }
 
   @ServerExceptionMapper
-  public Response mapFeatureFlagFailureException(
-      FeatureFlagFailureException exception
-  ) {
-
-    Failure failure = new Failure(
-        exception,
-        Status.INTERNAL_SERVER_ERROR,
-        Status.INTERNAL_SERVER_ERROR.getReasonPhrase(),
-        Status.INTERNAL_SERVER_ERROR.getReasonPhrase(),
-        uuidFactory.getRandomUuid(),
-        null
-    );
-    return Response
-        .status(Status.NOT_FOUND)
-        .entity(failure)
-        // Explicitly set the content type to JSON here
-        // since the resource method may have set it to something else
-        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-        .build();
-  }
-
-  @ServerExceptionMapper
   public Response mapGenericTemplateRegistryException(TemplateRegistryException exception) {
     Failure failure = new Failure(
         exception,

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.launchdarkly.sdk.LDContext;
 import com.launchdarkly.sdk.json.JsonSerialization;
+import io.confluent.idesidecar.restapi.exceptions.FeatureFlagFailureException;
 import io.confluent.idesidecar.restapi.util.WebClientFactory;
 import io.quarkus.logging.Log;
 import io.quarkus.runtime.annotations.RegisterForReflection;
@@ -75,17 +76,32 @@ class HttpFlagEvaluationProvider implements FeatureProject.Provider {
                 flags.size(),
                 projectName
             );
+            // Signal that we do have new evaluations
             callback.accept(flags);
           })
           .onFailure(failure -> {
-            // This is debug because a user running disconnected from network should not see errors
-            Log.debugf(
-                "Error evaluating feature flags for project '%s': %s",
-                projectName,
-                failure.getMessage(),
-                failure
-            );
-            // Use the callback, but pass null (not empty) signifying we have no new evaluations
+            if (failure instanceof FeatureFlagFailureException) {
+              // This occurs when we're unable to parse the evaluation response or error response
+              // from the provider. We DO want to log these, as the problem needs to be fixed.
+              Log.errorf(
+                  "Error evaluating feature flags for project '%s': %s",
+                  projectName,
+                  failure.getMessage(),
+                  failure
+              );
+            } else {
+              // This occurs when there are any other problems evaluating feature flags, including
+              // network issues due to running without a connection to the internet or LD is down.
+              // These are anticipated conditions that do not signal a problem with this code, so
+              // we DO NOT want the user to see these.
+              Log.debugf(
+                  "Error evaluating feature flags for project '%s': %s",
+                  projectName,
+                  failure.getMessage(),
+                  failure
+              );
+            }
+            // Pass to the callback a null (not empty) list, signifying we have no new evaluations
             callback.accept(null);
           });
   }
