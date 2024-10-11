@@ -168,11 +168,11 @@ public class RealLocalFetcher extends ConfluentLocalRestClient implements LocalF
   public Uni<LocalSchemaRegistry> getSchemaRegistry(String connectionId) {
     String uri = resolveSchemaRegistryUri(connectionId);
     if (uri == null) {
-      Log.infof("No Schema Registry will be used for connection %s", connectionId);
+      Log.debugf("No Schema Registry will be used for connection %s", connectionId);
       return Uni.createFrom().nullItem();
     }
 
-    Log.infof("Looking for Schema Registry at %s for connection %s", uri, connectionId);
+    Log.debugf("Looking for Schema Registry at %s for connection %s", uri, connectionId);
     final String configUri = uri + "/config";
     return getItem(connectionId, configUri, this::parseSchemaRegistryConfig)
         .onFailure(ConnectException.class).recoverWithItem(throwable -> null)
@@ -180,7 +180,7 @@ public class RealLocalFetcher extends ConfluentLocalRestClient implements LocalF
         .transformToUni(response -> {
           // Verify the compatibility level exists
           if (response == null || response.compatibilityLevel() == null) {
-            Log.infof("Unable to find Schema Registry at %s for connection %s", uri, connectionId);
+            Log.debugf("Unable to find Schema Registry at %s for connection %s", uri, connectionId);
             return Uni.createFrom().nullItem();
           }
           return Uni.createFrom().item(() -> new LocalSchemaRegistry(connectionId, uri));

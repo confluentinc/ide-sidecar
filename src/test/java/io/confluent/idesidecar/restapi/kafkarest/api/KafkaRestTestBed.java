@@ -1,15 +1,19 @@
 package io.confluent.idesidecar.restapi.kafkarest.api;
 
 import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.equalTo;
 
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
 import io.confluent.idesidecar.restapi.util.ConfluentLocalKafkaWithRestProxyContainer;
 import io.confluent.idesidecar.restapi.util.KafkaTestBed;
 import io.restassured.http.ContentType;
+import io.restassured.specification.RequestSpecification;
+import java.util.Map;
 import java.util.Properties;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.testcontainers.containers.wait.strategy.Wait;
 
@@ -33,6 +37,19 @@ public class KafkaRestTestBed extends KafkaTestBed {
 
     // Create a connection
     KafkaRestTestBed.createConnection();
+  }
+
+  @AfterEach
+  void cleanup() throws Exception {
+    // Delete all topics
+    deleteAllTopics();
+  }
+
+  private void deleteAllTopics() throws Exception {
+    for (var topic : listTopics()) {
+      deleteTopic(topic);
+    }
+    assert listTopics().isEmpty();
   }
 
   private static void createConnection() {
@@ -71,5 +88,44 @@ public class KafkaRestTestBed extends KafkaTestBed {
     Properties properties = new Properties();
     properties.put("bootstrap.servers", confluentLocal.getKafkaBootstrapServers());
     return properties;
+  }
+
+  protected static RequestSpecification givenDefault() {
+    return givenConnectionId()
+        .when()
+        .pathParams(clusterIdPathParams());
+  }
+
+  protected static RequestSpecification givenConnectionId() {
+    return givenConnectionId(CONNECTION_ID);
+  }
+
+  protected static RequestSpecification givenConnectionId(String connectionId) {
+    return given()
+        .header("X-connection-id", connectionId);
+  }
+
+  protected static Map<String, String> clusterIdPathParams() {
+    return Map.of("cluster_id", ConfluentLocalKafkaWithRestProxyContainer.CLUSTER_ID);
+  }
+
+  void shouldRaiseErrorWhenConnectionIdIsMissing(String path) {
+    given()
+        .when()
+        .get(path)
+        .then()
+        .statusCode(400)
+        .body("error_code", equalTo(400))
+        .body("message", equalTo("Missing required header: x-connection-id"));
+  }
+
+  void shouldRaiseErrorWhenConnectionNotFound(String path) {
+    givenConnectionId("non-existent-connection")
+        .when()
+        .get(path)
+        .then()
+        .statusCode(404)
+        .body("error_code", equalTo(404))
+        .body("message", equalTo("Connection not found: non-existent-connection"));
   }
 }
