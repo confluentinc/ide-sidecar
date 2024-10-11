@@ -25,7 +25,7 @@ import org.apache.kafka.clients.admin.TopicDescription;
 public class TopicV3ApiImpl implements TopicV3Api {
 
   @Inject
-  TopicManagerImpl topicManager;
+  TopicManager topicManager;
 
   @Override
   public Uni<TopicData> createKafkaTopic(
@@ -54,21 +54,29 @@ public class TopicV3ApiImpl implements TopicV3Api {
 
   @Override
   public Uni<TopicDataList> listKafkaTopics(String clusterId, Boolean includeAuthorizedOperations) {
-    return topicManager.listKafkaTopics(clusterId, includeAuthorizedOperations)
-            .onItem().transformToUni(topicDescriptionMap -> uniItem(TopicDataList
-            .builder()
-            .kind("KafkaTopicList")
-            .metadata(ResourceCollectionMetadata
-                .builder()
-                .next(null)
-                .self(forTopics(clusterId).getRelated())
-                .build()
+    return topicManager
+        .listKafkaTopics(clusterId, includeAuthorizedOperations)
+        .onItem()
+        .transformToUni(topicDescriptionMap ->
+            uniItem(
+                TopicDataList
+                    .builder()
+                    .kind("KafkaTopicList")
+                    .metadata(
+                        ResourceCollectionMetadata
+                            .builder()
+                            .next(null)
+                            .self(forTopics(clusterId).getRelated())
+                            .build()
+                    )
+                    .data(
+                        topicDescriptionMap
+                            .stream()
+                            .map(topic -> fromTopicDescription(clusterId, topic))
+                            .toList()
+                    )
+                    .build()
             )
-            .data(topicDescriptionMap
-                .stream()
-                .map(t -> fromTopicDescription(clusterId, t))
-                .toList()
-            ).build())
         );
   }
 

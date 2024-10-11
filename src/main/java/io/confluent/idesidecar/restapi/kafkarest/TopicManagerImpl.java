@@ -1,7 +1,9 @@
 package io.confluent.idesidecar.restapi.kafkarest;
 
 import static io.confluent.idesidecar.restapi.util.MutinyUtil.uniStage;
+import static io.confluent.idesidecar.restapi.util.RequestHeadersConstants.CONNECTION_ID_HEADER;
 
+import io.confluent.idesidecar.restapi.cache.AdminClients;
 import io.confluent.idesidecar.restapi.kafkarest.model.CreateTopicRequestData;
 import io.smallrye.mutiny.Uni;
 import io.vertx.core.http.HttpServerRequest;
@@ -9,6 +11,7 @@ import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
 import org.apache.kafka.clients.admin.DescribeTopicsOptions;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.admin.TopicDescription;
@@ -19,10 +22,17 @@ import org.apache.kafka.clients.admin.TopicDescription;
  * request headers.
  */
 @RequestScoped
-public class TopicManagerImpl extends Manager implements TopicManager {
+public class TopicManagerImpl implements TopicManager {
+  @Inject
+  AdminClients adminClients;
 
   @Inject
-  ClusterManagerImpl clusterManager;
+  HttpServerRequest request;
+
+  Supplier<String> connectionId = () -> request.getHeader(CONNECTION_ID_HEADER);
+
+  @Inject
+  ClusterManager clusterManager;
 
   @Override
   public Uni<TopicDescription> createKafkaTopic(

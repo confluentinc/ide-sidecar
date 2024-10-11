@@ -9,10 +9,11 @@ import org.apache.kafka.common.TopicPartitionInfo;
 import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
 
 @RequestScoped
-public class PartitionManagerImpl extends Manager {
+public class PartitionManagerImpl implements PartitionManager {
   @Inject
-  TopicManagerImpl topicManager;
+  TopicManager topicManager;
 
+  @Override
   public Uni<TopicPartitionInfo> getKafkaPartition(
       String clusterId, String topicName, Integer partitionId
   ) {
@@ -30,6 +31,7 @@ public class PartitionManagerImpl extends Manager {
         );
   }
 
+  @Override
   public Uni<List<TopicPartitionInfo>> listKafkaPartitions(String clusterId, String topicName) {
     return topicManager
         .getKafkaTopic(clusterId, topicName, false)

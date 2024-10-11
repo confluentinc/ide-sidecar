@@ -22,7 +22,7 @@ import org.apache.kafka.common.TopicPartitionInfo;
 public class PartitionV3ApiImpl implements PartitionV3Api {
 
   @Inject
-  PartitionManagerImpl partitionManager;
+  PartitionManager partitionManager;
 
   @Override
   public Uni<PartitionData> getKafkaPartition(
