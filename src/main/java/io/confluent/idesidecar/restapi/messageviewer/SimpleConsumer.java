@@ -28,14 +28,12 @@ import org.apache.kafka.common.TopicPartition;
 /**
  * Implements consuming records from Confluent Local Kafka topics for the message viewer API.
  */
-// CHECKSTYLE:OFF: ClassDataAbstractionCoupling
 public class SimpleConsumer {
   private static final Duration POLL_TIMEOUT = Duration.ofSeconds(1);
   private static final int MAX_POLLS = 5;
   private static final int MAX_POLL_RECORDS_LIMIT = 2_000;
   private static final int MAX_RESPONSE_BYTES = 20 * 1024 * 1024; // 20 MB
   private static final int DEFAULT_MESSAGE_MAX_BYTES = 4 * 1024 * 1024; // 4MB
-  private static final int SR_CACHE_SIZE = 10;
   private final SchemaRegistryClient schemaRegistryClient;
 
   final Properties baseConsumerConfig;

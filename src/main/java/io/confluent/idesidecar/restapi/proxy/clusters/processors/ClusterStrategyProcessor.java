@@ -9,6 +9,7 @@ import io.confluent.idesidecar.restapi.proxy.clusters.strategy.ClusterStrategy;
 import io.confluent.idesidecar.restapi.proxy.clusters.strategy.ConfluentCloudKafkaClusterStrategy;
 import io.confluent.idesidecar.restapi.proxy.clusters.strategy.ConfluentCloudSchemaRegistryClusterStrategy;
 import io.confluent.idesidecar.restapi.proxy.clusters.strategy.ConfluentLocalKafkaClusterStrategy;
+import io.confluent.idesidecar.restapi.proxy.clusters.strategy.ConfluentLocalSchemaRegistryClusterStrategy;
 import io.vertx.core.Future;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -28,6 +29,9 @@ public class ClusterStrategyProcessor extends
 
   @Inject
   ConfluentCloudSchemaRegistryClusterStrategy confluentCloudSchemaRegistryClusterStrategy;
+
+  @Inject
+  ConfluentLocalSchemaRegistryClusterStrategy confluentLocalSchemaRegistryClusterStrategy;
 
 
   @Override
@@ -52,7 +56,7 @@ public class ClusterStrategyProcessor extends
           ? confluentCloudKafkaClusterStrategy : confluentCloudSchemaRegistryClusterStrategy;
       case LOCAL ->
           clusterType == ClusterType.KAFKA
-              ? confluentLocalKafkaClusterStrategy : null;
+              ? confluentLocalKafkaClusterStrategy : confluentLocalSchemaRegistryClusterStrategy;
       case PLATFORM -> null;
     };
   }
