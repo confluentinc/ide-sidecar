@@ -178,7 +178,7 @@ public class ClusterCache {
   void onConnectionEstablished(
       @ObservesAsync @Lifecycle.Connected ConnectionState connection
   ) {
-    Log.infof("Connected %s", connection.getSpec());
+    Log.debugf("Connected %s", connection.getSpec());
   }
 
   void onConnectionDisconnected(
