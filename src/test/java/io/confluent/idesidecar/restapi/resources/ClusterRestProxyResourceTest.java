@@ -351,11 +351,6 @@ class ClusterRestProxyResourceTest {
 
   private static Stream<Arguments> invalidClusterRequests() {
     return Stream.of(
-        // Local Schema Registry is not supported
-        Arguments.of(ConnectionType.LOCAL, ClusterType.SCHEMA_REGISTRY,
-            "/subjects/fake-subject/versions/fake-version/schema"),
-        Arguments.of(ConnectionType.LOCAL, ClusterType.SCHEMA_REGISTRY,
-            "/schemas/id/fake-schema-id/subjects"),
         // Platform anything is not supported
         Arguments.of(ConnectionType.PLATFORM, ClusterType.KAFKA,
             "/kafka/v3/clusters/%s/topics".formatted(CLUSTER_ID)),
