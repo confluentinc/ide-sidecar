@@ -5,7 +5,6 @@ import static io.quarkus.arc.impl.UncaughtExceptions.LOGGER;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.confluent.idesidecar.restapi.application.SidecarAccessTokenBean;
 import io.confluent.idesidecar.restapi.cache.SchemaRegistryClients;
 import io.confluent.idesidecar.restapi.connections.CCloudConnectionState;
 import io.confluent.idesidecar.restapi.exceptions.ProcessorFailedException;
@@ -15,13 +14,8 @@ import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPart
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeData;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeRecord;
 import io.confluent.idesidecar.restapi.proxy.ProxyHttpClient;
-import io.confluent.idesidecar.restapi.util.RequestHeadersConstants;
 import io.confluent.idesidecar.restapi.util.WebClientFactory;
-import io.confluent.kafka.schemaregistry.avro.AvroSchemaProvider;
-import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
-import io.confluent.kafka.schemaregistry.json.JsonSchemaProvider;
-import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchemaProvider;
 import io.quarkus.logging.Log;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
@@ -32,20 +26,12 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Map;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
  * Requests & handles the response from Confluent Cloud for message viewer functionality.
  */
-@SuppressWarnings("checkstyle:ClassDataAbstractionCoupling")
 @ApplicationScoped
 public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
-
-  private static final int SR_CACHE_SIZE = 10;
-
   static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   @Inject
@@ -53,12 +39,6 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
 
   @Inject
   SchemaRegistryClients schemaRegistryClients;
-
-  @Inject
-  SidecarAccessTokenBean accessTokenBean;
-
-  @ConfigProperty(name = "ide-sidecar.api.host")
-  String sidecarHost;
 
   @Inject
   Vertx vertx;
@@ -163,11 +143,7 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
     }
 
     var connectionId = context.getConnectionState().getId();
-    var schemaRegistryClient = schemaRegistryClients.getClient(
-        connectionId,
-        schemaRegistry.id(),
-        () -> createSchemaRegistryClient(context)
-    );
+    var schemaRegistryClient = schemaRegistryClients.getClient(connectionId, schemaRegistry.id());
     if (schemaRegistryClient == null) {
       return rawResponse;
     }
@@ -252,39 +228,6 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
     }
     return new DecoderUtil.DecodedResult(value, null);
   }
-
-  /**
-   * Creates a SchemaRegistryClient instance based on the MessageViewerContext.
-   *
-   * @param context The MessageViewerContext.
-   * @return The created SchemaRegistryClient instance, or null if SchemaRegistryInfo is not
-   *         available.
-   */
-  private SchemaRegistryClient createSchemaRegistryClient(MessageViewerContext context) {
-    if (context.getSchemaRegistryInfo() == null) {
-      return null;
-    }
-
-    var extraHeaders = Map.of(
-        RequestHeadersConstants.CONNECTION_ID_HEADER, context.getConnectionId(),
-        RequestHeadersConstants.CLUSTER_ID_HEADER, context.getSchemaRegistryInfo().id(),
-        HttpHeaders.AUTHORIZATION, "Bearer %s".formatted(accessTokenBean.getToken())
-    );
-
-    return new CachedSchemaRegistryClient(
-        // We use the SR Rest Proxy provided by the sidecar itself
-        Collections.singletonList(sidecarHost),
-        SR_CACHE_SIZE,
-        Arrays.asList(
-            new ProtobufSchemaProvider(),
-            new AvroSchemaProvider(),
-            new JsonSchemaProvider()
-        ),
-        Collections.emptyMap(),
-        extraHeaders
-    );
-  }
-
 
   /**
    * Constructs the URL to query messages from the specified topic in Confluent Cloud.

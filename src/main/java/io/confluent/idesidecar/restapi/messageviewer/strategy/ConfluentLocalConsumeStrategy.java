@@ -6,20 +6,13 @@ import io.confluent.idesidecar.restapi.messageviewer.MessageViewerContext;
 import io.confluent.idesidecar.restapi.messageviewer.SimpleConsumer;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequest;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
-import io.confluent.idesidecar.restapi.util.RequestHeadersConstants;
 import io.confluent.idesidecar.restapi.util.WebClientFactory;
-import io.confluent.kafka.schemaregistry.avro.AvroSchemaProvider;
-import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
-import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
-import io.confluent.kafka.schemaregistry.json.JsonSchemaProvider;
-import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchemaProvider;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.stream.Collectors;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -28,7 +21,6 @@ import org.eclipse.microprofile.config.ConfigProvider;
 /**
  * Handles consuming from a Confluent Local Kafka topic for the message viewer API.
  */
-@SuppressWarnings("checkstyle:ClassDataAbstractionCoupling")
 @ApplicationScoped
 public class ConfluentLocalConsumeStrategy implements ConsumeStrategy {
   @Inject
@@ -39,10 +31,6 @@ public class ConfluentLocalConsumeStrategy implements ConsumeStrategy {
 
   @Inject
   SchemaRegistryClients schemaRegistryClients;
-
-  private static final String DEFAULT_LOCAL_SCHEMA_REGISTRY_ID = "lsrc-local";
-
-  private static final int SR_CACHE_SIZE = 10;
 
   private static final String CONFLUENT_LOCAL_KAFKA_TOPIC_REST_URI = ConfigProvider
       .getConfig()
@@ -97,12 +85,10 @@ public class ConfluentLocalConsumeStrategy implements ConsumeStrategy {
     props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
         context.getKafkaClusterInfo().bootstrapServers());
 
-    // Initialize Schema Registry Client
-    var schemaRegistryClient = schemaRegistryClients.getClient(
-        context.getConnectionId(),
-        DEFAULT_LOCAL_SCHEMA_REGISTRY_ID,
-        () -> createSchemaRegistryClient(context)
-    );
+    var schemaRegistryClient = Optional
+        .ofNullable(context.getSchemaRegistryInfo())
+        .map(info -> schemaRegistryClients.getClient(context.getConnectionId(), info.id()))
+        .orElse(null);
 
     SimpleConsumer simpleConsumer = new SimpleConsumer(props, schemaRegistryClient);
     SimpleConsumeMultiPartitionResponse simpleConsumeResp =
@@ -130,40 +116,5 @@ public class ConfluentLocalConsumeStrategy implements ConsumeStrategy {
                 SimpleConsumeMultiPartitionRequest.PartitionOffset::partitionId,
                 SimpleConsumeMultiPartitionRequest.PartitionOffset::offset
             ));
-  }
-
-  /**
-   * Creates a SchemaRegistryClient instance based on the MessageViewerContext.
-   *
-   * @param context The MessageViewerContext.
-   * @return The created SchemaRegistryClient instance, or null if SchemaRegistryInfo is not
-   *         available.
-   */
-  private SchemaRegistryClient createSchemaRegistryClient(MessageViewerContext context) {
-    if (context.getSchemaRegistryInfo() == null) {
-      return null;
-    }
-    var schemaRegistryUrl = context.getSchemaRegistryInfo().uri();
-    if (schemaRegistryUrl == null || schemaRegistryUrl.isEmpty()) {
-      return null;
-    }
-
-    var extraHeaders = Map.of(
-        RequestHeadersConstants.CONNECTION_ID_HEADER, context.getConnectionId(),
-        RequestHeadersConstants.CLUSTER_ID_HEADER, context.getSchemaRegistryInfo().id()
-    );
-
-    return new CachedSchemaRegistryClient(
-        // We use the SR Rest Proxy provided by the sidecar itself
-        Collections.singletonList(schemaRegistryUrl),
-        SR_CACHE_SIZE,
-        Arrays.asList(
-            new ProtobufSchemaProvider(),
-            new AvroSchemaProvider(),
-            new JsonSchemaProvider()
-        ),
-        Collections.emptyMap(),
-        extraHeaders
-    );
   }
 }
