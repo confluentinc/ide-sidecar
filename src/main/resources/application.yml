@@ -152,11 +152,10 @@ quarkus:
       includes: templates/callback.html,templates/callback_failure.html,static/templates.zip
   smallrye-health:
     root-path: /gateway/v1/health
-  ssl:
-    native: true
-  health:
     openapi:
       included: true
+  ssl:
+    native: true
   smallrye-openapi:
     path: /openapi
     info-title: Confluent ide-sidecar API
