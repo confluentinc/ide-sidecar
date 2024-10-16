@@ -1,6 +1,7 @@
 package io.confluent.idesidecar.restapi.messageviewer;
 
 import static io.confluent.idesidecar.restapi.kafkarest.SchemaManager.SCHEMA_PROVIDERS;
+import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.confluent.idesidecar.restapi.avro.MyAvroMessage;
@@ -18,6 +19,7 @@ import org.json.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.testcontainers.shaded.com.fasterxml.jackson.databind.JsonNode;
 
 
 @QuarkusIntegrationTest
@@ -35,9 +37,10 @@ public class SimpleConsumerIT extends ConfluentLocalTestBed {
     simpleConsumer = new SimpleConsumer(
         consumerProps,
         new CachedSchemaRegistryClient(
-            sidecarHost,
+            Collections.singletonList(sidecarHost),
             10,
             SCHEMA_PROVIDERS,
+            Collections.emptyMap(),
             Map.of(
                 RequestHeadersConstants.CONNECTION_ID_HEADER, CONNECTION_ID,
                 RequestHeadersConstants.CLUSTER_ID_HEADER, schemaRegistry.id()
@@ -47,7 +50,7 @@ public class SimpleConsumerIT extends ConfluentLocalTestBed {
   }
 
   @Test
-  void testAvroProduceAndConsume() throws Exception {
+  void testAvroProduceAndConsume() {
     String topic = "myavromessage1";
     createTopic(topic);
 
@@ -91,10 +94,11 @@ public class SimpleConsumerIT extends ConfluentLocalTestBed {
     String topic = "myProtobufTopic";
     createTopic(topic);
 
+    var protobufSchema = loadResource("proto/message.proto");
     Integer valueSchemaVersion = createSchema(
         "%s-value".formatted(topic),
         "PROTOBUF",
-        MyMessage.getDescriptor().toProto().toString()
+        protobufSchema
     );
 
     MyMessage message1 = MyMessage.newBuilder()
@@ -123,7 +127,11 @@ public class SimpleConsumerIT extends ConfluentLocalTestBed {
           topic,
           keys.get(i),
           null,
-          messages.get(i),
+          Map.of(
+              "name", messages.get(i).getName(),
+              "age", messages.get(i).getAge(),
+              "is_active", messages.get(i).getIsActive()
+          ),
           valueSchemaVersion
       );
     }
@@ -151,19 +159,18 @@ public class SimpleConsumerIT extends ConfluentLocalTestBed {
     String topic = "test-json-topic";
     createTopic(topic);
 
-    List<JSONObject> sentRecords = new ArrayList<>();
-    for (int i = 1; i <= 3; i++) {
-      JSONObject json = new JSONObject();
-      json.put("id", i);
-      json.put("name", "Person " + i);
-      json.put("email", "person" + i + "@example.com");
-      sentRecords.add(json);
+    record Person(int id, String name, String email) {
+    }
 
+    var persons = new ArrayList<Person>();
+    for (int i = 1; i <= 3; i++) {
+      var person = new Person(i, "Person " + i, "person" + i + "@example.com");
+      persons.add(person);
       produceRecord(
           topic,
           "key" + i,
           null,
-          json,
+          Map.of("id", person.id(), "name", person.name(), "email", person.email()),
           null
       );
     }
@@ -179,10 +186,10 @@ public class SimpleConsumerIT extends ConfluentLocalTestBed {
 
     for (int i = 0; i < 3; i++) {
       PartitionConsumeRecord record = partitionData.records().get(i);
-      JSONObject sentJson = sentRecords.get(i);
-      assertEquals(sentJson.getInt("id"), record.value().get("id").asInt(), "ID should match");
-      assertEquals(sentJson.getString("name"), record.value().get("name").asText(), "Name should match");
-      assertEquals(sentJson.getString("email"), record.value().get("email").asText(), "Email should match");
+      var sentJson = persons.get(i);
+      assertEquals(sentJson.id(), record.value().get("id").asInt(), "ID should match");
+      assertEquals(sentJson.name(), record.value().get("name").asText(), "Name should match");
+      assertEquals(sentJson.email(), record.value().get("email").asText(), "Email should match");
     }
   }
 

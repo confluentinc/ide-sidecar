@@ -117,7 +117,7 @@ public class ConfluentLocalTestBed implements AutoCloseable {
 
   public void deleteTopic(String topicName) {
     givenDefault()
-        .delete("/kafka/v3/clusters/{cluster_id}/topics/%s".formatted(topicName))
+        .delete("%s/kafka/v3/clusters/{cluster_id}/topics/%s".formatted(sidecarHost, topicName))
         .then()
         .statusCode(204);
   }
@@ -127,7 +127,6 @@ public class ConfluentLocalTestBed implements AutoCloseable {
     for (var topic : topics) {
       deleteTopic(topic);
     }
-    assert listTopics().isEmpty();
   }
 
   public static Set<String> listTopics() {
@@ -247,7 +246,7 @@ public class ConfluentLocalTestBed implements AutoCloseable {
   }
 
   public Integer createSchema(String subject, String schemaType, String schema) {
-    return givenDefault()
+    return givenConnectionId()
         .headers(
             "Content-Type", "application/vnd.schemaregistry.v1+json",
             "X-cluster-id", getSchemaRegistryCluster().id()

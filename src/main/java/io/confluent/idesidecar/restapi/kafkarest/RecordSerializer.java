@@ -14,10 +14,16 @@ import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchema;
 import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchemaUtils;
 import io.confluent.kafka.serializers.KafkaAvroSerializer;
 import io.confluent.kafka.serializers.KafkaJsonSerializer;
+import io.confluent.kafka.serializers.KafkaJsonSerializerConfig;
+import io.confluent.kafka.serializers.json.AbstractKafkaJsonSchemaSerializer;
 import io.confluent.kafka.serializers.json.KafkaJsonSchemaSerializer;
 import io.confluent.kafka.serializers.protobuf.KafkaProtobufSerializer;
+import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.BadRequestException;
+
+import java.util.Collections;
+import java.util.Map;
 
 @ApplicationScoped
 public class RecordSerializer {
@@ -30,14 +36,6 @@ public class RecordSerializer {
       String topicName,
       Object data
   ) {
-    if (data == null) {
-      return ByteString.EMPTY;
-    }
-
-    if (parsedSchema == null) {
-      return ByteString.copyFrom(data.toString().getBytes());
-    }
-
     return switch (format) {
       case AVRO -> serializeAvro(
           client,
@@ -120,6 +118,8 @@ public class RecordSerializer {
 
   private ByteString serializeJson(String topicName, Object data) {
     try (var kafkaJsonSerializer = new KafkaJsonSerializer<>()) {
+      // isKey is unused in KafkaJsonSerializer, so we can safely pass false
+      kafkaJsonSerializer.configure(Collections.emptyMap(), false);
       return ByteString.copyFrom(kafkaJsonSerializer.serialize(topicName, data));
     }
   }

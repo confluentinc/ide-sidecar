@@ -8,9 +8,6 @@ import static io.confluent.idesidecar.restapi.util.RequestHeadersConstants.CONNE
 import com.google.protobuf.ByteString;
 import io.confluent.idesidecar.restapi.cache.KafkaProducerClients;
 import io.confluent.idesidecar.restapi.cache.SchemaRegistryClients;
-import io.confluent.idesidecar.restapi.kafkarest.api.RecordsV3Api;
-import io.confluent.idesidecar.restapi.kafkarest.model.ProduceBatchRequest;
-import io.confluent.idesidecar.restapi.kafkarest.model.ProduceBatchResponse;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequest;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequestData;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceResponse;
@@ -23,20 +20,26 @@ import io.vertx.core.http.HttpServerRequest;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
-import jakarta.ws.rs.BadRequestException;
+import jakarta.validation.Valid;
+import jakarta.ws.rs.*;
+
 import java.time.Instant;
 import java.util.Date;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
+
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 
 
+// We don't implement RecordsV3Api interface since its root path conflicts
+// with the root path of TopicV3ApiImpl.
 @RequestScoped
-public class RecordsV3ApiImpl implements RecordsV3Api {
+@Path("/internal/kafka/v3/clusters/{cluster_id}/topics/{topic_name}/records")
+public class RecordsV3ApiImpl {
   @Inject
   RecordSerializer recordSerializer;
 
@@ -57,11 +60,13 @@ public class RecordsV3ApiImpl implements RecordsV3Api {
 
   Supplier<String> connectionId = () -> request.getHeader(CONNECTION_ID_HEADER);
 
-  @Override
+  @POST
+  @Consumes({ "application/json" })
+  @Produces({ "application/json", "text/html" })
   public Uni<ProduceResponse> produceRecord(
-      String clusterId,
-      String topicName,
-      ProduceRequest produceRequest
+      @PathParam("cluster_id") String clusterId,
+      @PathParam("topic_name") String topicName,
+      @Valid ProduceRequest produceRequest
   ) {
     return Optional
         .ofNullable(produceRequest.getPartitionId())
@@ -205,15 +210,6 @@ public class RecordsV3ApiImpl implements RecordsV3Api {
             .ofNullable(schema)
             .map(s -> s.parsedSchema().schemaType()).orElse(null))
         .build();
-  }
-
-  @Override
-  public Uni<ProduceBatchResponse> produceRecordsBatch(
-      String clusterId,
-      String topicName,
-      ProduceBatchRequest produceBatchRequest
-  ) {
-    throw new UnsupportedOperationException("Not implemented yet");
   }
 
   private Uni<RegisteredSchema> getSchema(
