@@ -88,8 +88,8 @@ public class RecordsV3ApiImpl implements RecordsV3Api {
       KafkaProducer<byte[], byte[]> producer
   ) {
     return combineUnis(
-        getSchema(schemaRegistryClient, produceRequest.getKey()),
-        getSchema(schemaRegistryClient, produceRequest.getValue())
+        getSchema(schemaRegistryClient, topicName, produceRequest.getKey(), true),
+        getSchema(schemaRegistryClient, topicName, produceRequest.getValue(), false)
     )
         .with((keySchema, valueSchema) -> new ProducePipeline()
                 .withKeySchema(keySchema)
@@ -101,7 +101,7 @@ public class RecordsV3ApiImpl implements RecordsV3Api {
                 Optional
                     .ofNullable(pipeline.keySchema())
                     .map(RegisteredSchema::format)
-                    .orElse(SchemaManager.SchemaFormat.BINARY),
+                    .orElse(SchemaManager.SchemaFormat.JSON),
                 Optional
                     .ofNullable(pipeline.keySchema())
                     .map(RegisteredSchema::parsedSchema).orElse(null),
@@ -113,7 +113,7 @@ public class RecordsV3ApiImpl implements RecordsV3Api {
                 Optional
                     .ofNullable(pipeline.valueSchema())
                     .map(RegisteredSchema::format)
-                    .orElse(SchemaManager.SchemaFormat.BINARY),
+                    .orElse(SchemaManager.SchemaFormat.JSON),
                 Optional
                     .ofNullable(pipeline.valueSchema())
                     .map(RegisteredSchema::parsedSchema).orElse(null),
@@ -217,12 +217,17 @@ public class RecordsV3ApiImpl implements RecordsV3Api {
   }
 
   private Uni<RegisteredSchema> getSchema(
-      SchemaRegistryClient schemaRegistryClient, ProduceRequestData produceRequestData) {
+      SchemaRegistryClient schemaRegistryClient,
+      String topicName,
+      ProduceRequestData produceRequestData,
+      boolean isKey
+  ) {
     if (supportsSchemaVersion(produceRequestData)) {
       return getSchemaFromSchemaVersion(
           schemaRegistryClient,
-          produceRequestData.getSubject(),
-          produceRequestData.getSchemaVersion()
+          topicName,
+          produceRequestData.getSchemaVersion(),
+          isKey
       );
     }
     return Uni.createFrom().nullItem();
@@ -232,23 +237,25 @@ public class RecordsV3ApiImpl implements RecordsV3Api {
    * Check if the ProduceRequestData contains a non-null subject and schema version.
    */
   static boolean supportsSchemaVersion(ProduceRequestData produceRequestData) {
-    return produceRequestData.getSubject() != null && produceRequestData.getSchemaVersion() != null;
+    return produceRequestData.getSchemaVersion() != null;
   }
 
   private Uni<RegisteredSchema> getSchemaFromSchemaVersion(
       @Nullable SchemaRegistryClient schemaRegistryClient,
-      String subject,
-      Integer schemaVersion
+      String topicName,
+      Integer schemaVersion,
+      boolean isKey
   ) {
     if (schemaRegistryClient == null) {
-      if (subject != null || schemaVersion != null) {
+      if (schemaVersion != null) {
         throw new BadRequestException("Schema version requested without a schema registry client");
       }
       return Uni.createFrom().nullItem();
     }
 
     return uniItem(() -> schemaRegistryClient.getByVersion(
-        subject,
+        // Note: We default to TopicNameStrategy for the subject name for the sake of simplicity.
+        (isKey ? topicName + "-key" : topicName + "-value"),
         schemaVersion,
         // do not lookup deleted schemas
         false

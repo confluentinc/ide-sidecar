@@ -64,18 +64,6 @@ public class SchemaManager {
       SchemaProvider schemaProvider() {
         return schemaProvider;
       }
-    },
-    STRING {
-      @Override
-      SchemaProvider schemaProvider() {
-        return null;
-      }
-    },
-    BINARY {
-      @Override
-      SchemaProvider schemaProvider() {
-        return null;
-      }
     };
 
     abstract SchemaProvider schemaProvider();

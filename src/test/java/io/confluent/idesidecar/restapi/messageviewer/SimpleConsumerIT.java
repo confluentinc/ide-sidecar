@@ -1,107 +1,74 @@
 package io.confluent.idesidecar.restapi.messageviewer;
 
+import static io.confluent.idesidecar.restapi.kafkarest.SchemaManager.SCHEMA_PROVIDERS;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.confluent.idesidecar.restapi.avro.MyAvroMessage;
+import io.confluent.idesidecar.restapi.cache.SchemaRegistryClients;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeData;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeRecord;
 import io.confluent.idesidecar.restapi.proto.Message.MyMessage;
 import io.confluent.idesidecar.restapi.util.ConfluentLocalTestBed;
-import io.confluent.kafka.schemaregistry.avro.AvroSchemaProvider;
+import io.confluent.idesidecar.restapi.util.RequestHeadersConstants;
 import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
-import io.confluent.kafka.schemaregistry.json.JsonSchemaProvider;
-import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchemaProvider;
 import io.quarkus.test.junit.QuarkusIntegrationTest;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
-import org.apache.avro.generic.GenericRecord;
-import org.apache.avro.generic.GenericRecordBuilder;
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.Producer;
-import org.apache.kafka.clients.producer.ProducerRecord;
+import java.util.*;
+
 import org.json.JSONObject;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @QuarkusIntegrationTest
 @Tag("io.confluent.common.utils.IntegrationTest")
-public class SimpleConsumerIT {
+public class SimpleConsumerIT extends ConfluentLocalTestBed {
+  private SimpleConsumer simpleConsumer;
 
-  private static ConfluentLocalTestBed testBed;
-  private static SimpleConsumer simpleConsumer;
-
-  @BeforeAll
-  public static void setUp() {
-    testBed = new ConfluentLocalTestBed();
-    testBed.start();
-    assertTrue(testBed.isReady(), "Test bed should be ready");
-
-    Properties consumerProps = new Properties();
-    consumerProps.setProperty("bootstrap.servers", testBed.getBootstrapServers());
-    consumerProps.setProperty("schema.registry.url", testBed.getSchemaRegistryUrl());
+  @BeforeEach
+  public void setupSimpleConsumer() {
+    var consumerProps = new Properties();
+    var schemaRegistry = getSchemaRegistryCluster();
+    var sidecarHost = "http://localhost:%s".formatted(TEST_PORT);
+    consumerProps.setProperty("bootstrap.servers", getBootstrapServers());
+    consumerProps.setProperty("schema.registry.url", sidecarHost);
     simpleConsumer = new SimpleConsumer(
         consumerProps,
         new CachedSchemaRegistryClient(
-            testBed.getSchemaRegistryUrl(),
+            sidecarHost,
             10,
-            Arrays.asList(
-            new ProtobufSchemaProvider(),
-            new AvroSchemaProvider(),
-            new JsonSchemaProvider()),
-            Collections.emptyMap()
+            SCHEMA_PROVIDERS,
+            Map.of(
+                RequestHeadersConstants.CONNECTION_ID_HEADER, CONNECTION_ID,
+                RequestHeadersConstants.CLUSTER_ID_HEADER, schemaRegistry.id()
+            )
         )
     );
-  }
-
-  @AfterAll
-  public static void tearDown() {
-    testBed.stop();
-  }
-
-  void recreateTopic(String topic) throws Exception {
-    if (testBed.topicExists(topic)) {
-      testBed.deleteTopic(topic);
-      testBed.waitForTopicCreation(topic, Duration.ofSeconds(30));
-    }
-    testBed.createTopic(topic, 1, (short) 1);
-    testBed.waitForTopicCreation(topic, Duration.ofSeconds(30));
   }
 
   @Test
   void testAvroProduceAndConsume() throws Exception {
     String topic = "myavromessage1";
-    recreateTopic(topic);
+    createTopic(topic);
 
-    Producer<String, GenericRecord> producer = testBed.createAvroProducer();
-    GenericRecordBuilder myMessageBuilder = new GenericRecordBuilder(MyAvroMessage.SCHEMA$);
+    Integer valueSchemaVersion = createSchema(
+        "%s-value".formatted(topic),
+        "AVRO",
+        MyAvroMessage.SCHEMA$.toString()
+    );
 
     List<String> ids = Arrays.asList("12345", "12346", "12347");
     List<String> values = Arrays.asList("Test Value 1", "Test Value 2", "Test Value 3");
 
     for (int i = 0; i < 3; i++) {
-      myMessageBuilder.set("id", ids.get(i));
-      myMessageBuilder.set("value", values.get(i));
-      GenericRecord myMessage = myMessageBuilder.build();
-
-      ProducerRecord<String, GenericRecord> record = new ProducerRecord<>(topic, "message-key-" + i, myMessage);
-      producer.send(record);
+      produceRecord(
+          topic,
+          "message-key-" + i,
+          null,
+          Map.of("id", ids.get(i), "value", values.get(i)),
+          valueSchemaVersion
+      );
     }
-
-    producer.flush();
-    producer.close();
 
     Map<Integer, Long> offsets = new HashMap<>();
     offsets.put(0, 0L);  // Assuming single partition, start from offset 0
@@ -120,9 +87,15 @@ public class SimpleConsumerIT {
   }
 
   @Test
-  public void testProtoProduceAndConsumeMultipleRecords() throws Exception {
+  public void testProtoProduceAndConsumeMultipleRecords() {
     String topic = "myProtobufTopic";
-    recreateTopic(topic);
+    createTopic(topic);
+
+    Integer valueSchemaVersion = createSchema(
+        "%s-value".formatted(topic),
+        "PROTOBUF",
+        MyMessage.getDescriptor().toProto().toString()
+    );
 
     MyMessage message1 = MyMessage.newBuilder()
         .setName("Some One")
@@ -145,13 +118,15 @@ public class SimpleConsumerIT {
     List<MyMessage> messages = List.of(message1, message2, message3);
     List<String> keys = List.of("key1", "key2", "key3");
 
-    KafkaProducer<String, MyMessage> producer = testBed.createProtobufProducer();
-
     for (int i = 0; i < messages.size(); i++) {
-      ProducerRecord<String, MyMessage> producerRecord = new ProducerRecord<>(topic, keys.get(i), messages.get(i));
-      producer.send(producerRecord);
+      produceRecord(
+          topic,
+          keys.get(i),
+          null,
+          messages.get(i),
+          valueSchemaVersion
+      );
     }
-    producer.close();
 
     Map<Integer, Long> offsets = new HashMap<>();
     offsets.put(0, 0L);  // Assuming single partition, start from offset 0
@@ -172,11 +147,9 @@ public class SimpleConsumerIT {
   }
 
   @Test
-  public void testJsonProducerAndConsumer() throws Exception {
+  public void testJsonProducerAndConsumer() {
     String topic = "test-json-topic";
-    recreateTopic(topic);
-
-    KafkaProducer<String, JSONObject> producer = testBed.createJsonSchemaProducer();
+    createTopic(topic);
 
     List<JSONObject> sentRecords = new ArrayList<>();
     for (int i = 1; i <= 3; i++) {
@@ -186,11 +159,14 @@ public class SimpleConsumerIT {
       json.put("email", "person" + i + "@example.com");
       sentRecords.add(json);
 
-      ProducerRecord<String, JSONObject> record = new ProducerRecord<>(topic, "key" + i, json);
-      producer.send(record).get();
+      produceRecord(
+          topic,
+          "key" + i,
+          null,
+          json,
+          null
+      );
     }
-
-    producer.close();
 
     Map<Integer, Long> offsets = new HashMap<>();
     offsets.put(0, 0L);  // Assuming single partition, start from offset 0
@@ -211,23 +187,15 @@ public class SimpleConsumerIT {
   }
 
   @Test
-  public void testProduceAndConsumeMultipleStringRecords() throws Exception {
+  public void testProduceAndConsumeMultipleStringRecords() {
     String topic = "test-str-topic";
-    recreateTopic(topic);
-
-    KafkaProducer<String, String> producer = testBed.createStringProducer();
-
-    List<ProducerRecord<String, String>> records = Arrays.asList(
-        new ProducerRecord<>(topic, "key1", "value1"),
-        new ProducerRecord<>(topic, "key2", "value2"),
-        new ProducerRecord<>(topic, "key3", "value3")
-    );
-
-    for (ProducerRecord<String, String> record : records) {
-      producer.send(record).get();
-    }
-
-    producer.close();
+    createTopic(topic);
+    var records = new String[][]{
+        {"key1", "value1"},
+        {"key2", "value2"},
+        {"key3", "value3"}
+    };
+    produceStringRecords(topic, records);
 
     Map<Integer, Long> offsets = new HashMap<>();
     offsets.put(0, 0L);  // Assuming single partition, start from offset 0
@@ -243,8 +211,8 @@ public class SimpleConsumerIT {
       String key = record.key().asText();
       String value = record.value().asText();
 
-      assertEquals(records.get(i).key(), key, "Key should match");
-      assertEquals(records.get(i).value(), value, "Value should match");
+      assertEquals(records[i][0], key, "Key should match");
+      assertEquals(records[i][1], value, "Value should match");
     }
   }
 }

@@ -13,6 +13,7 @@ import io.confluent.kafka.schemaregistry.json.JsonSchemaUtils;
 import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchema;
 import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchemaUtils;
 import io.confluent.kafka.serializers.KafkaAvroSerializer;
+import io.confluent.kafka.serializers.KafkaJsonSerializer;
 import io.confluent.kafka.serializers.json.KafkaJsonSchemaSerializer;
 import io.confluent.kafka.serializers.protobuf.KafkaProtobufSerializer;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -56,8 +57,7 @@ public class RecordSerializer {
           topicName,
           objectMapper.valueToTree(data)
       );
-      case BINARY -> ByteString.copyFrom(data.toString().getBytes());
-      default -> throw new BadRequestException("Unsupported schema format");
+      case JSON -> serializeJson(topicName, data);
     };
   }
 
@@ -115,6 +115,12 @@ public class RecordSerializer {
       }
 
       return ByteString.copyFrom(protobufSerializer.serialize(topicName, record));
+    }
+  }
+
+  private ByteString serializeJson(String topicName, Object data) {
+    try (var kafkaJsonSerializer = new KafkaJsonSerializer<>()) {
+      return ByteString.copyFrom(kafkaJsonSerializer.serialize(topicName, data));
     }
   }
 }
