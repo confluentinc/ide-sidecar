@@ -6,7 +6,7 @@ import static io.confluent.idesidecar.restapi.util.MutinyUtil.uniStage;
 import static io.confluent.idesidecar.restapi.util.RequestHeadersConstants.CONNECTION_ID_HEADER;
 
 import com.google.protobuf.ByteString;
-import io.confluent.idesidecar.restapi.cache.ProducerClients;
+import io.confluent.idesidecar.restapi.cache.KafkaProducerClients;
 import io.confluent.idesidecar.restapi.cache.SchemaRegistryClients;
 import io.confluent.idesidecar.restapi.kafkarest.api.RecordsV3Api;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceBatchRequest;
@@ -50,7 +50,7 @@ public class RecordsV3ApiImpl implements RecordsV3Api {
   SchemaRegistryClients schemaRegistryClients;
 
   @Inject
-  ProducerClients producerClients;
+  KafkaProducerClients kafkaProducerClients;
 
   @Inject
   PartitionManager partitionManager;
@@ -70,7 +70,7 @@ public class RecordsV3ApiImpl implements RecordsV3Api {
         .onItem()
         .transformToUni(ignored -> combineUnis(
             () -> schemaRegistryClients.getClientByKafkaClusterId(connectionId.get(), clusterId),
-            () -> producerClients.getClient(connectionId.get(), clusterId)
+            () -> kafkaProducerClients.getClient(connectionId.get(), clusterId)
         )
         .asTuple()
         .runSubscriptionOn(Infrastructure.getDefaultWorkerPool())

@@ -8,7 +8,7 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 
 @ApplicationScoped
-public class ProducerClients extends Clients<KafkaProducer<byte[], byte[]>> {
+public class KafkaProducerClients extends Clients<KafkaProducer<byte[], byte[]>> {
   // Evict cached Producer instances after 5 minutes of inactivity
   private static final String CAFFEINE_SPEC = "expireAfterAccess=5m";
 
@@ -17,7 +17,7 @@ public class ProducerClients extends Clients<KafkaProducer<byte[], byte[]>> {
   @Inject
   ClusterCache clusterCache;
 
-  public ProducerClients() {
+  public KafkaProducerClients() {
     super(CaffeineSpec.parse(CAFFEINE_SPEC));
   }
 
