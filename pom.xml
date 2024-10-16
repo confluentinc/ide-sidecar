@@ -73,6 +73,7 @@
     <avro.version>1.12.0</avro.version>
     <jackson-dataformat.version>2.17.1</jackson-dataformat.version>
     <versions-maven-plugin.version>2.8.1</versions-maven-plugin.version>
+    <launch-darkly-sdk.version>7.0.0</launch-darkly-sdk.version>
   </properties>
 
   <repositories>
@@ -202,6 +203,11 @@
       <groupId>com.fasterxml.jackson.dataformat</groupId>
       <artifactId>jackson-dataformat-avro</artifactId>
       <version>${jackson-dataformat.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.launchdarkly</groupId>
+      <artifactId>launchdarkly-java-server-sdk</artifactId>
+      <version>${launch-darkly-sdk.version}</version>
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
