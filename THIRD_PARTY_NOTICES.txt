@@ -7,9 +7,9 @@
 
 The following 3rd-party software packages may be used by or distributed with git@github.com:confluentinc/ide-sidecar.git. Any information relevant to third-party vendors listed below are collected using common, reasonable means.
 
-Date generated: 2024-10-11
+Date generated: 2024-10-16
 
-Revision ID: b239bbfc4c93132688e4deef341afae6096c72e8
+Revision ID: 7d1a7ee915869ea20bed8dede3cad618e2fe77ae
 
 ================================================================================
 ================================================================================
@@ -49,7 +49,11 @@ No licenses found
 
 
 --------------------------------------------------------------------------------
-Package Title: Ancillary classes for making third party frameworks to run on top of Vert.x (3.13.3)
+Package Title: Ancillary classes for making third party frameworks to run on top of Vert.x (3.15.1)
+
+Package Locator: mvn+io.quarkus.vertx.utils:quarkus-vertx-utils$3.15.1
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -73,10 +77,14 @@ See the License for the specific language governing permissions and limitations 
 
 * Package Info *
 
-Package Download URL: https://repo1.maven.org/maven2/io/quarkus/vertx/utils/quarkus-vertx-utils/3.13.3/quarkus-vertx-utils-3.13.3-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/io/quarkus/vertx/utils/quarkus-vertx-utils/3.15.1/quarkus-vertx-utils-3.15.1-sources.jar
 
 --------------------------------------------------------------------------------
 Package Title: Apache Avro (1.12.0)
+
+Package Locator: mvn+org.apache.avro:avro$1.12.0
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -330,6 +338,10 @@ Package Download URL: https://repo1.maven.org/maven2/org/apache/avro/avro/1.12.0
 
 --------------------------------------------------------------------------------
 Package Title: Apache Commons Codec (1.17.0)
+
+Package Locator: mvn+commons-codec:commons-codec$1.17.0
+
+Package Depth: Direct
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -548,7 +560,11 @@ Authors: Henri Yandell, Tim OBrien, Scott Sanders, Rodney Waldhoff, Daniel Rall,
 Package Download URL: https://repo1.maven.org/maven2/commons-codec/commons-codec/1.17.0/commons-codec-1.17.0-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: Apache Commons Compress (1.26.2)
+Package Title: Apache Commons Compress (1.27.0)
+
+Package Locator: mvn+org.apache.commons:commons-compress$1.27.0
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -763,10 +779,14 @@ Apache-2.0
 
 Authors: Torsten Curdt, Stefan Bodewig, Sebastian Bazley, Christian Grobmeier, Julius Davies, Damjan Jovanovic, Emmanuel Bourg, Gary Gregory, Rob Tompkins, Peter Alfred Lee, Wolfgang Glas, Christian Kohlschütte, Bear Giles, Michael Kuss, Lasse Collin, John Kodis, BELUGA BEHR, Simon Spero, Michael Hausegger, Arturo Bernal
 
-Package Download URL: https://repo1.maven.org/maven2/org/apache/commons/commons-compress/1.26.2/commons-compress-1.26.2-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/org/apache/commons/commons-compress/1.27.0/commons-compress-1.27.0-sources.jar
 
 --------------------------------------------------------------------------------
 Package Title: Apache Commons IO (2.16.1)
+
+Package Locator: mvn+commons-io:commons-io$2.16.1
+
+Package Depth: Direct
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -987,6 +1007,10 @@ Package Download URL: https://repo1.maven.org/maven2/commons-io/commons-io/2.16.
 
 --------------------------------------------------------------------------------
 Package Title: Apache Commons Lang (3.14.0)
+
+Package Locator: mvn+org.apache.commons:commons-lang3$3.14.0
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -1205,7 +1229,11 @@ Authors: Daniel Rall, Stephen Colebourne, Henri Yandell, Steven Caswell, Robert 
 Package Download URL: https://repo1.maven.org/maven2/org/apache/commons/commons-lang3/3.14.0/commons-lang3-3.14.0-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: Apache Commons Logging (1.2)
+Package Title: Apache Commons Logging (1.3.2)
+
+Package Locator: mvn+commons-logging:commons-logging$1.3.2
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -1421,10 +1449,14 @@ Apache-2.0
 
 Authors: Juozas Baliuka, Morgan Delagrange, Peter Donald, Robert Burrell Donkin, Simon Kitching, Dennis Lundberg, Costin Manolache, Craig McClanahan, Thomas Neidhart, Scott Sanders, Richard Sitze, Brian Stansberry, Rodney Waldhoff, Gary Gregory, Matthew P. Del Buono, Vince Eagen, Peter Lawrey, Berin Loritsch, Philippe Mouawad, Neeme Praks, Arturo Bernal
 
-Package Download URL: https://repo1.maven.org/maven2/commons-logging/commons-logging/1.2/commons-logging-1.2-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/commons-logging/commons-logging/1.3.2/commons-logging-1.3.2-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: Apache Commons Validator (1.7)
+Package Title: Apache Commons Validator (1.9.0)
+
+Package Locator: mvn+commons-validator:commons-validator$1.9.0
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -1640,10 +1672,14 @@ Apache-2.0
 
 Authors: Don Brown, Martin Cooper, David Graham, Ted Husted, Rob Leland, Craig McClanahan, James Mitchell, Niall Pemberton, James Turner, David Winterfeldt, Henri Yandell, Ben Speakmon, Nick Burch, SimoneTripodi, Benedikt Ritter, Gary Gregory, Makoto Uchino
 
-Package Download URL: https://repo1.maven.org/maven2/commons-validator/commons-validator/1.7/commons-validator-1.7-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/commons-validator/commons-validator/1.9.0/commons-validator-1.9.0-sources.jar
 
 --------------------------------------------------------------------------------
 Package Title: Apache Maven Shared Utils (3.4.2)
+
+Package Locator: mvn+org.apache.maven.shared:maven-shared-utils$3.4.2
+
+Package Depth: Direct
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -1862,7 +1898,11 @@ Authors: Kathryn Newbould
 Package Download URL: https://repo1.maven.org/maven2/org/apache/maven/shared/maven-shared-utils/3.4.2/maven-shared-utils-3.4.2-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: ArC - Runtime (3.13.3)
+Package Title: ArC - Runtime (3.15.1)
+
+Package Locator: mvn+io.quarkus.arc:arc$3.15.1
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -1886,10 +1926,14 @@ See the License for the specific language governing permissions and limitations 
 
 * Package Info *
 
-Package Download URL: https://repo1.maven.org/maven2/io/quarkus/arc/arc/3.13.3/arc-3.13.3-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/io/quarkus/arc/arc/3.15.1/arc-3.15.1-sources.jar
 
 --------------------------------------------------------------------------------
 Package Title: assembly-plugin-boilerplate (7.7.0)
+
+Package Locator: mvn+io.confluent:assembly-plugin-boilerplate$7.7.0
+
+Package Depth: Direct
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -1913,6 +1957,10 @@ See the License for the specific language governing permissions and limitations 
 
 --------------------------------------------------------------------------------
 Package Title: Bean Validation API (2.0.1.Final)
+
+Package Locator: mvn+javax.validation:validation-api$2.0.1.Final
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -1942,6 +1990,10 @@ Package Download URL: https://repo1.maven.org/maven2/javax/validation/validation
 
 --------------------------------------------------------------------------------
 Package Title: brotli4j (1.16.0)
+
+Package Locator: mvn+com.aayushatharva.brotli4j:brotli4j$1.16.0
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -1993,6 +2045,10 @@ Package Download URL: https://repo1.maven.org/maven2/com/aayushatharva/brotli4j/
 
 --------------------------------------------------------------------------------
 Package Title: Caffeine cache (3.1.8)
+
+Package Locator: mvn+com.github.ben-manes.caffeine:caffeine$3.1.8
+
+Package Depth: Direct
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -2049,6 +2105,10 @@ Package Download URL: https://repo1.maven.org/maven2/com/github/ben-manes/caffei
 
 --------------------------------------------------------------------------------
 Package Title: CDI APIs (4.1.0)
+
+Package Locator: mvn+jakarta.enterprise:jakarta.enterprise.cdi-api$4.1.0
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -2387,6 +2447,10 @@ Package Download URL: https://repo1.maven.org/maven2/jakarta/enterprise/jakarta.
 
 --------------------------------------------------------------------------------
 Package Title: CDI Language Model (4.1.0)
+
+Package Locator: mvn+jakarta.enterprise:jakarta.enterprise.lang-model$4.1.0
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -2722,7 +2786,11 @@ THE ACCOMPANYING PROGRAM IS PROVIDED UNDER THE TERMS OF THIS ECLIPSE PUBLIC LICE
 Package Download URL: https://repo1.maven.org/maven2/jakarta/enterprise/jakarta.enterprise.lang-model/4.1.0/jakarta.enterprise.lang-model-4.1.0-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: Checker Qual (3.45.0)
+Package Title: Checker Qual (3.46.0)
+
+Package Locator: mvn+org.checkerframework:checker-qual$3.46.0
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -2758,10 +2826,14 @@ THE SOFTWARE.
 
 Authors: Michael Ernst, Suzanne Millstein
 
-Package Download URL: https://repo1.maven.org/maven2/org/checkerframework/checker-qual/3.45.0/checker-qual-3.45.0-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/org/checkerframework/checker-qual/3.46.0/checker-qual-3.46.0-sources.jar
 
 --------------------------------------------------------------------------------
 Package Title: ClassGraph (4.8.21)
+
+Package Locator: mvn+io.github.classgraph:classgraph$4.8.21
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -2796,6 +2868,10 @@ Package Download URL: https://repo1.maven.org/maven2/io/github/classgraph/classg
 
 --------------------------------------------------------------------------------
 Package Title: ClassMate (1.7.0)
+
+Package Locator: mvn+com.fasterxml:classmate$1.7.0
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -2820,6 +2896,10 @@ Package Download URL: https://repo1.maven.org/maven2/com/fasterxml/classmate/1.7
 
 --------------------------------------------------------------------------------
 Package Title: com.apollographql.federation:federation-graphql-java-support (4.4.0)
+
+Package Locator: mvn+com.apollographql.federation:federation-graphql-java-support$4.4.0
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -2854,6 +2934,10 @@ Package Download URL: https://repo1.maven.org/maven2/com/apollographql/federatio
 
 --------------------------------------------------------------------------------
 Package Title: Commons Digester (2.1)
+
+Package Locator: mvn+commons-digester:commons-digester$2.1
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -3073,6 +3157,10 @@ Package Download URL: https://repo1.maven.org/maven2/commons-digester/commons-di
 
 --------------------------------------------------------------------------------
 Package Title: Commons Logging to JBoss Logging (1.0.0.Final)
+
+Package Locator: mvn+org.jboss.logging:commons-logging-jboss-logging$1.0.0.Final
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -3100,6 +3188,10 @@ Package Download URL: https://repo1.maven.org/maven2/org/jboss/logging/commons-l
 
 --------------------------------------------------------------------------------
 Package Title: commons-collections (3.2.2)
+
+Package Locator: mvn+commons-collections:commons-collections$3.2.2
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -3319,6 +3411,10 @@ Package Download URL: https://repo1.maven.org/maven2/commons-collections/commons
 
 --------------------------------------------------------------------------------
 Package Title: compiler (0.9.13)
+
+Package Locator: mvn+com.github.spullara.mustache.java:compiler$0.9.13
+
+Package Depth: Direct
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -3348,6 +3444,10 @@ Package Download URL: https://repo1.maven.org/maven2/com/github/spullara/mustach
 
 --------------------------------------------------------------------------------
 Package Title: config (7.7.0)
+
+Package Locator: mvn+io.confluent:common-config$7.7.0
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -3375,6 +3475,10 @@ Package Download URL: http://packages.confluent.io/maven/io/confluent/common-con
 
 --------------------------------------------------------------------------------
 Package Title: Confluent Server (7.7.0-ccs)
+
+Package Locator: mvn+org.apache.kafka:kafka-clients$7.7.0-ccs
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -3438,6 +3542,10 @@ Package Download URL: http://packages.confluent.io/maven/org/apache/kafka/kafka-
 
 --------------------------------------------------------------------------------
 Package Title: cron-utils (9.2.1)
+
+Package Locator: mvn+com.cronutils:cron-utils$9.2.1
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -3465,6 +3573,10 @@ Package Download URL: https://repo1.maven.org/maven2/com/cronutils/cron-utils/9.
 
 --------------------------------------------------------------------------------
 Package Title: Eclipse Expressly (5.0.0)
+
+Package Locator: mvn+org.glassfish.expressly:expressly$5.0.0
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -3595,6 +3707,10 @@ Package Download URL: https://repo1.maven.org/maven2/org/glassfish/expressly/exp
 
 --------------------------------------------------------------------------------
 Package Title: Eclipse Parsson (1.1.7)
+
+Package Locator: mvn+org.eclipse.parsson:parsson$1.1.7
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -4339,7 +4455,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Package Download URL: https://repo1.maven.org/maven2/org/eclipse/parsson/parsson/1.1.7/parsson-1.1.7-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: error-prone annotations (2.29.0)
+Package Title: error-prone annotations (2.30.0)
+
+Package Locator: mvn+com.google.errorprone:error_prone_annotations$2.30.0
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -4363,10 +4483,14 @@ See the License for the specific language governing permissions and limitations 
 
 * Package Info *
 
-Package Download URL: https://repo1.maven.org/maven2/com/google/errorprone/error_prone_annotations/2.29.0/error_prone_annotations-2.29.0-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/com/google/errorprone/error_prone_annotations/2.30.0/error_prone_annotations-2.30.0-sources.jar
 
 --------------------------------------------------------------------------------
 Package Title: everit-json-schema (1.14.3)
+
+Package Locator: mvn+com.github.erosb:everit-json-schema$1.14.3
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -4396,6 +4520,10 @@ Package Download URL: https://repo1.maven.org/maven2/com/github/erosb/everit-jso
 
 --------------------------------------------------------------------------------
 Package Title: FindBugs-jsr305 (3.0.2)
+
+Package Locator: mvn+com.google.code.findbugs:jsr305$3.0.2
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -4497,6 +4625,10 @@ Package Download URL: https://repo1.maven.org/maven2/com/google/code/findbugs/js
 
 --------------------------------------------------------------------------------
 Package Title: graphql-java (22.1)
+
+Package Locator: mvn+com.graphql-java:graphql-java$22.1
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -4621,6 +4753,10 @@ Package Download URL: https://repo1.maven.org/maven2/com/graphql-java/graphql-ja
 
 --------------------------------------------------------------------------------
 Package Title: graphql-java-extended-scalars (21.0)
+
+Package Locator: mvn+com.graphql-java:graphql-java-extended-scalars$21.0
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -4655,6 +4791,10 @@ Package Download URL: https://repo1.maven.org/maven2/com/graphql-java/graphql-ja
 
 --------------------------------------------------------------------------------
 Package Title: Gson (2.9.0)
+
+Package Locator: mvn+com.google.code.gson:gson$2.9.0
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -4684,6 +4824,10 @@ Package Download URL: https://repo1.maven.org/maven2/com/google/code/gson/gson/2
 
 --------------------------------------------------------------------------------
 Package Title: Guava InternalFutureFailureAccess and InternalFutures (1.0.1)
+
+Package Locator: mvn+com.google.guava:failureaccess$1.0.1
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -4711,6 +4855,10 @@ Package Download URL: https://repo1.maven.org/maven2/com/google/guava/failureacc
 
 --------------------------------------------------------------------------------
 Package Title: Guava ListenableFuture only (9999.0-empty-to-avoid-conflict-with-guava)
+
+Package Locator: mvn+com.google.guava:listenablefuture$9999.0-empty-to-avoid-conflict-with-guava
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -4774,6 +4922,10 @@ Package Download URL: https://repo1.maven.org/maven2/com/google/guava/listenable
 
 --------------------------------------------------------------------------------
 Package Title: Guava: Google Core Libraries for Java (32.0.1-jre)
+
+Package Locator: mvn+com.google.guava:guava$32.0.1-jre
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -5018,6 +5170,10 @@ Package Download URL: https://repo1.maven.org/maven2/com/google/guava/guava/32.0
 
 --------------------------------------------------------------------------------
 Package Title: Handy URI Templates (2.1.8)
+
+Package Locator: mvn+com.damnhandy:handy-uri-templates$2.1.8
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -5047,6 +5203,10 @@ Package Download URL: https://repo1.maven.org/maven2/com/damnhandy/handy-uri-tem
 
 --------------------------------------------------------------------------------
 Package Title: Hibernate Validator Engine (8.0.1.Final)
+
+Package Locator: mvn+org.hibernate.validator:hibernate-validator$8.0.1.Final
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -5103,6 +5263,10 @@ Package Download URL: https://repo1.maven.org/maven2/org/hibernate/validator/hib
 
 --------------------------------------------------------------------------------
 Package Title: J2ObjC Annotations (2.8)
+
+Package Locator: mvn+com.google.j2objc:j2objc-annotations$2.8
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -5132,6 +5296,10 @@ Package Download URL: https://repo1.maven.org/maven2/com/google/j2objc/j2objc-an
 
 --------------------------------------------------------------------------------
 Package Title: Jackson dataformat: Avro (2.17.1)
+
+Package Locator: mvn+com.fasterxml.jackson.dataformat:jackson-dataformat-avro$2.17.1
+
+Package Depth: Direct
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -5155,6 +5323,10 @@ Package Download URL: https://repo1.maven.org/maven2/com/fasterxml/jackson/dataf
 
 --------------------------------------------------------------------------------
 Package Title: Jackson datatype: Guava (2.17.2)
+
+Package Locator: mvn+com.fasterxml.jackson.datatype:jackson-datatype-guava$2.17.2
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -5218,6 +5390,10 @@ Package Download URL: https://repo1.maven.org/maven2/com/fasterxml/jackson/datat
 
 --------------------------------------------------------------------------------
 Package Title: Jackson datatype: jdk8 (2.17.2)
+
+Package Locator: mvn+com.fasterxml.jackson.datatype:jackson-datatype-jdk8$2.17.2
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -5245,6 +5421,10 @@ Package Download URL: https://repo1.maven.org/maven2/com/fasterxml/jackson/datat
 
 --------------------------------------------------------------------------------
 Package Title: Jackson datatype: Joda (2.17.2)
+
+Package Locator: mvn+com.fasterxml.jackson.datatype:jackson-datatype-joda$2.17.2
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -5268,6 +5448,10 @@ Package Download URL: https://repo1.maven.org/maven2/com/fasterxml/jackson/datat
 
 --------------------------------------------------------------------------------
 Package Title: Jackson datatype: JSR310 (2.17.2)
+
+Package Locator: mvn+com.fasterxml.jackson.datatype:jackson-datatype-jsr310$2.17.2
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -5293,6 +5477,10 @@ Package Download URL: https://repo1.maven.org/maven2/com/fasterxml/jackson/datat
 
 --------------------------------------------------------------------------------
 Package Title: Jackson-annotations (2.17.2)
+
+Package Locator: mvn+com.fasterxml.jackson.core:jackson-annotations$2.17.2
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -5510,6 +5698,10 @@ Package Download URL: https://repo1.maven.org/maven2/com/fasterxml/jackson/core/
 
 --------------------------------------------------------------------------------
 Package Title: Jackson-core (2.17.2)
+
+Package Locator: mvn+com.fasterxml.jackson.core:jackson-core$2.17.2
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -5751,6 +5943,10 @@ Package Download URL: https://repo1.maven.org/maven2/com/fasterxml/jackson/core/
 
 --------------------------------------------------------------------------------
 Package Title: jackson-databind (2.17.2)
+
+Package Locator: mvn+com.fasterxml.jackson.core:jackson-databind$2.17.2
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -5968,6 +6164,10 @@ Package Download URL: https://repo1.maven.org/maven2/com/fasterxml/jackson/core/
 
 --------------------------------------------------------------------------------
 Package Title: Jackson-dataformat-CSV (2.17.2)
+
+Package Locator: mvn+com.fasterxml.jackson.dataformat:jackson-dataformat-csv$2.17.2
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -5995,6 +6195,10 @@ Package Download URL: https://repo1.maven.org/maven2/com/fasterxml/jackson/dataf
 
 --------------------------------------------------------------------------------
 Package Title: Jackson-dataformat-YAML (2.17.2)
+
+Package Locator: mvn+com.fasterxml.jackson.dataformat:jackson-dataformat-yaml$2.17.2
+
+Package Depth: Direct
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -6018,6 +6222,10 @@ Package Download URL: https://repo1.maven.org/maven2/com/fasterxml/jackson/dataf
 
 --------------------------------------------------------------------------------
 Package Title: Jackson-module-parameter-names (2.17.2)
+
+Package Locator: mvn+com.fasterxml.jackson.module:jackson-module-parameter-names$2.17.2
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -6081,6 +6289,10 @@ Package Download URL: https://repo1.maven.org/maven2/com/fasterxml/jackson/modul
 
 --------------------------------------------------------------------------------
 Package Title: Jakarta Activation API (2.1.3)
+
+Package Locator: mvn+jakarta.activation:jakarta.activation-api$2.1.3
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -6261,6 +6473,10 @@ Package Download URL: https://repo1.maven.org/maven2/jakarta/activation/jakarta.
 
 --------------------------------------------------------------------------------
 Package Title: Jakarta Annotations API (3.0.0)
+
+Package Locator: mvn+jakarta.annotation:jakarta.annotation-api$3.0.0
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -7008,6 +7224,10 @@ Package Download URL: https://repo1.maven.org/maven2/jakarta/annotation/jakarta.
 
 --------------------------------------------------------------------------------
 Package Title: Jakarta Dependency Injection (2.0.1)
+
+Package Locator: mvn+jakarta.inject:jakarta.inject-api$2.0.1
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -7347,6 +7567,10 @@ Package Download URL: https://repo1.maven.org/maven2/jakarta/inject/jakarta.inje
 
 --------------------------------------------------------------------------------
 Package Title: Jakarta Expression Language API (5.0.1)
+
+Package Locator: mvn+jakarta.el:jakarta.el-api$5.0.1
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -8111,6 +8335,10 @@ Package Download URL: https://repo1.maven.org/maven2/jakarta/el/jakarta.el-api/5
 
 --------------------------------------------------------------------------------
 Package Title: Jakarta Interceptors (2.2.0)
+
+Package Locator: mvn+jakarta.interceptor:jakarta.interceptor-api$2.2.0
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -8858,6 +9086,10 @@ Package Download URL: https://repo1.maven.org/maven2/jakarta/interceptor/jakarta
 
 --------------------------------------------------------------------------------
 Package Title: Jakarta JSON Processing API (2.1.3)
+
+Package Locator: mvn+jakarta.json:jakarta.json-api$2.1.3
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -9605,6 +9837,10 @@ Package Download URL: https://repo1.maven.org/maven2/jakarta/json/jakarta.json-a
 
 --------------------------------------------------------------------------------
 Package Title: Jakarta RESTful WS API (3.1.0)
+
+Package Locator: mvn+jakarta.ws.rs:jakarta.ws.rs-api$3.1.0
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -10425,6 +10661,10 @@ Package Download URL: https://repo1.maven.org/maven2/jakarta/ws/rs/jakarta.ws.rs
 
 --------------------------------------------------------------------------------
 Package Title: Jakarta Validation API (3.0.2)
+
+Package Locator: mvn+jakarta.validation:jakarta.validation-api$3.0.2
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -10574,6 +10814,10 @@ Package Download URL: https://repo1.maven.org/maven2/jakarta/validation/jakarta.
 
 --------------------------------------------------------------------------------
 Package Title: Jakarta XML Binding API (4.0.2)
+
+Package Locator: mvn+jakarta.xml.bind:jakarta.xml.bind-api$4.0.2
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -10738,6 +10982,10 @@ Package Download URL: https://repo1.maven.org/maven2/jakarta/xml/bind/jakarta.xm
 
 --------------------------------------------------------------------------------
 Package Title: jakarta.transaction API (2.0.1)
+
+Package Locator: mvn+jakarta.transaction:jakarta.transaction-api$2.0.1
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -11485,6 +11733,10 @@ Package Download URL: https://repo1.maven.org/maven2/jakarta/transaction/jakarta
 
 --------------------------------------------------------------------------------
 Package Title: Jandex: Core (3.2.2)
+
+Package Locator: mvn+io.smallrye:jandex$3.2.2
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -11512,6 +11764,10 @@ Package Download URL: https://repo1.maven.org/maven2/io/smallrye/jandex/3.2.2/ja
 
 --------------------------------------------------------------------------------
 Package Title: Java Concurrency Tools Core Library (4.0.5)
+
+Package Locator: mvn+org.jctools:jctools-core$4.0.5
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -11539,6 +11795,10 @@ Package Download URL: https://repo1.maven.org/maven2/org/jctools/jctools-core/4.
 
 --------------------------------------------------------------------------------
 Package Title: java-dataloader (3.3.0)
+
+Package Locator: mvn+com.graphql-java:java-dataloader$3.3.0
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -11617,6 +11877,10 @@ Package Download URL: https://repo1.maven.org/maven2/com/graphql-java/java-datal
 
 --------------------------------------------------------------------------------
 Package Title: JavaPoet (1.13.0)
+
+Package Locator: mvn+com.squareup:javapoet$1.13.0
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -11644,6 +11908,10 @@ Package Download URL: https://repo1.maven.org/maven2/com/squareup/javapoet/1.13.
 
 --------------------------------------------------------------------------------
 Package Title: JBoss Log Manager (3.0.6.Final)
+
+Package Locator: mvn+org.jboss.logmanager:jboss-logmanager$3.0.6.Final
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -11671,6 +11939,10 @@ Package Download URL: https://repo1.maven.org/maven2/org/jboss/logmanager/jboss-
 
 --------------------------------------------------------------------------------
 Package Title: JBoss Logging 3 (3.6.0.Final)
+
+Package Locator: mvn+org.jboss.logging:jboss-logging$3.6.0.Final
+
+Package Depth: Direct
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -11697,7 +11969,11 @@ See the License for the specific language governing permissions and limitations 
 Package Download URL: https://repo1.maven.org/maven2/org/jboss/logging/jboss-logging/3.6.0.Final/jboss-logging-3.6.0.Final-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: JBoss Logging I18n Annotations (3.0.0.Final)
+Package Title: JBoss Logging I18n Annotations (3.0.1.Final)
+
+Package Locator: mvn+org.jboss.logging:jboss-logging-annotations$3.0.1.Final
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -11721,10 +11997,14 @@ See the License for the specific language governing permissions and limitations 
 
 * Package Info *
 
-Package Download URL: https://repo1.maven.org/maven2/org/jboss/logging/jboss-logging-annotations/3.0.0.Final/jboss-logging-annotations-3.0.0.Final-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/org/jboss/logging/jboss-logging-annotations/3.0.1.Final/jboss-logging-annotations-3.0.1.Final-sources.jar
 
 --------------------------------------------------------------------------------
 Package Title: JBoss Threads (3.6.1.Final)
+
+Package Locator: mvn+org.jboss.threads:jboss-threads$3.6.1.Final
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -11917,6 +12197,10 @@ Package Download URL: https://repo1.maven.org/maven2/org/jboss/threads/jboss-thr
 
 --------------------------------------------------------------------------------
 Package Title: JetBrains Java Annotations (24.1.0)
+
+Package Locator: mvn+org.jetbrains:annotations$24.1.0
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -11946,6 +12230,10 @@ Package Download URL: https://repo1.maven.org/maven2/org/jetbrains/annotations/2
 
 --------------------------------------------------------------------------------
 Package Title: Joda-Time (2.12.7)
+
+Package Locator: mvn+joda-time:joda-time$2.12.7
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -12164,7 +12452,11 @@ Authors: Stephen Colebourne, Brian S O&#39;Neill, Sergi Almacellas Abellana, Adr
 Package Download URL: https://repo1.maven.org/maven2/joda-time/joda-time/2.12.7/joda-time-2.12.7-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: JSON in Java (20231013)
+Package Title: JSON in Java (20240303)
+
+Package Locator: mvn+org.json:json$20240303
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -12180,10 +12472,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 * Package Info *
 
-Package Download URL: https://repo1.maven.org/maven2/org/json/json/20231013/json-20231013-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/org/json/json/20240303/json-20240303-sources.jar
 
 --------------------------------------------------------------------------------
 Package Title: JSON-B API (3.0.1)
+
+Package Locator: mvn+jakarta.json.bind:jakarta.json.bind-api$3.0.1
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -12931,6 +13227,10 @@ Package Download URL: https://repo1.maven.org/maven2/jakarta/json/bind/jakarta.j
 
 --------------------------------------------------------------------------------
 Package Title: json-sKema (0.15.0)
+
+Package Locator: mvn+com.github.erosb:json-sKema$0.15.0
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -12965,6 +13265,10 @@ Package Download URL: https://repo1.maven.org/maven2/com/github/erosb/json-sKema
 
 --------------------------------------------------------------------------------
 Package Title: kafka-avro-serializer (7.7.0)
+
+Package Locator: mvn+io.confluent:kafka-avro-serializer$7.7.0
+
+Package Depth: Direct
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -12992,6 +13296,10 @@ Package Download URL: http://packages.confluent.io/maven/io/confluent/kafka-avro
 
 --------------------------------------------------------------------------------
 Package Title: kafka-json-schema-provider (7.7.0)
+
+Package Locator: mvn+io.confluent:kafka-json-schema-provider$7.7.0
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -13144,6 +13452,10 @@ Package Download URL: http://packages.confluent.io/maven/io/confluent/kafka-json
 
 --------------------------------------------------------------------------------
 Package Title: kafka-json-schema-serializer (7.7.0)
+
+Package Locator: mvn+io.confluent:kafka-json-schema-serializer$7.7.0
+
+Package Depth: Direct
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -13296,6 +13608,10 @@ Package Download URL: http://packages.confluent.io/maven/io/confluent/kafka-json
 
 --------------------------------------------------------------------------------
 Package Title: kafka-json-serializer (7.7.0)
+
+Package Locator: mvn+io.confluent:kafka-json-serializer$7.7.0
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -13323,6 +13639,10 @@ Package Download URL: http://packages.confluent.io/maven/io/confluent/kafka-json
 
 --------------------------------------------------------------------------------
 Package Title: kafka-protobuf-provider (7.7.0)
+
+Package Locator: mvn+io.confluent:kafka-protobuf-provider$7.7.0
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -13475,6 +13795,10 @@ Package Download URL: http://packages.confluent.io/maven/io/confluent/kafka-prot
 
 --------------------------------------------------------------------------------
 Package Title: kafka-protobuf-serializer (7.7.0)
+
+Package Locator: mvn+io.confluent:kafka-protobuf-serializer$7.7.0
+
+Package Depth: Direct
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -13627,6 +13951,10 @@ Package Download URL: http://packages.confluent.io/maven/io/confluent/kafka-prot
 
 --------------------------------------------------------------------------------
 Package Title: kafka-protobuf-types (7.7.0)
+
+Package Locator: mvn+io.confluent:kafka-protobuf-types$7.7.0
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -13779,6 +14107,10 @@ Package Download URL: http://packages.confluent.io/maven/io/confluent/kafka-prot
 
 --------------------------------------------------------------------------------
 Package Title: kafka-schema-registry-client (7.7.0)
+
+Package Locator: mvn+io.confluent:kafka-schema-registry-client$7.7.0
+
+Package Depth: Direct
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -13806,6 +14138,10 @@ Package Download URL: http://packages.confluent.io/maven/io/confluent/kafka-sche
 
 --------------------------------------------------------------------------------
 Package Title: kafka-schema-serializer (7.7.0)
+
+Package Locator: mvn+io.confluent:kafka-schema-serializer$7.7.0
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -13957,7 +14293,11 @@ This is a catch-all license used when we find many different proprietary license
 Package Download URL: http://packages.confluent.io/maven/io/confluent/kafka-schema-serializer/7.7.0/kafka-schema-serializer-7.7.0-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: Kotlin Reflect (2.0.0)
+Package Title: Kotlin Reflect (2.0.10)
+
+Package Locator: mvn+org.jetbrains.kotlin:kotlin-reflect$2.0.10
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -13983,10 +14323,14 @@ See the License for the specific language governing permissions and limitations 
 
 Authors: Kotlin Team
 
-Package Download URL: https://repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-reflect/2.0.0/kotlin-reflect-2.0.0-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-reflect/2.0.10/kotlin-reflect-2.0.10-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: Kotlin Script Runtime (2.0.0)
+Package Title: Kotlin Script Runtime (2.0.10)
+
+Package Locator: mvn+org.jetbrains.kotlin:kotlin-script-runtime$2.0.10
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -14012,10 +14356,14 @@ See the License for the specific language governing permissions and limitations 
 
 Authors: Kotlin Team
 
-Package Download URL: https://repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-script-runtime/2.0.0/kotlin-script-runtime-2.0.0-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-script-runtime/2.0.10/kotlin-script-runtime-2.0.10-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: Kotlin Scripting Common (2.0.0)
+Package Title: Kotlin Scripting Common (2.0.10)
+
+Package Locator: mvn+org.jetbrains.kotlin:kotlin-scripting-common$2.0.10
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -14041,39 +14389,14 @@ See the License for the specific language governing permissions and limitations 
 
 Authors: Kotlin Team
 
-Package Download URL: https://repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-scripting-common/2.0.0/kotlin-scripting-common-2.0.0-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-scripting-common/2.0.10/kotlin-scripting-common-2.0.10-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: Kotlin Scripting Compiler Embeddable (2.0.0)
---------------------------------------------------------------------------------
+Package Title: Kotlin Scripting Compiler Embeddable (2.0.10)
 
-* Declared Licenses *
-Apache-2.0
+Package Locator: mvn+org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable$2.0.10
 
-
-Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-
-See the License for the specific language governing permissions and limitations under the License.
-
-
-* Package Info *
-
-Authors: Kotlin Team
-
-Package Download URL: https://repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-scripting-compiler-embeddable/2.0.0/kotlin-scripting-compiler-embeddable-2.0.0-sources.jar
-
---------------------------------------------------------------------------------
-Package Title: Kotlin Scripting Compiler Impl Embeddable (2.0.0)
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -14099,10 +14422,47 @@ See the License for the specific language governing permissions and limitations 
 
 Authors: Kotlin Team
 
-Package Download URL: https://repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-scripting-compiler-impl-embeddable/2.0.0/kotlin-scripting-compiler-impl-embeddable-2.0.0-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-scripting-compiler-embeddable/2.0.10/kotlin-scripting-compiler-embeddable-2.0.10-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: Kotlin Scripting Jvm (2.0.0)
+Package Title: Kotlin Scripting Compiler Impl Embeddable (2.0.10)
+
+Package Locator: mvn+org.jetbrains.kotlin:kotlin-scripting-compiler-impl-embeddable$2.0.10
+
+Package Depth: Transitive
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+Apache-2.0
+
+
+Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+See the License for the specific language governing permissions and limitations under the License.
+
+
+* Package Info *
+
+Authors: Kotlin Team
+
+Package Download URL: https://repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-scripting-compiler-impl-embeddable/2.0.10/kotlin-scripting-compiler-impl-embeddable-2.0.10-sources.jar
+
+--------------------------------------------------------------------------------
+Package Title: Kotlin Scripting Jvm (2.0.10)
+
+Package Locator: mvn+org.jetbrains.kotlin:kotlin-scripting-jvm$2.0.10
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -14128,39 +14488,14 @@ See the License for the specific language governing permissions and limitations 
 
 Authors: Kotlin Team
 
-Package Download URL: https://repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-scripting-jvm/2.0.0/kotlin-scripting-jvm-2.0.0-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-scripting-jvm/2.0.10/kotlin-scripting-jvm-2.0.10-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: Kotlin Stdlib (2.0.0)
---------------------------------------------------------------------------------
+Package Title: Kotlin Stdlib (2.0.10)
 
-* Declared Licenses *
-Apache-2.0
+Package Locator: mvn+org.jetbrains.kotlin:kotlin-stdlib$2.0.10
 
-
-Copyright 2010-2016 JetBrains s.r.o.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-
-See the License for the specific language governing permissions and limitations under the License.
-
-
-* Package Info *
-
-Authors: Kotlin Team
-
-Package Download URL: https://repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/2.0.0/kotlin-stdlib-2.0.0-sources.jar
-
---------------------------------------------------------------------------------
-Package Title: Kotlin Stdlib Common (2.0.0)
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -14186,10 +14521,47 @@ See the License for the specific language governing permissions and limitations 
 
 Authors: Kotlin Team
 
-Package Download URL: https://repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-stdlib-common/2.0.0/kotlin-stdlib-common-2.0.0-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/2.0.10/kotlin-stdlib-2.0.10-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: Kotlin Stdlib Jdk7 (2.0.0)
+Package Title: Kotlin Stdlib Common (2.0.10)
+
+Package Locator: mvn+org.jetbrains.kotlin:kotlin-stdlib-common$2.0.10
+
+Package Depth: Transitive
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+Apache-2.0
+
+
+Copyright 2010-2016 JetBrains s.r.o.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+See the License for the specific language governing permissions and limitations under the License.
+
+
+* Package Info *
+
+Authors: Kotlin Team
+
+Package Download URL: https://repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-stdlib-common/2.0.10/kotlin-stdlib-common-2.0.10-sources.jar
+
+--------------------------------------------------------------------------------
+Package Title: Kotlin Stdlib Jdk7 (2.0.10)
+
+Package Locator: mvn+org.jetbrains.kotlin:kotlin-stdlib-jdk7$2.0.10
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -14215,10 +14587,14 @@ See the License for the specific language governing permissions and limitations 
 
 Authors: Kotlin Team
 
-Package Download URL: https://repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-stdlib-jdk7/2.0.0/kotlin-stdlib-jdk7-2.0.0-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-stdlib-jdk7/2.0.10/kotlin-stdlib-jdk7-2.0.10-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: Kotlin Stdlib Jdk8 (2.0.0)
+Package Title: Kotlin Stdlib Jdk8 (2.0.10)
+
+Package Locator: mvn+org.jetbrains.kotlin:kotlin-stdlib-jdk8$2.0.10
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -14244,10 +14620,14 @@ See the License for the specific language governing permissions and limitations 
 
 Authors: Kotlin Team
 
-Package Download URL: https://repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-stdlib-jdk8/2.0.0/kotlin-stdlib-jdk8-2.0.0-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-stdlib-jdk8/2.0.10/kotlin-stdlib-jdk8-2.0.10-sources.jar
 
 --------------------------------------------------------------------------------
 Package Title: KotlinPoet (1.16.0)
+
+Package Locator: mvn+com.squareup:kotlinpoet-jvm$1.16.0
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -14277,6 +14657,10 @@ Package Download URL: https://repo1.maven.org/maven2/com/squareup/kotlinpoet-jvm
 
 --------------------------------------------------------------------------------
 Package Title: Log Redactor (1.0.12)
+
+Package Locator: mvn+io.confluent:logredactor$1.0.12
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -14304,6 +14688,10 @@ Package Download URL: https://repo1.maven.org/maven2/io/confluent/logredactor/1.
 
 --------------------------------------------------------------------------------
 Package Title: Log Redactor Metrics (1.0.12)
+
+Package Locator: mvn+io.confluent:logredactor-metrics$1.0.12
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -14331,6 +14719,10 @@ Package Download URL: https://repo1.maven.org/maven2/io/confluent/logredactor-me
 
 --------------------------------------------------------------------------------
 Package Title: LZ4 and xxHash (1.8.0)
+
+Package Locator: mvn+org.lz4:lz4-java$1.8.0
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -14360,6 +14752,10 @@ Package Download URL: https://repo1.maven.org/maven2/org/lz4/lz4-java/1.8.0/lz4-
 
 --------------------------------------------------------------------------------
 Package Title: mbknor-jackson-jsonSchema (1.0.39)
+
+Package Locator: mvn+com.kjetland:mbknor-jackson-jsonschema_2.13$1.0.39
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -14394,6 +14790,10 @@ Package Download URL: https://repo1.maven.org/maven2/com/kjetland/mbknor-jackson
 
 --------------------------------------------------------------------------------
 Package Title: MicroProfile Config API (3.1)
+
+Package Locator: mvn+org.eclipse.microprofile.config:microprofile-config-api$3.1
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -14610,6 +15010,10 @@ Package Download URL: https://repo1.maven.org/maven2/org/eclipse/microprofile/co
 
 --------------------------------------------------------------------------------
 Package Title: MicroProfile Context Propagation (1.3)
+
+Package Locator: mvn+org.eclipse.microprofile.context-propagation:microprofile-context-propagation-api$1.3
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -14825,6 +15229,10 @@ Package Download URL: https://repo1.maven.org/maven2/org/eclipse/microprofile/co
 
 --------------------------------------------------------------------------------
 Package Title: MicroProfile GraphQL :: API (2.0)
+
+Package Locator: mvn+org.eclipse.microprofile.graphql:microprofile-graphql-api$2.0
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -15041,6 +15449,10 @@ Package Download URL: https://repo1.maven.org/maven2/org/eclipse/microprofile/gr
 
 --------------------------------------------------------------------------------
 Package Title: MicroProfile Health API (4.0.1)
+
+Package Locator: mvn+org.eclipse.microprofile.health:microprofile-health-api$4.0.1
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -15257,6 +15669,10 @@ Package Download URL: https://repo1.maven.org/maven2/org/eclipse/microprofile/he
 
 --------------------------------------------------------------------------------
 Package Title: MicroProfile Metrics API (4.0.1)
+
+Package Locator: mvn+org.eclipse.microprofile.metrics:microprofile-metrics-api$4.0.1
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -15473,6 +15889,10 @@ Package Download URL: https://repo1.maven.org/maven2/org/eclipse/microprofile/me
 
 --------------------------------------------------------------------------------
 Package Title: MicroProfile OpenAPI API (3.1.1)
+
+Package Locator: mvn+org.eclipse.microprofile.openapi:microprofile-openapi-api$3.1.1
+
+Package Depth: Direct
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -15689,6 +16109,10 @@ Package Download URL: https://repo1.maven.org/maven2/org/eclipse/microprofile/op
 
 --------------------------------------------------------------------------------
 Package Title: minimal-json (0.9.5)
+
+Package Locator: mvn+com.eclipsesource.minimal-json:minimal-json$0.9.5
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -15721,6 +16145,10 @@ Package Download URL: https://repo1.maven.org/maven2/com/eclipsesource/minimal-j
 
 --------------------------------------------------------------------------------
 Package Title: native-linux-x86_64 (1.16.0)
+
+Package Locator: mvn+com.aayushatharva.brotli4j:native-linux-x86_64$1.16.0
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -15748,6 +16176,10 @@ Package Download URL: https://repo1.maven.org/maven2/com/aayushatharva/brotli4j/
 
 --------------------------------------------------------------------------------
 Package Title: Netty/All-in-One (4.1.109.Final)
+
+Package Locator: mvn+io.netty:netty-all$4.1.109.Final
+
+Package Depth: Direct
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -15777,6 +16209,10 @@ Package Download URL: https://repo1.maven.org/maven2/io/netty/netty-all/4.1.109.
 
 --------------------------------------------------------------------------------
 Package Title: Netty/Buffer (4.1.111.Final)
+
+Package Locator: mvn+io.netty:netty-buffer$4.1.111.Final
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -15804,6 +16240,10 @@ Package Download URL: https://repo1.maven.org/maven2/io/netty/netty-buffer/4.1.1
 
 --------------------------------------------------------------------------------
 Package Title: Netty/Codec (4.1.111.Final)
+
+Package Locator: mvn+io.netty:netty-codec$4.1.111.Final
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -15844,6 +16284,10 @@ Package Download URL: https://repo1.maven.org/maven2/io/netty/netty-codec/4.1.11
 
 --------------------------------------------------------------------------------
 Package Title: Netty/Codec/DNS (4.1.111.Final)
+
+Package Locator: mvn+io.netty:netty-codec-dns$4.1.111.Final
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -15871,6 +16315,10 @@ Package Download URL: https://repo1.maven.org/maven2/io/netty/netty-codec-dns/4.
 
 --------------------------------------------------------------------------------
 Package Title: Netty/Codec/HAProxy (4.1.111.Final)
+
+Package Locator: mvn+io.netty:netty-codec-haproxy$4.1.111.Final
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -15898,6 +16346,10 @@ Package Download URL: https://repo1.maven.org/maven2/io/netty/netty-codec-haprox
 
 --------------------------------------------------------------------------------
 Package Title: Netty/Codec/HTTP (4.1.111.Final)
+
+Package Locator: mvn+io.netty:netty-codec-http$4.1.111.Final
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -15979,6 +16431,10 @@ Package Download URL: https://repo1.maven.org/maven2/io/netty/netty-codec-http/4
 
 --------------------------------------------------------------------------------
 Package Title: Netty/Codec/HTTP2 (4.1.111.Final)
+
+Package Locator: mvn+io.netty:netty-codec-http2$4.1.111.Final
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -16006,6 +16462,10 @@ Package Download URL: https://repo1.maven.org/maven2/io/netty/netty-codec-http2/
 
 --------------------------------------------------------------------------------
 Package Title: Netty/Codec/Memcache (4.1.111.Final)
+
+Package Locator: mvn+io.netty:netty-codec-memcache$4.1.111.Final
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -16033,6 +16493,10 @@ Package Download URL: https://repo1.maven.org/maven2/io/netty/netty-codec-memcac
 
 --------------------------------------------------------------------------------
 Package Title: Netty/Codec/MQTT (4.1.111.Final)
+
+Package Locator: mvn+io.netty:netty-codec-mqtt$4.1.111.Final
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -16060,6 +16524,10 @@ Package Download URL: https://repo1.maven.org/maven2/io/netty/netty-codec-mqtt/4
 
 --------------------------------------------------------------------------------
 Package Title: Netty/Codec/Redis (4.1.111.Final)
+
+Package Locator: mvn+io.netty:netty-codec-redis$4.1.111.Final
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -16087,6 +16555,10 @@ Package Download URL: https://repo1.maven.org/maven2/io/netty/netty-codec-redis/
 
 --------------------------------------------------------------------------------
 Package Title: Netty/Codec/SMTP (4.1.111.Final)
+
+Package Locator: mvn+io.netty:netty-codec-smtp$4.1.111.Final
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -16114,6 +16586,10 @@ Package Download URL: https://repo1.maven.org/maven2/io/netty/netty-codec-smtp/4
 
 --------------------------------------------------------------------------------
 Package Title: Netty/Codec/Socks (4.1.111.Final)
+
+Package Locator: mvn+io.netty:netty-codec-socks$4.1.111.Final
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -16141,6 +16617,10 @@ Package Download URL: https://repo1.maven.org/maven2/io/netty/netty-codec-socks/
 
 --------------------------------------------------------------------------------
 Package Title: Netty/Codec/Stomp (4.1.111.Final)
+
+Package Locator: mvn+io.netty:netty-codec-stomp$4.1.111.Final
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -16168,6 +16648,10 @@ Package Download URL: https://repo1.maven.org/maven2/io/netty/netty-codec-stomp/
 
 --------------------------------------------------------------------------------
 Package Title: Netty/Codec/XML (4.1.111.Final)
+
+Package Locator: mvn+io.netty:netty-codec-xml$4.1.111.Final
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -16195,6 +16679,10 @@ Package Download URL: https://repo1.maven.org/maven2/io/netty/netty-codec-xml/4.
 
 --------------------------------------------------------------------------------
 Package Title: Netty/Common (4.1.111.Final)
+
+Package Locator: mvn+io.netty:netty-common$4.1.111.Final
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -16271,6 +16759,10 @@ Package Download URL: https://repo1.maven.org/maven2/io/netty/netty-common/4.1.1
 
 --------------------------------------------------------------------------------
 Package Title: Netty/Handler (4.1.111.Final)
+
+Package Locator: mvn+io.netty:netty-handler$4.1.111.Final
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -16298,6 +16790,10 @@ Package Download URL: https://repo1.maven.org/maven2/io/netty/netty-handler/4.1.
 
 --------------------------------------------------------------------------------
 Package Title: Netty/Handler/Proxy (4.1.111.Final)
+
+Package Locator: mvn+io.netty:netty-handler-proxy$4.1.111.Final
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -16325,6 +16821,10 @@ Package Download URL: https://repo1.maven.org/maven2/io/netty/netty-handler-prox
 
 --------------------------------------------------------------------------------
 Package Title: Netty/Handler/Ssl/Ocsp (4.1.111.Final)
+
+Package Locator: mvn+io.netty:netty-handler-ssl-ocsp$4.1.111.Final
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -16352,6 +16852,10 @@ Package Download URL: https://repo1.maven.org/maven2/io/netty/netty-handler-ssl-
 
 --------------------------------------------------------------------------------
 Package Title: Netty/Resolver (4.1.111.Final)
+
+Package Locator: mvn+io.netty:netty-resolver$4.1.111.Final
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -16379,6 +16883,10 @@ Package Download URL: https://repo1.maven.org/maven2/io/netty/netty-resolver/4.1
 
 --------------------------------------------------------------------------------
 Package Title: Netty/Resolver/DNS (4.1.111.Final)
+
+Package Locator: mvn+io.netty:netty-resolver-dns$4.1.111.Final
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -16406,6 +16914,10 @@ Package Download URL: https://repo1.maven.org/maven2/io/netty/netty-resolver-dns
 
 --------------------------------------------------------------------------------
 Package Title: Netty/Resolver/DNS/Classes/MacOS (4.1.111.Final)
+
+Package Locator: mvn+io.netty:netty-resolver-dns-classes-macos$4.1.111.Final
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -16433,6 +16945,10 @@ Package Download URL: https://repo1.maven.org/maven2/io/netty/netty-resolver-dns
 
 --------------------------------------------------------------------------------
 Package Title: Netty/Resolver/DNS/Native/MacOS (4.1.111.Final)
+
+Package Locator: mvn+io.netty:netty-resolver-dns-native-macos$4.1.111.Final
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -16460,6 +16976,10 @@ Package Download URL: https://repo1.maven.org/maven2/io/netty/netty-resolver-dns
 
 --------------------------------------------------------------------------------
 Package Title: Netty/Transport (4.1.111.Final)
+
+Package Locator: mvn+io.netty:netty-transport$4.1.111.Final
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -16487,6 +17007,10 @@ Package Download URL: https://repo1.maven.org/maven2/io/netty/netty-transport/4.
 
 --------------------------------------------------------------------------------
 Package Title: Netty/Transport/Classes/Epoll (4.1.111.Final)
+
+Package Locator: mvn+io.netty:netty-transport-classes-epoll$4.1.111.Final
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -16514,6 +17038,10 @@ Package Download URL: https://repo1.maven.org/maven2/io/netty/netty-transport-cl
 
 --------------------------------------------------------------------------------
 Package Title: Netty/Transport/Classes/KQueue (4.1.111.Final)
+
+Package Locator: mvn+io.netty:netty-transport-classes-kqueue$4.1.111.Final
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -16541,6 +17069,10 @@ Package Download URL: https://repo1.maven.org/maven2/io/netty/netty-transport-cl
 
 --------------------------------------------------------------------------------
 Package Title: Netty/Transport/Native/Epoll (4.1.111.Final)
+
+Package Locator: mvn+io.netty:netty-transport-native-epoll$4.1.111.Final
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -16568,6 +17100,10 @@ Package Download URL: https://repo1.maven.org/maven2/io/netty/netty-transport-na
 
 --------------------------------------------------------------------------------
 Package Title: Netty/Transport/Native/KQueue (4.1.111.Final)
+
+Package Locator: mvn+io.netty:netty-transport-native-kqueue$4.1.111.Final
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -16595,6 +17131,10 @@ Package Download URL: https://repo1.maven.org/maven2/io/netty/netty-transport-na
 
 --------------------------------------------------------------------------------
 Package Title: Netty/Transport/Native/Unix/Common (4.1.111.Final)
+
+Package Locator: mvn+io.netty:netty-transport-native-unix-common$4.1.111.Final
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -16622,6 +17162,10 @@ Package Download URL: https://repo1.maven.org/maven2/io/netty/netty-transport-na
 
 --------------------------------------------------------------------------------
 Package Title: Netty/Transport/RXTX (4.1.111.Final)
+
+Package Locator: mvn+io.netty:netty-transport-rxtx$4.1.111.Final
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -16649,6 +17193,10 @@ Package Download URL: https://repo1.maven.org/maven2/io/netty/netty-transport-rx
 
 --------------------------------------------------------------------------------
 Package Title: Netty/Transport/SCTP (4.1.111.Final)
+
+Package Locator: mvn+io.netty:netty-transport-sctp$4.1.111.Final
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -16676,6 +17224,10 @@ Package Download URL: https://repo1.maven.org/maven2/io/netty/netty-transport-sc
 
 --------------------------------------------------------------------------------
 Package Title: Netty/Transport/UDT (4.1.111.Final)
+
+Package Locator: mvn+io.netty:netty-transport-udt$4.1.111.Final
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -16703,6 +17255,10 @@ Package Download URL: https://repo1.maven.org/maven2/io/netty/netty-transport-ud
 
 --------------------------------------------------------------------------------
 Package Title: okio (3.6.0)
+
+Package Locator: mvn+com.squareup.okio:okio-jvm$3.6.0
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -16732,6 +17288,10 @@ Package Download URL: https://repo1.maven.org/maven2/com/squareup/okio/okio-jvm/
 
 --------------------------------------------------------------------------------
 Package Title: OpenTelemetry Instrumentation for Java (2.5.0)
+
+Package Locator: mvn+io.opentelemetry.instrumentation:opentelemetry-instrumentation-api$2.5.0
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -16761,6 +17321,10 @@ Package Download URL: https://repo1.maven.org/maven2/io/opentelemetry/instrument
 
 --------------------------------------------------------------------------------
 Package Title: OpenTelemetry Java (1.39.0)
+
+Package Locator: mvn+io.opentelemetry:opentelemetry-api$1.39.0
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -16790,6 +17354,10 @@ Package Download URL: https://repo1.maven.org/maven2/io/opentelemetry/openteleme
 
 --------------------------------------------------------------------------------
 Package Title: OpenTelemetry Java (1.39.0-alpha)
+
+Package Locator: mvn+io.opentelemetry:opentelemetry-api-incubator$1.39.0-alpha
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -16819,6 +17387,10 @@ Package Download URL: https://repo1.maven.org/maven2/io/opentelemetry/openteleme
 
 --------------------------------------------------------------------------------
 Package Title: OpenTelemetry Java (1.39.0)
+
+Package Locator: mvn+io.opentelemetry:opentelemetry-context$1.39.0
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -16847,7 +17419,11 @@ Authors: OpenTelemetry
 Package Download URL: https://repo1.maven.org/maven2/io/opentelemetry/opentelemetry-context/1.39.0/opentelemetry-context-1.39.0-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: OpenTelemetry Semantic Conventions Java (1.25.0-alpha)
+Package Title: OpenTelemetry Semantic Conventions Java (1.26.0-alpha)
+
+Package Locator: mvn+io.opentelemetry.semconv:opentelemetry-semconv$1.26.0-alpha
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -16873,10 +17449,14 @@ See the License for the specific language governing permissions and limitations 
 
 Authors: OpenTelemetry
 
-Package Download URL: https://repo1.maven.org/maven2/io/opentelemetry/semconv/opentelemetry-semconv/1.25.0-alpha/opentelemetry-semconv-1.25.0-alpha-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/io/opentelemetry/semconv/opentelemetry-semconv/1.26.0-alpha/opentelemetry-semconv-1.26.0-alpha-sources.jar
 
 --------------------------------------------------------------------------------
 Package Title: org-crac (0.1.3)
+
+Package Locator: mvn+io.github.crac:org-crac$0.1.3
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -16916,6 +17496,10 @@ Package Download URL: https://repo1.maven.org/maven2/io/github/crac/org-crac/0.1
 
 --------------------------------------------------------------------------------
 Package Title: picocli (4.7.6)
+
+Package Locator: mvn+info.picocli:picocli$4.7.6
+
+Package Depth: Direct
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -16945,6 +17529,10 @@ Package Download URL: https://repo1.maven.org/maven2/info/picocli/picocli/4.7.6/
 
 --------------------------------------------------------------------------------
 Package Title: proto-google-common-protos (2.41.0)
+
+Package Locator: mvn+com.google.api.grpc:proto-google-common-protos$2.41.0
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -16974,6 +17562,10 @@ Package Download URL: https://repo1.maven.org/maven2/com/google/api/grpc/proto-g
 
 --------------------------------------------------------------------------------
 Package Title: Protocol Buffers [Core] (3.25.3)
+
+Package Locator: mvn+com.google.protobuf:protobuf-java$3.25.3
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -17013,7 +17605,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Package Download URL: https://repo1.maven.org/maven2/com/google/protobuf/protobuf-java/3.25.3/protobuf-java-3.25.3-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: Protocol Buffers [Util] (3.25.3)
+Package Title: Protocol Buffers [Util] (3.25.5)
+
+Package Locator: mvn+com.google.protobuf:protobuf-java-util$3.25.5
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -17050,37 +17646,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 * Package Info *
 
-Package Download URL: https://repo1.maven.org/maven2/com/google/protobuf/protobuf-java-util/3.25.3/protobuf-java-util-3.25.3-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/com/google/protobuf/protobuf-java-util/3.25.5/protobuf-java-util-3.25.5-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: Quarkus - ArC - Runtime (3.13.3)
---------------------------------------------------------------------------------
+Package Title: Quarkus - ArC - Runtime (3.15.1)
 
-* Declared Licenses *
-Apache-2.0
+Package Locator: mvn+io.quarkus:quarkus-arc$3.15.1
 
-
-Copyright [yyyy] [name of copyright owner]
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-
-See the License for the specific language governing permissions and limitations under the License.
-
-
-* Package Info *
-
-Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-arc/3.13.3/quarkus-arc-3.13.3-sources.jar
-
---------------------------------------------------------------------------------
-Package Title: Quarkus - Bootstrap - Classloader common utilities (3.13.3)
+Package Depth: Direct
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -17104,10 +17677,45 @@ See the License for the specific language governing permissions and limitations 
 
 * Package Info *
 
-Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-classloader-commons/3.13.3/quarkus-classloader-commons-3.13.3-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-arc/3.15.1/quarkus-arc-3.15.1-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: Quarkus - Bootstrap - Runner (3.13.3)
+Package Title: Quarkus - Bootstrap - Classloader common utilities (3.15.1)
+
+Package Locator: mvn+io.quarkus:quarkus-classloader-commons$3.15.1
+
+Package Depth: Transitive
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+Apache-2.0
+
+
+Copyright [yyyy] [name of copyright owner]
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+See the License for the specific language governing permissions and limitations under the License.
+
+
+* Package Info *
+
+Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-classloader-commons/3.15.1/quarkus-classloader-commons-3.15.1-sources.jar
+
+--------------------------------------------------------------------------------
+Package Title: Quarkus - Bootstrap - Runner (3.15.1)
+
+Package Locator: mvn+io.quarkus:quarkus-bootstrap-runner$3.15.1
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -17131,37 +17739,14 @@ See the License for the specific language governing permissions and limitations 
 
 * Package Info *
 
-Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-bootstrap-runner/3.13.3/quarkus-bootstrap-runner-3.13.3-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-bootstrap-runner/3.15.1/quarkus-bootstrap-runner-3.15.1-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: Quarkus - Configuration - YAML - Runtime (3.13.3)
---------------------------------------------------------------------------------
+Package Title: Quarkus - Configuration - YAML - Runtime (3.15.1)
 
-* Declared Licenses *
-Apache-2.0
+Package Locator: mvn+io.quarkus:quarkus-config-yaml$3.15.1
 
-
-Copyright [yyyy] [name of copyright owner]
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-
-See the License for the specific language governing permissions and limitations under the License.
-
-
-* Package Info *
-
-Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-config-yaml/3.13.3/quarkus-config-yaml-3.13.3-sources.jar
-
---------------------------------------------------------------------------------
-Package Title: Quarkus - Core - Runtime (3.13.3)
+Package Depth: Direct
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -17185,37 +17770,14 @@ See the License for the specific language governing permissions and limitations 
 
 * Package Info *
 
-Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-core/3.13.3/quarkus-core-3.13.3-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-config-yaml/3.15.1/quarkus-config-yaml-3.15.1-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: Quarkus - Credentials - Runtime (3.13.3)
---------------------------------------------------------------------------------
+Package Title: Quarkus - Core - Runtime (3.15.1)
 
-* Declared Licenses *
-Apache-2.0
+Package Locator: mvn+io.quarkus:quarkus-core$3.15.1
 
-
-Copyright [yyyy] [name of copyright owner]
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-
-See the License for the specific language governing permissions and limitations under the License.
-
-
-* Package Info *
-
-Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-credentials/3.13.3/quarkus-credentials-3.13.3-sources.jar
-
---------------------------------------------------------------------------------
-Package Title: Quarkus - Development mode - SPI (3.13.3)
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -17239,10 +17801,76 @@ See the License for the specific language governing permissions and limitations 
 
 * Package Info *
 
-Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-development-mode-spi/3.13.3/quarkus-development-mode-spi-3.13.3-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-core/3.15.1/quarkus-core-3.15.1-sources.jar
+
+--------------------------------------------------------------------------------
+Package Title: Quarkus - Credentials - Runtime (3.15.1)
+
+Package Locator: mvn+io.quarkus:quarkus-credentials$3.15.1
+
+Package Depth: Transitive
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+Apache-2.0
+
+
+Copyright [yyyy] [name of copyright owner]
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+See the License for the specific language governing permissions and limitations under the License.
+
+
+* Package Info *
+
+Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-credentials/3.15.1/quarkus-credentials-3.15.1-sources.jar
+
+--------------------------------------------------------------------------------
+Package Title: Quarkus - Development mode - SPI (3.15.1)
+
+Package Locator: mvn+io.quarkus:quarkus-development-mode-spi$3.15.1
+
+Package Depth: Transitive
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+Apache-2.0
+
+
+Copyright [yyyy] [name of copyright owner]
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+See the License for the specific language governing permissions and limitations under the License.
+
+
+* Package Info *
+
+Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-development-mode-spi/3.15.1/quarkus-development-mode-spi-3.15.1-sources.jar
 
 --------------------------------------------------------------------------------
 Package Title: Quarkus - FS Util (0.0.10)
+
+Package Locator: mvn+io.quarkus:quarkus-fs-util$0.0.10
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -17273,7 +17901,11 @@ Authors: Quarkus Community
 Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-fs-util/0.0.10/quarkus-fs-util-0.0.10-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: Quarkus - Hibernate Validator - Runtime (3.13.3)
+Package Title: Quarkus - Hibernate Validator - Runtime (3.15.1)
+
+Package Locator: mvn+io.quarkus:quarkus-hibernate-validator$3.15.1
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -17297,37 +17929,14 @@ See the License for the specific language governing permissions and limitations 
 
 * Package Info *
 
-Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-hibernate-validator/3.13.3/quarkus-hibernate-validator-3.13.3-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-hibernate-validator/3.15.1/quarkus-hibernate-validator-3.15.1-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: Quarkus - IDE Launcher (3.13.3)
---------------------------------------------------------------------------------
+Package Title: Quarkus - IDE Launcher (3.15.1)
 
-* Declared Licenses *
-Apache-2.0
+Package Locator: mvn+io.quarkus:quarkus-ide-launcher$3.15.1
 
-
-Copyright [yyyy] [name of copyright owner]
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-
-See the License for the specific language governing permissions and limitations under the License.
-
-
-* Package Info *
-
-Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-ide-launcher/3.13.3/quarkus-ide-launcher-3.13.3-sources.jar
-
---------------------------------------------------------------------------------
-Package Title: Quarkus - Jackson - Runtime (3.13.3)
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -17351,37 +17960,14 @@ See the License for the specific language governing permissions and limitations 
 
 * Package Info *
 
-Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-jackson/3.13.3/quarkus-jackson-3.13.3-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-ide-launcher/3.15.1/quarkus-ide-launcher-3.15.1-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: Quarkus - JSON-B - Runtime (3.13.3)
---------------------------------------------------------------------------------
+Package Title: Quarkus - Jackson - Runtime (3.15.1)
 
-* Declared Licenses *
-Apache-2.0
+Package Locator: mvn+io.quarkus:quarkus-jackson$3.15.1
 
-
-Copyright [yyyy] [name of copyright owner]
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-
-See the License for the specific language governing permissions and limitations under the License.
-
-
-* Package Info *
-
-Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-jsonb/3.13.3/quarkus-jsonb-3.13.3-sources.jar
-
---------------------------------------------------------------------------------
-Package Title: Quarkus - JSON-P - Runtime (3.13.3)
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -17405,10 +17991,14 @@ See the License for the specific language governing permissions and limitations 
 
 * Package Info *
 
-Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-jsonp/3.13.3/quarkus-jsonp-3.13.3-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-jackson/3.15.1/quarkus-jackson-3.15.1-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: Quarkus - Mutiny - Runtime (3.13.3)
+Package Title: Quarkus - JSON-B - Runtime (3.15.1)
+
+Package Locator: mvn+io.quarkus:quarkus-jsonb$3.15.1
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -17432,10 +18022,76 @@ See the License for the specific language governing permissions and limitations 
 
 * Package Info *
 
-Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-mutiny/3.13.3/quarkus-mutiny-3.13.3-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-jsonb/3.15.1/quarkus-jsonb-3.15.1-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: Quarkus - Netty - Runtime (3.13.3)
+Package Title: Quarkus - JSON-P - Runtime (3.15.1)
+
+Package Locator: mvn+io.quarkus:quarkus-jsonp$3.15.1
+
+Package Depth: Transitive
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+Apache-2.0
+
+
+Copyright [yyyy] [name of copyright owner]
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+See the License for the specific language governing permissions and limitations under the License.
+
+
+* Package Info *
+
+Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-jsonp/3.15.1/quarkus-jsonp-3.15.1-sources.jar
+
+--------------------------------------------------------------------------------
+Package Title: Quarkus - Mutiny - Runtime (3.15.1)
+
+Package Locator: mvn+io.quarkus:quarkus-mutiny$3.15.1
+
+Package Depth: Transitive
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+Apache-2.0
+
+
+Copyright [yyyy] [name of copyright owner]
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+See the License for the specific language governing permissions and limitations under the License.
+
+
+* Package Info *
+
+Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-mutiny/3.15.1/quarkus-mutiny-3.15.1-sources.jar
+
+--------------------------------------------------------------------------------
+Package Title: Quarkus - Netty - Runtime (3.15.1)
+
+Package Locator: mvn+io.quarkus:quarkus-netty$3.15.1
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -17459,37 +18115,14 @@ See the License for the specific language governing permissions and limitations 
 
 * Package Info *
 
-Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-netty/3.13.3/quarkus-netty-3.13.3-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-netty/3.15.1/quarkus-netty-3.15.1-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: Quarkus - Qute - Runtime (3.13.3)
---------------------------------------------------------------------------------
+Package Title: Quarkus - Qute - Runtime (3.15.1)
 
-* Declared Licenses *
-Apache-2.0
+Package Locator: mvn+io.quarkus:quarkus-qute$3.15.1
 
-
-Copyright [yyyy] [name of copyright owner]
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-
-See the License for the specific language governing permissions and limitations under the License.
-
-
-* Package Info *
-
-Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-qute/3.13.3/quarkus-qute-3.13.3-sources.jar
-
---------------------------------------------------------------------------------
-Package Title: Quarkus - Reactive Routes - Runtime (3.13.3)
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -17513,37 +18146,14 @@ See the License for the specific language governing permissions and limitations 
 
 * Package Info *
 
-Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-reactive-routes/3.13.3/quarkus-reactive-routes-3.13.3-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-qute/3.15.1/quarkus-qute-3.15.1-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: Quarkus - REST - Common - Runtime (3.13.3)
---------------------------------------------------------------------------------
+Package Title: Quarkus - Reactive Routes - Runtime (3.15.1)
 
-* Declared Licenses *
-Apache-2.0
+Package Locator: mvn+io.quarkus:quarkus-reactive-routes$3.15.1
 
-
-Copyright [yyyy] [name of copyright owner]
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-
-See the License for the specific language governing permissions and limitations under the License.
-
-
-* Package Info *
-
-Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-rest-common/3.13.3/quarkus-rest-common-3.13.3-sources.jar
-
---------------------------------------------------------------------------------
-Package Title: Quarkus - REST - Jackson - Runtime (3.13.3)
+Package Depth: Direct
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -17567,37 +18177,14 @@ See the License for the specific language governing permissions and limitations 
 
 * Package Info *
 
-Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-rest-jackson/3.13.3/quarkus-rest-jackson-3.13.3-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-reactive-routes/3.15.1/quarkus-reactive-routes-3.15.1-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: Quarkus - REST - Jackson Common Bits - Runtime (3.13.3)
---------------------------------------------------------------------------------
+Package Title: Quarkus - REST - Common - Runtime (3.15.1)
 
-* Declared Licenses *
-Apache-2.0
+Package Locator: mvn+io.quarkus:quarkus-rest-common$3.15.1
 
-
-Copyright [yyyy] [name of copyright owner]
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-
-See the License for the specific language governing permissions and limitations under the License.
-
-
-* Package Info *
-
-Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-rest-jackson-common/3.13.3/quarkus-rest-jackson-common-3.13.3-sources.jar
-
---------------------------------------------------------------------------------
-Package Title: Quarkus - REST - Runtime (3.13.3)
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -17621,37 +18208,14 @@ See the License for the specific language governing permissions and limitations 
 
 * Package Info *
 
-Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-rest/3.13.3/quarkus-rest-3.13.3-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-rest-common/3.15.1/quarkus-rest-common-3.15.1-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: Quarkus - Scheduler - API (3.13.3)
---------------------------------------------------------------------------------
+Package Title: Quarkus - REST - Jackson - Runtime (3.15.1)
 
-* Declared Licenses *
-Apache-2.0
+Package Locator: mvn+io.quarkus:quarkus-rest-jackson$3.15.1
 
-
-Copyright [yyyy] [name of copyright owner]
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-
-See the License for the specific language governing permissions and limitations under the License.
-
-
-* Package Info *
-
-Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-scheduler-api/3.13.3/quarkus-scheduler-api-3.13.3-sources.jar
-
---------------------------------------------------------------------------------
-Package Title: Quarkus - Scheduler - Common (3.13.3)
+Package Depth: Direct
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -17675,37 +18239,14 @@ See the License for the specific language governing permissions and limitations 
 
 * Package Info *
 
-Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-scheduler-common/3.13.3/quarkus-scheduler-common-3.13.3-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-rest-jackson/3.15.1/quarkus-rest-jackson-3.15.1-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: Quarkus - Scheduler - Kotlin (3.13.3)
---------------------------------------------------------------------------------
+Package Title: Quarkus - REST - Jackson Common Bits - Runtime (3.15.1)
 
-* Declared Licenses *
-Apache-2.0
+Package Locator: mvn+io.quarkus:quarkus-rest-jackson-common$3.15.1
 
-
-Copyright [yyyy] [name of copyright owner]
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-
-See the License for the specific language governing permissions and limitations under the License.
-
-
-* Package Info *
-
-Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-scheduler-kotlin/3.13.3/quarkus-scheduler-kotlin-3.13.3-sources.jar
-
---------------------------------------------------------------------------------
-Package Title: Quarkus - Scheduler - Runtime (3.13.3)
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -17729,37 +18270,14 @@ See the License for the specific language governing permissions and limitations 
 
 * Package Info *
 
-Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-scheduler/3.13.3/quarkus-scheduler-3.13.3-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-rest-jackson-common/3.15.1/quarkus-rest-jackson-common-3.15.1-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: Quarkus - Scheduler - SPI (3.13.3)
---------------------------------------------------------------------------------
+Package Title: Quarkus - REST - Runtime (3.15.1)
 
-* Declared Licenses *
-Apache-2.0
+Package Locator: mvn+io.quarkus:quarkus-rest$3.15.1
 
-
-Copyright [yyyy] [name of copyright owner]
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-
-See the License for the specific language governing permissions and limitations under the License.
-
-
-* Package Info *
-
-Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-scheduler-spi/3.13.3/quarkus-scheduler-spi-3.13.3-sources.jar
-
---------------------------------------------------------------------------------
-Package Title: Quarkus - Security - Runtime SPI (3.13.3)
+Package Depth: Direct
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -17783,37 +18301,14 @@ See the License for the specific language governing permissions and limitations 
 
 * Package Info *
 
-Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-security-runtime-spi/3.13.3/quarkus-security-runtime-spi-3.13.3-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-rest/3.15.1/quarkus-rest-3.15.1-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: Quarkus - SmallRye Context Propagation - Runtime (3.13.3)
---------------------------------------------------------------------------------
+Package Title: Quarkus - Scheduler - API (3.15.1)
 
-* Declared Licenses *
-Apache-2.0
+Package Locator: mvn+io.quarkus:quarkus-scheduler-api$3.15.1
 
-
-Copyright [yyyy] [name of copyright owner]
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-
-See the License for the specific language governing permissions and limitations under the License.
-
-
-* Package Info *
-
-Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-smallrye-context-propagation/3.13.3/quarkus-smallrye-context-propagation-3.13.3-sources.jar
-
---------------------------------------------------------------------------------
-Package Title: Quarkus - SmallRye GraphQL - Runtime (3.13.3)
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -17837,37 +18332,14 @@ See the License for the specific language governing permissions and limitations 
 
 * Package Info *
 
-Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-smallrye-graphql/3.13.3/quarkus-smallrye-graphql-3.13.3-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-scheduler-api/3.15.1/quarkus-scheduler-api-3.15.1-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: Quarkus - SmallRye Health - Runtime (3.13.3)
---------------------------------------------------------------------------------
+Package Title: Quarkus - Scheduler - Common (3.15.1)
 
-* Declared Licenses *
-Apache-2.0
+Package Locator: mvn+io.quarkus:quarkus-scheduler-common$3.15.1
 
-
-Copyright [yyyy] [name of copyright owner]
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-
-See the License for the specific language governing permissions and limitations under the License.
-
-
-* Package Info *
-
-Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-smallrye-health/3.13.3/quarkus-smallrye-health-3.13.3-sources.jar
-
---------------------------------------------------------------------------------
-Package Title: Quarkus - SmallRye OpenAPI - Runtime (3.13.3)
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -17891,37 +18363,14 @@ See the License for the specific language governing permissions and limitations 
 
 * Package Info *
 
-Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-smallrye-openapi/3.13.3/quarkus-smallrye-openapi-3.13.3-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-scheduler-common/3.15.1/quarkus-scheduler-common-3.15.1-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: Quarkus - Swagger UI - Runtime (3.13.3)
---------------------------------------------------------------------------------
+Package Title: Quarkus - Scheduler - Kotlin (3.15.1)
 
-* Declared Licenses *
-Apache-2.0
+Package Locator: mvn+io.quarkus:quarkus-scheduler-kotlin$3.15.1
 
-
-Copyright [yyyy] [name of copyright owner]
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-
-See the License for the specific language governing permissions and limitations under the License.
-
-
-* Package Info *
-
-Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-swagger-ui/3.13.3/quarkus-swagger-ui-3.13.3-sources.jar
-
---------------------------------------------------------------------------------
-Package Title: Quarkus - TLS Registry - Runtime (3.13.3)
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -17945,10 +18394,293 @@ See the License for the specific language governing permissions and limitations 
 
 * Package Info *
 
-Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-tls-registry/3.13.3/quarkus-tls-registry-3.13.3-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-scheduler-kotlin/3.15.1/quarkus-scheduler-kotlin-3.15.1-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: Quarkus - Vert.x - HTTP - Runtime (3.13.3)
+Package Title: Quarkus - Scheduler - Runtime (3.15.1)
+
+Package Locator: mvn+io.quarkus:quarkus-scheduler$3.15.1
+
+Package Depth: Direct
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+Apache-2.0
+
+
+Copyright [yyyy] [name of copyright owner]
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+See the License for the specific language governing permissions and limitations under the License.
+
+
+* Package Info *
+
+Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-scheduler/3.15.1/quarkus-scheduler-3.15.1-sources.jar
+
+--------------------------------------------------------------------------------
+Package Title: Quarkus - Scheduler - SPI (3.15.1)
+
+Package Locator: mvn+io.quarkus:quarkus-scheduler-spi$3.15.1
+
+Package Depth: Transitive
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+Apache-2.0
+
+
+Copyright [yyyy] [name of copyright owner]
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+See the License for the specific language governing permissions and limitations under the License.
+
+
+* Package Info *
+
+Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-scheduler-spi/3.15.1/quarkus-scheduler-spi-3.15.1-sources.jar
+
+--------------------------------------------------------------------------------
+Package Title: Quarkus - Security - Runtime SPI (3.15.1)
+
+Package Locator: mvn+io.quarkus:quarkus-security-runtime-spi$3.15.1
+
+Package Depth: Transitive
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+Apache-2.0
+
+
+Copyright [yyyy] [name of copyright owner]
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+See the License for the specific language governing permissions and limitations under the License.
+
+
+* Package Info *
+
+Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-security-runtime-spi/3.15.1/quarkus-security-runtime-spi-3.15.1-sources.jar
+
+--------------------------------------------------------------------------------
+Package Title: Quarkus - SmallRye Context Propagation - Runtime (3.15.1)
+
+Package Locator: mvn+io.quarkus:quarkus-smallrye-context-propagation$3.15.1
+
+Package Depth: Transitive
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+Apache-2.0
+
+
+Copyright [yyyy] [name of copyright owner]
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+See the License for the specific language governing permissions and limitations under the License.
+
+
+* Package Info *
+
+Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-smallrye-context-propagation/3.15.1/quarkus-smallrye-context-propagation-3.15.1-sources.jar
+
+--------------------------------------------------------------------------------
+Package Title: Quarkus - SmallRye GraphQL - Runtime (3.15.1)
+
+Package Locator: mvn+io.quarkus:quarkus-smallrye-graphql$3.15.1
+
+Package Depth: Direct
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+Apache-2.0
+
+
+Copyright [yyyy] [name of copyright owner]
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+See the License for the specific language governing permissions and limitations under the License.
+
+
+* Package Info *
+
+Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-smallrye-graphql/3.15.1/quarkus-smallrye-graphql-3.15.1-sources.jar
+
+--------------------------------------------------------------------------------
+Package Title: Quarkus - SmallRye Health - Runtime (3.15.1)
+
+Package Locator: mvn+io.quarkus:quarkus-smallrye-health$3.15.1
+
+Package Depth: Direct
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+Apache-2.0
+
+
+Copyright [yyyy] [name of copyright owner]
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+See the License for the specific language governing permissions and limitations under the License.
+
+
+* Package Info *
+
+Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-smallrye-health/3.15.1/quarkus-smallrye-health-3.15.1-sources.jar
+
+--------------------------------------------------------------------------------
+Package Title: Quarkus - SmallRye OpenAPI - Runtime (3.15.1)
+
+Package Locator: mvn+io.quarkus:quarkus-smallrye-openapi$3.15.1
+
+Package Depth: Direct
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+Apache-2.0
+
+
+Copyright [yyyy] [name of copyright owner]
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+See the License for the specific language governing permissions and limitations under the License.
+
+
+* Package Info *
+
+Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-smallrye-openapi/3.15.1/quarkus-smallrye-openapi-3.15.1-sources.jar
+
+--------------------------------------------------------------------------------
+Package Title: Quarkus - Swagger UI - Runtime (3.15.1)
+
+Package Locator: mvn+io.quarkus:quarkus-swagger-ui$3.15.1
+
+Package Depth: Transitive
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+Apache-2.0
+
+
+Copyright [yyyy] [name of copyright owner]
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+See the License for the specific language governing permissions and limitations under the License.
+
+
+* Package Info *
+
+Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-swagger-ui/3.15.1/quarkus-swagger-ui-3.15.1-sources.jar
+
+--------------------------------------------------------------------------------
+Package Title: Quarkus - TLS Registry - Runtime (3.15.1)
+
+Package Locator: mvn+io.quarkus:quarkus-tls-registry$3.15.1
+
+Package Depth: Transitive
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+Apache-2.0
+
+
+Copyright [yyyy] [name of copyright owner]
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+See the License for the specific language governing permissions and limitations under the License.
+
+
+* Package Info *
+
+Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-tls-registry/3.15.1/quarkus-tls-registry-3.15.1-sources.jar
+
+--------------------------------------------------------------------------------
+Package Title: Quarkus - Vert.x - HTTP - Runtime (3.15.1)
+
+Package Locator: mvn+io.quarkus:quarkus-vertx-http$3.15.1
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -18021,10 +18753,14 @@ THE ACCOMPANYING PROGRAM IS PROVIDED UNDER THE TERMS OF THIS ECLIPSE PUBLIC LICE
 
 * Package Info *
 
-Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-vertx-http/3.13.3/quarkus-vertx-http-3.13.3-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-vertx-http/3.15.1/quarkus-vertx-http-3.15.1-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: Quarkus - Vert.x - Runtime (3.13.3)
+Package Title: Quarkus - Vert.x - Runtime (3.15.1)
+
+Package Locator: mvn+io.quarkus:quarkus-vertx$3.15.1
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -18107,37 +18843,14 @@ THE ACCOMPANYING PROGRAM IS PROVIDED UNDER THE TERMS OF THIS ECLIPSE PUBLIC LICE
 
 * Package Info *
 
-Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-vertx/3.13.3/quarkus-vertx-3.13.3-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-vertx/3.15.1/quarkus-vertx-3.15.1-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: Quarkus - Vert.x Late Bound MDC Provider (3.13.3)
---------------------------------------------------------------------------------
+Package Title: Quarkus - Vert.x Late Bound MDC Provider (3.15.1)
 
-* Declared Licenses *
-Apache-2.0
+Package Locator: mvn+io.quarkus:quarkus-vertx-latebound-mdc-provider$3.15.1
 
-
-Copyright [yyyy] [name of copyright owner]
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-
-See the License for the specific language governing permissions and limitations under the License.
-
-
-* Package Info *
-
-Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-vertx-latebound-mdc-provider/3.13.3/quarkus-vertx-latebound-mdc-provider-3.13.3-sources.jar
-
---------------------------------------------------------------------------------
-Package Title: Quarkus - Virtual Threads - Runtime (3.13.3)
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -18161,10 +18874,45 @@ See the License for the specific language governing permissions and limitations 
 
 * Package Info *
 
-Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-virtual-threads/3.13.3/quarkus-virtual-threads-3.13.3-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-vertx-latebound-mdc-provider/3.15.1/quarkus-vertx-latebound-mdc-provider-3.15.1-sources.jar
+
+--------------------------------------------------------------------------------
+Package Title: Quarkus - Virtual Threads - Runtime (3.15.1)
+
+Package Locator: mvn+io.quarkus:quarkus-virtual-threads$3.15.1
+
+Package Depth: Transitive
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+Apache-2.0
+
+
+Copyright [yyyy] [name of copyright owner]
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+See the License for the specific language governing permissions and limitations under the License.
+
+
+* Package Info *
+
+Package Download URL: https://repo1.maven.org/maven2/io/quarkus/quarkus-virtual-threads/3.15.1/quarkus-virtual-threads-3.15.1-sources.jar
 
 --------------------------------------------------------------------------------
 Package Title: Quarkus Qute Web - Runtime (3.0.1)
+
+Package Locator: mvn+io.quarkiverse.qute.web:quarkus-qute-web$3.0.1
+
+Package Depth: Direct
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -18192,6 +18940,10 @@ Package Download URL: https://repo1.maven.org/maven2/io/quarkiverse/qute/web/qua
 
 --------------------------------------------------------------------------------
 Package Title: quarkus-security (2.1.0)
+
+Package Locator: mvn+io.quarkus.security:quarkus-security$2.1.0
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -18218,7 +18970,11 @@ See the License for the specific language governing permissions and limitations 
 Package Download URL: https://repo1.maven.org/maven2/io/quarkus/security/quarkus-security/2.1.0/quarkus-security-2.1.0-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: Qute - Core (3.13.3)
+Package Title: Qute - Core (3.15.1)
+
+Package Locator: mvn+io.quarkus.qute:qute-core$3.15.1
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -18242,10 +18998,14 @@ See the License for the specific language governing permissions and limitations 
 
 * Package Info *
 
-Package Download URL: https://repo1.maven.org/maven2/io/quarkus/qute/qute-core/3.13.3/qute-core-3.13.3-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/io/quarkus/qute/qute-core/3.15.1/qute-core-3.15.1-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: RE2/J (1.6)
+Package Title: RE2/J (1.7)
+
+Package Locator: mvn+com.google.re2j:re2j$1.7
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -18284,10 +19044,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 Authors: The RE2/J Contributors
 
-Package Download URL: https://repo1.maven.org/maven2/com/google/re2j/re2j/1.6/re2j-1.6-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/com/google/re2j/re2j/1.7/re2j-1.7-sources.jar
 
 --------------------------------------------------------------------------------
 Package Title: reactive-streams (1.0.4)
+
+Package Locator: mvn+org.reactivestreams:reactive-streams$1.0.4
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -18356,7 +19120,11 @@ Authors: Reactive Streams SIG
 Package Download URL: https://repo1.maven.org/maven2/org/reactivestreams/reactive-streams/1.0.4/reactive-streams-1.0.4-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: RESTEasy Reactive - Common Runtime (3.13.3)
+Package Title: RESTEasy Reactive - Common Runtime (3.15.1)
+
+Package Locator: mvn+io.quarkus.resteasy.reactive:resteasy-reactive-common$3.15.1
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -18380,37 +19148,14 @@ See the License for the specific language governing permissions and limitations 
 
 * Package Info *
 
-Package Download URL: https://repo1.maven.org/maven2/io/quarkus/resteasy/reactive/resteasy-reactive-common/3.13.3/resteasy-reactive-common-3.13.3-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/io/quarkus/resteasy/reactive/resteasy-reactive-common/3.15.1/resteasy-reactive-common-3.15.1-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: RESTEasy Reactive - Common Types (3.13.3)
---------------------------------------------------------------------------------
+Package Title: RESTEasy Reactive - Common Types (3.15.1)
 
-* Declared Licenses *
-Apache-2.0
+Package Locator: mvn+io.quarkus.resteasy.reactive:resteasy-reactive-common-types$3.15.1
 
-
-Copyright [yyyy] [name of copyright owner]
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-
-See the License for the specific language governing permissions and limitations under the License.
-
-
-* Package Info *
-
-Package Download URL: https://repo1.maven.org/maven2/io/quarkus/resteasy/reactive/resteasy-reactive-common-types/3.13.3/resteasy-reactive-common-types-3.13.3-sources.jar
-
---------------------------------------------------------------------------------
-Package Title: RESTEasy Reactive - Jackson Support - Runtime (3.13.3)
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -18434,37 +19179,14 @@ See the License for the specific language governing permissions and limitations 
 
 * Package Info *
 
-Package Download URL: https://repo1.maven.org/maven2/io/quarkus/resteasy/reactive/resteasy-reactive-jackson/3.13.3/resteasy-reactive-jackson-3.13.3-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/io/quarkus/resteasy/reactive/resteasy-reactive-common-types/3.15.1/resteasy-reactive-common-types-3.15.1-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: RESTEasy Reactive - Runtime (3.13.3)
---------------------------------------------------------------------------------
+Package Title: RESTEasy Reactive - Jackson Support - Runtime (3.15.1)
 
-* Declared Licenses *
-Apache-2.0
+Package Locator: mvn+io.quarkus.resteasy.reactive:resteasy-reactive-jackson$3.15.1
 
-
-Copyright [yyyy] [name of copyright owner]
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-
-See the License for the specific language governing permissions and limitations under the License.
-
-
-* Package Info *
-
-Package Download URL: https://repo1.maven.org/maven2/io/quarkus/resteasy/reactive/resteasy-reactive/3.13.3/resteasy-reactive-3.13.3-sources.jar
-
---------------------------------------------------------------------------------
-Package Title: RESTEasy Reactive - Vert.x Support - Runtime (3.13.3)
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -18488,10 +19210,76 @@ See the License for the specific language governing permissions and limitations 
 
 * Package Info *
 
-Package Download URL: https://repo1.maven.org/maven2/io/quarkus/resteasy/reactive/resteasy-reactive-vertx/3.13.3/resteasy-reactive-vertx-3.13.3-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/io/quarkus/resteasy/reactive/resteasy-reactive-jackson/3.15.1/resteasy-reactive-jackson-3.15.1-sources.jar
+
+--------------------------------------------------------------------------------
+Package Title: RESTEasy Reactive - Runtime (3.15.1)
+
+Package Locator: mvn+io.quarkus.resteasy.reactive:resteasy-reactive$3.15.1
+
+Package Depth: Transitive
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+Apache-2.0
+
+
+Copyright [yyyy] [name of copyright owner]
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+See the License for the specific language governing permissions and limitations under the License.
+
+
+* Package Info *
+
+Package Download URL: https://repo1.maven.org/maven2/io/quarkus/resteasy/reactive/resteasy-reactive/3.15.1/resteasy-reactive-3.15.1-sources.jar
+
+--------------------------------------------------------------------------------
+Package Title: RESTEasy Reactive - Vert.x Support - Runtime (3.15.1)
+
+Package Locator: mvn+io.quarkus.resteasy.reactive:resteasy-reactive-vertx$3.15.1
+
+Package Depth: Transitive
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+Apache-2.0
+
+
+Copyright [yyyy] [name of copyright owner]
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+See the License for the specific language governing permissions and limitations under the License.
+
+
+* Package Info *
+
+Package Download URL: https://repo1.maven.org/maven2/io/quarkus/resteasy/reactive/resteasy-reactive-vertx/3.15.1/resteasy-reactive-vertx-3.15.1-sources.jar
 
 --------------------------------------------------------------------------------
 Package Title: Scala Library (2.13.10)
+
+Package Locator: mvn+org.scala-lang:scala-library$2.13.10
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -18598,6 +19386,10 @@ Package Download URL: https://repo1.maven.org/maven2/org/scala-lang/scala-librar
 
 --------------------------------------------------------------------------------
 Package Title: semver4j (3.1.0)
+
+Package Locator: mvn+com.vdurmont:semver4j$3.1.0
+
+Package Depth: Direct
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -18630,6 +19422,10 @@ Package Download URL: https://repo1.maven.org/maven2/com/vdurmont/semver4j/3.1.0
 
 --------------------------------------------------------------------------------
 Package Title: service (1.16.0)
+
+Package Locator: mvn+com.aayushatharva.brotli4j:service$1.16.0
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -18657,6 +19453,10 @@ Package Download URL: https://repo1.maven.org/maven2/com/aayushatharva/brotli4j/
 
 --------------------------------------------------------------------------------
 Package Title: SLF4J API Module (1.7.36)
+
+Package Locator: mvn+org.slf4j:slf4j-api$1.7.36
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -18689,6 +19489,10 @@ Package Download URL: https://repo1.maven.org/maven2/org/slf4j/slf4j-api/1.7.36/
 
 --------------------------------------------------------------------------------
 Package Title: SLF4J: JBoss Log Manager (2.0.0.Final)
+
+Package Locator: mvn+org.jboss.slf4j:slf4j-jboss-logmanager$2.0.0.Final
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -18719,7 +19523,11 @@ Authors: James R. Perkins
 Package Download URL: https://repo1.maven.org/maven2/org/jboss/slf4j/slf4j-jboss-logmanager/2.0.0.Final/slf4j-jboss-logmanager-2.0.0.Final-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: SmallRye Common: Annotations (2.5.0)
+Package Title: SmallRye Common: Annotations (2.6.0)
+
+Package Locator: mvn+io.smallrye.common:smallrye-common-annotation$2.6.0
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -18743,37 +19551,14 @@ See the License for the specific language governing permissions and limitations 
 
 * Package Info *
 
-Package Download URL: https://repo1.maven.org/maven2/io/smallrye/common/smallrye-common-annotation/2.5.0/smallrye-common-annotation-2.5.0-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/io/smallrye/common/smallrye-common-annotation/2.6.0/smallrye-common-annotation-2.6.0-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: SmallRye Common: Classloader (2.5.0)
---------------------------------------------------------------------------------
+Package Title: SmallRye Common: Classloader (2.6.0)
 
-* Declared Licenses *
-Apache-2.0
+Package Locator: mvn+io.smallrye.common:smallrye-common-classloader$2.6.0
 
-
-Copyright [yyyy] [name of copyright owner]
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-
-See the License for the specific language governing permissions and limitations under the License.
-
-
-* Package Info *
-
-Package Download URL: https://repo1.maven.org/maven2/io/smallrye/common/smallrye-common-classloader/2.5.0/smallrye-common-classloader-2.5.0-sources.jar
-
---------------------------------------------------------------------------------
-Package Title: SmallRye Common: Constraints (2.5.0)
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -18797,37 +19582,14 @@ See the License for the specific language governing permissions and limitations 
 
 * Package Info *
 
-Package Download URL: https://repo1.maven.org/maven2/io/smallrye/common/smallrye-common-constraint/2.5.0/smallrye-common-constraint-2.5.0-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/io/smallrye/common/smallrye-common-classloader/2.6.0/smallrye-common-classloader-2.6.0-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: SmallRye Common: CPU (2.5.0)
---------------------------------------------------------------------------------
+Package Title: SmallRye Common: Constraints (2.6.0)
 
-* Declared Licenses *
-Apache-2.0
+Package Locator: mvn+io.smallrye.common:smallrye-common-constraint$2.6.0
 
-
-Copyright [yyyy] [name of copyright owner]
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-
-See the License for the specific language governing permissions and limitations under the License.
-
-
-* Package Info *
-
-Package Download URL: https://repo1.maven.org/maven2/io/smallrye/common/smallrye-common-cpu/2.5.0/smallrye-common-cpu-2.5.0-sources.jar
-
---------------------------------------------------------------------------------
-Package Title: SmallRye Common: Expressions (2.5.0)
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -18851,37 +19613,14 @@ See the License for the specific language governing permissions and limitations 
 
 * Package Info *
 
-Package Download URL: https://repo1.maven.org/maven2/io/smallrye/common/smallrye-common-expression/2.5.0/smallrye-common-expression-2.5.0-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/io/smallrye/common/smallrye-common-constraint/2.6.0/smallrye-common-constraint-2.6.0-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: SmallRye Common: Functions (2.5.0)
---------------------------------------------------------------------------------
+Package Title: SmallRye Common: CPU (2.6.0)
 
-* Declared Licenses *
-Apache-2.0
+Package Locator: mvn+io.smallrye.common:smallrye-common-cpu$2.6.0
 
-
-Copyright [yyyy] [name of copyright owner]
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-
-See the License for the specific language governing permissions and limitations under the License.
-
-
-* Package Info *
-
-Package Download URL: https://repo1.maven.org/maven2/io/smallrye/common/smallrye-common-function/2.5.0/smallrye-common-function-2.5.0-sources.jar
-
---------------------------------------------------------------------------------
-Package Title: SmallRye Common: IO (2.5.0)
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -18905,10 +19644,14 @@ See the License for the specific language governing permissions and limitations 
 
 * Package Info *
 
-Package Download URL: https://repo1.maven.org/maven2/io/smallrye/common/smallrye-common-io/2.5.0/smallrye-common-io-2.5.0-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/io/smallrye/common/smallrye-common-cpu/2.6.0/smallrye-common-cpu-2.6.0-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: SmallRye Common: Net (2.5.0)
+Package Title: SmallRye Common: Expressions (2.6.0)
+
+Package Locator: mvn+io.smallrye.common:smallrye-common-expression$2.6.0
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -18932,10 +19675,107 @@ See the License for the specific language governing permissions and limitations 
 
 * Package Info *
 
-Package Download URL: https://repo1.maven.org/maven2/io/smallrye/common/smallrye-common-net/2.5.0/smallrye-common-net-2.5.0-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/io/smallrye/common/smallrye-common-expression/2.6.0/smallrye-common-expression-2.6.0-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: SmallRye Common: OS (2.5.0)
+Package Title: SmallRye Common: Functions (2.6.0)
+
+Package Locator: mvn+io.smallrye.common:smallrye-common-function$2.6.0
+
+Package Depth: Transitive
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+Apache-2.0
+
+
+Copyright [yyyy] [name of copyright owner]
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+See the License for the specific language governing permissions and limitations under the License.
+
+
+* Package Info *
+
+Package Download URL: https://repo1.maven.org/maven2/io/smallrye/common/smallrye-common-function/2.6.0/smallrye-common-function-2.6.0-sources.jar
+
+--------------------------------------------------------------------------------
+Package Title: SmallRye Common: IO (2.6.0)
+
+Package Locator: mvn+io.smallrye.common:smallrye-common-io$2.6.0
+
+Package Depth: Transitive
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+Apache-2.0
+
+
+Copyright [yyyy] [name of copyright owner]
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+See the License for the specific language governing permissions and limitations under the License.
+
+
+* Package Info *
+
+Package Download URL: https://repo1.maven.org/maven2/io/smallrye/common/smallrye-common-io/2.6.0/smallrye-common-io-2.6.0-sources.jar
+
+--------------------------------------------------------------------------------
+Package Title: SmallRye Common: Net (2.6.0)
+
+Package Locator: mvn+io.smallrye.common:smallrye-common-net$2.6.0
+
+Package Depth: Transitive
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+Apache-2.0
+
+
+Copyright [yyyy] [name of copyright owner]
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+See the License for the specific language governing permissions and limitations under the License.
+
+
+* Package Info *
+
+Package Download URL: https://repo1.maven.org/maven2/io/smallrye/common/smallrye-common-net/2.6.0/smallrye-common-net-2.6.0-sources.jar
+
+--------------------------------------------------------------------------------
+Package Title: SmallRye Common: OS (2.6.0)
+
+Package Locator: mvn+io.smallrye.common:smallrye-common-os$2.6.0
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -18959,37 +19799,14 @@ See the License for the specific language governing permissions and limitations 
 
 * Package Info *
 
-Package Download URL: https://repo1.maven.org/maven2/io/smallrye/common/smallrye-common-os/2.5.0/smallrye-common-os-2.5.0-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/io/smallrye/common/smallrye-common-os/2.6.0/smallrye-common-os-2.6.0-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: SmallRye Common: References (2.5.0)
---------------------------------------------------------------------------------
+Package Title: SmallRye Common: References (2.6.0)
 
-* Declared Licenses *
-Apache-2.0
+Package Locator: mvn+io.smallrye.common:smallrye-common-ref$2.6.0
 
-
-Copyright [yyyy] [name of copyright owner]
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-
-See the License for the specific language governing permissions and limitations under the License.
-
-
-* Package Info *
-
-Package Download URL: https://repo1.maven.org/maven2/io/smallrye/common/smallrye-common-ref/2.5.0/smallrye-common-ref-2.5.0-sources.jar
-
---------------------------------------------------------------------------------
-Package Title: SmallRye Common: Vert.x Context Utilities (2.5.0)
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -19013,10 +19830,45 @@ See the License for the specific language governing permissions and limitations 
 
 * Package Info *
 
-Package Download URL: https://repo1.maven.org/maven2/io/smallrye/common/smallrye-common-vertx-context/2.5.0/smallrye-common-vertx-context-2.5.0-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/io/smallrye/common/smallrye-common-ref/2.6.0/smallrye-common-ref-2.6.0-sources.jar
+
+--------------------------------------------------------------------------------
+Package Title: SmallRye Common: Vert.x Context Utilities (2.6.0)
+
+Package Locator: mvn+io.smallrye.common:smallrye-common-vertx-context$2.6.0
+
+Package Depth: Transitive
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+Apache-2.0
+
+
+Copyright [yyyy] [name of copyright owner]
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+See the License for the specific language governing permissions and limitations under the License.
+
+
+* Package Info *
+
+Package Download URL: https://repo1.maven.org/maven2/io/smallrye/common/smallrye-common-vertx-context/2.6.0/smallrye-common-vertx-context-2.6.0-sources.jar
 
 --------------------------------------------------------------------------------
 Package Title: SmallRye Config: CDI (3.9.1)
+
+Package Locator: mvn+io.smallrye.config:smallrye-config$3.9.1
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -19044,6 +19896,10 @@ Package Download URL: https://repo1.maven.org/maven2/io/smallrye/config/smallrye
 
 --------------------------------------------------------------------------------
 Package Title: SmallRye Config: Common (3.9.1)
+
+Package Locator: mvn+io.smallrye.config:smallrye-config-common$3.9.1
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -19071,6 +19927,10 @@ Package Download URL: https://repo1.maven.org/maven2/io/smallrye/config/smallrye
 
 --------------------------------------------------------------------------------
 Package Title: SmallRye Config: ConfigSource - YAML (3.9.1)
+
+Package Locator: mvn+io.smallrye.config:smallrye-config-source-yaml$3.9.1
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -19098,6 +19958,10 @@ Package Download URL: https://repo1.maven.org/maven2/io/smallrye/config/smallrye
 
 --------------------------------------------------------------------------------
 Package Title: SmallRye Config: Core (3.9.1)
+
+Package Locator: mvn+io.smallrye.config:smallrye-config-core$3.9.1
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -19125,6 +19989,10 @@ Package Download URL: https://repo1.maven.org/maven2/io/smallrye/config/smallrye
 
 --------------------------------------------------------------------------------
 Package Title: SmallRye Config: Validator (3.9.1)
+
+Package Locator: mvn+io.smallrye.config:smallrye-config-validator$3.9.1
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -19152,6 +20020,10 @@ Package Download URL: https://repo1.maven.org/maven2/io/smallrye/config/smallrye
 
 --------------------------------------------------------------------------------
 Package Title: SmallRye Context Propagation: API (2.1.2)
+
+Package Locator: mvn+io.smallrye:smallrye-context-propagation-api$2.1.2
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -19179,6 +20051,10 @@ Package Download URL: https://repo1.maven.org/maven2/io/smallrye/smallrye-contex
 
 --------------------------------------------------------------------------------
 Package Title: SmallRye Context Propagation: Core (2.1.2)
+
+Package Locator: mvn+io.smallrye:smallrye-context-propagation$2.1.2
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -19206,6 +20082,10 @@ Package Download URL: https://repo1.maven.org/maven2/io/smallrye/smallrye-contex
 
 --------------------------------------------------------------------------------
 Package Title: SmallRye Context Propagation: Storage (2.1.2)
+
+Package Locator: mvn+io.smallrye:smallrye-context-propagation-storage$2.1.2
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -19232,7 +20112,11 @@ See the License for the specific language governing permissions and limitations 
 Package Download URL: https://repo1.maven.org/maven2/io/smallrye/smallrye-context-propagation-storage/2.1.2/smallrye-context-propagation-storage-2.1.2-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: SmallRye Fault Tolerance: Vert.x Integration (6.3.0)
+Package Title: SmallRye Fault Tolerance: Vert.x Integration (6.4.0)
+
+Package Locator: mvn+io.smallrye:smallrye-fault-tolerance-vertx$6.4.0
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -19256,10 +20140,14 @@ See the License for the specific language governing permissions and limitations 
 
 * Package Info *
 
-Package Download URL: https://repo1.maven.org/maven2/io/smallrye/smallrye-fault-tolerance-vertx/6.3.0/smallrye-fault-tolerance-vertx-6.3.0-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/io/smallrye/smallrye-fault-tolerance-vertx/6.4.0/smallrye-fault-tolerance-vertx-6.4.0-sources.jar
 
 --------------------------------------------------------------------------------
 Package Title: SmallRye Health: API (4.1.0)
+
+Package Locator: mvn+io.smallrye:smallrye-health-api$4.1.0
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -19287,6 +20175,10 @@ Package Download URL: https://repo1.maven.org/maven2/io/smallrye/smallrye-health
 
 --------------------------------------------------------------------------------
 Package Title: SmallRye Health: Implementation (4.1.0)
+
+Package Locator: mvn+io.smallrye:smallrye-health$4.1.0
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -19314,6 +20206,10 @@ Package Download URL: https://repo1.maven.org/maven2/io/smallrye/smallrye-health
 
 --------------------------------------------------------------------------------
 Package Title: SmallRye Health: Provided Health Checks (4.1.0)
+
+Package Locator: mvn+io.smallrye:smallrye-health-provided-checks$4.1.0
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -19340,7 +20236,11 @@ See the License for the specific language governing permissions and limitations 
 Package Download URL: https://repo1.maven.org/maven2/io/smallrye/smallrye-health-provided-checks/4.1.0/smallrye-health-provided-checks-4.1.0-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: SmallRye Mutiny - Code Generator (3.14.0)
+Package Title: SmallRye Mutiny - Code Generator (3.15.0)
+
+Package Locator: mvn+io.smallrye.reactive:vertx-mutiny-generator$3.15.0
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -19364,10 +20264,14 @@ See the License for the specific language governing permissions and limitations 
 
 * Package Info *
 
-Package Download URL: https://repo1.maven.org/maven2/io/smallrye/reactive/vertx-mutiny-generator/3.14.0/vertx-mutiny-generator-3.14.0-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/io/smallrye/reactive/vertx-mutiny-generator/3.15.0/vertx-mutiny-generator-3.15.0-sources.jar
 
 --------------------------------------------------------------------------------
 Package Title: SmallRye Mutiny - Core library (2.6.2)
+
+Package Locator: mvn+io.smallrye.reactive:mutiny$2.6.2
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -19395,6 +20299,10 @@ Package Download URL: https://repo1.maven.org/maven2/io/smallrye/reactive/mutiny
 
 --------------------------------------------------------------------------------
 Package Title: SmallRye Mutiny - Integration with SmallRye Context Propagation (2.6.2)
+
+Package Locator: mvn+io.smallrye.reactive:mutiny-smallrye-context-propagation$2.6.2
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -19421,7 +20329,11 @@ See the License for the specific language governing permissions and limitations 
 Package Download URL: https://repo1.maven.org/maven2/io/smallrye/reactive/mutiny-smallrye-context-propagation/2.6.2/mutiny-smallrye-context-propagation-2.6.2-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: SmallRye Mutiny - Runtime Helpers (3.14.0)
+Package Title: SmallRye Mutiny - Runtime Helpers (3.15.0)
+
+Package Locator: mvn+io.smallrye.reactive:smallrye-mutiny-vertx-runtime$3.15.0
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -19445,37 +20357,14 @@ See the License for the specific language governing permissions and limitations 
 
 * Package Info *
 
-Package Download URL: https://repo1.maven.org/maven2/io/smallrye/reactive/smallrye-mutiny-vertx-runtime/3.14.0/smallrye-mutiny-vertx-runtime-3.14.0-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/io/smallrye/reactive/smallrye-mutiny-vertx-runtime/3.15.0/smallrye-mutiny-vertx-runtime-3.15.0-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: SmallRye Mutiny - Vert.x Auth Common (3.14.0)
---------------------------------------------------------------------------------
+Package Title: SmallRye Mutiny - Vert.x Auth Common (3.15.0)
 
-* Declared Licenses *
-Apache-2.0
+Package Locator: mvn+io.smallrye.reactive:smallrye-mutiny-vertx-auth-common$3.15.0
 
-
-Copyright [yyyy] [name of copyright owner]
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-
-See the License for the specific language governing permissions and limitations under the License.
-
-
-* Package Info *
-
-Package Download URL: https://repo1.maven.org/maven2/io/smallrye/reactive/smallrye-mutiny-vertx-auth-common/3.14.0/smallrye-mutiny-vertx-auth-common-3.14.0-sources.jar
-
---------------------------------------------------------------------------------
-Package Title: SmallRye Mutiny - Vert.x Bridge Common (3.14.0)
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -19499,37 +20388,14 @@ See the License for the specific language governing permissions and limitations 
 
 * Package Info *
 
-Package Download URL: https://repo1.maven.org/maven2/io/smallrye/reactive/smallrye-mutiny-vertx-bridge-common/3.14.0/smallrye-mutiny-vertx-bridge-common-3.14.0-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/io/smallrye/reactive/smallrye-mutiny-vertx-auth-common/3.15.0/smallrye-mutiny-vertx-auth-common-3.15.0-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: SmallRye Mutiny - Vert.x Core (3.14.0)
---------------------------------------------------------------------------------
+Package Title: SmallRye Mutiny - Vert.x Bridge Common (3.15.0)
 
-* Declared Licenses *
-Apache-2.0
+Package Locator: mvn+io.smallrye.reactive:smallrye-mutiny-vertx-bridge-common$3.15.0
 
-
-Copyright [yyyy] [name of copyright owner]
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-
-See the License for the specific language governing permissions and limitations under the License.
-
-
-* Package Info *
-
-Package Download URL: https://repo1.maven.org/maven2/io/smallrye/reactive/smallrye-mutiny-vertx-core/3.14.0/smallrye-mutiny-vertx-core-3.14.0-sources.jar
-
---------------------------------------------------------------------------------
-Package Title: SmallRye Mutiny - Vert.x URI Template (3.14.0)
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -19553,37 +20419,14 @@ See the License for the specific language governing permissions and limitations 
 
 * Package Info *
 
-Package Download URL: https://repo1.maven.org/maven2/io/smallrye/reactive/smallrye-mutiny-vertx-uri-template/3.14.0/smallrye-mutiny-vertx-uri-template-3.14.0-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/io/smallrye/reactive/smallrye-mutiny-vertx-bridge-common/3.15.0/smallrye-mutiny-vertx-bridge-common-3.15.0-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: SmallRye Mutiny - Vert.x Web (3.14.0)
---------------------------------------------------------------------------------
+Package Title: SmallRye Mutiny - Vert.x Core (3.15.0)
 
-* Declared Licenses *
-Apache-2.0
+Package Locator: mvn+io.smallrye.reactive:smallrye-mutiny-vertx-core$3.15.0
 
-
-Copyright [yyyy] [name of copyright owner]
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-
-See the License for the specific language governing permissions and limitations under the License.
-
-
-* Package Info *
-
-Package Download URL: https://repo1.maven.org/maven2/io/smallrye/reactive/smallrye-mutiny-vertx-web/3.14.0/smallrye-mutiny-vertx-web-3.14.0-sources.jar
-
---------------------------------------------------------------------------------
-Package Title: SmallRye Mutiny - Vert.x Web Common (3.14.0)
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -19607,10 +20450,107 @@ See the License for the specific language governing permissions and limitations 
 
 * Package Info *
 
-Package Download URL: https://repo1.maven.org/maven2/io/smallrye/reactive/smallrye-mutiny-vertx-web-common/3.14.0/smallrye-mutiny-vertx-web-common-3.14.0-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/io/smallrye/reactive/smallrye-mutiny-vertx-core/3.15.0/smallrye-mutiny-vertx-core-3.15.0-sources.jar
+
+--------------------------------------------------------------------------------
+Package Title: SmallRye Mutiny - Vert.x URI Template (3.15.0)
+
+Package Locator: mvn+io.smallrye.reactive:smallrye-mutiny-vertx-uri-template$3.15.0
+
+Package Depth: Transitive
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+Apache-2.0
+
+
+Copyright [yyyy] [name of copyright owner]
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+See the License for the specific language governing permissions and limitations under the License.
+
+
+* Package Info *
+
+Package Download URL: https://repo1.maven.org/maven2/io/smallrye/reactive/smallrye-mutiny-vertx-uri-template/3.15.0/smallrye-mutiny-vertx-uri-template-3.15.0-sources.jar
+
+--------------------------------------------------------------------------------
+Package Title: SmallRye Mutiny - Vert.x Web (3.15.0)
+
+Package Locator: mvn+io.smallrye.reactive:smallrye-mutiny-vertx-web$3.15.0
+
+Package Depth: Transitive
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+Apache-2.0
+
+
+Copyright [yyyy] [name of copyright owner]
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+See the License for the specific language governing permissions and limitations under the License.
+
+
+* Package Info *
+
+Package Download URL: https://repo1.maven.org/maven2/io/smallrye/reactive/smallrye-mutiny-vertx-web/3.15.0/smallrye-mutiny-vertx-web-3.15.0-sources.jar
+
+--------------------------------------------------------------------------------
+Package Title: SmallRye Mutiny - Vert.x Web Common (3.15.0)
+
+Package Locator: mvn+io.smallrye.reactive:smallrye-mutiny-vertx-web-common$3.15.0
+
+Package Depth: Transitive
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+Apache-2.0
+
+
+Copyright [yyyy] [name of copyright owner]
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+See the License for the specific language governing permissions and limitations under the License.
+
+
+* Package Info *
+
+Package Download URL: https://repo1.maven.org/maven2/io/smallrye/reactive/smallrye-mutiny-vertx-web-common/3.15.0/smallrye-mutiny-vertx-web-common-3.15.0-sources.jar
 
 --------------------------------------------------------------------------------
 Package Title: SmallRye Mutiny Zero JDK Flow / Reactive Streams Adapters (1.1.0)
+
+Package Locator: mvn+io.smallrye.reactive:mutiny-zero-flow-adapters$1.1.0
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -19637,7 +20577,11 @@ See the License for the specific language governing permissions and limitations 
 Package Download URL: https://repo1.maven.org/maven2/io/smallrye/reactive/mutiny-zero-flow-adapters/1.1.0/mutiny-zero-flow-adapters-1.1.0-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: SmallRye: GraphQL Common :: Schema Model (2.9.1)
+Package Title: SmallRye: GraphQL Common :: Schema Model (2.9.2)
+
+Package Locator: mvn+io.smallrye:smallrye-graphql-schema-model$2.9.2
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -19661,10 +20605,14 @@ See the License for the specific language governing permissions and limitations 
 
 * Package Info *
 
-Package Download URL: https://repo1.maven.org/maven2/io/smallrye/smallrye-graphql-schema-model/2.9.1/smallrye-graphql-schema-model-2.9.1-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/io/smallrye/smallrye-graphql-schema-model/2.9.2/smallrye-graphql-schema-model-2.9.2-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: SmallRye: GraphQL Server :: API (2.9.1)
+Package Title: SmallRye: GraphQL Server :: API (2.9.2)
+
+Package Locator: mvn+io.smallrye:smallrye-graphql-api$2.9.2
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -19688,37 +20636,14 @@ See the License for the specific language governing permissions and limitations 
 
 * Package Info *
 
-Package Download URL: https://repo1.maven.org/maven2/io/smallrye/smallrye-graphql-api/2.9.1/smallrye-graphql-api-2.9.1-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/io/smallrye/smallrye-graphql-api/2.9.2/smallrye-graphql-api-2.9.2-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: SmallRye: GraphQL Server :: CDI (2.9.1)
---------------------------------------------------------------------------------
+Package Title: SmallRye: GraphQL Server :: CDI (2.9.2)
 
-* Declared Licenses *
-Apache-2.0
+Package Locator: mvn+io.smallrye:smallrye-graphql-cdi$2.9.2
 
-
-Copyright [yyyy] [name of copyright owner]
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-
-See the License for the specific language governing permissions and limitations under the License.
-
-
-* Package Info *
-
-Package Download URL: https://repo1.maven.org/maven2/io/smallrye/smallrye-graphql-cdi/2.9.1/smallrye-graphql-cdi-2.9.1-sources.jar
-
---------------------------------------------------------------------------------
-Package Title: SmallRye: GraphQL Server :: Implementation (2.9.1)
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -19742,10 +20667,45 @@ See the License for the specific language governing permissions and limitations 
 
 * Package Info *
 
-Package Download URL: https://repo1.maven.org/maven2/io/smallrye/smallrye-graphql/2.9.1/smallrye-graphql-2.9.1-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/io/smallrye/smallrye-graphql-cdi/2.9.2/smallrye-graphql-cdi-2.9.2-sources.jar
+
+--------------------------------------------------------------------------------
+Package Title: SmallRye: GraphQL Server :: Implementation (2.9.2)
+
+Package Locator: mvn+io.smallrye:smallrye-graphql$2.9.2
+
+Package Depth: Transitive
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+Apache-2.0
+
+
+Copyright [yyyy] [name of copyright owner]
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+See the License for the specific language governing permissions and limitations under the License.
+
+
+* Package Info *
+
+Package Download URL: https://repo1.maven.org/maven2/io/smallrye/smallrye-graphql/2.9.2/smallrye-graphql-2.9.2-sources.jar
 
 --------------------------------------------------------------------------------
 Package Title: SmallRye: OpenAPI Core (3.10.0)
+
+Package Locator: mvn+io.smallrye:smallrye-open-api-core$3.10.0
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -19773,6 +20733,10 @@ Package Download URL: https://repo1.maven.org/maven2/io/smallrye/smallrye-open-a
 
 --------------------------------------------------------------------------------
 Package Title: SnakeYAML (2.0)
+
+Package Locator: mvn+org.yaml:snakeyaml$2.0
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -19882,6 +20846,10 @@ Package Download URL: https://repo1.maven.org/maven2/org/yaml/snakeyaml/2.0/snak
 
 --------------------------------------------------------------------------------
 Package Title: snappy-java (1.1.10.5)
+
+Package Locator: mvn+org.xerial.snappy:snappy-java$1.1.10.5
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -19911,6 +20879,10 @@ Package Download URL: https://repo1.maven.org/maven2/org/xerial/snappy/snappy-ja
 
 --------------------------------------------------------------------------------
 Package Title: swagger-annotations (2.1.10)
+
+Package Locator: mvn+io.swagger.core.v3:swagger-annotations$2.1.10
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -19938,6 +20910,10 @@ Package Download URL: https://repo1.maven.org/maven2/io/swagger/core/v3/swagger-
 
 --------------------------------------------------------------------------------
 Package Title: utils (7.7.0)
+
+Package Locator: mvn+io.confluent:common-utils$7.7.0
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -19964,7 +20940,11 @@ See the License for the specific language governing permissions and limitations 
 Package Download URL: http://packages.confluent.io/maven/io/confluent/common-utils/7.7.0/common-utils-7.7.0-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: Vert.x Bridge Common (4.5.9)
+Package Title: Vert.x Bridge Common (4.5.10)
+
+Package Locator: mvn+io.vertx:vertx-bridge-common$4.5.10
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -20035,14 +21015,34 @@ THE ACCOMPANYING PROGRAM IS PROVIDED UNDER THE TERMS OF THIS ECLIPSE PUBLIC LICE
 
 * Package Info *
 
-Package Download URL: https://repo1.maven.org/maven2/io/vertx/vertx-bridge-common/4.5.9/vertx-bridge-common-4.5.9-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/io/vertx/vertx-bridge-common/4.5.10/vertx-bridge-common-4.5.10-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: Vert.x Core (4.5.9)
+Package Title: Vert.x Core (4.5.10)
+
+Package Locator: mvn+io.vertx:vertx-core$4.5.10
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
-EPL-2.0, Apache-2.0, EPL-1.0
+Apache-2.0, EPL-2.0, EPL-1.0
+
+* Apache-2.0 *
+
+Copyright 2011-2017 Contributors to the Eclipse Foundation
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+See the License for the specific language governing permissions and limitations under the License.
 
 * EPL-2.0 *
 
@@ -20099,22 +21099,6 @@ THE ACCOMPANYING PROGRAM IS PROVIDED UNDER THE TERMS OF THIS ECLIPSE PUBLIC LICE
    Simply including a copy of this Agreement, including this Exhibit A is not sufficient to license the Source Code under Secondary Licenses.
    If it is not possible or desirable to put the notice in a particular file, then You may include the notice in a location (such as a LICENSE file in a relevant directory) where a recipient would be likely to look for such a notice.
    You may add additional accurate notices of copyright ownership.
-
-* Apache-2.0 *
-
-Copyright 2011-2017 Contributors to the Eclipse Foundation
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-
-See the License for the specific language governing permissions and limitations under the License.
 
 * EPL-1.0 *
 
@@ -20191,10 +21175,14 @@ SOFTWARE.
 
 Authors: Tim Fox, Pid
 
-Package Download URL: https://repo1.maven.org/maven2/io/vertx/vertx-core/4.5.9/vertx-core-4.5.9-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/io/vertx/vertx-core/4.5.10/vertx-core-4.5.10-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: Vert.x URI Template (4.5.9)
+Package Title: Vert.x URI Template (4.5.10)
+
+Package Locator: mvn+io.vertx:vertx-uri-template$4.5.10
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -20324,10 +21312,14 @@ THE ACCOMPANYING PROGRAM IS PROVIDED UNDER THE TERMS OF THIS ECLIPSE PUBLIC LICE
 
 * Package Info *
 
-Package Download URL: https://repo1.maven.org/maven2/io/vertx/vertx-uri-template/4.5.9/vertx-uri-template-4.5.9-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/io/vertx/vertx-uri-template/4.5.10/vertx-uri-template-4.5.10-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: vertx-auth-common (4.5.9)
+Package Title: vertx-auth-common (4.5.10)
+
+Package Locator: mvn+io.vertx:vertx-auth-common$4.5.10
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -20457,10 +21449,14 @@ THE ACCOMPANYING PROGRAM IS PROVIDED UNDER THE TERMS OF THIS ECLIPSE PUBLIC LICE
 
 * Package Info *
 
-Package Download URL: https://repo1.maven.org/maven2/io/vertx/vertx-auth-common/4.5.9/vertx-auth-common-4.5.9-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/io/vertx/vertx-auth-common/4.5.10/vertx-auth-common-4.5.10-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: vertx-codegen (4.5.9)
+Package Title: vertx-codegen (4.5.10)
+
+Package Locator: mvn+io.vertx:vertx-codegen$4.5.10
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -20531,30 +21527,18 @@ See the License for the specific language governing permissions and limitations 
 
 * Package Info *
 
-Package Download URL: https://repo1.maven.org/maven2/io/vertx/vertx-codegen/4.5.9/vertx-codegen-4.5.9-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/io/vertx/vertx-codegen/4.5.10/vertx-codegen-4.5.10-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: vertx-web (4.5.9)
+Package Title: vertx-web (4.5.10)
+
+Package Locator: mvn+io.vertx:vertx-web$4.5.10
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
-Apache-2.0, EPL-2.0, EPL-1.0
-
-* Apache-2.0 *
-
-Copyright 2011-2023 Contributors to the Eclipse Foundation
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-
-See the License for the specific language governing permissions and limitations under the License.
+EPL-2.0, EPL-1.0, Apache-2.0
 
 * EPL-2.0 *
 
@@ -20658,13 +21642,33 @@ THE ACCOMPANYING PROGRAM IS PROVIDED UNDER THE TERMS OF THIS ECLIPSE PUBLIC LICE
    Everyone is permitted to copy and distribute copies of this Agreement, but in order to avoid inconsistency the Agreement is copyrighted and may only be modified in the following manner. The Agreement Steward reserves the right to publish new versions (including revisions) of this Agreement from time to time. No one other than the Agreement Steward has the right to modify this Agreement. The Eclipse Foundation is the initial Agreement Steward. The Eclipse Foundation may assign the responsibility to serve as the Agreement Steward to a suitable separate entity. Each new version of the Agreement will be given a distinguishing version number. The Program (including Contributions) may always be distributed subject to the version of the Agreement under which it was received. In addition, after a new version of the Agreement is published, Contributor may elect to distribute the Program (including its Contributions) under the new version. Except as expressly stated in Sections 2(a) and 2(b) above, Recipient receives no rights or licenses to the intellectual property of any Contributor under this Agreement, whether expressly, by implication, estoppel or otherwise. All rights in the Program not expressly granted under this Agreement are reserved.
    This Agreement is governed by the laws of the State of New York and the intellectual property laws of the United States of America. No party to this Agreement will bring a legal action under this Agreement more than one year after the cause of action arose. Each party waives its rights to a jury trial in any resulting litigation.
 
+* Apache-2.0 *
+
+Copyright 2011-2023 Contributors to the Eclipse Foundation
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+See the License for the specific language governing permissions and limitations under the License.
+
 
 * Package Info *
 
-Package Download URL: https://repo1.maven.org/maven2/io/vertx/vertx-web/4.5.9/vertx-web-4.5.9-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/io/vertx/vertx-web/4.5.10/vertx-web-4.5.10-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: vertx-web-client (4.5.7)
+Package Title: vertx-web-client (4.5.10)
+
+Package Locator: mvn+io.vertx:vertx-web-client$4.5.10
+
+Package Depth: Direct
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -20794,10 +21798,14 @@ THE ACCOMPANYING PROGRAM IS PROVIDED UNDER THE TERMS OF THIS ECLIPSE PUBLIC LICE
 
 * Package Info *
 
-Package Download URL: https://repo1.maven.org/maven2/io/vertx/vertx-web-client/4.5.7/vertx-web-client-4.5.7-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/io/vertx/vertx-web-client/4.5.10/vertx-web-client-4.5.10-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: vertx-web-common (4.5.9)
+Package Title: vertx-web-common (4.5.10)
+
+Package Locator: mvn+io.vertx:vertx-web-common$4.5.10
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -20868,10 +21876,14 @@ See the License for the specific language governing permissions and limitations 
 
 * Package Info *
 
-Package Download URL: https://repo1.maven.org/maven2/io/vertx/vertx-web-common/4.5.9/vertx-web-common-4.5.9-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/io/vertx/vertx-web-common/4.5.10/vertx-web-common-4.5.10-sources.jar
 
 --------------------------------------------------------------------------------
 Package Title: wildfly-common (1.7.0.Final)
+
+Package Locator: mvn+org.wildfly.common:wildfly-common$1.7.0.Final
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -20899,6 +21911,10 @@ Package Download URL: https://repo1.maven.org/maven2/org/wildfly/common/wildfly-
 
 --------------------------------------------------------------------------------
 Package Title: wire-runtime (4.9.7)
+
+Package Locator: mvn+com.squareup.wire:wire-runtime-jvm$4.9.7
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -20960,6 +21976,10 @@ Package Download URL: https://repo1.maven.org/maven2/com/squareup/wire/wire-runt
 
 --------------------------------------------------------------------------------
 Package Title: wire-schema (4.9.7)
+
+Package Locator: mvn+com.squareup.wire:wire-schema-jvm$4.9.7
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -20989,6 +22009,10 @@ Package Download URL: https://repo1.maven.org/maven2/com/squareup/wire/wire-sche
 
 --------------------------------------------------------------------------------
 Package Title: Yasson (3.0.4)
+
+Package Locator: mvn+org.eclipse:yasson$3.0.4
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -21222,6 +22246,10 @@ Package Download URL: https://repo1.maven.org/maven2/org/eclipse/yasson/3.0.4/ya
 
 --------------------------------------------------------------------------------
 Package Title: zstd-jni (1.5.6-3)
+
+Package Locator: mvn+com.github.luben:zstd-jni$1.5.6-3
+
+Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -25803,19 +26831,13 @@ BSD 3-Clause "New" or "Revised" License
 
 Copyright (c) 2018, 2024 Oracle and/or its affiliates. All rights reserved.
 
-Copyright (c) 2003, 2024 Oracle and/or its affiliates. All rights reserved.
-
-Copyright (c) 2017, 2024 Oracle and/or its affiliates. All rights reserved.
-
 Copyright (c) 2004, 2024 Oracle and/or its affiliates. All rights reserved.
 
-Copyright (c) 2004, 2021 Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2009, 2021 Oracle and/or its affiliates. All rights reserved.
 
 Copyright (c) 2003, 2021 Oracle and/or its affiliates. All rights reserved.
 
-Copyright (c) 2005, 2021 Oracle and/or its affiliates. All rights reserved.
-
-Copyright (c) 2009, 2021 Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2003, 2024 Oracle and/or its affiliates. All rights reserved.
 
 Copyright (c) 2005, 2024 Oracle and/or its affiliates. All rights reserved.
 
@@ -25865,17 +26887,23 @@ Copyright (c) 2018, 2023 Oracle and/or its affiliates. All rights reserved.
 
 Copyright (c) 2019 current.year} Eclipse Foundation. All rights reserved.<br>
 
-Copyright (c) 2015, 2024 Oracle and/or its affiliates. All rights reserved.
-
-Copyright (c) 2007, 2024 Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2020, 2021 Oracle and/or its affiliates. All rights reserved.
 
 Copyright (c) 2006, 2021 Oracle and/or its affiliates. All rights reserved.
 
-Copyright (c) 2020, 2021 Oracle and/or its affiliates. All rights reserved.
-
 Copyright (c) 2006, 2024 Oracle and/or its affiliates. All rights reserved.
 
+Copyright (c) 2004, 2021 Oracle and/or its affiliates. All rights reserved.
+
+Copyright (c) 2007, 2024 Oracle and/or its affiliates. All rights reserved.
+
+Copyright (c) 2015, 2024 Oracle and/or its affiliates. All rights reserved.
+
+Copyright (c) 2017, 2024 Oracle and/or its affiliates. All rights reserved.
+
 Copyright (c) 2007, 2021 Oracle and/or its affiliates. All rights reserved.
+
+Copyright (c) 2005, 2021 Oracle and/or its affiliates. All rights reserved.
 
 Copyright (c) 2021 Oracle and/or its affiliates. All rights reserved.
 
@@ -25891,33 +26919,25 @@ Copyright (c)  ignoreyear>false</copyright.ignoreyear>
 
 Copyright (c) 2016, 2024 Oracle and/or its affiliates. All rights reserved.
 
-Copyright (c) 2021, 2022 Oracle and/or its affiliates. All rights reserved.
-
 Copyright (c) 2016, 2022 Oracle and/or its affiliates. All rights reserved.
+
+Copyright (c) 2021, 2022 Oracle and/or its affiliates. All rights reserved.
 
 Copyright (c) 2021, 2023 Oracle and/or its affiliates. All rights reserved.
 
-Copyright (c) 2016, 2020 Oracle and/or its affiliates. All rights reserved.
-
-Copyright (c) 2015, 2023 Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2019, 2022 Oracle and/or its affiliates. All rights reserved.
 
 Copyright (c) 2015, 2022 Oracle and/or its affiliates. All rights reserved.
 
-Copyright (c) 2019, 2023 Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2015, 2020 Oracle and/or its affiliates. All rights reserved.
 
 Copyright (c) 2019, 2020 Oracle and/or its affiliates. All rights reserved.
 
-Copyright (c) 2019, 2022 Oracle and/or its affiliates. All rights reserved.
-
 Copyright (c) 2016, 2023 Oracle and/or its affiliates. All rights reserved.
 
-Copyright (c) 2017, 2022 Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2016, 2020 Oracle and/or its affiliates. All rights reserved.
 
-Copyright (c) 2019, 2020 Payara Foundation and/or its affiliates. All rights reserved.
-
-Copyright (c) 2018, 2020 Oracle and/or its affiliates. All rights reserved.
-
-Copyright (c) 2017, 2020 Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2022 Oracle and/or its affiliates. All rights reserved.
 
 Copyright (c)  maven-plugin.version>2.4</glassfish-copyright-maven-plugin.version>
 
@@ -25941,13 +26961,21 @@ Copyright (c)  txt</templateFile>
 
 Copyright (c)  exclude.txt</excludeFile>
 
-Copyright (c) 2019, 2022 IBM and/or its affiliates. All rights reserved.
-
-Copyright (c) 2015, 2020 Oracle and/or its affiliates. All rights reserved.
-
 Copyright (c) 2018, 2022 Oracle and/or its affiliates. All rights reserved.
 
-Copyright (c) 2022 Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2019, 2022 IBM and/or its affiliates. All rights reserved.
+
+Copyright (c) 2019, 2020 Payara Foundation and/or its affiliates. All rights reserved.
+
+Copyright (c) 2017, 2020 Oracle and/or its affiliates. All rights reserved.
+
+Copyright (c) 2015, 2023 Oracle and/or its affiliates. All rights reserved.
+
+Copyright (c) 2018, 2020 Oracle and/or its affiliates. All rights reserved.
+
+Copyright (c) 2017, 2022 Oracle and/or its affiliates. All rights reserved.
+
+Copyright (c) 2019, 2023 Oracle and/or its affiliates. All rights reserved.
 
 Copyright (c) 2021 Markus KARG. All rights reserved.
 
@@ -26246,8 +27274,6 @@ Copyright (c) 2011-2015 The original author or authors
 Copyright (c) 2011-2014 The original author or authors
 
 Copyright (c) 2011-2013 The original author or authors
-
-Copyright (c) 2022 Red Hat, Inc.
 Eclipse Public License - v 1.0
 THE ACCOMPANYING PROGRAM IS PROVIDED UNDER THE TERMS OF THIS ECLIPSE PUBLIC LICENSE ("AGREEMENT"). ANY USE, REPRODUCTION OR DISTRIBUTION OF THE PROGRAM CONSTITUTES RECIPIENT'S ACCEPTANCE OF THIS AGREEMENT.
    1. DEFINITIONS
@@ -26818,4 +27844,4 @@ Public Domain
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
-Report Generated by FOSSA on 2024-10-11
+Report Generated by FOSSA on 2024-10-16
