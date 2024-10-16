@@ -17,7 +17,6 @@ import io.confluent.idesidecar.restapi.kafkarest.model.ProduceResponse;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceResponseData;
 import io.confluent.kafka.schemaregistry.ParsedSchema;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
-import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.infrastructure.Infrastructure;
 import io.vertx.core.http.HttpServerRequest;
@@ -25,7 +24,6 @@ import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
-import jakarta.ws.rs.InternalServerErrorException;
 import java.time.Instant;
 import java.util.Date;
 import java.util.Optional;
@@ -37,8 +35,6 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 
 
-// TODO: resolve this
-@SuppressWarnings("checkstyle:ClassDataAbstractionCoupling")
 @RequestScoped
 public class RecordsV3ApiImpl implements RecordsV3Api {
   @Inject
@@ -257,20 +253,9 @@ public class RecordsV3ApiImpl implements RecordsV3Api {
         // do not lookup deleted schemas
         false
     ))
-        // Run the supplier on the default worker pool since it may block
         .runSubscriptionOn(Infrastructure.getDefaultWorkerPool())
         .onFailure(RuntimeException.class)
-        .transform(e -> {
-          if (e.getCause() instanceof RestClientException) {
-            return e.getCause();
-          } else {
-            return e;
-          }
-        })
-        .onItem()
-        .ifNull()
-        .failWith(new InternalServerErrorException(
-            "Error fetching schema %s version %d".formatted(subject, schemaVersion)))
+        .transform(Throwable::getCause)
         .onItem()
         .ifNotNull()
         .transform(schema -> new RegisteredSchema(
