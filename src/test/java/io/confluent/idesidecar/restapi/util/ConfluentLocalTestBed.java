@@ -295,7 +295,6 @@ public class ConfluentLocalTestBed implements AutoCloseable {
     var srCluster = getSchemaRegistryCluster();
     givenConnectionId()
         .headers(
-            "Content-Type", "application/vnd.schemaregistry.v1+json",
             "X-cluster-id", srCluster.id()
         )
         .body(Map.of(

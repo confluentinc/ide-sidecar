@@ -108,25 +108,19 @@ public class RecordsV3ApiImpl {
                 schemaRegistryClient,
                 Optional
                     .ofNullable(pipeline.keySchema())
-                    .map(RegisteredSchema::format)
-                    .orElse(SchemaManager.SchemaFormat.JSON),
-                Optional
-                    .ofNullable(pipeline.keySchema())
                     .map(RegisteredSchema::parsedSchema).orElse(null),
                 topicName,
-                produceRequest.getKey().getData()
+                produceRequest.getKey().getData(),
+                true
             ),
             () -> recordSerializer.serialize(
                 schemaRegistryClient,
                 Optional
                     .ofNullable(pipeline.valueSchema())
-                    .map(RegisteredSchema::format)
-                    .orElse(SchemaManager.SchemaFormat.JSON),
-                Optional
-                    .ofNullable(pipeline.valueSchema())
                     .map(RegisteredSchema::parsedSchema).orElse(null),
                 topicName,
-                produceRequest.getValue().getData()
+                produceRequest.getValue().getData(),
+                false
             ))
             .with((key, value) -> pipeline.withKey(key).withValue(value))
         )
@@ -136,8 +130,15 @@ public class RecordsV3ApiImpl {
                 topicName,
                 produceRequest.getPartitionId(),
                 produceRequest.getTimestamp(),
-                pipeline.serializedKey().toByteArray(),
-                pipeline.serializedValue().toByteArray())
+                Optional
+                    .ofNullable(pipeline.serializedKey())
+                    .map(ByteString::toByteArray)
+                    .orElse(null),
+                Optional
+                    .ofNullable(pipeline.serializedValue())
+                    .map(ByteString::toByteArray)
+                    .orElse(null)
+                )
             )
             .runSubscriptionOn(Infrastructure.getDefaultWorkerPool())
             .onItem()

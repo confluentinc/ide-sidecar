@@ -35,31 +35,41 @@ public class RecordSerializer {
 
   public ByteString serialize(
       SchemaRegistryClient client,
-      SchemaManager.SchemaFormat format,
       ParsedSchema parsedSchema,
       String topicName,
-      Object data
+      Object data,
+      boolean isKey
   ) {
-    return switch (format) {
+    if (data == null) {
+      return null;
+    }
+
+    if (parsedSchema == null) {
+      return serializeJson(topicName, data, isKey);
+    }
+
+    return switch (SchemaManager.SchemaFormat.fromSchemaType(parsedSchema.schemaType())) {
       case AVRO -> serializeAvro(
           client,
           parsedSchema,
           topicName,
-          objectMapper.valueToTree(data)
+          objectMapper.valueToTree(data),
+          isKey
       );
-      case JSONSCHEMA -> serializeJsonSchema(
+      case JSON -> serializeJsonSchema(
           client,
           parsedSchema,
           topicName,
-          objectMapper.valueToTree(data)
+          objectMapper.valueToTree(data),
+          isKey
       );
       case PROTOBUF -> serializeProtobuf(
           client,
           parsedSchema,
           topicName,
-          objectMapper.valueToTree(data)
+          objectMapper.valueToTree(data),
+          isKey
       );
-      case JSON -> serializeJson(topicName, data);
     };
   }
 
@@ -67,9 +77,11 @@ public class RecordSerializer {
       SchemaRegistryClient client,
       ParsedSchema parsedSchema,
       String topicName,
-      JsonNode data
+      JsonNode data,
+      boolean isKey
   ) {
-    try (var avroSerializer = new KafkaAvroSerializer(client, getSchemaSerdeConfig())) {
+    try (var avroSerializer = new KafkaAvroSerializer(client)) {
+      avroSerializer.configure(getSchemaSerdeConfig(), isKey);
       AvroSchema schema = (AvroSchema) parsedSchema;
       Object record;
       try {
@@ -86,11 +98,11 @@ public class RecordSerializer {
       SchemaRegistryClient client,
       ParsedSchema parsedSchema,
       String topicName,
-      JsonNode data
+      JsonNode data,
+      boolean isKey
   ) {
-    try (var jsonschemaSerializer =
-             new KafkaJsonSchemaSerializer<>(client, getSchemaSerdeConfig())
-    ) {
+    try (var jsonschemaSerializer = new KafkaJsonSchemaSerializer<>(client)) {
+      jsonschemaSerializer.configure(getSchemaSerdeConfig(), isKey);
       JsonSchema schema = (JsonSchema) parsedSchema;
       Object record;
       try {
@@ -107,9 +119,11 @@ public class RecordSerializer {
       SchemaRegistryClient client,
       ParsedSchema parsedSchema,
       String topicName,
-      JsonNode data
+      JsonNode data,
+      boolean isKey
   ) {
-    try (var protobufSerializer = new KafkaProtobufSerializer<>(client, getSchemaSerdeConfig())) {
+    try (var protobufSerializer = new KafkaProtobufSerializer<>(client)) {
+      protobufSerializer.configure(getSchemaSerdeConfig(), isKey);
       ProtobufSchema schema = (ProtobufSchema) parsedSchema;
       Message record;
       try {
@@ -122,10 +136,9 @@ public class RecordSerializer {
     }
   }
 
-  private ByteString serializeJson(String topicName, Object data) {
+  private ByteString serializeJson(String topicName, Object data, boolean isKey) {
     try (var kafkaJsonSerializer = new KafkaJsonSerializer<>()) {
-      // isKey is unused in KafkaJsonSerializer, so we can safely pass false
-      kafkaJsonSerializer.configure(getSchemaSerdeConfig(), false);
+      kafkaJsonSerializer.configure(getSchemaSerdeConfig(), isKey);
       return ByteString.copyFrom(kafkaJsonSerializer.serialize(topicName, data));
     }
   }

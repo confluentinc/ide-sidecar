@@ -19,7 +19,7 @@ public class SchemaManager {
       Arrays.asList(
         SchemaFormat.AVRO.schemaProvider(),
         SchemaFormat.PROTOBUF.schemaProvider(),
-        SchemaFormat.JSONSCHEMA.schemaProvider()
+        SchemaFormat.JSON.schemaProvider()
       )
   );
 
@@ -43,12 +43,6 @@ public class SchemaManager {
         return schemaProvider;
       }
     },
-    JSON {
-      @Override
-      SchemaProvider schemaProvider() {
-        return null;
-      }
-    },
     PROTOBUF {
       private final SchemaProvider schemaProvider = new ProtobufSchemaProvider();
 
@@ -57,7 +51,7 @@ public class SchemaManager {
         return schemaProvider;
       }
     },
-    JSONSCHEMA {
+    JSON {
       private final SchemaProvider schemaProvider = new JsonSchemaProvider();
 
       @Override
