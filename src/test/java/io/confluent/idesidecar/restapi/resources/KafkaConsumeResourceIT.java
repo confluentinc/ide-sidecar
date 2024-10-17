@@ -1,9 +1,9 @@
 package io.confluent.idesidecar.restapi.resources;
 
-import static io.confluent.idesidecar.restapi.util.ConfluentLocalKafkaWithRestProxyContainer.CLUSTER_ID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -62,8 +62,8 @@ public class KafkaConsumeResourceIT extends ConfluentLocalTestBed {
     };
     setupTestEnvironment(topicName, 1, sampleRecords);
 
-    var url = "gateway/v1/clusters/%s/topics/%s/partitions/-/consume".formatted(
-        CLUSTER_ID, topicName);
+    var url = "/gateway/v1/clusters/{cluster_id}/topics/%s/partitions/-/consume".formatted(
+        topicName);
     var rows = givenDefault()
         .body("{\"from_beginning\" : true, \"max_poll_records\" : 3}")
         .post(url)
@@ -89,8 +89,8 @@ public class KafkaConsumeResourceIT extends ConfluentLocalTestBed {
     };
     setupTestEnvironment(topicName, 1, sampleRecords);
 
-    var url = "gateway/v1/clusters/%s/topics/%s/partitions/-/consume".formatted(
-        CLUSTER_ID, topicName);
+    var url = "/gateway/v1/clusters/{cluster_id}/topics/%s/partitions/-/consume"
+        .formatted(topicName);
     var rows = givenDefault()
         .body("{\"from_beginning\" : true, \"max_poll_records\" : 2}")
         .post(url)
@@ -122,8 +122,8 @@ public class KafkaConsumeResourceIT extends ConfluentLocalTestBed {
     };
     setupTestEnvironment(topicName, 2, sampleRecords);
 
-    var url = "gateway/v1/clusters/%s/topics/%s/partitions/-/consume".formatted(
-        CLUSTER_ID, topicName);
+    var url = "/gateway/v1/clusters/{cluster_id}/topics/%s/partitions/-/consume".formatted(
+        topicName);
     var rows = givenDefault()
         .body("{\"from_beginning\" : true, \"max_poll_records\" : 3}")
         .post(url)
@@ -160,8 +160,8 @@ public class KafkaConsumeResourceIT extends ConfluentLocalTestBed {
     };
     setupTestEnvironment(topicName, 1, sampleRecords);
 
-    var url = "gateway/v1/clusters/%s/topics/%s/partitions/-/consume".formatted(
-        CLUSTER_ID, topicName);
+    var url = "/gateway/v1/clusters/{cluster_id}/topics/%s/partitions/-/consume".formatted(
+        topicName);
     var rows = givenDefault()
         .body("{\"from_beginning\" : true, \"max_poll_records\" : null}")
         .post(url)
@@ -193,8 +193,8 @@ public class KafkaConsumeResourceIT extends ConfluentLocalTestBed {
     setupTestEnvironment(topicName, 1, sampleRecords);
 
     // Initial consume from beginning
-    var url = "gateway/v1/clusters/%s/topics/%s/partitions/-/consume".formatted(
-        CLUSTER_ID, topicName);
+    var url = "/gateway/v1/clusters/{cluster_id}/topics/%s/partitions/-/consume".formatted(
+        topicName);
     var initialResponse = givenDefault()
         .body("{\"from_beginning\" : true, \"max_poll_records\" : 4}")
         .post(url)
@@ -262,8 +262,8 @@ public class KafkaConsumeResourceIT extends ConfluentLocalTestBed {
     };
     setupTestEnvironment(topicName, 1, sampleRecords);
 
-    var url = "gateway/v1/clusters/%s/topics/%s/partitions/-/consume".formatted(
-        CLUSTER_ID, topicName);
+    var url = "/gateway/v1/clusters/{cluster_id}/topics/%s/partitions/-/consume".formatted(
+        topicName);
     var rows = givenDefault()
         .body("{\"from_beginning\" : true, \"max_poll_records\" : null}")
         .post(url)
@@ -285,8 +285,8 @@ public class KafkaConsumeResourceIT extends ConfluentLocalTestBed {
     };
     setupTestEnvironment(topicName, 1, sampleRecords);
 
-    var url = "gateway/v1/clusters/%s/topics/%s/partitions/-/consume".formatted(
-        CLUSTER_ID, topicName);
+    var url = "/gateway/v1/clusters/{cluster_id}/topics/%s/partitions/-/consume".formatted(
+        topicName);
     var rows = givenDefault()
         .body("{\"from_beginning\" : true, \"max_poll_records\" : 3, \"fetch_max_bytes\" : null}")
         .post(url)
@@ -308,8 +308,8 @@ public class KafkaConsumeResourceIT extends ConfluentLocalTestBed {
     };
     setupTestEnvironment(topicName, 1, sampleRecords);
 
-    var url = "gateway/v1/clusters/%s/topics/%s/partitions/-/consume".formatted(
-        CLUSTER_ID, topicName);
+    var url = "/gateway/v1/clusters/{cluster_id}/topics/%s/partitions/-/consume".formatted(
+        topicName);
     var rows = givenDefault()
         .body("{\"from_beginning\" : true, \"max_poll_records\" : 3, \"fetch_max_bytes\" : 1024}")
         .post(url)
@@ -336,8 +336,8 @@ public class KafkaConsumeResourceIT extends ConfluentLocalTestBed {
     };
     setupTestEnvironment(topicName, 1, sampleRecords);
 
-    var url = "gateway/v1/clusters/%s/topics/%s/partitions/-/consume".formatted(
-        CLUSTER_ID, topicName);
+    var url = "/gateway/v1/clusters/{cluster_id}/topics/%s/partitions/-/consume".formatted(
+        topicName);
     var rows = givenDefault()
         .body("{\"from_beginning\" : true, \"message_max_bytes\" : 8}")
         .post(url)
@@ -358,10 +358,10 @@ public class KafkaConsumeResourceIT extends ConfluentLocalTestBed {
     assertFalse(newRecords.get(0).get("exceeded_fields").get("value").asBoolean());
 
     assertEquals("key%d".formatted(1), newRecords.get(1).get("key").asText());
-    assertTrue(newRecords.get(1).get("value") == null);
+    assertNull(newRecords.get(1).get("value"));
     assertTrue(newRecords.get(1).get("exceeded_fields").get("value").asBoolean());
     assertEquals("key%d".formatted(2), newRecords.get(2).get("key").asText());
-    assertTrue(newRecords.get(2).get("value") == null);
+    assertNull(newRecords.get(2).get("value"));
     assertTrue(newRecords.get(2).get("exceeded_fields").get("value").asBoolean());
   }
 
@@ -420,8 +420,8 @@ public class KafkaConsumeResourceIT extends ConfluentLocalTestBed {
       ),1);
     }
 
-    var url = "gateway/v1/clusters/%s/topics/%s/partitions/-/consume".formatted(
-        CLUSTER_ID, topic);
+    var url = "/gateway/v1/clusters/{cluster_id}/topics/%s/partitions/-/consume".formatted(
+        topic);
     var rows = givenDefault()
         .body("{\"from_beginning\" : true}")
         .post(url)

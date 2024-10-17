@@ -1,7 +1,8 @@
 package io.confluent.idesidecar.restapi.util;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.confluent.idesidecar.restapi.kafkarest.model.*;
+import io.confluent.idesidecar.restapi.kafkarest.model.CreateTopicRequestData;
+import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequest;
+import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequestData;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import java.util.*;
 
@@ -20,8 +21,7 @@ import org.testcontainers.containers.wait.strategy.Wait;
 import java.time.Duration;
 import java.util.stream.Collectors;
 
-import static io.confluent.idesidecar.restapi.util.ConfluentLocalKafkaWithRestProxyContainer.CLUSTER_ID;
-import static io.confluent.idesidecar.restapi.util.RequestHeadersConstants.CONNECTION_ID_HEADER;
+import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.asJson;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -81,12 +81,9 @@ public class ConfluentLocalTestBed implements AutoCloseable {
 
   @AfterEach
   public void afterEach() {
-    // First delete all topics
+    deleteAllSubjects();
     deleteAllTopics();
-
-    // Then delete the connection
     deleteConnection();
-    // TODO: delete all resources from Schema Registry
   }
 
   @Override
@@ -135,7 +132,38 @@ public class ConfluentLocalTestBed implements AutoCloseable {
         .then()
         .statusCode(200)
         .extract().body().jsonPath().getList("data");
-    return topics.stream().map(t -> t.get("topic_name")).collect(Collectors.toSet());
+    return topics
+        .stream()
+        .filter(t -> !t.get("topic_name").startsWith("_"))
+        .map(t -> t.get("topic_name")).collect(Collectors.toSet());
+  }
+
+  public static Set<String> listSubjects(String srClusterId) {
+    List<String> subjects = givenConnectionId()
+        .header("X-cluster-id", srClusterId)
+        .get("/subjects")
+        .then()
+        .statusCode(200)
+        .extract().body().jsonPath().getList(".");
+    return new HashSet<>(subjects);
+  }
+
+  public static void deleteAllSubjects() {
+    var schemaRegistry = getSchemaRegistryCluster();
+    var subjects = listSubjects(schemaRegistry.id());
+    for (var subject : subjects) {
+      deleteSubject(subject, schemaRegistry.id());
+    }
+  }
+
+  private static void deleteSubject(String subject, String srClusterId) {
+
+    // Soft delete
+    givenConnectionId()
+        .header("X-cluster-id", srClusterId)
+        .delete("/subjects/%s".formatted(subject))
+        .then()
+        .statusCode(200);
   }
 
   private static void createConnection() {
@@ -165,6 +193,7 @@ public class ConfluentLocalTestBed implements AutoCloseable {
   protected static RequestSpecification givenDefault() {
     return givenConnectionId()
         .when()
+        .header("Content-Type", "application/json")
         .pathParams(clusterIdPathParams());
   }
 
@@ -246,10 +275,11 @@ public class ConfluentLocalTestBed implements AutoCloseable {
   }
 
   public Integer createSchema(String subject, String schemaType, String schema) {
-    return givenConnectionId()
+    var srCluster = getSchemaRegistryCluster();
+    givenConnectionId()
         .headers(
             "Content-Type", "application/vnd.schemaregistry.v1+json",
-            "X-cluster-id", getSchemaRegistryCluster().id()
+            "X-cluster-id", srCluster.id()
         )
         .body(Map.of(
             "schemaType", schemaType,
@@ -257,11 +287,29 @@ public class ConfluentLocalTestBed implements AutoCloseable {
         ))
         .post("/subjects/%s/versions".formatted(subject))
         .then()
+        .statusCode(200);
+
+    // Sleep for a bit to allow the schema to be registered
+    try {
+      Thread.sleep(50);
+    } catch (InterruptedException e) {
+      // Ignore
+    }
+
+    return getLatestSchemaVersion(subject, srCluster.id());
+  }
+
+  private Integer getLatestSchemaVersion(String subject, String srClusterId) {
+    var response = givenConnectionId()
+        .headers("X-cluster-id", srClusterId)
+        .get("/subjects/%s/versions/latest".formatted(subject))
+        .then()
         .statusCode(200)
+        .contentType("application/vnd.schemaregistry.v1+json")
         .extract()
         .body()
-        .jsonPath()
-        .getInt("id");
+        .asString();
+    return Objects.requireNonNull(asJson(response)).get("version").asInt();
   }
 
   public record SchemaRegistry(String id, String uri) {
@@ -291,8 +339,7 @@ public class ConfluentLocalTestBed implements AutoCloseable {
         .body()
         .asString();
 
-    var localConnections = ResourceIOUtil
-        .asJson(graphQlResponse)
+    var localConnections = asJson(graphQlResponse)
         .get("data")
         .get("localConnections")
         .elements();

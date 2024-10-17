@@ -4,8 +4,6 @@ import static io.confluent.idesidecar.restapi.kafkarest.SchemaManager.SCHEMA_PRO
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import io.confluent.idesidecar.restapi.avro.MyAvroMessage;
-import io.confluent.idesidecar.restapi.cache.SchemaRegistryClients;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeData;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeRecord;
 import io.confluent.idesidecar.restapi.proto.Message.MyMessage;
@@ -14,12 +12,9 @@ import io.confluent.idesidecar.restapi.util.RequestHeadersConstants;
 import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
 import io.quarkus.test.junit.QuarkusIntegrationTest;
 import java.util.*;
-
-import org.json.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.testcontainers.shaded.com.fasterxml.jackson.databind.JsonNode;
 
 
 @QuarkusIntegrationTest
@@ -57,7 +52,7 @@ public class SimpleConsumerIT extends ConfluentLocalTestBed {
     Integer valueSchemaVersion = createSchema(
         "%s-value".formatted(topic),
         "AVRO",
-        MyAvroMessage.SCHEMA$.toString()
+        loadResource("avro/myavromessage.avsc")
     );
 
     List<String> ids = Arrays.asList("12345", "12346", "12347");
