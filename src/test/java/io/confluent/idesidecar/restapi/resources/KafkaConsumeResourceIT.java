@@ -1,75 +1,38 @@
 package io.confluent.idesidecar.restapi.resources;
 
-import static io.restassured.RestAssured.given;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.protobuf.util.JsonFormat;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequest;
-import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeData;
-import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeRecord;
 import io.confluent.idesidecar.restapi.proto.Message.MyMessage;
 import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
-import io.confluent.idesidecar.restapi.util.ConfluentLocalKafkaWithRestProxyContainer;
 import io.confluent.idesidecar.restapi.util.ConfluentLocalTestBed;
 import io.confluent.idesidecar.restapi.util.ResourceIOUtil;
 import io.quarkus.test.junit.QuarkusIntegrationTest;
 import io.quarkus.test.junit.TestProfile;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.jupiter.api.*;
 
 @QuarkusIntegrationTest
 @Tag("io.confluent.common.utils.IntegrationTest")
 @TestProfile(NoAccessFilterProfile.class)
-public class KafkaConsumeResourceIT {
-  public record KafkaClusterDetails(String id, String name, String bootstrapServers, String uri) {}
-
-  private static ConfluentLocalTestBed confluentLocal;
-  
-  private String connectionId;
-
-  @BeforeAll
-  public static void setUp() {
-    confluentLocal = new ConfluentLocalTestBed();
-    confluentLocal.start();
-  }
-
-  @AfterAll
-  public static void tearDown() {
-    if (confluentLocal != null) {
-      confluentLocal.stop();
-    }
-  }
-
-  @AfterEach
-  public void cleanup() {
-    if (connectionId != null) {
-      deleteLocalConnection(connectionId);
-    }
-  }
-
-  private KafkaClusterDetails setupTestEnvironment(
-      ConfluentLocalTestBed confluentLocal, String connectionId, String topicName, int partitions, String[][] sampleRecords) {
-    confluentLocal.start();
-    createLocalConnection(connectionId, connectionId);
-    var localKafkaClusterDetails = getLocalKafkaClusterId();
-    assertFalse(localKafkaClusterDetails.id().isEmpty());
-    createLocalKafkaTopic(connectionId, localKafkaClusterDetails.id(), topicName, partitions);
+public class KafkaConsumeResourceIT extends ConfluentLocalTestBed {
+  private static void setupTestEnvironment(
+      String topicName,
+      int partitions,
+      String[][] sampleRecords
+  ) {
+    createTopic(topicName, partitions, (short) 1);
     if (sampleRecords != null) {
-      produceRecords(localKafkaClusterDetails.bootstrapServers(), topicName, sampleRecords);
+      produceStringRecords(topicName, sampleRecords);
     }
-    return localKafkaClusterDetails;
   }
 
   private void assertConsumerRecords(String responseJson, String[][] expectedRecords) {
@@ -91,21 +54,17 @@ public class KafkaConsumeResourceIT {
 
   @Test
   void testConfluentLocalContainer() {
-    connectionId = "local-connection";
     var topicName = "test_topic";
     var sampleRecords = new String[][]{
         {"key-record0", "value-record0"},
         {"key-record1", "value-record1"},
         {"key-record2", "value-record2"}
     };
-    var localKafkaClusterDetails = setupTestEnvironment(confluentLocal, connectionId, topicName, 1, sampleRecords);
+    setupTestEnvironment(topicName, 1, sampleRecords);
 
-    var url = "gateway/v1/clusters/%s/topics/%s/partitions/-/consume".formatted(
-        localKafkaClusterDetails.id(), topicName);
-    var rows = given()
-        .when()
-        .header("Content-Type", "application/json")
-        .header("x-connection-id", connectionId)
+    var url = "/gateway/v1/clusters/{cluster_id}/topics/%s/partitions/-/consume".formatted(
+        topicName);
+    var rows = givenDefault()
         .body("{\"from_beginning\" : true, \"max_poll_records\" : 3}")
         .post(url)
         .then()
@@ -121,7 +80,6 @@ public class KafkaConsumeResourceIT {
     // Test that the Kafka consumer respects the "max_poll_records" limit
     // and returns only the specified number of records when consuming
     // from multiple partitions in a Kafka topic. The max limit is 2000 (MAX_POLL_RECORDS_LIMIT)
-    connectionId = "local-connection3";
     var topicName = "test_topic_max_poll";
     var sampleRecords = new String[][]{
         {"key-record0", "value-record0"},
@@ -129,14 +87,11 @@ public class KafkaConsumeResourceIT {
         {"key-record2", "value-record2"},
         {"key-record3", "value-record3"}
     };
-    var localKafkaClusterDetails = setupTestEnvironment(confluentLocal, connectionId, topicName, 1, sampleRecords);
+    setupTestEnvironment(topicName, 1, sampleRecords);
 
-    var url = "gateway/v1/clusters/%s/topics/%s/partitions/-/consume".formatted(
-        localKafkaClusterDetails.id(), topicName);
-    var rows = given()
-        .when()
-        .header("Content-Type", "application/json")
-        .header("x-connection-id", connectionId)
+    var url = "/gateway/v1/clusters/{cluster_id}/topics/%s/partitions/-/consume"
+        .formatted(topicName);
+    var rows = givenDefault()
         .body("{\"from_beginning\" : true, \"max_poll_records\" : 2}")
         .post(url)
         .then()
@@ -158,7 +113,6 @@ public class KafkaConsumeResourceIT {
     // across multiple partitions, ensuring that the total number of records
     // returned does not exceed the specified limit, regardless of how
     // many partitions the records are consumed from.
-    connectionId = "local-connection9";
     var topicName = "test_topic_max_poll1";
     var sampleRecords = new String[][]{
         {"key-record0", "value-record0"},
@@ -166,14 +120,11 @@ public class KafkaConsumeResourceIT {
         {"key-record2", "value-record2"},
         {"key-record3", "value-record3"}
     };
-    var localKafkaClusterDetails = setupTestEnvironment(confluentLocal, connectionId, topicName, 2, sampleRecords);
+    setupTestEnvironment(topicName, 2, sampleRecords);
 
-    var url = "gateway/v1/clusters/%s/topics/%s/partitions/-/consume".formatted(
-        localKafkaClusterDetails.id(), topicName);
-    var rows = given()
-        .when()
-        .header("Content-Type", "application/json")
-        .header("x-connection-id", connectionId)
+    var url = "/gateway/v1/clusters/{cluster_id}/topics/%s/partitions/-/consume".formatted(
+        topicName);
+    var rows = givenDefault()
         .body("{\"from_beginning\" : true, \"max_poll_records\" : 3}")
         .post(url)
         .then()
@@ -200,7 +151,6 @@ public class KafkaConsumeResourceIT {
     // Test that the Kafka consumer, when provided with a null value for
     // "max_poll_records", retrieves all available records  from the
     // topic (with default size limits). Here, it should retrieve four records.
-    connectionId = "local-connection4";
     var topicName = "test_topic_null_max_poll";
     var sampleRecords = new String[][]{
         {"key-record0", "value-record0"},
@@ -208,14 +158,11 @@ public class KafkaConsumeResourceIT {
         {"key-record2", "value-record2"},
         {"key-record3", "value-record3"}
     };
-    var localKafkaClusterDetails = setupTestEnvironment(confluentLocal, connectionId, topicName, 1, sampleRecords);
+    setupTestEnvironment(topicName, 1, sampleRecords);
 
-    var url = "gateway/v1/clusters/%s/topics/%s/partitions/-/consume".formatted(
-        localKafkaClusterDetails.id(), topicName);
-    var rows = given()
-        .when()
-        .header("Content-Type", "application/json")
-        .header("x-connection-id", connectionId)
+    var url = "/gateway/v1/clusters/{cluster_id}/topics/%s/partitions/-/consume".formatted(
+        topicName);
+    var rows = givenDefault()
         .body("{\"from_beginning\" : true, \"max_poll_records\" : null}")
         .post(url)
         .then()
@@ -234,7 +181,6 @@ public class KafkaConsumeResourceIT {
     // offset (in this case, offset 2) and verify that the correct records are retrieved
     // from that offset onwards.
     // Set up Kafka Cluster
-    connectionId = "local-connection6";
     var topicName = "test_topic_next_offset_query";
     // Produce records
     var sampleRecords = new String[][]{
@@ -244,15 +190,12 @@ public class KafkaConsumeResourceIT {
         {"key-record3", "value-record3"}
     };
 
-    var localKafkaClusterDetails = setupTestEnvironment(confluentLocal, connectionId, topicName, 1, sampleRecords);
+    setupTestEnvironment(topicName, 1, sampleRecords);
 
     // Initial consume from beginning
-    var url = "gateway/v1/clusters/%s/topics/%s/partitions/-/consume".formatted(
-        localKafkaClusterDetails.id(), topicName);
-    var initialResponse = given()
-        .when()
-        .header("Content-Type", "application/json")
-        .header("x-connection-id", connectionId)
+    var url = "/gateway/v1/clusters/{cluster_id}/topics/%s/partitions/-/consume".formatted(
+        topicName);
+    var initialResponse = givenDefault()
         .body("{\"from_beginning\" : true, \"max_poll_records\" : 4}")
         .post(url)
         .then()
@@ -281,10 +224,7 @@ public class KafkaConsumeResourceIT {
     var requestBodyJson = objectMapper.writeValueAsString(requestBody);
 
     // Send the new request
-    var newConsumeResponse = given()
-        .when()
-        .header("Content-Type", "application/json")
-        .header("x-connection-id", connectionId)
+    var newConsumeResponse = givenDefault()
         .body(requestBodyJson)
         .post(url)
         .then()
@@ -313,7 +253,6 @@ public class KafkaConsumeResourceIT {
 
   @Test
   void testConsumeFromMultiplePartitions_fromBeginningTrue() {
-    connectionId = "local-connection5";
     var topicName = "test_topic_from_beginning_true";
     var sampleRecords = new String[][]{
         {"key-record0", "value-record0"},
@@ -321,14 +260,11 @@ public class KafkaConsumeResourceIT {
         {"key-record2", "value-record2"},
         {"key-record3", "value-record3"}
     };
-    var localKafkaClusterDetails = setupTestEnvironment(confluentLocal, connectionId, topicName, 1, sampleRecords);
+    setupTestEnvironment(topicName, 1, sampleRecords);
 
-    var url = "gateway/v1/clusters/%s/topics/%s/partitions/-/consume".formatted(
-        localKafkaClusterDetails.id(), topicName);
-    var rows = given()
-        .when()
-        .header("Content-Type", "application/json")
-        .header("x-connection-id", connectionId)
+    var url = "/gateway/v1/clusters/{cluster_id}/topics/%s/partitions/-/consume".formatted(
+        topicName);
+    var rows = givenDefault()
         .body("{\"from_beginning\" : true, \"max_poll_records\" : null}")
         .post(url)
         .then()
@@ -341,21 +277,17 @@ public class KafkaConsumeResourceIT {
 
   @Test
   void testConsumeFromMultiplePartitions_withNullFetchMaxBytes() {
-    connectionId = "local-connection1";
     var topicName = "test_topic_null_fetch_max_bytes";
     var sampleRecords = new String[][]{
         {"key-record0", "value-record0"},
         {"key-record1", "value-record1"},
         {"key-record2", "value-record2"}
     };
-    var localKafkaClusterDetails = setupTestEnvironment(confluentLocal, connectionId, topicName, 1, sampleRecords);
+    setupTestEnvironment(topicName, 1, sampleRecords);
 
-    var url = "gateway/v1/clusters/%s/topics/%s/partitions/-/consume".formatted(
-        localKafkaClusterDetails.id(), topicName);
-    var rows = given()
-        .when()
-        .header("Content-Type", "application/json")
-        .header("x-connection-id", connectionId)
+    var url = "/gateway/v1/clusters/{cluster_id}/topics/%s/partitions/-/consume".formatted(
+        topicName);
+    var rows = givenDefault()
         .body("{\"from_beginning\" : true, \"max_poll_records\" : 3, \"fetch_max_bytes\" : null}")
         .post(url)
         .then()
@@ -368,21 +300,17 @@ public class KafkaConsumeResourceIT {
 
   @Test
   void testConsumeFromMultiplePartitions_withFetchMaxBytesLimit() {
-    connectionId = "local-connection8";
     var topicName = "test_topic_fetch_max_bytes";
     var sampleRecords = new String[][]{
         {"key-record0", "value-record0"},
         {"key-record1", "value-record1"},
         {"key-record2", "value-record2"}
     };
-    var localKafkaClusterDetails = setupTestEnvironment(confluentLocal, connectionId, topicName, 1, sampleRecords);
+    setupTestEnvironment(topicName, 1, sampleRecords);
 
-    var url = "gateway/v1/clusters/%s/topics/%s/partitions/-/consume".formatted(
-        localKafkaClusterDetails.id(), topicName);
-    var rows = given()
-        .when()
-        .header("Content-Type", "application/json")
-        .header("x-connection-id", connectionId)
+    var url = "/gateway/v1/clusters/{cluster_id}/topics/%s/partitions/-/consume".formatted(
+        topicName);
+    var rows = givenDefault()
         .body("{\"from_beginning\" : true, \"max_poll_records\" : 3, \"fetch_max_bytes\" : 1024}")
         .post(url)
         .then()
@@ -400,21 +328,17 @@ public class KafkaConsumeResourceIT {
     // limit are partially consumed, with their values being omitted and marked as
     // exceeding the limit. It validates that smaller messages are fully retrieved, while larger
     // ones are marked as exceeding the allowed size.
-    connectionId = "local-connection2";
     var topicName = "test_topic_fetch_max_bytes2";
     var sampleRecords = new String[][]{
         {"key0", "foo"},
         {"key1", "value-record1"},
         {"key2", "value-record2"}
     };
-    var localKafkaClusterDetails = setupTestEnvironment(confluentLocal, connectionId, topicName, 1, sampleRecords);
+    setupTestEnvironment(topicName, 1, sampleRecords);
 
-    var url = "gateway/v1/clusters/%s/topics/%s/partitions/-/consume".formatted(
-        localKafkaClusterDetails.id(), topicName);
-    var rows = given()
-        .when()
-        .header("Content-Type", "application/json")
-        .header("x-connection-id", connectionId)
+    var url = "/gateway/v1/clusters/{cluster_id}/topics/%s/partitions/-/consume".formatted(
+        topicName);
+    var rows = givenDefault()
         .body("{\"from_beginning\" : true, \"message_max_bytes\" : 8}")
         .post(url)
         .then()
@@ -434,10 +358,10 @@ public class KafkaConsumeResourceIT {
     assertFalse(newRecords.get(0).get("exceeded_fields").get("value").asBoolean());
 
     assertEquals("key%d".formatted(1), newRecords.get(1).get("key").asText());
-    assertTrue(newRecords.get(1).get("value") == null);
+    assertNull(newRecords.get(1).get("value"));
     assertTrue(newRecords.get(1).get("exceeded_fields").get("value").asBoolean());
     assertEquals("key%d".formatted(2), newRecords.get(2).get("key").asText());
-    assertTrue(newRecords.get(2).get("value") == null);
+    assertNull(newRecords.get(2).get("value"));
     assertTrue(newRecords.get(2).get("exceeded_fields").get("value").asBoolean());
   }
 
@@ -457,9 +381,16 @@ public class KafkaConsumeResourceIT {
    */
   @Test
   public void testShouldDecodeProfobufMessagesUsingSRInMessageViewer() throws Exception {
-    String topic = "myProtobufTopic";
-    connectionId = "local-connection10";
-    var localKafkaClusterDetails = setupTestEnvironment(confluentLocal, connectionId, topic, 1, null);
+    var topic = "myProtobufTopic";
+    setupTestEnvironment(topic, 1, null);
+
+    // Create the schema version for the Protobuf message
+    createSchema(
+        "myProtobufTopic-value",
+        "PROTOBUF",
+        "syntax = \"proto3\"; package io.confluent.idesidecar.restapi; message MyMessage { string name = 1; int32 age = 2; bool is_active = 3; }"
+    );
+
     MyMessage message1 = MyMessage.newBuilder()
         .setName("Some One")
         .setAge(30)
@@ -481,21 +412,17 @@ public class KafkaConsumeResourceIT {
     List<MyMessage> messages = List.of(message1, message2, message3);
     List<String> keys = List.of("key0", "key1", "key2");
 
-    KafkaProducer<String, MyMessage> producer = confluentLocal.createProtobufProducer();
-
     for (int i = 0; i < messages.size(); i++) {
-      ProducerRecord<String, MyMessage> producerRecord = new ProducerRecord<>(topic, keys.get(i),
-          messages.get(i));
-      producer.send(producerRecord);
+      produceRecord(topic, keys.get(i), null, Map.of(
+          "name", messages.get(i).getName(),
+          "age", messages.get(i).getAge(),
+          "is_active", messages.get(i).getIsActive()
+      ),1);
     }
-    producer.close();
 
-    var url = "gateway/v1/clusters/%s/topics/%s/partitions/-/consume".formatted(
-        localKafkaClusterDetails.id(), topic);
-    var rows = given()
-        .when()
-        .header("Content-Type", "application/json")
-        .header("x-connection-id", connectionId)
+    var url = "/gateway/v1/clusters/{cluster_id}/topics/%s/partitions/-/consume".formatted(
+        topic);
+    var rows = givenDefault()
         .body("{\"from_beginning\" : true}")
         .post(url)
         .then()
@@ -522,117 +449,6 @@ public class KafkaConsumeResourceIT {
       assertEquals(messages.get(i), parsedMessage, "Mismatched Protobuf message");
 
       assertFalse(newRecords.get(i).get("exceeded_fields").get("value").asBoolean(), "Exceeded fields should be false");
-    }
-  }
-
-  void deleteLocalConnection(String id) {
-    given()
-        .when()
-        .header("Content-Type", "application/json")
-        .delete("/gateway/v1/connections/" + id)
-        .then()
-        .statusCode(204);
-  }
-
-  void createLocalConnection(String id, String name) {
-    given()
-        .when()
-        .header("Content-Type", "application/json")
-        .body("{\"id\": \"%s\", \"name\": \"%s\", \"type\": \"LOCAL\" }".formatted(id, name))
-        .post("/gateway/v1/connections")
-        .then()
-        .statusCode(200);
-  }
-
-  KafkaClusterDetails getLocalKafkaClusterId() {
-    var queryLocalConnections = """
-        { "query": "query localConnections {
-            localConnections{
-              id
-              name
-              type
-              kafkaCluster {
-                id
-                name
-                bootstrapServers
-                uri
-              }
-              schemaRegistry {
-                id
-                uri
-              }
-            }
-          }"
-        }
-        """;
-    var graphQlResponse = given()
-        .when()
-        .header("Content-Type", "application/json")
-        .body(queryLocalConnections)
-        .post("/gateway/v1/graphql")
-        .then()
-        .statusCode(200)
-        .extract()
-        .body()
-        .asString();
-
-    var localConnections = ResourceIOUtil
-        .asJson(graphQlResponse)
-        .get("data")
-        .get("localConnections")
-        .elements();
-    assertTrue(localConnections.hasNext(), "Could not find local connections");
-    var kafkaCluster = localConnections.next().get("kafkaCluster");
-
-    return new KafkaClusterDetails(
-        kafkaCluster.get("id").asText(),
-        kafkaCluster.get("name").asText(),
-        kafkaCluster.get("bootstrapServers").asText(),
-        kafkaCluster.get("uri").asText()
-    );
-  }
-
-  void createLocalKafkaTopic(String connectionId,
-                             String localKafkaClusterId,
-                             String topicName,
-                             Integer partitionsCount) {
-    var response = given()
-        .when()
-        .header("X-Connection-ID", connectionId)
-        .header("Content-Type", "application/json")
-        .body(
-            String.format(
-                "{\"topic_name\": \"%s\", \"partitions_count\": %d}",
-                topicName,
-                partitionsCount
-            )
-        )
-        .post(String.format("/kafka/v3/clusters/%s/topics", localKafkaClusterId));
-    if (response.statusCode() != 201) {
-      System.err.println("Failed to create Kafka topic. Status code: " + response.statusCode());
-      System.err.println("Response body: " + response.getBody().asString());
-    } else {
-      response.then().statusCode(201); // Only assert status if successful
-    }
-  }
-
-
-  void produceRecords(String bootstrapServers, String topicName, String[][] records) {
-    // Configure the Producer
-    var properties = new Properties();
-    properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-    properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
-    properties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
-
-    // Create the Producer
-    try (var producer = new KafkaProducer<String, String>(properties)) {
-      for (var recordData : records) {
-        var record = new ProducerRecord<>(
-            topicName,
-            recordData[0],
-            recordData[1]);
-        producer.send(record);
-      }
     }
   }
 }
