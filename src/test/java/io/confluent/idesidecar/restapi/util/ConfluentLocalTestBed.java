@@ -3,10 +3,13 @@ package io.confluent.idesidecar.restapi.util;
 import io.confluent.idesidecar.restapi.kafkarest.model.CreateTopicRequestData;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequest;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequestData;
+import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequest;
+import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import java.util.*;
 
 import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
+import io.confluent.kafka.schemaregistry.client.rest.entities.Schema;
 import io.quarkus.test.junit.TestProfile;
 import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
@@ -259,6 +262,20 @@ public class ConfluentLocalTestBed implements AutoCloseable {
         .statusCode(200);
   }
 
+  public static SimpleConsumeMultiPartitionResponse consume(
+      String topicName, SimpleConsumeMultiPartitionRequest requestBody
+  ) {
+    return givenDefault()
+        .body(requestBody)
+        .post("/gateway/v1/clusters/{cluster_id}/topics/%s/partitions/-/consume"
+            .formatted(topicName)
+        )
+        .then()
+        .statusCode(200)
+        .extract()
+        .body().as(SimpleConsumeMultiPartitionResponse.class);
+  }
+
   /**
    * Produce plain old String key/value records to a topic
    */
@@ -274,7 +291,7 @@ public class ConfluentLocalTestBed implements AutoCloseable {
     }
   }
 
-  public Integer createSchema(String subject, String schemaType, String schema) {
+  public Schema createSchema(String subject, String schemaType, String schema) {
     var srCluster = getSchemaRegistryCluster();
     givenConnectionId()
         .headers(
@@ -299,8 +316,8 @@ public class ConfluentLocalTestBed implements AutoCloseable {
     return getLatestSchemaVersion(subject, srCluster.id());
   }
 
-  private Integer getLatestSchemaVersion(String subject, String srClusterId) {
-    var response = givenConnectionId()
+  private Schema getLatestSchemaVersion(String subject, String srClusterId) {
+    return givenConnectionId()
         .headers("X-cluster-id", srClusterId)
         .get("/subjects/%s/versions/latest".formatted(subject))
         .then()
@@ -308,8 +325,7 @@ public class ConfluentLocalTestBed implements AutoCloseable {
         .contentType("application/vnd.schemaregistry.v1+json")
         .extract()
         .body()
-        .asString();
-    return Objects.requireNonNull(asJson(response)).get("version").asInt();
+        .as(Schema.class);
   }
 
   public record SchemaRegistry(String id, String uri) {
@@ -353,5 +369,9 @@ public class ConfluentLocalTestBed implements AutoCloseable {
 
   public static String getBootstrapServers() {
     return confluent.getKafkaBootstrapServers();
+  }
+
+  public static String randomTopicName() {
+    return "test-topic-" + UUID.randomUUID();
   }
 }

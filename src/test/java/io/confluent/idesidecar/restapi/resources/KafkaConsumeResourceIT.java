@@ -6,25 +6,27 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.protobuf.util.JsonFormat;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequest;
+import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
 import io.confluent.idesidecar.restapi.proto.Message.MyMessage;
 import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
 import io.confluent.idesidecar.restapi.util.ConfluentLocalTestBed;
-import io.confluent.idesidecar.restapi.util.ResourceIOUtil;
 import io.quarkus.test.junit.QuarkusIntegrationTest;
 import io.quarkus.test.junit.TestProfile;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 @QuarkusIntegrationTest
 @Tag("io.confluent.common.utils.IntegrationTest")
 @TestProfile(NoAccessFilterProfile.class)
 public class KafkaConsumeResourceIT extends ConfluentLocalTestBed {
-  private static void setupTestEnvironment(
+  private static void createTopicAndProduceRecords(
       String topicName,
       int partitions,
       String[][] sampleRecords
@@ -35,44 +37,66 @@ public class KafkaConsumeResourceIT extends ConfluentLocalTestBed {
     }
   }
 
-  private void assertConsumerRecords(String responseJson, String[][] expectedRecords) {
-    var partitionDataList = ResourceIOUtil.asJson(responseJson).get("partition_data_list");
+  private void assertConsumerRecords(SimpleConsumeMultiPartitionResponse response, String[][] expectedRecords) {
+    var partitionDataList = response.partitionDataList();
     assertNotNull(partitionDataList);
     assertFalse(partitionDataList.isEmpty(), "partition_data_list should not be empty");
 
-    var records = partitionDataList.get(0).get("records");
+    var records = partitionDataList.getFirst().records();
     assertNotNull(records);
 
     var expectedRecordCount = expectedRecords.length;
     assertEquals(expectedRecordCount, records.size(), "Expected number of records is " + expectedRecordCount);
 
     for (var i = 0; i < expectedRecordCount; i++) {
-      assertEquals(expectedRecords[i][0], records.get(i).get("key").asText());
-      assertEquals(expectedRecords[i][1], records.get(i).get("value").asText());
+      assertEquals(expectedRecords[i][0], records.get(i).key().asText());
+      assertEquals(expectedRecords[i][1], records.get(i).value().asText());
     }
   }
 
-  @Test
-  void testConfluentLocalContainer() {
-    var topicName = "test_topic";
-    var sampleRecords = new String[][]{
+  private static Stream<Arguments> testConsumeRequestParameters() {
+    return Stream.of(
+        // Test that we get exactly the same records that we produced
+        Arguments.of(
+            new SimpleConsumeMultiPartitionRequest()
+                .withFromBeginning(true)
+                .withMaxPollRecords(3)
+        ),
+        // Test that the Kafka consumer, when provided with a null value for
+        // "max_poll_records", retrieves all available records from the
+        // topic (with default size limits).
+        Arguments.of(
+            new SimpleConsumeMultiPartitionRequest()
+                .withFromBeginning(true)
+                .withMaxPollRecords(null)
+        ),
+        // Test consume with fetch_max_bytes limit set
+        Arguments.of(
+            new SimpleConsumeMultiPartitionRequest()
+                .withFromBeginning(true)
+                .withFetchMaxBytes(1024)
+        )
+    );
+  }
+
+  @ParameterizedTest
+  @MethodSource
+  void testConsumeRequestParameters(
+      SimpleConsumeMultiPartitionRequest request
+  ) {
+    var topicName = randomTopicName();
+    final var sampleRecords = new String[][]{
         {"key-record0", "value-record0"},
         {"key-record1", "value-record1"},
-        {"key-record2", "value-record2"}
+        {"key-record2", "value-record2"},
     };
-    setupTestEnvironment(topicName, 1, sampleRecords);
+    createTopicAndProduceRecords(topicName, 1, sampleRecords);
 
-    var url = "/gateway/v1/clusters/{cluster_id}/topics/%s/partitions/-/consume".formatted(
-        topicName);
-    var rows = givenDefault()
-        .body("{\"from_beginning\" : true, \"max_poll_records\" : 3}")
-        .post(url)
-        .then()
-        .statusCode(200)
-        .extract()
-        .body().asString();
-
-    assertConsumerRecords(rows, sampleRecords);
+    var consumedRecords = consume(topicName, request);
+    assertConsumerRecords(
+        consumedRecords,
+        sampleRecords
+    );
   }
 
   @Test
@@ -87,17 +111,12 @@ public class KafkaConsumeResourceIT extends ConfluentLocalTestBed {
         {"key-record2", "value-record2"},
         {"key-record3", "value-record3"}
     };
-    setupTestEnvironment(topicName, 1, sampleRecords);
+    createTopicAndProduceRecords(topicName, 1, sampleRecords);
 
-    var url = "/gateway/v1/clusters/{cluster_id}/topics/%s/partitions/-/consume"
-        .formatted(topicName);
-    var rows = givenDefault()
-        .body("{\"from_beginning\" : true, \"max_poll_records\" : 2}")
-        .post(url)
-        .then()
-        .statusCode(200)
-        .extract()
-        .body().asString();
+    var rows = consume(topicName, new SimpleConsumeMultiPartitionRequest()
+        .withFromBeginning(true)
+        .withMaxPollRecords(2)
+    );
 
     // Only the first 2 records should be returned due to the max_poll_records limit
     var expectedRecords = new String[][]{
@@ -120,25 +139,20 @@ public class KafkaConsumeResourceIT extends ConfluentLocalTestBed {
         {"key-record2", "value-record2"},
         {"key-record3", "value-record3"}
     };
-    setupTestEnvironment(topicName, 2, sampleRecords);
+    createTopicAndProduceRecords(topicName, 2, sampleRecords);
 
-    var url = "/gateway/v1/clusters/{cluster_id}/topics/%s/partitions/-/consume".formatted(
-        topicName);
-    var rows = givenDefault()
-        .body("{\"from_beginning\" : true, \"max_poll_records\" : 3}")
-        .post(url)
-        .then()
-        .statusCode(200)
-        .extract()
-        .body().asString();
+    var rows = consume(topicName, new SimpleConsumeMultiPartitionRequest()
+        .withFromBeginning(true)
+        .withMaxPollRecords(3)
+    );
 
-    var partitionDataList = ResourceIOUtil.asJson(rows).get("partition_data_list");
+    var partitionDataList = rows.partitionDataList();
     assertNotNull(partitionDataList);
     assertFalse(partitionDataList.isEmpty(), "partition_data_list should not be empty");
 
-    int totalRecordsSize = 0;
-    for (int i = 0; i < partitionDataList.size(); i++) {
-      var records = partitionDataList.get(i).get("records");
+    var totalRecordsSize = 0;
+    for (var partitionConsumeData : partitionDataList) {
+      var records = partitionConsumeData.records();
       if (records != null) {
         totalRecordsSize += records.size();
       }
@@ -147,34 +161,7 @@ public class KafkaConsumeResourceIT extends ConfluentLocalTestBed {
   }
 
   @Test
-  void testConsumeFromMultiplePartitions_withNullMaxPollRecords() {
-    // Test that the Kafka consumer, when provided with a null value for
-    // "max_poll_records", retrieves all available records  from the
-    // topic (with default size limits). Here, it should retrieve four records.
-    var topicName = "test_topic_null_max_poll";
-    var sampleRecords = new String[][]{
-        {"key-record0", "value-record0"},
-        {"key-record1", "value-record1"},
-        {"key-record2", "value-record2"},
-        {"key-record3", "value-record3"}
-    };
-    setupTestEnvironment(topicName, 1, sampleRecords);
-
-    var url = "/gateway/v1/clusters/{cluster_id}/topics/%s/partitions/-/consume".formatted(
-        topicName);
-    var rows = givenDefault()
-        .body("{\"from_beginning\" : true, \"max_poll_records\" : null}")
-        .post(url)
-        .then()
-        .statusCode(200)
-        .extract()
-        .body().asString();
-
-    assertConsumerRecords(rows, sampleRecords);
-  }
-
-  @Test
-  void testConsumeFromSpecificPartitionAndOffset() throws JsonProcessingException {
+  void testConsumeFromSpecificPartitionAndOffset() {
     // Test that the Kafka consumer can retrieve records starting from a specific partition
     // and offset. First, consume all records from the topic and retrieve the next offset
     // for a specific partition. Then, issue a new consume request starting from a specified
@@ -190,52 +177,33 @@ public class KafkaConsumeResourceIT extends ConfluentLocalTestBed {
         {"key-record3", "value-record3"}
     };
 
-    setupTestEnvironment(topicName, 1, sampleRecords);
+    createTopicAndProduceRecords(topicName, 1, sampleRecords);
 
     // Initial consume from beginning
-    var url = "/gateway/v1/clusters/{cluster_id}/topics/%s/partitions/-/consume".formatted(
-        topicName);
-    var initialResponse = givenDefault()
-        .body("{\"from_beginning\" : true, \"max_poll_records\" : 4}")
-        .post(url)
-        .then()
-        .statusCode(200)
-        .extract()
-        .body().asString();
-    assertConsumerRecords(initialResponse, sampleRecords);
+    var rows = consume(topicName, new SimpleConsumeMultiPartitionRequest()
+        .withFromBeginning(true)
+        .withMaxPollRecords(4)
+    );
+    assertConsumerRecords(rows, sampleRecords);
 
     // Parse the response to get next_offset for partition 0
-    var partitionDataList = ResourceIOUtil.asJson(initialResponse).get("partition_data_list");
+    var partitionDataList = rows.partitionDataList();
     assertNotNull(partitionDataList);
-    var partitionData = partitionDataList.get(0);
-    var nextOffset = partitionData.get("next_offset").asLong();
+    var partitionData = partitionDataList.getFirst();
+    var nextOffset = partitionData.nextOffset();
     assertEquals(4, nextOffset);
 
     // Now consume again with partition 0 and offset = 2
-    var requestBody = new SimpleConsumeMultiPartitionRequest(
-        List.of(new SimpleConsumeMultiPartitionRequest.PartitionOffset(0, 2)), // query partition 0 from offset 2
-        null,  // max_poll_records
-        null, // timestamp
-        null, // fetch_max_bytes
-        null, // message_max_bytes
-        null // from_beginning = false
+    var requestWithPartitionOffset = new SimpleConsumeMultiPartitionRequest().withPartitionOffsets(
+        // query partition 0 from offset 2
+        List.of(new SimpleConsumeMultiPartitionRequest.PartitionOffset(0, 2))
     );
-    ObjectMapper objectMapper = new ObjectMapper();
-    var requestBodyJson = objectMapper.writeValueAsString(requestBody);
-
-    // Send the new request
-    var newConsumeResponse = givenDefault()
-        .body(requestBodyJson)
-        .post(url)
-        .then()
-        .statusCode(200)
-        .extract()
-        .body().asString();
+    var partitionOffsetConsumeResp = consume(topicName, requestWithPartitionOffset);
 
     // Validate that records are consumed from offset 2 onward
-    var newPartitionDataList = ResourceIOUtil.asJson(newConsumeResponse).get("partition_data_list");
+    var newPartitionDataList = partitionOffsetConsumeResp.partitionDataList();
     assertNotNull(newPartitionDataList);
-    var newRecords = newPartitionDataList.get(0).get("records");
+    var newRecords = newPartitionDataList.getFirst().records();
     assertNotNull(newRecords);
     assertEquals(2, newRecords.size(), "Expected number of records is 2");
 
@@ -243,83 +211,14 @@ public class KafkaConsumeResourceIT extends ConfluentLocalTestBed {
       var actualRecord = newRecords.get(i);
       assertEquals(
           "key-record%d".formatted(i + 2),
-          actualRecord.get("key").asText());
+          actualRecord.key().asText());
       assertEquals(
           "value-record%d".formatted(i + 2),
-          actualRecord.get("value").asText());
-      assertEquals(0, actualRecord.get("partition_id").asInt());
+          actualRecord.value().asText());
+      assertEquals(0, actualRecord.partitionId());
     }
   }
 
-  @Test
-  void testConsumeFromMultiplePartitions_fromBeginningTrue() {
-    var topicName = "test_topic_from_beginning_true";
-    var sampleRecords = new String[][]{
-        {"key-record0", "value-record0"},
-        {"key-record1", "value-record1"},
-        {"key-record2", "value-record2"},
-        {"key-record3", "value-record3"}
-    };
-    setupTestEnvironment(topicName, 1, sampleRecords);
-
-    var url = "/gateway/v1/clusters/{cluster_id}/topics/%s/partitions/-/consume".formatted(
-        topicName);
-    var rows = givenDefault()
-        .body("{\"from_beginning\" : true, \"max_poll_records\" : null}")
-        .post(url)
-        .then()
-        .statusCode(200)
-        .extract()
-        .body().asString();
-
-    assertConsumerRecords(rows, sampleRecords);
-  }
-
-  @Test
-  void testConsumeFromMultiplePartitions_withNullFetchMaxBytes() {
-    var topicName = "test_topic_null_fetch_max_bytes";
-    var sampleRecords = new String[][]{
-        {"key-record0", "value-record0"},
-        {"key-record1", "value-record1"},
-        {"key-record2", "value-record2"}
-    };
-    setupTestEnvironment(topicName, 1, sampleRecords);
-
-    var url = "/gateway/v1/clusters/{cluster_id}/topics/%s/partitions/-/consume".formatted(
-        topicName);
-    var rows = givenDefault()
-        .body("{\"from_beginning\" : true, \"max_poll_records\" : 3, \"fetch_max_bytes\" : null}")
-        .post(url)
-        .then()
-        .statusCode(200)
-        .extract()
-        .body().asString();
-
-    assertConsumerRecords(rows, sampleRecords);
-  }
-
-  @Test
-  void testConsumeFromMultiplePartitions_withFetchMaxBytesLimit() {
-    var topicName = "test_topic_fetch_max_bytes";
-    var sampleRecords = new String[][]{
-        {"key-record0", "value-record0"},
-        {"key-record1", "value-record1"},
-        {"key-record2", "value-record2"}
-    };
-    setupTestEnvironment(topicName, 1, sampleRecords);
-
-    var url = "/gateway/v1/clusters/{cluster_id}/topics/%s/partitions/-/consume".formatted(
-        topicName);
-    var rows = givenDefault()
-        .body("{\"from_beginning\" : true, \"max_poll_records\" : 3, \"fetch_max_bytes\" : 1024}")
-        .post(url)
-        .then()
-        .statusCode(200)
-        .extract()
-        .body().asString();
-
-    assertConsumerRecords(rows, sampleRecords);
-  }
 
   @Test
   void testConsumeWithMessageSizeLimitAcrossPartitions() {
@@ -334,35 +233,30 @@ public class KafkaConsumeResourceIT extends ConfluentLocalTestBed {
         {"key1", "value-record1"},
         {"key2", "value-record2"}
     };
-    setupTestEnvironment(topicName, 1, sampleRecords);
+    createTopicAndProduceRecords(topicName, 1, sampleRecords);
 
-    var url = "/gateway/v1/clusters/{cluster_id}/topics/%s/partitions/-/consume".formatted(
-        topicName);
-    var rows = givenDefault()
-        .body("{\"from_beginning\" : true, \"message_max_bytes\" : 8}")
-        .post(url)
-        .then()
-        .statusCode(200)
-        .extract()
-        .body().asString();
+    var rows = consume(topicName, new SimpleConsumeMultiPartitionRequest()
+        .withFromBeginning(true)
+        .withMessageMaxBytes(8)
+    );
 
     // Validate that records are consumed from offset 2 onward
-    var newPartitionDataList = ResourceIOUtil.asJson(rows).get("partition_data_list");
+    var newPartitionDataList = rows.partitionDataList();
     assertNotNull(newPartitionDataList);
-    var newRecords = newPartitionDataList.get(0).get("records");
+    var newRecords = newPartitionDataList.getFirst().records();
     assertNotNull(newRecords);
     assertEquals(3, newRecords.size(), "Expected number of records is 2");
 
-    assertEquals("key%d".formatted(0), newRecords.get(0).get("key").asText());
-    assertEquals("foo", newRecords.get(0).get("value").asText());
-    assertFalse(newRecords.get(0).get("exceeded_fields").get("value").asBoolean());
+    assertEquals("key%d".formatted(0), newRecords.getFirst().key().asText());
+    assertEquals("foo", newRecords.getFirst().value().asText());
+    assertFalse(newRecords.getFirst().exceededFields().value());
 
-    assertEquals("key%d".formatted(1), newRecords.get(1).get("key").asText());
-    assertNull(newRecords.get(1).get("value"));
-    assertTrue(newRecords.get(1).get("exceeded_fields").get("value").asBoolean());
-    assertEquals("key%d".formatted(2), newRecords.get(2).get("key").asText());
-    assertNull(newRecords.get(2).get("value"));
-    assertTrue(newRecords.get(2).get("exceeded_fields").get("value").asBoolean());
+    assertEquals("key%d".formatted(1), newRecords.get(1).key().asText());
+    assertNull(newRecords.get(1).value());
+    assertTrue(newRecords.get(1).exceededFields().value());
+    assertEquals("key%d".formatted(2), newRecords.get(2).key().asText());
+    assertNull(newRecords.get(2).value());
+    assertTrue(newRecords.get(2).exceededFields().value());
   }
 
   /**
@@ -382,7 +276,7 @@ public class KafkaConsumeResourceIT extends ConfluentLocalTestBed {
   @Test
   public void testShouldDecodeProfobufMessagesUsingSRInMessageViewer() throws Exception {
     var topic = "myProtobufTopic";
-    setupTestEnvironment(topic, 1, null);
+    createTopicAndProduceRecords(topic, 1, null);
 
     // Create the schema version for the Protobuf message
     createSchema(
@@ -391,28 +285,28 @@ public class KafkaConsumeResourceIT extends ConfluentLocalTestBed {
         "syntax = \"proto3\"; package io.confluent.idesidecar.restapi; message MyMessage { string name = 1; int32 age = 2; bool is_active = 3; }"
     );
 
-    MyMessage message1 = MyMessage.newBuilder()
+    var message1 = MyMessage.newBuilder()
         .setName("Some One")
         .setAge(30)
         .setIsActive(true)
         .build();
 
-    MyMessage message2 = MyMessage.newBuilder()
+    var message2 = MyMessage.newBuilder()
         .setName("John Doe")
         .setAge(25)
         .setIsActive(false)
         .build();
 
-    MyMessage message3 = MyMessage.newBuilder()
+    var message3 = MyMessage.newBuilder()
         .setName("Jane Smith")
         .setAge(40)
         .setIsActive(true)
         .build();
 
-    List<MyMessage> messages = List.of(message1, message2, message3);
-    List<String> keys = List.of("key0", "key1", "key2");
+    var messages = List.of(message1, message2, message3);
+    var keys = List.of("key0", "key1", "key2");
 
-    for (int i = 0; i < messages.size(); i++) {
+    for (var i = 0; i < messages.size(); i++) {
       produceRecord(topic, keys.get(i), null, Map.of(
           "name", messages.get(i).getName(),
           "age", messages.get(i).getAge(),
@@ -420,35 +314,30 @@ public class KafkaConsumeResourceIT extends ConfluentLocalTestBed {
       ),1);
     }
 
-    var url = "/gateway/v1/clusters/{cluster_id}/topics/%s/partitions/-/consume".formatted(
-        topic);
-    var rows = givenDefault()
-        .body("{\"from_beginning\" : true}")
-        .post(url)
-        .then()
-        .statusCode(200)
-        .extract()
-        .body().asString();
+    var rows = consume(topic, new SimpleConsumeMultiPartitionRequest()
+        .withFromBeginning(true)
+        .withMaxPollRecords(3)
+    );
 
-    var newPartitionDataList = ResourceIOUtil.asJson(rows).get("partition_data_list");
+    var newPartitionDataList = rows.partitionDataList();
     assertNotNull(newPartitionDataList);
-    var newRecords = newPartitionDataList.get(0).get("records");
+    var newRecords = newPartitionDataList.getFirst().records();
     assertNotNull(newRecords);
     assertEquals(3, newRecords.size(), "Expected number of records is 3");
     // Use JsonFormat to parse the JSON into a Protobuf object
     for (int i = 0; i < 3; i++) {
-      assertEquals(keys.get(i), newRecords.get(i).get("key").asText(), "Mismatched key");
+      assertEquals(keys.get(i), newRecords.get(i).key().asText(), "Mismatched key");
 
       // Parse JSON string into MyMessage Protobuf object
-      String jsonValue = newRecords.get(i).get("value").toString();
-      MyMessage.Builder messageBuilder = MyMessage.newBuilder();
+      var jsonValue = newRecords.get(i).value().toString();
+      var messageBuilder = MyMessage.newBuilder();
       JsonFormat.parser().merge(jsonValue, messageBuilder); // Parse JSON to MyMessage
-      MyMessage parsedMessage = messageBuilder.build();
+      var parsedMessage = messageBuilder.build();
 
       // Compare the parsed message with the original message
       assertEquals(messages.get(i), parsedMessage, "Mismatched Protobuf message");
 
-      assertFalse(newRecords.get(i).get("exceeded_fields").get("value").asBoolean(), "Exceeded fields should be false");
+      assertFalse(newRecords.get(i).exceededFields().value(), "Exceeded fields should be false");
     }
   }
 }

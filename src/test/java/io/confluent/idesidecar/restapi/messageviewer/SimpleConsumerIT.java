@@ -46,17 +46,17 @@ public class SimpleConsumerIT extends ConfluentLocalTestBed {
 
   @Test
   void testAvroProduceAndConsume() {
-    String topic = "myavromessage1";
+    var topic = randomTopicName();
     createTopic(topic);
 
-    Integer valueSchemaVersion = createSchema(
+    var valueSchemaVersion = createSchema(
         "%s-value".formatted(topic),
         "AVRO",
         loadResource("avro/myavromessage.avsc")
-    );
+    ).getVersion();
 
-    List<String> ids = Arrays.asList("12345", "12346", "12347");
-    List<String> values = Arrays.asList("Test Value 1", "Test Value 2", "Test Value 3");
+    var ids = Arrays.asList("12345", "12346", "12347");
+    var values = Arrays.asList("Test Value 1", "Test Value 2", "Test Value 3");
 
     for (int i = 0; i < 3; i++) {
       produceRecord(
@@ -74,7 +74,7 @@ public class SimpleConsumerIT extends ConfluentLocalTestBed {
         topic, offsets, true, null, 10, null, null);
 
     assertEquals(1, response.size(), "Should have data for 1 partition");
-    PartitionConsumeData partitionData = response.get(0);
+    PartitionConsumeData partitionData = response.getFirst();
     assertEquals(3, partitionData.records().size(), "Should have 3 records");
 
     for (int i = 0; i < 3; i++) {
@@ -86,7 +86,7 @@ public class SimpleConsumerIT extends ConfluentLocalTestBed {
 
   @Test
   public void testProtoProduceAndConsumeMultipleRecords() {
-    String topic = "myProtobufTopic";
+    var topic = randomTopicName();
     createTopic(topic);
 
     var protobufSchema = loadResource("proto/message.proto");
@@ -94,7 +94,7 @@ public class SimpleConsumerIT extends ConfluentLocalTestBed {
         "%s-value".formatted(topic),
         "PROTOBUF",
         protobufSchema
-    );
+    ).getVersion();
 
     MyMessage message1 = MyMessage.newBuilder()
         .setName("Some One")
@@ -137,7 +137,7 @@ public class SimpleConsumerIT extends ConfluentLocalTestBed {
         topic, offsets, true, null, 10, null, null);
 
     assertEquals(1, response.size(), "Should have data for 1 partition");
-    PartitionConsumeData partitionData = response.get(0);
+    PartitionConsumeData partitionData = response.getFirst();
     assertEquals(3, partitionData.records().size(), "Should have 3 records");
 
     for (int i = 0; i < 3; i++) {
@@ -151,7 +151,7 @@ public class SimpleConsumerIT extends ConfluentLocalTestBed {
 
   @Test
   public void testJsonProducerAndConsumer() {
-    String topic = "test-json-topic";
+    String topic = randomTopicName();
     createTopic(topic);
 
     record Person(int id, String name, String email) {
@@ -176,7 +176,7 @@ public class SimpleConsumerIT extends ConfluentLocalTestBed {
         topic, offsets, true, null, 10, null, null);
 
     assertEquals(1, response.size(), "Should have data for 1 partition");
-    PartitionConsumeData partitionData = response.get(0);
+    PartitionConsumeData partitionData = response.getFirst();
     assertEquals(3, partitionData.records().size(), "Should have 3 records");
 
     for (int i = 0; i < 3; i++) {
@@ -190,7 +190,7 @@ public class SimpleConsumerIT extends ConfluentLocalTestBed {
 
   @Test
   public void testProduceAndConsumeMultipleStringRecords() {
-    String topic = "test-str-topic";
+    String topic = randomTopicName();
     createTopic(topic);
     var records = new String[][]{
         {"key1", "value1"},
@@ -205,7 +205,7 @@ public class SimpleConsumerIT extends ConfluentLocalTestBed {
         topic, offsets, true, null, 10, null, null);
 
     assertEquals(1, response.size(), "Should have data for 1 partition");
-    PartitionConsumeData partitionData = response.get(0);
+    PartitionConsumeData partitionData = response.getFirst();
     assertEquals(3, partitionData.records().size(), "Should have 3 records");
 
     for (int i = 0; i < 3; i++) {
