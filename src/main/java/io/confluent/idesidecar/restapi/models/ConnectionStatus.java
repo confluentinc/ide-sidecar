@@ -40,16 +40,19 @@ public record ConnectionStatus(@JsonProperty(required = true) Authentication aut
   ) {
 
     /**
-     * A connection can be in one of three states: Initially, a connection does not hold any tokens
+     * A connection can be in one of four states: Initially, a connection does not hold any tokens
      * and is in the state NO_TOKEN. If the connection holds tokens, these tokens can be valid or
      * invalid. Depending on the health of the tokens, the connection is in the state VALID_TOKEN or
-     * INVALID_TOKEN. If tokens are invalid, consumers of our API are advised to trigger a new
-     * authentication flow.
+     * INVALID_TOKEN. The connection will regularly refresh tokens before they expire to keep them
+     * valid. If the connection experienced a non-transient error, it will enter the state
+     * FAILED from which it can't recover automatically. Consumers of the API are advised to trigger
+     * a new authentication flow to recover from the FAILED state.
      */
     public enum Status {
       NO_TOKEN,
       VALID_TOKEN,
-      INVALID_TOKEN
+      INVALID_TOKEN,
+      FAILED
     }
   }
 
