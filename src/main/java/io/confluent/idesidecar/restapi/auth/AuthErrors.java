@@ -42,7 +42,7 @@ public record AuthErrors(
 
   public AuthErrors withAuthStatusCheck(String message) {
     return new AuthErrors(
-        // Always consider errors that occurred when signing in as transient
+        // Always consider errors that occurred when checking the auth status as transient
         new AuthError(Instant.now(), message, true),
         signIn,
         tokenRefresh
