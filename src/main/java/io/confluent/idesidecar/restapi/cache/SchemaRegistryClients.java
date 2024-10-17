@@ -1,17 +1,14 @@
 package io.confluent.idesidecar.restapi.cache;
 
+import static io.confluent.idesidecar.restapi.kafkarest.SchemaManager.SCHEMA_PROVIDERS;
 import static jakarta.ws.rs.core.HttpHeaders.AUTHORIZATION;
 
 import io.confluent.idesidecar.restapi.application.SidecarAccessTokenBean;
 import io.confluent.idesidecar.restapi.util.RequestHeadersConstants;
-import io.confluent.kafka.schemaregistry.avro.AvroSchemaProvider;
 import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
-import io.confluent.kafka.schemaregistry.json.JsonSchemaProvider;
-import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchemaProvider;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -23,6 +20,9 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 @ApplicationScoped
 public class SchemaRegistryClients extends Clients<SchemaRegistryClient> {
   private static final int SR_CACHE_SIZE = 10;
+
+  @Inject
+  ClusterCache clusterCache;
 
   @Inject
   SidecarAccessTokenBean accessTokenBean;
@@ -49,6 +49,17 @@ public class SchemaRegistryClients extends Clients<SchemaRegistryClient> {
         ));
   }
 
+  public SchemaRegistryClient getClientByKafkaClusterId(
+      String connectionId,
+      String kafkaClusterId
+  ) {
+    var srCluster = clusterCache.maybeGetSchemaRegistryForKafkaClusterId(
+        connectionId, kafkaClusterId
+    );
+
+    return srCluster.map(sr -> getClient(connectionId, sr.id())).orElse(null);
+  }
+
   private SchemaRegistryClient createClient(
       String srClusterUri,
       Map<String, String> headers
@@ -56,11 +67,7 @@ public class SchemaRegistryClients extends Clients<SchemaRegistryClient> {
     return new CachedSchemaRegistryClient(
         Collections.singletonList(srClusterUri),
         SR_CACHE_SIZE,
-        Arrays.asList(
-            new ProtobufSchemaProvider(),
-            new AvroSchemaProvider(),
-            new JsonSchemaProvider()
-        ),
+        SCHEMA_PROVIDERS,
         Collections.emptyMap(),
         headers
     );
