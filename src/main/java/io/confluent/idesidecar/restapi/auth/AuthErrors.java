@@ -27,8 +27,26 @@ public record AuthErrors(
     return authStatusCheck != null || signIn != null || tokenRefresh != null;
   }
 
+  public boolean hasNonTransientErrors() {
+    boolean nonTransientAuthStatusCheckError =
+        authStatusCheck != null && Boolean.FALSE.equals(authStatusCheck.isTransient);
+    boolean nonTransientSignInError =
+        signIn != null && Boolean.FALSE.equals(signIn.isTransient);
+    boolean nonTransientTokenRefreshError =
+        tokenRefresh != null && Boolean.FALSE.equals(tokenRefresh.isTransient);
+
+    return nonTransientAuthStatusCheckError
+        || nonTransientSignInError
+        || nonTransientTokenRefreshError;
+  }
+
   public AuthErrors withAuthStatusCheck(String message) {
-    return new AuthErrors(new AuthError(Instant.now(), message), signIn, tokenRefresh);
+    return new AuthErrors(
+        // Always consider errors that occurred when signing in as transient
+        new AuthError(Instant.now(), message, true),
+        signIn,
+        tokenRefresh
+    );
   }
 
   public AuthErrors withoutAuthStatusCheck() {
@@ -36,15 +54,24 @@ public record AuthErrors(
   }
 
   public AuthErrors withSignIn(String message) {
-    return new AuthErrors(authStatusCheck, new AuthError(Instant.now(), message), tokenRefresh);
+    return new AuthErrors(
+        authStatusCheck,
+        // Always consider errors that occurred when signing in as non-transient
+        new AuthError(Instant.now(), message, false),
+        tokenRefresh
+    );
   }
 
   public AuthErrors withoutSignIn() {
     return new AuthErrors(authStatusCheck, null, tokenRefresh);
   }
 
-  public AuthErrors withTokenRefresh(String message) {
-    return new AuthErrors(authStatusCheck, signIn, new AuthError(Instant.now(), message));
+  public AuthErrors withTokenRefresh(String message, Boolean isTransient) {
+    return new AuthErrors(
+        authStatusCheck,
+        signIn,
+        new AuthError(Instant.now(), message, isTransient)
+    );
   }
 
   public AuthErrors withoutTokenRefresh() {
@@ -53,7 +80,8 @@ public record AuthErrors(
 
   public record AuthError(
       @JsonProperty(value = "created_at") Instant createdAt,
-      String message
+      String message,
+      @JsonProperty(value = "is_transient") Boolean isTransient
   ) {
 
   }

@@ -63,11 +63,22 @@ public class CCloudConnectionState extends ConnectionState {
     if (!missingTokens.isEmpty()) {
       Log.infof(
           "Authentication flow for connection with ID=%s seems to be not completed because "
-          + "it does not hold the following tokens: %s.",
+              + "it does not hold the following tokens: %s.",
           getId(),
           String.join(", ", missingTokens));
 
       return getInitialStatusWithErrors(getAuthErrors(oauthContext));
+    } else if (oauthContext.hasNonTransientError()) {
+      return Future.succeededFuture(
+          new ConnectionStatus(
+              new Authentication(
+                  Status.FAILED,
+                  null,
+                  null,
+                  getAuthErrors(oauthContext)
+              )
+          )
+      );
     } else {
       return oauthContext
           .checkAuthenticationStatus()
