@@ -6,6 +6,7 @@ import static io.confluent.idesidecar.restapi.testutil.QueryResourceUtil.queryGr
 
 import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
 import io.confluent.idesidecar.restapi.util.ConfluentLocalKafkaWithRestProxyContainer;
+import io.confluent.idesidecar.restapi.util.ConfluentLocalTestBed;
 import io.quarkus.test.junit.QuarkusIntegrationTest;
 import io.quarkus.test.junit.TestProfile;
 import org.junit.jupiter.api.Tag;
@@ -15,7 +16,7 @@ import org.junit.jupiter.api.Test;
 @QuarkusIntegrationTest
 @Tag("io.confluent.common.utils.IntegrationTest")
 @TestProfile(NoAccessFilterProfile.class)
-public class ClusterV3ApiImplIT extends KafkaRestTestBed {
+public class ClusterV3ApiImplIT extends ConfluentLocalTestBed {
   @Test
   void shouldListKafkaClusters() {
     // Try to list Kafka clusters when none are available, we should get an empty list

@@ -138,6 +138,8 @@ quarkus:
         level: ERROR
       "org.apache.kafka.common":
         level: ERROR
+      "io.confluent.kafka.serializers":
+        level: ERROR
   http:
     host: 127.0.0.1
     port: 26636

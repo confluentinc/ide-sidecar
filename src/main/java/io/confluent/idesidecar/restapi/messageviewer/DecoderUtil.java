@@ -286,13 +286,19 @@ public class DecoderUtil {
         );
       } else {
         return new DecodedResult(
-            new TextNode(new String(bytes, StandardCharsets.UTF_8)),
-            "The value references a schema but we can't find the schema registry");
+            safeReadTree(bytes),
+            "The value references a schema but we can't find the schema registry"
+        );
       }
     }
-    return new DecodedResult(
-        new TextNode(new String(bytes, StandardCharsets.UTF_8)),
-        null
-    );
+    return new DecodedResult(safeReadTree(bytes), null);
+  }
+
+  private static JsonNode safeReadTree(byte[] bytes) {
+    try {
+      return OBJECT_MAPPER.readTree(bytes);
+    } catch (IOException e) {
+      return TextNode.valueOf(new String(bytes, StandardCharsets.UTF_8));
+    }
   }
 }

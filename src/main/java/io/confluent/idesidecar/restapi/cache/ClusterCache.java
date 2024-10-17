@@ -131,6 +131,17 @@ public class ClusterCache {
     return forConnection(connectionId).getSchemaRegistryForKafkaCluster(kafkaCluster);
   }
 
+  public Optional<SchemaRegistry> maybeGetSchemaRegistryForKafkaClusterId(
+      String connectionId, String kafkaClusterId
+  ) {
+    var kafkaCluster = getKafkaCluster(connectionId, kafkaClusterId);
+    try {
+      return Optional.of(getSchemaRegistryForKafkaCluster(connectionId, kafkaCluster));
+    } catch (ClusterNotFoundException e) {
+      return Optional.empty();
+    }
+  }
+
   /**
    * Get the info for the Schema Registry with the given ID using the specified connection.
    *
