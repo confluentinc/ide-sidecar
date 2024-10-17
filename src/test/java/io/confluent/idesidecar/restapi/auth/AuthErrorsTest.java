@@ -18,9 +18,15 @@ public class AuthErrorsTest {
   }
 
   @Test
+  void hasNonTransientErrorsShouldReturnFalseIfAllErrorsAreNull() {
+    var authErrorsWithoutErrors = new AuthErrors(null, null, null);
+    assertFalse(authErrorsWithoutErrors.hasNonTransientErrors());
+  }
+
+  @Test
   void hasErrorsShouldReturnTrueIfAuthStatusCheckIsNotNull() {
     var authErrorsWithAuthStatusCheck = new AuthErrors(
-        new AuthError(Instant.now(), "error"),
+        new AuthError(Instant.now(), "error", true),
         null,
         null);
     assertTrue(authErrorsWithAuthStatusCheck.hasErrors());
@@ -30,7 +36,7 @@ public class AuthErrorsTest {
   void hasErrorsShouldReturnTrueIfSignInIsNotNull() {
     var authErrorsWithSignIn = new AuthErrors(
         null,
-        new AuthError(Instant.now(), "error"),
+        new AuthError(Instant.now(), "error", false),
         null);
     assertTrue(authErrorsWithSignIn.hasErrors());
   }
@@ -40,7 +46,7 @@ public class AuthErrorsTest {
     var authErrorsWithTokenRefresh = new AuthErrors(
         null,
         null,
-        new AuthError(Instant.now(), "error"));
+        new AuthError(Instant.now(), "error", false));
     assertTrue(authErrorsWithTokenRefresh.hasErrors());
   }
 }

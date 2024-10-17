@@ -338,7 +338,7 @@ class CCloudOAuthContextTest {
   }
 
   @Test
-  void shouldAttemptTokenRefreshShouldReturnFalseIfTooManyTokenRefreshAttempts() {
+  void shouldAttemptTokenRefreshShouldReturnFalseIfNonTransientErrorHasBeenExperienced() {
     var authContext = Mockito.spy(CCloudOAuthContext.class);
 
     // tokens have not yet expired
@@ -347,9 +347,8 @@ class CCloudOAuthContextTest {
     Mockito.when(authContext.getEndOfLifetime())
         .thenReturn(Instant.now().plusSeconds(5));
 
-    // has experienced too many token refresh attempts
-    Mockito.when(authContext.getFailedTokenRefreshAttempts())
-            .thenReturn(50);
+    // connection has experienced non transient error
+    Mockito.when(authContext.hasNonTransientError()).thenReturn(true);
 
     assertFalse(authContext.shouldAttemptTokenRefresh());
   }
