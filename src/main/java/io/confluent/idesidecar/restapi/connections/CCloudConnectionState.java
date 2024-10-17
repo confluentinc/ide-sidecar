@@ -43,6 +43,8 @@ public class CCloudConnectionState extends ConnectionState {
    * must re-authenticate with CCloud.</li>
    * <li>{@link Status#INVALID_TOKEN}, if the connection holds all tokens but cannot perform API
    * requests against the CCloud API.</li>
+   * <li>{@link Status#FAILED}, if the connection experienced a non-transient error from which it
+   * cannot recover.</li>
    * </ul>
    *
    * @return status of connection
