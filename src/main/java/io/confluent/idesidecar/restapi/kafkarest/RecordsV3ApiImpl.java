@@ -137,7 +137,7 @@ public class RecordsV3ApiImpl {
    * Use {@link SchemaManager#getSchema} to fetch schema information that may be provided
    * for the key and/or value data.
    * @param c The context object.
-   * @return  A Uni that emits the context object with key/value schema set (can be null).
+   * @return  A Uni that emits the context object with key/value schema set (can be empty).
    */
   private Uni<ProduceContext> getSchemas(ProduceContext c) {
     return combineUnis(
@@ -172,30 +172,26 @@ public class RecordsV3ApiImpl {
    * Use the {@link RecordSerializer#serialize} to serialize the key and value data
    * based on optionally provided schema information. If the computed schema is null,
    * we use the {@link io.confluent.kafka.serializers.KafkaJsonSerializer} to serialize the data.
-   * @param p The context object.
+   * @param c The context object.
    * @return  A Uni that emits the context object with the serialized key and value set.
    */
-  private Uni<ProduceContext> serialize(ProduceContext p) {
+  private Uni<ProduceContext> serialize(ProduceContext c) {
     return combineUnis(
         () -> recordSerializer.serialize(
-            p.srClient,
-            Optional
-                .ofNullable(p.keySchema)
-                .map(SchemaManager.RegisteredSchema::parsedSchema).orElse(null),
-            p.topicName,
-            p.produceRequest.getKey().getData(),
+            c.srClient,
+            c.keySchema.map(SchemaManager.RegisteredSchema::parsedSchema).orElse(null),
+            c.topicName,
+            c.produceRequest.getKey().getData(),
             true
         ),
         () -> recordSerializer.serialize(
-            p.srClient,
-            Optional
-                .ofNullable(p.valueSchema)
-                .map(SchemaManager.RegisteredSchema::parsedSchema).orElse(null),
-            p.topicName,
-            p.produceRequest.getValue().getData(),
+            c.srClient,
+            c.valueSchema.map(SchemaManager.RegisteredSchema::parsedSchema).orElse(null),
+            c.topicName,
+            c.produceRequest.getValue().getData(),
             false
         ))
-        .with((key, value) -> p
+        .with((key, value) -> c
             .with()
             .serializedKey(key)
             .serializedValue(value)
@@ -203,16 +199,16 @@ public class RecordsV3ApiImpl {
         );
   }
 
-  private Uni<ProduceContext> sendSerializedRecord(ProduceContext p) {
+  private Uni<ProduceContext> sendSerializedRecord(ProduceContext c) {
     return uniStage(sendSerializedRecord(
-            p.producer,
-            p.topicName,
-            p.produceRequest.getPartitionId(),
-            p.produceRequest.getTimestamp(),
-            Optional.ofNullable(p.serializedKey()).map(ByteString::toByteArray).orElse(null),
-            Optional.ofNullable(p.serializedValue()).map(ByteString::toByteArray).orElse(null)
+            c.producer,
+            c.topicName,
+            c.produceRequest.getPartitionId(),
+            c.produceRequest.getTimestamp(),
+            Optional.ofNullable(c.serializedKey()).map(ByteString::toByteArray).orElse(null),
+            Optional.ofNullable(c.serializedValue()).map(ByteString::toByteArray).orElse(null)
         ))
-        .map(recordMetadata -> p
+        .map(recordMetadata -> c
             .with()
             .recordMetadata(recordMetadata)
             .build()
@@ -246,39 +242,31 @@ public class RecordsV3ApiImpl {
     return completableFuture;
   }
 
-  private ProduceResponse toProduceResponse(ProduceContext p) {
+  private ProduceResponse toProduceResponse(ProduceContext c) {
     return ProduceResponse
         .builder()
-        .clusterId(p.clusterId)
-        .topicName(p.topicName)
-        .partitionId(p.recordMetadata.partition())
-        .offset(p.recordMetadata.offset())
-        .timestamp(new Date(p.recordMetadata.timestamp()))
-        .key(toProduceResponseData(p.keySchema(), p.recordMetadata, true))
-        .value(toProduceResponseData(p.valueSchema(), p.recordMetadata, false))
+        .clusterId(c.clusterId)
+        .topicName(c.topicName)
+        .partitionId(c.recordMetadata.partition())
+        .offset(c.recordMetadata.offset())
+        .timestamp(new Date(c.recordMetadata.timestamp()))
+        .key(toProduceResponseData(c.keySchema(), c.recordMetadata, true))
+        .value(toProduceResponseData(c.valueSchema(), c.recordMetadata, false))
         .build();
   }
 
   private static ProduceResponseData toProduceResponseData(
-      SchemaManager.RegisteredSchema schema,
+      Optional<SchemaManager.RegisteredSchema> schema,
       RecordMetadata metadata,
       boolean isKey
   ) {
     return ProduceResponseData
         .builder()
         .size((long) (isKey ? metadata.serializedKeySize() : metadata.serializedValueSize()))
-        .schemaId(Optional
-            .ofNullable(schema)
-            .map(SchemaManager.RegisteredSchema::schemaId).orElse(null))
-        .subject(Optional
-            .ofNullable(schema)
-            .map(SchemaManager.RegisteredSchema::subject).orElse(null))
-        .schemaVersion(Optional
-            .ofNullable(schema)
-            .map(SchemaManager.RegisteredSchema::schemaVersion).orElse(null))
-        .type(Optional
-            .ofNullable(schema)
-            .map(s -> s.parsedSchema().schemaType()).orElse(null))
+        .schemaId(schema.map(SchemaManager.RegisteredSchema::schemaId).orElse(null))
+        .subject(schema.map(SchemaManager.RegisteredSchema::subject).orElse(null))
+        .schemaVersion(schema.map(SchemaManager.RegisteredSchema::schemaVersion).orElse(null))
+        .type(schema.map(s -> s.parsedSchema().schemaType()).orElse(null))
         .build();
   }
 
@@ -297,8 +285,8 @@ public class RecordsV3ApiImpl {
       KafkaProducer<byte[], byte[]> producer,
       SchemaRegistryClient srClient,
       // Computed fields
-      SchemaManager.RegisteredSchema keySchema,
-      SchemaManager.RegisteredSchema valueSchema,
+      Optional<SchemaManager.RegisteredSchema> keySchema,
+      Optional<SchemaManager.RegisteredSchema> valueSchema,
       ByteString serializedKey,
       ByteString serializedValue,
       RecordMetadata recordMetadata
@@ -316,8 +304,8 @@ public class RecordsV3ApiImpl {
           produceRequest,
           null,
           null,
-          null,
-          null,
+          Optional.empty(),
+          Optional.empty(),
           null,
           null,
           null

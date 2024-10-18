@@ -26,7 +26,7 @@ public class SchemaManager {
       )
   );
 
-  public @Nullable RegisteredSchema getSchema(
+  public Optional<RegisteredSchema> getSchema(
       SchemaRegistryClient schemaRegistryClient,
       String topicName,
       ProduceRequestData produceRequestData,
@@ -37,12 +37,12 @@ public class SchemaManager {
     // as the subject name strategy. We may choose to support non-default subject name strategies
     // and that is left as a future enhancement.
     if (supportsSchemaVersion(produceRequestData)) {
-      return getSchemaFromSchemaVersion(
+      return Optional.of(getSchemaFromSchemaVersion(
           schemaRegistryClient,
           topicName,
           produceRequestData.getSchemaVersion(),
           isKey
-      );
+      ));
     }
 
     // If any of the other schema related fields are set, disallow the request
@@ -54,7 +54,7 @@ public class SchemaManager {
       );
     }
 
-    return null;
+    return Optional.empty();
   }
 
   /**
