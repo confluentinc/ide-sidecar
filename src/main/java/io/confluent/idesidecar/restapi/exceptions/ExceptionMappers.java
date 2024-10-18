@@ -6,7 +6,9 @@ import io.confluent.idesidecar.scaffolding.exceptions.InvalidTemplateOptionsProv
 import io.confluent.idesidecar.scaffolding.exceptions.TemplateNotFoundException;
 import io.confluent.idesidecar.scaffolding.exceptions.TemplateRegistryException;
 import io.confluent.idesidecar.scaffolding.exceptions.TemplateRegistryIOException;
+import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 import jakarta.inject.Inject;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -259,6 +261,32 @@ public class ExceptionMappers {
         .message(exception.getMessage()).build();
     return Response
         .status(Status.INTERNAL_SERVER_ERROR)
+        .entity(error)
+        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+        .build();
+  }
+
+  @ServerExceptionMapper
+  public Response mapRestClientException(RestClientException exception) {
+    var error = io.confluent.idesidecar.restapi.kafkarest.model.Error
+        .builder()
+        .errorCode(exception.getStatus())
+        .message(exception.getMessage()).build();
+    return Response
+        .status(exception.getStatus())
+        .entity(error)
+        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+        .build();
+  }
+
+  @ServerExceptionMapper
+  public Response mapBadRequestException(BadRequestException exception) {
+    var error = io.confluent.idesidecar.restapi.kafkarest.model.Error
+        .builder()
+        .errorCode(Status.BAD_REQUEST.getStatusCode())
+        .message(exception.getMessage()).build();
+    return Response
+        .status(Status.BAD_REQUEST)
         .entity(error)
         .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
         .build();

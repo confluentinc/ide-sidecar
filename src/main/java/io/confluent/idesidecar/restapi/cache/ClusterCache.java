@@ -132,6 +132,20 @@ public class ClusterCache {
   }
 
   /**
+   * Find the cluster info for the schema registry that is associated with the given Kafka cluster,
+   * if one exists. Else, return an empty Optional.
+   * @param connectionId   the ID of the connection
+   * @param kafkaClusterId the ID of the Kafka cluster
+   * @return the info for the schema registry that is associated with the given Kafka cluster
+   * @throws ConnectionNotFoundException if there is no connection with the given ID
+   */
+  public Optional<SchemaRegistry> maybeGetSchemaRegistryForKafkaClusterId(
+      String connectionId, String kafkaClusterId
+  ) {
+    return forConnection(connectionId).maybeSchemaRegistryForKafkaCluster(kafkaClusterId, true);
+  }
+
+  /**
    * Get the info for the Schema Registry with the given ID using the specified connection.
    *
    * @param connectionId the ID of the connection
@@ -338,19 +352,28 @@ public class ClusterCache {
         String kafkaClusterId,
         boolean loadIfMissing
     ) {
+      return maybeSchemaRegistryForKafkaCluster(kafkaClusterId, loadIfMissing).orElseThrow(() ->
+          new ClusterNotFoundException(
+              "Schema Registry not found for Kafka Cluster %s in connection %s".formatted(
+                  kafkaClusterId,
+                  connectionId
+              )
+          )
+      );
+    }
+
+    public Optional<SchemaRegistry> maybeSchemaRegistryForKafkaCluster(
+        String kafkaClusterId,
+        boolean loadIfMissing
+    ) {
       // Find the path for this Kafka cluster
       var kafkaCluster = findKafkaCluster(kafkaClusterId, loadIfMissing);
       // Find the schema registry that has the same path as the Kafka cluster
       var result = findFirstSchemaRegistryWithPath(kafkaCluster.path(), loadIfMissing);
       if (result == null) {
-        throw new ClusterNotFoundException(
-            "Schema Registry not found for Kafka Cluster %s in connection %s".formatted(
-                kafkaClusterId,
-                connectionId
-            )
-        );
+        return Optional.empty();
       }
-      return result.spec();
+      return Optional.of(result.spec());
     }
 
     protected ClusterInfo<KafkaCluster> findKafkaCluster(
