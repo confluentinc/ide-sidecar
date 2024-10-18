@@ -4,6 +4,7 @@ import static io.confluent.idesidecar.restapi.util.ConfluentLocalKafkaWithRestPr
 import static org.hamcrest.Matchers.equalTo;
 
 import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
+import io.confluent.idesidecar.restapi.util.ConfluentLocalTestBed;
 import io.quarkus.test.junit.QuarkusIntegrationTest;
 import io.quarkus.test.junit.TestProfile;
 import org.junit.jupiter.api.Tag;
@@ -13,10 +14,10 @@ import org.junit.jupiter.api.Test;
 @QuarkusIntegrationTest
 @Tag("io.confluent.common.utils.IntegrationTest")
 @TestProfile(NoAccessFilterProfile.class)
-public class PartitionV3ApiImplIT extends KafkaRestTestBed {
+public class PartitionV3ApiImplIT extends ConfluentLocalTestBed {
   @Test
-  void shouldListTopicPartitions() throws Exception {
-    createTopic("topic-multiple-partitions", 3, (short) 1);
+  void shouldListTopicPartitions() {
+    createTopic("topic-multiple-partitions", 3, 1);
 
     givenDefault()
         .when()
@@ -26,8 +27,8 @@ public class PartitionV3ApiImplIT extends KafkaRestTestBed {
   }
 
   @Test
-  void shouldGetTopicPartition() throws Exception {
-    createTopic("topic-single-partition", 1, (short) 1);
+  void shouldGetTopicPartition() {
+    createTopic("topic-single-partition", 1, 1);
 
     givenDefault()
         .when()
@@ -54,8 +55,8 @@ public class PartitionV3ApiImplIT extends KafkaRestTestBed {
   }
 
   @Test
-  void shouldThrow404WhenGettingNonExistentPartition() throws Exception {
-    createTopic("topic-single-partition", 1, (short) 1);
+  void shouldThrow404WhenGettingNonExistentPartition() {
+    createTopic("topic-single-partition", 1, 1);
 
     givenDefault()
         .when()
@@ -64,7 +65,7 @@ public class PartitionV3ApiImplIT extends KafkaRestTestBed {
         .statusCode(404)
         .body("error_code", equalTo(404))
         .body("message", equalTo(
-            "This server does not host topic-partition 3 for topic topic-single-partition"
+            "This server does not host this topic-partition."
         ));
   }
 

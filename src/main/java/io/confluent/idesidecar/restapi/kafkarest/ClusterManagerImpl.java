@@ -20,7 +20,6 @@ import io.confluent.idesidecar.restapi.kafkarest.model.ClusterData;
 import io.confluent.idesidecar.restapi.kafkarest.model.ClusterDataList;
 import io.confluent.idesidecar.restapi.kafkarest.model.ResourceCollectionMetadata;
 import io.confluent.idesidecar.restapi.kafkarest.model.ResourceMetadata;
-import io.confluent.idesidecar.restapi.models.graph.KafkaCluster;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.infrastructure.Infrastructure;
 import io.vertx.core.http.HttpServerRequest;
@@ -30,7 +29,7 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.DescribeClusterResult;
 import org.apache.kafka.common.Node;
 
@@ -71,11 +70,9 @@ public class ClusterManagerImpl implements ClusterManager {
   public Uni<ClusterDataList> listKafkaClusters() {
     return uniItem(
         // Get the first Kafka cluster for the connection
-        (Supplier<Optional<KafkaCluster>>)
-            () -> clusterCache.getKafkaClusterForConnection(connectionId.get()))
+        () -> clusterCache.getKafkaClusterForConnection(connectionId.get()))
         // Run the supplier on the default worker pool since it may block
         .runSubscriptionOn(Infrastructure.getDefaultWorkerPool())
-        .map(Supplier::get)
         // Call describeCluster if the cluster info is present
         // else return null
         .chain(clusterInfo -> clusterInfo
@@ -106,10 +103,9 @@ public class ClusterManagerImpl implements ClusterManager {
   }
 
   private Uni<ClusterDescribe> describeCluster(String clusterId) {
-    return uniItem((Supplier<AdminClient>)
-        () -> adminClients.getClient(connectionId.get(), clusterId))
+    return uniItem(() -> adminClients.getClient(connectionId.get(), clusterId))
         .runSubscriptionOn(Infrastructure.getDefaultWorkerPool())
-        .map(supplier -> supplier.get().describeCluster())
+        .map(Admin::describeCluster)
         .chain(describeClusterResult ->
             uniStage(describeClusterResult.clusterId().toCompletionStage())
                 .map(id -> new ClusterDescribe(describeClusterResult).withId(id)))
@@ -126,7 +122,7 @@ public class ClusterManagerImpl implements ClusterManager {
         .kind("KafkaCluster")
         .metadata(ResourceMetadata
             .builder()
-            .self(forCluster(cluster.id()).toString())
+            .self(forCluster(cluster.id()).getRelated())
             // TODO: Construct resource name based on the connection/cluster type
             .resourceName(null)
             .build()

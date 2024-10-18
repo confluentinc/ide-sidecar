@@ -39,7 +39,6 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponseSchema;
 @ApplicationScoped
 public class KafkaConsumeResource {
 
-  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
   public static final String KAFKA_CONSUMED_BYTES_RESPONSE_HEADER =
       "Kafka-Multi-Partition-Consume-Bytes";
 
