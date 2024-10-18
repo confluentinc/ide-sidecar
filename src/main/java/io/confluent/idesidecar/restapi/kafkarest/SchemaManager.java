@@ -96,8 +96,16 @@ public class SchemaManager {
         // do not lookup deleted schemas
         false
     );
+
+    ParsedSchema parsedSchema;
+    try {
+      parsedSchema = parseSchema(schema);
+    } catch (IllegalArgumentException e) {
+      throw new BadRequestException("Failed to parse schema: %s".formatted(e.getMessage()), e);
+    }
+
     return new RegisteredSchema(
-        schema.getSubject(), schema.getId(), schema.getVersion(), parseSchema(schema)
+        schema.getSubject(), schema.getId(), schema.getVersion(), parsedSchema
     );
   }
 
@@ -106,7 +114,7 @@ public class SchemaManager {
     var schemaProvider = Optional
         .ofNullable(schemaFormat.schemaProvider())
         .orElseThrow(() ->
-            new IllegalArgumentException("Schema type has no provider: " + schema.getSchemaType()));
+            new IllegalArgumentException("Unsupported schema type: " + schema.getSchemaType()));
     return schemaProvider
         .parseSchema(schema, false)
         .orElseThrow(() -> new BadRequestException("Failed to parse schema"));
