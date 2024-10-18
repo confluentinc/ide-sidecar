@@ -4,6 +4,7 @@ import static io.confluent.idesidecar.restapi.util.ConfluentLocalKafkaWithRestPr
 import static org.hamcrest.Matchers.equalTo;
 
 import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
+import io.confluent.idesidecar.restapi.util.ConfluentLocalTestBed;
 import io.quarkus.test.junit.QuarkusIntegrationTest;
 import io.quarkus.test.junit.TestProfile;
 import org.junit.jupiter.api.Tag;
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.Test;
 @QuarkusIntegrationTest
 @Tag("io.confluent.common.utils.IntegrationTest")
 @TestProfile(NoAccessFilterProfile.class)
-class TopicV3ApiImplIT extends KafkaRestTestBed {
+class TopicV3ApiImplIT extends ConfluentLocalTestBed {
 
   @Test
   void shouldCreateKafkaTopic() throws Exception {

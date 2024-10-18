@@ -277,6 +277,12 @@
       <artifactId>caffeine</artifactId>
       <version>3.1.8</version>
     </dependency>
+    <dependency>
+      <groupId>io.soabase.record-builder</groupId>
+      <artifactId>record-builder-processor</artifactId>
+      <version>43</version>
+      <scope>compile</scope>
+    </dependency>
   </dependencies>
 
   <profiles>
@@ -765,6 +771,11 @@
               <groupId>info.picocli</groupId>
               <artifactId>picocli-codegen</artifactId>
               <version>${picocli.version}</version>
+            </path>
+            <path>
+              <groupId>io.soabase.record-builder</groupId>
+              <artifactId>record-builder-processor</artifactId>
+              <version>43</version>
             </path>
           </annotationProcessorPaths>
           <compilerArgs>
