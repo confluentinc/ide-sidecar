@@ -85,7 +85,7 @@ public class RecordsV3ApiImpl {
     return topicManager
         // First, check that the topic exists
         .getKafkaTopic(c.clusterId, c.topicName, false)
-        // Check provided partition exists, if provided
+        // Then, check that the partition exists, if provided
         .chain(ignored -> Optional
             .ofNullable(c.produceRequest.getPartitionId())
             .map(partitionId ->
