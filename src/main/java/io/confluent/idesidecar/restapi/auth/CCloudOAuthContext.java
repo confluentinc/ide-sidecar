@@ -263,10 +263,15 @@ public class CCloudOAuthContext implements AuthContext {
           .compose(response -> this.processTokenExchangeResponse(response, ccloudOrganizationId))
           .map(CCloudOAuthContext.class::cast)
           .onSuccess(result -> {
-            // Reset any existing errors related to the sign-in flow
+            // Reset any existing errors
             tokens.updateAndGet(oldTokens ->
                 oldTokens.withErrors(
-                    oldTokens.errors.withoutSignIn()));
+                    oldTokens.errors
+                        .withoutSignIn()
+                        .withoutTokenRefresh()
+                        .withoutAuthStatusCheck()
+                )
+            );
             Log.infof(
                 "User has successfully authenticated with CCloud (email=%s,organization_id=%s).",
                 getUserEmail(), ccloudOrganizationId);
@@ -303,11 +308,6 @@ public class CCloudOAuthContext implements AuthContext {
               // has been reached, in which case the user must re-authenticate with CCloud
               && now.compareTo(getEndOfLifetime()) < 0;
 
-      // Do not perform the token refresh if we have already tried it
-      // MAX_TOKEN_REFRESH_ATTEMPTS times but failed
-      var lessThanMaxTokenRefreshAttempts =
-          getFailedTokenRefreshAttempts() < CCloudOAuthConfig.MAX_TOKEN_REFRESH_ATTEMPTS;
-
       // Perform token refresh only if auth context will expire before next run of this job
       var expiresAt = expiresAt();
       var nextExecution = now.plus(CCloudOAuthConfig.TOKEN_REFRESH_INTERVAL_SECONDS);
@@ -315,7 +315,7 @@ public class CCloudOAuthContext implements AuthContext {
           && expiresAt.get().compareTo(nextExecution) < 0;
 
       return validRefreshToken
-          && lessThanMaxTokenRefreshAttempts
+          && !hasNonTransientError()
           && atLeastOneTokenWillExpireBeforeNextRun;
     } finally {
       readLock.unlock();
@@ -348,6 +348,10 @@ public class CCloudOAuthContext implements AuthContext {
 
   public AuthErrors getErrors() {
     return tokens.get().errors;
+  }
+
+  public boolean hasNonTransientError() {
+    return tokens.get().errors.hasNonTransientErrors();
   }
 
   public MultiMap getControlPlaneAuthenticationHeaders() {
@@ -725,6 +729,9 @@ public class CCloudOAuthContext implements AuthContext {
     }
 
     Tokens withFailedTokenRefreshAttempt(Throwable error) {
+      boolean isTransient =
+          failedTokenRefreshAttempts < CCloudOAuthConfig.MAX_TOKEN_REFRESH_ATTEMPTS
+          && !error.getMessage().contains("Unknown or invalid refresh token.");
       return new Tokens(
           refreshToken,
           controlPlaneToken,
@@ -733,7 +740,7 @@ public class CCloudOAuthContext implements AuthContext {
           organization,
           endOfLifetime,
           // Add error related to the token refresh
-          errors.withTokenRefresh(error.getMessage()),
+          errors.withTokenRefresh(error.getMessage(), isTransient),
           // Bump the number of failed token refresh attempts
           failedTokenRefreshAttempts + 1);
     }

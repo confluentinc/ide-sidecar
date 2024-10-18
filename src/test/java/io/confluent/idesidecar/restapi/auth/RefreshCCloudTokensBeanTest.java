@@ -70,6 +70,7 @@ class RefreshCCloudTokensBeanTest {
         Optional.of(Instant.now().plusSeconds(5)),
         Optional.of(Instant.now().plusSeconds(15))
     );
+    Mockito.when(ineligibleAuthContext.hasNonTransientError()).thenReturn(true);
     Mockito.when(ineligibleConnection.getOauthContext()).thenReturn(ineligibleAuthContext);
 
     var localConnection = createdSpiedConnectionState(
@@ -83,49 +84,6 @@ class RefreshCCloudTokensBeanTest {
     // Should attempt a token refresh for only the eligible auth context
     Mockito.verify(eligibleAuthContext, Mockito.atLeastOnce()).refresh(null);
     Mockito.verify(ineligibleAuthContext, Mockito.never()).refresh(null);
-  }
-
-  @Test
-  void refreshTokensShouldResetAuthContextsWithTooManyFailedAttempts() {
-    // Connection eligible for a token refresh attempt
-    var eligibleConnection = (CCloudConnectionState) createdSpiedConnectionState(
-        "eligible", "name", ConnectionType.CCLOUD);
-    var eligibleAuthContext = createSpiedCCloudOAuthContext(
-        true,
-        // No failed token refresh attempts
-        0,
-        // Tokens will expire before next run in 10 seconds
-        Optional.of(Instant.now().plusSeconds(5)),
-        Optional.of(Instant.now().plusSeconds(15))
-    );
-    Mockito.when(eligibleConnection.getOauthContext()).thenReturn(eligibleAuthContext);
-
-    // Connection not eligible for a token refresh attempt
-    var ineligibleConnection = (CCloudConnectionState) createdSpiedConnectionState(
-        "ineligible", "name", ConnectionType.CCLOUD);
-    var ineligibleAuthContext = createSpiedCCloudOAuthContext(
-        true,
-        // Too many failed token refresh attempts
-        50,
-        // Tokens will expire before next run in 10 seconds
-        Optional.of(Instant.now().plusSeconds(5)),
-        Optional.of(Instant.now().plusSeconds(15))
-    );
-    Mockito.when(ineligibleConnection.getOauthContext()).thenReturn(ineligibleAuthContext);
-
-    var localConnection = createdSpiedConnectionState(
-        "local", "name", ConnectionType.LOCAL);
-
-    var connections = List.of(eligibleConnection, ineligibleConnection, localConnection);
-    Mockito.when(connectionStateManager.getConnectionStates()).thenReturn(connections);
-
-    refreshCCloudTokensBean.refreshTokens();
-
-    // Should attempt a token refresh for only the eligible auth context
-    Mockito.verify(eligibleAuthContext, Mockito.atLeastOnce()).refresh(null);
-    Mockito.verify(ineligibleAuthContext, Mockito.never()).refresh(null);
-    Mockito.verify(eligibleAuthContext, Mockito.never()).reset();
-    Mockito.verify(ineligibleAuthContext, Mockito.atLeastOnce()).reset();
   }
 
   private ConnectionState createdSpiedConnectionState(String id,

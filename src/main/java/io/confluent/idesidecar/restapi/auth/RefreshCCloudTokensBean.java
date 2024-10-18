@@ -50,14 +50,6 @@ public class RefreshCCloudTokensBean {
         .filter(connection -> connection.getOauthContext().shouldAttemptTokenRefresh())
         // Attempt token refresh
         .forEach(this::refreshAuthContext);
-
-    // Reset auth contexts with too many failed token refresh attempts
-    connectionsWithAuthContexts.get()
-        .map(CCloudConnectionState::getOauthContext)
-        .filter(authContext ->
-            authContext.getFailedTokenRefreshAttempts() >= MAX_TOKEN_REFRESH_ATTEMPTS
-        )
-        .forEach(CCloudOAuthContext::reset);
   }
 
   /**

@@ -55,7 +55,13 @@ public class CCloudConnectionTest {
       throws Throwable {
 
     var testContext = new VertxTestContext();
-    var connectionState = spyCCloudConnectionState(true, false, true, true);
+    var connectionState = spyCCloudConnectionState(
+        true,
+        false,
+        true,
+        true,
+        false
+    );
     connectionState.getConnectionStatus()
         .onComplete(
             testContext.succeeding(connectionStatus ->
@@ -76,7 +82,13 @@ public class CCloudConnectionTest {
       throws Throwable {
 
     var testContext = new VertxTestContext();
-    var connectionState = spyCCloudConnectionState(true, true, false, true);
+    var connectionState = spyCCloudConnectionState(
+        true,
+        true,
+        false,
+        true,
+        false
+    );
     connectionState.getConnectionStatus()
         .onComplete(
             testContext.succeeding(connectionStatus ->
@@ -97,7 +109,13 @@ public class CCloudConnectionTest {
       throws Throwable {
 
     var testContext = new VertxTestContext();
-    var connectionState = spyCCloudConnectionState(true, true, true, false);
+    var connectionState = spyCCloudConnectionState(
+        true,
+        true,
+        true,
+        false,
+        false
+    );
     connectionState.getConnectionStatus()
         .onComplete(
             testContext.succeeding(connectionStatus ->
@@ -118,7 +136,13 @@ public class CCloudConnectionTest {
       throws Throwable {
 
     var testContext = new VertxTestContext();
-    var connectionState = spyCCloudConnectionState(true, true, true, true);
+    var connectionState = spyCCloudConnectionState(
+        true,
+        true,
+        true,
+        true,
+        false
+    );
     connectionState.getConnectionStatus()
         .onComplete(
             testContext.succeeding(connectionStatus ->
@@ -139,12 +163,45 @@ public class CCloudConnectionTest {
       throws Throwable {
 
     var testContext = new VertxTestContext();
-    var connectionState = spyCCloudConnectionState(false, true, true, true);
+    var connectionState = spyCCloudConnectionState(
+        false,
+        true,
+        true,
+        true,
+        false
+    );
     connectionState.getConnectionStatus()
         .onComplete(
             testContext.succeeding(connectionStatus ->
                 testContext.verify(() -> {
                   assertEquals(Status.INVALID_TOKEN, connectionStatus.authentication().status());
+                  testContext.completeNow();
+                })));
+
+    assertTrue(testContext.awaitCompletion(AWAIT_COMPLETION_TIMEOUT_SEC, TimeUnit.SECONDS));
+
+    if (testContext.failed()) {
+      throw testContext.causeOfFailure();
+    }
+  }
+
+  @Test
+  void getConnectionStatusShouldReturnFailedForCCloudConnectionsThatExperiencedNonTransientError()
+      throws Throwable {
+
+    var testContext = new VertxTestContext();
+    var connectionState = spyCCloudConnectionState(
+        false,
+        true,
+        true,
+        true,
+        true
+    );
+    connectionState.getConnectionStatus()
+        .onComplete(
+            testContext.succeeding(connectionStatus ->
+                testContext.verify(() -> {
+                  assertEquals(Status.FAILED, connectionStatus.authentication().status());
                   testContext.completeNow();
                 })));
 
@@ -167,11 +224,13 @@ public class CCloudConnectionTest {
         connectionState.getInternalId());
   }
 
-  ConnectionState spyCCloudConnectionState(boolean authenticationStatus,
-                                           boolean withRefreshToken,
-                                           boolean withControlPlaneToken,
-                                           boolean withDataPlaneToken)
-      throws NoSuchFieldException, IllegalAccessException {
+  ConnectionState spyCCloudConnectionState(
+      boolean authenticationStatus,
+      boolean withRefreshToken,
+      boolean withControlPlaneToken,
+      boolean withDataPlaneToken,
+      boolean withNonTransientError
+  ) throws NoSuchFieldException, IllegalAccessException {
 
     var connectionState = spy(CCloudConnectionState.class);
     connectionState.setSpec(new ConnectionSpec("1", "foo", ConnectionType.CCLOUD));
@@ -190,6 +249,9 @@ public class CCloudConnectionTest {
     if (withDataPlaneToken) {
       when(authContext.getDataPlaneToken())
           .thenReturn(new Token("data-plane-token", Instant.now()));
+    }
+    if (withNonTransientError) {
+      when(authContext.hasNonTransientError()).thenReturn(true);
     }
 
     // Inject mocked CCloudOAuthContext into connection state via reflection
