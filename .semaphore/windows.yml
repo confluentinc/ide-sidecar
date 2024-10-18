@@ -67,8 +67,8 @@ global_job_config:
 
 blocks:
   - name: "Build and Test Native Executable (Windows x64)"
-    run: {}
-      # when: "branch =~ '.*'"
+    # run: 
+    #   when: "branch =~ '.*'"
     task:
       prologue:
         commands:
