@@ -125,6 +125,19 @@ ide-sidecar:
     "default.api.timeout.ms": 3000
     "request.timeout.ms": 3000
     "client.id": Confluent for VS Code sidecar ${quarkus.application.version}
+  # Configuration set by the sidecar when instantiating Kafka record serializers
+  # See https://github.com/confluentinc/schema-registry/blob/master/schema-serializer/src/main/java/io/confluent/kafka/serializers/AbstractKafkaSchemaSerDeConfig.java#L39
+  # for a full list of available configs.
+  serializer-configs:
+    # Use sidecar provided SR proxy as the schema registry URL
+    # Should be unused by serializers since we pass the
+    # SchemaRegistryClient instance to them directly.
+    "schema.registry.url": ${ide-sidecar.api.host}
+    # Disable auto-registering schemas, as we expect the schema to be registered
+    # before the data is serialized.
+    "auto.register.schemas": "false"
+    # Do not try to fetch the latest version of the schema from the registry
+    "use.latest.version": "false"
 
 quarkus:
   application:

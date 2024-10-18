@@ -294,6 +294,11 @@ public class DecoderUtil {
     return new DecodedResult(safeReadTree(bytes), null);
   }
 
+  /**
+   * Try to read the byte array as a JSON object, falling back to a string if it fails.
+   * @param bytes The byte array to read
+   * @return      A JsonNode representing the byte array as a JSON object, or a TextNode
+   */
   private static JsonNode safeReadTree(byte[] bytes) {
     try {
       return OBJECT_MAPPER.readTree(bytes);

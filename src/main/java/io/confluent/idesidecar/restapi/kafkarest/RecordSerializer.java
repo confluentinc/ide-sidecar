@@ -1,9 +1,5 @@
 package io.confluent.idesidecar.restapi.kafkarest;
 
-import static io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.AUTO_REGISTER_SCHEMAS;
-import static io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG;
-import static io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.USE_LATEST_VERSION;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.protobuf.ByteString;
@@ -35,8 +31,8 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 public class RecordSerializer {
   private static final ObjectMapper objectMapper = new ObjectMapper();
 
-  @ConfigProperty(name = "ide-sidecar.api.host")
-  String sidecarHost;
+  @ConfigProperty(name = "ide-sidecar.serializer-configs")
+  Map<String, String> serializerConfigs;
 
   public ByteString serialize(
       SchemaRegistryClient client,
@@ -69,7 +65,7 @@ public class RecordSerializer {
       boolean isKey
   ) {
     try (var avroSerializer = new KafkaAvroSerializer(client)) {
-      avroSerializer.configure(getSchemaSerdeConfig(), isKey);
+      avroSerializer.configure(serializerConfigs, isKey);
       var schema = (AvroSchema) parsedSchema;
       var record = wrappedToObject(() -> AvroSchemaUtils.toObject(data, schema));
       return ByteString.copyFrom(avroSerializer.serialize(topicName, record));
@@ -84,7 +80,7 @@ public class RecordSerializer {
       boolean isKey
   ) {
     try (var jsonschemaSerializer = new KafkaJsonSchemaSerializer<>(client)) {
-      jsonschemaSerializer.configure(getSchemaSerdeConfig(), isKey);
+      jsonschemaSerializer.configure(serializerConfigs, isKey);
       var schema = (JsonSchema) parsedSchema;
       var record = wrappedToObject(() -> JsonSchemaUtils.toObject(data, schema));
       return ByteString.copyFrom(jsonschemaSerializer.serialize(topicName, record));
@@ -99,7 +95,7 @@ public class RecordSerializer {
       boolean isKey
   ) {
     try (var protobufSerializer = new KafkaProtobufSerializer<>(client)) {
-      protobufSerializer.configure(getSchemaSerdeConfig(), isKey);
+      protobufSerializer.configure(serializerConfigs, isKey);
       var schema = (ProtobufSchema) parsedSchema;
       var record = (Message) wrappedToObject(() -> ProtobufSchemaUtils.toObject(data, schema));
       return ByteString.copyFrom(protobufSerializer.serialize(topicName, record));
@@ -127,22 +123,8 @@ public class RecordSerializer {
 
   private ByteString serializeJson(String topicName, Object data, boolean isKey) {
     try (var kafkaJsonSerializer = new KafkaJsonSerializer<>()) {
-      kafkaJsonSerializer.configure(getSchemaSerdeConfig(), isKey);
+      kafkaJsonSerializer.configure(serializerConfigs, isKey);
       return ByteString.copyFrom(kafkaJsonSerializer.serialize(topicName, data));
     }
-  }
-
-  private Map<String, ?> getSchemaSerdeConfig() {
-    return Map.of(
-        // The schema.registry.url is a required config, however, we don't expect
-        // the serializers to actually use it to construct a new client,
-        // since we pass the SchemaRegistryClient instance to them directly.
-        SCHEMA_REGISTRY_URL_CONFIG, sidecarHost,
-        // Disable auto-registering schemas, as we expect the schema to be registered
-        // before the data is serialized.
-        AUTO_REGISTER_SCHEMAS, false,
-        // Do not try to fetch the latest version of the schema from the registry
-        USE_LATEST_VERSION, false
-    );
   }
 }
