@@ -20,4 +20,41 @@ public record SimpleConsumeMultiPartitionRequest(
       @JsonProperty("partition_id") int partitionId,
       @JsonProperty("offset") long offset
   ) {}
+
+  public SimpleConsumeMultiPartitionRequest withMaxPollRecords(Integer maxPollRecords) {
+    return new SimpleConsumeMultiPartitionRequest(
+        partitionOffsets, maxPollRecords, timestamp, fetchMaxBytes, messageMaxBytes, fromBeginning
+    );
+  }
+
+  public SimpleConsumeMultiPartitionRequest withFetchMaxBytes(Integer fetchMaxBytes) {
+    return new SimpleConsumeMultiPartitionRequest(
+        partitionOffsets, maxPollRecords, timestamp, fetchMaxBytes, messageMaxBytes, fromBeginning
+    );
+  }
+
+  public SimpleConsumeMultiPartitionRequest withFromBeginning(Boolean fromBeginning) {
+    return new SimpleConsumeMultiPartitionRequest(
+        partitionOffsets, maxPollRecords, timestamp, fetchMaxBytes, messageMaxBytes, fromBeginning
+    );
+  }
+
+  public SimpleConsumeMultiPartitionRequest withPartitionOffsets(
+      List<PartitionOffset> partitionOffsets
+  ) {
+    return new SimpleConsumeMultiPartitionRequest(
+        partitionOffsets, maxPollRecords, timestamp, fetchMaxBytes, messageMaxBytes, fromBeginning
+    );
+  }
+
+  public SimpleConsumeMultiPartitionRequest withMessageMaxBytes(Integer messageMaxBytes) {
+    return new SimpleConsumeMultiPartitionRequest(
+        partitionOffsets, maxPollRecords, timestamp, fetchMaxBytes, messageMaxBytes, fromBeginning
+    );
+  }
+
+  public SimpleConsumeMultiPartitionRequest() {
+    this(null, null, null, null, null, null);
+  }
+
 }
