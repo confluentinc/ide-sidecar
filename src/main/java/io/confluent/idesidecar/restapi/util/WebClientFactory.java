@@ -2,7 +2,6 @@ package io.confluent.idesidecar.restapi.util;
 
 import io.confluent.idesidecar.restapi.models.Preferences;
 import io.confluent.idesidecar.restapi.models.Preferences.PreferencesSpec;
-import io.confluent.idesidecar.restapi.util.OsUtil.OS;
 import io.quarkus.arc.Arc;
 import io.quarkus.logging.Log;
 import io.vertx.core.Vertx;
@@ -99,7 +98,7 @@ public class WebClientFactory {
   WebClientOptions getDefaultWebClientOptions() {
     var clientOptions = new WebClientOptions();
 
-    if (OsUtil.getOperatingSystem() == OS.WINDOWS) {
+    if (OperatingSystemType.current() == OperatingSystemType.Windows) {
       var pemTrustOptions = new PemTrustOptions();
       addCertsFromBuiltInTrustStore(pemTrustOptions);
       addCertsFromSystemKeyStore(WINDOWS_TRUST_STORE_NAME, pemTrustOptions);

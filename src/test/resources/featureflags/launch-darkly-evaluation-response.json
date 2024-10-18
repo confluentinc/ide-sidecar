@@ -1,0 +1,38 @@
+{
+  "example.boolean.enable": {
+    "value": true
+  },
+  "example.int.count": {
+    "value": 100
+  },
+  "example.long.bytes": {
+    "value": 9234567890
+  },
+  "example.string.id": {
+    "value": "id-0"
+  },
+  "example.string.ids": {
+    "value": [
+      "id-1",
+      "id-2"
+    ]
+  },
+  "example.flag.notice": {
+    "value": {
+      "message": "First message",
+      "suggestion": "First suggestion"
+    }
+  },
+  "example.flag.notices": {
+    "value": [
+      {
+        "message": "Second message",
+        "suggestion": "Second suggestion"
+      },
+      {
+        "message": "Third message",
+        "suggestion": "Third suggestion"
+      }
+    ]
+  }
+}
