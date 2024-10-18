@@ -254,7 +254,7 @@ public class KafkaConsumeResourceIT extends ConfluentLocalTestBed {
     var rows = consume(topicName, SimpleConsumeMultiPartitionRequestBuilder
         .builder()
         .fromBeginning(true)
-        .maxPollRecords(8)
+        .messageMaxBytes(8)
         .build()
     );
 
