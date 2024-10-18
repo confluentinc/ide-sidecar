@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.protobuf.util.JsonFormat;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequest;
+import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequestBuilder;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
 import io.confluent.idesidecar.restapi.proto.Message.MyMessage;
 import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
@@ -58,25 +59,31 @@ public class KafkaConsumeResourceIT extends ConfluentLocalTestBed {
     return Stream.of(
         // Test that we get exactly the same records that we produced
         Arguments.of(
-            new SimpleConsumeMultiPartitionRequest()
-                .withFromBeginning(true)
-                .withMaxPollRecords(3)
+            SimpleConsumeMultiPartitionRequestBuilder
+                .builder()
+                .fromBeginning(true)
+                .maxPollRecords(3)
+                .build()
         ),
         // Test that the Kafka consumer, when provided with a null value for
         // "max_poll_records", retrieves all available records from the
         // topic (with default size limits).
         Arguments.of(
-            new SimpleConsumeMultiPartitionRequest()
-                .withFromBeginning(true)
-                .withMaxPollRecords(null)
+            SimpleConsumeMultiPartitionRequestBuilder
+                .builder()
+                .fromBeginning(true)
+                .maxPollRecords(null)
+                .build()
         ),
         // Test consume with fetch_max_bytes limit set
         Arguments.of(
-            new SimpleConsumeMultiPartitionRequest()
-                .withFromBeginning(true)
-                .withFetchMaxBytes(1024)
-        )
-    );
+            SimpleConsumeMultiPartitionRequestBuilder
+                .builder()
+                .fromBeginning(true)
+                .fetchMaxBytes(1024)
+                .build()
+            )
+        );
   }
 
   @ParameterizedTest
@@ -113,9 +120,11 @@ public class KafkaConsumeResourceIT extends ConfluentLocalTestBed {
     };
     createTopicAndProduceRecords(topicName, 1, sampleRecords);
 
-    var rows = consume(topicName, new SimpleConsumeMultiPartitionRequest()
-        .withFromBeginning(true)
-        .withMaxPollRecords(2)
+    var rows = consume(topicName, SimpleConsumeMultiPartitionRequestBuilder
+        .builder()
+        .fromBeginning(true)
+        .maxPollRecords(2)
+        .build()
     );
 
     // Only the first 2 records should be returned due to the max_poll_records limit
@@ -141,9 +150,11 @@ public class KafkaConsumeResourceIT extends ConfluentLocalTestBed {
     };
     createTopicAndProduceRecords(topicName, 2, sampleRecords);
 
-    var rows = consume(topicName, new SimpleConsumeMultiPartitionRequest()
-        .withFromBeginning(true)
-        .withMaxPollRecords(3)
+    var rows = consume(topicName, SimpleConsumeMultiPartitionRequestBuilder
+        .builder()
+        .fromBeginning(true)
+        .maxPollRecords(3)
+        .build()
     );
 
     var partitionDataList = rows.partitionDataList();
@@ -180,9 +191,11 @@ public class KafkaConsumeResourceIT extends ConfluentLocalTestBed {
     createTopicAndProduceRecords(topicName, 1, sampleRecords);
 
     // Initial consume from beginning
-    var rows = consume(topicName, new SimpleConsumeMultiPartitionRequest()
-        .withFromBeginning(true)
-        .withMaxPollRecords(4)
+    var rows = consume(topicName, SimpleConsumeMultiPartitionRequestBuilder
+        .builder()
+        .fromBeginning(true)
+        .maxPollRecords(4)
+        .build()
     );
     assertConsumerRecords(rows, sampleRecords);
 
@@ -194,10 +207,13 @@ public class KafkaConsumeResourceIT extends ConfluentLocalTestBed {
     assertEquals(4, nextOffset);
 
     // Now consume again with partition 0 and offset = 2
-    var requestWithPartitionOffset = new SimpleConsumeMultiPartitionRequest().withPartitionOffsets(
+    var requestWithPartitionOffset = SimpleConsumeMultiPartitionRequestBuilder
+        .builder()
         // query partition 0 from offset 2
-        List.of(new SimpleConsumeMultiPartitionRequest.PartitionOffset(0, 2))
-    );
+        .partitionOffsets(
+            List.of(new SimpleConsumeMultiPartitionRequest.PartitionOffset(0, 2))
+        )
+        .build();
     var partitionOffsetConsumeResp = consume(topicName, requestWithPartitionOffset);
 
     // Validate that records are consumed from offset 2 onward
@@ -235,9 +251,11 @@ public class KafkaConsumeResourceIT extends ConfluentLocalTestBed {
     };
     createTopicAndProduceRecords(topicName, 1, sampleRecords);
 
-    var rows = consume(topicName, new SimpleConsumeMultiPartitionRequest()
-        .withFromBeginning(true)
-        .withMessageMaxBytes(8)
+    var rows = consume(topicName, SimpleConsumeMultiPartitionRequestBuilder
+        .builder()
+        .fromBeginning(true)
+        .maxPollRecords(8)
+        .build()
     );
 
     // Validate that records are consumed from offset 2 onward
@@ -314,9 +332,11 @@ public class KafkaConsumeResourceIT extends ConfluentLocalTestBed {
       ),1);
     }
 
-    var rows = consume(topic, new SimpleConsumeMultiPartitionRequest()
-        .withFromBeginning(true)
-        .withMaxPollRecords(3)
+    var rows = consume(topic, SimpleConsumeMultiPartitionRequestBuilder
+        .builder()
+        .fromBeginning(true)
+        .maxPollRecords(3)
+        .build()
     );
 
     var newPartitionDataList = rows.partitionDataList();

@@ -286,7 +286,6 @@ public class RecordsV3ApiImpl {
    * Context object for the produce record operation. This object is used to pass around
    * the various request parameters, clients, and computed fields from intermediate steps.
    */
-  // TODO: Use @RecordBuilder everywhere we hand-craft the .with() methods
   @RecordBuilder
   record ProduceContext(
       // Provided

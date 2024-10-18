@@ -113,32 +113,19 @@ public class SchemaManager {
   }
 
   public enum SchemaFormat {
-    AVRO {
-      private final SchemaProvider schemaProvider = new AvroSchemaProvider();
+    AVRO(new AvroSchemaProvider()),
+    PROTOBUF(new ProtobufSchemaProvider()),
+    JSON(new JsonSchemaProvider());
 
-      @Override
-      SchemaProvider schemaProvider() {
-        return schemaProvider;
-      }
-    },
-    PROTOBUF {
-      private final SchemaProvider schemaProvider = new ProtobufSchemaProvider();
+    private final SchemaProvider schemaProvider;
 
-      @Override
-      SchemaProvider schemaProvider() {
-        return schemaProvider;
-      }
-    },
-    JSON {
-      private final SchemaProvider schemaProvider = new JsonSchemaProvider();
+    SchemaFormat(SchemaProvider schemaProvider) {
+      this.schemaProvider = schemaProvider;
+    }
 
-      @Override
-      SchemaProvider schemaProvider() {
-        return schemaProvider;
-      }
-    };
-
-    abstract SchemaProvider schemaProvider();
+    SchemaProvider schemaProvider() {
+      return schemaProvider;
+    }
 
     /**
      * Get the SchemaFormat for the given schema type. Only formats with a schema provider are

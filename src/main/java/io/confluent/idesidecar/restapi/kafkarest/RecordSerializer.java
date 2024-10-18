@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.util.Map;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
-
 /**
  * Encapsulates logic to serialize data based on the schema type. Defaults to JSON serialization
  * if no schema is provided.

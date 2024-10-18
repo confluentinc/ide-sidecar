@@ -3,6 +3,7 @@ package io.confluent.idesidecar.restapi.kafkarest;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequest;
+import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequestBuilder;
 import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
 import io.confluent.idesidecar.restapi.util.ConfluentLocalTestBed;
 import io.confluent.kafka.schemaregistry.client.rest.entities.Schema;
@@ -102,7 +103,11 @@ class RecordsV3ApiImplIT extends ConfluentLocalTestBed {
               "message", equalTo("This server does not host this topic-partition."));
     }
 
-    private static Stream<Arguments> keyAndValueSchemaVersions() {
+    /**
+     * Inputs for test cases for when the key and value schema versions are not found.
+     * @return the Arguments for the test cases
+     */
+    static Stream<Arguments> keyAndValueSchemaVersions() {
       return Stream.of(
           Arguments.of(40, null),
           Arguments.of(null, 40),
@@ -162,7 +167,11 @@ class RecordsV3ApiImplIT extends ConfluentLocalTestBed {
           .body("message", equalTo("Key and value data cannot both be null"));
     }
 
-    private static ArgumentSets badData() {
+    /**
+     * Inputs for test cases for when the schema is not compatible with the data.
+     * @return the ArgumentSets with the combinations of schema formats and bad data
+     */
+    static ArgumentSets badData() {
       return ArgumentSets
           .argumentsForFirstParameter(
               SchemaManager.SchemaFormat.AVRO,
@@ -222,7 +231,11 @@ class RecordsV3ApiImplIT extends ConfluentLocalTestBed {
           .body("message", containsString("Failed to parse data"));
     }
 
-    private static Stream<Arguments> shouldThrowBadRequestForInvalidProtobufData() {
+    /**
+     * Inputs for test cases for when the (Protobuf) schema is not compatible with the data.
+     * @return the arguments for the test cases
+     */
+    static Stream<Arguments> invalidProtobufData() {
       return Stream.of(
           Arguments.of(
               Map.of("id", "invalid", "name", "hello", "price", 123.45)),
@@ -234,7 +247,7 @@ class RecordsV3ApiImplIT extends ConfluentLocalTestBed {
     // Special treatment for protobuf data since it's more liberal in schema validation
     // and there is no way to declare required fields in protobuf.
     @ParameterizedTest
-    @MethodSource("shouldThrowBadRequestForInvalidProtobufData")
+    @MethodSource("invalidProtobufData")
     void shouldThrowBadRequestForInvalidProtobufData(Object badData) {
       shouldThrowBadRequestIfSchemaIsNotCompatibleWithData(
           SchemaManager.SchemaFormat.PROTOBUF, badData
@@ -272,7 +285,11 @@ class RecordsV3ApiImplIT extends ConfluentLocalTestBed {
         schemaData(SchemaManager.SchemaFormat.AVRO, PRODUCT_DATA)
     );
 
-    private static ArgumentSets testProduceAndConsumeData() {
+    /**
+     * Valid keys and values inputs used for producing and consuming data.
+     * @return the sets of keys and sets of values
+     */
+    static ArgumentSets validKeysAndValues() {
       return ArgumentSets
           .argumentsForFirstParameter(RECORD_DATA_VALUES)
           .argumentsForNextParameter(RECORD_DATA_VALUES);
@@ -291,7 +308,7 @@ class RecordsV3ApiImplIT extends ConfluentLocalTestBed {
     }
 
     @CartesianTest
-    @CartesianTest.MethodFactory("testProduceAndConsumeData")
+    @CartesianTest.MethodFactory("validKeysAndValues")
     void testProduceAndConsumeData(RecordData key, RecordData value) {
       var topicName = randomTopicName();
       // Create topic with a single partition
@@ -343,9 +360,11 @@ class RecordsV3ApiImplIT extends ConfluentLocalTestBed {
     private static void assertTopicHasRecord(RecordData key, RecordData value, String topicName) {
       var consumeResponse = consume(
           topicName,
-          new SimpleConsumeMultiPartitionRequest()
-              .withFromBeginning(true)
-              .withMaxPollRecords(1)
+          SimpleConsumeMultiPartitionRequestBuilder
+              .builder()
+              .fromBeginning(true)
+              .maxPollRecords(1)
+              .build()
       );
 
       var records = consumeResponse
@@ -376,9 +395,10 @@ class RecordsV3ApiImplIT extends ConfluentLocalTestBed {
       produceRecord(4, topicName, null, "value8");
       produceRecord(4, topicName, null, "value9");
 
-      var resp = consume(topicName, new SimpleConsumeMultiPartitionRequest()
-          .withFromBeginning(true)
-          .withPartitionOffsets(
+      var resp = consume(topicName, SimpleConsumeMultiPartitionRequestBuilder
+          .builder()
+          .fromBeginning(true)
+          .partitionOffsets(
               List.of(
                   new SimpleConsumeMultiPartitionRequest.PartitionOffset(0, 0),
                   new SimpleConsumeMultiPartitionRequest.PartitionOffset(1, 0),
@@ -386,6 +406,7 @@ class RecordsV3ApiImplIT extends ConfluentLocalTestBed {
                   new SimpleConsumeMultiPartitionRequest.PartitionOffset(3, 0),
                   new SimpleConsumeMultiPartitionRequest.PartitionOffset(4, 0)
               ))
+          .build()
       );
 
       for (var partition : resp.partitionDataList()) {
