@@ -122,7 +122,7 @@ public class ClusterManagerImpl implements ClusterManager {
         .kind("KafkaCluster")
         .metadata(ResourceMetadata
             .builder()
-            .self(forCluster(cluster.id()).toString())
+            .self(forCluster(cluster.id()).getRelated())
             // TODO: Construct resource name based on the connection/cluster type
             .resourceName(null)
             .build()

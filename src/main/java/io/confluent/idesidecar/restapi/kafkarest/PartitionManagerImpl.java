@@ -24,10 +24,8 @@ public class PartitionManagerImpl implements PartitionManager {
             .filter(partitionInfo -> partitionInfo.partition() == partitionId)
             .findFirst()
             .orElseThrow(() -> new UnknownTopicOrPartitionException(
-                "This server does not host topic-partition %d for topic %s".formatted(
-                    partitionId, topicName
-                )
-            ))
+                "This server does not host this topic-partition.")
+            )
         );
   }
 

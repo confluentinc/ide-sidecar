@@ -22,10 +22,15 @@ import io.confluent.kafka.serializers.json.KafkaJsonSchemaSerializer;
 import io.confluent.kafka.serializers.protobuf.KafkaProtobufSerializer;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.BadRequestException;
+import java.io.IOException;
 import java.util.Map;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 
+/**
+ * Encapsulates logic to serialize data based on the schema type. Defaults to JSON serialization
+ * if no schema is provided.
+ */
 @ApplicationScoped
 public class RecordSerializer {
   private static final ObjectMapper objectMapper = new ObjectMapper();
@@ -48,28 +53,11 @@ public class RecordSerializer {
       return serializeJson(topicName, data, isKey);
     }
 
+    var jsonNode = objectMapper.valueToTree(data);
     return switch (SchemaManager.SchemaFormat.fromSchemaType(parsedSchema.schemaType())) {
-      case AVRO -> serializeAvro(
-          client,
-          parsedSchema,
-          topicName,
-          objectMapper.valueToTree(data),
-          isKey
-      );
-      case JSON -> serializeJsonSchema(
-          client,
-          parsedSchema,
-          topicName,
-          objectMapper.valueToTree(data),
-          isKey
-      );
-      case PROTOBUF -> serializeProtobuf(
-          client,
-          parsedSchema,
-          topicName,
-          objectMapper.valueToTree(data),
-          isKey
-      );
+      case AVRO -> serializeAvro(client, parsedSchema, topicName, jsonNode, isKey);
+      case JSON -> serializeJsonSchema(client, parsedSchema, topicName, jsonNode, isKey);
+      case PROTOBUF -> serializeProtobuf(client, parsedSchema, topicName, jsonNode, isKey);
     };
   }
 
@@ -82,14 +70,8 @@ public class RecordSerializer {
   ) {
     try (var avroSerializer = new KafkaAvroSerializer(client)) {
       avroSerializer.configure(getSchemaSerdeConfig(), isKey);
-      AvroSchema schema = (AvroSchema) parsedSchema;
-      Object record;
-      try {
-        record = AvroSchemaUtils.toObject(data, schema);
-      } catch (Exception e) {
-        throw new BadRequestException("Failed to parse Avro data", e);
-      }
-
+      var schema = (AvroSchema) parsedSchema;
+      var record = wrappedToObject(() -> AvroSchemaUtils.toObject(data, schema));
       return ByteString.copyFrom(avroSerializer.serialize(topicName, record));
     }
   }
@@ -103,14 +85,8 @@ public class RecordSerializer {
   ) {
     try (var jsonschemaSerializer = new KafkaJsonSchemaSerializer<>(client)) {
       jsonschemaSerializer.configure(getSchemaSerdeConfig(), isKey);
-      JsonSchema schema = (JsonSchema) parsedSchema;
-      Object record;
-      try {
-        record = JsonSchemaUtils.toObject(data, schema);
-      } catch (Exception e) {
-        throw new BadRequestException("Failed to parse JSON data", e);
-      }
-
+      var schema = (JsonSchema) parsedSchema;
+      var record = wrappedToObject(() -> JsonSchemaUtils.toObject(data, schema));
       return ByteString.copyFrom(jsonschemaSerializer.serialize(topicName, record));
     }
   }
@@ -124,15 +100,28 @@ public class RecordSerializer {
   ) {
     try (var protobufSerializer = new KafkaProtobufSerializer<>(client)) {
       protobufSerializer.configure(getSchemaSerdeConfig(), isKey);
-      ProtobufSchema schema = (ProtobufSchema) parsedSchema;
-      Message record;
-      try {
-        record = (Message) ProtobufSchemaUtils.toObject(data, schema);
-      } catch (Exception e) {
-        throw new BadRequestException("Failed to parse Protobuf data", e);
-      }
-
+      var schema = (ProtobufSchema) parsedSchema;
+      var record = (Message) wrappedToObject(() -> ProtobufSchemaUtils.toObject(data, schema));
       return ByteString.copyFrom(protobufSerializer.serialize(topicName, record));
+    }
+  }
+
+  /**
+   * Cute, eh? This is a functional interface that allows us to pass a supplier that throws a
+   * checked exception.
+   * @param <T> The type of the object to be supplied.
+   */
+  @FunctionalInterface
+  public interface ThrowingSupplier<T, E extends Exception> {
+    T get() throws E;
+  }
+
+  private Object wrappedToObject(ThrowingSupplier<Object, IOException> toObjectSupplier) {
+    try {
+      return toObjectSupplier.get();
+    } catch (Exception e) {
+      throw new BadRequestException(
+          "Failed to parse data: %s".formatted(e.getMessage()), e);
     }
   }
 

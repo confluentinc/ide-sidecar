@@ -19,28 +19,6 @@ import org.junit.jupiter.api.Test;
 public class ClusterV3ApiImplIT extends ConfluentLocalTestBed {
   @Test
   void shouldListKafkaClusters() {
-    // Try to list Kafka clusters when none are available, we should get an empty list
-    givenConnectionId()
-        .when()
-        .get("/internal/kafka/v3/clusters")
-        .then()
-        .statusCode(200)
-        .body("data.size()", equalTo(0));
-
-    // Issue GraphQL query to create a Kafka cluster
-    // The internal Kafka REST implementation _intentionally_ does not have
-    // the ability to discover and fetch metadata about Kafka clusters that it
-    // does not already know about.
-
-    // Issue a get local connections GraphQL query. We don't care about the response.
-    // By issuing the query, GraphQL will try and discover the
-    // Confluent local Kafka cluster by hitting its kafka-rest server running at
-    // http://localhost:8082, upon which the cluster details get cached in the ClusterCache.
-    // The internal Kafka REST implementation then looks in the ClusterCache to fetch
-    // metadata about Kafka clusters.
-    queryGraphQLRaw(loadResource("graph/real/local-connections-query.graphql"));
-
-    // And now, we should be able to list the Kafka cluster
     givenConnectionId()
         .when()
         .get("/internal/kafka/v3/clusters")

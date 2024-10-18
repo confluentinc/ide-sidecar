@@ -9,20 +9,18 @@ import com.google.protobuf.ByteString;
 import io.confluent.idesidecar.restapi.cache.KafkaProducerClients;
 import io.confluent.idesidecar.restapi.cache.SchemaRegistryClients;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequest;
-import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequestData;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceResponse;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceResponseData;
-import io.confluent.kafka.schemaregistry.ParsedSchema;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.infrastructure.Infrastructure;
-import io.vertx.core.http.HttpServerRequest;
-import jakarta.annotation.Nullable;
+import io.soabase.recordbuilder.core.RecordBuilder;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.HeaderParam;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -31,27 +29,14 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Supplier;
 import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 
 
-// We don't implement RecordsV3Api interface since its root path conflicts
-// with the root path of TopicV3ApiImpl.
 @RequestScoped
 @Path("/internal/kafka/v3/clusters/{cluster_id}/topics/{topic_name}/records")
 public class RecordsV3ApiImpl {
-  @Inject
-  RecordSerializer recordSerializer;
-
-  @Inject
-  HttpServerRequest request;
-
-  @Inject
-  SchemaManager schemaManager;
-
   @Inject
   SchemaRegistryClients schemaRegistryClients;
 
@@ -59,94 +44,182 @@ public class RecordsV3ApiImpl {
   KafkaProducerClients kafkaProducerClients;
 
   @Inject
+  RecordSerializer recordSerializer;
+
+  @Inject
+  SchemaManager schemaManager;
+
+  @Inject
   PartitionManager partitionManager;
 
-  Supplier<String> connectionId = () -> request.getHeader(CONNECTION_ID_HEADER);
+  @Inject
+  TopicManager topicManager;
 
   @POST
   @Consumes({ "application/json" })
   @Produces({ "application/json", "text/html" })
   public Uni<ProduceResponse> produceRecord(
+      @HeaderParam(CONNECTION_ID_HEADER) String connectionId,
       @PathParam("cluster_id") String clusterId,
       @PathParam("topic_name") String topicName,
       @Valid ProduceRequest produceRequest
   ) {
-    return Optional
-        .ofNullable(produceRequest.getPartitionId())
-        .map(partitionId -> partitionManager.getKafkaPartition(clusterId, topicName, partitionId))
-        .orElse(Uni.createFrom().nullItem())
-        .onItem()
-        .transformToUni(ignored -> combineUnis(
-            () -> schemaRegistryClients.getClientByKafkaClusterId(connectionId.get(), clusterId),
-            () -> kafkaProducerClients.getClient(connectionId.get(), clusterId)
-        )
-        .asTuple()
-        .runSubscriptionOn(Infrastructure.getDefaultWorkerPool())
-        .onItem().transformToUni(tuple -> produceRecord(
-                clusterId, topicName, produceRequest, tuple.getItem1(), tuple.getItem2()
-            )
-        ));
+    return uniItem(ProduceContext.fromRequest(connectionId, clusterId, topicName, produceRequest))
+        .chain(this::ensureTopicPartitionExists)
+        .chain(this::ensureKeyOrValueDataExists)
+        .chain(this::fetchClients)
+        .chain(this::getSchemas)
+        .chain(this::serialize)
+        .chain(this::sendSerializedRecord)
+        .map(this::toProduceResponse);
   }
 
-  private Uni<ProduceResponse> produceRecord(
-      String clusterId,
-      String topicName,
-      ProduceRequest produceRequest,
-      @Nullable SchemaRegistryClient schemaRegistryClient,
-      KafkaProducer<byte[], byte[]> producer
-  ) {
-    return combineUnis(
-        getSchema(schemaRegistryClient, topicName, produceRequest.getKey(), true),
-        getSchema(schemaRegistryClient, topicName, produceRequest.getValue(), false)
-    )
-        .with((keySchema, valueSchema) -> new ProducePipeline()
-                .withKeySchema(keySchema)
-                .withValueSchema(valueSchema)
-        )
-        .chain(pipeline -> combineUnis(
-            () -> recordSerializer.serialize(
-                schemaRegistryClient,
-                Optional
-                    .ofNullable(pipeline.keySchema())
-                    .map(RegisteredSchema::parsedSchema).orElse(null),
-                topicName,
-                produceRequest.getKey().getData(),
-                true
-            ),
-            () -> recordSerializer.serialize(
-                schemaRegistryClient,
-                Optional
-                    .ofNullable(pipeline.valueSchema())
-                    .map(RegisteredSchema::parsedSchema).orElse(null),
-                topicName,
-                produceRequest.getValue().getData(),
-                false
-            ))
-            .with((key, value) -> pipeline.withKey(key).withValue(value))
-        )
-        .chain(pipeline ->
-            uniStage(sendRecord(
-                producer,
-                topicName,
-                produceRequest.getPartitionId(),
-                produceRequest.getTimestamp(),
-                Optional
-                    .ofNullable(pipeline.serializedKey())
-                    .map(ByteString::toByteArray)
-                    .orElse(null),
-                Optional
-                    .ofNullable(pipeline.serializedValue())
-                    .map(ByteString::toByteArray)
-                    .orElse(null)
-                )
+  /**
+   * Check that the topic-partition exists. If partition id was not provided,
+   * we simply pass through.
+   * @param c The context object.
+   * @return  A Uni that emits the context object after checking the partition. The context object
+   *          is left unchanged in all cases.
+   */
+  private Uni<ProduceContext> ensureTopicPartitionExists(ProduceContext c) {
+    return topicManager
+        // First, check that the topic exists
+        .getKafkaTopic(c.clusterId, c.topicName, false)
+        // Check provided partition exists, if provided
+        .chain(ignored -> Optional
+            .ofNullable(c.produceRequest.getPartitionId())
+            .map(partitionId ->
+                partitionManager.getKafkaPartition(c.clusterId, c.topicName, partitionId)
             )
-            .runSubscriptionOn(Infrastructure.getDefaultWorkerPool())
-            .onItem()
-            .transform(metadata -> toProduceResponse(clusterId, topicName, pipeline, metadata))
+            .orElse(Uni.createFrom().nullItem()))
+        .onItem().transform(ignored -> c);
+  }
+
+  /**
+   * Ensure that either key or value data is provided in the request. If neither is provided,
+   * throw a 400.
+   * @param c The context object.
+   * @return  A Uni that emits the context object if key or value data is provided.
+   */
+  private Uni<ProduceContext> ensureKeyOrValueDataExists(ProduceContext c) {
+    if (c.produceRequest.getKey().getData() == null
+        && c.produceRequest.getValue().getData() == null) {
+      return Uni.createFrom().failure(
+          new BadRequestException("Key and value data cannot both be null")
+      );
+    }
+    return uniItem(c);
+  }
+
+  /**
+   * Fetch the Schema Registry and Kafka Producer clients for the given cluster.
+   * @param c The context object.
+   * @return  A Uni that emits the context object with the clients set.
+   */
+  private Uni<ProduceContext> fetchClients(ProduceContext c) {
+    return combineUnis(
+        () -> schemaRegistryClients.getClientByKafkaClusterId(c.connectionId, c.clusterId),
+        () -> kafkaProducerClients.getClient(c.connectionId, c.clusterId)
+    )
+        .asTuple()
+        // The getClient* methods may end up performing HTTP requests to fetch cluster information,
+        // so we run this on a worker pool of threads.
+        .runSubscriptionOn(Infrastructure.getDefaultWorkerPool())
+        .map(tuple -> c
+            .with()
+            .srClient(tuple.getItem1())
+            .producer(tuple.getItem2())
+            .build()
         );
   }
 
-  private static CompletableFuture<RecordMetadata> sendRecord(
+  /**
+   * Use {@link SchemaManager#getSchema} to fetch schema information that may be provided
+   * for the key and/or value data.
+   * @param c The context object.
+   * @return  A Uni that emits the context object with key/value schema set (can be null).
+   */
+  private Uni<ProduceContext> getSchemas(ProduceContext c) {
+    return combineUnis(
+        () -> schemaManager.getSchema(
+            c.srClient,
+            c.topicName,
+            c.produceRequest.getKey(),
+            true
+        ),
+        () -> schemaManager.getSchema(
+            c.srClient,
+            c.topicName,
+            c.produceRequest.getValue(),
+            false
+        )
+    )
+        .asTuple()
+        // The SchemaRegistryClient uses java.net.HttpURLConnection under the hood
+        // which is a synchronous I/O blocking client, so we run this on a worker pool of threads.
+        .runSubscriptionOn(Infrastructure.getDefaultWorkerPool())
+        .onFailure(RuntimeException.class)
+        .transform(Throwable::getCause)
+        .map(tuple -> c
+            .with()
+            .keySchema(tuple.getItem1())
+            .valueSchema(tuple.getItem2())
+            .build()
+        );
+  }
+
+  /**
+   * Use the {@link RecordSerializer#serialize} to serialize the key and value data
+   * based on optionally provided schema information. If the computed schema is null,
+   * we use the {@link io.confluent.kafka.serializers.KafkaJsonSerializer} to serialize the data.
+   * @param p The context object.
+   * @return  A Uni that emits the context object with the serialized key and value set.
+   */
+  private Uni<ProduceContext> serialize(ProduceContext p) {
+    return combineUnis(
+        () -> recordSerializer.serialize(
+            p.srClient,
+            Optional
+                .ofNullable(p.keySchema)
+                .map(SchemaManager.RegisteredSchema::parsedSchema).orElse(null),
+            p.topicName,
+            p.produceRequest.getKey().getData(),
+            true
+        ),
+        () -> recordSerializer.serialize(
+            p.srClient,
+            Optional
+                .ofNullable(p.valueSchema)
+                .map(SchemaManager.RegisteredSchema::parsedSchema).orElse(null),
+            p.topicName,
+            p.produceRequest.getValue().getData(),
+            false
+        ))
+        .with((key, value) -> p
+            .with()
+            .serializedKey(key)
+            .serializedValue(value)
+            .build()
+        );
+  }
+
+  private Uni<ProduceContext> sendSerializedRecord(ProduceContext p) {
+    return uniStage(sendSerializedRecord(
+            p.producer,
+            p.topicName,
+            p.produceRequest.getPartitionId(),
+            p.produceRequest.getTimestamp(),
+            Optional.ofNullable(p.serializedKey()).map(ByteString::toByteArray).orElse(null),
+            Optional.ofNullable(p.serializedValue()).map(ByteString::toByteArray).orElse(null)
+        ))
+        .map(recordMetadata -> p
+            .with()
+            .recordMetadata(recordMetadata)
+            .build()
+        );
+  }
+
+  private static CompletableFuture<RecordMetadata> sendSerializedRecord(
       KafkaProducer<byte[], byte[]> producer,
       String topicName,
       Integer partitionId,
@@ -159,9 +232,7 @@ public class RecordsV3ApiImpl {
         new ProducerRecord<>(
             topicName,
             partitionId,
-            Optional.ofNullable(timestamp)
-                .orElse(Date.from(Instant.now()))
-                .getTime(),
+            Optional.ofNullable(timestamp).orElse(Date.from(Instant.now())).getTime(),
             key,
             value
         ),
@@ -175,26 +246,21 @@ public class RecordsV3ApiImpl {
     return completableFuture;
   }
 
-  private static ProduceResponse toProduceResponse(
-      String clusterId,
-      String topicName,
-      ProducePipeline pipeline,
-      RecordMetadata metadata
-  ) {
+  private ProduceResponse toProduceResponse(ProduceContext p) {
     return ProduceResponse
         .builder()
-        .clusterId(clusterId)
-        .topicName(topicName)
-        .partitionId(metadata.partition())
-        .offset(metadata.offset())
-        .timestamp(new Date(metadata.timestamp()))
-        .key(toProduceResponseData(pipeline.keySchema(), metadata, true))
-        .value(toProduceResponseData(pipeline.valueSchema(), metadata, false))
+        .clusterId(p.clusterId)
+        .topicName(p.topicName)
+        .partitionId(p.recordMetadata.partition())
+        .offset(p.recordMetadata.offset())
+        .timestamp(new Date(p.recordMetadata.timestamp()))
+        .key(toProduceResponseData(p.keySchema(), p.recordMetadata, true))
+        .value(toProduceResponseData(p.valueSchema(), p.recordMetadata, false))
         .build();
   }
 
   private static ProduceResponseData toProduceResponseData(
-      RegisteredSchema schema,
+      SchemaManager.RegisteredSchema schema,
       RecordMetadata metadata,
       boolean isKey
   ) {
@@ -203,119 +269,60 @@ public class RecordsV3ApiImpl {
         .size((long) (isKey ? metadata.serializedKeySize() : metadata.serializedValueSize()))
         .schemaId(Optional
             .ofNullable(schema)
-            .map(RegisteredSchema::schemaId).orElse(null))
+            .map(SchemaManager.RegisteredSchema::schemaId).orElse(null))
         .subject(Optional
             .ofNullable(schema)
-            .map(RegisteredSchema::subject).orElse(null))
+            .map(SchemaManager.RegisteredSchema::subject).orElse(null))
         .schemaVersion(Optional
             .ofNullable(schema)
-            .map(RegisteredSchema::schemaVersion).orElse(null))
+            .map(SchemaManager.RegisteredSchema::schemaVersion).orElse(null))
         .type(Optional
             .ofNullable(schema)
             .map(s -> s.parsedSchema().schemaType()).orElse(null))
         .build();
   }
 
-  private Uni<RegisteredSchema> getSchema(
-      SchemaRegistryClient schemaRegistryClient,
-      String topicName,
-      ProduceRequestData produceRequestData,
-      boolean isKey
-  ) {
-    if (supportsSchemaVersion(produceRequestData)) {
-      return getSchemaFromSchemaVersion(
-          schemaRegistryClient,
-          topicName,
-          produceRequestData.getSchemaVersion(),
-          isKey
-      );
-    }
-    return Uni.createFrom().nullItem();
-  }
-
   /**
-   * Check if the ProduceRequestData contains a non-null subject and schema version.
+   * Context object for the produce record operation. This object is used to pass around
+   * the various request parameters, clients, and computed fields from intermediate steps.
    */
-  static boolean supportsSchemaVersion(ProduceRequestData produceRequestData) {
-    return produceRequestData.getSchemaVersion() != null;
-  }
-
-  private Uni<RegisteredSchema> getSchemaFromSchemaVersion(
-      @Nullable SchemaRegistryClient schemaRegistryClient,
+  // TODO: Use @RecordBuilder everywhere we hand-craft the .with() methods
+  @RecordBuilder
+  record ProduceContext(
+      // Provided
+      String connectionId,
+      String clusterId,
       String topicName,
-      Integer schemaVersion,
-      boolean isKey
-  ) {
-    if (schemaRegistryClient == null) {
-      if (schemaVersion != null) {
-        throw new BadRequestException("Schema version requested without a schema registry client");
-      }
-      return Uni.createFrom().nullItem();
-    }
-
-    return uniItem(() -> schemaRegistryClient.getByVersion(
-        // Note: We default to TopicNameStrategy for the subject name for the sake of simplicity.
-        (isKey ? topicName + "-key" : topicName + "-value"),
-        schemaVersion,
-        // do not lookup deleted schemas
-        false
-    ))
-        .runSubscriptionOn(Infrastructure.getDefaultWorkerPool())
-        .onFailure(RuntimeException.class)
-        .transform(Throwable::getCause)
-        .onItem()
-        .ifNotNull()
-        .transform(schema -> new RegisteredSchema(
-            schema.getSubject(),
-            schema.getId(),
-            schema.getVersion(),
-            schemaManager.parseSchema(schema))
-        );
-  }
-
-  private record ProducePipeline(
-      RegisteredSchema keySchema,
-      RegisteredSchema valueSchema,
+      ProduceRequest produceRequest,
+      // Fetched
+      KafkaProducer<byte[], byte[]> producer,
+      SchemaRegistryClient srClient,
+      // Computed fields
+      SchemaManager.RegisteredSchema keySchema,
+      SchemaManager.RegisteredSchema valueSchema,
       ByteString serializedKey,
       ByteString serializedValue,
-      Producer<byte[], byte[]> producer,
-      SchemaRegistryClient srClient
-  ) {
-    ProducePipeline() {
-      this(
-          null, null, null, null, null, null);
-    }
-
-    ProducePipeline withKeySchema(RegisteredSchema keySchema) {
-      return new ProducePipeline(
-          keySchema, valueSchema, serializedKey, serializedValue, producer, srClient);
-    }
-
-    ProducePipeline withValueSchema(RegisteredSchema valueSchema) {
-      return new ProducePipeline(
-          keySchema, valueSchema, serializedKey, serializedValue, producer, srClient);
-    }
-
-    ProducePipeline withKey(ByteString key) {
-      return new ProducePipeline(
-          keySchema, valueSchema, key, serializedValue, producer, srClient);
-    }
-
-    ProducePipeline withValue(ByteString value) {
-      return new ProducePipeline(
-          keySchema, valueSchema, serializedKey, value, producer, srClient);
-    }
-  }
-
-  private record RegisteredSchema(
-      String subject,
-      Integer schemaId,
-      Integer schemaVersion,
-      ParsedSchema parsedSchema
-  ) {
-
-    SchemaManager.SchemaFormat format() {
-      return SchemaManager.SchemaFormat.fromSchemaType(parsedSchema.schemaType());
+      RecordMetadata recordMetadata
+  ) implements RecordsV3ApiImplProduceContextBuilder.With {
+    static ProduceContext fromRequest(
+        String connectionId,
+        String clusterId,
+        String topicName,
+        ProduceRequest produceRequest
+    ) {
+      return RecordsV3ApiImplProduceContextBuilder.ProduceContext(
+          connectionId,
+          clusterId,
+          topicName,
+          produceRequest,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+      );
     }
   }
 }

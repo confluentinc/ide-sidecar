@@ -12,6 +12,7 @@ import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
 import io.confluent.kafka.schemaregistry.client.rest.entities.Schema;
 import io.quarkus.test.junit.TestProfile;
 import io.restassured.http.ContentType;
+import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.junit.jupiter.api.AfterAll;
@@ -24,10 +25,13 @@ import org.testcontainers.containers.wait.strategy.Wait;
 import java.time.Duration;
 import java.util.stream.Collectors;
 
+import static io.confluent.idesidecar.restapi.testutil.QueryResourceUtil.queryGraphQLRaw;
+import static io.confluent.idesidecar.restapi.util.ConfluentLocalKafkaWithRestProxyContainer.CLUSTER_ID;
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.asJson;
+import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 
 @TestProfile(NoAccessFilterProfile.class)
@@ -80,6 +84,9 @@ public class ConfluentLocalTestBed implements AutoCloseable {
   @BeforeEach
   public void beforeEach() {
     createConnection();
+
+    // Ensure Kafka and SR clusters are cached
+    queryGraphQLRaw(loadResource("graph/real/local-connections-query.graphql"));
   }
 
   @AfterEach
@@ -96,19 +103,24 @@ public class ConfluentLocalTestBed implements AutoCloseable {
     network.close();
   }
 
-  public static void createTopic(String topicName, int partitions, short replicationFactor) {
-    givenDefault()
+  public static void createTopic(String topicName, int partitions, int replicationFactor) {
+    var resp = givenDefault()
         .body(
             CreateTopicRequestData
                 .builder()
                 .topicName(topicName)
                 .partitionsCount(partitions)
-                .replicationFactor((int) replicationFactor)
+                .replicationFactor(replicationFactor)
                 .build()
         )
         .post("/kafka/v3/clusters/{cluster_id}/topics")
-        .then()
-        .statusCode(200);
+        .then().extract().response();
+
+    if (resp.statusCode() != 200) {
+      fail("Failed to create topic: Status: %d, message: %s".formatted(resp.statusCode(), resp.body().asString()));
+    } else {
+      assertEquals(200, resp.statusCode());
+    }
   }
 
   public static void createTopic(String topicName) {
@@ -210,7 +222,7 @@ public class ConfluentLocalTestBed implements AutoCloseable {
   }
 
   protected static Map<String, String> clusterIdPathParams() {
-    return Map.of("cluster_id", ConfluentLocalKafkaWithRestProxyContainer.CLUSTER_ID);
+    return Map.of("cluster_id", CLUSTER_ID);
   }
 
   public void shouldRaiseErrorWhenConnectionIdIsMissing(String path) {
@@ -234,32 +246,81 @@ public class ConfluentLocalTestBed implements AutoCloseable {
   }
 
   public static void produceRecord(
+      Integer partitionId,
+      String topicName,
+      Object key,
+      Object value
+  ) {
+    produceRecord(partitionId, topicName, key, null, value, null);
+  }
+
+  public static void produceRecord(
+      Integer partitionId,
       String topicName,
       Object key,
       Integer keySchemaVersion,
       Object value,
       Integer valueSchemaVersion
   ) {
-    givenDefault()
-        .body(
-            ProduceRequest.builder()
-                .key(
-                    ProduceRequestData.builder()
-                        .schemaVersion(keySchemaVersion)
-                        .data(key)
-                        .build()
-                )
-                .value(
-                    ProduceRequestData.builder()
-                        .schemaVersion(valueSchemaVersion)
-                        .data(value)
-                        .build()
-                )
+    produceRecordThen(partitionId, topicName, key, keySchemaVersion, value, valueSchemaVersion)
+        .statusCode(200);
+  }
+
+  public static void produceRecord(
+      String topicName,
+      Object key,
+      Integer keySchemaVersion,
+      Object value,
+      Integer valueSchemaVersion
+  ) {
+    produceRecord(null, topicName, key, keySchemaVersion, value, valueSchemaVersion);
+  }
+
+  public static ValidatableResponse produceRecordThen(
+      Integer partitionId,
+      String topicName,
+      Object key,
+      Object value
+  ) {
+    return produceRecordThen(partitionId, topicName, key, null, value, null);
+  }
+
+  public static ValidatableResponse produceRecordThen(
+      Integer partitionId,
+      String topicName,
+      Object key,
+      Integer keySchemaVersion,
+      Object value,
+      Integer valueSchemaVersion
+  ) {
+    return givenDefault()
+        .body(createProduceRequest(partitionId, key, keySchemaVersion, value, valueSchemaVersion))
+        .post("/kafka/v3/clusters/{cluster_id}/topics/%s/records".formatted(topicName))
+        .then();
+  }
+
+  public static ProduceRequest createProduceRequest(
+      Integer partitionId,
+      Object key,
+      Integer keySchemaVersion,
+      Object value,
+      Integer valueSchemaVersion
+  ) {
+    return ProduceRequest.builder()
+        .partitionId(partitionId)
+        .key(
+            ProduceRequestData.builder()
+                .schemaVersion(keySchemaVersion)
+                .data(key)
                 .build()
         )
-        .post("/kafka/v3/clusters/{cluster_id}/topics/%s/records".formatted(topicName))
-        .then()
-        .statusCode(200);
+        .value(
+            ProduceRequestData.builder()
+                .schemaVersion(valueSchemaVersion)
+                .data(value)
+                .build()
+        )
+        .build();
   }
 
   public static SimpleConsumeMultiPartitionResponse consume(
@@ -293,7 +354,7 @@ public class ConfluentLocalTestBed implements AutoCloseable {
 
   public Schema createSchema(String subject, String schemaType, String schema) {
     var srCluster = getSchemaRegistryCluster();
-    givenConnectionId()
+    var createSchemaVersionResp = givenConnectionId()
         .headers(
             "X-cluster-id", srCluster.id()
         )
@@ -302,8 +363,13 @@ public class ConfluentLocalTestBed implements AutoCloseable {
             "schema", schema
         ))
         .post("/subjects/%s/versions".formatted(subject))
-        .then()
-        .statusCode(200);
+        .then().extract().response();
+
+    if (createSchemaVersionResp.statusCode() != 200) {
+      fail("Failed to create schema: %s".formatted(createSchemaVersionResp.body().asString()));
+    } else {
+      assertEquals(200, createSchemaVersionResp.statusCode());
+    }
 
     // Sleep for a bit to allow the schema to be registered
     try {

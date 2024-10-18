@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test;
 public class PartitionV3ApiImplIT extends ConfluentLocalTestBed {
   @Test
   void shouldListTopicPartitions() {
-    createTopic("topic-multiple-partitions", 3, (short) 1);
+    createTopic("topic-multiple-partitions", 3, 1);
 
     givenDefault()
         .when()
@@ -28,7 +28,7 @@ public class PartitionV3ApiImplIT extends ConfluentLocalTestBed {
 
   @Test
   void shouldGetTopicPartition() {
-    createTopic("topic-single-partition", 1, (short) 1);
+    createTopic("topic-single-partition", 1, 1);
 
     givenDefault()
         .when()
@@ -56,7 +56,7 @@ public class PartitionV3ApiImplIT extends ConfluentLocalTestBed {
 
   @Test
   void shouldThrow404WhenGettingNonExistentPartition() {
-    createTopic("topic-single-partition", 1, (short) 1);
+    createTopic("topic-single-partition", 1, 1);
 
     givenDefault()
         .when()
@@ -65,7 +65,7 @@ public class PartitionV3ApiImplIT extends ConfluentLocalTestBed {
         .statusCode(404)
         .body("error_code", equalTo(404))
         .body("message", equalTo(
-            "This server does not host topic-partition 3 for topic topic-single-partition"
+            "This server does not host this topic-partition."
         ));
   }
 
