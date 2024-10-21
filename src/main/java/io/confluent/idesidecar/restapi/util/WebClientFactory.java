@@ -23,6 +23,8 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
+import java.util.HashMap;
+import java.util.List;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
@@ -36,7 +38,7 @@ public class WebClientFactory {
   static final String LINE_SEPARATOR = System.lineSeparator();
   static final String CERT_HEADER = "-----BEGIN CERTIFICATE-----" + LINE_SEPARATOR;
   static final String CERT_FOOTER = LINE_SEPARATOR + "-----END CERTIFICATE-----" + LINE_SEPARATOR;
-  static final String WINDOWS_TRUST_STORE_NAME = "WINDOWS-MY";
+  static final List<String> WINDOWS_TRUST_STORE_NAMES = List.of("WINDOWS-MY", "WINDOWS-ROOT");
 
   /**
    * It's important that we use the Quarkus-managed Vertx instance here
@@ -102,7 +104,9 @@ public class WebClientFactory {
     if (OsUtil.getOperatingSystem() == OS.WINDOWS) {
       var pemTrustOptions = new PemTrustOptions();
       addCertsFromBuiltInTrustStore(pemTrustOptions);
-      addCertsFromSystemKeyStore(WINDOWS_TRUST_STORE_NAME, pemTrustOptions);
+      for (var trustStoreName : WINDOWS_TRUST_STORE_NAMES) {
+        addCertsFromSystemKeyStore(trustStoreName, pemTrustOptions);
+      }
       // We should not update the WebClient's PEM trust options if we haven't been able to read
       // certs from the baked-in or system trust store.
       if (!pemTrustOptions.getCertValues().isEmpty()) {
@@ -131,7 +135,7 @@ public class WebClientFactory {
     try {
       // Load certs from trust store baked into native executable so that we don't lose access to
       // them
-      Log.debug("Loading certificates from build-time trust store.");
+      Log.info("Loading certificates from build-time trust store.");
       var trustManagerFactory = TrustManagerFactory
           .getInstance(TrustManagerFactory.getDefaultAlgorithm());
       trustManagerFactory.init((KeyStore) null);
@@ -163,20 +167,23 @@ public class WebClientFactory {
   void addCertsFromSystemKeyStore(String keyStoreType, PemTrustOptions pemTrustOptions) {
     try {
       // Load certs from provided trust store
-      Log.debug("Loading certificates from system key store.");
+      Log.infof("Loading certificates from system key store %s.", keyStoreType);
       var keyStore = KeyStore.getInstance(keyStoreType);
       keyStore.load(null, null);
+      var countByType = new HashMap<String, Integer>();
       var it = keyStore.aliases().asIterator();
       while (it.hasNext()) {
         var certAlias = it.next();
         var cert = keyStore.getCertificate(certAlias);
-        Log.debugf(
-            "Adding certificate %s of type %s",
-            certAlias,
-            cert.getClass().getCanonicalName()
-        );
+        var type = cert.getClass().getCanonicalName();
+        Log.debugf("Adding certificate %s of type %s", certAlias, type);
         pemTrustOptions.addCertValue(Buffer.buffer(certToString(cert)));
+        countByType.compute(type, (k, v) -> v == null ? 1 : v + 1);
       }
+      // Log the number of certificates added for each type
+      countByType.forEach((type, count) ->
+          Log.infof("Added %d certificates from %s of type %s", count, keyStoreType, type)
+      );
     } catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException e) {
       var stringWriter = new StringWriter();
       e.printStackTrace(new PrintWriter(stringWriter));
