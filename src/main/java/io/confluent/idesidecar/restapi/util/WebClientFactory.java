@@ -23,6 +23,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
+import java.util.HashMap;
 import java.util.List;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
@@ -169,17 +170,20 @@ public class WebClientFactory {
       Log.infof("Loading certificates from system key store %s.", keyStoreType);
       var keyStore = KeyStore.getInstance(keyStoreType);
       keyStore.load(null, null);
+      var countByType = new HashMap<String, Integer>();
       var it = keyStore.aliases().asIterator();
       while (it.hasNext()) {
         var certAlias = it.next();
         var cert = keyStore.getCertificate(certAlias);
-        Log.infof(
-            "Adding certificate %s of type %s",
-            certAlias,
-            cert.getClass().getCanonicalName()
-        );
+        var type = cert.getClass().getCanonicalName();
+        Log.debugf("Adding certificate %s of type %s", certAlias, type);
         pemTrustOptions.addCertValue(Buffer.buffer(certToString(cert)));
+        countByType.compute(type, (k, v) -> v == null ? 1 : v + 1);
       }
+      // Log the number of certificates added for each type
+      countByType.forEach((type, count) ->
+          Log.infof("Added %d certificates from %s of type %s", count, keyStoreType, type)
+      );
     } catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException e) {
       var stringWriter = new StringWriter();
       e.printStackTrace(new PrintWriter(stringWriter));
