@@ -216,6 +216,9 @@ class ClusterRestProxyResourceTest {
                     .withStatus(200)
                     .withHeader("Content-Type", "application/json")
                     .withHeader("x-ccloud-specific-header", "fake-value")
+                    // Explicitly disable gzip since RestAssured sends the
+                    // Accept-Encoding: gzip header by default
+                    .withGzipDisabled(true)
                     .withBody(
                         new String(Objects.requireNonNull(
                             Thread
@@ -275,16 +278,21 @@ class ClusterRestProxyResourceTest {
 
     // Given we have a fake CCloud Schema Registry server endpoint for list schemas
     wireMock.register(
-        WireMock.get("/schemas")
+        WireMock
+            .get("/schemas")
             .withHeader("Authorization",
                 new EqualToPattern("Bearer %s".formatted(dataPlaneToken.token()))
             )
             .withHeader("target-sr-cluster", new EqualToPattern(srClusterId))
+            .withHeader("x-non-sidecar-specific-header", new EqualToPattern("dummy"))
             .willReturn(
                 WireMock.aResponse()
                     .withStatus(200)
                     .withHeader("Content-Type", "application/json")
                     .withHeader("x-ccloud-specific-header", "fake-value")
+                    // Explicitly disable gzip since RestAssured sends the
+                    // Accept-Encoding: gzip header by default
+                    .withGzipDisabled(true)
                     .withBody(
                         new String(Objects.requireNonNull(
                             Thread
@@ -301,7 +309,10 @@ class ClusterRestProxyResourceTest {
         .when()
         .headers(Map.of(
             "x-connection-id", CONNECTION_ID,
-            "x-cluster-id", srClusterId
+            "x-cluster-id", srClusterId,
+            // Assert that any headers sent to the proxy are passed through
+            // to the target server
+             "x-non-sidecar-specific-header", "dummy"
         ))
         .get("/schemas")
         .then();
