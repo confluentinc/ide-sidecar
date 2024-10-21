@@ -7,9 +7,9 @@
 
 The following 3rd-party software packages may be used by or distributed with git@github.com:confluentinc/ide-sidecar.git. Any information relevant to third-party vendors listed below are collected using common, reasonable means.
 
-Date generated: 2024-10-16
+Date generated: 2024-10-18
 
-Revision ID: 7d1a7ee915869ea20bed8dede3cad618e2fe77ae
+Revision ID: 1d65e5c4764bf9ab1f983f7089661c42fe11c18e
 
 ================================================================================
 ================================================================================
@@ -11763,6 +11763,39 @@ See the License for the specific language governing permissions and limitations 
 Package Download URL: https://repo1.maven.org/maven2/io/smallrye/jandex/3.2.2/jandex-3.2.2-sources.jar
 
 --------------------------------------------------------------------------------
+Package Title: Java Composer (1.0)
+
+Package Locator: mvn+io.soabase.java-composer:java-composer$1.0
+
+Package Depth: Transitive
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+Apache-2.0
+
+
+Copyright 2015 Square, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+See the License for the specific language governing permissions and limitations under the License.
+
+
+* Package Info *
+
+Authors: Jordan Zimmerman
+
+Package Download URL: https://repo1.maven.org/maven2/io/soabase/java-composer/java-composer/1.0/java-composer-1.0-sources.jar
+
+--------------------------------------------------------------------------------
 Package Title: Java Concurrency Tools Core Library (4.0.5)
 
 Package Locator: mvn+org.jctools:jctools-core$4.0.5
@@ -19118,6 +19151,68 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 Authors: Reactive Streams SIG
 
 Package Download URL: https://repo1.maven.org/maven2/org/reactivestreams/reactive-streams/1.0.4/reactive-streams-1.0.4-sources.jar
+
+--------------------------------------------------------------------------------
+Package Title: record-builder-core (43)
+
+Package Locator: mvn+io.soabase.record-builder:record-builder-core$43
+
+Package Depth: Transitive
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+Apache-2.0
+
+
+Copyright 2019 The original author or authors
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+See the License for the specific language governing permissions and limitations under the License.
+
+
+* Package Info *
+
+Package Download URL: https://repo1.maven.org/maven2/io/soabase/record-builder/record-builder-core/43/record-builder-core-43-sources.jar
+
+--------------------------------------------------------------------------------
+Package Title: record-builder-processor (43)
+
+Package Locator: mvn+io.soabase.record-builder:record-builder-processor$43
+
+Package Depth: Direct
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+Apache-2.0
+
+
+Copyright 2019 The original author or authors
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+See the License for the specific language governing permissions and limitations under the License.
+
+
+* Package Info *
+
+Package Download URL: https://repo1.maven.org/maven2/io/soabase/record-builder/record-builder-processor/43/record-builder-processor-43-sources.jar
 
 --------------------------------------------------------------------------------
 Package Title: RESTEasy Reactive - Common Runtime (3.15.1)
@@ -26628,6 +26723,8 @@ Copyright (c) 2012 The Netty Project
 
 Copyright (c) 2017 Remko Popma
 
+Copyright (c) 2019 The original author or authors
+
 Copyright (c) 2011-2021 Contributors to the Eclipse Foundation
 
 Copyright (c) project.inceptionYear}-{currentYear} <a href="http://redhat.com">Red Hat Inc.</a>  All Rights Reserved.
@@ -26664,9 +26761,9 @@ Copyright (c) 2019,2020 Eclipse Foundation.<br>
 
 Copyright (c) 2013 Red Hat, Inc., and individual contributors
 
-Copyright (c) 2016 The original author or authors
-
 Copyright (c) 2015 Square, Inc.
+
+Copyright (c) 2016 The original author or authors
 
 Copyright (c) 2023 Red Hat, Inc., and individual contributors
 
@@ -26919,15 +27016,15 @@ Copyright (c)  ignoreyear>false</copyright.ignoreyear>
 
 Copyright (c) 2016, 2024 Oracle and/or its affiliates. All rights reserved.
 
-Copyright (c) 2016, 2022 Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2015, 2022 Oracle and/or its affiliates. All rights reserved.
 
 Copyright (c) 2021, 2022 Oracle and/or its affiliates. All rights reserved.
 
 Copyright (c) 2021, 2023 Oracle and/or its affiliates. All rights reserved.
 
-Copyright (c) 2019, 2022 Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2016, 2022 Oracle and/or its affiliates. All rights reserved.
 
-Copyright (c) 2015, 2022 Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2019, 2022 Oracle and/or its affiliates. All rights reserved.
 
 Copyright (c) 2015, 2020 Oracle and/or its affiliates. All rights reserved.
 
@@ -27844,4 +27941,4 @@ Public Domain
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
-Report Generated by FOSSA on 2024-10-16
+Report Generated by FOSSA on 2024-10-18
