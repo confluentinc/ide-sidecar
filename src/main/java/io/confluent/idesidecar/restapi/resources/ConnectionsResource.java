@@ -1,5 +1,7 @@
 package io.confluent.idesidecar.restapi.resources;
 
+import static io.confluent.idesidecar.restapi.util.MutinyUtil.uniStage;
+
 import io.confluent.idesidecar.restapi.connections.ConnectionState;
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
 import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
@@ -8,8 +10,8 @@ import io.confluent.idesidecar.restapi.exceptions.Failure;
 import io.confluent.idesidecar.restapi.models.Connection;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionsList;
+import io.smallrye.common.annotation.Blocking;
 import io.smallrye.mutiny.Uni;
-import io.vertx.core.Future;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
@@ -20,17 +22,26 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.stream.Collectors;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 
 /**
- * API endpoints for managing Sidecar connections.
+ * API endpoints for managing Sidecar connections. We use the {@link Blocking} annotation
+ * to run the endpoints on the Quarkus worker thread pool instead of the event loop threads (also
+ * called I/O threads). This is because we call the blocking method
+ * {@link io.confluent.idesidecar.restapi.auth.CCloudOAuthContext#checkAuthenticationStatus} in
+ * some of the endpoints.
  */
 @Path(ConnectionsResource.API_RESOURCE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
+@Blocking
 public class ConnectionsResource {
 
   public static final String API_RESOURCE_PATH = "/gateway/v1/connections";
@@ -41,20 +52,25 @@ public class ConnectionsResource {
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   public Uni<ConnectionsList> listConnections() {
-    var connections = connectionStateManager
-        .getConnectionStates()
-        .stream()
-        .map(connection -> getConnectionModel(connection.getSpec().id()))
-        .toList();
+    return Uni.createFrom()
+        .item(() -> connectionStateManager.getConnectionStates())
+        .onItem().transformToUni(connectionStates -> {
+          var connectionFutures = connectionStates
+              .stream()
+              .map(connection -> uniStage(() -> getConnectionModel(connection.getSpec().id())))
+              .collect(Collectors.toList());
 
-    Future<ConnectionsList> future = Future.future(handler ->
-        Future
-            .join(connections)
-            .onSuccess(result -> handler.complete(ConnectionsList.from(result.list())))
-            .onFailure(handler::fail)
-    );
-
-    return Uni.createFrom().completionStage(future.toCompletionStage());
+          return Uni
+              .combine()
+              .all()
+              .unis(connectionFutures)
+              .with(connections -> {
+                List<Connection> connectionList = connections.stream()
+                    .map(connection -> (Connection) connection)
+                    .collect(Collectors.toList());
+                return new ConnectionsList(connectionList);
+              });
+        });
   }
 
   @POST
@@ -71,9 +87,7 @@ public class ConnectionsResource {
   @Path("/{id}")
   @Produces(MediaType.APPLICATION_JSON)
   public Uni<Connection> getConnection(@PathParam("id") String id) {
-    return Uni
-        .createFrom()
-        .completionStage(getConnectionModel(id).toCompletionStage());
+    return uniStage(() -> getConnectionModel(id));
   }
 
   @PUT
@@ -113,8 +127,7 @@ public class ConnectionsResource {
   public Uni<Connection> updateConnection(@PathParam("id") String id, ConnectionSpec spec) {
     return connectionStateManager
         .updateSpecForConnectionState(id, spec)
-        .chain(ignored ->
-            Uni.createFrom().completionStage(getConnectionModel(id).toCompletionStage()));
+        .chain(ignored -> uniStage(() -> getConnectionModel(id)));
   }
 
   @DELETE
@@ -123,15 +136,16 @@ public class ConnectionsResource {
     connectionStateManager.deleteConnectionState(id);
   }
 
-  private Future<Connection> getConnectionModel(String id) {
+  private CompletionStage<Connection> getConnectionModel(String id) {
     try {
       ConnectionState connectionState = connectionStateManager.getConnectionState(id);
 
       return connectionState
           .getConnectionStatus()
-          .map(connectionStatus -> Connection.from(connectionState, connectionStatus));
+          .map(connectionStatus -> Connection.from(connectionState, connectionStatus))
+          .toCompletionStage();
     } catch (ConnectionNotFoundException e) {
-      return Future.failedFuture(e);
+      return CompletableFuture.failedFuture(e);
     }
   }
 }
