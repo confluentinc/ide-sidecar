@@ -4,7 +4,9 @@ import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
 import io.confluent.idesidecar.restapi.util.UriUtil;
 import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpHeaders;
+import java.util.List;
 import java.util.regex.Pattern;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
  * Holds default implementations for processing constructing the proxy URI, headers before
@@ -18,8 +20,17 @@ public abstract class ClusterStrategy {
 
   static UriUtil uriUtil = new UriUtil();
 
+  @ConfigProperty(name = "ide-sidecar.cluster-proxy.http-header-exclusions")
+  List<String> httpHeaderExclusions;
+
   public MultiMap constructProxyHeaders(ClusterProxyContext context) {
-    return HttpHeaders.headers();
+    var headers = HttpHeaders.headers();
+    context.getRequestHeaders().forEach(header -> {
+      if (!httpHeaderExclusions.contains(header.getKey())) {
+        headers.add(header.getKey(), header.getValue());
+      }
+    });
+    return headers;
   }
 
   public String constructProxyUri(String requestUri, String clusterUri) {
