@@ -119,6 +119,8 @@ ide-sidecar:
     enabled: true
     # How often to check?
     interval-seconds: 60
+  webclient:
+    connect-timeout-ms: 10000
 
 quarkus:
   application:
