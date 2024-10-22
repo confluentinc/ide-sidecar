@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.List;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
  * Factory class for {@link WebClient}s. Returns a new Vert.x web client while making sure that a
@@ -39,7 +40,9 @@ public class WebClientFactory {
   static final String CERT_HEADER = "-----BEGIN CERTIFICATE-----" + LINE_SEPARATOR;
   static final String CERT_FOOTER = LINE_SEPARATOR + "-----END CERTIFICATE-----" + LINE_SEPARATOR;
   static final List<String> WINDOWS_TRUST_STORE_NAMES = List.of("WINDOWS-MY", "WINDOWS-ROOT");
-  static final Integer CONNECT_TIMEOUT = 10000;
+
+  @ConfigProperty(name = "ide-sidecar.webclient.connect-timeout-ms")
+  Integer webClientConnectTimeoutMs;
 
   /**
    * It's important that we use the Quarkus-managed Vertx instance here
@@ -101,7 +104,7 @@ public class WebClientFactory {
 
   WebClientOptions getDefaultWebClientOptions() {
     var clientOptions = new WebClientOptions();
-    clientOptions.setConnectTimeout(CONNECT_TIMEOUT);
+    clientOptions.setConnectTimeout(webClientConnectTimeoutMs);
 
     if (OsUtil.getOperatingSystem() == OS.WINDOWS) {
       var pemTrustOptions = new PemTrustOptions();
