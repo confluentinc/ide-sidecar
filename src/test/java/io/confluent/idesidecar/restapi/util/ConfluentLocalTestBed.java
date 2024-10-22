@@ -11,6 +11,8 @@ import java.util.*;
 import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
 import io.confluent.kafka.schemaregistry.client.rest.entities.Schema;
 import io.quarkus.test.junit.TestProfile;
+import io.restassured.RestAssured;
+import io.restassured.config.DecoderConfig;
 import io.restassured.http.ContentType;
 import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
@@ -218,6 +220,13 @@ public class ConfluentLocalTestBed implements AutoCloseable {
 
   protected static RequestSpecification givenConnectionId(String connectionId) {
     return given()
+        .config(
+            // https://stackoverflow.com/a/67876342 saves the day
+            // Not specifying this will lead to a `java.util.zip.ZipException: Not in GZIP format` error
+            // even though the response is not gzipped, because RestAssured tries to decode it as such
+            // by default. This is a workaround to disable the default decoders.
+            RestAssured.config().decoderConfig(DecoderConfig.decoderConfig().noContentDecoders())
+        )
         .header("X-connection-id", connectionId);
   }
 
@@ -356,6 +365,7 @@ public class ConfluentLocalTestBed implements AutoCloseable {
     var srCluster = getSchemaRegistryCluster();
     var createSchemaVersionResp = givenConnectionId()
         .headers(
+             "Content-Type", "application/json",
             "X-cluster-id", srCluster.id()
         )
         .body(Map.of(

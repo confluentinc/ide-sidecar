@@ -77,6 +77,7 @@ class RecordsV3ApiImplIT extends ConfluentLocalTestBed {
     @Test
     void shouldThrowNotFoundWhenClusterDoesNotExist() {
       givenConnectionId()
+          .header("Content-Type", "application/json")
           .body(createProduceRequest(
               null, "key", null, "value", null
           ))

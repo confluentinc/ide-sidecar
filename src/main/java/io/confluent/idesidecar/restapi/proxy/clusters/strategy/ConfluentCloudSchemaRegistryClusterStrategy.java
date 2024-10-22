@@ -3,7 +3,6 @@ package io.confluent.idesidecar.restapi.proxy.clusters.strategy;
 import io.confluent.idesidecar.restapi.connections.CCloudConnectionState;
 import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
 import io.vertx.core.MultiMap;
-import io.vertx.core.http.HttpHeaders;
 import jakarta.enterprise.context.ApplicationScoped;
 
 /**
@@ -16,7 +15,7 @@ public class ConfluentCloudSchemaRegistryClusterStrategy extends ClusterStrategy
 
   @Override
   public MultiMap constructProxyHeaders(ClusterProxyContext context) {
-    var headers = HttpHeaders.headers();
+    var headers = super.constructProxyHeaders(context);
     if (context.getConnectionState() instanceof CCloudConnectionState cCloudConnectionState) {
       cCloudConnectionState.getOauthContext()
           .getDataPlaneAuthenticationHeaders()
