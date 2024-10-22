@@ -120,12 +120,6 @@ public class CCloudOAuthContext implements AuthContext {
         return Future.failedFuture(new CCloudAuthenticationFailedException(errorMessage));
       }
 
-      try {
-        Thread.sleep(5000);
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-      }
-
       return webClientFactory.getWebClient()
           .getAbs(CCloudOAuthConfig.CCLOUD_CONTROL_PLANE_CHECK_JWT_URI)
           .putHeaders(getControlPlaneAuthenticationHeaders())
