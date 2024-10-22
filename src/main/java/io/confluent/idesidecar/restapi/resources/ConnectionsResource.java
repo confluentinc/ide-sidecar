@@ -1,5 +1,6 @@
 package io.confluent.idesidecar.restapi.resources;
 
+import static io.confluent.idesidecar.restapi.util.MutinyUtil.uniItem;
 import static io.confluent.idesidecar.restapi.util.MutinyUtil.uniStage;
 
 import io.confluent.idesidecar.restapi.connections.ConnectionState;
@@ -59,16 +60,19 @@ public class ConnectionsResource {
               .stream()
               .map(connection -> uniStage(() -> getConnectionModel(connection.getSpec().id())))
               .collect(Collectors.toList());
-
+          if (connectionFutures.isEmpty()) {
+            return uniItem(ConnectionsList.from(List.of()));
+          }
           return Uni
               .combine()
               .all()
               .unis(connectionFutures)
               .with(connections -> {
-                List<Connection> connectionList = connections.stream()
+                var connectionList = connections
+                    .stream()
                     .map(connection -> (Connection) connection)
                     .collect(Collectors.toList());
-                return new ConnectionsList(connectionList);
+                return ConnectionsList.from(connectionList);
               });
         });
   }
