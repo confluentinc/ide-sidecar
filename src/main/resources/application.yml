@@ -154,6 +154,18 @@ ide-sidecar:
     "auto.register.schemas": "false"
     # Do not try to fetch the latest version of the schema from the registry
     "use.latest.version": "false"
+  cluster-proxy:
+    # Exclude these HTTP headers when proxying requests to the remote cluster (Kafka or Schema Registry)
+    # It shouldn't really hurt if we _don't_ exclude these headers, but it's just cleaner to do so.
+    http-header-exclusions:
+      - x-connection-id
+      - x-cluster-id
+      - Authorization
+      - Host
+      - Connection
+      # This may contradict UTF-8 decoding done in the proxy response processing
+      # https://github.com/confluentinc/ide-sidecar/issues/102
+      - Accept-Encoding
 
 quarkus:
   application:
