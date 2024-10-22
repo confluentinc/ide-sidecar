@@ -1,8 +1,5 @@
 package io.confluent.idesidecar.restapi.resources;
 
-import static io.confluent.idesidecar.restapi.util.MutinyUtil.uniItem;
-import static io.confluent.idesidecar.restapi.util.MutinyUtil.uniStage;
-
 import io.confluent.idesidecar.restapi.connections.ConnectionState;
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
 import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
@@ -58,10 +55,14 @@ public class ConnectionsResource {
         .onItem().transformToUni(connectionStates -> {
           var connectionFutures = connectionStates
               .stream()
-              .map(connection -> uniStage(() -> getConnectionModel(connection.getSpec().id())))
+              .map(connection -> Uni
+                  .createFrom()
+                  .completionStage(() -> getConnectionModel(connection.getSpec().id())))
               .collect(Collectors.toList());
           if (connectionFutures.isEmpty()) {
-            return uniItem(ConnectionsList.from(List.of()));
+            return Uni
+                .createFrom()
+                .item(ConnectionsList.from(List.of()));
           }
           return Uni
               .combine()
@@ -91,7 +92,7 @@ public class ConnectionsResource {
   @Path("/{id}")
   @Produces(MediaType.APPLICATION_JSON)
   public Uni<Connection> getConnection(@PathParam("id") String id) {
-    return uniStage(() -> getConnectionModel(id));
+    return Uni.createFrom().completionStage(() -> getConnectionModel(id));
   }
 
   @PUT
@@ -131,7 +132,7 @@ public class ConnectionsResource {
   public Uni<Connection> updateConnection(@PathParam("id") String id, ConnectionSpec spec) {
     return connectionStateManager
         .updateSpecForConnectionState(id, spec)
-        .chain(ignored -> uniStage(() -> getConnectionModel(id)));
+        .chain(ignored -> Uni.createFrom().completionStage(() -> getConnectionModel(id)));
   }
 
   @DELETE
