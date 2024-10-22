@@ -144,6 +144,12 @@ ide-sidecar:
     http-header-exclusions:
       - x-connection-id
       - x-cluster-id
+      - Authorization
+      - Host
+      - Connection
+      # This may contradict UTF-8 decoding done in the proxy response processing
+      # https://github.com/confluentinc/ide-sidecar/issues/102
+      - Accept-Encoding
 
 quarkus:
   application:
