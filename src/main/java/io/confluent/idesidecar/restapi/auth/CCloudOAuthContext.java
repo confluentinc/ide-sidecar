@@ -99,20 +99,23 @@ public class CCloudOAuthContext implements AuthContext {
   @Override
   public Future<Boolean> checkAuthenticationStatus() {
     writeLock.lock();
-    {
-      final var controlPlaneToken = tokens.get().controlPlaneToken;
-      // This context can't be authenticated if it does not hold a control plane token
-      if (isTokenMissing(controlPlaneToken)) {
-        var errorMessage =
-            "Cannot verify authentication status because no control plane token is available. It's "
-                + "likely that this connection has not yet completed the authentication with CCloud.";
-        tokens.updateAndGet(oldTokens ->
-            oldTokens.withErrors(
-                oldTokens.errors.withAuthStatusCheck(errorMessage)));
-        writeLock.unlock();
-        return Future.failedFuture(new CCloudAuthenticationFailedException(errorMessage));
-      }
+    final var controlPlaneToken = tokens.get().controlPlaneToken;
+    // This context can't be authenticated if it does not hold a control plane token
+    if (isTokenMissing(controlPlaneToken)) {
+      var errorMessage =
+          "Cannot verify authentication status because no control plane token is available. It's "
+              + "likely that this connection has not yet completed the authentication with CCloud.";
+      tokens.updateAndGet(oldTokens ->
+          oldTokens.withErrors(
+              oldTokens.errors.withAuthStatusCheck(errorMessage)));
+      // Unlock the write lock before returning the failed future
+      writeLock.unlock();
+      return Future.failedFuture(new CCloudAuthenticationFailedException(errorMessage));
     }
+
+    // Unlock the write lock before making the API call
+    // so that other concurrent tasks in this Vertx event loop thread, as well as tasks in
+    // other threads can access the tokens while we wait for the response.
     writeLock.unlock();
 
     return webClientFactory
@@ -139,8 +142,8 @@ public class CCloudOAuthContext implements AuthContext {
           }
         })
         .onSuccess(result -> {
-          // Reset any existing error related to auth status check
           writeLock.lock();
+          // Reset any existing error related to auth status check
           tokens.updateAndGet(oldTokens ->
               oldTokens.withErrors(
                   oldTokens.errors.withoutAuthStatusCheck()));
