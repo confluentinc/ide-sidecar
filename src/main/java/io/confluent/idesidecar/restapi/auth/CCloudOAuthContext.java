@@ -99,55 +99,60 @@ public class CCloudOAuthContext implements AuthContext {
   @Override
   public Future<Boolean> checkAuthenticationStatus() {
     writeLock.lock();
-    try {
+    {
       final var controlPlaneToken = tokens.get().controlPlaneToken;
       // This context can't be authenticated if it does not hold a control plane token
       if (isTokenMissing(controlPlaneToken)) {
         var errorMessage =
             "Cannot verify authentication status because no control plane token is available. It's "
-            + "likely that this connection has not yet completed the authentication with CCloud.";
+                + "likely that this connection has not yet completed the authentication with CCloud.";
         tokens.updateAndGet(oldTokens ->
             oldTokens.withErrors(
                 oldTokens.errors.withAuthStatusCheck(errorMessage)));
+        writeLock.unlock();
         return Future.failedFuture(new CCloudAuthenticationFailedException(errorMessage));
       }
-
-      return webClientFactory.getWebClient()
-          .getAbs(CCloudOAuthConfig.CCLOUD_CONTROL_PLANE_CHECK_JWT_URI)
-          .putHeaders(getControlPlaneAuthenticationHeaders())
-          .send()
-          .map(result -> {
-            try {
-              var response = OBJECT_MAPPER.readValue(result.bodyAsString(), CheckJwtResponse.class);
-              if (response.error() != null && !response.error().isNull()) {
-                Log.errorf("Error in CCloud response while verifying the auth status "
-                    + "of this connection: %s", response.error());
-                // depending on what kinds of errors we get from CCloud, we might want to
-                // throw a different exception here (e.g. 429 Too Many Requests)
-              }
-              // If the response does not return any error, we can assume that we are successfully
-              // authenticated with the CCloud API.
-              return response.error().isNull();
-            } catch (JsonProcessingException e) {
-              throw new CCloudAuthenticationFailedException(
-                  "Could not parse the response from Confluent Cloud when verifying the "
-                  + "authentication status of this connection.", e);
-            }
-          })
-          .onSuccess(result ->
-              // Reset any existing error related to auth status check
-              tokens.updateAndGet(oldTokens ->
-                  oldTokens.withErrors(
-                      oldTokens.errors.withoutAuthStatusCheck()))
-          )
-          .onFailure(failure ->
-              tokens.updateAndGet(oldTokens ->
-                  oldTokens.withErrors(
-                      oldTokens.errors.withAuthStatusCheck(failure.getMessage())))
-          );
-    } finally {
-      writeLock.unlock();
     }
+    writeLock.unlock();
+
+    return webClientFactory
+        .getWebClient()
+        .getAbs(CCloudOAuthConfig.CCLOUD_CONTROL_PLANE_CHECK_JWT_URI)
+        .putHeaders(getControlPlaneAuthenticationHeaders())
+        .send()
+        .map(result -> {
+          try {
+            var response = OBJECT_MAPPER.readValue(result.bodyAsString(), CheckJwtResponse.class);
+            if (response.error() != null && !response.error().isNull()) {
+              Log.errorf("Error in CCloud response while verifying the auth status "
+                  + "of this connection: %s", response.error());
+              // depending on what kinds of errors we get from CCloud, we might want to
+              // throw a different exception here (e.g. 429 Too Many Requests)
+            }
+            // If the response does not return any error, we can assume that we are successfully
+            // authenticated with the CCloud API.
+            return response.error().isNull();
+          } catch (JsonProcessingException e) {
+            throw new CCloudAuthenticationFailedException(
+                "Could not parse the response from Confluent Cloud when verifying the "
+                + "authentication status of this connection.", e);
+          }
+        })
+        .onSuccess(result -> {
+          // Reset any existing error related to auth status check
+          writeLock.lock();
+          tokens.updateAndGet(oldTokens ->
+              oldTokens.withErrors(
+                  oldTokens.errors.withoutAuthStatusCheck()));
+          writeLock.unlock();
+        })
+        .onFailure(failure -> {
+          writeLock.lock();
+          tokens.updateAndGet(oldTokens ->
+              oldTokens.withErrors(
+                  oldTokens.errors.withAuthStatusCheck(failure.getMessage())));
+          writeLock.unlock();
+        });
   }
 
   /**
