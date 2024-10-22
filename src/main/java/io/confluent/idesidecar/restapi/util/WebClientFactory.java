@@ -39,6 +39,7 @@ public class WebClientFactory {
   static final String CERT_HEADER = "-----BEGIN CERTIFICATE-----" + LINE_SEPARATOR;
   static final String CERT_FOOTER = LINE_SEPARATOR + "-----END CERTIFICATE-----" + LINE_SEPARATOR;
   static final List<String> WINDOWS_TRUST_STORE_NAMES = List.of("WINDOWS-MY", "WINDOWS-ROOT");
+  static final Integer CONNECT_TIMEOUT = 10000;
 
   /**
    * It's important that we use the Quarkus-managed Vertx instance here
@@ -100,6 +101,7 @@ public class WebClientFactory {
 
   WebClientOptions getDefaultWebClientOptions() {
     var clientOptions = new WebClientOptions();
+    clientOptions.setConnectTimeout(CONNECT_TIMEOUT);
 
     if (OsUtil.getOperatingSystem() == OS.WINDOWS) {
       var pemTrustOptions = new PemTrustOptions();
