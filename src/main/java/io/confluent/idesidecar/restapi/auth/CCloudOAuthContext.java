@@ -21,6 +21,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.client.HttpRequest;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import java.nio.charset.StandardCharsets;
@@ -89,8 +90,15 @@ public class CCloudOAuthContext implements AuthContext {
 
   /**
    * Performs an API call against CCloud's <code>/api/check_jwt</code> endpoint to see if the
-   * control plane token is valid.
-   *
+   * control plane token is valid. Note that this method may block the calling thread on the
+   * following conditions:
+   * <ul>
+   *   <li>When another task holds the write lock</li>
+   *   <li>When the host machine is unable to resolve the CCloud server's hostname
+   *       due to DNS issues. The {@link HttpRequest#send()} method synchronously tries to
+   *       resolve the hostname before sending the request.
+   *   </li>
+   * </ul>
    * @return Succeeded future holding the boolean value true if the token is valid. Succeeded future
    *         holding the boolean value false if the token is not valid. Failed future holding the
    *         cause of the failure if any error occurred while interacting with the CCloud API, e.g.,
@@ -115,6 +123,8 @@ public class CCloudOAuthContext implements AuthContext {
       return webClientFactory.getWebClient()
           .getAbs(CCloudOAuthConfig.CCLOUD_CONTROL_PLANE_CHECK_JWT_URI)
           .putHeaders(getControlPlaneAuthenticationHeaders())
+          // Synchronously tries to DNS resolve the hostname before sending the request
+          // Calling threads beware!
           .send()
           .map(result -> {
             try {
