@@ -4,10 +4,9 @@ import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
 import io.confluent.idesidecar.restapi.util.UriUtil;
 import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpHeaders;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-
 import java.util.List;
 import java.util.regex.Pattern;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
  * Holds default implementations for processing constructing the proxy URI, headers before
