@@ -10,9 +10,8 @@ import io.confluent.idesidecar.restapi.exceptions.Failure;
 import io.confluent.idesidecar.restapi.models.Connection;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionsList;
-import io.quarkus.logging.Log;
+import io.smallrye.common.annotation.Blocking;
 import io.smallrye.mutiny.Uni;
-import io.smallrye.mutiny.infrastructure.Infrastructure;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
@@ -33,11 +32,16 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 
 /**
- * API endpoints for managing Sidecar connections.
+ * API endpoints for managing Sidecar connections. We use the {@link Blocking} annotation
+ * to run the endpoints on the Quarkus worker thread pool instead of the event loop threads (also
+ * called I/O threads). This is because we call the blocking method
+ * {@link io.confluent.idesidecar.restapi.auth.CCloudOAuthContext#checkAuthenticationStatus} in
+ * some of the endpoints.
  */
 @Path(ConnectionsResource.API_RESOURCE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
+@Blocking
 public class ConnectionsResource {
 
   public static final String API_RESOURCE_PATH = "/gateway/v1/connections";
@@ -53,9 +57,7 @@ public class ConnectionsResource {
         .onItem().transformToUni(connectionStates -> {
           var connectionFutures = connectionStates
               .stream()
-              .map(connection -> Uni
-                  .createFrom()
-                  .completionStage(() -> getConnectionModel(connection.getSpec().id())))
+              .map(connection -> uniStage(() -> getConnectionModel(connection.getSpec().id())))
               .collect(Collectors.toList());
 
           return Uni
@@ -68,8 +70,7 @@ public class ConnectionsResource {
                     .collect(Collectors.toList());
                 return new ConnectionsList(connectionList);
               });
-        })
-        .runSubscriptionOn(Infrastructure.getDefaultWorkerPool());
+        });
   }
 
   @POST
@@ -86,13 +87,7 @@ public class ConnectionsResource {
   @Path("/{id}")
   @Produces(MediaType.APPLICATION_JSON)
   public Uni<Connection> getConnection(@PathParam("id") String id) {
-    Log.infof(
-        "Handling get connection request for thread %d",
-        Thread.currentThread().threadId());
-    return Uni
-        .createFrom()
-        .completionStage(() -> getConnectionModel(id))
-        .runSubscriptionOn(Infrastructure.getDefaultWorkerPool());
+    return uniStage(() -> getConnectionModel(id));
   }
 
   @PUT
@@ -132,8 +127,7 @@ public class ConnectionsResource {
   public Uni<Connection> updateConnection(@PathParam("id") String id, ConnectionSpec spec) {
     return connectionStateManager
         .updateSpecForConnectionState(id, spec)
-        .chain(ignored -> uniStage(() -> getConnectionModel(id)))
-        .runSubscriptionOn(Infrastructure.getDefaultWorkerPool());
+        .chain(ignored -> uniStage(() -> getConnectionModel(id)));
   }
 
   @DELETE
