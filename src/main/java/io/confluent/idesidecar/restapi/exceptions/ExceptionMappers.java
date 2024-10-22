@@ -74,15 +74,35 @@ public class ExceptionMappers {
         .build();
   }
 
+  @ServerExceptionMapper
+  public Response mapFlagNotFoundException(
+      FlagNotFoundException exception
+  ) {
+
+    Failure failure = new Failure(
+        exception,
+        Status.NOT_FOUND,
+        "resource_missing", exception.getMessage(), uuidFactory.getRandomUuid(),
+        null);
+    return Response
+        .status(Status.NOT_FOUND)
+        .entity(failure)
+        // Explicitly set the content type to JSON here
+        // since the resource method may have set it to something else
+        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+        .build();
+  }
 
   @ServerExceptionMapper
   public Response mapGenericTemplateRegistryException(TemplateRegistryException exception) {
     Failure failure = new Failure(
         exception,
         Status.INTERNAL_SERVER_ERROR,
-        exception.getCode(), Status.INTERNAL_SERVER_ERROR.getReasonPhrase(),
+        exception.getCode(),
+        Status.INTERNAL_SERVER_ERROR.getReasonPhrase(),
         uuidFactory.getRandomUuid(),
-        null);
+        null
+    );
     return Response
         .status(Status.INTERNAL_SERVER_ERROR)
         .entity(failure)
@@ -114,9 +134,11 @@ public class ExceptionMappers {
     Failure failure = new Failure(
         exception,
         Status.INTERNAL_SERVER_ERROR,
-        exception.getCode(), Status.INTERNAL_SERVER_ERROR.getReasonPhrase(),
+        exception.getCode(),
+        Status.INTERNAL_SERVER_ERROR.getReasonPhrase(),
         uuidFactory.getRandomUuid(),
-        null);
+        null
+    );
     return Response
         .status(Status.INTERNAL_SERVER_ERROR)
         .entity(failure)
