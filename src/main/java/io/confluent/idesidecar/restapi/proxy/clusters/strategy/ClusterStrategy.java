@@ -25,11 +25,8 @@ public abstract class ClusterStrategy {
 
   public MultiMap constructProxyHeaders(ClusterProxyContext context) {
     var headers = HttpHeaders.headers();
-    context.getRequestHeaders().forEach(header -> {
-      if (!httpHeaderExclusions.contains(header.getKey())) {
-        headers.add(header.getKey(), header.getValue());
-      }
-    });
+    headers.addAll(context.getRequestHeaders());
+    httpHeaderExclusions.forEach(headers::remove);
     return headers;
   }
 
