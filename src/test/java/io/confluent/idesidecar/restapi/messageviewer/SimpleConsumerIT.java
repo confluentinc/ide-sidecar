@@ -4,14 +4,20 @@ import static io.confluent.idesidecar.restapi.kafkarest.SchemaManager.SCHEMA_PRO
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeData;
-import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeRecord;
+import io.confluent.idesidecar.restapi.messageviewer.data.ConsumeRequest;
+import io.confluent.idesidecar.restapi.messageviewer.data.ConsumeRequestBuilder;
+import io.confluent.idesidecar.restapi.messageviewer.data.ConsumeResponse.PartitionConsumeData;
+import io.confluent.idesidecar.restapi.messageviewer.data.ConsumeResponse.PartitionConsumeRecord;
 import io.confluent.idesidecar.restapi.proto.Message.MyMessage;
 import io.confluent.idesidecar.restapi.util.ConfluentLocalTestBed;
 import io.confluent.idesidecar.restapi.util.RequestHeadersConstants;
 import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
 import io.quarkus.test.junit.QuarkusIntegrationTest;
 import java.util.*;
+
+import jakarta.inject.Inject;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -30,7 +36,9 @@ public class SimpleConsumerIT extends ConfluentLocalTestBed {
     consumerProps.setProperty("bootstrap.servers", getBootstrapServers());
     consumerProps.setProperty("schema.registry.url", sidecarHost);
     simpleConsumer = new SimpleConsumer(
-        consumerProps,
+        new KafkaConsumer<>(
+            consumerProps, new ByteArrayDeserializer(), new ByteArrayDeserializer()
+        ),
         new CachedSchemaRegistryClient(
             Collections.singletonList(sidecarHost),
             10,
@@ -40,7 +48,8 @@ public class SimpleConsumerIT extends ConfluentLocalTestBed {
                 RequestHeadersConstants.CONNECTION_ID_HEADER, CONNECTION_ID,
                 RequestHeadersConstants.CLUSTER_ID_HEADER, schemaRegistry.id()
             )
-        )
+        ),
+        new RecordDeserializer()
     );
   }
 
@@ -68,10 +77,10 @@ public class SimpleConsumerIT extends ConfluentLocalTestBed {
       );
     }
 
-    Map<Integer, Long> offsets = new HashMap<>();
-    offsets.put(0, 0L);  // Assuming single partition, start from offset 0
-    List<PartitionConsumeData> response = simpleConsumer.consumeFromMultiplePartitions(
-        topic, offsets, true, null, 10, null, null);
+    List<PartitionConsumeData> response = simpleConsumer.consume(
+        topic,
+        consumeRequestSinglePartitionFromOffsetZero()
+    );
 
     assertEquals(1, response.size(), "Should have data for 1 partition");
     PartitionConsumeData partitionData = response.getFirst();
@@ -131,10 +140,7 @@ public class SimpleConsumerIT extends ConfluentLocalTestBed {
       );
     }
 
-    Map<Integer, Long> offsets = new HashMap<>();
-    offsets.put(0, 0L);  // Assuming single partition, start from offset 0
-    var response = simpleConsumer.consumeFromMultiplePartitions(
-        topic, offsets, true, null, 10, null, null);
+    var response = simpleConsumer.consume(topic, consumeRequestSinglePartitionFromOffsetZero());
 
     assertEquals(1, response.size(), "Should have data for 1 partition");
     PartitionConsumeData partitionData = response.getFirst();
@@ -170,10 +176,7 @@ public class SimpleConsumerIT extends ConfluentLocalTestBed {
       );
     }
 
-    Map<Integer, Long> offsets = new HashMap<>();
-    offsets.put(0, 0L);  // Assuming single partition, start from offset 0
-    var response = simpleConsumer.consumeFromMultiplePartitions(
-        topic, offsets, true, null, 10, null, null);
+    var response = simpleConsumer.consume(topic, consumeRequestSinglePartitionFromOffsetZero());
 
     assertEquals(1, response.size(), "Should have data for 1 partition");
     PartitionConsumeData partitionData = response.getFirst();
@@ -199,10 +202,7 @@ public class SimpleConsumerIT extends ConfluentLocalTestBed {
     };
     produceStringRecords(topic, records);
 
-    Map<Integer, Long> offsets = new HashMap<>();
-    offsets.put(0, 0L);  // Assuming single partition, start from offset 0
-    var response = simpleConsumer.consumeFromMultiplePartitions(
-        topic, offsets, true, null, 10, null, null);
+    var response = simpleConsumer.consume(topic, consumeRequestSinglePartitionFromOffsetZero());
 
     assertEquals(1, response.size(), "Should have data for 1 partition");
     PartitionConsumeData partitionData = response.getFirst();
@@ -217,4 +217,17 @@ public class SimpleConsumerIT extends ConfluentLocalTestBed {
       assertEquals(records[i][1], value, "Value should match");
     }
   }
+
+  private static ConsumeRequest consumeRequestSinglePartitionFromOffsetZero() {
+    return ConsumeRequestBuilder
+        .builder()
+        .partitionOffsets(
+            Collections.singletonList(
+                // Assuming single partition, start from offset 0
+                new ConsumeRequest.PartitionOffset(0, 0L)
+            )
+        )
+        .build();
+  }
+
 }

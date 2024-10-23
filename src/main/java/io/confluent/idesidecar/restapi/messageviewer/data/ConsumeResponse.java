@@ -16,7 +16,7 @@ import java.util.List;
  */
 @JsonInclude(Include.NON_NULL)
 @RegisterForReflection
-public record SimpleConsumeMultiPartitionResponse(
+public record ConsumeResponse(
     @JsonProperty("cluster_id") String clusterId,
     @JsonProperty("topic_name") String topicName,
     @JsonProperty("partition_data_list") List<PartitionConsumeData> partitionDataList
@@ -104,17 +104,6 @@ public record SimpleConsumeMultiPartitionResponse(
   public record PartitionConsumeRecordHeader(
       @JsonProperty("key") String key,
       @JsonProperty("value") String value
-  ) {}
-
-
-  /**
-   * Represents a value encoded as a Base64 string.
-   *
-   * @param raw The Base64 encoded string.
-   */
-  @RegisterForReflection
-  public record SchemaEncodedValue(
-      @JsonProperty("__raw__") String raw // Base64 encoded string
   ) {}
 
   /**

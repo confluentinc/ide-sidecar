@@ -8,11 +8,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.idesidecar.restapi.cache.SchemaRegistryClients;
 import io.confluent.idesidecar.restapi.connections.CCloudConnectionState;
 import io.confluent.idesidecar.restapi.exceptions.ProcessorFailedException;
-import io.confluent.idesidecar.restapi.messageviewer.DecoderUtil;
 import io.confluent.idesidecar.restapi.messageviewer.MessageViewerContext;
-import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
-import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeData;
-import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeRecord;
+import io.confluent.idesidecar.restapi.messageviewer.RecordDeserializer;
+import io.confluent.idesidecar.restapi.messageviewer.data.ConsumeResponse;
+import io.confluent.idesidecar.restapi.messageviewer.data.ConsumeResponse.PartitionConsumeData;
+import io.confluent.idesidecar.restapi.messageviewer.data.ConsumeResponse.PartitionConsumeRecord;
 import io.confluent.idesidecar.restapi.proxy.ProxyHttpClient;
 import io.confluent.idesidecar.restapi.util.WebClientFactory;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
@@ -26,6 +26,8 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import java.util.ArrayList;
+import java.util.Base64;
+import java.util.Optional;
 
 /**
  * Requests & handles the response from Confluent Cloud for message viewer functionality.
@@ -33,9 +35,14 @@ import java.util.ArrayList;
 @ApplicationScoped
 public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
   static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+  static final Base64.Decoder BASE64_DECODER = Base64.getDecoder();
+  static final Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
 
   @Inject
   WebClientFactory webClientFactory;
+
+  @Inject
+  RecordDeserializer deserializer;
 
   @Inject
   SchemaRegistryClients schemaRegistryClients;
@@ -88,9 +95,9 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
     }
 
     try {
-      SimpleConsumeMultiPartitionResponse data = OBJECT_MAPPER.readValue(
+      ConsumeResponse data = OBJECT_MAPPER.readValue(
           rawTopicRowsResponse,
-          SimpleConsumeMultiPartitionResponse.class
+          ConsumeResponse.class
       );
       var processedPartitionResponse = decodeSchemaEncodedValues(context, data);
       context.setConsumeResponse(processedPartitionResponse);
@@ -119,7 +126,7 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
   private MessageViewerContext handleEmptyOrNullResponseFromCCloud(
       MessageViewerContext context
   ) {
-    var data = new SimpleConsumeMultiPartitionResponse(
+    var data = new ConsumeResponse(
         context.getClusterId(),
         context.getTopicName(),
         new ArrayList<>());
@@ -133,9 +140,9 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
    * @param context     The MessageViewerContext.
    * @param rawResponse The MultiPartitionConsumeResponse to decode.
    */
-  private SimpleConsumeMultiPartitionResponse decodeSchemaEncodedValues(
+  private ConsumeResponse decodeSchemaEncodedValues(
       MessageViewerContext context,
-      SimpleConsumeMultiPartitionResponse rawResponse
+      ConsumeResponse rawResponse
   ) {
     var schemaRegistry = context.getSchemaRegistryInfo();
     if (schemaRegistry == null) {
@@ -153,7 +160,7 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
         .map(partitionData -> processPartition(partitionData, context, schemaRegistryClient))
         .toList();
 
-    return new SimpleConsumeMultiPartitionResponse(
+    return new ConsumeResponse(
         rawResponse.clusterId(),
         rawResponse.topicName(),
         processedPartitions
@@ -177,15 +184,17 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
     var processedRecords = partitionConsumeData
         .records().stream()
         .map(record -> {
-          var decodedRecordKey = decodeValue(
+          var keyData = deserialize(
               record.key(),
               schemaRegistryClient,
-              context.getTopicName()
+              context.getTopicName(),
+              true
           );
-          var decodedRecordValue = decodeValue(
+          var valueData = deserialize(
               record.value(),
               schemaRegistryClient,
-              context.getTopicName()
+              context.getTopicName(),
+              false
           );
 
           return new PartitionConsumeRecord(
@@ -194,10 +203,10 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
               record.timestamp(),
               record.timestampType(),
               record.headers(),
-              decodedRecordKey.getValue(),
-              decodedRecordValue.getValue(),
-              decodedRecordKey.getErrorMessage(),
-              decodedRecordValue.getErrorMessage(),
+              keyData.value(),
+              valueData.value(),
+              keyData.errorMessage(),
+              valueData.errorMessage(),
               record.exceededFields()
           );
         })
@@ -211,23 +220,49 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
   }
 
   /**
-   * Decodes a value using the SchemaRegistryClient if it is schema-encoded.
+   * Confluent Cloud specific deserialization logic. We might get back a __raw__ field in the
+   * message data, which indicates that the data is schema-encoded. If so, we first Base64 decode
+   * the data and use the . If not, we return the message data as is.
    *
-   * @param value                The value to decode.
+   * @param data                The value to decode.
    * @param schemaRegistryClient The SchemaRegistryClient to use for decoding.
-   * @param topicName  The name of the topic.
+   * @param topicName            The name of the topic.
    * @return The decoded value.
    */
-  private DecoderUtil.DecodedResult decodeValue(
-      JsonNode value,
+  private RecordDeserializer.DecodedResult deserialize(
+      JsonNode data,
       SchemaRegistryClient schemaRegistryClient,
-      String topicName) {
-    if (value.has("__raw__")) {
-      String rawValue = value.get("__raw__").asText();
-      return DecoderUtil.decodeAndDeserialize(rawValue, schemaRegistryClient, topicName);
+      String topicName,
+      boolean isKey
+  ) {
+    if (data.has("__raw__")) {
+      // We know that Confluent Cloud encodes raw data in Base64, so decode appropriately.
+      byte[] decodedBytes;
+      try {
+        decodedBytes = BASE64_DECODER.decode(data.get("__raw__").asText());
+      } catch (IllegalArgumentException e) {
+        // For whatever reason, we couldn't decode the Base64 string.
+        // Log the error and return the raw data.
+        Log.error("Error decoding Base64 string: %s", data, e);
+        return new RecordDeserializer.DecodedResult(data, e.getMessage());
+      }
+
+      // Pass the decoded bytes to the deserializer to get the JSON representation
+      // of the data, informed by the schema.
+      return deserializer.deserialize(
+          decodedBytes,
+          schemaRegistryClient,
+          topicName,
+          isKey,
+          Optional.of(BASE64_ENCODER::encode)
+      );
+    } else {
+      // Data is not schema-encoded, so return it as is.
+      return new RecordDeserializer.DecodedResult(data, null);
     }
-    return new DecoderUtil.DecodedResult(value, null);
   }
+
+
 
   /**
    * Constructs the URL to query messages from the specified topic in Confluent Cloud.
