@@ -166,6 +166,8 @@ ide-sidecar:
       # This may contradict UTF-8 decoding done in the proxy response processing
       # https://github.com/confluentinc/ide-sidecar/issues/102
       - Accept-Encoding
+  webclient:
+    connect-timeout-ms: 10000
 
 quarkus:
   application:
