@@ -316,8 +316,6 @@ public class KafkaConsumeResourceTest {
 
   @Test
   void testConsumeRecordsProtoSchemaTopic() throws JsonProcessingException {
-    var protobufResponseFromCCloud = loadResource(
-        "message-viewer/ccloud-records-consume-proto.json");
     var expectedProtoResponse = loadResource("message-viewer/consume-proto-topic-expected-response.json");
     ObjectMapper objectMapper = new ObjectMapper();
     JsonNode expectedNode = objectMapper.readTree(expectedProtoResponse);

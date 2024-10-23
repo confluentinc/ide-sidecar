@@ -9,6 +9,7 @@ import io.confluent.idesidecar.restapi.events.Lifecycle;
 import io.quarkus.logging.Log;
 import jakarta.enterprise.event.ObservesAsync;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
@@ -46,7 +47,12 @@ public abstract class Clients<T extends AutoCloseable> {
    * already exist, it will be created using the provided factory.
    *
    * @param connectionId     the ID of the connection
-   * @param clientId         the identifier of the client
+   * @param clientId         the identifier of the client. Client {@link T} instances
+   *                         are cached and retrieved by this ID.
+   *                         You may get creative with this, for example, you may
+   *                         use a cluster ID and a hash of the client configuration to
+   *                         cache clients per cluster and configuration. See
+   *                         {@link KafkaConsumerClients#getClient(String, String, Properties)}.
    * @param factory          the method that will create the client if there is not already one
    * @return the client
    */

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Message;
+import io.confluent.idesidecar.restapi.util.ConfigUtil;
 import io.confluent.kafka.schemaregistry.ParsedSchema;
 import io.confluent.kafka.schemaregistry.avro.AvroSchema;
 import io.confluent.kafka.schemaregistry.avro.AvroSchemaUtils;
@@ -20,7 +21,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.BadRequestException;
 import java.io.IOException;
 import java.util.Map;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
+
 
 /**
  * Encapsulates logic to serialize data based on the schema type. Defaults to JSON serialization
@@ -30,8 +31,8 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 public class RecordSerializer {
   private static final ObjectMapper objectMapper = new ObjectMapper();
 
-  @ConfigProperty(name = "ide-sidecar.serializer-configs")
-  Map<String, String> serializerConfigs;
+  private static final Map<String, String> SERDE_CONFIGS = ConfigUtil
+      .asMap("ide-sidecar.serde-configs");
 
   public ByteString serialize(
       SchemaRegistryClient client,
@@ -64,7 +65,7 @@ public class RecordSerializer {
       boolean isKey
   ) {
     try (var avroSerializer = new KafkaAvroSerializer(client)) {
-      avroSerializer.configure(serializerConfigs, isKey);
+      avroSerializer.configure(SERDE_CONFIGS, isKey);
       var schema = (AvroSchema) parsedSchema;
       var record = wrappedToObject(() -> AvroSchemaUtils.toObject(data, schema));
       return ByteString.copyFrom(avroSerializer.serialize(topicName, record));
@@ -79,7 +80,7 @@ public class RecordSerializer {
       boolean isKey
   ) {
     try (var jsonschemaSerializer = new KafkaJsonSchemaSerializer<>(client)) {
-      jsonschemaSerializer.configure(serializerConfigs, isKey);
+      jsonschemaSerializer.configure(SERDE_CONFIGS, isKey);
       var schema = (JsonSchema) parsedSchema;
       var record = wrappedToObject(() -> JsonSchemaUtils.toObject(data, schema));
       return ByteString.copyFrom(jsonschemaSerializer.serialize(topicName, record));
@@ -94,7 +95,7 @@ public class RecordSerializer {
       boolean isKey
   ) {
     try (var protobufSerializer = new KafkaProtobufSerializer<>(client)) {
-      protobufSerializer.configure(serializerConfigs, isKey);
+      protobufSerializer.configure(SERDE_CONFIGS, isKey);
       var schema = (ProtobufSchema) parsedSchema;
       var record = (Message) wrappedToObject(() -> ProtobufSchemaUtils.toObject(data, schema));
       return ByteString.copyFrom(protobufSerializer.serialize(topicName, record));
@@ -122,7 +123,7 @@ public class RecordSerializer {
 
   private ByteString serializeJson(String topicName, Object data, boolean isKey) {
     try (var kafkaJsonSerializer = new KafkaJsonSerializer<>()) {
-      kafkaJsonSerializer.configure(serializerConfigs, isKey);
+      kafkaJsonSerializer.configure(SERDE_CONFIGS, isKey);
       return ByteString.copyFrom(kafkaJsonSerializer.serialize(topicName, data));
     }
   }
