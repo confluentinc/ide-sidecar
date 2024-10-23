@@ -23,11 +23,12 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.config.ConfigProvider;
 
 /**
  * Factory class for {@link WebClient}s. Returns a new Vert.x web client while making sure that a
@@ -41,8 +42,12 @@ public class WebClientFactory {
   static final String CERT_FOOTER = LINE_SEPARATOR + "-----END CERTIFICATE-----" + LINE_SEPARATOR;
   static final List<String> WINDOWS_TRUST_STORE_NAMES = List.of("WINDOWS-MY", "WINDOWS-ROOT");
 
-  @ConfigProperty(name = "ide-sidecar.webclient.connect-timeout-ms")
-  Integer webClientConnectTimeoutMs;
+  static final Duration WEBCLIENT_CONNECT_TIMEOUT_SECONDS = Duration.ofSeconds(
+      ConfigProvider
+          .getConfig()
+          .getValue(
+              "ide-sidecar.webclient.connect-timeout-seconds",
+              Long.class));
 
   /**
    * It's important that we use the Quarkus-managed Vertx instance here
@@ -104,7 +109,7 @@ public class WebClientFactory {
 
   WebClientOptions getDefaultWebClientOptions() {
     var clientOptions = new WebClientOptions();
-    clientOptions.setConnectTimeout(webClientConnectTimeoutMs);
+    clientOptions.setConnectTimeout((int) WEBCLIENT_CONNECT_TIMEOUT_SECONDS.toMillis());
 
     if (OsUtil.getOperatingSystem() == OS.WINDOWS) {
       var pemTrustOptions = new PemTrustOptions();

@@ -120,7 +120,7 @@ ide-sidecar:
     # How often to check?
     interval-seconds: 60
   webclient:
-    connect-timeout-ms: 10000
+    connect-timeout-seconds: 10
 
 quarkus:
   application:
