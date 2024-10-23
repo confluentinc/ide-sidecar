@@ -15,6 +15,7 @@ import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.JsonFormat;
 import graphql.VisibleForTesting;
+import io.confluent.idesidecar.restapi.kafkarest.SchemaFormat;
 import io.confluent.idesidecar.restapi.util.ConfigUtil;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
@@ -22,6 +23,7 @@ import io.confluent.kafka.serializers.KafkaAvroDeserializer;
 import io.confluent.kafka.serializers.json.KafkaJsonSchemaDeserializer;
 import io.confluent.kafka.serializers.protobuf.KafkaProtobufDeserializer;
 import io.quarkus.logging.Log;
+import io.soabase.recordbuilder.core.RecordBuilder;
 import jakarta.enterprise.context.ApplicationScoped;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -50,18 +52,21 @@ public class RecordDeserializer {
       .asMap("ide-sidecar.serde-configs");
 
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-  private static final ObjectMapper avroObjectMapper = new AvroMapper(new AvroFactory());
+  private static final ObjectMapper AVRO_OBJECT_MAPPER = new AvroMapper(new AvroFactory());
   public static final byte MAGIC_BYTE = 0x0;
   private static final Duration CACHE_FAILED_SCHEMA_ID_FETCH_DURATION = Duration.ofSeconds(30);
-  private static final Cache<Integer, String> schemaFetchErrorCache = Caffeine.newBuilder()
+  private static final Cache<Integer, String> SCHEMA_FETCH_ERROR_CACHE = Caffeine.newBuilder()
       .expireAfterWrite(CACHE_FAILED_SCHEMA_ID_FETCH_DURATION)
       .build();
 
-  public record DecodedResult(JsonNode value, String errorMessage) {
+  @RecordBuilder
+  public record DecodedResult(JsonNode value, String errorMessage)
+      implements RecordDeserializerDecodedResultBuilder.With {
   }
 
+  @VisibleForTesting
   static void clearCachedFailures() {
-    schemaFetchErrorCache.invalidateAll();
+    SCHEMA_FETCH_ERROR_CACHE.invalidateAll();
   }
 
   /**
@@ -79,80 +84,6 @@ public class RecordDeserializer {
     // The first byte is the magic byte, so we skip it
     ByteBuffer buffer = ByteBuffer.wrap(rawBytes, 1, 4);
     return buffer.getInt();
-  }
-
-  /**
-   * Deserializes the given bytes to JSON based on the schema type retrieved from the
-   * SchemaRegistryClient.
-   *
-   * @param bytes                The bytes to deserialize.
-   * @param schemaRegistryClient The SchemaRegistryClient used for retrieving the schema.
-   * @param topicName            Name of topic.
-   * @param isKey                Whether the bytes are a key or value.
-   * @return The deserialized JsonNode.
-   */
-  @SuppressWarnings("checkstyle:NPathComplexity")
-  private DecodedResult deserializeToJson(
-      byte[] bytes,
-      SchemaRegistryClient schemaRegistryClient,
-      String topicName,
-      boolean isKey,
-      Optional<Function<byte[], byte[]>> encoderOnFailure
-  ) {
-    if (bytes == null || bytes.length == 0) {
-      return new DecodedResult(OBJECT_MAPPER.nullNode(), null);
-    }
-
-    final int schemaId = getSchemaIdFromRawBytes(bytes);
-    // Check if schema retrieval has failed recently
-    var cachedError = schemaFetchErrorCache.getIfPresent(schemaId);
-    if (cachedError != null) {
-      return new DecodedResult(
-          // If the schema fetch failed, we can't decode the data, so we just return the raw bytes.
-          // We apply the encoderOnFailure function to the bytes before returning them.
-          onFailure(encoderOnFailure, bytes),
-          cachedError
-      );
-    }
-
-    try {
-      // Attempt to get the schema from the schema registry
-      var schemaType = schemaRegistryClient.getSchemaById(schemaId).schemaType();
-      var decodedJson = switch (schemaType) {
-        case "AVRO" -> handleAvro(bytes, topicName, schemaRegistryClient, isKey);
-        case "PROTOBUF" -> handleProtobuf(bytes, topicName, schemaRegistryClient, isKey);
-        case "JSON" -> handleJson(bytes, topicName, schemaRegistryClient, isKey);
-        default -> OBJECT_MAPPER.readTree(new String(bytes, StandardCharsets.UTF_8));
-      };
-      return new DecodedResult(decodedJson, null);
-    } catch (RestClientException e) {
-      var retryTime = Instant.now().plus(CACHE_FAILED_SCHEMA_ID_FETCH_DURATION);
-      var timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
-          .withZone(ZoneId.systemDefault());
-      Log.errorf(
-          "Failed to retrieve schema with ID %d. Will try again in %d seconds at %s. Error: %s",
-          schemaId,
-          CACHE_FAILED_SCHEMA_ID_FETCH_DURATION.getSeconds(),
-          timeFormatter.format(retryTime),
-          e.getMessage(),
-          e
-      );
-      var errorMessage = String.format(
-          "Failed to retrieve schema with ID %d: %s",
-          schemaId,
-          e.getMessage()
-      );
-      schemaFetchErrorCache.put(schemaId, errorMessage);
-      return new DecodedResult(onFailure(encoderOnFailure, bytes), e.getMessage());
-    } catch (IOException | SerializationException e) {
-      var data = onFailure(encoderOnFailure, bytes);
-      Log.error("Error deserializing: %s", data, e);
-      return new DecodedResult(data, e.getMessage());
-    }
-  }
-
-  private JsonNode onFailure(Optional<Function<byte[], byte[]>> encoderOnFailure, byte[] bytes) {
-    return safeReadTree(encoderOnFailure.orElse(Function.identity()).apply(bytes));
   }
 
   /**
@@ -179,7 +110,7 @@ public class RecordDeserializer {
       writer.write(avroRecord, encoder);
       encoder.flush();
       var jacksonAvroSchema = new AvroSchema(avroRecord.getSchema());
-      return avroObjectMapper
+      return AVRO_OBJECT_MAPPER
           .readerFor(ObjectNode.class)
           .with(jacksonAvroSchema)
           .readValue(outputStream.toByteArray());
@@ -263,23 +194,44 @@ public class RecordDeserializer {
       boolean isKey,
       Optional<Function<byte[], byte[]>> encoderOnFailure
   ) {
-    if (bytes == null) {
-      return new DecodedResult(NullNode.getInstance(), null);
+    var result = maybeTrivialCase(bytes, schemaRegistryClient);
+    if (result.isPresent()) {
+      return result.get();
     }
-    if (bytes.length == 0) {
-      return new DecodedResult(new TextNode(""), null);
+
+    final int schemaId = getSchemaIdFromRawBytes(bytes);
+    // Check if schema retrieval has failed recently
+    var cachedError = SCHEMA_FETCH_ERROR_CACHE.getIfPresent(schemaId);
+    if (cachedError != null) {
+      return new DecodedResult(
+          // If the schema fetch failed, we can't decode the data, so we just return the raw bytes.
+          // We apply the encoderOnFailure function to the bytes before returning them.
+          onFailure(encoderOnFailure, bytes),
+          cachedError
+      );
     }
-    if (bytes[0] == MAGIC_BYTE) {
-      if (schemaRegistryClient != null) {
-        return deserializeToJson(bytes, schemaRegistryClient, topic, isKey, encoderOnFailure);
-      } else {
-        return new DecodedResult(
-            safeReadTree(bytes),
-            "The value references a schema but we can't find the schema registry"
-        );
-      }
+
+    try {
+      // Attempt to get the schema from the schema registry
+      var parsedSchema = schemaRegistryClient.getSchemaById(schemaId);
+      var schemaType = SchemaFormat.fromSchemaType(parsedSchema.schemaType());
+      var deserializedData = switch (schemaType) {
+        case AVRO -> handleAvro(bytes, topic, schemaRegistryClient, isKey);
+        case PROTOBUF -> handleProtobuf(bytes, topic, schemaRegistryClient, isKey);
+        case JSON -> handleJson(bytes, topic, schemaRegistryClient, isKey);
+      };
+      return RecordDeserializerDecodedResultBuilder
+          .builder()
+          .value(deserializedData)
+          .build();
+    } catch (RestClientException e) {
+      cacheSchemaFetchError(e, schemaId);
+      return new DecodedResult(onFailure(encoderOnFailure, bytes), e.getMessage());
+    } catch (IOException | SerializationException e) {
+      var data = onFailure(encoderOnFailure, bytes);
+      Log.error("Error deserializing: %s", data, e);
+      return new DecodedResult(data, e.getMessage());
     }
-    return new DecodedResult(safeReadTree(bytes), null);
   }
 
   public DecodedResult deserialize(
@@ -289,6 +241,65 @@ public class RecordDeserializer {
       boolean isKey
   ) {
     return deserialize(bytes, schemaRegistryClient, topic, isKey, Optional.empty());
+  }
+
+  private static void cacheSchemaFetchError(RestClientException e, int schemaId) {
+    var retryTime = Instant.now().plus(CACHE_FAILED_SCHEMA_ID_FETCH_DURATION);
+    var timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
+        .withZone(ZoneId.systemDefault());
+    Log.errorf(
+        "Failed to retrieve schema with ID %d. Will try again in %d seconds at %s. Error: %s",
+        schemaId,
+        CACHE_FAILED_SCHEMA_ID_FETCH_DURATION.getSeconds(),
+        timeFormatter.format(retryTime),
+        e.getMessage(),
+        e
+    );
+    var errorMessage = String.format(
+        "Failed to retrieve schema with ID %d: %s",
+        schemaId,
+        e.getMessage()
+    );
+    SCHEMA_FETCH_ERROR_CACHE.put(schemaId, errorMessage);
+  }
+
+  /**
+   * Handles the trivial cases of deserialization: null, empty, or non-Schema Registry encoded data.
+   *
+   * @param bytes                The byte array to parse
+   * @param schemaRegistryClient The SchemaRegistryClient used for deserialization of
+   *                             Schema Registry encoded data
+   * @return An Optional containing a DecodedResult if the base cases are met, or empty otherwise
+   */
+  private static Optional<DecodedResult> maybeTrivialCase(
+      byte[] bytes,
+      SchemaRegistryClient schemaRegistryClient
+  ) {
+    // If the byte array is null or empty, we return a NullNode or an empty string, respectively.
+    if (bytes == null) {
+      return Optional.of(new DecodedResult(NullNode.getInstance(), null));
+    }
+    if (bytes.length == 0) {
+      return Optional.of(new DecodedResult(new TextNode(""), null));
+    }
+
+    // If the first byte is not the magic byte, we try to parse the data as a JSON object
+    // or fall back to a string if parsing fails. Simple enough.
+    if (bytes[0] != MAGIC_BYTE) {
+      return Optional.of(new DecodedResult(safeReadTree(bytes), null));
+    }
+
+    // If the first byte is the magic byte, but we weren't provided a schema registry client,
+    // we can't decode the data, so we just return the raw bytes.
+    if (schemaRegistryClient == null) {
+      return Optional.of(new DecodedResult(
+          safeReadTree(bytes),
+          "The value references a schema but we can't find the schema registry"
+      ));
+    }
+
+    // Alright, let's move on to more complex cases.
+    return Optional.empty();
   }
 
   /**
@@ -303,4 +314,11 @@ public class RecordDeserializer {
       return TextNode.valueOf(new String(bytes, StandardCharsets.UTF_8));
     }
   }
+
+  private static JsonNode onFailure(
+      Optional<Function<byte[], byte[]>> encoderOnFailure, byte[] bytes
+  ) {
+    return safeReadTree(encoderOnFailure.orElse(Function.identity()).apply(bytes));
+  }
+
 }

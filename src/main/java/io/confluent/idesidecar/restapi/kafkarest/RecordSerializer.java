@@ -22,7 +22,6 @@ import jakarta.ws.rs.BadRequestException;
 import java.io.IOException;
 import java.util.Map;
 
-
 /**
  * Encapsulates logic to serialize data based on the schema type. Defaults to JSON serialization
  * if no schema is provided.
@@ -50,7 +49,7 @@ public class RecordSerializer {
     }
 
     var jsonNode = objectMapper.valueToTree(data);
-    return switch (SchemaManager.SchemaFormat.fromSchemaType(parsedSchema.schemaType())) {
+    return switch (SchemaFormat.fromSchemaType(parsedSchema.schemaType())) {
       case AVRO -> serializeAvro(client, parsedSchema, topicName, jsonNode, isKey);
       case JSON -> serializeJsonSchema(client, parsedSchema, topicName, jsonNode, isKey);
       case PROTOBUF -> serializeProtobuf(client, parsedSchema, topicName, jsonNode, isKey);
