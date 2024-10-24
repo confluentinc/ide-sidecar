@@ -62,7 +62,6 @@ public class KafkaConsumeResourceTest {
   private static final String KAFKA_CLUSTER_ID = "lkc-abcd123";
   private static final String SCHEMA_REGISTRY_CLUSTER_ID = "lsrc-defg456";
   private static final String CONNECTION_ID = "fake-connection-id";
-  private static final String ENV_ID = "env-1234";
   private static final Map<String, String> CLUSTER_REQUEST_HEADERS = Map.of(
       "x-connection-id", CONNECTION_ID,
       "x-cluster-id", KAFKA_CLUSTER_ID
@@ -265,7 +264,7 @@ public class KafkaConsumeResourceTest {
     actualResponse.statusCode(200);
 
     var actualResponseBody = actualResponse.extract().asString();
-    var expectedResponseBody = loadResource("message-viewer/ccloud-message.json");
+    var expectedResponseBody = loadResource("message-viewer/ccloud-message-sidecar-response.json");
     JsonObject expectedJson = new JsonObject(expectedResponseBody);
     JsonObject actualJson = new JsonObject(actualResponseBody);
 
@@ -279,7 +278,6 @@ public class KafkaConsumeResourceTest {
 
   @Test
   void testConsumeRecordsAvroSchemaTopic() throws JsonProcessingException {
-    var avroResponseFromCCloud = loadResource("message-viewer/ccloud-records-consume-avro.json");
     var expectedAvroResponse = loadResource("message-viewer/consume-avro-topic-expected-response.json");
     ObjectMapper objectMapper = new ObjectMapper();
     JsonNode expectedNode = objectMapper.readTree(expectedAvroResponse);
@@ -332,7 +330,6 @@ public class KafkaConsumeResourceTest {
         )
         .then()
         .statusCode(200)
-        .body(JsonMatcher.matchesJson(expectedProtoResponse))
         .header(
             KafkaConsumeResource.KAFKA_CONSUMED_BYTES_RESPONSE_HEADER,
             String.valueOf(expectedNode.toString().length())

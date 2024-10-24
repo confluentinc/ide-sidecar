@@ -25,6 +25,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Optional;
@@ -224,7 +225,7 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
    * message data, which indicates that the data is schema-encoded. If so, we first Base64 decode
    * the data and use the . If not, we return the message data as is.
    *
-   * @param data                The value to decode.
+   * @param data                 The JsonNode containing the message data.
    * @param schemaRegistryClient The SchemaRegistryClient to use for decoding.
    * @param topicName            The name of the topic.
    * @return The decoded value.
@@ -237,32 +238,30 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
   ) {
     if (data.has("__raw__")) {
       // We know that Confluent Cloud encodes raw data in Base64, so decode appropriately.
-      byte[] decodedBytes;
       try {
-        decodedBytes = BASE64_DECODER.decode(data.get("__raw__").asText());
+        return deserializer.deserialize(
+            BASE64_DECODER.decode(data.get("__raw__").asText()),
+            schemaRegistryClient,
+            topicName,
+            isKey,
+            // If deserialize fails, we want to return the raw data unchanged.
+            Optional.of(BASE64_ENCODER::encode)
+        );
       } catch (IllegalArgumentException e) {
         // For whatever reason, we couldn't decode the Base64 string.
         // Log the error and return the raw data.
         Log.error("Error decoding Base64 string: %s", data, e);
         return new RecordDeserializer.DecodedResult(data, e.getMessage());
       }
-
-      // Pass the decoded bytes to the deserializer to get the JSON representation
-      // of the data, informed by the schema.
+    } else {
       return deserializer.deserialize(
-          decodedBytes,
+          data.asText().getBytes(StandardCharsets.UTF_8),
           schemaRegistryClient,
           topicName,
-          isKey,
-          Optional.of(BASE64_ENCODER::encode)
+          isKey
       );
-    } else {
-      // Data is not schema-encoded, so return it as is.
-      return new RecordDeserializer.DecodedResult(data, null);
     }
   }
-
-
 
   /**
    * Constructs the URL to query messages from the specified topic in Confluent Cloud.
