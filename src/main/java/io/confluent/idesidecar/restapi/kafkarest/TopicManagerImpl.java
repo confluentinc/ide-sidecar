@@ -9,12 +9,14 @@ import io.smallrye.mutiny.Uni;
 import io.vertx.core.http.HttpServerRequest;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 import org.apache.kafka.clients.admin.DescribeTopicsOptions;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.admin.TopicDescription;
+import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
 
 /**
  * RequestScoped bean for managing Kafka topics. Creating the bean as {@link RequestScoped} allows
@@ -54,7 +56,18 @@ public class TopicManagerImpl implements TopicManager {
             clusterId,
             createTopicRequestData.getTopicName(),
             false
-        ));
+            )
+            // The topic may not be immediately available after creation, so we retry a few times
+            // This is also recommended in the Javadoc for UnknownTopicOrPartitionException
+            // "This exception is retryable because the topic or partition might
+            // subsequently be created."
+            .onFailure(UnknownTopicOrPartitionException.class)
+            .retry()
+            // Exponential backoff with a max of 3 retries
+            // Initial delay of 150ms, max delay of 1s
+            .withBackOff(Duration.ofMillis(150), Duration.ofMillis(1000))
+            .atMost(3)
+        );
   }
 
   @Override
