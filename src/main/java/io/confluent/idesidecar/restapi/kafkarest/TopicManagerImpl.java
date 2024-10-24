@@ -9,6 +9,8 @@ import io.smallrye.mutiny.Uni;
 import io.vertx.core.http.HttpServerRequest;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
+
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -62,6 +64,9 @@ public class TopicManagerImpl implements TopicManager {
             // subsequently be created."
             .onFailure(UnknownTopicOrPartitionException.class)
             .retry()
+            // Exponential backoff with a max of 3 retries
+            // Initial delay of 150ms, max delay of 1s
+            .withBackOff(Duration.ofMillis(150), Duration.ofMillis(1000))
             .atMost(3)
         );
   }
