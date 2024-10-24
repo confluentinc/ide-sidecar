@@ -9,7 +9,6 @@ import io.smallrye.mutiny.Uni;
 import io.vertx.core.http.HttpServerRequest;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
-
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
