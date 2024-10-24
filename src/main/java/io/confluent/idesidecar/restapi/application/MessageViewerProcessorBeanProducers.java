@@ -5,8 +5,8 @@ import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
 import io.confluent.idesidecar.restapi.messageviewer.MessageViewerClusterInfoProcessor;
 import io.confluent.idesidecar.restapi.messageviewer.MessageViewerContext;
 import io.confluent.idesidecar.restapi.messageviewer.strategy.ConfluentCloudConsumeStrategy;
-import io.confluent.idesidecar.restapi.messageviewer.strategy.ConfluentLocalConsumeStrategy;
 import io.confluent.idesidecar.restapi.messageviewer.strategy.ConsumeStrategyProcessor;
+import io.confluent.idesidecar.restapi.messageviewer.strategy.NativeConsumeStrategy;
 import io.confluent.idesidecar.restapi.processors.Processor;
 import io.confluent.idesidecar.restapi.proxy.ConnectionProcessor;
 import io.confluent.idesidecar.restapi.proxy.EmptyProcessor;
@@ -37,7 +37,7 @@ public class MessageViewerProcessorBeanProducers {
   String sidecarHost;
 
   @Inject
-  ConfluentLocalConsumeStrategy confluentLocalConsumeStrategy;
+  NativeConsumeStrategy nativeConsumeStrategy;
 
   @Inject
   ConfluentCloudConsumeStrategy confluentCloudConsumeStrategy;
@@ -53,7 +53,7 @@ public class MessageViewerProcessorBeanProducers {
         new ConnectionProcessor<>(connectionManager),
         new MessageViewerClusterInfoProcessor(clusterCache),
         new ConsumeStrategyProcessor(
-            confluentLocalConsumeStrategy,
+            nativeConsumeStrategy,
             confluentCloudConsumeStrategy
         ),
         new EmptyProcessor<>()

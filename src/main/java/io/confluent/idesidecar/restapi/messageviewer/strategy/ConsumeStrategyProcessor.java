@@ -11,28 +11,26 @@ import io.vertx.core.Future;
  */
 public class ConsumeStrategyProcessor
     extends Processor<MessageViewerContext, Future<MessageViewerContext>> {
-  private final ConfluentLocalConsumeStrategy confluentLocalConsumeStrategy;
+  private final NativeConsumeStrategy nativeConsumeStrategy;
   private final ConfluentCloudConsumeStrategy confluentCloudConsumeStrategy;
 
   public ConsumeStrategyProcessor(
-      ConfluentLocalConsumeStrategy confluentLocalConsumeStrategy,
+      NativeConsumeStrategy nativeConsumeStrategy,
       ConfluentCloudConsumeStrategy confluentCloudConsumeStrategy) {
-    this.confluentLocalConsumeStrategy = confluentLocalConsumeStrategy;
+    this.nativeConsumeStrategy = nativeConsumeStrategy;
     this.confluentCloudConsumeStrategy = confluentCloudConsumeStrategy;
   }
 
   @Override
   public Future<MessageViewerContext> process(MessageViewerContext context) {
     var messageConsumer = chooseStrategy(context);
-    return messageConsumer.execute(context).compose(updatedContext -> {
-      return next().process(context);
-    });
+    return messageConsumer.execute(context).compose(updatedContext -> next().process(context));
   }
 
   public ConsumeStrategy chooseStrategy(MessageViewerContext context) {
     var connectionType = context.getConnectionState().getType();
     return switch (connectionType) {
-      case LOCAL -> confluentLocalConsumeStrategy;
+      case LOCAL -> nativeConsumeStrategy;
       case CCLOUD -> confluentCloudConsumeStrategy;
       case PLATFORM -> throw new ProcessorFailedException(
           context.failf(

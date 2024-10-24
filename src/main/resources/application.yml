@@ -141,10 +141,10 @@ ide-sidecar:
     "default.api.timeout.ms": 3000
     "request.timeout.ms": 3000
     "client.id": Confluent for VS Code sidecar ${quarkus.application.version}
-  # Configuration set by the sidecar when instantiating Kafka record serializers
+  # Configuration set by the sidecar when instantiating Kafka record serializers and deserializers.
   # See https://github.com/confluentinc/schema-registry/blob/master/schema-serializer/src/main/java/io/confluent/kafka/serializers/AbstractKafkaSchemaSerDeConfig.java#L39
   # for a full list of available configs.
-  serializer-configs:
+  serde-configs:
     # Use sidecar provided SR proxy as the schema registry URL
     # Should be unused by serializers since we pass the
     # SchemaRegistryClient instance to them directly.
@@ -154,6 +154,8 @@ ide-sidecar:
     "auto.register.schemas": "false"
     # Do not try to fetch the latest version of the schema from the registry
     "use.latest.version": "false"
+    "key.subject.name.strategy": "io.confluent.kafka.serializers.subject.TopicNameStrategy"
+    "value.subject.name.strategy": "io.confluent.kafka.serializers.subject.TopicNameStrategy"
   cluster-proxy:
     # Exclude these HTTP headers when proxying requests to the remote cluster (Kafka or Schema Registry)
     # It shouldn't really hurt if we _don't_ exclude these headers, but it's just cleaner to do so.

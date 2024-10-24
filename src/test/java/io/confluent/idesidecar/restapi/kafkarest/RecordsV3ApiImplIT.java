@@ -34,7 +34,7 @@ class RecordsV3ApiImplIT extends ConfluentLocalTestBed {
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   record RecordData(
-      SchemaManager.SchemaFormat schemaFormat,
+      SchemaFormat schemaFormat,
       String rawSchema,
       Object data
   ) {
@@ -46,7 +46,7 @@ class RecordsV3ApiImplIT extends ConfluentLocalTestBed {
     }
   }
 
-  static RecordData schemaData(SchemaManager.SchemaFormat format, String jsonData) {
+  static RecordData schemaData(SchemaFormat format, String jsonData) {
     var schema = getProductSchema(format);
 
     try {
@@ -56,7 +56,7 @@ class RecordsV3ApiImplIT extends ConfluentLocalTestBed {
     }
   }
 
-  private static String getProductSchema(SchemaManager.SchemaFormat format) {
+  private static String getProductSchema(SchemaFormat format) {
     return switch (format) {
       case JSON: {
         yield loadResource("schemas/product.schema.json").translateEscapes();
@@ -175,8 +175,8 @@ class RecordsV3ApiImplIT extends ConfluentLocalTestBed {
     static ArgumentSets badData() {
       return ArgumentSets
           .argumentsForFirstParameter(
-              SchemaManager.SchemaFormat.AVRO,
-              SchemaManager.SchemaFormat.JSON
+              SchemaFormat.AVRO,
+              SchemaFormat.JSON
           )
           .argumentsForNextParameter(
               Stream.of(
@@ -205,7 +205,7 @@ class RecordsV3ApiImplIT extends ConfluentLocalTestBed {
     @CartesianTest
     @CartesianTest.MethodFactory("badData")
     void shouldThrowBadRequestIfSchemaIsNotCompatibleWithData(
-        SchemaManager.SchemaFormat keyFormat, Object badData
+        SchemaFormat keyFormat, Object badData
     ) {
       var topic = randomTopicName();
       createTopic(topic);
@@ -251,7 +251,7 @@ class RecordsV3ApiImplIT extends ConfluentLocalTestBed {
     @MethodSource("invalidProtobufData")
     void shouldThrowBadRequestForInvalidProtobufData(Object badData) {
       shouldThrowBadRequestIfSchemaIsNotCompatibleWithData(
-          SchemaManager.SchemaFormat.PROTOBUF, badData
+          SchemaFormat.PROTOBUF, badData
       );
     }
   }
@@ -281,9 +281,9 @@ class RecordsV3ApiImplIT extends ConfluentLocalTestBed {
         jsonData(true),
         jsonData(List.of("hello", "world")),
         jsonData(Collections.singletonMap("hello", "world")),
-        schemaData(SchemaManager.SchemaFormat.JSON, PRODUCT_DATA),
-        schemaData(SchemaManager.SchemaFormat.PROTOBUF, PRODUCT_DATA),
-        schemaData(SchemaManager.SchemaFormat.AVRO, PRODUCT_DATA)
+        schemaData(SchemaFormat.JSON, PRODUCT_DATA),
+        schemaData(SchemaFormat.PROTOBUF, PRODUCT_DATA),
+        schemaData(SchemaFormat.AVRO, PRODUCT_DATA)
     );
 
     /**

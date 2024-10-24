@@ -106,17 +106,6 @@ public record SimpleConsumeMultiPartitionResponse(
       @JsonProperty("value") String value
   ) {}
 
-
-  /**
-   * Represents a value encoded as a Base64 string.
-   *
-   * @param raw The Base64 encoded string.
-   */
-  @RegisterForReflection
-  public record SchemaEncodedValue(
-      @JsonProperty("__raw__") String raw // Base64 encoded string
-  ) {}
-
   /**
    * @see org.apache.kafka.common.record.TimestampType
    */

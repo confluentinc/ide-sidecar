@@ -3,11 +3,8 @@ package io.confluent.idesidecar.restapi.kafkarest;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequestData;
 import io.confluent.kafka.schemaregistry.ParsedSchema;
 import io.confluent.kafka.schemaregistry.SchemaProvider;
-import io.confluent.kafka.schemaregistry.avro.AvroSchemaProvider;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.rest.entities.Schema;
-import io.confluent.kafka.schemaregistry.json.JsonSchemaProvider;
-import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchemaProvider;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.BadRequestException;
@@ -118,37 +115,6 @@ public class SchemaManager {
     return schemaProvider
         .parseSchema(schema, false)
         .orElseThrow(() -> new BadRequestException("Failed to parse schema"));
-  }
-
-  public enum SchemaFormat {
-    AVRO(new AvroSchemaProvider()),
-    PROTOBUF(new ProtobufSchemaProvider()),
-    JSON(new JsonSchemaProvider());
-
-    private final SchemaProvider schemaProvider;
-
-    SchemaFormat(SchemaProvider schemaProvider) {
-      this.schemaProvider = schemaProvider;
-    }
-
-    SchemaProvider schemaProvider() {
-      return schemaProvider;
-    }
-
-    /**
-     * Get the SchemaFormat for the given schema type. Only formats with a schema provider are
-     * supported.
-     *
-     * @param schemaType the schema type
-     * @return the SchemaFormat
-     */
-    static SchemaFormat fromSchemaType(String schemaType) {
-      return Arrays.stream(values())
-          .filter(format -> format.schemaProvider() != null)
-          .filter(format -> format.name().equalsIgnoreCase(schemaType))
-          .findFirst()
-          .orElseThrow(() -> new IllegalArgumentException("Illegal schema type: " + schemaType));
-    }
   }
 
   public record RegisteredSchema(
