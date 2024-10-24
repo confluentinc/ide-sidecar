@@ -667,6 +667,9 @@
           },
           "message" : {
             "type" : "string"
+          },
+          "is_transient" : {
+            "type" : "boolean"
           }
         }
       },
@@ -1201,7 +1204,7 @@
         }
       },
       "Status" : {
-        "enum" : [ "NO_TOKEN", "VALID_TOKEN", "INVALID_TOKEN" ],
+        "enum" : [ "NO_TOKEN", "VALID_TOKEN", "INVALID_TOKEN", "FAILED" ],
         "type" : "string"
       },
       "Template" : {
