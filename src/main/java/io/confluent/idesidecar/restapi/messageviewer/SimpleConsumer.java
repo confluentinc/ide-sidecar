@@ -299,18 +299,22 @@ public class SimpleConsumer {
     boolean valueExceeded = consumerRecord.value() != null
         && consumerRecord.value().length > messageMaxBytes;
 
-    var keyResult = keyExceeded ? null : recordDeserializer.deserialize(
-        consumerRecord.key(),
-        schemaRegistryClient,
-        consumerRecord.topic(),
-        true
-    );
-    var valueResult = valueExceeded ? null : recordDeserializer.deserialize(
-        consumerRecord.value(),
-        schemaRegistryClient,
-        consumerRecord.topic(),
-        false
-    );
+    Optional<RecordDeserializer.DecodedResult> keyResult = keyExceeded
+        ? Optional.empty() : Optional
+        .of(recordDeserializer.deserialize(
+            consumerRecord.key(),
+            schemaRegistryClient,
+            consumerRecord.topic(),
+            true)
+        );
+    Optional<RecordDeserializer.DecodedResult> valueResult = valueExceeded
+        ? Optional.empty() : Optional
+        .of(recordDeserializer.deserialize(
+            consumerRecord.value(),
+            schemaRegistryClient,
+            consumerRecord.topic(),
+            false)
+        );
 
     return new PartitionConsumeRecord(
         consumerRecord.partition(),
@@ -318,10 +322,10 @@ public class SimpleConsumer {
         consumerRecord.timestamp(),
         TimestampType.valueOf(consumerRecord.timestampType().name()),
         headers,
-        keyResult == null ? null : keyResult.value(),
-        valueResult == null ? null : valueResult.value(),
-        keyResult == null ? null : keyResult.errorMessage(),
-        valueResult == null ? null : valueResult.errorMessage(),
+        keyResult.map(RecordDeserializer.DecodedResult::value).orElse(null),
+        valueResult.map(RecordDeserializer.DecodedResult::value).orElse(null),
+        keyResult.map(RecordDeserializer.DecodedResult::errorMessage).orElse(null),
+        valueResult.map(RecordDeserializer.DecodedResult::errorMessage).orElse(null),
         new ExceededFields(keyExceeded, valueExceeded)
     );
   }
