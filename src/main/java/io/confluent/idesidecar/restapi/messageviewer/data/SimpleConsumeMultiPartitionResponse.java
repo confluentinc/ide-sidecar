@@ -16,7 +16,7 @@ import java.util.List;
  */
 @JsonInclude(Include.NON_NULL)
 @RegisterForReflection
-public record ConsumeResponse(
+public record SimpleConsumeMultiPartitionResponse(
     @JsonProperty("cluster_id") String clusterId,
     @JsonProperty("topic_name") String topicName,
     @JsonProperty("partition_data_list") List<PartitionConsumeData> partitionDataList

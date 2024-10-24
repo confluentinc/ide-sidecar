@@ -14,14 +14,14 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @RegisterForReflection
 @RecordBuilder
-public record ConsumeRequest(
+public record SimpleConsumeMultiPartitionRequest(
     @JsonProperty("offsets") List<PartitionOffset> partitionOffsets,
     @JsonProperty("max_poll_records") Integer maxPollRecords,
     Long timestamp,
     @JsonProperty("fetch_max_bytes") Integer fetchMaxBytes,
     @JsonProperty("message_max_bytes") Integer messageMaxBytes,
     @JsonProperty("from_beginning") Boolean fromBeginning
-) implements ConsumeRequestBuilder.With {
+) implements SimpleConsumeMultiPartitionRequestBuilder.With {
 
   @RegisterForReflection
   public record PartitionOffset(

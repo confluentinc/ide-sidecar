@@ -12,7 +12,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.TextNode;
-import io.confluent.idesidecar.restapi.messageviewer.data.ConsumeResponse;
+import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
 import io.confluent.kafka.schemaregistry.avro.AvroSchema;
 import io.confluent.kafka.schemaregistry.avro.AvroSchemaProvider;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
@@ -280,20 +280,20 @@ public class RecordDeserializerTest {
     JsonNode valueNode = objectMapper.nullNode();
 
     // Create a PartitionConsumeRecord with null keyDecodingError and valueDecodingError
-    ConsumeResponse.PartitionConsumeRecord record = new ConsumeResponse.PartitionConsumeRecord(
+    SimpleConsumeMultiPartitionResponse.PartitionConsumeRecord record = new SimpleConsumeMultiPartitionResponse.PartitionConsumeRecord(
         0, 100L, System.currentTimeMillis(),
-        ConsumeResponse.TimestampType.CREATE_TIME,
+        SimpleConsumeMultiPartitionResponse.TimestampType.CREATE_TIME,
         Collections.emptyList(),
         keyNode, valueNode, null // NULL exceeding fields
     );
 
     // Create PartitionConsumeData with the record
-    ConsumeResponse.PartitionConsumeData partitionConsumeData = new ConsumeResponse.PartitionConsumeData(
+    SimpleConsumeMultiPartitionResponse.PartitionConsumeData partitionConsumeData = new SimpleConsumeMultiPartitionResponse.PartitionConsumeData(
         0, 101L, List.of(record)
     );
 
     // Construct the full SimpleConsumeMultiPartitionResponse object
-    ConsumeResponse response = new ConsumeResponse(
+    SimpleConsumeMultiPartitionResponse response = new SimpleConsumeMultiPartitionResponse(
         "test-cluster",
         "test-topic",
         List.of(partitionConsumeData)
@@ -312,12 +312,12 @@ public class RecordDeserializerTest {
     // Given
     JsonNode keyNode = objectMapper.nullNode();
     JsonNode valueNode = objectMapper.nullNode();
-    ConsumeResponse.PartitionConsumeRecord record = new ConsumeResponse.PartitionConsumeRecord(
+    SimpleConsumeMultiPartitionResponse.PartitionConsumeRecord record = new SimpleConsumeMultiPartitionResponse.PartitionConsumeRecord(
         0, 100L, System.currentTimeMillis(),
-        ConsumeResponse.TimestampType.CREATE_TIME,
+        SimpleConsumeMultiPartitionResponse.TimestampType.CREATE_TIME,
         Collections.emptyList(),
         keyNode, valueNode, "Key decoding failed", "Value decoding failed",
-        new ConsumeResponse.ExceededFields(false, false)
+        new SimpleConsumeMultiPartitionResponse.ExceededFields(false, false)
     );
 
     // When

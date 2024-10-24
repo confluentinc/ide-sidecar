@@ -3,8 +3,8 @@ package io.confluent.idesidecar.restapi.resources;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.idesidecar.restapi.messageviewer.MessageViewerContext;
-import io.confluent.idesidecar.restapi.messageviewer.data.ConsumeRequest;
-import io.confluent.idesidecar.restapi.messageviewer.data.ConsumeResponse;
+import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequest;
+import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
 import io.confluent.idesidecar.restapi.processors.Processor;
 import io.confluent.idesidecar.restapi.util.RequestHeadersConstants;
 import io.quarkus.logging.Log;
@@ -55,20 +55,20 @@ public class KafkaConsumeResource {
       in = ParameterIn.HEADER,
       schema = @Schema(type = SchemaType.STRING)
   )
-  @APIResponseSchema(ConsumeResponse.class)
+  @APIResponseSchema(SimpleConsumeMultiPartitionResponse.class)
   @Path("/clusters/{cluster_id}/topics/{topic_name}/partitions/-/consume")
   @Blocking
   public Uni<Response> messageViewer(
       @Context RoutingContext routingContext,
       @PathParam("cluster_id") String clusterId,
       @PathParam("topic_name") String topicName,
-      ConsumeRequest requestBody
+      SimpleConsumeMultiPartitionRequest requestBody
   ) throws JsonProcessingException {
     var responseCompletionStage = messageViewerProcessor
         .process(createMessageViewerContext(routingContext, clusterId, topicName, requestBody))
         .map(messageViewerContext -> {
           // Extract the number of bytes of the response body
-          ConsumeResponse response = messageViewerContext.getConsumeResponse();
+          SimpleConsumeMultiPartitionResponse response = messageViewerContext.getConsumeResponse();
           ObjectMapper objectMapper = new ObjectMapper();
           String jsonResponse;
           try {
@@ -103,7 +103,7 @@ public class KafkaConsumeResource {
       RoutingContext routingContext,
       String clusterId,
       String topicName,
-      ConsumeRequest requestBody
+      SimpleConsumeMultiPartitionRequest requestBody
   ) throws JsonProcessingException {
     return new MessageViewerContext(
         routingContext.request().uri(),

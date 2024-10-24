@@ -6,7 +6,7 @@ import io.confluent.idesidecar.restapi.exceptions.ProcessorFailedException;
 import io.confluent.idesidecar.restapi.messageviewer.MessageViewerContext;
 import io.confluent.idesidecar.restapi.messageviewer.RecordDeserializer;
 import io.confluent.idesidecar.restapi.messageviewer.SimpleConsumer;
-import io.confluent.idesidecar.restapi.messageviewer.data.ConsumeResponse;
+import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -66,7 +66,7 @@ public class NativeConsumeStrategy implements ConsumeStrategy {
         recordDeserializer
     );
     var consumedData = simpleConsumer.consume(topic, request);
-    context.setConsumeResponse(new ConsumeResponse(context.getClusterId(), topic, consumedData));
+    context.setConsumeResponse(new SimpleConsumeMultiPartitionResponse(context.getClusterId(), topic, consumedData));
     return context;
   }
 }

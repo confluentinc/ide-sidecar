@@ -1,11 +1,11 @@
 package io.confluent.idesidecar.restapi.messageviewer;
 
-import io.confluent.idesidecar.restapi.messageviewer.data.ConsumeRequest;
-import io.confluent.idesidecar.restapi.messageviewer.data.ConsumeResponse.ExceededFields;
-import io.confluent.idesidecar.restapi.messageviewer.data.ConsumeResponse.PartitionConsumeData;
-import io.confluent.idesidecar.restapi.messageviewer.data.ConsumeResponse.PartitionConsumeRecord;
-import io.confluent.idesidecar.restapi.messageviewer.data.ConsumeResponse.PartitionConsumeRecordHeader;
-import io.confluent.idesidecar.restapi.messageviewer.data.ConsumeResponse.TimestampType;
+import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequest;
+import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.ExceededFields;
+import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeData;
+import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeRecord;
+import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeRecordHeader;
+import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.TimestampType;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -50,7 +50,7 @@ public class SimpleConsumer {
   @SuppressWarnings("CyclomaticComplexity")
   public List<PartitionConsumeData> consume(
       String topicName,
-      ConsumeRequest request) {
+      SimpleConsumeMultiPartitionRequest request) {
     final var messageMaxBytes = Optional
         .ofNullable(request.messageMaxBytes())
         .orElse(DEFAULT_MESSAGE_MAX_BYTES);

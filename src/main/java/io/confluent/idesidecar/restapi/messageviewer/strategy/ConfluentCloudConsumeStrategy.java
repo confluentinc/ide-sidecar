@@ -10,9 +10,9 @@ import io.confluent.idesidecar.restapi.connections.CCloudConnectionState;
 import io.confluent.idesidecar.restapi.exceptions.ProcessorFailedException;
 import io.confluent.idesidecar.restapi.messageviewer.MessageViewerContext;
 import io.confluent.idesidecar.restapi.messageviewer.RecordDeserializer;
-import io.confluent.idesidecar.restapi.messageviewer.data.ConsumeResponse;
-import io.confluent.idesidecar.restapi.messageviewer.data.ConsumeResponse.PartitionConsumeData;
-import io.confluent.idesidecar.restapi.messageviewer.data.ConsumeResponse.PartitionConsumeRecord;
+import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
+import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeData;
+import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeRecord;
 import io.confluent.idesidecar.restapi.proxy.ProxyHttpClient;
 import io.confluent.idesidecar.restapi.util.WebClientFactory;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
@@ -96,9 +96,9 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
     }
 
     try {
-      ConsumeResponse data = OBJECT_MAPPER.readValue(
+      SimpleConsumeMultiPartitionResponse data = OBJECT_MAPPER.readValue(
           rawTopicRowsResponse,
-          ConsumeResponse.class
+          SimpleConsumeMultiPartitionResponse.class
       );
       var processedPartitionResponse = decodeSchemaEncodedValues(context, data);
       context.setConsumeResponse(processedPartitionResponse);
@@ -127,7 +127,7 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
   private MessageViewerContext handleEmptyOrNullResponseFromCCloud(
       MessageViewerContext context
   ) {
-    var data = new ConsumeResponse(
+    var data = new SimpleConsumeMultiPartitionResponse(
         context.getClusterId(),
         context.getTopicName(),
         new ArrayList<>());
@@ -141,9 +141,9 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
    * @param context     The MessageViewerContext.
    * @param rawResponse The MultiPartitionConsumeResponse to decode.
    */
-  private ConsumeResponse decodeSchemaEncodedValues(
+  private SimpleConsumeMultiPartitionResponse decodeSchemaEncodedValues(
       MessageViewerContext context,
-      ConsumeResponse rawResponse
+      SimpleConsumeMultiPartitionResponse rawResponse
   ) {
     var schemaRegistry = context.getSchemaRegistryInfo();
     if (schemaRegistry == null) {
@@ -161,7 +161,7 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
         .map(partitionData -> processPartition(partitionData, context, schemaRegistryClient))
         .toList();
 
-    return new ConsumeResponse(
+    return new SimpleConsumeMultiPartitionResponse(
         rawResponse.clusterId(),
         rawResponse.topicName(),
         processedPartitions

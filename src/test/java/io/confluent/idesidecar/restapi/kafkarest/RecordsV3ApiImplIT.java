@@ -2,8 +2,8 @@ package io.confluent.idesidecar.restapi.kafkarest;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.confluent.idesidecar.restapi.messageviewer.data.ConsumeRequest;
-import io.confluent.idesidecar.restapi.messageviewer.data.ConsumeRequestBuilder;
+import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequest;
+import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequestBuilder;
 import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
 import io.confluent.idesidecar.restapi.util.ConfluentLocalTestBed;
 import io.confluent.kafka.schemaregistry.client.rest.entities.Schema;
@@ -361,7 +361,7 @@ class RecordsV3ApiImplIT extends ConfluentLocalTestBed {
     private static void assertTopicHasRecord(RecordData key, RecordData value, String topicName) {
       var consumeResponse = consume(
           topicName,
-          ConsumeRequestBuilder
+          SimpleConsumeMultiPartitionRequestBuilder
               .builder()
               .fromBeginning(true)
               .maxPollRecords(1)
@@ -396,16 +396,16 @@ class RecordsV3ApiImplIT extends ConfluentLocalTestBed {
       produceRecord(4, topicName, null, "value8");
       produceRecord(4, topicName, null, "value9");
 
-      var resp = consume(topicName, ConsumeRequestBuilder
+      var resp = consume(topicName, SimpleConsumeMultiPartitionRequestBuilder
           .builder()
           .fromBeginning(true)
           .partitionOffsets(
               List.of(
-                  new ConsumeRequest.PartitionOffset(0, 0),
-                  new ConsumeRequest.PartitionOffset(1, 0),
-                  new ConsumeRequest.PartitionOffset(2, 0),
-                  new ConsumeRequest.PartitionOffset(3, 0),
-                  new ConsumeRequest.PartitionOffset(4, 0)
+                  new SimpleConsumeMultiPartitionRequest.PartitionOffset(0, 0),
+                  new SimpleConsumeMultiPartitionRequest.PartitionOffset(1, 0),
+                  new SimpleConsumeMultiPartitionRequest.PartitionOffset(2, 0),
+                  new SimpleConsumeMultiPartitionRequest.PartitionOffset(3, 0),
+                  new SimpleConsumeMultiPartitionRequest.PartitionOffset(4, 0)
               ))
           .build()
       );

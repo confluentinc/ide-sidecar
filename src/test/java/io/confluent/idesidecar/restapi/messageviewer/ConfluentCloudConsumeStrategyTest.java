@@ -6,8 +6,8 @@ import static org.wildfly.common.Assert.assertNotNull;
 import static org.wildfly.common.Assert.assertTrue;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.confluent.idesidecar.restapi.messageviewer.data.ConsumeResponse;
-import io.confluent.idesidecar.restapi.messageviewer.data.ConsumeResponse.TimestampType;
+import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
+import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.TimestampType;
 import java.io.IOException;
 import java.util.Objects;
 import org.junit.jupiter.api.Test;
@@ -21,8 +21,8 @@ public class ConfluentCloudConsumeStrategyTest {
             .getResourceAsStream(resourcePath)).readAllBytes());
 
     ObjectMapper objectMapper = new ObjectMapper();
-    ConsumeResponse data = objectMapper.readValue(
-        json, ConsumeResponse.class);
+    SimpleConsumeMultiPartitionResponse data = objectMapper.readValue(
+        json, SimpleConsumeMultiPartitionResponse.class);
 
     assertNotNull(data);
     assertEquals("lkc-devcky182g", data.clusterId());

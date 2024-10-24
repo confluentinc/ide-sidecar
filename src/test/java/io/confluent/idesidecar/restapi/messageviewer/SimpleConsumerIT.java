@@ -4,10 +4,10 @@ import static io.confluent.idesidecar.restapi.kafkarest.SchemaManager.SCHEMA_PRO
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import io.confluent.idesidecar.restapi.messageviewer.data.ConsumeRequest;
-import io.confluent.idesidecar.restapi.messageviewer.data.ConsumeRequestBuilder;
-import io.confluent.idesidecar.restapi.messageviewer.data.ConsumeResponse.PartitionConsumeData;
-import io.confluent.idesidecar.restapi.messageviewer.data.ConsumeResponse.PartitionConsumeRecord;
+import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequest;
+import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequestBuilder;
+import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeData;
+import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeRecord;
 import io.confluent.idesidecar.restapi.proto.Message.MyMessage;
 import io.confluent.idesidecar.restapi.util.ConfluentLocalTestBed;
 import io.confluent.idesidecar.restapi.util.RequestHeadersConstants;
@@ -15,7 +15,6 @@ import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
 import io.quarkus.test.junit.QuarkusIntegrationTest;
 import java.util.*;
 
-import jakarta.inject.Inject;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.junit.jupiter.api.BeforeEach;
@@ -218,13 +217,13 @@ public class SimpleConsumerIT extends ConfluentLocalTestBed {
     }
   }
 
-  private static ConsumeRequest consumeRequestSinglePartitionFromOffsetZero() {
-    return ConsumeRequestBuilder
+  private static SimpleConsumeMultiPartitionRequest consumeRequestSinglePartitionFromOffsetZero() {
+    return SimpleConsumeMultiPartitionRequestBuilder
         .builder()
         .partitionOffsets(
             Collections.singletonList(
                 // Assuming single partition, start from offset 0
-                new ConsumeRequest.PartitionOffset(0, 0L)
+                new SimpleConsumeMultiPartitionRequest.PartitionOffset(0, 0L)
             )
         )
         .build();
