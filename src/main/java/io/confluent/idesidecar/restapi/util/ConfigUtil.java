@@ -8,7 +8,7 @@ import org.eclipse.microprofile.config.ConfigProvider;
  * Utility class for extracting configuration properties.
  */
 public final class ConfigUtil {
-  ConfigUtil() {
+  private ConfigUtil() {
   }
 
   /**

@@ -47,7 +47,7 @@ public abstract class Clients<T extends AutoCloseable> {
    * already exist, it will be created using the provided factory.
    *
    * @param connectionId     the ID of the connection
-   * @param clientId         the identifier of the client. Client {@link T} instances
+   * @param clientId         the identifier of the client. Client instances of {@code T}
    *                         are cached and retrieved by this ID.
    *                         You may get creative with this, for example, you may
    *                         use a cluster ID and a hash of the client configuration to

@@ -33,17 +33,6 @@ public class NativeConsumeStrategy implements ConsumeStrategy {
 
   @Override
   public Future<MessageViewerContext> execute(MessageViewerContext context) {
-    if (context.getKafkaClusterInfo() == null
-        || context.getKafkaClusterInfo().bootstrapServers().isEmpty()) {
-      return Future.failedFuture(
-          new ProcessorFailedException(
-              context.fail(500,
-                  "Internal Server Error: Unable to retrieve bootstrap servers "
-                      + "for the Kafka cluster %s".formatted(context.getClusterId())
-              )
-          )
-      );
-    }
     return vertx.executeBlocking(() -> consumeMessages(context));
   }
 
