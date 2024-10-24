@@ -3,8 +3,8 @@ package io.confluent.idesidecar.restapi.util;
 import io.confluent.idesidecar.restapi.kafkarest.model.CreateTopicRequestData;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequest;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequestData;
-import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequest;
-import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
+import io.confluent.idesidecar.restapi.messageviewer.data.ConsumeRequest;
+import io.confluent.idesidecar.restapi.messageviewer.data.ConsumeResponse;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import java.util.*;
 
@@ -332,8 +332,8 @@ public class ConfluentLocalTestBed implements AutoCloseable {
         .build();
   }
 
-  public static SimpleConsumeMultiPartitionResponse consume(
-      String topicName, SimpleConsumeMultiPartitionRequest requestBody
+  public static ConsumeResponse consume(
+      String topicName, ConsumeRequest requestBody
   ) {
     return givenDefault()
         .body(requestBody)
@@ -343,7 +343,7 @@ public class ConfluentLocalTestBed implements AutoCloseable {
         .then()
         .statusCode(200)
         .extract()
-        .body().as(SimpleConsumeMultiPartitionResponse.class);
+        .body().as(ConsumeResponse.class);
   }
 
   /**
