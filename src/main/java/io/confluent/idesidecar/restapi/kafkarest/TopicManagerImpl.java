@@ -64,7 +64,7 @@ public class TopicManagerImpl implements TopicManager {
             .retry()
             .atMost(3)
         );
-    }
+  }
 
   @Override
   public Uni<Void> deleteKafkaTopic(String clusterId, String topicName) {
