@@ -4,8 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
-import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.TimestampType;
+import io.confluent.idesidecar.restapi.messageviewer.data.ConsumeResponse;
+import io.confluent.idesidecar.restapi.messageviewer.data.ConsumeResponse.TimestampType;
 import java.io.IOException;
 import java.util.Objects;
 import org.junit.jupiter.api.Test;
@@ -23,13 +23,13 @@ public class TestSimpleConsumeMultiPartitionResponse {
                     "message-viewer/ccloud-schema-less.json")
         ).readAllBytes());
     // Deserialize JSON 1
-    SimpleConsumeMultiPartitionResponse data1 = mapper.readValue(json1, SimpleConsumeMultiPartitionResponse.class);
+    ConsumeResponse data1 = mapper.readValue(json1, ConsumeResponse.class);
     assertEquals("lkc-abcd123", data1.clusterId());
     assertEquals("orders_json", data1.topicName());
-    SimpleConsumeMultiPartitionResponse.PartitionConsumeData partitionData1 = data1.partitionDataList().get(0);
+    ConsumeResponse.PartitionConsumeData partitionData1 = data1.partitionDataList().get(0);
     assertEquals(0, partitionData1.partitionId());
     assertEquals(60607, partitionData1.nextOffset());
-    SimpleConsumeMultiPartitionResponse.PartitionConsumeRecord record1 = partitionData1.records().get(0);
+    ConsumeResponse.PartitionConsumeRecord record1 = partitionData1.records().get(0);
     assertEquals(0, record1.partitionId());
     assertEquals(60606, record1.offset());
     assertEquals(1718911829088L, record1.timestamp());
@@ -37,13 +37,13 @@ public class TestSimpleConsumeMultiPartitionResponse {
     assertEquals("363302", record1.key().asText());
     assertEquals("{\"ordertime\":1497402000262,\"orderid\":363302,\"itemid\":\"Item_7\",\"orderunits\":0.7202503545348564,\"address\":{\"city\":\"City_\",\"state\":\"State_35\",\"zipcode\":94086}}", record1.value().asText());
 
-    SimpleConsumeMultiPartitionResponse.PartitionConsumeRecordHeader header1_1 = record1.headers().get(0);
+    ConsumeResponse.PartitionConsumeRecordHeader header1_1 = record1.headers().get(0);
     assertEquals("task.generation", header1_1.key());
     assertEquals("MA==", header1_1.value());
-    SimpleConsumeMultiPartitionResponse.PartitionConsumeRecordHeader header1_2 = record1.headers().get(1);
+    ConsumeResponse.PartitionConsumeRecordHeader header1_2 = record1.headers().get(1);
     assertEquals("task.id", header1_2.key());
     assertEquals("MA==", header1_2.value());
-    SimpleConsumeMultiPartitionResponse.PartitionConsumeRecordHeader header1_3 = record1.headers().get(2);
+    ConsumeResponse.PartitionConsumeRecordHeader header1_3 = record1.headers().get(2);
     assertEquals("current.iteration", header1_3.key());
     assertEquals("MzYzMzAy", header1_3.value());
   }
@@ -60,13 +60,13 @@ public class TestSimpleConsumeMultiPartitionResponse {
             .getResourceAsStream(
                 "message-viewer/ccloud-schema-encoded.json")
     ).readAllBytes());
-    SimpleConsumeMultiPartitionResponse data2 = mapper.readValue(json2, SimpleConsumeMultiPartitionResponse.class);
+    ConsumeResponse data2 = mapper.readValue(json2, ConsumeResponse.class);
     assertEquals("lkc-abcd123", data2.clusterId());
     assertEquals("order_json_sr", data2.topicName());
-    SimpleConsumeMultiPartitionResponse.PartitionConsumeData partitionData2 = data2.partitionDataList().get(0);
+    ConsumeResponse.PartitionConsumeData partitionData2 = data2.partitionDataList().get(0);
     assertEquals(0, partitionData2.partitionId());
     assertEquals(60652, partitionData2.nextOffset());
-    SimpleConsumeMultiPartitionResponse.PartitionConsumeRecord record2 = partitionData2.records().get(0);
+    ConsumeResponse.PartitionConsumeRecord record2 = partitionData2.records().get(0);
     assertEquals(0, record2.partitionId());
     assertEquals(60602, record2.offset());
     assertEquals(1718911799411L, record2.timestamp());
@@ -75,13 +75,13 @@ public class TestSimpleConsumeMultiPartitionResponse {
     JsonNode value2 = record2.value();
     assertEquals("AAABhqF7Im9yZGVydGltZSI6MTQ4ODA1MjkzMjEyMywib3JkZXJpZCI6MzYzMjg3LCJpdGVtaWQiOiJJdGVtXzU0MyIsIm9yZGVydW5pdHMiOjQuNzMwMDI5ODkxOTUwODE4LCJhZGRyZXNzIjp7ImNpdHkiOiJDaXR5XyIsInN0YXRlIjoiU3RhdGVfMTgiLCJ6aXBjb2RlIjo3NTA2MH19", value2.get("__raw__").asText());
 
-    SimpleConsumeMultiPartitionResponse.PartitionConsumeRecordHeader header2_1 = record2.headers().get(0);
+    ConsumeResponse.PartitionConsumeRecordHeader header2_1 = record2.headers().get(0);
     assertEquals("task.generation", header2_1.key());
     assertEquals("MA==", header2_1.value());
-    SimpleConsumeMultiPartitionResponse.PartitionConsumeRecordHeader header2_2 = record2.headers().get(1);
+    ConsumeResponse.PartitionConsumeRecordHeader header2_2 = record2.headers().get(1);
     assertEquals("task.id", header2_2.key());
     assertEquals("MA==", header2_2.value());
-    SimpleConsumeMultiPartitionResponse.PartitionConsumeRecordHeader header2_3 = record2.headers().get(2);
+    ConsumeResponse.PartitionConsumeRecordHeader header2_3 = record2.headers().get(2);
     assertEquals("current.iteration", header2_3.key());
     assertEquals("MzYzMjg3", header2_3.value());
   }

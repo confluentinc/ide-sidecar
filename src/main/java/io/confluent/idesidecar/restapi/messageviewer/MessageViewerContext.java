@@ -2,8 +2,8 @@ package io.confluent.idesidecar.restapi.messageviewer;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequest;
-import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
+import io.confluent.idesidecar.restapi.messageviewer.data.ConsumeRequest;
+import io.confluent.idesidecar.restapi.messageviewer.data.ConsumeResponse;
 import io.confluent.idesidecar.restapi.models.graph.KafkaCluster;
 import io.confluent.idesidecar.restapi.models.graph.SchemaRegistry;
 import io.confluent.idesidecar.restapi.proxy.ProxyContext;
@@ -21,15 +21,15 @@ public class MessageViewerContext extends ProxyContext {
   private final String topicName;
   private KafkaCluster kafkaClusterInfo;
   private SchemaRegistry schemaRegistryInfo;
-  private final SimpleConsumeMultiPartitionRequest consumeRequest;
+  private final ConsumeRequest consumeRequest;
 
-  private SimpleConsumeMultiPartitionResponse consumeResponse;
+  private ConsumeResponse consumeResponse;
 
   public MessageViewerContext(
       String requestUri,
       MultiMap requestHeaders,
       HttpMethod requestMethod,
-      SimpleConsumeMultiPartitionRequest requestBody,
+      ConsumeRequest requestBody,
       Map<String, String> requestPathParams,
       String connectionId,
       String clusterId,
@@ -72,16 +72,16 @@ public class MessageViewerContext extends ProxyContext {
     return this.schemaRegistryInfo;
   }
 
-  public SimpleConsumeMultiPartitionResponse getConsumeResponse() {
+  public ConsumeResponse getConsumeResponse() {
     return consumeResponse;
   }
 
   public void setConsumeResponse(
-      SimpleConsumeMultiPartitionResponse consumeResponse) {
+      ConsumeResponse consumeResponse) {
     this.consumeResponse = consumeResponse;
   }
 
-  public SimpleConsumeMultiPartitionRequest getConsumeRequest() {
+  public ConsumeRequest getConsumeRequest() {
     return this.consumeRequest;
   }
 }

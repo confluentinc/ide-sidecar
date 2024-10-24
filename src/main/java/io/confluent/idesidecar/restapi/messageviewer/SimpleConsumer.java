@@ -1,10 +1,11 @@
 package io.confluent.idesidecar.restapi.messageviewer;
 
-import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.ExceededFields;
-import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeData;
-import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeRecord;
-import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeRecordHeader;
-import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.TimestampType;
+import io.confluent.idesidecar.restapi.messageviewer.data.ConsumeRequest;
+import io.confluent.idesidecar.restapi.messageviewer.data.ConsumeResponse.ExceededFields;
+import io.confluent.idesidecar.restapi.messageviewer.data.ConsumeResponse.PartitionConsumeData;
+import io.confluent.idesidecar.restapi.messageviewer.data.ConsumeResponse.PartitionConsumeRecord;
+import io.confluent.idesidecar.restapi.messageviewer.data.ConsumeResponse.PartitionConsumeRecordHeader;
+import io.confluent.idesidecar.restapi.messageviewer.data.ConsumeResponse.TimestampType;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -15,10 +16,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.Properties;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.OffsetAndTimestamp;
@@ -26,7 +25,7 @@ import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
 
 /**
- * Implements consuming records from Confluent Local Kafka topics for the message viewer API.
+ * Implements consuming records from Kafka topics for the message viewer API.
  */
 public class SimpleConsumer {
   private static final Duration POLL_TIMEOUT = Duration.ofSeconds(1);
@@ -35,47 +34,46 @@ public class SimpleConsumer {
   private static final int MAX_RESPONSE_BYTES = 20 * 1024 * 1024; // 20 MB
   private static final int DEFAULT_MESSAGE_MAX_BYTES = 4 * 1024 * 1024; // 4MB
   private final SchemaRegistryClient schemaRegistryClient;
+  private final KafkaConsumer<byte[], byte[]> consumer;
+  private final RecordDeserializer recordDeserializer;
 
-  final Properties baseConsumerConfig;
-
-  public SimpleConsumer(Properties baseConfig, SchemaRegistryClient src) {
-    schemaRegistryClient = src;
-    var props = new Properties();
-    // Custom properties
-    props.putAll(baseConfig);
-
-    // Default properties
-    props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
-        "org.apache.kafka.common.serialization.ByteArrayDeserializer");
-    props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
-        "org.apache.kafka.common.serialization.ByteArrayDeserializer");
-    baseConsumerConfig = props;
+  public SimpleConsumer(
+      KafkaConsumer<byte[], byte[]> consumer,
+      SchemaRegistryClient sr,
+      RecordDeserializer recordDeserializer
+  ) {
+    this.consumer = consumer;
+    this.schemaRegistryClient = sr;
+    this.recordDeserializer = recordDeserializer;
   }
 
   @SuppressWarnings("CyclomaticComplexity")
-  public List<PartitionConsumeData> consumeFromMultiplePartitions(
+  public List<PartitionConsumeData> consume(
       String topicName,
-      Map<Integer, Long> offsets,
-      Boolean fromBeginning,
-      Long timestamp,
-      Integer maxPollRecords,
-      Integer fetchMaxBytes,
-      Integer messageMaxBytes
-  ) {
-    messageMaxBytes = messageMaxBytes == null ? DEFAULT_MESSAGE_MAX_BYTES : messageMaxBytes;
+      ConsumeRequest request) {
+    final var messageMaxBytes = Optional
+        .ofNullable(request.messageMaxBytes())
+        .orElse(DEFAULT_MESSAGE_MAX_BYTES);
+
     // maxPollRecords is the number of messages we get for this entire query.
-    int recordsLimit = Math.min(
-        Optional.ofNullable(maxPollRecords).orElse(MAX_POLL_RECORDS_LIMIT),
+    var recordsLimit = Math.min(
+        Optional.ofNullable(request.maxPollRecords()).orElse(MAX_POLL_RECORDS_LIMIT),
         MAX_POLL_RECORDS_LIMIT
     );
-    var consumer = getConsumerWithConfigs(recordsLimit, fetchMaxBytes);
-    var numPartitions = getPartitionCount(consumer, topicName);
-    var partitions = getPartitions(topicName, numPartitions, offsets);
+    final var numPartitions = getPartitionCount(consumer, topicName);
+    final var partitions = getPartitions(topicName, numPartitions, request.offsetsByPartition());
     final var endOffsets = consumer.endOffsets(partitions);
-    offsets = getInitialOffsets(
-        consumer, partitions, offsets, endOffsets, fromBeginning, timestamp);
+    final var offsets = getInitialOffsets(
+        consumer,
+        partitions,
+        request.offsetsByPartition(),
+        endOffsets,
+        request.fromBeginning(),
+        request.timestamp()
+    );
 
-    var partitionRecordsMap = new HashMap<TopicPartition, List<ConsumerRecord<byte[], byte[]>>>();
+    final var partitionRecordsMap =
+        new HashMap<TopicPartition, List<ConsumerRecord<byte[], byte[]>>>();
     if (canConsumeFromOffsets(offsets, endOffsets)) {
       consumer.assign(partitions);
       for (TopicPartition partition : partitions) {
@@ -212,20 +210,6 @@ public class SimpleConsumer {
     return initialOffsets;
   }
 
-  KafkaConsumer<byte[], byte[]> getConsumerWithConfigs(
-      Integer maxPollRecords,
-      Integer fetchMaxBytes
-  ) {
-    var consumerConfigOverride = baseConsumerConfig;
-    if (maxPollRecords != null) {
-      consumerConfigOverride.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, maxPollRecords);
-    }
-    if (fetchMaxBytes != null) {
-      consumerConfigOverride.put(ConsumerConfig.FETCH_MAX_BYTES_CONFIG, fetchMaxBytes);
-    }
-    return new KafkaConsumer<>(consumerConfigOverride);
-  }
-
   List<TopicPartition> getPartitions(
       String topicName,
       int numPartitions,
@@ -307,6 +291,48 @@ public class SimpleConsumer {
   PartitionConsumeRecord mapConsumerRecord(
       ConsumerRecord<byte[], byte[]> consumerRecord,
       Integer messageMaxBytes) {
+    var headers = getPartitionConsumeRecordHeaders(consumerRecord);
+
+    // Determine if the key or value exceeds the maximum allowed size
+    boolean keyExceeded = consumerRecord.key() != null
+        && consumerRecord.key().length > messageMaxBytes;
+    boolean valueExceeded = consumerRecord.value() != null
+        && consumerRecord.value().length > messageMaxBytes;
+
+    Optional<RecordDeserializer.DecodedResult> keyResult = keyExceeded
+        ? Optional.empty() : Optional
+        .of(recordDeserializer.deserialize(
+            consumerRecord.key(),
+            schemaRegistryClient,
+            consumerRecord.topic(),
+            true)
+        );
+    Optional<RecordDeserializer.DecodedResult> valueResult = valueExceeded
+        ? Optional.empty() : Optional
+        .of(recordDeserializer.deserialize(
+            consumerRecord.value(),
+            schemaRegistryClient,
+            consumerRecord.topic(),
+            false)
+        );
+
+    return new PartitionConsumeRecord(
+        consumerRecord.partition(),
+        consumerRecord.offset(),
+        consumerRecord.timestamp(),
+        TimestampType.valueOf(consumerRecord.timestampType().name()),
+        headers,
+        keyResult.map(RecordDeserializer.DecodedResult::value).orElse(null),
+        valueResult.map(RecordDeserializer.DecodedResult::value).orElse(null),
+        keyResult.map(RecordDeserializer.DecodedResult::errorMessage).orElse(null),
+        valueResult.map(RecordDeserializer.DecodedResult::errorMessage).orElse(null),
+        new ExceededFields(keyExceeded, valueExceeded)
+    );
+  }
+
+  private static ArrayList<PartitionConsumeRecordHeader> getPartitionConsumeRecordHeaders(
+      ConsumerRecord<byte[], byte[]> consumerRecord
+  ) {
     var headers = new ArrayList<PartitionConsumeRecordHeader>();
     for (var header : consumerRecord.headers()) {
       headers.add(
@@ -316,36 +342,7 @@ public class SimpleConsumer {
           )
       );
     }
-
-    // Determine if the key or value exceeds the maximum allowed size
-    boolean keyExceeded = consumerRecord.key() != null
-        && consumerRecord.key().length > messageMaxBytes;
-    boolean valueExceeded = consumerRecord.value() != null
-        && consumerRecord.value().length > messageMaxBytes;
-
-    var keyResult = keyExceeded ? null : DecoderUtil.parseJsonNode(
-        consumerRecord.key(),
-        schemaRegistryClient,
-        consumerRecord.topic()
-    );
-    var valueResult = valueExceeded ? null : DecoderUtil.parseJsonNode(
-        consumerRecord.value(),
-        schemaRegistryClient,
-        consumerRecord.topic()
-    );
-
-    return new PartitionConsumeRecord(
-        consumerRecord.partition(),
-        consumerRecord.offset(),
-        consumerRecord.timestamp(),
-        TimestampType.valueOf(consumerRecord.timestampType().name()),
-        headers,
-        keyResult == null ? null : keyResult.getValue(),
-        valueResult == null ? null : valueResult.getValue(),
-        keyResult == null ? null : keyResult.getErrorMessage(),
-        valueResult == null ? null : valueResult.getErrorMessage(),
-        new ExceededFields(keyExceeded, valueExceeded)
-    );
+    return headers;
   }
 }
 // CHECKSTYLE:ON: ClassDataAbstractionCoupling
