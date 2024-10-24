@@ -72,14 +72,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/SimpleConsumeMultiPartitionRequest"
+              $ref: "#/components/schemas/ConsumeRequest"
       responses:
         "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SimpleConsumeMultiPartitionResponse"
+                $ref: "#/components/schemas/ConsumeResponse"
   /gateway/v1/connections:
     get:
       tags:
@@ -566,6 +566,38 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Connection"
+    ConsumeRequest:
+      type: object
+      properties:
+        offsets:
+          type: array
+          items:
+            $ref: "#/components/schemas/PartitionOffset"
+        max_poll_records:
+          format: int32
+          type: integer
+        timestamp:
+          format: int64
+          type: integer
+        fetch_max_bytes:
+          format: int32
+          type: integer
+        message_max_bytes:
+          format: int32
+          type: integer
+        from_beginning:
+          type: boolean
+    ConsumeResponse:
+      type: object
+      properties:
+        cluster_id:
+          type: string
+        topic_name:
+          type: string
+        partition_data_list:
+          type: array
+          items:
+            $ref: "#/components/schemas/PartitionConsumeData"
     Error:
       description: Describes a particular error encountered while performing an operation.
       type: object
@@ -805,38 +837,6 @@ components:
       properties:
         version:
           type: string
-    SimpleConsumeMultiPartitionRequest:
-      type: object
-      properties:
-        offsets:
-          type: array
-          items:
-            $ref: "#/components/schemas/PartitionOffset"
-        max_poll_records:
-          format: int32
-          type: integer
-        timestamp:
-          format: int64
-          type: integer
-        fetch_max_bytes:
-          format: int32
-          type: integer
-        message_max_bytes:
-          format: int32
-          type: integer
-        from_beginning:
-          type: boolean
-    SimpleConsumeMultiPartitionResponse:
-      type: object
-      properties:
-        cluster_id:
-          type: string
-        topic_name:
-          type: string
-        partition_data_list:
-          type: array
-          items:
-            $ref: "#/components/schemas/PartitionConsumeData"
     Status:
       enum:
       - NO_TOKEN
