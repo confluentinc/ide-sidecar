@@ -15,6 +15,7 @@ import java.util.function.Supplier;
 import org.apache.kafka.clients.admin.DescribeTopicsOptions;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.admin.TopicDescription;
+import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
 
 /**
  * RequestScoped bean for managing Kafka topics. Creating the bean as {@link RequestScoped} allows
@@ -54,8 +55,16 @@ public class TopicManagerImpl implements TopicManager {
             clusterId,
             createTopicRequestData.getTopicName(),
             false
-        ));
-  }
+            )
+            // The topic may not be immediately available after creation, so we retry a few times
+            // This is also recommended in the Javadoc for UnknownTopicOrPartitionException
+            // "This exception is retryable because the topic or partition might
+            // subsequently be created."
+            .onFailure(UnknownTopicOrPartitionException.class)
+            .retry()
+            .atMost(3)
+        );
+    }
 
   @Override
   public Uni<Void> deleteKafkaTopic(String clusterId, String topicName) {
