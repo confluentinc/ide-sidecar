@@ -10,13 +10,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.confluent.idesidecar.restapi.exceptions.Failure.Error;
 import io.confluent.idesidecar.restapi.util.CCloud.KafkaEndpoint;
 import io.confluent.idesidecar.restapi.util.CCloud.SchemaRegistryEndpoint;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Null;
+import jakarta.validation.constraints.Size;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Null;
-import javax.validation.constraints.Size;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 @Schema(description = "The connection details that can be set or changed.")
