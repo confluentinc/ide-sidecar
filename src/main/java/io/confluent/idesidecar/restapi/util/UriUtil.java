@@ -88,6 +88,34 @@ public class UriUtil {
     }
   }
 
+  public String getHostAndPort(String uri) {
+    return getHostAndPort(uri, -1);
+  }
+
+  public String getHostAndPort(String uri, int defaultPort) {
+    try {
+      URI parsedUri = new URI(uri);
+      return getHostAndPort(parsedUri, defaultPort);
+    } catch (URISyntaxException e) {
+      throw new IllegalArgumentException(INVALID_URI + uri);
+    }
+  }
+
+  public String getHostAndPort(URI uri) {
+    return getHostAndPort(uri, -1);
+  }
+
+  public String getHostAndPort(URI uri, int defaultPort) {
+    var builder = new StringBuilder();
+    builder.append(uri.getHost());
+    if (uri.getPort() > 0) {
+      builder.append(":").append(uri.getPort());
+    } else if (defaultPort > 0) {
+      builder.append(":").append(defaultPort);
+    }
+    return builder.toString();
+  }
+
   /**
    * Extracts the path from a URI, including the query string if present.
    */
