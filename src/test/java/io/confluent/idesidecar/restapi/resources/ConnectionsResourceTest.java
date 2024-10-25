@@ -746,7 +746,7 @@ public class ConnectionsResourceTest {
         new TestInput(
             // If the URI is empty, then we assume that the user does not want to use SR
             // If the URI is null, then we assume the user wants to use SR at the default local port
-            "Local spec is valid with blank Schema Registry URI (new config)",
+            "Local spec is invalid with blank Schema Registry URI (new config)",
             """
             {
               "name": "Connection 1",
