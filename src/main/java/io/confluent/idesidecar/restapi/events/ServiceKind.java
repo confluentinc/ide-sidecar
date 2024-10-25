@@ -32,6 +32,11 @@ public @interface ServiceKind {
   @Qualifier
   @Target({METHOD, FIELD, PARAMETER, TYPE})
   @Retention(RUNTIME)
+  @interface Direct {}
+
+  @Qualifier
+  @Target({METHOD, FIELD, PARAMETER, TYPE})
+  @Retention(RUNTIME)
   @interface Local {}
 
 }
