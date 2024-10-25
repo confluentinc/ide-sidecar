@@ -146,6 +146,12 @@ public class ConnectionStateManager {
           )
       );
     }
+    // validate the connection spec to make sure is has no invalid combinations
+    var errors = spec.validate();
+    if (!errors.isEmpty()) {
+      throw new InvalidInputException(errors);
+    }
+
     var connection = ConnectionStates.from(spec, stateChangeListener);
     connectionStates.put(spec.id(), connection);
 
@@ -177,7 +183,11 @@ public class ConnectionStateManager {
           return Uni.createFrom().voidItem();
         })
         .chain(ignored -> switch (newSpec.type()) {
+          // Make sure the Confluent Cloud organization ID is valid for this user
           case CCLOUD -> validateCCloudOrganizationId(id, newSpec.ccloudOrganizationId());
+          // TODO: DIRECT connection changes need to be validated
+          case DIRECT -> Uni.createFrom().voidItem();
+          // No need to validate the spec for LOCAL, DIRECT, and PLATFORM connections
           case LOCAL, PLATFORM -> Uni.createFrom().voidItem();
         })
         .chain(ignored -> {
