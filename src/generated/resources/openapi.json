@@ -712,10 +712,12 @@
         "properties" : {
           "username" : {
             "description" : "The username to use when connecting to the external service.",
+            "maxLength" : 64,
             "type" : "string"
           },
           "password" : {
             "description" : "The password to use when connecting to the external service.",
+            "maxLength" : 64,
             "type" : "string"
           }
         }
@@ -727,7 +729,8 @@
         "properties" : {
           "organization_id" : {
             "description" : "The identifier of the CCloud organization to use. The user's default organization is used when absent.",
-            "minLength" : 1,
+            "maxLength" : 36,
+            "minLength" : 36,
             "type" : "string"
           }
         }
@@ -791,10 +794,13 @@
         "properties" : {
           "id" : {
             "description" : "The unique identifier of the connection resource.",
+            "maxLength" : 64,
+            "minLength" : 1,
             "type" : "string"
           },
           "name" : {
             "description" : "The user-supplied name of the connection resource.",
+            "maxLength" : 64,
             "type" : "string"
           },
           "type" : {
@@ -1014,10 +1020,12 @@
         "properties" : {
           "id" : {
             "description" : "The identifier of the Kafka cluster, if known.",
+            "maxLength" : 64,
             "type" : "string"
           },
           "bootstrap_servers" : {
             "description" : "A list of host/port pairs to use for establishing the initial connection to the Kafka cluster.",
+            "maxLength" : 256,
             "minLength" : 1,
             "type" : "string"
           }
@@ -1029,6 +1037,7 @@
         "properties" : {
           "schema-registry-uri" : {
             "description" : "The URL of the Schema Registry running locally.",
+            "maxLength" : 512,
             "type" : "string"
           }
         }
@@ -1210,10 +1219,12 @@
         "properties" : {
           "id" : {
             "description" : "The identifier of the Schema Registry cluster, if known.",
+            "maxLength" : 64,
             "type" : "string"
           },
           "uri" : {
             "description" : "The URL of the Schema Registry.",
+            "maxLength" : 256,
             "minLength" : 1,
             "type" : "string"
           }

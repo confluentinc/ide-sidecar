@@ -14,21 +14,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Null;
+import javax.validation.constraints.Size;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 @Schema(description = "The connection details that can be set or changed.")
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record ConnectionSpec(
     @Schema(description = "The unique identifier of the connection resource.")
-    @Max(64)
+    @Size(min = 1, max = 64)
     String id,
     @Schema(description = "The user-supplied name of the connection resource.")
-    @Max(64)
+    @Size(max = 64)
     String name,
     @Schema(description = "The type of connection resource.")
     ConnectionType type,
@@ -221,12 +219,12 @@ public record ConnectionSpec(
 
   @Schema(description = "Configuration for Confluent Cloud connections")
   public record CCloudConfig(
-      @Schema(description = "The identifier of the CCloud organization to use. "
-                            + "The user's default organization is used when absent.")
+      @Schema(
+          description = "The identifier of the CCloud organization to use. "
+                        + "The user's default organization is used when absent."
+      )
       @JsonProperty(value = "organization_id", required = true)
-      @NotEmpty
-      @Min(36)
-      @Max(36)
+      @Size(min = 36, max = 36)
       String organizationId
   ) {
   }
@@ -237,7 +235,7 @@ public record ConnectionSpec(
       @Schema(description = "The URL of the Schema Registry running locally.")
       @JsonProperty(value = "schema-registry-uri")
       @Null
-      @Max(512)
+      @Size(max = 512)
       String schemaRegistryUri
   ) {
   }
@@ -246,14 +244,14 @@ public record ConnectionSpec(
   public record KafkaClusterConfig(
       @Schema(description = "The identifier of the Kafka cluster, if known.")
       @Null
-      @Max(64)
+      @Size(max = 64)
       String id,
 
       @Schema(description = "A list of host/port pairs to use for establishing the "
                             + "initial connection to the Kafka cluster.")
       @JsonProperty(value = "bootstrap_servers")
-      @NotEmpty
-      @Max(256)
+      @Size(min = 1, max = 256)
+      @NotNull
       String bootstrapServers
   ) {
 
@@ -267,12 +265,13 @@ public record ConnectionSpec(
   public record SchemaRegistryConfig(
       @Schema(description = "The identifier of the Schema Registry cluster, if known.")
       @Null
-      @Max(64)
+      @Size(max = 64)
       String id,
 
       @Schema(description = "The URL of the Schema Registry.")
       @JsonProperty(value = "uri")
-      @NotEmpty
+      @Size(min = 1, max = 256)
+      @NotNull
       String uri
   ) {
 
@@ -286,14 +285,14 @@ public record ConnectionSpec(
   public record BasicCredentials(
       @Schema(description = "The username to use when connecting to the external service.")
       @JsonProperty(value = "username")
+      @Size(max = 64)
       @NotNull
-      @Max(64)
       String username,
 
       @Schema(description = "The password to use when connecting to the external service.")
       @JsonProperty(value = "password")
+      @Size(max = 64)
       @NotNull
-      @Max(64)
       // TODO: Wrap in Secret record rather than String, and override toString to
       //  prevent/limit read access
       String password
@@ -329,25 +328,25 @@ public record ConnectionSpec(
 
     // Check required fields and immutability
     if (newSpec.name == null || newSpec.name.isBlank()) {
-      isRequired(errors, "name", "Connection name");
+      checkRequired(errors, "name", "Connection name");
     }
     if (newSpec.id == null || newSpec.id.isBlank()) {
-      isRequired(errors, "id", "Connection ID");
+      checkRequired(errors, "id", "Connection ID");
     } else if (!Objects.equals(newSpec.id, id)) {
-      isImmutable(errors, "id", "Connection ID");
+      checkImmutable(errors, "id", "Connection ID");
     }
     if (newSpec.type == null) {
-      isRequired(errors, "type", "Connection type");
+      checkRequired(errors, "type", "Connection type");
     } else if (!Objects.equals(newSpec.type, type)) {
-      isImmutable(errors, "type", "Connection type");
+      checkImmutable(errors, "type", "Connection type");
     } else {
       // The type is the same, so we can check type-specific fields
 
       // Check type-specific fields
       switch (newSpec.type) {
         case LOCAL -> {
-          ccloudConfigNotAllowed(errors, newSpec);
-          kafkaClusterNotAllowed(errors, newSpec);
+          checkCCloudConfigNotAllowed(errors, newSpec);
+          checkKafkaClusterNotAllowed(errors, newSpec);
           // Allow use of the older local config with Schema Registry.
           var local = newSpec.localConfig;
           if (local != null) {
@@ -370,7 +369,7 @@ public record ConnectionSpec(
           var sr = newSpec.schemaRegistryConfig();
           if (sr != null) {
             if (sr.uri == null || sr.uri.isBlank()) {
-              isRequired(errors, "schema_registry.uri", "Schema Registry URI");
+              checkRequired(errors, "schema_registry.uri", "Schema Registry URI");
             }
           }
           // Make sure we're not using both
@@ -383,15 +382,15 @@ public record ConnectionSpec(
           }
         }
         case CCLOUD -> {
-          localConfigNotAllowed(errors, newSpec);
-          kafkaClusterNotAllowed(errors, newSpec);
-          schemaRegistryNotAllowed(errors, newSpec);
+          checkLocalConfigNotAllowed(errors, newSpec);
+          checkKafkaClusterNotAllowed(errors, newSpec);
+          checkSchemaRegistryNotAllowed(errors, newSpec);
         }
         case DIRECT -> {
           var kafka = newSpec.kafkaClusterConfig();
           if (kafka != null) {
             if (kafka.bootstrapServers == null || kafka.bootstrapServers.isBlank()) {
-              isRequired(
+              checkRequired(
                   errors,
                   "kafka_cluster.bootstrap_servers",
                   "Kafka cluster bootstrap_servers"
@@ -401,11 +400,11 @@ public record ConnectionSpec(
           var sr = newSpec.schemaRegistryConfig();
           if (sr != null) {
             if (sr.uri == null || sr.uri.isBlank()) {
-              isRequired(errors, "schema_registry.uri", "Schema Registry URI");
+              checkRequired(errors, "schema_registry.uri", "Schema Registry URI");
             }
           }
-          localConfigNotAllowed(errors, newSpec);
-          ccloudConfigNotAllowed(errors, newSpec);
+          checkLocalConfigNotAllowed(errors, newSpec);
+          checkCCloudConfigNotAllowed(errors, newSpec);
         }
         case PLATFORM -> {
         }
@@ -421,9 +420,9 @@ public record ConnectionSpec(
     return errors;
   }
 
-  void localConfigNotAllowed(List<Error> errors, ConnectionSpec newSpec) {
+  void checkLocalConfigNotAllowed(List<Error> errors, ConnectionSpec newSpec) {
     if (newSpec.localConfig != null) {
-      isNotAllowed(
+      checkAllowedWhen(
           errors,
           LOCAL_CONFIG_FIELD_NAME,
           "Local configuration",
@@ -432,9 +431,9 @@ public record ConnectionSpec(
     }
   }
 
-  void ccloudConfigNotAllowed(List<Error> errors, ConnectionSpec newSpec) {
+  void checkCCloudConfigNotAllowed(List<Error> errors, ConnectionSpec newSpec) {
     if (newSpec.ccloudConfig != null) {
-      isNotAllowed(
+      checkAllowedWhen(
           errors,
           CCLOUD_CONFIG_FIELD_NAME,
           "CCloud configuration",
@@ -443,9 +442,9 @@ public record ConnectionSpec(
     }
   }
 
-  void kafkaClusterNotAllowed(List<Error> errors, ConnectionSpec newSpec) {
+  void checkKafkaClusterNotAllowed(List<Error> errors, ConnectionSpec newSpec) {
     if (newSpec.kafkaClusterConfig != null) {
-      isNotAllowed(
+      checkAllowedWhen(
           errors,
           KAFKA_CLUSTER_CONFIG_FIELD_NAME,
           "Kafka cluster configuration",
@@ -454,9 +453,9 @@ public record ConnectionSpec(
     }
   }
 
-  void schemaRegistryNotAllowed(List<Error> errors, ConnectionSpec newSpec) {
+  void checkSchemaRegistryNotAllowed(List<Error> errors, ConnectionSpec newSpec) {
     if (newSpec.schemaRegistryConfig != null) {
-      isNotAllowed(
+      checkAllowedWhen(
           errors,
           SCHEMA_REGISTRY_CONFIG_FIELD_NAME,
           "Schema Registry configuration",
@@ -465,7 +464,7 @@ public record ConnectionSpec(
     }
   }
 
-  void isNotAllowed(List<Error> errors, String path, String what, String when) {
+  void checkAllowedWhen(List<Error> errors, String path, String what, String when) {
     errors.add(
         Error.create()
              .withDetail("%s is not allowed when %s".formatted(what, when))
@@ -473,7 +472,7 @@ public record ConnectionSpec(
     );
   }
 
-  void isRequired(List<Error> errors, String path, String what) {
+  void checkRequired(List<Error> errors, String path, String what) {
     errors.add(
         Error.create()
              .withDetail("%s is required and may not be blank".formatted(what))
@@ -481,7 +480,7 @@ public record ConnectionSpec(
     );
   }
 
-  void isImmutable(List<Error> errors, String path, String what) {
+  void checkImmutable(List<Error> errors, String path, String what) {
     errors.add(
         Error.create()
              .withDetail("%s may not be changed".formatted(what))
