@@ -59,7 +59,7 @@ public class RealDirectFetcher extends ConfluentRestClient implements DirectFetc
       return directConnectionState.getAuthenticationHeaders();
     } else {
       throw new ConnectionNotFoundException(
-          String.format("Connection with ID=%s is not a CCloud connection.", connectionId));
+          String.format("Connection with ID=%s is not a Direct connection.", connectionId));
     }
   }
 
@@ -95,12 +95,10 @@ public class RealDirectFetcher extends ConfluentRestClient implements DirectFetc
       var ccloudEndpoint = kafkaConfig.asCCloudEndpoint();
       if (ccloudEndpoint.isPresent()) {
         var endpoint = ccloudEndpoint.get();
-        var name = spec.name() + " Kafka Cluster";
         cluster = new DirectKafkaCluster(
             endpoint.clusterId().toString(),
-            name,
-            endpoint.getUri().toString(),
-            endpoint.getUri().getHost(),
+            spec.name() + " Kafka Cluster",
+            uriUtil.getHostAndPort(endpoint.getUri()),
             connectionId
         );
       } else {

@@ -94,7 +94,7 @@ public class CCloud {
     }
 
     static final Pattern CCLOUD_BOOTSTRAP_SERVER_PATTERN = Pattern.compile(
-        "(((pkc|lkc)-([a-z0-9]+))" // group 2: pkc or lkc
+        "(((pkc|lkc)-([a-z0-9]+))" // group 2: ID for the pkc or lkc
         + "([-.]([a-z0-9.]+))?" // group 6: network ID or dom slug
         + "\\.([a-z0-9-]+)" // group 7: region
         + "\\.([a-z0-9-]+)" // group 8: cloud provider
@@ -139,8 +139,8 @@ public class CCloud {
       return URI.create(builder.toString());
     }
 
-    static final Pattern CCLOUD_URI_PATTERN = Pattern.compile(
-        "https://(([lp]src-([a-z0-9]+))" // group 2: pkc or lkc
+    static final Pattern CCLOUD_SR_URI_PATTERN = Pattern.compile(
+        "https://(([lp]src-([a-z0-9]+))" // group 2: SR ID
         + "\\.([a-z0-9-]+)" // group 4: region
         + "\\.([a-z0-9-]+)" // group 5: cloud provider
         + "\\.(([a-z0-9-]+)\\.)?" // group 7: routing
@@ -151,7 +151,7 @@ public class CCloud {
       if (bootstrapServers != null) {
         // Look through the bootstrap servers and find the first one that matches the pattern
         for (var server : bootstrapServers.split(",")) {
-          var matcher = CCLOUD_URI_PATTERN.matcher(server);
+          var matcher = CCLOUD_SR_URI_PATTERN.matcher(server);
           if (matcher.matches()) {
             var clusterId = SchemaRegistryIdentifier.parse(matcher.group(2)).orElse(null);
             var region = new CloudProviderRegion(matcher.group(4));
