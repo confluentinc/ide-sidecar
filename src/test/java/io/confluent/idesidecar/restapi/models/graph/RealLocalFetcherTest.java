@@ -208,7 +208,7 @@ class RealLocalFetcherTest {
   @Test
   void shouldReturnValidSchemaRegistryUri() throws CreateConnectionException {
     var localConfig = new ConnectionSpec.LocalConfig("http://localhost:8085");
-    var connectionSpec = new ConnectionSpec("1", "Local Connection", ConnectionSpec.ConnectionType.LOCAL, null, localConfig);
+    var connectionSpec = ConnectionSpec.createLocal("1", "Local Connection", localConfig);
     manager.createConnectionState(connectionSpec);
 
     String uri = localFetcher.resolveSchemaRegistryUri("1");
@@ -217,7 +217,7 @@ class RealLocalFetcherTest {
 
   @Test
   void shouldReturnDefaultSchemaRegistryUriWhenLocalConfigIsNull() throws CreateConnectionException {
-    var connectionSpec = new ConnectionSpec("2", "Local Connection", ConnectionSpec.ConnectionType.LOCAL, null, null);
+    var connectionSpec = ConnectionSpec.createLocal("2", "Local Connection", null);
     manager.createConnectionState(connectionSpec);
 
     String uri = localFetcher.resolveSchemaRegistryUri("2");
@@ -227,7 +227,7 @@ class RealLocalFetcherTest {
   @Test
   void shouldReturnNullWhenSchemaRegistryUriIsBlank() throws CreateConnectionException {
     var localConfig = new ConnectionSpec.LocalConfig("");
-    var connectionSpec = new ConnectionSpec("3", "Local Connection", ConnectionSpec.ConnectionType.LOCAL, null, localConfig);
+    var connectionSpec = ConnectionSpec.createLocal("3", "Local Connection", localConfig);
     manager.createConnectionState(connectionSpec);
 
     String uri = localFetcher.resolveSchemaRegistryUri("3");
@@ -237,7 +237,7 @@ class RealLocalFetcherTest {
   @Test
   void shouldReturnDefaultSchemaRegistryUriWhenSchemaRegistryUriIsNull() throws CreateConnectionException {
     var localConfig = new ConnectionSpec.LocalConfig(null);
-    var connectionSpec = new ConnectionSpec("4", "Local Connection", ConnectionSpec.ConnectionType.LOCAL, null, localConfig);
+    var connectionSpec = ConnectionSpec.createLocal("4", "Local Connection", localConfig);
     manager.createConnectionState(connectionSpec);
     String uri = localFetcher.resolveSchemaRegistryUri("4");
     assertEquals("http://localhost:8081", uri);

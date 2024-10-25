@@ -29,6 +29,7 @@ public final class ConnectionStates {
     return switch (spec.type()) {
       case CCLOUD   -> new CCloudConnectionState(spec, listener);
       case LOCAL    -> new LocalConnectionState(spec, listener);
+      case DIRECT -> new DirectConnectionState(spec, listener);
       case PLATFORM -> new PlatformConnectionState(spec, listener);
     };
   }

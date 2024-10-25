@@ -14,6 +14,7 @@ import io.confluent.idesidecar.restapi.models.graph.Cluster;
 import io.confluent.idesidecar.restapi.models.graph.ClusterEvent;
 import io.confluent.idesidecar.restapi.models.graph.KafkaCluster;
 import io.confluent.idesidecar.restapi.models.graph.RealCCloudFetcher;
+import io.confluent.idesidecar.restapi.models.graph.RealDirectFetcher;
 import io.confluent.idesidecar.restapi.models.graph.RealLocalFetcher;
 import io.confluent.idesidecar.restapi.models.graph.SchemaRegistry;
 import io.confluent.idesidecar.restapi.util.TimeUtil;
@@ -58,6 +59,9 @@ public class ClusterCache {
 
   @Inject
   RealCCloudFetcher ccloudFetcher;
+
+  @Inject
+  RealDirectFetcher directFetcher;
 
   Duration loadTimeout = DEFAULT_TIMEOUT;
 
@@ -487,6 +491,9 @@ public class ClusterCache {
           case LOCAL -> localFetcher.getKafkaCluster(connectionId)
                                     .await()
                                     .atMost(timeout);
+          case DIRECT -> directFetcher.getKafkaCluster(connectionId)
+                                    .await()
+                                    .atMost(timeout);
           case PLATFORM -> null;
         };
       } catch (CompletionException e) {
@@ -510,6 +517,9 @@ public class ClusterCache {
                                       .await()
                                       .atMost(timeout);
           case LOCAL -> localFetcher.getSchemaRegistry(connectionId)
+                                    .await()
+                                    .atMost(timeout);
+          case DIRECT -> directFetcher.getSchemaRegistry(connectionId)
                                     .await()
                                     .atMost(timeout);
           case PLATFORM -> null;
@@ -537,6 +547,9 @@ public class ClusterCache {
           case LOCAL -> localFetcher.getSchemaRegistry(connectionId)
                                     .await()
                                     .atMost(timeout);
+          case DIRECT -> directFetcher.getSchemaRegistry(connectionId)
+                                      .await()
+                                      .atMost(timeout);
           case PLATFORM -> null;
         };
       } catch (CompletionException e) {
