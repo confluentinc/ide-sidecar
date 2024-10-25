@@ -567,7 +567,7 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-checkstyle-plugin</artifactId>
         <configuration>
-          <propertiesLocation>${build-tools.dir}/checkstyle/checkstyle.properties</propertiesLocation>
+          <configLocation>${build-tools.dir}/checkstyle/checkstyle.xml</configLocation>
           <suppressionsLocation>${build-tools.dir}/checkstyle/suppressions.xml</suppressionsLocation>
           <includeTestSourceDirectory>false</includeTestSourceDirectory>
           <excludes>**/static/templates/**/*</excludes>
