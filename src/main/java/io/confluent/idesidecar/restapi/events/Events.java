@@ -141,6 +141,14 @@ public class Events {
     }
 
     /**
+     * Return a qualifier to signal the annotated event represents a
+     * {@link ConnectionType#DIRECT Direct} connection object
+     */
+    public static AnnotationLiteral<ServiceKind.Direct> direct() {
+      return new AnnotationLiteral<>() {};
+    }
+
+    /**
      * Return a qualifier to signal the annotated event represents an object from
      * {@link ConnectionType#LOCAL lcoal services}.
      */
@@ -164,6 +172,7 @@ public class Events {
       return switch (type) {
         case LOCAL -> ConnectionTypeQualifier.local();
         case CCLOUD -> ConnectionTypeQualifier.ccloud();
+        case DIRECT -> ConnectionTypeQualifier.direct();
         case PLATFORM -> ConnectionTypeQualifier.confluentPlatform();
       };
     }

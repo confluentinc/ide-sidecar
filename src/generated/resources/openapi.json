@@ -705,12 +705,29 @@
           }
         }
       },
+      "BasicCredentials" : {
+        "description" : "Basic authentication credentials",
+        "required" : [ "username", "password" ],
+        "type" : "object",
+        "properties" : {
+          "username" : {
+            "description" : "The username to use when connecting to the external service.",
+            "type" : "string"
+          },
+          "password" : {
+            "description" : "The password to use when connecting to the external service.",
+            "type" : "string"
+          }
+        }
+      },
       "CCloudConfig" : {
         "description" : "Configuration for Confluent Cloud connections",
         "required" : [ "organization_id" ],
         "type" : "object",
         "properties" : {
           "organization_id" : {
+            "description" : "The identifier of the CCloud organization to use. The user's default organization is used when absent.",
+            "minLength" : 1,
             "type" : "string"
           }
         }
@@ -769,22 +786,51 @@
         }
       },
       "ConnectionSpec" : {
+        "description" : "The connection details that can be set or changed.",
         "type" : "object",
         "properties" : {
           "id" : {
+            "description" : "The unique identifier of the connection resource.",
             "type" : "string"
           },
           "name" : {
+            "description" : "The user-supplied name of the connection resource.",
             "type" : "string"
           },
           "type" : {
-            "$ref" : "#/components/schemas/ConnectionType"
+            "description" : "The type of connection resource.",
+            "type" : "string",
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/ConnectionType"
+            } ]
           },
           "ccloud_config" : {
-            "$ref" : "#/components/schemas/CCloudConfig"
+            "description" : "The details for connecting to CCloud.",
+            "type" : "object",
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/CCloudConfig"
+            } ]
           },
           "local_config" : {
-            "$ref" : "#/components/schemas/LocalConfig"
+            "description" : "The details for connecting to Confluent Local.",
+            "type" : "object",
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/LocalConfig"
+            } ]
+          },
+          "kafka_cluster" : {
+            "description" : "The details for connecting to a CCloud, Confluent Platform, or Apache Kafka cluster.",
+            "type" : "object",
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/KafkaClusterConfig"
+            } ]
+          },
+          "schema_registry" : {
+            "description" : "The details for connecting to a Schema Registry.",
+            "type" : "object",
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/SchemaRegistryConfig"
+            } ]
           }
         }
       },
@@ -798,7 +844,7 @@
         }
       },
       "ConnectionType" : {
-        "enum" : [ "LOCAL", "PLATFORM", "CCLOUD" ],
+        "enum" : [ "LOCAL", "PLATFORM", "CCLOUD", "DIRECT" ],
         "type" : "string"
       },
       "ConnectionsList" : {
@@ -961,11 +1007,28 @@
         "enum" : [ "ARRAY", "BINARY", "BOOLEAN", "MISSING", "NULL", "NUMBER", "OBJECT", "POJO", "STRING" ],
         "type" : "string"
       },
+      "KafkaClusterConfig" : {
+        "description" : "Kafka cluster configuration.",
+        "required" : [ "bootstrap_servers" ],
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "description" : "The identifier of the Kafka cluster, if known.",
+            "type" : "string"
+          },
+          "bootstrap_servers" : {
+            "description" : "A list of host/port pairs to use for establishing the initial connection to the Kafka cluster.",
+            "minLength" : 1,
+            "type" : "string"
+          }
+        }
+      },
       "LocalConfig" : {
-        "description" : "Configuration for local cluster",
+        "description" : "Configuration when using Confluent Local and optionally a local Schema Registry.",
         "type" : "object",
         "properties" : {
           "schema-registry-uri" : {
+            "description" : "The URL of the Schema Registry running locally.",
             "type" : "string"
           }
         }
@@ -1137,6 +1200,22 @@
           },
           "trust_all_certificates" : {
             "type" : "boolean"
+          }
+        }
+      },
+      "SchemaRegistryConfig" : {
+        "description" : "Schema Registry configuration.",
+        "required" : [ "uri" ],
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "description" : "The identifier of the Schema Registry cluster, if known.",
+            "type" : "string"
+          },
+          "uri" : {
+            "description" : "The URL of the Schema Registry.",
+            "minLength" : 1,
+            "type" : "string"
           }
         }
       },
