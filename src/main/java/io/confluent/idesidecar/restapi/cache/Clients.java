@@ -15,6 +15,10 @@ import java.util.function.Supplier;
 
 /**
  * Utilities to obtain and cache clients for a given connection and client ID.
+ * Client instances of {@code T} are cached and retrieved by the client ID.
+ * You may get creative with this, for example, you may use a cluster ID and a hash of
+ * the client configuration to cache clients per cluster and configuration. See
+ * {@link KafkaConsumerClients#getClient(String, String, Properties)}.
  */
 public abstract class Clients<T extends AutoCloseable> {
 
