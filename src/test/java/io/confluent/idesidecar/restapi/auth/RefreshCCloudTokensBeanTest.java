@@ -3,6 +3,7 @@ package io.confluent.idesidecar.restapi.auth;
 import io.confluent.idesidecar.restapi.connections.CCloudConnectionState;
 import io.confluent.idesidecar.restapi.connections.ConnectionState;
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
+import io.confluent.idesidecar.restapi.connections.DirectConnectionState;
 import io.confluent.idesidecar.restapi.connections.LocalConnectionState;
 import io.confluent.idesidecar.restapi.connections.PlatformConnectionState;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
@@ -92,6 +93,7 @@ class RefreshCCloudTokensBeanTest {
     var clazz = switch (connectionType) {
       case CCLOUD   -> CCloudConnectionState.class;
       case LOCAL    -> LocalConnectionState.class;
+      case DIRECT -> DirectConnectionState.class;
       case PLATFORM -> PlatformConnectionState.class;
     };
 

@@ -1,10 +1,13 @@
 package io.confluent.idesidecar.restapi.util;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.core.MultivaluedHashMap;
 import jakarta.ws.rs.core.UriInfo;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -35,7 +38,7 @@ public class UriUtilTest {
     // We expect two joining ampersands because we have three query parameters
     var numberOfAmpersands = flattenedQueryParameters.chars()
         .filter(character -> character == '&').count();
-    Assertions.assertEquals(2, numberOfAmpersands);
+    assertEquals(2, numberOfAmpersands);
   }
 
   @Test
@@ -44,6 +47,34 @@ public class UriUtilTest {
 
     var encodedUri = uriUtil.encodeUri("dtx@confluent.io");
 
-    Assertions.assertEquals(expectedResult, encodedUri);
+    assertEquals(expectedResult, encodedUri);
+  }
+
+  @Test
+  void shouldReturnHostnameAndPortForUriWithoutPort() throws URISyntaxException {
+    var uri = "http://localhost";
+    var expected = "localhost";
+    assertEquals(expected, uriUtil.getHostAndPort(uri));
+    assertEquals(expected, uriUtil.getHostAndPort(new URI(uri)));
+  }
+
+  @Test
+  void shouldReturnHostnameAndPortForUriWithoutPortButWithDefaultPort() throws URISyntaxException {
+    var uri = "http://localhost:80";
+    var expected = "localhost:80";
+    assertEquals(expected, uriUtil.getHostAndPort(uri, 443));
+    assertEquals(expected, uriUtil.getHostAndPort(new URI(uri), 443));
+
+    uri = "http://localhost";
+    assertEquals(expected, uriUtil.getHostAndPort(uri, 80));
+    assertEquals(expected, uriUtil.getHostAndPort(new URI(uri), 80));
+  }
+
+  @Test
+  void shouldReturnHostnameAndPortForUriWithPort() throws URISyntaxException {
+    var uri = "http://localhost:8082";
+    var expected = "localhost:8082";
+    assertEquals(expected, uriUtil.getHostAndPort(uri));
+    assertEquals(expected, uriUtil.getHostAndPort(new URI(uri)));
   }
 }

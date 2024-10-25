@@ -57,6 +57,8 @@ public class ClusterStrategyProcessor extends
       case LOCAL ->
           clusterType == ClusterType.KAFKA
               ? confluentLocalKafkaClusterStrategy : confluentLocalSchemaRegistryClusterStrategy;
+      // TODO: DIRECT proxy strategy
+      case DIRECT -> null;
       case PLATFORM -> null;
     };
   }
