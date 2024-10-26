@@ -215,21 +215,18 @@ public class CCloudTestUtil {
     return accessToken;
   }
 
-  public ConnectionSpec createConnection(
+  public ConnectionSpec createCCloudConnection(
       String connectionId,
       String connectionName,
-      ConnectionType connectionType,
       CCloudConfig ccloudConfig
   ) {
     given()
         .when()
         .body(
-            new ConnectionSpec(
+            ConnectionSpec.createCCloud(
                 connectionId,
                 connectionName,
-                connectionType,
-                ccloudConfig,
-                null
+                ccloudConfig
             )
         )
         .contentType(MediaType.APPLICATION_JSON)
@@ -240,11 +237,34 @@ public class CCloudTestUtil {
   }
 
   public ConnectionSpec createConnection(
+      ConnectionSpec spec
+  ) {
+    given()
+        .when()
+        .body(spec)
+        .contentType(MediaType.APPLICATION_JSON)
+        .post("/gateway/v1/connections")
+        .then()
+        .statusCode(200);
+    return connectionStateManager.getConnectionSpec(spec.id());
+  }
+
+  public ConnectionSpec createConnection(
       String connectionId,
       String connectionName,
       ConnectionType connectionType
   ) {
-    return createConnection(connectionId, connectionName, connectionType, null);
+    return createConnection(
+        new ConnectionSpec(
+            connectionId,
+            connectionName,
+            connectionType,
+            null,
+            null,
+            null,
+            null
+        )
+    );
   }
 
   public void createAuthedConnection(String connectionId, ConnectionType connectionType) {
@@ -269,10 +289,9 @@ public class CCloudTestUtil {
       String ccloudOrganizationName,
       String ccloudOrganizationId
   ) {
-    createConnection(
+    createCCloudConnection(
         connectionId,
         connectionName,
-        ConnectionType.CCLOUD,
         new CCloudConfig(ccloudOrganizationId)
     );
     return authenticateCCloudConnection(connectionId, ccloudOrganizationName, ccloudOrganizationId);

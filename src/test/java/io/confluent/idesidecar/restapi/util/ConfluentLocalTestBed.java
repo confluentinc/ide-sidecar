@@ -186,14 +186,13 @@ public class ConfluentLocalTestBed implements AutoCloseable {
   private static void createConnection() {
     given()
         .contentType(ContentType.JSON)
-        .body(new ConnectionSpec(
-            CONNECTION_ID,
-            CONNECTION_ID,
-            ConnectionSpec.ConnectionType.LOCAL,
-            null,
-            null
-        ))
-        .when()
+        .body(
+            ConnectionSpec.createLocal(
+                CONNECTION_ID,
+                CONNECTION_ID,
+                null
+            )
+        )
         .post("%s/gateway/v1/connections".formatted(sidecarHost))
         .then()
         .statusCode(200);

@@ -32,7 +32,8 @@ public class ConsumeStrategyProcessor
     return switch (connectionType) {
       case LOCAL -> nativeConsumeStrategy;
       case CCLOUD -> confluentCloudConsumeStrategy;
-      case PLATFORM -> throw new ProcessorFailedException(
+      // TODO: DIRECT connection strategy is needed
+      case PLATFORM, DIRECT -> throw new ProcessorFailedException(
           context.failf(
               501,
               "This endpoint does not yet support connection-type=%s",

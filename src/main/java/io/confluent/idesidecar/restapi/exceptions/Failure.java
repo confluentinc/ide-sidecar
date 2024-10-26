@@ -174,6 +174,58 @@ public record Failure(
           source != null ? OBJECT_MAPPER.convertValue(source, JsonNode.class) : null
       );
     }
+
+    @SuppressWarnings({
+        "CyclomaticComplexity",
+        "NPathComplexity"
+    })
+    @Override
+    public String toString() {
+      // Custom implementation to avoid printing fields when they are null,
+      // as most will be null much of the time
+      var builder = new StringBuilder("Error{");
+      boolean addDelim = false;
+      if (id != null) {
+        builder.append("id=").append(id);
+        addDelim = true;
+      }
+      if (status != null) {
+        if (addDelim) {
+          builder.append(", ");
+        }
+        builder.append("status=").append(status);
+        addDelim = false;
+      }
+      if (code != null) {
+        if (addDelim) {
+          builder.append(", ");
+        }
+        builder.append(", code=").append(code);
+        addDelim = false;
+      }
+      if (title != null) {
+        if (addDelim) {
+          builder.append(", ");
+        }
+        builder.append(", title=").append(title);
+        addDelim = false;
+      }
+      if (detail != null) {
+        if (addDelim) {
+          builder.append(", ");
+        }
+        builder.append(", detail=").append(detail);
+        addDelim = false;
+      }
+      if (source != null) {
+        if (addDelim) {
+          builder.append(", ");
+        }
+        builder.append(", source=").append(source);
+      }
+      builder.append("}");
+      return builder.toString();
+    }
   }
 
   public String asJsonString() {
