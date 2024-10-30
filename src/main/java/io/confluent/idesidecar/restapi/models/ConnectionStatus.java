@@ -1,5 +1,6 @@
 package io.confluent.idesidecar.restapi.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -10,6 +11,7 @@ import java.time.Instant;
 /**
  * Represents the status of a connection.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public record ConnectionStatus(@JsonProperty(required = true) Authentication authentication) {
 
   /**

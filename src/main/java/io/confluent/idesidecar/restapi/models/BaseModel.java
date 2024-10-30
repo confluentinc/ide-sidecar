@@ -1,35 +1,50 @@
 package io.confluent.idesidecar.restapi.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import org.eclipse.microprofile.config.ConfigProvider;
 
-@JsonPropertyOrder({
-    "api_version",
-    "kind",
-    "id",
-    "metadata",
-    "spec"
-})
-public abstract class BaseModel<SpecT> {
+public abstract class BaseModel<SpecT, MetadataT extends ObjectMetadata> {
 
-  @JsonProperty(value = "api_version", required = true)
-  protected String apiVersion = ConfigProvider.getConfig()
+  protected static final String API_VERSION = ConfigProvider
+      .getConfig()
       .getValue("ide-sidecar.api.groupWithVersion", String.class);
 
-  @JsonProperty(required = true)
-  protected String kind = this.getClass().getSimpleName();
+  protected final String id;
+  protected final MetadataT metadata;
+  protected final SpecT spec;
 
-  @JsonProperty(required = true)
-  protected String id;
+  protected BaseModel(
+      String id,
+      MetadataT metadata,
+      SpecT spec
+  ) {
+    this.id = id;
+    this.metadata = metadata;
+    this.spec = spec;
+  }
 
-  @JsonProperty(required = true)
-  protected ObjectMetadata metadata;
+  @JsonProperty(value = "api_version", required = true)
+  public String apiVersion() {
+    return API_VERSION;
+  }
 
-  @JsonProperty(required = true)
-  protected SpecT spec;
+  @JsonProperty(value = "kind", required = true)
+  public String kind() {
+    return this.getClass().getSimpleName();
+  }
 
-  public String getId() {
+  @JsonProperty(value = "id", required = true)
+  public String id() {
     return this.id;
+  }
+
+  @JsonProperty(value = "spec", required = true)
+  public SpecT spec() {
+    return this.spec;
+  }
+
+  @JsonProperty(value = "metadata", required = true)
+  public MetadataT metadata() {
+    return this.metadata;
   }
 }
