@@ -1,0 +1,16 @@
+query directConnections {
+    directConnections {
+        id
+        name
+        type
+        kafkaCluster {
+            id
+            bootstrapServers
+            uri
+        }
+        schemaRegistry {
+            id
+            uri
+        }
+    }
+}
