@@ -14,6 +14,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.function.Consumer;
+import org.jboss.logging.Logger;
 
 /**
  * A {@link FeatureProject.Provider} that makes a remote HTTP call to LaunchDarkly APIs to
@@ -26,6 +27,7 @@ class HttpFlagEvaluationProvider implements FeatureProject.Provider {
   final ObjectMapper objectMapper;
   final String clientId;
   final String fetchUri;
+  final boolean testMode;
 
   HttpFlagEvaluationProvider(
       @NotNull String projectName,
@@ -37,6 +39,7 @@ class HttpFlagEvaluationProvider implements FeatureProject.Provider {
     this.clientId = clientId;
     this.fetchUri = fetchUri;
     this.objectMapper = objectMapper;
+    this.testMode = fetchUri.startsWith("http://localhost");
   }
 
   @Override
@@ -81,9 +84,11 @@ class HttpFlagEvaluationProvider implements FeatureProject.Provider {
           })
           .onFailure(failure -> {
             if (failure instanceof FeatureFlagFailureException) {
+              var level = testMode ? Logger.Level.DEBUG : Logger.Level.ERROR;
               // This occurs when we're unable to parse the evaluation response or error response
               // from the provider. We DO want to log these, as the problem needs to be fixed.
-              Log.errorf(
+              Log.logf(
+                  level,
                   "Error evaluating feature flags for project '%s': %s",
                   projectName,
                   failure.getMessage(),

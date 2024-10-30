@@ -44,7 +44,7 @@ public class TemplateResource {
     var templateManifests = templateRegistryService.listTemplates();
     var templateList = templateManifests.stream()
         .map(Template::new)
-        .sorted(Comparator.comparing(Template::getId))
+        .sorted(Comparator.comparing(Template::id))
         .toList();
     return new TemplateList(templateList);
   }

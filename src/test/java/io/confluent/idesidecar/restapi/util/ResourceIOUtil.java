@@ -1,5 +1,9 @@
 package io.confluent.idesidecar.restapi.util;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -7,7 +11,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.Objects;
 import org.opentest4j.AssertionFailedError;
@@ -65,7 +68,7 @@ public class ResourceIOUtil {
    * Parse the supplied string content as JSON.
    *
    * <p>This method is only to be used within tests, since it fails the test if
-   * the resource could not be found.
+   * the JSON string content could not be parsed.
    *
    * @param content the JSON string content
    * @return the JSON representation; never null
@@ -81,7 +84,30 @@ public class ResourceIOUtil {
   }
 
   /**
+   * Parse the supplied string content as the supplied type.
+   *
+   * <p>This method is only to be used within tests, since it fails the test if
+   * the JSON string content could not be parsed.
+   *
+   * @param content the JSON string content
+   * @param type    the type of the object to instantiate
+   * @return the object representation of the JSON; never null
+   * @throws AssertionFailedError if the content could not be parsed as JSON
+   */
+  public static <T> T asObject(String content, Class<T> type) {
+    try {
+      return MAPPER.readValue(content, type);
+    } catch (IOException e) {
+      fail("Error parsing JSON", e);
+      return null;
+    }
+  }
+
+  /**
    * Serialize the supplied object to JSON.
+   *
+   * <p>This method is only to be used within tests, since it fails the test if
+   * the object could not be written as JSON.
    *
    * @param object the object to be serialized
    * @return the JSON representation; never null
@@ -123,5 +149,60 @@ public class ResourceIOUtil {
     doc.put("query", query);
     doc.put("variables", variables);
     return doc.toPrettyString();
+  }
+
+  /**
+   * Serializes and deserializes the POJO of the given type. This also checks the equals, hashCode,
+   * and toString methods, and if the object is comparable it checks the compareTo method.
+   *
+   * @param type the JSON POJO class to test
+   * @param <T>  the type of JSON POJO class
+   * @return the test function; never null
+   */
+  @SuppressWarnings("unchecked")
+  public static <T> T deserializeAndSerialize(String resourcePath, Class<T> type) {
+    try {
+      var content = loadResource(resourcePath);
+      var expected = MAPPER.readValue(content, type);
+      serializeAndDeserialize(expected);
+      return expected;
+    } catch (IOException e) {
+      fail("Error loading and deserializing " + type, e);
+      return null;
+    }
+  }
+
+  /**
+   * Serializes and deserializes the POJO of the given type. This also checks the equals, hashCode,
+   * and toString methods, and if the object is comparable it checks the compareTo method.
+   *
+   * @param expected the object to serialize and deserialize
+   * @param <T>      the type of JSON POJO class
+   */
+  @SuppressWarnings("unchecked")
+  public static <T> void serializeAndDeserialize(T expected) {
+    try {
+      // Serialize
+      var serialized = MAPPER.writeValueAsString(expected);
+      var deserialized = MAPPER.readValue(serialized, expected.getClass());
+
+      assertEquals(expected, deserialized);
+
+      // Check equals, hashCode, toString
+      assertSame(deserialized, deserialized);
+      assertEquals(deserialized, deserialized);
+      assertEquals(expected, deserialized);
+      assertEquals(expected.hashCode(), deserialized.hashCode());
+      assertEquals(expected.toString(), deserialized.toString());
+      assertNotEquals("not the same", deserialized);
+      assertNotEquals(deserialized, null);
+      assertTrue(expected.equals(expected)); // always use 'equals' method
+      if (expected instanceof Comparable<?> comparableExpected) {
+        assertEquals(0, ((Comparable<T>)expected).compareTo(expected));
+        assertEquals(0, ((Comparable<T>)expected).compareTo(expected));
+      }
+    } catch (IOException e) {
+      fail("Error serializing and deserializing " + expected, e);
+    }
   }
 }
