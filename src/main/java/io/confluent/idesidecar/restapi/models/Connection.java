@@ -20,7 +20,8 @@ import java.util.Objects;
 public class Connection extends BaseModel<ConnectionSpec, ConnectionMetadata> {
 
   /**
-   * Create a connection from the given connection state and resource path.
+   * Create a connection from the given connection state. The metadata and spec are obtained
+   * from the connection state, and the status is set to {@link ConnectionStatus#INITIAL_STATUS}.
    *
    * @param connectionState the state of the connection
    * @return the connection
@@ -28,6 +29,7 @@ public class Connection extends BaseModel<ConnectionSpec, ConnectionMetadata> {
   public static Connection from(
       ConnectionState connectionState
   ) {
+    // By default, a connection does not hold any tokens
     return from(connectionState, ConnectionStatus.INITIAL_STATUS);
   }
 
@@ -43,11 +45,7 @@ public class Connection extends BaseModel<ConnectionSpec, ConnectionMetadata> {
       ConnectionStatus status
   ) {
     return new Connection(
-        ConnectionMetadata.from(
-            null,
-            ConnectionsResource.API_RESOURCE_PATH,
-            connectionState.getSpec().id()
-        ),
+        connectionState.getConnectionMetadata(),
         connectionState.getSpec(),
         status
     );

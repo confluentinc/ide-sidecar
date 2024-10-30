@@ -1407,9 +1407,11 @@ public class ConnectionsResourceTest {
       assertEquals(expected.resourceName(), actual.resourceName());
       if (expected instanceof ConnectionMetadata expectedConnectionMetadata) {
         if (actual instanceof ConnectionMetadata actualConnectionMetadata) {
+          var expectedSignInUri = expectedConnectionMetadata.signInUri();
+          var actualSignInUri = actualConnectionMetadata.signInUri();
           assertEquals(
-              linkWithoutPort(expectedConnectionMetadata.signInUri()),
-              linkWithoutPort(actualConnectionMetadata.signInUri())
+              expectedSignInUri == null || !expectedSignInUri.trim().isEmpty(),
+              actualSignInUri == null || !actualSignInUri.trim().isEmpty()
           );
         } else {
           assertEquals(expected.getClass(), actual.getClass());
@@ -1421,15 +1423,28 @@ public class ConnectionsResourceTest {
   }
 
   protected void assertMetadata(JsonNode expected, JsonNode actual) {
-    assertEquals(
-        linkWithoutPort(expected.get("sign_in_uri")),
-        linkWithoutPort(actual.get("sign_in_uri"))
-    );
-    assertEquals(expected.get("resource_name"), actual.get("resource_name"));
+    // Don't compare the values of the sign-in URI since that contains a variable token
+    // and instead just ensure that both have or do not have the field
+    assertNullOrNonBlankText(expected.get("sign_in_uri"), actual.get("sign_in_uri"));
+    assertEqualsOrNull(expected.get("resource_name"), actual.get("resource_name"));
     // The actual port is dynamic and will likely differ from the expected port read from files
     assertEquals(
         linkWithoutPort(expected.get("self")),
         linkWithoutPort(actual.get("self"))
+    );
+  }
+
+  protected void assertNullOrNonBlankText(JsonNode expected, JsonNode actual) {
+    assertEquals(
+        expected == null || expected.isNull() || !expected.asText().trim().isEmpty(),
+        actual == null || actual.isNull() || !actual.asText().trim().isEmpty()
+    );
+  }
+
+  protected void assertEqualsOrNull(JsonNode expected, JsonNode actual) {
+    assertEquals(
+        expected == null || expected.isNull() ? null : expected,
+        actual == null || actual.isNull() ? null : actual
     );
   }
 

@@ -8,6 +8,7 @@ import io.confluent.idesidecar.restapi.exceptions.FeatureFlagFailureException;
 import io.confluent.idesidecar.restapi.util.WebClientFactory;
 import io.quarkus.logging.Log;
 import io.quarkus.runtime.annotations.RegisterForReflection;
+import io.quarkus.runtime.configuration.ConfigUtils;
 import io.smallrye.common.constraint.NotNull;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -23,11 +24,12 @@ import org.jboss.logging.Logger;
 @RegisterForReflection
 class HttpFlagEvaluationProvider implements FeatureProject.Provider {
 
+  static final boolean TEST_MODE = ConfigUtils.getProfiles().contains("test");
+
   final String projectName;
   final ObjectMapper objectMapper;
   final String clientId;
   final String fetchUri;
-  final boolean testMode;
 
   HttpFlagEvaluationProvider(
       @NotNull String projectName,
@@ -39,7 +41,6 @@ class HttpFlagEvaluationProvider implements FeatureProject.Provider {
     this.clientId = clientId;
     this.fetchUri = fetchUri;
     this.objectMapper = objectMapper;
-    this.testMode = fetchUri.startsWith("http://localhost");
   }
 
   @Override
@@ -84,9 +85,11 @@ class HttpFlagEvaluationProvider implements FeatureProject.Provider {
           })
           .onFailure(failure -> {
             if (failure instanceof FeatureFlagFailureException) {
-              var level = testMode ? Logger.Level.DEBUG : Logger.Level.ERROR;
               // This occurs when we're unable to parse the evaluation response or error response
-              // from the provider. We DO want to log these, as the problem needs to be fixed.
+              // from the provider. This indicates a bug that should be fixed and should be logged.
+              // Unfortunately, this also occurs very frequently in test profiles,
+              // and we don't need to log those.
+              var level = TEST_MODE ? Logger.Level.DEBUG : Logger.Level.ERROR;
               Log.logf(
                   level,
                   "Error evaluating feature flags for project '%s': %s",
