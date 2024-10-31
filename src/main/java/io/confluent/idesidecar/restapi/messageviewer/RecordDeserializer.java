@@ -272,7 +272,7 @@ public class RecordDeserializer {
         //            network-related IOExceptions, to prevent the sidecar from
         //            bombarding the Schema Registry servers with requests for every
         //            consumed message when we encounter a schema fetch error.
-        cacheSchemaFetchError(e, schemaId);
+        cacheSchemaFetchError(exc, schemaId);
         return new DecodedResult(onFailure(encoderOnFailure, bytes), e.getMessage());
       } else if (
           exc instanceof SerializationException
@@ -330,7 +330,7 @@ public class RecordDeserializer {
     return deserialize(bytes, schemaRegistryClient, topic, isKey, Optional.empty());
   }
 
-  private static void cacheSchemaFetchError(Exception e, int schemaId) {
+  private static void cacheSchemaFetchError(Throwable e, int schemaId) {
     var retryTime = Instant.now().plus(CACHE_FAILED_SCHEMA_ID_FETCH_DURATION);
     var timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
         .withZone(ZoneId.systemDefault());
