@@ -4,19 +4,26 @@ import static io.confluent.idesidecar.restapi.util.ConfluentLocalKafkaWithRestPr
 import static org.hamcrest.Matchers.equalTo;
 
 import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
-import io.confluent.idesidecar.restapi.util.ConfluentLocalTestBed;
+import io.confluent.idesidecar.restapi.util.AbstractSidecarIT;
 import io.quarkus.test.junit.QuarkusIntegrationTest;
 import io.quarkus.test.junit.TestProfile;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 @QuarkusIntegrationTest
 @Tag("io.confluent.common.utils.IntegrationTest")
 @TestProfile(NoAccessFilterProfile.class)
-class TopicV3ApiImplIT extends ConfluentLocalTestBed {
+class TopicV3ApiImplIT extends AbstractSidecarIT {
+
+  @BeforeEach
+  public void beforeEach() {
+    setupLocalConnection();
+  }
 
   @Test
-  void shouldCreateKafkaTopic() throws Exception {
+  void shouldCreateKafkaTopic() {
     createTopic("test-topic-1");
 
     // Get topic should contain the topic name
@@ -38,7 +45,7 @@ class TopicV3ApiImplIT extends ConfluentLocalTestBed {
   }
 
   @Test
-  void shouldDeleteKafkaTopic() throws Exception {
+  void shouldDeleteKafkaTopic() {
     createTopic("test-topic-delete-me");
 
     // Delete topic should return 204
