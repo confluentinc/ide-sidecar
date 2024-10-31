@@ -170,6 +170,10 @@ ide-sidecar:
       - Accept-Encoding
   webclient:
     connect-timeout-seconds: 10
+  schema-fetch-retry:
+    initial-backoff-ms: 250
+    max-backoff-ms: 5000
+    max-retries: 5
 
 quarkus:
   application:

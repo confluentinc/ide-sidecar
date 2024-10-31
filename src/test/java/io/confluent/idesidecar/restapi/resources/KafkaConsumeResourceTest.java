@@ -330,11 +330,11 @@ public class KafkaConsumeResourceTest {
         )
         .then()
         .statusCode(200)
+        .body(JsonMatcher.matchesJson(expectedProtoResponse))
         .header(
             KafkaConsumeResource.KAFKA_CONSUMED_BYTES_RESPONSE_HEADER,
             String.valueOf(expectedNode.toString().length())
-        )
-        .body(JsonMatcher.matchesJson(expectedProtoResponse));
+        );
 
     // It's not only enough to check for 200 since we simply fall back to returning
     // raw bytes if we fail to deserialize the message.
