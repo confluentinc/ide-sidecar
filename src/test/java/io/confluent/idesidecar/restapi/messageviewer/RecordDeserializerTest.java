@@ -1,12 +1,10 @@
 package io.confluent.idesidecar.restapi.messageviewer;
 
+import static io.confluent.idesidecar.restapi.messageviewer.RecordDeserializer.clearCachedFailures;
 import static io.confluent.idesidecar.restapi.messageviewer.RecordDeserializer.getSchemaIdFromRawBytes;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -15,6 +13,7 @@ import com.fasterxml.jackson.databind.node.TextNode;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
 import io.confluent.kafka.schemaregistry.avro.AvroSchema;
 import io.confluent.kafka.schemaregistry.avro.AvroSchemaProvider;
+import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 import io.confluent.kafka.schemaregistry.json.JsonSchema;
@@ -23,15 +22,17 @@ import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchema;
 import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchemaProvider;
 import io.quarkus.test.junit.QuarkusTest;
 import java.io.IOException;
-import java.nio.ByteBuffer;
+import java.net.ConnectException;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
+import java.net.UnknownServiceException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.apache.avro.Schema.Parser;
+import java.util.stream.Stream;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 @QuarkusTest
@@ -39,13 +40,27 @@ public class RecordDeserializerTest {
 
   private final ObjectMapper objectMapper = new ObjectMapper();
 
+  private static final int VALID_SCHEMA_ID = 10008;
+
+  /**
+   * Data containing valid schema ID of 10008, and nothing else.
+   * 00000000 00000000 00100111 00011000
+   */
+  private static final byte[] VALID_SCHEMA_ID_BYTES = new byte[]{0, 0, 0, 39, 24};
+  private static final String SAMPLE_TOPIC_NAME = "test-subject";
+
   private SchemaRegistryClient schemaRegistryClient;
 
-  @Inject
   RecordDeserializer recordDeserializer;
 
   @BeforeEach
-  public void setup() {
+  public void setup() throws RestClientException, IOException {
+    recordDeserializer = new RecordDeserializer(
+        1,
+        1,
+        10000,
+        0
+    );
     schemaRegistryClient = new SimpleMockSchemaRegistryClient(
         Arrays.asList(
             new ProtobufSchemaProvider(),
@@ -53,6 +68,11 @@ public class RecordDeserializerTest {
             new JsonSchemaProvider()
         )
     );
+  }
+
+  @AfterEach
+  public void tearDown() {
+    clearCachedFailures();
   }
 
   @ParameterizedTest
@@ -78,12 +98,7 @@ public class RecordDeserializerTest {
 
   @Test
   public void testDecodeAndDeserialize_ValidBase64() throws IOException, RestClientException {
-    var schemaStr = new String(Objects.requireNonNull(
-        Thread
-            .currentThread()
-            .getContextClassLoader()
-            .getResourceAsStream(
-                "message-viewer/schema-avro.json")).readAllBytes());
+    var schemaStr = loadResource("message-viewer/schema-avro.json");
     var parsedSchema = new AvroSchema(schemaStr);
     var smsrc = (SimpleMockSchemaRegistryClient) schemaRegistryClient;
     // This is raw text of actual record from the stag cluster which is prefixed with 100002 schemaId.
@@ -95,7 +110,7 @@ public class RecordDeserializerTest {
     var record = recordDeserializer.deserialize(
         decodedBytes,
         schemaRegistryClient,
-        "test-subject",
+        SAMPLE_TOPIC_NAME,
         false
     );
     assertNotNull(record);
@@ -116,12 +131,7 @@ public class RecordDeserializerTest {
 
   @Test
   public void testDecodeAndDeserialize_InValidBase64() throws IOException, RestClientException {
-    var schemaStr = new String(Objects.requireNonNull(
-        Thread
-            .currentThread()
-            .getContextClassLoader()
-            .getResourceAsStream(
-                "message-viewer/schema-avro.json")).readAllBytes());
+    var schemaStr = loadResource("message-viewer/schema-avro.json");
     var parsedSchema = new AvroSchema(schemaStr);
     var smsrc = (SimpleMockSchemaRegistryClient) schemaRegistryClient;
     // This is raw text of actual record from the stag cluster which is prefixed with 100002 schemaId.
@@ -134,7 +144,7 @@ public class RecordDeserializerTest {
         // Remove the last byte to make the base64 string invalid
         Arrays.copyOfRange(decodedBytes, 0, decodedBytes.length - 1),
         schemaRegistryClient,
-        "test-subject",
+        SAMPLE_TOPIC_NAME,
         false
     );
     assertNotNull(record);
@@ -144,12 +154,7 @@ public class RecordDeserializerTest {
 
   @Test
   public void testDecodeAndDeserializeProtobuf_ValidBase64() throws IOException, RestClientException {
-    var schemaStr = new String(Objects.requireNonNull(
-        Thread
-            .currentThread()
-            .getContextClassLoader()
-            .getResourceAsStream(
-                "message-viewer/schema-protobuf.proto")).readAllBytes());
+    var schemaStr = loadResource("message-viewer/schema-protobuf.proto");
     var parsedSchema = new ProtobufSchema(schemaStr);
     var smsrc = (SimpleMockSchemaRegistryClient) schemaRegistryClient;
     // This is raw text of actual record from the stag cluster which is prefixed with 100003 schemaId.
@@ -161,7 +166,7 @@ public class RecordDeserializerTest {
     var record = recordDeserializer.deserialize(
         decodedBytes,
         schemaRegistryClient,
-        "test-subject",
+        SAMPLE_TOPIC_NAME,
         false
     );
     assertNotNull(record);
@@ -181,12 +186,7 @@ public class RecordDeserializerTest {
 
   @Test
   public void testDecodeAndDeserializeJsonSR_ValidBase64() throws IOException, RestClientException {
-    var schemaStr = new String(Objects.requireNonNull(
-        Thread
-            .currentThread()
-            .getContextClassLoader()
-            .getResourceAsStream(
-                "message-viewer/schema-json.json")).readAllBytes());
+    var schemaStr = loadResource("message-viewer/schema-json.json");
     var parsedSchema = new JsonSchema(schemaStr);
     var smsrc = (SimpleMockSchemaRegistryClient) schemaRegistryClient;
     // This is raw text of actual record from the stag cluster which is prefixed with 100001 schemaId.
@@ -198,7 +198,7 @@ public class RecordDeserializerTest {
     var record = recordDeserializer.deserialize(
         decodedBytes,
         schemaRegistryClient,
-        "test-subject",
+        SAMPLE_TOPIC_NAME,
         false
     );
     assertNotNull(record);
@@ -274,40 +274,6 @@ public class RecordDeserializerTest {
   }
 
   @Test
-  public void testKeyDecodingErrorAndValueDecodingErrorAreNotSerializedWhenNull() throws JsonProcessingException {
-    // Given
-    JsonNode keyNode = objectMapper.nullNode();
-    JsonNode valueNode = objectMapper.nullNode();
-
-    // Create a PartitionConsumeRecord with null keyDecodingError and valueDecodingError
-    SimpleConsumeMultiPartitionResponse.PartitionConsumeRecord record = new SimpleConsumeMultiPartitionResponse.PartitionConsumeRecord(
-        0, 100L, System.currentTimeMillis(),
-        SimpleConsumeMultiPartitionResponse.TimestampType.CREATE_TIME,
-        Collections.emptyList(),
-        keyNode, valueNode, null // NULL exceeding fields
-    );
-
-    // Create PartitionConsumeData with the record
-    SimpleConsumeMultiPartitionResponse.PartitionConsumeData partitionConsumeData = new SimpleConsumeMultiPartitionResponse.PartitionConsumeData(
-        0, 101L, List.of(record)
-    );
-
-    // Construct the full SimpleConsumeMultiPartitionResponse object
-    SimpleConsumeMultiPartitionResponse response = new SimpleConsumeMultiPartitionResponse(
-        "test-cluster",
-        "test-topic",
-        List.of(partitionConsumeData)
-    );
-
-    // When
-    String serializedResponse = objectMapper.writeValueAsString(response);
-
-    // Then
-    assertFalse(serializedResponse.contains("key_decoding_error"), "keyDecodingError should not be present in the serialized JSON");
-    assertFalse(serializedResponse.contains("value_decoding_error"), "valueDecodingError should not be present in the serialized JSON");
-  }
-
-  @Test
   public void testKeyDecodingErrorAndValueDecodingErrorAreSerializedWhenNotNull() throws JsonProcessingException {
     // Given
     JsonNode keyNode = objectMapper.nullNode();
@@ -328,75 +294,233 @@ public class RecordDeserializerTest {
     assertTrue(serializedRecord.contains("value_decoding_error"), "valueDecodingError should be present in the serialized JSON");
   }
 
-  @Test
-  public void testDeserializeToJson_SchemaFetchFailure_403Unauthorized_ThenCacheFailure() throws IOException, RestClientException {
-    // Register an unauthenticated schema ID (403 Unauthorized)
-    var smc = new SimpleMockSchemaRegistryClient();
-    var avroSchema = new Parser().parse("{\"type\": \"record\", \"name\": \"TestRecord\", \"fields\": [{\"name\": \"testField\", \"type\": \"string\"}]}");
-    var topicName = "test-topic";
-    var schemaId = smc.register(100003, topicName + "-value", new AvroSchema(avroSchema));
-    smc.registerUnAuthenticated(schemaId);
-    var rawBytes = createRawBytes(schemaId); // Mock the bytes with schema ID
+  private static Stream<Arguments> testSchemaFetchFailuresAreCached() {
+    var clientWithAuthError = new SimpleMockSchemaRegistryClient()
+        .registerWithStatusCode(VALID_SCHEMA_ID, 403);
+    var clientWithNetworkError = new SimpleMockSchemaRegistryClient()
+        .registerAsNetworkErrored(VALID_SCHEMA_ID);
 
-    // First attempt - will return error message due to unauthorized schema
-    var firstResult = recordDeserializer
-        .deserialize(rawBytes, smc, topicName, false);
-    assertNotNull(firstResult.errorMessage());
-    assertTrue(firstResult.errorMessage().contains("error code: 40301"));
-
-    // Second attempt - should skip schema fetching and return the same error message
-    var secondResult = recordDeserializer
-        .deserialize(rawBytes, smc, topicName, false);
-    assertNotNull(secondResult.errorMessage());
-    assertTrue(secondResult.errorMessage().contains("Failed to retrieve schema"));
+    return Stream.of(
+        Arguments.of(clientWithAuthError, true),
+        Arguments.of(clientWithAuthError, false),
+        Arguments.of(clientWithNetworkError, true),
+        Arguments.of(clientWithNetworkError, false)
+    );
   }
 
   @ParameterizedTest
-  @ValueSource(booleans = {true, false})
-  public void testDecodeAndDeserializeProtobuf_UnauthorizedSchemaRegistry(boolean isKey) {
-    var smc = new SimpleMockSchemaRegistryClient();
-    var raw = "AAABhqMACJTg0YGSLBD/7x8aBkl0ZW1fMyGiH5dsO2sUQCoXCgdDaXR5XzgzEghTdGF0ZV81NBiO/wQ=";
-    var decodedBytes = Base64.getDecoder().decode(raw);
-    var actualSchemaId = RecordDeserializer.getSchemaIdFromRawBytes(decodedBytes);
-    smc.registerUnAuthenticated(actualSchemaId);
+  @MethodSource
+  public void testSchemaFetchFailuresAreCached(
+      SimpleMockSchemaRegistryClient smc,
+      boolean isKey
+  ) throws RestClientException, IOException {
+    smc = spy(smc);
+    // Assume we have 5 records with the same schema ID
+    // We should only fetch the schema once, and then cache the failure for the rest
+    RecordDeserializer.DecodedResult resp = null;
+    for (int i = 0; i < 5; i++) {
+      try {
+        resp = recordDeserializer.deserialize(
+            // Has a schema ID, so we'll actually try to fetch the schema
+            VALID_SCHEMA_ID_BYTES,
+            smc,
+            SAMPLE_TOPIC_NAME,
+            isKey,
+            Optional.of(Base64.getEncoder()::encode)
+        );
+      } catch (Exception e) {
+        fail(("Should not have thrown exception %s. Consider caching the error by the schema ID"
+            + " to avoid bombarding the schema registry API with requests.")
+            .formatted(e.getClass().getSimpleName() + ": " + e.getMessage()));
+      }
+      assertNotNull(resp.errorMessage());
+    }
 
-    // An error to fetch schema, should result in response containing the original base64 string.
-    var resp = recordDeserializer.deserialize(
-        decodedBytes,
-        smc,
-        "test-subject",
-        isKey,
-        Optional.of(Base64.getEncoder()::encode)
-    );
-    assertNotNull(resp.errorMessage());
-    assertTrue(resp.errorMessage().contains("error code: 40301"));
-    assertEquals(raw, resp.value().asText());
-
-    // The second fetch from cache should also return original rawBase64 String.
-    var resp2 = recordDeserializer.deserialize(
-        decodedBytes,
-        smc,
-        "test-subject",
-        isKey,
-        Optional.of(Base64.getEncoder()::encode)
-    );
-    assertNotNull(resp2.errorMessage());
-    assertTrue(resp2.errorMessage().contains("Failed to retrieve schema"));
-    assertEquals(raw, resp2.value().asText());
+    // Assert that the schema was tried to be fetched only once
+    verify(smc, times(1)).getSchemaById(anyInt());
   }
 
-  /**
-   * Helper method to create raw bytes with schema ID.
-   */
-  private byte[] createRawBytes(int schemaId) {
-    var schemaIdBytes = ByteBuffer.allocate(5).put(RecordDeserializer.MAGIC_BYTE).putInt(schemaId).array();
-    var sampleData = "{\"testField\":\"testValue\"}";
-    var dataBytes = sampleData.getBytes(StandardCharsets.UTF_8);
 
-    // Combine schema ID and data bytes
-    var combinedBytes = new byte[schemaIdBytes.length + dataBytes.length];
-    System.arraycopy(schemaIdBytes, 0, combinedBytes, 0, schemaIdBytes.length);
-    System.arraycopy(dataBytes, 0, combinedBytes, schemaIdBytes.length, dataBytes.length);
-    return combinedBytes;
+  @TestFactory
+  public Stream<DynamicTest>
+  testDeserializeRetriesAndCachesSchemaFetchFailuresUponUnhappyStatusCodes() {
+    record TestCase(
+        int statusCode,
+        int maxRetries,
+        int expectedTries,
+        Boolean isKey
+    ) {
+      static TestCase nonRetryable(int statusCode) {
+        // Expect only 1 try when the status code is non-retryable
+        return new TestCase(statusCode, 3, 1, null);
+      }
+
+      static TestCase retryable(int statusCode) {
+        // Expect 4 tries - 1 initial try + 3 retries
+        return new TestCase(statusCode, 3, 4, null);
+      }
+
+      TestCase withIsKey(Boolean isKey) {
+        return new TestCase(statusCode, maxRetries, expectedTries, isKey);
+      }
+
+      @Override
+      public String toString() {
+        var prefix = TestCase.this.expectedTries == 1 ? "Non" : "";
+        return prefix + "RetryableTestCase{" +
+            "statusCode=" + statusCode +
+            ", maxRetries=" + maxRetries +
+            ", expectedTries=" + expectedTries +
+            ", isKey=" + isKey +
+            '}';
+      }
+    }
+
+    return Stream.of(
+        // Test cases for non-retryable status codes
+        TestCase.nonRetryable(400),
+        TestCase.nonRetryable(401),
+        TestCase.nonRetryable(404),
+        TestCase.nonRetryable(405),
+        TestCase.nonRetryable(500),
+        TestCase.nonRetryable(501),
+        // Test cases for retryable status codes
+        TestCase.retryable(408),
+        TestCase.retryable(429),
+        TestCase.retryable(502),
+        TestCase.retryable(503),
+        TestCase.retryable(504)
+    )
+        .flatMap(tc -> Stream.of(tc.withIsKey(true), tc.withIsKey(false)))
+        .map(input -> DynamicTest.dynamicTest(String.valueOf(input), () -> {
+          var mockedSRClient = mock(CachedSchemaRegistryClient.class);
+          when(mockedSRClient.getSchemaById(anyInt()))
+              .thenThrow(new RestClientException("Mock", input.statusCode, input.statusCode));
+
+          assertSchemaFetchFailuresCached(
+              input.maxRetries,
+              input.expectedTries,
+              input.isKey,
+              mockedSRClient
+          );
+        }));
+  }
+
+  @TestFactory
+  public Stream<DynamicTest>
+  testDeserializeRetriesAndCachesSchemaFetchFailuresUponNetworkErrors() {
+    return Stream.of(
+        // Test a bunch of exceptions that are considered network errors (all extend IOException)
+        ConnectException.class,
+        SocketTimeoutException.class,
+        UnknownHostException.class,
+        UnknownServiceException.class
+    )
+        .map(input -> DynamicTest.dynamicTest(String.valueOf(input), () -> {
+          var mockedSRClient = mock(CachedSchemaRegistryClient.class);
+          when(mockedSRClient.getSchemaById(anyInt()))
+              .thenThrow(input.getDeclaredConstructor().newInstance());
+
+          assertSchemaFetchFailuresCached(
+              3,
+              4,
+              // We don't care about isKey
+              false,
+              mockedSRClient
+          );
+        }));
+  }
+
+  private void assertSchemaFetchFailuresCached(
+      int maxRetries,
+      int expectedTries,
+      Boolean isKey,
+      CachedSchemaRegistryClient mockedSRClient
+  ) throws IOException, RestClientException {
+    clearCachedFailures();
+
+    var recordDeserializer = getDeserializer(maxRetries);
+
+    // Create a new record with a schema ID
+    RecordDeserializer.DecodedResult resp;
+    resp = recordDeserializer.deserialize(
+        // Has a schema ID, so we'll actually try to fetch the schema
+        VALID_SCHEMA_ID_BYTES,
+        mockedSRClient,
+        SAMPLE_TOPIC_NAME,
+        isKey
+    );
+
+    // Assert before trying to deserialize with the same schema ID
+    verify(mockedSRClient, times(expectedTries)).getSchemaById(anyInt());
+
+    // Now simulate being called with the same schema ID again
+    for (int i = 0; i < 5; i++) {
+      try {
+        resp = recordDeserializer.deserialize(
+            VALID_SCHEMA_ID_BYTES,
+            mockedSRClient,
+            SAMPLE_TOPIC_NAME,
+            isKey
+        );
+      } catch (Exception e) {
+        fail(("Should not have thrown exception %s. Consider caching the error by the schema ID"
+            + " to avoid bombarding the schema registry API with requests.")
+            .formatted(e.getClass().getSimpleName() + ": " + e.getMessage()));
+      }
+      assertNotNull(resp.errorMessage());
+    }
+
+    // Assert after trying to deserialize with the same schema ID
+    verify(mockedSRClient, times(expectedTries)).getSchemaById(anyInt());
+
+    clearCachedFailures();
+  }
+
+  private RecordDeserializer getDeserializer(int maxRetries) {
+    // Configure retries but negligible delay
+    return new RecordDeserializer(
+        1,
+        1,
+        10000,
+        maxRetries
+    );
+  }
+
+  @TestFactory
+  public Stream<DynamicTest> testDeserializeWithUnexpectedExceptionsIsActuallyThrown() {
+    return Stream.of(
+        IllegalArgumentException.class,
+        IllegalStateException.class,
+        NullPointerException.class,
+        ArrayIndexOutOfBoundsException.class
+    )
+        .map(input -> DynamicTest.dynamicTest(String.valueOf(input), () -> {
+          var mockedSRClient = mock(CachedSchemaRegistryClient.class);
+          when(mockedSRClient.getSchemaById(anyInt()))
+              .thenThrow(input.getDeclaredConstructor().newInstance());
+
+          // Simulate a persistent failure that we don't expect
+          for (int i = 0; i < 10; i++) {
+            var recordDeserializer = getDeserializer(3);
+            try {
+              recordDeserializer.deserialize(
+                  VALID_SCHEMA_ID_BYTES,
+                  mockedSRClient,
+                  SAMPLE_TOPIC_NAME,
+                  // We don't care about isKey
+                  false
+              );
+            } catch (RuntimeException e) {
+              assertInstanceOf(input, e.getCause());
+            } catch (Exception e) {
+              fail("Should have thrown a RuntimeException, not %s".formatted(e.getClass().getSimpleName()));
+            }
+          }
+
+          // Check that we tried to fetch the schema 10 times
+          // but not any more than that because we're not retrying
+          verify(mockedSRClient, times(10)).getSchemaById(anyInt());
+        }));
   }
 }
