@@ -67,7 +67,9 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
     }
     ProxyHttpClient<MessageViewerContext> proxyHttpClient = new ProxyHttpClient<>(webClientFactory);
     return proxyHttpClient.send(context).compose(processedCtx ->
-        vertx.executeBlocking(() -> postProcess(processedCtx))
+        vertx
+            .createSharedWorkerExecutor("consume-worker")
+            .executeBlocking(() -> postProcess(processedCtx))
     );
   }
 
