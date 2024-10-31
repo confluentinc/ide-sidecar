@@ -1,9 +1,11 @@
 package io.confluent.idesidecar.restapi.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import java.util.List;
 import org.eclipse.microprofile.config.ConfigProvider;
 
+@RegisterForReflection
 public abstract class BaseList<T> {
 
   protected static final String API_VERSION = ConfigProvider
