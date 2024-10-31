@@ -415,9 +415,7 @@ public class RecordDeserializerTest {
         ConnectException.class,
         SocketTimeoutException.class,
         UnknownHostException.class,
-        UnknownServiceException.class,
-        // And a bare IOException as well
-        IOException.class
+        UnknownServiceException.class
     )
         .map(input -> DynamicTest.dynamicTest(String.valueOf(input), () -> {
           var mockedSRClient = mock(CachedSchemaRegistryClient.class);

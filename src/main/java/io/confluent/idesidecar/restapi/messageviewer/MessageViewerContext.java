@@ -1,7 +1,5 @@
 package io.confluent.idesidecar.restapi.messageviewer;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequest;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
 import io.confluent.idesidecar.restapi.models.graph.KafkaCluster;
@@ -11,12 +9,12 @@ import io.vertx.core.MultiMap;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Stores the context of a request of the message viewer API.
  */
 public class MessageViewerContext extends ProxyContext {
-  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
   private final String clusterId;
   private final String topicName;
   private KafkaCluster kafkaClusterInfo;
@@ -39,7 +37,10 @@ public class MessageViewerContext extends ProxyContext {
         requestUri,
         requestHeaders,
         requestMethod,
-        Buffer.buffer(requestBody.toJsonString()),
+        Optional
+            .ofNullable(requestBody)
+            .map(body -> Buffer.buffer(requestBody.toJsonString()))
+            .orElse(null),
         requestPathParams,
         connectionId
     );

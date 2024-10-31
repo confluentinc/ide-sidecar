@@ -28,6 +28,10 @@ import io.soabase.recordbuilder.core.RecordBuilder;
 import jakarta.enterprise.context.ApplicationScoped;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.ConnectException;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
+import java.net.UnknownServiceException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -242,13 +246,17 @@ public class RecordDeserializer {
           .value(deserializedData)
           .build();
     } catch (Exception e) {
-      if (e instanceof RestClientException || e instanceof IOException) {
-        // IMPORTANT: We must cache RestClientException, and more importantly, IOException, to prevent
-        //            the sidecar from bombarding the Schema Registry servers with requests for every
+      if (e instanceof RestClientException || isNetworkRelatedException(e)) {
+        // IMPORTANT: We must cache RestClientException, and more importantly,
+        //            network-related IOExceptions, to prevent the sidecar from
+        //            bombarding the Schema Registry servers with requests for every
         //            consumed message when we encounter a schema fetch error.
         cacheSchemaFetchError(e, schemaId);
         return new DecodedResult(onFailure(encoderOnFailure, bytes), e.getMessage());
-      } else if (e instanceof SerializationException) {
+      } else if (
+          e instanceof SerializationException
+              || e instanceof JsonProcessingException
+      ) {
         // We don't cache SerializationException because it's not a schema fetch error
         // but rather a deserialization error, scoped to the specific message.
         return new DecodedResult(onFailure(encoderOnFailure, bytes), e.getMessage());
@@ -259,15 +267,21 @@ public class RecordDeserializer {
   }
 
   private boolean isRetryableException(Throwable throwable) {
-    if (throwable instanceof IOException) {
-      // Always retry IOExceptions. Why? Because they're either transient network errors
-      // or transient server-side errors, and we can't tell the difference.
-      return true;
-    } else if (throwable instanceof RestClientException) {
-      return isRestClientExceptionRetryable((RestClientException) throwable);
-    }
+    return (
+        isNetworkRelatedException(throwable) ||
+            (throwable instanceof RestClientException
+                && isRestClientExceptionRetryable((RestClientException) throwable)
+    ));
+  }
 
-    return false;
+  private boolean isNetworkRelatedException(Throwable throwable) {
+    var e = (Exception) throwable;
+    return (
+        e instanceof ConnectException
+            || e instanceof SocketTimeoutException
+            || e instanceof UnknownHostException
+            || e instanceof UnknownServiceException
+    );
   }
 
   private boolean isRestClientExceptionRetryable(RestClientException e) {
