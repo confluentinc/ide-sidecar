@@ -22,6 +22,7 @@ import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientExcept
 import io.confluent.kafka.serializers.KafkaAvroDeserializer;
 import io.confluent.kafka.serializers.json.KafkaJsonSchemaDeserializer;
 import io.confluent.kafka.serializers.protobuf.KafkaProtobufDeserializer;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import io.quarkus.logging.Log;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.infrastructure.Infrastructure;
@@ -307,18 +308,13 @@ public class RecordDeserializer {
     // Adapted from io.confluent.kafka.schemaregistry.client.rest.RestService#isRetriable
     var status = e.getStatus();
     var isClientErrorToIgnore = (
-        // 408: Request Timeout
-        status == 408
-            // 429: Too Many Requests
-            || status == 429
+        status == HttpResponseStatus.REQUEST_TIMEOUT.code()
+            || status == HttpResponseStatus.TOO_MANY_REQUESTS.code()
     );
     var isServerErrorToIgnore = (
-        // 502: Bad Gateway
-        status == 502
-            // 503: Service Unavailable
-            || status == 503
-            // 504: Gateway Timeout
-            || status == 504
+        status == HttpResponseStatus.BAD_GATEWAY.code()
+            || status == HttpResponseStatus.SERVICE_UNAVAILABLE.code()
+            || status == HttpResponseStatus.GATEWAY_TIMEOUT.code()
     );
     return isClientErrorToIgnore || isServerErrorToIgnore;
   }
