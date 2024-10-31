@@ -1,5 +1,7 @@
 package io.confluent.idesidecar.restapi.resources;
 
+import static io.confluent.idesidecar.restapi.util.MutinyUtil.uniStage;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.idesidecar.restapi.messageviewer.MessageViewerContext;
@@ -63,8 +65,8 @@ public class KafkaConsumeResource {
       @PathParam("cluster_id") String clusterId,
       @PathParam("topic_name") String topicName,
       SimpleConsumeMultiPartitionRequest requestBody
-  ) throws JsonProcessingException {
-    var responseCompletionStage = messageViewerProcessor
+  ) {
+    return uniStage(() -> messageViewerProcessor
         .process(createMessageViewerContext(routingContext, clusterId, topicName, requestBody))
         .map(messageViewerContext -> {
           // Extract the number of bytes of the response body
@@ -87,24 +89,18 @@ public class KafkaConsumeResource {
               .entity(messageViewerContext.getConsumeResponse())
               .header(KAFKA_CONSUMED_BYTES_RESPONSE_HEADER, consumedBytes)
               .build();
-        })
-        .toCompletionStage();
-    return Uni.createFrom().completionStage(responseCompletionStage);
+        }).toCompletionStage());
   }
 
   /**
    * Create a MessageViewerContext from the given parameters.
-   *
-   * @throws JsonProcessingException if the requestBody cannot be serialized to JSON. Ideally,
-   *                                 this should never happen since we would have already validated
-   *                                 the requestBody in the JAX-RS resource method.
    */
   public static MessageViewerContext createMessageViewerContext(
       RoutingContext routingContext,
       String clusterId,
       String topicName,
       SimpleConsumeMultiPartitionRequest requestBody
-  ) throws JsonProcessingException {
+  ) {
     return new MessageViewerContext(
         routingContext.request().uri(),
         routingContext.request().headers(),

@@ -23,10 +23,17 @@ import io.confluent.kafka.serializers.KafkaAvroDeserializer;
 import io.confluent.kafka.serializers.json.KafkaJsonSchemaDeserializer;
 import io.confluent.kafka.serializers.protobuf.KafkaProtobufDeserializer;
 import io.quarkus.logging.Log;
+import io.smallrye.mutiny.Uni;
+import io.smallrye.mutiny.infrastructure.Infrastructure;
+import io.smallrye.mutiny.unchecked.Unchecked;
 import io.soabase.recordbuilder.core.RecordBuilder;
 import jakarta.enterprise.context.ApplicationScoped;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.ConnectException;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
+import java.net.UnknownServiceException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -36,10 +43,13 @@ import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.Predicate;
+
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.io.EncoderFactory;
 import org.apache.kafka.common.errors.SerializationException;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
  * Utility class for decoding record keys and values.
@@ -58,6 +68,23 @@ public class RecordDeserializer {
   private static final Cache<Integer, String> SCHEMA_FETCH_ERROR_CACHE = Caffeine.newBuilder()
       .expireAfterWrite(CACHE_FAILED_SCHEMA_ID_FETCH_DURATION)
       .build();
+
+  private final Duration schemaFetchRetryInitialBackoff;
+  private final Duration schemaFetchRetryMaxBackoff;
+  private final int schemaFetchMaxRetries;
+
+  public RecordDeserializer(
+      @ConfigProperty(name = "ide-sidecar.schema-fetch-retry.initial-backoff-ms")
+      long schemaFetchRetryInitialBackoffMs,
+      @ConfigProperty(name = "ide-sidecar.schema-fetch-retry.max-backoff-ms")
+      long schemaFetchRetryMaxBackoffMs,
+      @ConfigProperty(name = "ide-sidecar.schema-fetch-retry.max-retries")
+      int schemaFetchMaxRetries
+  ) {
+    this.schemaFetchRetryInitialBackoff = Duration.ofMillis(schemaFetchRetryInitialBackoffMs);
+    this.schemaFetchRetryMaxBackoff = Duration.ofMillis(schemaFetchRetryMaxBackoffMs);
+    this.schemaFetchMaxRetries = schemaFetchMaxRetries;
+  }
 
   @RecordBuilder
   public record DecodedResult(JsonNode value, String errorMessage)
@@ -213,7 +240,18 @@ public class RecordDeserializer {
 
     try {
       // Attempt to get the schema from the schema registry
-      var parsedSchema = schemaRegistryClient.getSchemaById(schemaId);
+      // and retry if the operation fails due to a retryable exception.
+      var parsedSchema = Uni
+          .createFrom()
+          .item(Unchecked.supplier(() -> schemaRegistryClient.getSchemaById(schemaId)))
+          .onFailure(this::isRetryableException)
+          .retry()
+          .withBackOff(schemaFetchRetryInitialBackoff, schemaFetchRetryMaxBackoff)
+          .atMost(schemaFetchMaxRetries)
+          .runSubscriptionOn(Infrastructure.getDefaultExecutor())
+          .await()
+          .atMost(Duration.ofSeconds(30));
+
       var schemaType = SchemaFormat.fromSchemaType(parsedSchema.schemaType());
       var deserializedData = switch (schemaType) {
         case AVRO -> handleAvro(bytes, topic, schemaRegistryClient, isKey);
@@ -224,14 +262,65 @@ public class RecordDeserializer {
           .builder()
           .value(deserializedData)
           .build();
-    } catch (RestClientException e) {
-      cacheSchemaFetchError(e, schemaId);
-      return new DecodedResult(onFailure(encoderOnFailure, bytes), e.getMessage());
-    } catch (IOException | SerializationException e) {
-      var data = onFailure(encoderOnFailure, bytes);
-      Log.error("Error deserializing: %s", data, e);
-      return new DecodedResult(data, e.getMessage());
+    } catch (Exception e) {
+      var exc = e.getCause();
+      if (exc instanceof RestClientException || isNetworkRelatedException(exc)) {
+        // IMPORTANT: We must cache RestClientException, and more importantly,
+        //            network-related IOExceptions, to prevent the sidecar from
+        //            bombarding the Schema Registry servers with requests for every
+        //            consumed message when we encounter a schema fetch error.
+        cacheSchemaFetchError(e, schemaId);
+        return new DecodedResult(onFailure(encoderOnFailure, bytes), e.getMessage());
+      } else if (
+          exc instanceof SerializationException
+              || exc instanceof IOException
+      ) {
+        // We don't cache SerializationException because it's not a schema fetch error
+        // but rather a deserialization error, scoped to the specific message.
+        return new DecodedResult(onFailure(encoderOnFailure, bytes), e.getMessage());
+      }
+      // If we reach this point, we have an unexpected exception, so we rethrow it.
+      throw new RuntimeException("Failed to deserialize record", e);
     }
+  }
+
+  private boolean isRetryableException(Throwable throwable) {
+    var exc = throwable.getCause();
+    return (
+        isNetworkRelatedException(exc) ||
+            (exc instanceof RestClientException
+                && isRestClientExceptionRetryable((RestClientException) exc)
+    ));
+  }
+
+  private boolean isNetworkRelatedException(Throwable throwable) {
+    var e = (Exception) throwable;
+    return (
+        e instanceof ConnectException
+            || e instanceof SocketTimeoutException
+            || e instanceof UnknownHostException
+            || e instanceof UnknownServiceException
+    );
+  }
+
+  private boolean isRestClientExceptionRetryable(RestClientException e) {
+    // Adapted from io.confluent.kafka.schemaregistry.client.rest.RestService#isRetriable
+    var status = e.getStatus();
+    var isClientErrorToIgnore = (
+        // 408: Request Timeout
+        status == 408
+            // 429: Too Many Requests
+            || status == 429
+    );
+    var isServerErrorToIgnore = (
+        // 502: Bad Gateway
+        status == 502
+            // 503: Service Unavailable
+            || status == 503
+            // 504: Gateway Timeout
+            || status == 504
+    );
+    return isClientErrorToIgnore || isServerErrorToIgnore;
   }
 
   public DecodedResult deserialize(
@@ -243,7 +332,7 @@ public class RecordDeserializer {
     return deserialize(bytes, schemaRegistryClient, topic, isKey, Optional.empty());
   }
 
-  private static void cacheSchemaFetchError(RestClientException e, int schemaId) {
+  private static void cacheSchemaFetchError(Exception e, int schemaId) {
     var retryTime = Instant.now().plus(CACHE_FAILED_SCHEMA_ID_FETCH_DURATION);
     var timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
         .withZone(ZoneId.systemDefault());
@@ -321,5 +410,4 @@ public class RecordDeserializer {
   ) {
     return safeReadTree(encoderOnFailure.orElse(Function.identity()).apply(bytes));
   }
-
 }
