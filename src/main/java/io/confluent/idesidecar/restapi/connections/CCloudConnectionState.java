@@ -123,7 +123,7 @@ public class CCloudConnectionState extends ConnectionState {
    */
   @Override
   public ConnectionMetadata getConnectionMetadata() {
-    return new ConnectionMetadata(
+    return ConnectionMetadata.from(
         oauthContext.getSignInUri(),
         ConnectionsResource.API_RESOURCE_PATH,
         spec.id());

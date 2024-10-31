@@ -10,12 +10,14 @@ public class CollectionMetadataTest {
 
   @Test
   void selfShouldReturnAValidApiPath() {
-    var collectionMetadata = new CollectionMetadata(
+    var collectionMetadata = CollectionMetadata.from(
         0,
-        "/gateway/v1/fake-resource-path");
+        "/gateway/v1/fake-resource-path"
+    );
 
     assertEquals(
         "http://localhost:26637/gateway/v1/fake-resource-path",
-        collectionMetadata.self());
+        collectionMetadata.self()
+    );
   }
 }

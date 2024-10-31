@@ -67,7 +67,7 @@ public abstract class ConnectionState {
   }
 
   public ConnectionMetadata getConnectionMetadata() {
-    return new ConnectionMetadata(
+    return ConnectionMetadata.from(
         null,
         ConnectionsResource.API_RESOURCE_PATH,
         spec.id());

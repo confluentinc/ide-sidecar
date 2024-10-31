@@ -1,28 +1,40 @@
 package io.confluent.idesidecar.restapi.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.List;
 import org.eclipse.microprofile.config.ConfigProvider;
 
-@JsonPropertyOrder({
-    "api_version",
-    "kind",
-    "metadata",
-    "data"
-})
 public abstract class BaseList<T> {
 
-  @JsonProperty(value = "api_version", required = true)
-  protected String apiVersion = ConfigProvider.getConfig()
+  protected static final String API_VERSION = ConfigProvider
+      .getConfig()
       .getValue("ide-sidecar.api.groupWithVersion", String.class);
 
-  @JsonProperty(required = true)
-  protected String kind = this.getClass().getSimpleName();
+  protected final CollectionMetadata metadata;
+  protected final List<T> data;
 
-  @JsonProperty(required = true)
-  protected CollectionMetadata metadata;
+  protected BaseList(List<T> data, CollectionMetadata metadata) {
+    this.data = List.copyOf(data); // defensive copy
+    this.metadata = metadata;
+  }
 
-  @JsonProperty(required = true)
-  protected List<T> data;
+  @JsonProperty(value = "api_version", required = true)
+  public String apiVersion() {
+    return API_VERSION;
+  }
+
+  @JsonProperty(value = "kind", required = true)
+  public String kind() {
+    return this.getClass().getSimpleName();
+  }
+
+  @JsonProperty(value = "metadata", required = true)
+  public CollectionMetadata metadata() {
+    return metadata;
+  }
+
+  @JsonProperty(value = "data", required = true)
+  public List<T> data() {
+    return data;
+  }
 }
