@@ -49,7 +49,12 @@ public class SimpleConsumerIT extends ConfluentLocalTestBed {
             )
         ),
         // Disable retries
-        new RecordDeserializer(1, 1, 10, 0)
+        new RecordDeserializer(
+            1,
+            1,
+            10000,
+            0
+        )
     );
   }
 

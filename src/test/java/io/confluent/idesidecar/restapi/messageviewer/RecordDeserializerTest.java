@@ -27,11 +27,8 @@ import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.net.UnknownServiceException;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
 import java.util.*;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
-
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -59,7 +56,10 @@ public class RecordDeserializerTest {
   @BeforeEach
   public void setup() throws RestClientException, IOException {
     recordDeserializer = new RecordDeserializer(
-        1, 1, 10, 0
+        1,
+        1,
+        10000,
+        0
     );
     schemaRegistryClient = new SimpleMockSchemaRegistryClient(
         Arrays.asList(
@@ -482,7 +482,7 @@ public class RecordDeserializerTest {
     return new RecordDeserializer(
         1,
         1,
-        10,
+        10000,
         maxRetries
     );
   }
