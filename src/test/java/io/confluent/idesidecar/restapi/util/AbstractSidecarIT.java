@@ -8,7 +8,6 @@ import static io.confluent.idesidecar.restapi.kafkarest.SchemaManager.SCHEMA_PRO
 
 import io.confluent.idesidecar.restapi.messageviewer.RecordDeserializer;
 import io.confluent.idesidecar.restapi.messageviewer.SimpleConsumer;
-import io.confluent.idesidecar.restapi.messageviewer.SimpleConsumerIT;
 import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
 import java.util.Collections;
 import java.util.Map;
@@ -21,7 +20,13 @@ import org.junit.jupiter.api.BeforeAll;
 
 public abstract class AbstractSidecarIT extends SidecarClient {
 
-  private static final LocalTestEnvironment ENV = LocalTestEnvironment.INSTANCE;
+  /**
+   * Use the <a href="https://testcontainers.com/guides/testcontainers-container-lifecycle/#_using_singleton_containers">Singleton Container</a>
+   * pattern to ensure that the test environment is only started once, no matter how many
+   * test classes extend this class. Testcontainers will assure that this is initialized once,
+   * and stop the containers using the Ryuk container after all the tests have run.
+   */
+  private static final LocalTestEnvironment TEST_ENVIRONMENT = new LocalTestEnvironment();
 
   protected SimpleConsumer simpleConsumer;
 
@@ -30,12 +35,14 @@ public abstract class AbstractSidecarIT extends SidecarClient {
 
   @BeforeAll
   public static void beforeAll() {
-    ENV.join(SimpleConsumerIT.class);
+    TEST_ENVIRONMENT.start();
   }
 
   @AfterAll
   public static void afterAll() {
-    ENV.leave(SimpleConsumerIT.class);
+    // This may not stop the container, and instead may just mark it for stopping while letting
+    // Ryuk container handle the actual stopping. This is because the container is a singleton.
+    TEST_ENVIRONMENT.shutdown();
   }
 
   @AfterEach
@@ -78,7 +85,7 @@ public abstract class AbstractSidecarIT extends SidecarClient {
    */
   protected void setupLocalConnection() {
     // Create the local connection we'll use
-    var localConnectionId = createLocalConnectionTo(ENV).id();
+    var localConnectionId = createLocalConnectionTo(TEST_ENVIRONMENT).id();
     useConnection(localConnectionId);
 
     // Get the clusters we'll use
@@ -101,7 +108,7 @@ public abstract class AbstractSidecarIT extends SidecarClient {
    */
   protected void setupDirectConnection() {
     // Create the direct connection we'll use
-    var directConnectionId = createDirectConnectionTo(ENV).id();
+    var directConnectionId = createDirectConnectionTo(TEST_ENVIRONMENT).id();
     useConnection(directConnectionId);
 
     // Get the clusters we'll use

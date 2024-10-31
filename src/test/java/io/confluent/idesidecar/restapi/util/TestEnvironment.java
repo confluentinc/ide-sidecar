@@ -16,18 +16,6 @@ public interface TestEnvironment extends AutoCloseable {
 
   void shutdown();
 
-  void join(String testClassName);
-
-  default void join(Class<?> testClass) {
-    join(testClass.getName());
-  }
-
-  void leave(String testClassName);
-
-  default void leave(Class<?> testClass) {
-    leave(testClass.getName());
-  }
-
   /**
    * Obtain a {@link ConnectionSpec} for a local connection to the Kafka cluster and
    * the Schema Registry cluster in this environment.

@@ -19,15 +19,11 @@ import java.time.Duration;
 @TestProfile(NoAccessFilterProfile.class)
 public class LocalTestEnvironment implements TestEnvironment {
 
-  public static final LocalTestEnvironment INSTANCE = new LocalTestEnvironment();
-
   private static final String KAFKA_INTERNAL_LISTENER = "PLAINTEXT://confluent-local-broker-1:29092";
 
   private Network network;
   private ConfluentLocalKafkaWithRestProxyContainer kafkaWithRestProxy;
   private SchemaRegistryContainer schemaRegistry;
-  private final Set<String> joinedTestClasses = new HashSet<>();
-  private final AtomicBoolean started = new AtomicBoolean();
 
   public LocalTestEnvironment() {
   }
@@ -42,22 +38,6 @@ public class LocalTestEnvironment implements TestEnvironment {
   @Override
   public void shutdown() {
     stopContainers();
-  }
-
-  @Override
-  public synchronized void join(String testClassName) {
-    joinedTestClasses.add(testClassName);
-    if (started.compareAndSet(false, true)) {
-      start();
-    }
-  }
-
-  @Override
-  public synchronized void leave(String testClassName) {
-    joinedTestClasses.remove(testClassName);
-    if (joinedTestClasses.isEmpty()) {
-      shutdown();
-    }
   }
 
   protected void createNetworkAndContainers() {

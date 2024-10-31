@@ -30,6 +30,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @QuarkusIntegrationTest
 @Tag("io.confluent.common.utils.IntegrationTest")
+@TestProfile(NoAccessFilterProfile.class)
 class RecordsV3ApiImplIT {
 
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
@@ -72,7 +73,7 @@ class RecordsV3ApiImplIT {
   }
 
   @Nested
-  @TestProfile(NoAccessFilterProfile.class)
+  @Tag("io.confluent.common.utils.IntegrationTest")
   class SadPath extends AbstractSidecarIT {
 
     @BeforeEach
@@ -263,7 +264,7 @@ class RecordsV3ApiImplIT {
   }
 
   @Nested
-  @TestProfile(NoAccessFilterProfile.class)
+  @Tag("io.confluent.common.utils.IntegrationTest")
   class HappyPath extends AbstractSidecarIT {
 
     @BeforeEach
