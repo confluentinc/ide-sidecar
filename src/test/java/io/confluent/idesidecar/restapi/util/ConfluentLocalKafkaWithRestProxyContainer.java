@@ -90,6 +90,10 @@ public class ConfluentLocalKafkaWithRestProxyContainer
     ));
   }
 
+  public String getClusterId() {
+    return CLUSTER_ID;
+  }
+
   public String getKafkaBootstrapServers() {
     return String.format("%s:%d", getHost(), getMappedPort(KAFKA_PORT));
   }
