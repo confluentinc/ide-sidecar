@@ -1,0 +1,16 @@
+{
+  "data": {
+    "directConnections": [
+      {
+        "id": "direct-1",
+        "name": "Direct 1",
+        "type": "DIRECT",
+        "kafkaCluster": null,
+        "schemaRegistry": {
+          "id": "schema-registry-1",
+          "uri": "http://localhost:8081"
+        }
+      }
+    ]
+  }
+}
