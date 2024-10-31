@@ -48,7 +48,8 @@ public class SimpleConsumerIT extends ConfluentLocalTestBed {
                 RequestHeadersConstants.CLUSTER_ID_HEADER, schemaRegistry.id()
             )
         ),
-        new RecordDeserializer()
+        // Disable retries
+        new RecordDeserializer(1, 1, 10, 0)
     );
   }
 
