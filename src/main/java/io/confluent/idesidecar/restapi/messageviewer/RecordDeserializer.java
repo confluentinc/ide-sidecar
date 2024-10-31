@@ -44,8 +44,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.function.Predicate;
-
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.io.EncoderFactory;
@@ -72,6 +70,7 @@ public class RecordDeserializer {
 
   private final Duration schemaFetchRetryInitialBackoff;
   private final Duration schemaFetchRetryMaxBackoff;
+  private final Duration schemaFetchTimeout;
   private final int schemaFetchMaxRetries;
 
   public RecordDeserializer(
@@ -79,11 +78,14 @@ public class RecordDeserializer {
       long schemaFetchRetryInitialBackoffMs,
       @ConfigProperty(name = "ide-sidecar.schema-fetch-retry.max-backoff-ms")
       long schemaFetchRetryMaxBackoffMs,
+      @ConfigProperty(name = "ide-sidecar.schema-fetch-retry.timeout-ms")
+      long schemaFetchTimeoutMs,
       @ConfigProperty(name = "ide-sidecar.schema-fetch-retry.max-retries")
       int schemaFetchMaxRetries
   ) {
     this.schemaFetchRetryInitialBackoff = Duration.ofMillis(schemaFetchRetryInitialBackoffMs);
     this.schemaFetchRetryMaxBackoff = Duration.ofMillis(schemaFetchRetryMaxBackoffMs);
+    this.schemaFetchTimeout = Duration.ofMillis(schemaFetchTimeoutMs);
     this.schemaFetchMaxRetries = schemaFetchMaxRetries;
   }
 
@@ -251,7 +253,7 @@ public class RecordDeserializer {
           .atMost(schemaFetchMaxRetries)
           .runSubscriptionOn(Infrastructure.getDefaultExecutor())
           .await()
-          .atMost(Duration.ofSeconds(30));
+          .atMost(schemaFetchTimeout);
 
       var schemaType = SchemaFormat.fromSchemaType(parsedSchema.schemaType());
       var deserializedData = switch (schemaType) {

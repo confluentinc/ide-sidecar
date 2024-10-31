@@ -59,7 +59,7 @@ public class RecordDeserializerTest {
   @BeforeEach
   public void setup() throws RestClientException, IOException {
     recordDeserializer = new RecordDeserializer(
-        1, 1, 0
+        1, 1, 10, 0
     );
     schemaRegistryClient = new SimpleMockSchemaRegistryClient(
         Arrays.asList(
@@ -482,6 +482,7 @@ public class RecordDeserializerTest {
     return new RecordDeserializer(
         1,
         1,
+        10,
         maxRetries
     );
   }
