@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.confluent.idesidecar.restapi.resources.ConnectionsResource;
 import io.confluent.idesidecar.restapi.resources.TemplateResource;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import java.util.List;
 import java.util.Objects;
 
@@ -16,6 +17,7 @@ import java.util.Objects;
     "metadata",
     "data"
 })
+@RegisterForReflection
 public class TemplateList extends BaseList<Template> {
 
   public TemplateList(List<Template> templateList) {

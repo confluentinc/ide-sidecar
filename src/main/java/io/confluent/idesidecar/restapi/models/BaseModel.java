@@ -1,8 +1,10 @@
 package io.confluent.idesidecar.restapi.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import org.eclipse.microprofile.config.ConfigProvider;
 
+@RegisterForReflection
 public abstract class BaseModel<SpecT, MetadataT extends ObjectMetadata> {
 
   protected static final String API_VERSION = ConfigProvider
