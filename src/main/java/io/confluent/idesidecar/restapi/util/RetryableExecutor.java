@@ -12,8 +12,8 @@ import java.util.function.Predicate;
  */
 public class RetryableExecutor {
   private static final int DEFAULT_MAX_RETRIES = 5;
-  private static final Duration DEFAULT_RETRY_DELAY = Duration.ofMillis(500);
-  private static final Duration DEFAULT_MAX_RETRY_DELAY = Duration.ofSeconds(50);
+  private static final Duration DEFAULT_RETRY_DELAY = Duration.ofMillis(250);
+  private static final Duration DEFAULT_MAX_RETRY_DELAY = Duration.ofSeconds(5);
 
   private static final RetryableExecutor DEFAULT = new RetryableExecutor();
 
@@ -90,7 +90,6 @@ public class RetryableExecutor {
     var startTime = clock.now();
     while (true) {
       try {
-        Log.infof("Retrying operation %s for the %d time..", retryable, retries + 1);
         return retryable.execute();
       } catch (Exception e) {
         var elapsedTime = Duration.between(startTime, clock.now());
