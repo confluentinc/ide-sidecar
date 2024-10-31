@@ -34,12 +34,12 @@ public class MessageViewerContext extends ProxyContext {
       String connectionId,
       String clusterId,
       String topicName
-  ) throws JsonProcessingException {
+  ) {
     super(
         requestUri,
         requestHeaders,
         requestMethod,
-        Buffer.buffer(OBJECT_MAPPER.writeValueAsString(requestBody)),
+        Buffer.buffer(requestBody.toJsonString()),
         requestPathParams,
         connectionId
     );

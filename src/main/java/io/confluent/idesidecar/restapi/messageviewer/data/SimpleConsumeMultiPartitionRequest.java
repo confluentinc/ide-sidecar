@@ -2,6 +2,8 @@ package io.confluent.idesidecar.restapi.messageviewer.data;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import io.soabase.recordbuilder.core.RecordBuilder;
 import java.util.List;
@@ -22,6 +24,8 @@ public record SimpleConsumeMultiPartitionRequest(
     @JsonProperty("message_max_bytes") Integer messageMaxBytes,
     @JsonProperty("from_beginning") Boolean fromBeginning
 ) implements SimpleConsumeMultiPartitionRequestBuilder.With {
+
+  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   @RegisterForReflection
   public record PartitionOffset(
@@ -56,5 +60,13 @@ public record SimpleConsumeMultiPartitionRequest(
       props.put(ConsumerConfig.FETCH_MAX_BYTES_CONFIG, fetchMaxBytes());
     }
     return props;
+  }
+
+  public String toJsonString() {
+    try {
+      return OBJECT_MAPPER.writeValueAsString(this);
+    } catch (JsonProcessingException e) {
+      throw new RuntimeException(e);
+    }
   }
 }
