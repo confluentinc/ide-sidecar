@@ -70,6 +70,12 @@ public abstract class AbstractSidecarIT extends SidecarClient {
     );
   }
 
+  /**
+   * Test classes that extend {@link AbstractSidecarIT} should call this method in their
+   * {@code @BeforeEach} method to set up the local connection the test methods will use.
+   *
+   * @see #setupDirectConnection()
+   */
   protected void setupLocalConnection() {
     // Create the local connection we'll use
     var localConnectionId = createLocalConnectionTo(ENV).id();
@@ -80,10 +86,19 @@ public abstract class AbstractSidecarIT extends SidecarClient {
     srCluster = getSchemaRegistryCluster().orElseThrow();
     useClusters(kafkaCluster, srCluster);
 
+    // Set the current cluster to the Kafka cluster (by default)
+    setCurrentCluster(kafkaCluster.id());
+
     // And create a simple consumer
     simpleConsumer = createSimpleConsumer(kafkaCluster, srCluster);
   }
 
+  /**
+   * Test classes that extend {@link AbstractSidecarIT} should call this method in their
+   * {@code @BeforeEach} method to set up the direct connection the test methods will use.
+   *
+   * @see #setupLocalConnection()
+   */
   protected void setupDirectConnection() {
     // Create the direct connection we'll use
     var directConnectionId = createDirectConnectionTo(ENV).id();
@@ -93,6 +108,9 @@ public abstract class AbstractSidecarIT extends SidecarClient {
     kafkaCluster = getKafkaCluster().orElseThrow();
     srCluster = getSchemaRegistryCluster().orElseThrow();
     useClusters(kafkaCluster, srCluster);
+
+    // Set the current cluster to the Kafka cluster (by default)
+    setCurrentCluster(kafkaCluster.id());
 
     // And create a simple consumer
     simpleConsumer = createSimpleConsumer(kafkaCluster, srCluster);

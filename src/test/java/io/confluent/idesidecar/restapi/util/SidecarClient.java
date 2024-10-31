@@ -113,7 +113,7 @@ public class SidecarClient {
   public void deleteAllTopics() {
     if (currentConnectionId != null) {
       getKafkaCluster().ifPresent(kafkaCluster -> {
-        usesCluster(kafkaCluster.id());
+        setCurrentCluster(kafkaCluster.id());
         var topics = listTopics();
         for (var topic : topics) {
           deleteTopic(topic);
@@ -183,7 +183,7 @@ public class SidecarClient {
   public void withCluster(String clusterId, Runnable action) {
     var oldClusterId = this.currentClusterId;
     try {
-      usesCluster(clusterId);
+      setCurrentCluster(clusterId);
       action.run();
     } finally {
       this.currentClusterId = oldClusterId;
@@ -193,7 +193,7 @@ public class SidecarClient {
   public <T> T fromCluster(String clusterId, Supplier<T> action) {
     var oldClusterId = this.currentClusterId;
     try {
-      usesCluster(clusterId);
+      setCurrentCluster(clusterId);
       return action.get();
     } finally {
       this.currentClusterId = oldClusterId;
@@ -261,7 +261,7 @@ public class SidecarClient {
     currentConnectionId = connectionId;
   }
 
-  public void usesCluster(String clusterId) {
+  public void setCurrentCluster(String clusterId) {
     currentClusterId = clusterId;
   }
 

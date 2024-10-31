@@ -9,6 +9,7 @@ import io.confluent.idesidecar.restapi.util.AbstractSidecarIT;
 import io.confluent.kafka.schemaregistry.client.rest.entities.Schema;
 import io.quarkus.test.junit.QuarkusIntegrationTest;
 import io.quarkus.test.junit.TestProfile;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -73,6 +74,11 @@ class RecordsV3ApiImplIT {
   @Nested
   @TestProfile(NoAccessFilterProfile.class)
   class SadPath extends AbstractSidecarIT {
+
+    @BeforeEach
+    public void beforeEach() {
+      setupLocalConnection();
+    }
 
     @Test
     void shouldThrowNotFoundWhenClusterDoesNotExist() {
@@ -259,6 +265,11 @@ class RecordsV3ApiImplIT {
   @Nested
   @TestProfile(NoAccessFilterProfile.class)
   class HappyPath extends AbstractSidecarIT {
+
+    @BeforeEach
+    public void beforeEach() {
+      setupLocalConnection();
+    }
 
     private static RecordData jsonData(Object data) {
       return new RecordData(null, null, data);
