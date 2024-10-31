@@ -173,6 +173,7 @@ ide-sidecar:
   schema-fetch-retry:
     initial-backoff-ms: 250
     max-backoff-ms: 5000
+    timeout-ms: 10000
     max-retries: 5
 
 quarkus:
