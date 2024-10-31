@@ -81,7 +81,11 @@ public class AccessTokenFilter {
 
         String expectedToken = accessTokenBean.getToken();
         if (expectedToken == null) {
-          Log.error("Request for " + requestPath + " made before handshake route hit! Rejecting.");
+          if (enabled.get()) {
+            Log.error("Request for " + requestPath + " made before handshake route hit! Rejecting.");
+          } else {
+            Log.debug("Request for " + requestPath + " made without handshake.");
+          }
         } else if ("Bearer".equalsIgnoreCase(tokenType) && tokenValue.equals(expectedToken)) {
           // Allow to pass through!
           reject = false;
