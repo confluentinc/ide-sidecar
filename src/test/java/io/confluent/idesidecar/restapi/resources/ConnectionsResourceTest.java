@@ -1,6 +1,7 @@
 package io.confluent.idesidecar.restapi.resources;
 
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.asJson;
+import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.asObject;
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.is;
@@ -17,12 +18,17 @@ import com.github.tomakehurst.wiremock.client.WireMock;
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
 import io.confluent.idesidecar.restapi.exceptions.Failure;
 import io.confluent.idesidecar.restapi.exceptions.Failure.Error;
+import io.confluent.idesidecar.restapi.models.CollectionMetadata;
+import io.confluent.idesidecar.restapi.models.Connection;
+import io.confluent.idesidecar.restapi.models.ConnectionMetadata;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.CCloudConfig;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.SchemaRegistryConfig;
 import io.confluent.idesidecar.restapi.models.ConnectionStatus;
 import io.confluent.idesidecar.restapi.models.ConnectionStatus.Authentication.Status;
+import io.confluent.idesidecar.restapi.models.ConnectionsList;
+import io.confluent.idesidecar.restapi.models.ObjectMetadata;
 import io.confluent.idesidecar.restapi.util.CCloudTestUtil.AccessToken;
 import io.confluent.idesidecar.restapi.util.UuidFactory;
 import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
@@ -36,10 +42,8 @@ import io.quarkus.test.junit.TestProfile;
 import io.restassured.http.ContentType;
 import io.restassured.response.ValidatableResponse;
 import jakarta.inject.Inject;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Stream;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -96,27 +100,28 @@ public class ConnectionsResourceTest {
 
   @Test
   @TestHTTPEndpoint(ConnectionsResource.class)
-  void listConnections_emptyListResponse() throws IOException {
-    JsonNode expectedJson = asJson(
-        loadResource("connections/empty-list-connections-response.json")
-    );
+  void listConnections_emptyListResponse() {
+    var expectedContent = loadResource("connections/empty-list-connections-response.json");
+    JsonNode expectedJson = asJson(expectedContent);
 
     var actualResponse = given()
         .when()
         .get()
         .then()
         .statusCode(200)
-        .contentType(ContentType.JSON)
-        .extract().body().asString();
+        .contentType(ContentType.JSON);
 
-    JsonNode actualJson = asJson(actualResponse);
+    JsonNode actualJson = asJson(actualResponse.extract().body().asString());
+    assertConnectionList(expectedJson, actualJson, 0);
 
-    assertEquals(expectedJson, actualJson);
+    ConnectionsList actualList = actualResponse.extract().body().as(ConnectionsList.class);
+    ConnectionsList expectedList = asObject(expectedContent, ConnectionsList.class);
+    assertConnectionList(expectedList, actualList);
   }
 
   @Test
   @TestHTTPEndpoint(ConnectionsResource.class)
-  void createConnection_createsAndReturnsConnection() throws IOException {
+  void createConnection_createsAndReturnsConnection() {
     var requestBody = loadResource("connections/create-connection-request.json");
     var expectedJson = asJson(
         loadResource("connections/create-connection-response.json")
@@ -132,7 +137,7 @@ public class ConnectionsResourceTest {
         .extract().body().asString();
 
     JsonNode actualJson = asJson(actualResponse);
-    assertEquals(expectedJson, actualJson);
+    assertConnection(expectedJson, actualJson);
 
     //  Fail the recreating the same connection
     given()
@@ -147,7 +152,7 @@ public class ConnectionsResourceTest {
 
   @Test
   @TestHTTPEndpoint(ConnectionsResource.class)
-  void getConnection_withoutToken_shouldReturnWithStatus() throws IOException {
+  void getConnection_withoutToken_shouldReturnWithStatus() {
     List<ConnectionSpec> specs = Arrays.asList(
         new ConnectionSpec("c-1", "Connection 1", ConnectionType.CCLOUD)
     );
@@ -193,7 +198,7 @@ public class ConnectionsResourceTest {
   }
 
   @Test
-  void getConnection_withToken_shouldReturnWithStatusIncludingUserAndOrg() throws IOException {
+  void getConnection_withToken_shouldReturnWithStatusIncludingUserAndOrg() {
     var connectionId = "c-1";
     var connectionName = "Connection 1";
     var connectionType = ConnectionType.CCLOUD;
@@ -279,7 +284,7 @@ public class ConnectionsResourceTest {
 
   @Test
   @TestHTTPEndpoint(ConnectionsResource.class)
-  void listConnections_returnsAllConnections() throws IOException {
+  void listConnections_returnsAllConnections() {
     List<ConnectionSpec> specs = Arrays.asList(
         new ConnectionSpec("1", "Connection 1", ConnectionType.LOCAL),
         new ConnectionSpec("2", "Connection 2", ConnectionType.CCLOUD)
@@ -310,36 +315,22 @@ public class ConnectionsResourceTest {
         .when().get()
         .then()
         .statusCode(200)
-        .contentType(ContentType.JSON)
-        .extract().body().asString();
+        .contentType(ContentType.JSON);
 
     // should return both resources
-    var actualJson = asJson(actualResponse1);
-    var expectedJson = asJson(
-        loadResource("connections/list-connections-response.json")
+    var actualJson = asJson(
+        actualResponse1.extract().body().asString()
     );
+    var expectedContent = loadResource("connections/list-connections-response.json");
+    var expectedJson = asJson(expectedContent);
 
     assertNotNull(actualJson);
     assertNotNull(expectedJson);
-    assertEquals(expectedJson.get("api_version"), actualJson.get("api_version"));
-    assertEquals(expectedJson.get("kind"), actualJson.get("kind"));
-    assertEquals(expectedJson.get("metadata"), actualJson.get("metadata"));
-    assertEquals(2, actualJson.get("data").size());
+    assertConnectionList(expectedJson, actualJson, 2);
 
-    // The local connection should match exactly
-    var expectedConnection1 = expectedJson.get("data").get(0);
-    var actualConnection1 = actualJson.get("data").get(0);
-    assertEquals(expectedConnection1, actualConnection1);
-
-    // but don't compare the sign-in URI since that contains a variable token
-    var expectedConnection2 = expectedJson.get("data").get(1);
-    var actualConnection2 = actualJson.get("data").get(1);
-    assertTrue(actualConnection2.has("metadata"));
-    assertTrue(actualConnection2.get("metadata").has("sign_in_uri"));
-    assertEquals(expectedConnection2.get("api_version"), actualConnection2.get("api_version"));
-    assertEquals(expectedConnection2.get("kind"), actualConnection2.get("kind"));
-    assertEquals(expectedConnection2.get("spec"), actualConnection2.get("spec"));
-    assertEquals(expectedConnection2.get("status"), actualConnection2.get("status"));
+    var actualList = actualResponse1.extract().body().as(ConnectionsList.class);
+    var expectedList = asObject(expectedContent, ConnectionsList.class);
+    assertConnectionList(expectedList, actualList);
   }
 
   @ParameterizedTest
@@ -1282,7 +1273,7 @@ public class ConnectionsResourceTest {
 
   @Test
   @TestHTTPEndpoint(ConnectionsResource.class)
-  void updateConnection_FailUpdateNonExistingConnection() throws IOException {
+  void updateConnection_FailUpdateNonExistingConnection() {
     ConnectionSpec spec = new ConnectionSpec(
         "1",
         "Connection 1",
@@ -1310,40 +1301,159 @@ public class ConnectionsResourceTest {
 
   @Test
   @TestHTTPEndpoint(ConnectionsResource.class)
-  void deleteConnection_shouldDeleteAndSecondDeleteFails() throws IOException {
+  void deleteConnection_shouldDeleteAndSecondDeleteFails() {
     // Two scenarios are tested here for delete connection.
     // 1. Deletion of existing connection
     // 2. Deletion of non-existent connection.
-    String requestBodyPath = "connections/create-connection-request.json";
 
-    var requestBody = new String(
-        Objects.requireNonNull(Thread.currentThread().getContextClassLoader()
-            .getResourceAsStream(requestBodyPath)).readAllBytes());
-
-    var actualResponse = given()
+    // When we create a connection
+    var requestBody = loadResource("connections/create-connection-request.json");
+    var newConnection = given()
         .contentType(ContentType.JSON)
         .body(requestBody)
         .when().post()
         .then()
         .statusCode(200)
         .contentType(ContentType.JSON)
-        .extract().body().asString();
+        .extract().body().as(Connection.class);
+    var id = newConnection.id();
 
+    // Then we can delete it
     given()
-        .when().delete("/{id}", "3")
+        .when().delete("/{id}", id)
         .then()
         .statusCode(204); // Expecting HTTP 204 status code for no content
 
+    // And cannot delete it again
     given().when()
-        .get("/{id}", "3")
+        .get("/{id}", id)
         .then()
         .statusCode(404); // Expection HTTP 404 not found.
 
+    // And cannot delete it yet again
     given()
-        .when().delete("/{id}", "3")
+        .when().delete("/{id}", id)
         .then()
         .statusCode(404); // Expecting HTTP 404 status code for no content
   }
 
+  protected void assertConnectionList(ConnectionsList expected, ConnectionsList actual) {
+    if (expected != null && actual != null) {
+      assertEquals(expected.apiVersion(), actual.apiVersion());
+      assertEquals(expected.kind(), actual.kind());
+      assertMetadata(expected.metadata(), actual.metadata());
+
+      // Check the elements individually, since metadata checks deal with port differences
+      assertEquals(expected.data().size(), actual.data().size());
+      for (int i = 0; i != expected.data().size(); i++) {
+        assertConnection(expected.data().get(i), actual.data().get(i));
+      }
+    } else {
+      assertEquals(expected, actual);
+    }
+  }
+
+  protected void assertConnectionList(JsonNode expected, JsonNode actual, int expectedSize) {
+    assertEquals(expected.get("api_version"), actual.get("api_version"));
+    assertEquals(expected.get("kind"), actual.get("kind"));
+    assertMetadata(expected.get("metadata"), actual.get("metadata"));
+    assertEquals(expectedSize, expected.get("data").size());
+    assertEquals(expectedSize, actual.get("data").size());
+
+    for (int i = 0; i != expectedSize; i++) {
+      assertConnection(expected.get("data").get(i), actual.get("data").get(i));
+    }
+  }
+
+  protected void assertConnection(Connection expected, Connection actual) {
+    if (expected != null && actual != null) {
+      assertEquals(expected.apiVersion(), actual.apiVersion());
+      assertEquals(expected.kind(), actual.kind());
+      assertMetadata(expected.metadata(), actual.metadata());
+      assertEquals(expected.spec(), actual.spec());
+      assertEquals(expected.status(), actual.status());
+    } else {
+      assertEquals(expected, actual);
+    }
+  }
+
+  protected void assertConnection(JsonNode expected, JsonNode actual) {
+    assertEquals(expected.get("api_version"), actual.get("api_version"));
+    assertEquals(expected.get("kind"), actual.get("kind"));
+    assertMetadata(expected.get("metadata"), actual.get("metadata"));
+    assertEquals(expected.get("spec"), actual.get("spec"));
+    assertEquals(expected.get("status"), actual.get("status"));
+  }
+
+  protected void assertMetadata(CollectionMetadata expected, CollectionMetadata actual) {
+    if (expected != null && actual != null) {
+      assertEquals(expected.totalSize(), actual.totalSize());
+      assertEquals(
+          linkWithoutPort(expected.self()),
+          linkWithoutPort(actual.self())
+      );
+      assertEquals(
+          linkWithoutPort(expected.next()),
+          linkWithoutPort(actual.next())
+      );
+    } else {
+      assertEquals(expected, actual);
+    }
+  }
+
+  protected void assertMetadata(ObjectMetadata expected, ObjectMetadata actual) {
+    if (expected != null && actual != null) {
+      assertEquals(expected.self(), actual.self());
+      assertEquals(expected.resourceName(), actual.resourceName());
+      if (expected instanceof ConnectionMetadata expectedConnectionMetadata) {
+        if (actual instanceof ConnectionMetadata actualConnectionMetadata) {
+          var expectedSignInUri = expectedConnectionMetadata.signInUri();
+          var actualSignInUri = actualConnectionMetadata.signInUri();
+          assertEquals(
+              expectedSignInUri == null || !expectedSignInUri.trim().isEmpty(),
+              actualSignInUri == null || !actualSignInUri.trim().isEmpty()
+          );
+        } else {
+          assertEquals(expected.getClass(), actual.getClass());
+        }
+      }
+    } else {
+      assertEquals(expected, actual);
+    }
+  }
+
+  protected void assertMetadata(JsonNode expected, JsonNode actual) {
+    // Don't compare the values of the sign-in URI since that contains a variable token
+    // and instead just ensure that both have or do not have the field
+    assertNullOrNonBlankText(expected.get("sign_in_uri"), actual.get("sign_in_uri"));
+    assertEqualsOrNull(expected.get("resource_name"), actual.get("resource_name"));
+    // The actual port is dynamic and will likely differ from the expected port read from files
+    assertEquals(
+        linkWithoutPort(expected.get("self")),
+        linkWithoutPort(actual.get("self"))
+    );
+  }
+
+  protected void assertNullOrNonBlankText(JsonNode expected, JsonNode actual) {
+    assertEquals(
+        expected == null || expected.isNull() || !expected.asText().trim().isEmpty(),
+        actual == null || actual.isNull() || !actual.asText().trim().isEmpty()
+    );
+  }
+
+  protected void assertEqualsOrNull(JsonNode expected, JsonNode actual) {
+    assertEquals(
+        expected == null || expected.isNull() ? null : expected,
+        actual == null || actual.isNull() ? null : actual
+    );
+  }
+
+  protected String linkWithoutPort(JsonNode node) {
+    return node == null ? null : linkWithoutPort(node.asText());
+  }
+
+  protected String linkWithoutPort(String url) {
+    return url == null ? null : url.replaceAll("localhost:\\d+", "");
+  }
 }
 

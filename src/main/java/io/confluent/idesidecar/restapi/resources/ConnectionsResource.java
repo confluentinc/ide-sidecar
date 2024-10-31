@@ -8,6 +8,7 @@ import io.confluent.idesidecar.restapi.exceptions.Failure;
 import io.confluent.idesidecar.restapi.models.Connection;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionsList;
+import io.quarkus.logging.Log;
 import io.smallrye.common.annotation.Blocking;
 import io.smallrye.mutiny.Uni;
 import jakarta.inject.Inject;
@@ -20,7 +21,6 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
@@ -60,10 +60,12 @@ public class ConnectionsResource {
                   .completionStage(() -> getConnectionModel(connection.getSpec().id())))
               .collect(Collectors.toList());
           if (connectionFutures.isEmpty()) {
+            Log.error("Returning no connections");
             return Uni
                 .createFrom()
-                .item(ConnectionsList.from(List.of()));
+                .item(new ConnectionsList());
           }
+          Log.errorf("Returning %d connections", connectionFutures.size());
           return Uni
               .combine()
               .all()
@@ -73,7 +75,7 @@ public class ConnectionsResource {
                     .stream()
                     .map(connection -> (Connection) connection)
                     .collect(Collectors.toList());
-                return ConnectionsList.from(connectionList);
+                return new ConnectionsList(connectionList);
               });
         });
   }
@@ -144,7 +146,6 @@ public class ConnectionsResource {
   private CompletionStage<Connection> getConnectionModel(String id) {
     try {
       ConnectionState connectionState = connectionStateManager.getConnectionState(id);
-
       return connectionState
           .getConnectionStatus()
           .map(connectionStatus -> Connection.from(connectionState, connectionStatus))
