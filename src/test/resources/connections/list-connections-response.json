@@ -1,7 +1,10 @@
 {
   "api_version": "gateway/v1",
   "kind": "ConnectionsList",
-  "metadata": null,
+  "metadata": {
+    "self": "http://localhost:26637/gateway/v1/connections",
+    "total_size": 2
+  },
   "data":
   [
     {
@@ -10,8 +13,7 @@
       "id": "1",
       "metadata":
       {
-        "self": "http://localhost:26637/gateway/v1/connections/1",
-        "resource_name": null
+        "self": "http://localhost:26637/gateway/v1/connections/1"
       },
       "spec":
       {
@@ -33,7 +35,6 @@
       "metadata":
       {
         "self": "http://localhost:26637/gateway/v1/connections/2",
-        "resource_name": null,
         "sign_in_uri": "https://login.confluent-dev.io/oauth/authorize?response_type=code&code_challenge_method=S256&code_challenge=f0883e0c8257e80f15d993a26e498da93ce2e1922a04cdc54bce6a0de0127281&state=2&client_id=cUmAgrkbAZSqSiy38JE7Ya3i7FwXmyUF&redirect_uri=http://127.0.0.1:26637/gateway/v1/callback-vscode-docs&scope=email+openid+offline_access"
       },
       "spec":

@@ -1,31 +1,39 @@
 package io.confluent.idesidecar.restapi.models;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import org.eclipse.microprofile.config.ConfigProvider;
+import jakarta.validation.constraints.Null;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonPropertyOrder({
     "self",
     "next",
     "total_size"
 })
 public record CollectionMetadata(
+    @JsonProperty(value = "self")
+    @Null
+    String self,
+
+    @JsonProperty(value = "next")
+    @Null
+    String next,
+
     @JsonProperty(value = "total_size")
-    int totalSize,
-    @JsonIgnore
-    String resourcePath
+    int totalSize
 ) {
 
-  @JsonProperty
-  public String self() {
-    var apiHost = ConfigProvider.getConfig().getValue("ide-sidecar.api.host", String.class);
-
-    return String.format("%s%s", apiHost, resourcePath);
+  protected static String selfFromResourcePath(String resourcePath) {
+    return resourcePath == null ? null : String.format("%s%s", ObjectMetadata.API_HOST, resourcePath);
   }
 
-  @JsonProperty
-  public String next() {
-    return null;
+  public static CollectionMetadata from(int totalSize, String resourcePath) {
+    var self = selfFromResourcePath(resourcePath);
+    return new CollectionMetadata(self, null, totalSize);
+  }
+
+  public CollectionMetadata withTotalSize(int totalSize) {
+    return new CollectionMetadata(self, next, totalSize);
   }
 }
