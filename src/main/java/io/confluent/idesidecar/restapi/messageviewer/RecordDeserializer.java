@@ -17,13 +17,15 @@ import com.google.protobuf.util.JsonFormat;
 import graphql.VisibleForTesting;
 import io.confluent.idesidecar.restapi.kafkarest.SchemaFormat;
 import io.confluent.idesidecar.restapi.util.ConfigUtil;
-import io.confluent.idesidecar.restapi.util.RetryableExecutor;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 import io.confluent.kafka.serializers.KafkaAvroDeserializer;
 import io.confluent.kafka.serializers.json.KafkaJsonSchemaDeserializer;
 import io.confluent.kafka.serializers.protobuf.KafkaProtobufDeserializer;
 import io.quarkus.logging.Log;
+import io.smallrye.mutiny.Uni;
+import io.smallrye.mutiny.infrastructure.Infrastructure;
+import io.smallrye.mutiny.unchecked.Unchecked;
 import io.soabase.recordbuilder.core.RecordBuilder;
 import jakarta.enterprise.context.ApplicationScoped;
 import java.io.ByteArrayOutputStream;
@@ -47,6 +49,7 @@ import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.io.EncoderFactory;
 import org.apache.kafka.common.errors.SerializationException;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
  * Utility class for decoding record keys and values.
@@ -66,14 +69,21 @@ public class RecordDeserializer {
       .expireAfterWrite(CACHE_FAILED_SCHEMA_ID_FETCH_DURATION)
       .build();
 
-  private final RetryableExecutorWrapper retryableExecutorWrapper;
+  private final Duration schemaFetchRetryInitialBackoff;
+  private final Duration schemaFetchRetryMaxBackoff;
+  private final int schemaFetchMaxRetries;
 
-  public RecordDeserializer(RetryableExecutorWrapper wrapper) {
-    this.retryableExecutorWrapper = wrapper;
-  }
-
-  public RecordDeserializer() {
-    this(new DefaultRetryableExecutorWrapper());
+  public RecordDeserializer(
+      @ConfigProperty(name = "ide-sidecar.schema-fetch-retry.initial-backoff-ms")
+      long schemaFetchRetryInitialBackoffMs,
+      @ConfigProperty(name = "ide-sidecar.schema-fetch-retry.max-backoff-ms")
+      long schemaFetchRetryMaxBackoffMs,
+      @ConfigProperty(name = "ide-sidecar.schema-fetch-retry.max-retries")
+      int schemaFetchMaxRetries
+  ) {
+    this.schemaFetchRetryInitialBackoff = Duration.ofMillis(schemaFetchRetryInitialBackoffMs);
+    this.schemaFetchRetryMaxBackoff = Duration.ofMillis(schemaFetchRetryMaxBackoffMs);
+    this.schemaFetchMaxRetries = schemaFetchMaxRetries;
   }
 
   @RecordBuilder
@@ -231,10 +241,17 @@ public class RecordDeserializer {
     try {
       // Attempt to get the schema from the schema registry
       // and retry if the operation fails due to a retryable exception.
-      var parsedSchema = retryableExecutorWrapper.execute(
-          () -> schemaRegistryClient.getSchemaById(schemaId),
-          this::isRetryableException
-      );
+      var parsedSchema = Uni
+          .createFrom()
+          .item(Unchecked.supplier(() -> schemaRegistryClient.getSchemaById(schemaId)))
+          .onFailure(this::isRetryableException)
+          .retry()
+          .withBackOff(schemaFetchRetryInitialBackoff, schemaFetchRetryMaxBackoff)
+          .atMost(schemaFetchMaxRetries)
+          .runSubscriptionOn(Infrastructure.getDefaultExecutor())
+          .await()
+          .atMost(Duration.ofSeconds(30));
+
       var schemaType = SchemaFormat.fromSchemaType(parsedSchema.schemaType());
       var deserializedData = switch (schemaType) {
         case AVRO -> handleAvro(bytes, topic, schemaRegistryClient, isKey);
@@ -246,7 +263,8 @@ public class RecordDeserializer {
           .value(deserializedData)
           .build();
     } catch (Exception e) {
-      if (e instanceof RestClientException || isNetworkRelatedException(e)) {
+      var exc = e.getCause();
+      if (exc instanceof RestClientException || isNetworkRelatedException(exc)) {
         // IMPORTANT: We must cache RestClientException, and more importantly,
         //            network-related IOExceptions, to prevent the sidecar from
         //            bombarding the Schema Registry servers with requests for every
@@ -254,8 +272,8 @@ public class RecordDeserializer {
         cacheSchemaFetchError(e, schemaId);
         return new DecodedResult(onFailure(encoderOnFailure, bytes), e.getMessage());
       } else if (
-          e instanceof SerializationException
-              || e instanceof JsonProcessingException
+          exc instanceof SerializationException
+              || exc instanceof IOException
       ) {
         // We don't cache SerializationException because it's not a schema fetch error
         // but rather a deserialization error, scoped to the specific message.
@@ -267,10 +285,11 @@ public class RecordDeserializer {
   }
 
   private boolean isRetryableException(Throwable throwable) {
+    var exc = throwable.getCause();
     return (
-        isNetworkRelatedException(throwable) ||
-            (throwable instanceof RestClientException
-                && isRestClientExceptionRetryable((RestClientException) throwable)
+        isNetworkRelatedException(exc) ||
+            (exc instanceof RestClientException
+                && isRestClientExceptionRetryable((RestClientException) exc)
     ));
   }
 
@@ -390,20 +409,5 @@ public class RecordDeserializer {
       Optional<Function<byte[], byte[]>> encoderOnFailure, byte[] bytes
   ) {
     return safeReadTree(encoderOnFailure.orElse(Function.identity()).apply(bytes));
-  }
-
-  public interface RetryableExecutorWrapper {
-    <T> T execute(RetryableExecutor.Retryable<T> retryable, Predicate<Exception> retryPredicate) throws Exception;
-  }
-
-  public static class DefaultRetryableExecutorWrapper implements RetryableExecutorWrapper {
-    @Override
-    public <T> T execute(
-        RetryableExecutor.Retryable<T> retryable,
-        Predicate<Exception> retryPredicate
-    ) throws Exception {
-      return RetryableExecutor
-          .executeWithRetry(retryable, retryPredicate);
-    }
   }
 }

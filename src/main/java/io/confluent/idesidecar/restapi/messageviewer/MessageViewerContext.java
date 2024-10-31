@@ -39,7 +39,7 @@ public class MessageViewerContext extends ProxyContext {
         requestMethod,
         Optional
             .ofNullable(requestBody)
-            .map(body -> Buffer.buffer(requestBody.toJsonString()))
+            .map(body -> Buffer.buffer(body.toJsonString()))
             .orElse(null),
         requestPathParams,
         connectionId

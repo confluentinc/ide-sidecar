@@ -11,7 +11,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.TextNode;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
-import io.confluent.idesidecar.restapi.util.RetryableExecutor;
 import io.confluent.kafka.schemaregistry.avro.AvroSchema;
 import io.confluent.kafka.schemaregistry.avro.AvroSchemaProvider;
 import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
@@ -60,7 +59,7 @@ public class RecordDeserializerTest {
   @BeforeEach
   public void setup() throws RestClientException, IOException {
     recordDeserializer = new RecordDeserializer(
-        new ExecuteWithNoRetry()
+        1, 1, 0
     );
     schemaRegistryClient = new SimpleMockSchemaRegistryClient(
         Arrays.asList(
@@ -438,6 +437,8 @@ public class RecordDeserializerTest {
       Boolean isKey,
       CachedSchemaRegistryClient mockedSRClient
   ) throws IOException, RestClientException {
+    clearCachedFailures();
+
     var recordDeserializer = getDeserializer(maxRetries);
 
     // Create a new record with a schema ID
@@ -477,13 +478,12 @@ public class RecordDeserializerTest {
   }
 
   private RecordDeserializer getDeserializer(int maxRetries) {
-    var wrapper = getRetryableExecutorWithoutSleep(
-        maxRetries,
-        // These values don't matter since we're not actually sleeping
-        Duration.ofMillis(100),
-        Duration.ofMillis(1000)
+    // Configure retries but negligible delay
+    return new RecordDeserializer(
+        1,
+        1,
+        maxRetries
     );
-    return new RecordDeserializer(wrapper);
   }
 
   @TestFactory
@@ -521,38 +521,5 @@ public class RecordDeserializerTest {
           // but not any more than that because we're not retrying
           verify(mockedSRClient, times(10)).getSchemaById(anyInt());
         }));
-  }
-
-  /**
-   * Will actually retry the operation, but without sleeping between retries.
-   */
-  private RecordDeserializer.RetryableExecutorWrapper getRetryableExecutorWithoutSleep(
-      int maxRetries, Duration retryDelay, Duration maxRetryDelay
-  ) {
-    var mockSleeper = mock(RetryableExecutor.Sleeper.class);
-    var mockClock = mock(RetryableExecutor.Clock.class);
-    when(mockClock.now()).thenReturn(java.time.Instant.now());
-
-    var executor = new RetryableExecutor(
-        maxRetries,
-        retryDelay,
-        maxRetryDelay,
-        RetryableExecutor.BackoffStrategy.EXPONENTIAL,
-        mockSleeper,
-        mockClock
-    );
-    // Create a RetryableExecutorWrapper that uses the executor
-    return executor::execute;
-  }
-
-
-  public static class ExecuteWithNoRetry implements RecordDeserializer.RetryableExecutorWrapper {
-    @Override
-    public <T> T execute(
-        RetryableExecutor.Retryable<T> retryable,
-        Predicate<Exception> retryPredicate
-    ) throws Exception {
-      return retryable.execute();
-    }
   }
 }
