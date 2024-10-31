@@ -3,6 +3,7 @@ package io.confluent.idesidecar.restapi.models;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.validation.constraints.Null;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -11,6 +12,7 @@ import jakarta.validation.constraints.Null;
     "next",
     "total_size"
 })
+@RegisterForReflection
 public record CollectionMetadata(
     @JsonProperty(value = "self")
     @Null
