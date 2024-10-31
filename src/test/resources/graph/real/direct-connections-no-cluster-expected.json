@@ -1,0 +1,13 @@
+{
+  "data": {
+    "directConnections": [
+      {
+        "id": "direct-1",
+        "name": "Direct 1",
+        "type": "DIRECT",
+        "kafkaCluster": null,
+        "schemaRegistry": null
+      }
+    ]
+  }
+}
