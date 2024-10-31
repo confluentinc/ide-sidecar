@@ -5,10 +5,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequest;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequestBuilder;
 import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
-import io.confluent.idesidecar.restapi.util.ConfluentLocalTestBed;
+import io.confluent.idesidecar.restapi.util.AbstractSidecarIT;
 import io.confluent.kafka.schemaregistry.client.rest.entities.Schema;
 import io.quarkus.test.junit.QuarkusIntegrationTest;
 import io.quarkus.test.junit.TestProfile;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -29,8 +30,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @QuarkusIntegrationTest
 @Tag("io.confluent.common.utils.IntegrationTest")
-@TestProfile(NoAccessFilterProfile.class)
-class RecordsV3ApiImplIT extends ConfluentLocalTestBed {
+class RecordsV3ApiImplIT {
+
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   record RecordData(
@@ -71,9 +72,14 @@ class RecordsV3ApiImplIT extends ConfluentLocalTestBed {
   }
 
   @Nested
-  // Do we really need to specify this TestProfile again? Yes. Why? I don't know.
   @TestProfile(NoAccessFilterProfile.class)
-  class SadPath {
+  class SadPath extends AbstractSidecarIT {
+
+    @BeforeEach
+    public void beforeEach() {
+      setupLocalConnection();
+    }
+
     @Test
     void shouldThrowNotFoundWhenClusterDoesNotExist() {
       givenConnectionId()
@@ -256,10 +262,15 @@ class RecordsV3ApiImplIT extends ConfluentLocalTestBed {
     }
   }
 
-  // Happy path
   @Nested
   @TestProfile(NoAccessFilterProfile.class)
-  class HappyPath {
+  class HappyPath extends AbstractSidecarIT {
+
+    @BeforeEach
+    public void beforeEach() {
+      setupLocalConnection();
+    }
+
     private static RecordData jsonData(Object data) {
       return new RecordData(null, null, data);
     }
@@ -358,7 +369,7 @@ class RecordsV3ApiImplIT extends ConfluentLocalTestBed {
       }
     }
 
-    private static void assertTopicHasRecord(RecordData key, RecordData value, String topicName) {
+    private void assertTopicHasRecord(RecordData key, RecordData value, String topicName) {
       var consumeResponse = consume(
           topicName,
           SimpleConsumeMultiPartitionRequestBuilder

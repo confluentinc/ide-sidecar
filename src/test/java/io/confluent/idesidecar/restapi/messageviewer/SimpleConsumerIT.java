@@ -1,6 +1,5 @@
 package io.confluent.idesidecar.restapi.messageviewer;
 
-import static io.confluent.idesidecar.restapi.kafkarest.SchemaManager.SCHEMA_PROVIDERS;
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -9,54 +8,33 @@ import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPart
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeData;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeRecord;
 import io.confluent.idesidecar.restapi.proto.Message.MyMessage;
-import io.confluent.idesidecar.restapi.util.ConfluentLocalTestBed;
-import io.confluent.idesidecar.restapi.util.RequestHeadersConstants;
-import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
+import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
+import io.confluent.idesidecar.restapi.util.AbstractSidecarIT;
 import io.quarkus.test.junit.QuarkusIntegrationTest;
+import io.quarkus.test.junit.TestProfile;
 import java.util.*;
 
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
-
 @QuarkusIntegrationTest
 @Tag("io.confluent.common.utils.IntegrationTest")
-public class SimpleConsumerIT extends ConfluentLocalTestBed {
-  private SimpleConsumer simpleConsumer;
+@TestProfile(NoAccessFilterProfile.class)
+public class SimpleConsumerIT extends AbstractSidecarIT {
 
   @BeforeEach
-  public void setupSimpleConsumer() {
-    var consumerProps = new Properties();
-    var schemaRegistry = getSchemaRegistryCluster();
-    var sidecarHost = "http://localhost:%s".formatted(TEST_PORT);
-    consumerProps.setProperty("bootstrap.servers", getBootstrapServers());
-    consumerProps.setProperty("schema.registry.url", sidecarHost);
-    simpleConsumer = new SimpleConsumer(
-        new KafkaConsumer<>(
-            consumerProps, new ByteArrayDeserializer(), new ByteArrayDeserializer()
-        ),
-        new CachedSchemaRegistryClient(
-            Collections.singletonList(sidecarHost),
-            10,
-            SCHEMA_PROVIDERS,
-            Collections.emptyMap(),
-            Map.of(
-                RequestHeadersConstants.CONNECTION_ID_HEADER, CONNECTION_ID,
-                RequestHeadersConstants.CLUSTER_ID_HEADER, schemaRegistry.id()
-            )
-        ),
-        new RecordDeserializer()
-    );
+  public void beforeEach() {
+    setupLocalConnection();
   }
 
   @Test
   void testAvroProduceAndConsume() {
+    // When we create a topic
     var topic = randomTopicName();
     createTopic(topic);
 
+    // and register a schema
     var valueSchemaVersion = createSchema(
         "%s-value".formatted(topic),
         "AVRO",
@@ -66,6 +44,7 @@ public class SimpleConsumerIT extends ConfluentLocalTestBed {
     var ids = Arrays.asList("12345", "12346", "12347");
     var values = Arrays.asList("Test Value 1", "Test Value 2", "Test Value 3");
 
+    // and write the records to Kafka
     for (int i = 0; i < 3; i++) {
       produceRecord(
           topic,
@@ -76,15 +55,14 @@ public class SimpleConsumerIT extends ConfluentLocalTestBed {
       );
     }
 
+    // Then we can consume the same records
     List<PartitionConsumeData> response = simpleConsumer.consume(
         topic,
         consumeRequestSinglePartitionFromOffsetZero()
     );
-
     assertEquals(1, response.size(), "Should have data for 1 partition");
     PartitionConsumeData partitionData = response.getFirst();
     assertEquals(3, partitionData.records().size(), "Should have 3 records");
-
     for (int i = 0; i < 3; i++) {
       PartitionConsumeRecord record = partitionData.records().get(i);
       assertEquals(ids.get(i), record.value().get("id").asText(), "ID should match");
@@ -94,16 +72,18 @@ public class SimpleConsumerIT extends ConfluentLocalTestBed {
 
   @Test
   public void testProtoProduceAndConsumeMultipleRecords() {
+    // When we create a topic
     var topic = randomTopicName();
     createTopic(topic);
 
-    var protobufSchema = loadResource("proto/message.proto");
-    Integer valueSchemaVersion = createSchema(
+    // And register a schema
+    var valueSchemaVersion = createSchema(
         "%s-value".formatted(topic),
         "PROTOBUF",
-        protobufSchema
+        loadResource("proto/message.proto")
     ).getVersion();
 
+    // Then we can create records
     MyMessage message1 = MyMessage.newBuilder()
         .setName("Some One")
         .setAge(30)
@@ -125,6 +105,7 @@ public class SimpleConsumerIT extends ConfluentLocalTestBed {
     List<MyMessage> messages = List.of(message1, message2, message3);
     List<String> keys = List.of("key1", "key2", "key3");
 
+    // and write the records to Kafka
     for (int i = 0; i < messages.size(); i++) {
       produceRecord(
           topic,
@@ -139,12 +120,11 @@ public class SimpleConsumerIT extends ConfluentLocalTestBed {
       );
     }
 
+    // Then we can consume the same records
     var response = simpleConsumer.consume(topic, consumeRequestSinglePartitionFromOffsetZero());
-
     assertEquals(1, response.size(), "Should have data for 1 partition");
     PartitionConsumeData partitionData = response.getFirst();
     assertEquals(3, partitionData.records().size(), "Should have 3 records");
-
     for (int i = 0; i < 3; i++) {
       PartitionConsumeRecord record = partitionData.records().get(i);
       MyMessage originalMessage = messages.get(i);
@@ -156,12 +136,14 @@ public class SimpleConsumerIT extends ConfluentLocalTestBed {
 
   @Test
   public void testJsonProducerAndConsumer() {
+    // When we create a topic
     String topic = randomTopicName();
     createTopic(topic);
 
     record Person(int id, String name, String email) {
     }
 
+    // And write records to Kafka
     var persons = new ArrayList<Person>();
     for (int i = 1; i <= 3; i++) {
       var person = new Person(i, "Person " + i, "person" + i + "@example.com");
@@ -175,12 +157,11 @@ public class SimpleConsumerIT extends ConfluentLocalTestBed {
       );
     }
 
+    // Then we can consume the same records
     var response = simpleConsumer.consume(topic, consumeRequestSinglePartitionFromOffsetZero());
-
     assertEquals(1, response.size(), "Should have data for 1 partition");
     PartitionConsumeData partitionData = response.getFirst();
     assertEquals(3, partitionData.records().size(), "Should have 3 records");
-
     for (int i = 0; i < 3; i++) {
       PartitionConsumeRecord record = partitionData.records().get(i);
       var sentJson = persons.get(i);
@@ -192,8 +173,11 @@ public class SimpleConsumerIT extends ConfluentLocalTestBed {
 
   @Test
   public void testProduceAndConsumeMultipleStringRecords() {
+    // When we create a topic
     String topic = randomTopicName();
     createTopic(topic);
+
+    // And write records to Kafka
     var records = new String[][]{
         {"key1", "value1"},
         {"key2", "value2"},
@@ -201,6 +185,7 @@ public class SimpleConsumerIT extends ConfluentLocalTestBed {
     };
     produceStringRecords(topic, records);
 
+    // Then we can consume the same records
     var response = simpleConsumer.consume(topic, consumeRequestSinglePartitionFromOffsetZero());
 
     assertEquals(1, response.size(), "Should have data for 1 partition");
@@ -228,5 +213,4 @@ public class SimpleConsumerIT extends ConfluentLocalTestBed {
         )
         .build();
   }
-
 }
