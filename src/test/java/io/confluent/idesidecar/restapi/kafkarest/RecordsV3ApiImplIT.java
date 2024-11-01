@@ -74,11 +74,12 @@ class RecordsV3ApiImplIT {
 
   @Nested
   @Tag("io.confluent.common.utils.IntegrationTest")
+  @TestProfile(NoAccessFilterProfile.class)
   class SadPath extends AbstractSidecarIT {
 
     @BeforeEach
     public void beforeEach() {
-      setupLocalConnection();
+      setupLocalConnection(SadPath.class);
     }
 
     @Test
@@ -265,11 +266,12 @@ class RecordsV3ApiImplIT {
 
   @Nested
   @Tag("io.confluent.common.utils.IntegrationTest")
+  @TestProfile(NoAccessFilterProfile.class)
   class HappyPath extends AbstractSidecarIT {
 
     @BeforeEach
     public void beforeEach() {
-      setupLocalConnection();
+      setupLocalConnection(HappyPath.class);
     }
 
     private static RecordData jsonData(Object data) {

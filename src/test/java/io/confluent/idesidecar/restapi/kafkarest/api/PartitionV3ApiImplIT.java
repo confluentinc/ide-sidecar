@@ -18,7 +18,7 @@ public class PartitionV3ApiImplIT extends AbstractSidecarIT {
 
   @BeforeEach
   public void beforeEach() {
-    setupLocalConnection();
+    setupLocalConnection(PartitionV3ApiImplIT.class);
   }
 
   @Test

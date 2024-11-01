@@ -25,7 +25,7 @@ public class SimpleConsumerIT extends AbstractSidecarIT {
 
   @BeforeEach
   public void beforeEach() {
-    setupLocalConnection();
+    setupLocalConnection(SimpleConsumerIT.class);
   }
 
   @Test
@@ -56,7 +56,7 @@ public class SimpleConsumerIT extends AbstractSidecarIT {
     }
 
     // Then we can consume the same records
-    List<PartitionConsumeData> response = simpleConsumer.consume(
+    List<PartitionConsumeData> response = simpleConsumer().consume(
         topic,
         consumeRequestSinglePartitionFromOffsetZero()
     );
@@ -121,7 +121,7 @@ public class SimpleConsumerIT extends AbstractSidecarIT {
     }
 
     // Then we can consume the same records
-    var response = simpleConsumer.consume(topic, consumeRequestSinglePartitionFromOffsetZero());
+    var response = simpleConsumer().consume(topic, consumeRequestSinglePartitionFromOffsetZero());
     assertEquals(1, response.size(), "Should have data for 1 partition");
     PartitionConsumeData partitionData = response.getFirst();
     assertEquals(3, partitionData.records().size(), "Should have 3 records");
@@ -158,7 +158,7 @@ public class SimpleConsumerIT extends AbstractSidecarIT {
     }
 
     // Then we can consume the same records
-    var response = simpleConsumer.consume(topic, consumeRequestSinglePartitionFromOffsetZero());
+    var response = simpleConsumer().consume(topic, consumeRequestSinglePartitionFromOffsetZero());
     assertEquals(1, response.size(), "Should have data for 1 partition");
     PartitionConsumeData partitionData = response.getFirst();
     assertEquals(3, partitionData.records().size(), "Should have 3 records");
@@ -186,7 +186,7 @@ public class SimpleConsumerIT extends AbstractSidecarIT {
     produceStringRecords(topic, records);
 
     // Then we can consume the same records
-    var response = simpleConsumer.consume(topic, consumeRequestSinglePartitionFromOffsetZero());
+    var response = simpleConsumer().consume(topic, consumeRequestSinglePartitionFromOffsetZero());
 
     assertEquals(1, response.size(), "Should have data for 1 partition");
     PartitionConsumeData partitionData = response.getFirst();

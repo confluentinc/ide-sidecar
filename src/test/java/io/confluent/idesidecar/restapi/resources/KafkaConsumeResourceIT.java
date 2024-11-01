@@ -30,7 +30,7 @@ public class KafkaConsumeResourceIT extends AbstractSidecarIT {
 
   @BeforeEach
   public void beforeEach() {
-    setupLocalConnection();
+    setupLocalConnection(KafkaConsumeResourceIT.class);
   }
 
   void createTopicAndProduceRecords(
@@ -61,7 +61,7 @@ public class KafkaConsumeResourceIT extends AbstractSidecarIT {
     }
   }
 
-  Stream<Arguments> testConsumeRequestParameters() {
+  static Stream<Arguments> consumeRequestParameters() {
     return Stream.of(
         // Test that we get exactly the same records that we produced
         Arguments.of(
@@ -93,7 +93,7 @@ public class KafkaConsumeResourceIT extends AbstractSidecarIT {
   }
 
   @ParameterizedTest
-  @MethodSource
+  @MethodSource("consumeRequestParameters")
   void testConsumeRequestParameters(
       SimpleConsumeMultiPartitionRequest request
   ) {
@@ -240,7 +240,6 @@ public class KafkaConsumeResourceIT extends AbstractSidecarIT {
       assertEquals(0, actualRecord.partitionId());
     }
   }
-
 
   @Test
   void testConsumeWithMessageSizeLimitAcrossPartitions() {

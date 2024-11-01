@@ -18,7 +18,7 @@ public class ClusterV3ApiImplIT extends AbstractSidecarIT {
 
   @BeforeEach
   public void beforeEach() {
-    setupLocalConnection();
+    setupLocalConnection(ClusterV3ApiImplIT.class);
   }
 
   @Test

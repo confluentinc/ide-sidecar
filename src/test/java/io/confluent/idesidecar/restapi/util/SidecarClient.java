@@ -60,6 +60,8 @@ public class SidecarClient {
   private String currentClusterId;
   private String currentKafkaClusterId;
   private String currentSchemaClusterId;
+  private Set<KafkaCluster> usedKafkaClusters = new HashSet<>();
+  private Set<SchemaRegistry> usedSchemaRegistries = new HashSet<>();
 
   public SidecarClient() {
     this.sidecarHost = SIDECAR_HOST;
@@ -110,15 +112,14 @@ public class SidecarClient {
     });
   }
 
-  public void deleteAllTopics() {
+  public void deleteAllTopics(String clusterId) {
+    Log.debugf("Deleting all topics from cluster %s", clusterId);
     if (currentConnectionId != null) {
-      getKafkaCluster().ifPresent(kafkaCluster -> {
-        setCurrentCluster(kafkaCluster.id());
-        var topics = listTopics();
-        for (var topic : topics) {
-          deleteTopic(topic);
-        }
-      });
+      setCurrentCluster(clusterId);
+      var topics = listTopics();
+      for (var topic : topics) {
+        deleteTopic(topic);
+      }
     }
   }
 
@@ -148,14 +149,13 @@ public class SidecarClient {
     });
   }
 
-  public void deleteAllSubjects() {
+  public void deleteAllSubjects(String srClusterId) {
+    Log.debugf("Deleting all subjects from cluster %s", srClusterId);
     if (currentConnectionId != null) {
-      getSchemaRegistryCluster().ifPresent(schemaRegistry -> {
-        var subjects = listSubjects(schemaRegistry.id());
-        for (var subject : subjects) {
-          deleteSubject(subject, schemaRegistry.id());
-        }
-      });
+      var subjects = listSubjects(srClusterId);
+      for (var subject : subjects) {
+        deleteSubject(subject, srClusterId);
+      }
     }
   }
 
@@ -170,14 +170,14 @@ public class SidecarClient {
   }
 
   public void deleteAllContent() {
-    forEachConnection(
-        c -> c.spec().name().contains("Local"),
-        c -> {
-          deleteAllSubjects();
-          deleteAllTopics();
-          deleteCurrentConnection();
-        }
-    );
+    usedSchemaRegistries.forEach(sr -> {
+      useConnection(sr.connectionId);
+      deleteAllSubjects(sr.id);
+    });
+    usedKafkaClusters.forEach(kafka -> {
+      useConnection(kafka.connectionId);
+      deleteAllTopics(kafka.id);
+    });
   }
 
   public void withCluster(String clusterId, Runnable action) {
@@ -202,7 +202,13 @@ public class SidecarClient {
 
   public void useClusters(KafkaCluster kafkaCluster, SchemaRegistry schemaRegistry) {
     currentKafkaClusterId = kafkaCluster.id();
-    currentSchemaClusterId = schemaRegistry != null ? schemaRegistry.id() : null;
+    usedKafkaClusters.add(kafkaCluster);
+    if (schemaRegistry != null) {
+      currentSchemaClusterId = schemaRegistry.id();
+      usedSchemaRegistries.add(schemaRegistry);
+    } else {
+      currentSchemaClusterId = null;
+    }
   }
 
   private String generateConnectionId() {
@@ -279,18 +285,20 @@ public class SidecarClient {
     return connection;
   }
 
-  public Connection createLocalConnectionTo(TestEnvironment env) {
-    var localSpec = env.localConnectionSpec().orElseThrow();
-    return createConnection(localSpec);
+  public Connection createLocalConnectionTo(TestEnvironment env, String scope) {
+    var spec = env.localConnectionSpec().orElseThrow();
+    // Append the scope to the name of the connection
+    spec = spec.withName( "%s (%s)".formatted(spec.name(), scope));
+    spec = spec.withId( "%s-%s".formatted(spec.id(), scope));
+    return createConnection(spec);
   }
 
-  public Connection createDirectConnectionTo(TestEnvironment env) {
-    var localSpec = env.directConnectionSpec().orElseThrow();
-    return createConnection(localSpec);
-  }
-
-  public void deleteCurrentConnection() {
-    deleteConnection(currentConnectionId);
+  public Connection createDirectConnectionTo(TestEnvironment env, String scope) {
+    var spec = env.directConnectionSpec().orElseThrow();
+    // Append the scope to the name of the connection
+    spec = spec.withName( "%s (%s)".formatted(spec.name(), scope));
+    spec = spec.withId( "%s-%s".formatted(spec.id(), scope));
+    return createConnection(spec);
   }
 
   public void deleteConnection(String connectionId) {
@@ -522,10 +530,10 @@ public class SidecarClient {
         .as(Schema.class);
   }
 
-  public record SchemaRegistry(String id, String uri) {
+  public record SchemaRegistry(String connectionId, String id, String uri) {
   }
 
-  public record KafkaCluster(String id, String bootstrapServers) {
+  public record KafkaCluster(String connectionId, String id, String bootstrapServers) {
   }
 
   public Optional<SchemaRegistry> getSchemaRegistryCluster() {
@@ -557,7 +565,7 @@ public class SidecarClient {
         .extract()
         .body()
         .asString();
-    Log.error("GraphQL response: %s".formatted(graphQlResponse));
+    Log.debug("GraphQL response: %s".formatted(graphQlResponse));
 
     var results = asJson(graphQlResponse)
         .get("data")
@@ -573,7 +581,7 @@ public class SidecarClient {
         var clusterId = connection.get("schemaRegistry").get("id").asText();
         var clusterUri = connection.get("schemaRegistry").get("uri").asText();
         return Optional.of(
-            new SchemaRegistry(clusterId, clusterUri)
+            new SchemaRegistry(connectionId, clusterId, clusterUri)
         );
       }
     }
@@ -609,7 +617,7 @@ public class SidecarClient {
         .extract()
         .body()
         .asString();
-    Log.error("GraphQL response: %s".formatted(graphQlResponse));
+    Log.debug("GraphQL response: %s".formatted(graphQlResponse));
 
     var results = asJson(graphQlResponse)
         .get("data")
@@ -625,7 +633,7 @@ public class SidecarClient {
         var clusterId = connection.get("kafkaCluster").get("id").asText();
         var bootstrapServers = connection.get("kafkaCluster").get("bootstrapServers").asText();
         return Optional.of(
-            new KafkaCluster(clusterId, bootstrapServers)
+            new KafkaCluster(connectionId, clusterId, bootstrapServers)
         );
       }
     }

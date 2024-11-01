@@ -19,7 +19,7 @@ class TopicV3ApiImplIT extends AbstractSidecarIT {
 
   @BeforeEach
   public void beforeEach() {
-    setupLocalConnection();
+    setupLocalConnection(TopicV3ApiImplIT.class);
   }
 
   @Test
