@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import java.util.Objects;
 import org.eclipse.microprofile.config.ConfigProvider;
 
@@ -13,6 +14,7 @@ import org.eclipse.microprofile.config.ConfigProvider;
     "self",
     "resource_name"
 })
+@RegisterForReflection
 public class ObjectMetadata {
 
   static final String API_HOST = ConfigProvider
