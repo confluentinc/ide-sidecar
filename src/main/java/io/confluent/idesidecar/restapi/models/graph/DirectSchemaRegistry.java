@@ -9,15 +9,7 @@ public record DirectSchemaRegistry(
     String id,
     String uri,
     String connectionId
-) implements Cluster, SchemaRegistry {
-
-  DirectSchemaRegistry(String id, String uri) {
-    this(
-        id,
-        uri,
-        null
-    );
-  }
+) implements SchemaRegistry {
 
   public DirectSchemaRegistry withConnectionId(String connectionId) {
     return new DirectSchemaRegistry(
