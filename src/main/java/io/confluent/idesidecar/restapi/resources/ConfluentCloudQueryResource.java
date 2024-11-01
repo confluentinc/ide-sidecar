@@ -1,6 +1,5 @@
 package io.confluent.idesidecar.restapi.resources;
 
-import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
 import io.confluent.idesidecar.restapi.models.graph.CCloudConnection;
 import io.confluent.idesidecar.restapi.models.graph.CCloudEnvironment;
 import io.confluent.idesidecar.restapi.models.graph.CCloudKafkaCluster;
@@ -30,9 +29,6 @@ public class ConfluentCloudQueryResource {
 
   @Inject
   RealCCloudFetcher ccloud;
-
-  @Inject
-  ConnectionStateManager connections;
 
   public static final PageLimits DEFAULT_LIMITS = PageLimits.DEFAULT;
 

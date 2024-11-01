@@ -1,6 +1,5 @@
 package io.confluent.idesidecar.restapi.resources;
 
-import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
 import io.confluent.idesidecar.restapi.models.graph.ConfluentLocalKafkaCluster;
 import io.confluent.idesidecar.restapi.models.graph.LocalConnection;
 import io.confluent.idesidecar.restapi.models.graph.LocalSchemaRegistry;
@@ -24,9 +23,6 @@ public class ConfluentLocalQueryResource {
 
   @Inject
   RealLocalFetcher local;
-
-  @Inject
-  ConnectionStateManager connections;
 
   /**
    * Get all {@link LocalConnection}s.

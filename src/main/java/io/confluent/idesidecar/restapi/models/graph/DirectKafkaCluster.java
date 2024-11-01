@@ -21,14 +21,6 @@ public record DirectKafkaCluster(
     String connectionId
 ) implements KafkaCluster {
 
-  public DirectKafkaCluster(
-      String id,
-      String uri,
-      String bootstrapServers
-  ) {
-    this(id, uri, bootstrapServers, null);
-  }
-
   public DirectKafkaCluster withConnectionId(String connectionId) {
     return new DirectKafkaCluster(
         id,
