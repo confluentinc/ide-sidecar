@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.confluent.idesidecar.restapi.resources.ConnectionsResource;
 import io.confluent.idesidecar.restapi.resources.TemplateResource;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import java.util.List;

@@ -6,6 +6,7 @@ import org.testcontainers.utility.DockerImageName;
 public class SchemaRegistryContainer extends GenericContainer<SchemaRegistryContainer> {
 
   private static final int PORT = 8081;
+  private static final String CLUSTER_ID = "local-sr-cluster";
 
   public SchemaRegistryContainer(String kafkaBootstrap) {
     this("confluentinc/cp-schema-registry:7.7.0", kafkaBootstrap);
@@ -22,5 +23,9 @@ public class SchemaRegistryContainer extends GenericContainer<SchemaRegistryCont
 
   public String endpoint() {
     return String.format("http://%s:%d", getHost(), getMappedPort(PORT));
+  }
+
+  public String getClusterId() {
+    return CLUSTER_ID;
   }
 }

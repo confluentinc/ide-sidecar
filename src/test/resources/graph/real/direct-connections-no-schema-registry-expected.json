@@ -1,0 +1,17 @@
+{
+  "data": {
+    "directConnections": [
+      {
+        "id": "direct-1",
+        "name": "Direct 1",
+        "type": "DIRECT",
+        "kafkaCluster": {
+          "id": "kafka-cluster-1",
+          "bootstrapServers": "localhost:9092",
+          "uri": null
+        },
+        "schemaRegistry": null
+      }
+    ]
+  }
+}

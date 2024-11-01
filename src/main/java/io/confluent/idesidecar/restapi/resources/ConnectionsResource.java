@@ -8,6 +8,7 @@ import io.confluent.idesidecar.restapi.exceptions.Failure;
 import io.confluent.idesidecar.restapi.models.Connection;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionsList;
+import io.quarkus.logging.Log;
 import io.smallrye.common.annotation.Blocking;
 import io.smallrye.mutiny.Uni;
 import jakarta.inject.Inject;
@@ -59,10 +60,12 @@ public class ConnectionsResource {
                   .completionStage(() -> getConnectionModel(connection.getSpec().id())))
               .collect(Collectors.toList());
           if (connectionFutures.isEmpty()) {
+            Log.error("Returning no connections");
             return Uni
                 .createFrom()
                 .item(new ConnectionsList());
           }
+          Log.errorf("Returning %d connections", connectionFutures.size());
           return Uni
               .combine()
               .all()
