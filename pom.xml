@@ -791,8 +791,8 @@
       </plugin>
       <plugin>
         <!-- https://github.com/smallrye/smallrye-graphql/tree/main/tools/maven-plugin -->
-        <artifactId>smallrye-graphql-maven-plugin</artifactId>
         <groupId>io.smallrye</groupId>
+        <artifactId>smallrye-graphql-maven-plugin</artifactId>
         <version>2.9.0</version>
         <executions>
           <execution>
@@ -800,7 +800,7 @@
               <goal>generate-schema</goal>
             </goals>
             <configuration>
-              <destination>${maven.home}/src/generated/resources/schema.graphql
+              <destination>${project.basedir}/src/generated/resources/schema.graphql
               </destination>
             </configuration>
           </execution>
