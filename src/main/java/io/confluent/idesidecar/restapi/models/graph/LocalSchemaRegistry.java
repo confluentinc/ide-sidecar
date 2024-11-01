@@ -9,7 +9,7 @@ public record LocalSchemaRegistry(
     String id,
     String uri,
     String connectionId
-) implements Cluster, SchemaRegistry {
+) implements SchemaRegistry {
 
   LocalSchemaRegistry(String connectionId, String uri) {
     this(

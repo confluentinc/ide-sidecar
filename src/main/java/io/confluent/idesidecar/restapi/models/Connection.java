@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.confluent.idesidecar.restapi.connections.ConnectionState;
-import io.confluent.idesidecar.restapi.resources.ConnectionsResource;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import java.util.Objects;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -17,6 +17,7 @@ import java.util.Objects;
     "spec",
     "status"
 })
+@RegisterForReflection
 public class Connection extends BaseModel<ConnectionSpec, ConnectionMetadata> {
 
   /**

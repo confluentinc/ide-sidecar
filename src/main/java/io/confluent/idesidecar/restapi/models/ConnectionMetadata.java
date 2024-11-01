@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import java.util.Objects;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -14,6 +15,7 @@ import java.util.Objects;
     "resource_name",
     "sign_in_uri"
 })
+@RegisterForReflection
 public class ConnectionMetadata extends ObjectMetadata {
 
   public static ConnectionMetadata from(

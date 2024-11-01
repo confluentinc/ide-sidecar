@@ -65,7 +65,7 @@ public class DirectQueryResourceTest extends ConfluentQueryResourceTestBase {
     // When there is a direct connection
     createDirectConnection(false, true);
 
-    // Then the response should contain the connection and its Kafka cluster but no Schema Registry
+    // Then the response should contain the connection and its Schema Registry and no Kafka cluster
     assertQueryResponseMatches(
         "graph/real/direct-connections-query.graphql",
         "graph/real/direct-connections-no-kafka-expected.json"

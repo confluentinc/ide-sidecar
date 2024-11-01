@@ -116,7 +116,12 @@ public abstract class AbstractSidecarIT extends SidecarClient {
                 RequestHeadersConstants.CLUSTER_ID_HEADER, srCluster.id()
             )
         ),
-        new RecordDeserializer()
+        new RecordDeserializer(
+            1,
+            1,
+            10000,
+            3
+        )
     );
   }
 
