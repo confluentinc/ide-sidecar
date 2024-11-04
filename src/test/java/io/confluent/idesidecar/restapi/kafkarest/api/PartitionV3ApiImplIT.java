@@ -3,23 +3,10 @@ package io.confluent.idesidecar.restapi.kafkarest.api;
 import static io.confluent.idesidecar.restapi.util.ConfluentLocalKafkaWithRestProxyContainer.CLUSTER_ID;
 import static org.hamcrest.Matchers.equalTo;
 
-import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
 import io.confluent.idesidecar.restapi.util.AbstractSidecarIT;
-import io.quarkus.test.junit.QuarkusIntegrationTest;
-import io.quarkus.test.junit.TestProfile;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
-@QuarkusIntegrationTest
-@Tag("io.confluent.common.utils.IntegrationTest")
-@TestProfile(NoAccessFilterProfile.class)
-public class PartitionV3ApiImplIT extends AbstractSidecarIT {
-
-  @BeforeEach
-  public void beforeEach() {
-    setupLocalConnection(PartitionV3ApiImplIT.class);
-  }
+abstract class PartitionV3ApiImplIT extends AbstractSidecarIT {
 
   @Test
   void shouldListTopicPartitions() {

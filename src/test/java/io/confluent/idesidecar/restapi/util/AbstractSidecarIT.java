@@ -14,7 +14,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Predicate;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.junit.jupiter.api.AfterEach;
@@ -37,7 +36,8 @@ import org.junit.jupiter.api.AfterEach;
  *
  * <p>Most subclasses will use the same connection for all tests, often because the connection
  * is needed to test other APIs. In these cases, the test class' {@code @BeforeEach} method
- * should call {@link #setupLocalConnection(Class)} and/or {@link #setupDirectConnection(Class)}.
+ * should call {@link #setupLocalConnection(AbstractSidecarIT)} and/or
+ * {@link #setupDirectConnection(AbstractSidecarIT)}.
  * This minimizes the setup time for each test, as only the first test will need to create the
  * (shared) connection. (The sidecar will be terminated after all tests in the test class are run,
  * so deleting the connection is not necessary.)
@@ -137,13 +137,14 @@ public abstract class AbstractSidecarIT extends SidecarClient {
    * different test scope for each test. In those cases, {@link #setupLocalConnection(String)}
    * may be a better choice.
    *
-   * @param testClass the class under test
+   * @param testClass the test class instance
+   * @param <T> the type of {@link AbstractSidecarIT} subclass
    * @see #setupDirectConnection(String)
-   * @see #setupDirectConnection(Class)
+   * @see #setupDirectConnection(AbstractSidecarIT)
    * @see #setupLocalConnection(String)
    */
-  protected <T extends AbstractSidecarIT> void setupLocalConnection(Class<T> testClass) {
-    setupLocalConnection(testClass.getSimpleName());
+  protected <T extends AbstractSidecarIT> void setupLocalConnection(T testClass) {
+    setupLocalConnection(testClass.getClass().getSimpleName());
   }
 
   /**
@@ -152,15 +153,15 @@ public abstract class AbstractSidecarIT extends SidecarClient {
    *
    * <p>Each unique test scope will reuse the same local connection, and most subclasses will
    * use the same test scope for all tests. In those cases, using the name of the subclass
-   * is an easy way for tests to share the same scope, and {@link #setupLocalConnection(Class)}
-   * may be an easier way to do this.
+   * is an easy way for tests to share the same scope, and
+   * {@link #setupLocalConnection(AbstractSidecarIT)} may be an easier way to do this.
    *
    * <p>Other test classes may need new/different connections for each test may want to use a
    * different test scope for each test. In those cases, this method may be a better choice.
    *
    * @see #setupDirectConnection(String)
-   * @see #setupDirectConnection(Class)
-   * @see #setupLocalConnection(Class)
+   * @see #setupDirectConnection(AbstractSidecarIT)
+   * @see #setupLocalConnection(AbstractSidecarIT)
    */
   protected void setupLocalConnection(String testScope) {
     current = REUSABLE_CONNECTIONS_BY_TEST_SCOPE.computeIfAbsent(testScope, key -> {
@@ -192,13 +193,14 @@ public abstract class AbstractSidecarIT extends SidecarClient {
    * different test scope for each test. In those cases, {@link #setupDirectConnection(String)}
    * may be a better choice.
    *
-   * @param testClass the class under test
+   * @param testClass the test class instance
+   * @param <T> the type of {@link AbstractSidecarIT} subclass
    * @see #setupDirectConnection(String)
    * @see #setupLocalConnection(String)
-   * @see #setupLocalConnection(Class)
+   * @see #setupLocalConnection(AbstractSidecarIT)
    */
-  protected <T extends AbstractSidecarIT> void setupDirectConnection(Class<T> testClass) {
-    setupDirectConnection(testClass.getSimpleName());
+  protected <T extends AbstractSidecarIT> void setupDirectConnection(T testClass) {
+    setupDirectConnection(testClass.getClass().getSimpleName());
   }
 
   /**
@@ -207,14 +209,14 @@ public abstract class AbstractSidecarIT extends SidecarClient {
    *
    * <p>Each unique test scope will reuse the same local connection, and most subclasses will
    * use the same test scope for all tests. In those cases, using the name of the subclass
-   * is an easy way for tests to share the same scope, and {@link #setupDirectConnection(Class)}
-   * may be an easier way to do this.
+   * is an easy way for tests to share the same scope, and
+   * {@link #setupDirectConnection(AbstractSidecarIT)} may be an easier way to do this.
    *
    * <p>Other test classes may need new/different connections for each test may want to use a
    * different test scope for each test. In those cases, this method may be a better choice.
    *
-   * @see #setupDirectConnection(Class)
-   * @see #setupLocalConnection(Class)
+   * @see #setupDirectConnection(AbstractSidecarIT)
+   * @see #setupLocalConnection(AbstractSidecarIT)
    * @see #setupLocalConnection(String)
    */
   protected void setupDirectConnection(String testScope) {

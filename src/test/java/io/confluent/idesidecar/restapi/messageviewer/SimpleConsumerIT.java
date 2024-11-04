@@ -8,25 +8,16 @@ import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPart
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeData;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeRecord;
 import io.confluent.idesidecar.restapi.proto.Message.MyMessage;
-import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
 import io.confluent.idesidecar.restapi.util.AbstractSidecarIT;
-import io.quarkus.test.junit.QuarkusIntegrationTest;
-import io.quarkus.test.junit.TestProfile;
-import java.util.*;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Tag;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 
-@QuarkusIntegrationTest
-@Tag("io.confluent.common.utils.IntegrationTest")
-@TestProfile(NoAccessFilterProfile.class)
-public class SimpleConsumerIT extends AbstractSidecarIT {
-
-  @BeforeEach
-  public void beforeEach() {
-    setupLocalConnection(SimpleConsumerIT.class);
-  }
+abstract class SimpleConsumerIT extends AbstractSidecarIT {
 
   @Test
   void testAvroProduceAndConsume() {
