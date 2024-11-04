@@ -60,12 +60,12 @@ public class ConnectionsResource {
                   .completionStage(() -> getConnectionModel(connection.getSpec().id())))
               .collect(Collectors.toList());
           if (connectionFutures.isEmpty()) {
-            Log.error("Returning no connections");
+            Log.debug("Returning no connections");
             return Uni
                 .createFrom()
                 .item(new ConnectionsList());
           }
-          Log.errorf("Returning %d connections", connectionFutures.size());
+          Log.debugf("Returning %d connections", connectionFutures.size());
           return Uni
               .combine()
               .all()
