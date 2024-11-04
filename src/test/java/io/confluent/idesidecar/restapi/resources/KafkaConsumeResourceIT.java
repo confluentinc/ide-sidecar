@@ -12,7 +12,7 @@ import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPart
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
 import io.confluent.idesidecar.restapi.proto.Message.MyMessage;
 import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
-import io.confluent.idesidecar.restapi.util.ConfluentLocalTestBed;
+import io.confluent.idesidecar.restapi.util.AbstractSidecarIT;
 import io.quarkus.test.junit.QuarkusIntegrationTest;
 import io.quarkus.test.junit.TestProfile;
 import java.util.List;
@@ -26,8 +26,14 @@ import org.junit.jupiter.params.provider.MethodSource;
 @QuarkusIntegrationTest
 @Tag("io.confluent.common.utils.IntegrationTest")
 @TestProfile(NoAccessFilterProfile.class)
-public class KafkaConsumeResourceIT extends ConfluentLocalTestBed {
-  private static void createTopicAndProduceRecords(
+public class KafkaConsumeResourceIT extends AbstractSidecarIT {
+
+  @BeforeEach
+  public void beforeEach() {
+    setupLocalConnection(KafkaConsumeResourceIT.class);
+  }
+
+  void createTopicAndProduceRecords(
       String topicName,
       int partitions,
       String[][] sampleRecords
@@ -38,7 +44,7 @@ public class KafkaConsumeResourceIT extends ConfluentLocalTestBed {
     }
   }
 
-  private void assertConsumerRecords(SimpleConsumeMultiPartitionResponse response, String[][] expectedRecords) {
+  void assertConsumerRecords(SimpleConsumeMultiPartitionResponse response, String[][] expectedRecords) {
     var partitionDataList = response.partitionDataList();
     assertNotNull(partitionDataList);
     assertFalse(partitionDataList.isEmpty(), "partition_data_list should not be empty");
@@ -55,7 +61,7 @@ public class KafkaConsumeResourceIT extends ConfluentLocalTestBed {
     }
   }
 
-  private static Stream<Arguments> testConsumeRequestParameters() {
+  static Stream<Arguments> consumeRequestParameters() {
     return Stream.of(
         // Test that we get exactly the same records that we produced
         Arguments.of(
@@ -87,7 +93,7 @@ public class KafkaConsumeResourceIT extends ConfluentLocalTestBed {
   }
 
   @ParameterizedTest
-  @MethodSource
+  @MethodSource("consumeRequestParameters")
   void testConsumeRequestParameters(
       SimpleConsumeMultiPartitionRequest request
   ) {
@@ -234,7 +240,6 @@ public class KafkaConsumeResourceIT extends ConfluentLocalTestBed {
       assertEquals(0, actualRecord.partitionId());
     }
   }
-
 
   @Test
   void testConsumeWithMessageSizeLimitAcrossPartitions() {
