@@ -1,6 +1,7 @@
 package io.confluent.idesidecar.restapi.proxy.clusters.processors;
 
 import io.confluent.idesidecar.restapi.connections.CCloudConnectionState;
+import io.confluent.idesidecar.restapi.connections.DirectConnectionState;
 import io.confluent.idesidecar.restapi.connections.LocalConnectionState;
 import io.confluent.idesidecar.restapi.connections.PlatformConnectionState;
 import io.confluent.idesidecar.restapi.exceptions.ProcessorFailedException;
@@ -31,6 +32,9 @@ public class ClusterAuthenticationProcessor extends
       }
       case LocalConnectionState localConnection -> {
         // Do nothing
+      }
+      case DirectConnectionState directConnection -> {
+        // TODO: DIRECT check auth status and fail if not connected/authenticated
       }
       case PlatformConnectionState platformConnection -> {
         // Do nothing

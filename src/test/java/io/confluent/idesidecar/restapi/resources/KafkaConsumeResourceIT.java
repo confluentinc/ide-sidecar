@@ -11,27 +11,17 @@ import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPart
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequestBuilder;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
 import io.confluent.idesidecar.restapi.proto.Message.MyMessage;
-import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
 import io.confluent.idesidecar.restapi.util.AbstractSidecarIT;
-import io.quarkus.test.junit.QuarkusIntegrationTest;
-import io.quarkus.test.junit.TestProfile;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Stream;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-@QuarkusIntegrationTest
-@Tag("io.confluent.common.utils.IntegrationTest")
-@TestProfile(NoAccessFilterProfile.class)
-public class KafkaConsumeResourceIT extends AbstractSidecarIT {
-
-  @BeforeEach
-  public void beforeEach() {
-    setupLocalConnection(KafkaConsumeResourceIT.class);
-  }
+abstract class KafkaConsumeResourceIT extends AbstractSidecarIT {
 
   void createTopicAndProduceRecords(
       String topicName,
@@ -298,12 +288,12 @@ public class KafkaConsumeResourceIT extends AbstractSidecarIT {
    */
   @Test
   public void testShouldDecodeProfobufMessagesUsingSRInMessageViewer() throws Exception {
-    var topic = "myProtobufTopic";
+    var topic = "myProtobufTopic" + UUID.randomUUID();
     createTopicAndProduceRecords(topic, 1, null);
 
     // Create the schema version for the Protobuf message
     createSchema(
-        "myProtobufTopic-value",
+        topic + "-value",
         "PROTOBUF",
         "syntax = \"proto3\"; package io.confluent.idesidecar.restapi; message MyMessage { string name = 1; int32 age = 2; bool is_active = 3; }"
     );

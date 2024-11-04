@@ -95,11 +95,11 @@ public class LocalTestEnvironment implements TestEnvironment {
             "direct-to-local-connection",
             "Direct to Local",
             new ConnectionSpec.KafkaClusterConfig(
-                "local-kafka",
+                kafkaWithRestProxy.getClusterId(),
                 kafkaWithRestProxy.getKafkaBootstrapServers()
             ),
             new ConnectionSpec.SchemaRegistryConfig(
-                "local-schema-registry",
+                schemaRegistry.getClusterId(),
                 schemaRegistry.endpoint()
             )
         )

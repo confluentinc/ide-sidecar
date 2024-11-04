@@ -75,12 +75,26 @@ class RecordsV3ApiImplIT {
   @Nested
   @Tag("io.confluent.common.utils.IntegrationTest")
   @TestProfile(NoAccessFilterProfile.class)
-  class SadPath extends AbstractSidecarIT {
+  class SadPathWithLocal extends SadPath {
 
     @BeforeEach
     public void beforeEach() {
-      setupLocalConnection(SadPath.class);
+      setupLocalConnection(this);
     }
+  }
+
+  @Nested
+  @Tag("io.confluent.common.utils.IntegrationTest")
+  @TestProfile(NoAccessFilterProfile.class)
+  class SadPathWithDirect extends SadPath {
+
+    @BeforeEach
+    public void beforeEach() {
+      setupDirectConnection(this);
+    }
+  }
+
+  abstract class SadPath extends AbstractSidecarIT {
 
     @Test
     void shouldThrowNotFoundWhenClusterDoesNotExist() {
@@ -264,15 +278,30 @@ class RecordsV3ApiImplIT {
     }
   }
 
+
   @Nested
   @Tag("io.confluent.common.utils.IntegrationTest")
   @TestProfile(NoAccessFilterProfile.class)
-  class HappyPath extends AbstractSidecarIT {
+  class HappyPathWithLocal extends HappyPath {
 
     @BeforeEach
     public void beforeEach() {
-      setupLocalConnection(HappyPath.class);
+      setupLocalConnection(this);
     }
+  }
+
+  @Nested
+  @Tag("io.confluent.common.utils.IntegrationTest")
+  @TestProfile(NoAccessFilterProfile.class)
+  class HappyPathWithDirect extends HappyPath {
+
+    @BeforeEach
+    public void beforeEach() {
+      setupDirectConnection(this);
+    }
+  }
+
+  abstract class HappyPath extends AbstractSidecarIT {
 
     private static RecordData jsonData(Object data) {
       return new RecordData(null, null, data);
