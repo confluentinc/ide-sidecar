@@ -8,6 +8,7 @@ import static io.confluent.idesidecar.restapi.testutil.QueryResourceUtil.queryGr
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.asJson;
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
 import static io.restassured.RestAssured.given;
+import static java.util.function.Predicate.not;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -87,8 +88,6 @@ public class SidecarClient {
 
       if (resp.statusCode() != 200) {
         fail("Failed to create topic: Status: %d, message: %s".formatted(resp.statusCode(), resp.body().asString()));
-      } else {
-        assertEquals(200, resp.statusCode());
       }
     });
   }
@@ -132,7 +131,7 @@ public class SidecarClient {
           .extract().body().jsonPath().getList("data");
       return topics
           .stream()
-          .filter(t -> !t.get("topic_name").startsWith("_"))
+          .filter(not(t -> t.get("topic_name").startsWith("_"))) // ignore internal topics
           .map(t -> t.get("topic_name")).collect(Collectors.toSet());
       });
   }

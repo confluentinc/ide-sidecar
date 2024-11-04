@@ -35,24 +35,24 @@ import org.junit.jupiter.api.AfterEach;
  * require to validate the connection and determine the status. This class provides a flexible
  * way for subclasses to control how connections are created and reused.
  *
- * <p>Most subclasses will use the same connection for all tests, and can use
- * have the test class' {@code @BeforeEach} method call either
- * {@link #setupLocalConnection(Class)} or {@link #setupDirectConnection(Class)}, which will
- * reuse the same connection for all tests in the class.
+ * <p>Most subclasses will use the same connection for all tests, often because the connection
+ * is needed to test other APIs. In these cases, the test class' {@code @BeforeEach} method
+ * should call {@link #setupLocalConnection(Class)} and/or {@link #setupDirectConnection(Class)}.
  * This minimizes the setup time for each test, as only the first test will need to create the
- * (shared) connection.
+ * (shared) connection. (The sidecar will be terminated after all tests in the test class are run,
+ * so deleting the connection is not necessary.)
  *
- * <p>Other tests may want to use a different connection for each test, and can use
- * have the test class' {@code @BeforeEach} method call either
- * {@link #setupLocalConnection(String)} or {@link #setupDirectConnection(String)} to create
- * connections for a specified "test scope". This allows tests to use _different_ connections,
- * but reusing connections depends on which tests reuse the same scopes.
+ * <p>Other tests may want to use a different connection for each test. If the test class is
+ * testing the Connections API, then the test class may want each test method to create its own
+ * connections via the {@link #setupLocalConnection(String)} and/or
+ * {@link #setupDirectConnection(String)} methods. The test method may also want to
+ * delete the connections and verify the deletion. The {@code @AfterEach} method should still
+ * call {@link #deleteAllConnections()} to clean up all connections that remain at the end of
+ * each test, giving a clean slate to the next test method.
  *
- * <p>And yet other integration tests may want each test to set up the connections it needs.
- * In this case, each test should call the appropriate {@code setup*Connection} method and, when
- * finished, call {@link #deleteAllConnections(Predicate)} to clean up the test's connections.
- * This approach is the most flexible, but also the slowest, as each test will need to create
- * the connections it needs.
+ * <p>The {@link #setupLocalConnection(String)} and/or {@link #setupDirectConnection(String)}
+ * give the test class more flexibility for defining the test scope. However, this is probably
+ * less practical than using nested test classes each with their own {@code @BeforeEach}.
  */
 public abstract class AbstractSidecarIT extends SidecarClient {
 
