@@ -30,10 +30,9 @@ public class ConsumeStrategyProcessor
   public ConsumeStrategy chooseStrategy(MessageViewerContext context) {
     var connectionType = context.getConnectionState().getType();
     return switch (connectionType) {
-      case LOCAL -> nativeConsumeStrategy;
+      case DIRECT, LOCAL -> nativeConsumeStrategy;
       case CCLOUD -> confluentCloudConsumeStrategy;
-      // TODO: DIRECT connection strategy is needed
-      case PLATFORM, DIRECT -> throw new ProcessorFailedException(
+      case PLATFORM -> throw new ProcessorFailedException(
           context.failf(
               501,
               "This endpoint does not yet support connection-type=%s",

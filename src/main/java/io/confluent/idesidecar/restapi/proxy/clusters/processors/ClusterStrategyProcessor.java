@@ -10,6 +10,8 @@ import io.confluent.idesidecar.restapi.proxy.clusters.strategy.ConfluentCloudKaf
 import io.confluent.idesidecar.restapi.proxy.clusters.strategy.ConfluentCloudSchemaRegistryClusterStrategy;
 import io.confluent.idesidecar.restapi.proxy.clusters.strategy.ConfluentLocalKafkaClusterStrategy;
 import io.confluent.idesidecar.restapi.proxy.clusters.strategy.ConfluentLocalSchemaRegistryClusterStrategy;
+import io.confluent.idesidecar.restapi.proxy.clusters.strategy.DirectKafkaClusterStrategy;
+import io.confluent.idesidecar.restapi.proxy.clusters.strategy.DirectSchemaRegistryClusterStrategy;
 import io.vertx.core.Future;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -28,10 +30,16 @@ public class ClusterStrategyProcessor extends
   ConfluentLocalKafkaClusterStrategy confluentLocalKafkaClusterStrategy;
 
   @Inject
+  DirectKafkaClusterStrategy directKafkaClusterStrategy;
+
+  @Inject
   ConfluentCloudSchemaRegistryClusterStrategy confluentCloudSchemaRegistryClusterStrategy;
 
   @Inject
   ConfluentLocalSchemaRegistryClusterStrategy confluentLocalSchemaRegistryClusterStrategy;
+
+  @Inject
+  DirectSchemaRegistryClusterStrategy directSchemaRegistryClusterStrategy;
 
 
   @Override
@@ -57,8 +65,9 @@ public class ClusterStrategyProcessor extends
       case LOCAL ->
           clusterType == ClusterType.KAFKA
               ? confluentLocalKafkaClusterStrategy : confluentLocalSchemaRegistryClusterStrategy;
-      // TODO: DIRECT proxy strategy
-      case DIRECT -> null;
+      case DIRECT ->
+          clusterType == ClusterType.KAFKA
+          ? directKafkaClusterStrategy : directSchemaRegistryClusterStrategy;
       case PLATFORM -> null;
     };
   }

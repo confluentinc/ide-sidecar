@@ -6,6 +6,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.equalToJson;
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.containsString;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -278,6 +279,8 @@ public class CCloudTestUtil {
   ) {
     if (connectionType == ConnectionType.CCLOUD) {
       createAuthedCCloudConnection(connectionId, connectionName);
+    } else if (connectionType == ConnectionType.DIRECT) {
+      fail("Unable to create a direct connection without specifying the cluster and schema registry");
     } else {
       createConnection(connectionId, connectionName, connectionType);
     }
