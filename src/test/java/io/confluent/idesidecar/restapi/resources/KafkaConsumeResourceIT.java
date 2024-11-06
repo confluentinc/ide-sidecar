@@ -15,6 +15,9 @@ import io.confluent.idesidecar.restapi.util.AbstractSidecarIT;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -353,6 +356,49 @@ abstract class KafkaConsumeResourceIT extends AbstractSidecarIT {
       assertEquals(messages.get(i), parsedMessage, "Mismatched Protobuf message");
 
       assertFalse(newRecords.get(i).exceededFields().value(), "Exceeded fields should be false");
+    }
+  }
+
+  @Test
+  public void testConcurrentConsumeRequests() {
+    var topicName = "test_topic_concurrent_requests";
+    var sampleRecords = new String[][]{
+        {"key-record0", "value-record0"},
+        {"key-record1", "value-record1"},
+        {"key-record2", "value-record2"},
+        {"key-record3", "value-record3"}
+    };
+    createTopicAndProduceRecords(topicName, 1, sampleRecords);
+    var otherTopicName = "test_topic_concurrent_requests2";
+    createTopicAndProduceRecords(otherTopicName, 1, sampleRecords);
+
+    var request = SimpleConsumeMultiPartitionRequestBuilder
+        .builder()
+        .fromBeginning(true)
+        .build();
+    List<Future<SimpleConsumeMultiPartitionResponse>> futures;
+    Callable<SimpleConsumeMultiPartitionResponse> callable =
+        () -> consume(topicName, request);
+    Callable<SimpleConsumeMultiPartitionResponse> callable2 =
+        () -> consume(otherTopicName, request);
+
+    try (var executorService = Executors.newFixedThreadPool(5)) {
+      futures = List.of(
+          executorService.submit(callable),
+          executorService.submit(callable),
+          executorService.submit(callable2),
+          executorService.submit(callable2),
+          executorService.submit(callable2)
+      );
+    }
+
+    for (var future : futures) {
+      try {
+        var rows = future.get();
+        assertConsumerRecords(rows, sampleRecords);
+      } catch (Exception e) {
+        throw new RuntimeException("Error retrieving consume response", e);
+      }
     }
   }
 }
