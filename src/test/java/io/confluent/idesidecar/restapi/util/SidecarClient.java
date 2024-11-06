@@ -13,6 +13,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.awaitility.Awaitility.*;
 
 import io.confluent.idesidecar.restapi.kafkarest.model.CreateTopicRequestData;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequest;
@@ -31,6 +32,7 @@ import io.restassured.config.DecoderConfig;
 import io.restassured.http.ContentType;
 import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
+import java.time.Duration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -506,12 +508,7 @@ public class SidecarClient {
           assertEquals(200, createSchemaVersionResp.statusCode());
         }
 
-        // Sleep for a bit to allow the schema to be registered
-        try {
-          Thread.sleep(50);
-        } catch (InterruptedException e) {
-          // Ignore
-        }
+      await().pollDelay(Duration.ofMillis(20)).pollInterval(Duration.ofMillis(10)).atMost(Duration.ofMillis(100)).until(()->getLatestSchemaVersion(subject, currentSchemaClusterId) != null);
 
         return getLatestSchemaVersion(subject, currentSchemaClusterId);
     });
