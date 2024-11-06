@@ -13,7 +13,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.awaitility.Awaitility.*;
+import static org.awaitility.Awaitility.await;
 
 import io.confluent.idesidecar.restapi.kafkarest.model.CreateTopicRequestData;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequest;
@@ -508,7 +508,11 @@ public class SidecarClient {
           assertEquals(200, createSchemaVersionResp.statusCode());
         }
 
-      await().pollDelay(Duration.ofMillis(20)).pollInterval(Duration.ofMillis(10)).atMost(Duration.ofMillis(100)).until(()->getLatestSchemaVersion(subject, currentSchemaClusterId) != null);
+      await()
+           .pollDelay(Duration.ofMillis(20))
+           .pollInterval(Duration.ofMillis(10))
+           .atMost(Duration.ofMillis(100))
+           .until(()->getLatestSchemaVersion(subject, currentSchemaClusterId) != null);
 
         return getLatestSchemaVersion(subject, currentSchemaClusterId);
     });
