@@ -1,6 +1,6 @@
 package io.confluent.idesidecar.restapi.messageviewer.strategy;
 
-import io.confluent.idesidecar.restapi.cache.KafkaConsumerClients;
+import io.confluent.idesidecar.restapi.messageviewer.KafkaConsumerFactory;
 import io.confluent.idesidecar.restapi.cache.SchemaRegistryClients;
 import io.confluent.idesidecar.restapi.messageviewer.MessageViewerContext;
 import io.confluent.idesidecar.restapi.messageviewer.RecordDeserializer;
@@ -22,7 +22,7 @@ public class NativeConsumeStrategy implements ConsumeStrategy {
   public Vertx vertx;
 
   @Inject
-  KafkaConsumerClients consumerClients;
+  KafkaConsumerFactory consumerFactory;
 
   @Inject
   RecordDeserializer recordDeserializer;
@@ -43,20 +43,22 @@ public class NativeConsumeStrategy implements ConsumeStrategy {
         .map(info -> schemaRegistryClients.getClient(context.getConnectionId(), info.id()))
         .orElse(null);
 
-    var consumer = consumerClients.getClient(
+    var consumer = consumerFactory.getClient(
         context.getConnectionId(),
         context.getClusterId(),
         request.consumerConfigOverrides()
     );
-    var simpleConsumer = new SimpleConsumer(
-        consumer,
-        schemaRegistryClient,
-        recordDeserializer
-    );
-    var consumedData = simpleConsumer.consume(topic, request);
-    context.setConsumeResponse(new SimpleConsumeMultiPartitionResponse(
-        context.getClusterId(), topic, consumedData)
-    );
+    try (consumer) {
+      var simpleConsumer = new SimpleConsumer(
+          consumer,
+          schemaRegistryClient,
+          recordDeserializer
+      );
+      var consumedData = simpleConsumer.consume(topic, request);
+      context.setConsumeResponse(new SimpleConsumeMultiPartitionResponse(
+          context.getClusterId(), topic, consumedData)
+      );
+    }
     return context;
   }
 }
