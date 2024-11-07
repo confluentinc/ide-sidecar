@@ -95,6 +95,12 @@ public class WebClientFactory {
       if (pemTrustOptions == null) {
         pemTrustOptions = new PemTrustOptions();
       }
+      // Make sure that we don't lose access to certs baked into the native executable. On Windows,
+      // we perform this action when calling WebClientFactory#getDefaultWebClientOptions(), allowing
+      // us to skip it here.
+      if (OperatingSystemType.current() != OperatingSystemType.Windows) {
+        addCertsFromBuiltInTrustStore(pemTrustOptions);
+      }
       for (var pemPath : tlsPemPaths) {
         pemTrustOptions.addCertPath(pemPath);
       }
