@@ -193,7 +193,7 @@ public class ClusterCache {
     Log.infof("Updated %s", connection.getSpec());
 
     // clear the cache to force future Kafka/SR REST proxy requests to fetch and re-cache any new cluster details
-    clustersByConnectionId.clear();
+    clustersByConnectionId.remove(connection.getSpec().id());
   }
 
   void onConnectionEstablished(
