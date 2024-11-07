@@ -1,5 +1,6 @@
 package io.confluent.idesidecar.restapi.cache;
 
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -222,6 +223,16 @@ class ClusterCacheTest {
 
       // and no other methods are called
       verifyNoInteractions(local);
+    }
+
+    @Test
+    void shouldClearCacheOnConnectionUpdateAndReCacheDetails() {
+      // When a connection is updated
+      cache.onConnectionUpdated(CONNECTION_1);
+
+      // assert cache is empty
+      assertEquals(0, cache.clustersByConnectionId.size());
+
     }
 
     @Test
