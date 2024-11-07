@@ -33,11 +33,14 @@ const run = async () => {
       let messageValue = {
         messageFieldKey: `messageFieldValue${i}`,
       };
-      console.log(messageValue);
+
+      let messageKey = `messageKey${i}`
+
+      console.log({messageKey, messageValue});
 
       producer.send({
         topic: "{{ cc_topic }}",
-        messages: [{ value: JSON.stringify(messageValue) }],
+        messages: [{ key: JSON.stringify(messageKey), value: JSON.stringify(messageValue) }],
       });
       i++;
       await new Promise((resolve) => setTimeout(resolve, 1000));
