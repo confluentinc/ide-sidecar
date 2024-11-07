@@ -1,5 +1,6 @@
 package io.confluent.idesidecar.restapi.cache;
 
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -225,6 +226,16 @@ class ClusterCacheTest {
     }
 
     @Test
+    void shouldClearCacheOnConnectionUpdateAndReCacheDetails() {
+      // When a connection is updated
+      cache.onConnectionUpdated(CONNECTION_1);
+
+      // assert cache is empty
+      assertEquals(0, cache.clustersByConnectionId.size());
+
+    }
+
+    @Test
     void shouldNotFindAlreadyLoadedSchemaRegistryForKafkaClusterThatDoesNotExist() {
       // When a connection is created
       cache.onConnectionCreated(CONNECTION_1);
@@ -282,9 +293,7 @@ class ClusterCacheTest {
   }
 
 
-  void assertNoConnections() {
-    assertEquals(0, cache.clustersByConnectionId.size());
-  }
+  void assertNoConnections() { assertEquals(0, cache.clustersByConnectionId.size());}
 
   void assertNoConnection(String id) {
     assertThrows(

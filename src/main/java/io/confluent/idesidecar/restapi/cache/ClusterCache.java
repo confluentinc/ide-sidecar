@@ -191,6 +191,9 @@ public class ClusterCache {
 
   void onConnectionUpdated(@ObservesAsync @Lifecycle.Updated ConnectionState connection) {
     Log.infof("Updated %s", connection.getSpec());
+
+    // clear the cache to force future Kafka/SR REST proxy requests to fetch and re-cache any new cluster details
+    clustersByConnectionId.clear();
   }
 
   void onConnectionEstablished(
