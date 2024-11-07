@@ -105,14 +105,18 @@ public class DirectQueryResourceTest extends ConfluentQueryResourceTestBase {
     if (withKafka) {
       kafkaConfig = new KafkaClusterConfig(
           KAFKA_CLUSTER_ID,
-          KAFKA_BOOTSTRAP_SERVERS
+          KAFKA_BOOTSTRAP_SERVERS,
+          null,
+          null,
+          null
       );
     }
     SchemaRegistryConfig schemaRegistryConfig = null;
     if (withSchemaRegistry) {
       schemaRegistryConfig = new SchemaRegistryConfig(
           SCHEMA_REGISTRY_ID,
-          SCHEMA_REGISTRY_URL
+          SCHEMA_REGISTRY_URL,
+          null
       );
     }
     var spec = new ConnectionSpec(

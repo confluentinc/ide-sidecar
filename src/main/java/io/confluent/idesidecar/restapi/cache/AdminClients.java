@@ -4,7 +4,6 @@ import com.github.benmanes.caffeine.cache.CaffeineSpec;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.util.Map;
-import java.util.Properties;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
@@ -18,7 +17,7 @@ public class AdminClients extends Clients<AdminClient> {
   private static final String CAFFEINE_SPEC = "expireAfterAccess=5m";
 
   @Inject
-  ClusterCache clusterCache;
+  ClientConfigurator configurator;
 
   @ConfigProperty(name = "ide-sidecar.admin-client-configs")
   Map<String, String> adminClientSidecarConfigs;
@@ -38,16 +37,12 @@ public class AdminClients extends Clients<AdminClient> {
     return getClient(
         connectionId,
         clusterId,
-        () -> AdminClient.create(getAdminClientConfig(connectionId, clusterId))
+        () -> {
+          // Generate the Kafka admin client configuration
+          var config = configurator.getAdminClientConfig(connectionId, clusterId, false);
+          // Create the admin client
+          return AdminClient.create(config);
+        }
     );
-  }
-
-  private Properties getAdminClientConfig(String connectionId, String clusterId) {
-    var cluster = clusterCache.getKafkaCluster(connectionId, clusterId);
-    var props = new Properties();
-    // Set AdminClient configs provided by the sidecar
-    props.putAll(adminClientSidecarConfigs);
-    props.put("bootstrap.servers", cluster.bootstrapServers());
-    return props;
   }
 }

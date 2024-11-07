@@ -16,6 +16,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
+import io.confluent.idesidecar.restapi.credentials.ApiKeyAndSecret;
+import io.confluent.idesidecar.restapi.credentials.ApiSecret;
+import io.confluent.idesidecar.restapi.credentials.BasicCredentials;
+import io.confluent.idesidecar.restapi.credentials.Password;
 import io.confluent.idesidecar.restapi.exceptions.Failure;
 import io.confluent.idesidecar.restapi.exceptions.Failure.Error;
 import io.confluent.idesidecar.restapi.models.CollectionMetadata;
@@ -676,13 +680,58 @@ public class ConnectionsResourceTest {
             """
         ),
         new TestInput(
-            "Local spec is valid with new Schema Registry config",
+            "Local spec is valid with new Schema Registry config but without credentials",
             """
             {
               "name": "Connection 1",
               "type": "LOCAL",
               "schema_registry": {
                 "uri": "http://localhost:8081"
+              }
+            }
+            """
+        ),
+        new TestInput(
+            "Local spec is valid with new Schema Registry config and null credentials",
+            """
+            {
+              "name": "Connection 1",
+              "type": "LOCAL",
+              "schema_registry": {
+                "uri": "http://localhost:8081",
+                "credentials": null
+              }
+            }
+            """
+        ),
+        new TestInput(
+            "Local spec is valid with new Schema Registry config including basic credentials",
+            """
+            {
+              "name": "Connection 1",
+              "type": "LOCAL",
+              "schema_registry": {
+                "uri": "http://localhost:8081",
+                "credentials": {
+                  "username": "user",
+                  "password": "pass"
+                }
+              }
+            }
+            """
+        ),
+        new TestInput(
+            "Local spec is valid with new Schema Registry config including API key and secret credentials",
+            """
+            {
+              "name": "Connection 1",
+              "type": "LOCAL",
+              "schema_registry": {
+                "uri": "http://localhost:8081",
+                "credentials": {
+                  "api_key": "my-api-key",
+                  "api_secret": "my-api-secret"
+                }
               }
             }
             """
@@ -777,6 +826,22 @@ public class ConnectionsResourceTest {
             }
             """,
             createError().withSource("local_config.schema-registry-uri").withDetail("Local config cannot be used with schema_registry configuration")
+        ),
+        new TestInput(
+            "Local spec is invalid with new Schema Registry config and incomplete basic credentials",
+            """
+            {
+              "name": "Connection 1",
+              "type": "LOCAL",
+              "schema_registry": {
+                "uri": "http://localhost:8081",
+                "credentials": {
+                  "username": "user"
+                }
+              }
+            }
+            """,
+            createError().withSource("schema_registry.credentials.password").withDetail("Schema Registry password is required")
         ),
         new TestInput(
             "Local spec is invalid with CCloud spec",
@@ -930,6 +995,22 @@ public class ConnectionsResourceTest {
               "type": "DIRECT",
               "kafka_cluster": {
                 "bootstrap_servers": "localhost:9092"
+              }
+            }
+            """
+        ),
+        new TestInput(
+            "Direct spec is valid with name and Kafka w/ basic credentials and no Schema Registry",
+            """
+            {
+              "name": "Some connection name",
+              "type": "DIRECT",
+              "kafka_cluster": {
+                "bootstrap_servers": "localhost:9092",
+                "credentials": {
+                  "username": "user",
+                  "password": "pass"
+                }
               }
             }
             """
@@ -1096,12 +1177,48 @@ public class ConnectionsResourceTest {
             validLocalSpec.withLocalConfig("http://localhost:8081")
         ),
         new TestInput(
-            "Updated of local config is valid with (new) Schema Registry URI",
+            "Updated of local config is valid with (new) Schema Registry URI and no credentials",
             validLocalSpec,
             validLocalSpec
                 .withoutLocalConfig()
                 .withSchemaRegistry(
-                    new SchemaRegistryConfig(null, "http://localhost:8081")
+                    new SchemaRegistryConfig(
+                        null,
+                        "http://localhost:8081",
+                        null
+                    )
+                )
+        ),
+        new TestInput(
+            "Updated of local config is valid with (new) Schema Registry URI and basic credentials",
+            validLocalSpec,
+            validLocalSpec
+                .withoutLocalConfig()
+                .withSchemaRegistry(
+                    new SchemaRegistryConfig(
+                        null,
+                        "http://localhost:8081",
+                        new BasicCredentials(
+                            "user",
+                            new Password("pass".toCharArray())
+                        )
+                    )
+                )
+        ),
+        new TestInput(
+            "Updated of local config is valid with (new) Schema Registry URI and API key and secret credentials",
+            validLocalSpec,
+            validLocalSpec
+                .withoutLocalConfig()
+                .withSchemaRegistry(
+                    new SchemaRegistryConfig(
+                        null,
+                        "http://localhost:8081",
+                        new ApiKeyAndSecret(
+                            "api-key-123",
+                            new ApiSecret("api-secret-123456".toCharArray())
+                        )
+                    )
                 )
         ),
         new TestInput(
