@@ -293,7 +293,9 @@ class ClusterCacheTest {
   }
 
 
-  void assertNoConnections() { assertEquals(0, cache.clustersByConnectionId.size());}
+  void assertNoConnections() {
+    assertEquals(0, cache.clustersByConnectionId.size());
+  }
 
   void assertNoConnection(String id) {
     assertThrows(
