@@ -1,16 +1,23 @@
 package io.confluent.idesidecar.restapi.cache;
 
+
 import graphql.VisibleForTesting;
 import io.confluent.idesidecar.restapi.connections.ConnectionState;
-import io.confluent.idesidecar.restapi.connections.ConnectionStates;
 import io.confluent.idesidecar.restapi.events.ClusterKind;
 import io.confluent.idesidecar.restapi.events.Lifecycle;
 import io.confluent.idesidecar.restapi.exceptions.ClusterNotFoundException;
 import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
 import io.confluent.idesidecar.restapi.models.ClusterType;
-import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
-import io.confluent.idesidecar.restapi.models.graph.*;
+import io.confluent.idesidecar.restapi.models.graph.CCloudKafkaCluster;
+import io.confluent.idesidecar.restapi.models.graph.CCloudSchemaRegistry;
+import io.confluent.idesidecar.restapi.models.graph.Cluster;
+import io.confluent.idesidecar.restapi.models.graph.ClusterEvent;
+import io.confluent.idesidecar.restapi.models.graph.KafkaCluster;
+import io.confluent.idesidecar.restapi.models.graph.RealCCloudFetcher;
+import io.confluent.idesidecar.restapi.models.graph.RealDirectFetcher;
+import io.confluent.idesidecar.restapi.models.graph.RealLocalFetcher;
+import io.confluent.idesidecar.restapi.models.graph.SchemaRegistry;
 import io.confluent.idesidecar.restapi.util.TimeUtil;
 import io.quarkus.logging.Log;
 import io.smallrye.common.constraint.NotNull;
