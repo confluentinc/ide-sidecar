@@ -744,7 +744,9 @@ public class ConnectionsResourceTest {
               "local_config": {}
             }
             """,
-            createError().withSource("name").withDetail("Connection name is required and may not be blank")
+            createError()
+                .withSource("name")
+                .withDetail("Connection name is required and may not be blank")
         ),
         new TestInput(
             "Local spec is invalid with blank name",
@@ -755,7 +757,9 @@ public class ConnectionsResourceTest {
               "local_config": {}
             }
             """,
-            createError().withSource("name").withDetail("Connection name is required and may not be blank")
+            createError()
+                .withSource("name")
+                .withDetail("Connection name is required and may not be blank")
         ),
         new TestInput(
             "Local spec is invalid with blank Schema Registry URI (old config)",
@@ -768,7 +772,9 @@ public class ConnectionsResourceTest {
               }
             }
             """,
-            createError().withSource("local_config.schema-registry-uri").withDetail("Schema Registry URI may null (use default local SR) or empty (do not use SR), but may not have only whitespace")
+            createError()
+                .withSource("local_config.schema-registry-uri")
+                .withDetail("Schema Registry URI may be null (use default local SR) or empty (do not use SR), but may not have only whitespace")
         ),
         new TestInput(
             "Local spec is invalid with null Schema Registry URI (new config)",
@@ -781,7 +787,9 @@ public class ConnectionsResourceTest {
               }
             }
             """,
-            createError().withSource("schema_registry.uri").withDetail("Schema Registry URI is required and may not be blank")
+            createError()
+                .withSource("schema_registry.uri")
+                .withDetail("Schema Registry URI is required and may not be blank")
         ),
         new TestInput(
             // If the URI is empty, then we assume that the user does not want to use SR
@@ -796,7 +804,9 @@ public class ConnectionsResourceTest {
               }
             }
             """,
-            createError().withSource("schema_registry.uri").withDetail("Schema Registry URI is required and may not be blank")
+            createError()
+                .withSource("schema_registry.uri")
+                .withDetail("Schema Registry URI is required and may not be blank")
         ),
         new TestInput(
             "Local spec is invalid with null Schema Registry URI",
@@ -809,7 +819,9 @@ public class ConnectionsResourceTest {
               }
             }
             """,
-            createError().withSource("schema_registry.uri").withDetail("Schema Registry URI is required and may not be blank")
+            createError()
+                .withSource("schema_registry.uri")
+                .withDetail("Schema Registry URI is required and may not be blank")
         ),
         new TestInput(
             "Local spec is invalid with both local config and Schema Registry",
@@ -825,7 +837,9 @@ public class ConnectionsResourceTest {
               }
             }
             """,
-            createError().withSource("local_config.schema-registry-uri").withDetail("Local config cannot be used with schema_registry configuration")
+            createError()
+                .withSource("local_config.schema-registry-uri")
+                .withDetail("Local config cannot be used with schema_registry configuration")
         ),
         new TestInput(
             "Local spec is invalid with new Schema Registry config and incomplete basic credentials",
@@ -841,7 +855,9 @@ public class ConnectionsResourceTest {
               }
             }
             """,
-            createError().withSource("schema_registry.credentials.password").withDetail("Schema Registry password is required")
+            createError()
+                .withSource("schema_registry.credentials.password")
+                .withDetail("Schema Registry password is required")
         ),
         new TestInput(
             "Local spec is invalid with CCloud spec",
@@ -854,7 +870,9 @@ public class ConnectionsResourceTest {
               }
             }
             """,
-            createError().withSource("ccloud_config").withDetail("CCloud configuration is not allowed when type is LOCAL")
+            createError()
+                .withSource("ccloud_config")
+                .withDetail("CCloud configuration is not allowed when type is LOCAL")
         ),
         new TestInput(
             "Local spec is invalid with Kafka spec",
@@ -866,7 +884,9 @@ public class ConnectionsResourceTest {
               }
             }
             """,
-            createError().withSource("kafka_cluster").withDetail("Kafka cluster configuration is not allowed when type is LOCAL")
+            createError()
+                .withSource("kafka_cluster")
+                .withDetail("Kafka cluster configuration is not allowed when type is LOCAL")
         ),
 
         // CCloud connections
@@ -925,7 +945,9 @@ public class ConnectionsResourceTest {
               }
             }
             """,
-            createError().withSource("name").withDetail("Connection name is required and may not be blank")
+            createError()
+                .withSource("name")
+                .withDetail("Connection name is required and may not be blank")
         ),
         new TestInput(
             "CCloud spec is invalid with blank name",
@@ -938,7 +960,9 @@ public class ConnectionsResourceTest {
               }
             }
             """,
-            createError().withSource("name").withDetail("Connection name is required and may not be blank")
+            createError()
+                .withSource("name")
+                .withDetail("Connection name is required and may not be blank")
         ),
         new TestInput(
             "CCloud spec is invalid with local config",
@@ -950,7 +974,9 @@ public class ConnectionsResourceTest {
               }
             }
             """,
-            createError().withSource("local_config").withDetail("Local configuration is not allowed when type is CCLOUD")
+            createError()
+                .withSource("local_config")
+                .withDetail("Local configuration is not allowed when type is CCLOUD")
         ),
         new TestInput(
             "CCloud spec is invalid with Kafka spec",
@@ -962,7 +988,9 @@ public class ConnectionsResourceTest {
               }
             }
             """,
-            createError().withSource("kafka_cluster").withDetail("Kafka cluster configuration is not allowed when type is CCLOUD")
+            createError()
+                .withSource("kafka_cluster")
+                .withDetail("Kafka cluster configuration is not allowed when type is CCLOUD")
         ),
         new TestInput(
             "CCloud spec is invalid with Schema Registry spec",
@@ -974,7 +1002,9 @@ public class ConnectionsResourceTest {
               }
             }
             """,
-            createError().withSource("schema_registry").withDetail( "Schema Registry configuration is not allowed when type is CCLOUD")
+            createError()
+                .withSource("schema_registry")
+                .withDetail( "Schema Registry configuration is not allowed when type is CCLOUD")
         ),
 
         // Direct connections
@@ -1052,8 +1082,12 @@ public class ConnectionsResourceTest {
               }
             }
             """,
-            createError().withSource("name").withDetail("Connection name is required and may not be blank"),
-            createError().withSource("kafka_cluster.bootstrap_servers").withDetail("Kafka cluster bootstrap_servers is required and may not be blank")
+            createError()
+                .withSource("name")
+                .withDetail("Connection name is required and may not be blank"),
+            createError()
+                .withSource("kafka_cluster.bootstrap_servers")
+                .withDetail("Kafka cluster bootstrap_servers is required and may not be blank")
         ),
         new TestInput(
             "Direct spec is invalid with blank name",
@@ -1066,8 +1100,12 @@ public class ConnectionsResourceTest {
               }
             }
             """,
-            createError().withSource("name").withDetail("Connection name is required and may not be blank"),
-            createError().withSource("kafka_cluster.bootstrap_servers").withDetail("Kafka cluster bootstrap_servers is required and may not be blank")
+            createError()
+                .withSource("name")
+                .withDetail("Connection name is required and may not be blank"),
+            createError()
+                .withSource("kafka_cluster.bootstrap_servers")
+                .withDetail("Kafka cluster bootstrap_servers is required and may not be blank")
         ),
         new TestInput(
             "Direct spec is invalid with local config",
@@ -1079,7 +1117,9 @@ public class ConnectionsResourceTest {
               }
             }
             """,
-            createError().withSource("local_config").withDetail("Local configuration is not allowed when type is DIRECT")
+            createError()
+                .withSource("local_config")
+                .withDetail("Local configuration is not allowed when type is DIRECT")
         ),
         new TestInput(
             "Direct spec is invalid with Kafka spec",
@@ -1092,7 +1132,9 @@ public class ConnectionsResourceTest {
               }
             }
             """,
-            createError().withSource("ccloud_config").withDetail("CCloud configuration is not allowed when type is DIRECT")
+            createError()
+                .withSource("ccloud_config")
+                .withDetail("CCloud configuration is not allowed when type is DIRECT")
         ),
 
         // Combination
@@ -1113,9 +1155,15 @@ public class ConnectionsResourceTest {
               }
             }
             """,
-            createError().withSource("ccloud_config").withDetail("CCloud configuration is not allowed when type is LOCAL"),
-            createError().withSource("kafka_cluster").withDetail("Kafka cluster configuration is not allowed when type is LOCAL"),
-            createError().withSource("schema_registry.uri").withDetail("Schema Registry URI is required and may not be blank")
+            createError()
+                .withSource("ccloud_config")
+                .withDetail("CCloud configuration is not allowed when type is LOCAL"),
+            createError()
+                .withSource("kafka_cluster")
+                .withDetail("Kafka cluster configuration is not allowed when type is LOCAL"),
+            createError()
+                .withSource("schema_registry.uri")
+                .withDetail("Schema Registry URI is required and may not be blank")
         )
     );
     return inputs
