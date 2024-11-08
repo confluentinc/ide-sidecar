@@ -97,6 +97,9 @@ class FeatureFlagsContextTest extends BaseFeatureFlagsTest implements FeatureFla
     // Then the device context should contain the sidecar information
     assertDeviceContextMatchesSidecar(flags);
 
+    // And the CCloud context should contain the CCloud information
+    assertCCloudContext(flags);
+
     // When the CCloud connection is disconnected
     flags.onConnectionDisconnected(ccloudState2);
 
