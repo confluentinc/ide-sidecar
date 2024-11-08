@@ -9,6 +9,7 @@ import io.confluent.idesidecar.restapi.models.ClusterType;
 import io.confluent.idesidecar.restapi.models.graph.Cluster;
 import io.confluent.idesidecar.restapi.models.graph.KafkaCluster;
 import io.confluent.idesidecar.restapi.models.graph.SchemaRegistry;
+import java.util.Optional;
 
 /**
  * Methods used to prepare a mock {@link ClusterCache} for expected operations.
@@ -42,6 +43,15 @@ public class ClusterCacheExpectations {
     ).thenReturn(
         mockCluster
     );
+
+    // Register the schema registry without the type
+    if (clusterType == ClusterType.SCHEMA_REGISTRY) {
+      when(
+          cache.getSchemaRegistry(connectionId, clusterId)
+      ).thenReturn(
+          (SchemaRegistry) mockCluster
+      );
+    }
   }
 
   /**
@@ -184,6 +194,11 @@ public class ClusterCacheExpectations {
         cache.getSchemaRegistryForKafkaCluster(connectionId, kafkaCluster)
     ).thenReturn(
         mockRegistry
+    );
+    when(
+        cache.maybeGetSchemaRegistryForKafkaClusterId(connectionId, kafkaCluster.id())
+    ).thenReturn(
+        Optional.of(mockRegistry)
     );
   }
 
