@@ -51,6 +51,7 @@ public class ClientConfigurator {
 
     // First set the bootstrap servers
     props.put("bootstrap.servers", cluster.bootstrapServers());
+    props.put("session.timeout.ms", "45000");
 
     // Second, add any connection properties for Kafka cluster credentials (if defined)
     var options = connection.getKafkaConnectionOptions(cluster.id()).withRedact(redact);
@@ -142,7 +143,13 @@ public class ClientConfigurator {
     var connection = connections.getConnectionState(connectionId);
     var cluster = clusterCache.getKafkaCluster(connectionId, clusterId);
     // Return the AdminClient config
-    return getKafkaClientConfig(connection, cluster, null, redact, adminClientSidecarConfigs);
+    return getKafkaClientConfig(
+        connection,
+        cluster,
+        null,
+        redact,
+        adminClientSidecarConfigs
+    );
   }
 
   /**
@@ -178,7 +185,13 @@ public class ClientConfigurator {
       sr = clusterCache.getSchemaRegistryForKafkaCluster(connectionId, cluster);
     }
     // Return the Consumer config
-    return getKafkaClientConfig(connection, cluster, sr, redact, Map.of());
+    return getKafkaClientConfig(
+        connection,
+        cluster,
+        sr,
+        redact,
+        Map.of()
+    );
   }
 
   /**
@@ -207,6 +220,7 @@ public class ClientConfigurator {
     // Find the connection and cluster, or fail if either does not exist
     var connection = connections.getConnectionState(connectionId);
     var cluster = clusterCache.getKafkaCluster(connectionId, clusterId);
+
     // Maybe look up the SR for the Kafka cluster
     SchemaRegistry sr = null;
     if (includeSchemaRegistry) {
@@ -214,7 +228,13 @@ public class ClientConfigurator {
     }
 
     // Get the basic producer config
-    return getKafkaClientConfig(connection, cluster, sr, redact, Map.of());
+    return getKafkaClientConfig(
+        connection,
+        cluster,
+        sr,
+        redact,
+        Map.of("acks", "all")
+    );
   }
 
   /**

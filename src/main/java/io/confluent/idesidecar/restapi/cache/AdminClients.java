@@ -3,9 +3,7 @@ package io.confluent.idesidecar.restapi.cache;
 import com.github.benmanes.caffeine.cache.CaffeineSpec;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import java.util.Map;
 import org.apache.kafka.clients.admin.AdminClient;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
  * Create an ApplicationScoped bean to cache AdminClient instances by connection ID and client ID.
@@ -18,9 +16,6 @@ public class AdminClients extends Clients<AdminClient> {
 
   @Inject
   ClientConfigurator configurator;
-
-  @ConfigProperty(name = "ide-sidecar.admin-client-configs")
-  Map<String, String> adminClientSidecarConfigs;
 
   public AdminClients() {
     super(CaffeineSpec.parse(CAFFEINE_SPEC));
