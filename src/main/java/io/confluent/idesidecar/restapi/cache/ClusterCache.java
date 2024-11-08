@@ -1,5 +1,6 @@
 package io.confluent.idesidecar.restapi.cache;
 
+
 import graphql.VisibleForTesting;
 import io.confluent.idesidecar.restapi.connections.ConnectionState;
 import io.confluent.idesidecar.restapi.events.ClusterKind;
@@ -191,6 +192,12 @@ public class ClusterCache {
 
   void onConnectionUpdated(@ObservesAsync @Lifecycle.Updated ConnectionState connection) {
     Log.infof("Updated %s", connection.getSpec());
+
+    // Replace the existing cache for this connection with a new one
+    clustersByConnectionId.put(
+            connection.getId(),
+            new Clusters(connection.getId(), connection.getType())
+    );
   }
 
   void onConnectionEstablished(
