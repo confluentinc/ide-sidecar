@@ -49,17 +49,16 @@ public record BasicCredentials(
   ) {
     var config = new LinkedHashMap<String, String>();
     var protocol = options.securityProtocol();
-    if (protocol != SecurityProtocol.UNKNOWN) {
+    if (protocol != null && protocol != SecurityProtocol.UNKNOWN) {
       config.put("security.protocol", protocol.toString());
     }
     var algorithm = options.sslIdentificationAlgorithm();
-    if (algorithm != SslIdentificationAlgorithm.UNKNOWN) {
+    if (algorithm != null && algorithm != SslIdentificationAlgorithm.UNKNOWN) {
       config.put("ssl.endpoint.identification.algorithm", algorithm.toString());
     }
-    config.put(
-        "sasl.mechanism",
-        protocol.isSslEnabled() ? "SASL_SSL" : "PLAIN"
-    );
+    if (protocol != null) {
+      config.put("sasl.mechanism", protocol.isSslEnabled() ? "SASL_SSL" : "PLAIN");
+    }
     config.put(
         "sasl.jaas.config",
         "%s required username=\"%s\" password=\"%s\";".formatted(
