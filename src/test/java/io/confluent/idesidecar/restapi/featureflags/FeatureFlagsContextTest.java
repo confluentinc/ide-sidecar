@@ -90,7 +90,7 @@ class FeatureFlagsContextTest extends BaseFeatureFlagsTest implements FeatureFla
     assertCCloudContext(flags);
 
     //When the CCloud connection is updated
-    flags.onConnectionUpdated(ccloudState2);
+    flags.onConnectionUpdated(ccloudState);
 
     // Then the device context should contain the sidecar information
     assertDeviceContextMatchesSidecar(flags);
