@@ -149,18 +149,18 @@ public record Failure(
       return new Error(id, status, code, title, detail, source);
     }
 
-    public Error withDetail(String detail) {
-      return new Error(id, status, code, title, detail, source);
+    public Error withDetail(String detail, Object...args) {
+      return new Error(id, status, code, title, detail.formatted(args), source);
     }
 
-    public Error withSource(String source) {
+    public Error withSource(String source, Object...args) {
       return new Error(
           id,
           status,
           code,
           title,
           detail,
-          source != null ? OBJECT_MAPPER.convertValue(source, JsonNode.class) : null
+          source != null ? OBJECT_MAPPER.convertValue(source.formatted(args), JsonNode.class) : null
       );
     }
 
@@ -194,34 +194,34 @@ public record Failure(
           builder.append(", ");
         }
         builder.append("status=").append(status);
-        addDelim = false;
+        addDelim = true;
       }
       if (code != null) {
         if (addDelim) {
           builder.append(", ");
         }
-        builder.append(", code=").append(code);
-        addDelim = false;
+        builder.append("code=").append(code);
+        addDelim = true;
       }
       if (title != null) {
         if (addDelim) {
           builder.append(", ");
         }
-        builder.append(", title=").append(title);
-        addDelim = false;
+        builder.append("title=").append(title);
+        addDelim = true;
       }
       if (detail != null) {
         if (addDelim) {
           builder.append(", ");
         }
-        builder.append(", detail=").append(detail);
-        addDelim = false;
+        builder.append("detail=").append(detail);
+        addDelim = true;
       }
       if (source != null) {
         if (addDelim) {
           builder.append(", ");
         }
-        builder.append(", source=").append(source);
+        builder.append("source=").append(source);
       }
       builder.append("}");
       return builder.toString();
