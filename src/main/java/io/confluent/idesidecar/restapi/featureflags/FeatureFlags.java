@@ -714,8 +714,6 @@ public class FeatureFlags {
     refreshFlags(true);
   }
 
-
-
   /**
    * Utility to construct the {@link LDContext} for the given CCloud connection.
    *
