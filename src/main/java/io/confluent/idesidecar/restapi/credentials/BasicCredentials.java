@@ -60,7 +60,7 @@ public record BasicCredentials(
       config.put("ssl.endpoint.identification.algorithm", algorithm.toString());
     }
     if (protocol != null) {
-      config.put("sasl.mechanism", protocol.isSslEnabled() ? "SASL_SSL" : "PLAIN");
+      config.put("sasl.mechanism", "PLAIN");
     }
     config.put(
         "sasl.jaas.config",
