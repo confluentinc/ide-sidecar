@@ -209,6 +209,18 @@
       <artifactId>launchdarkly-java-server-sdk</artifactId>
       <version>${launch-darkly-sdk.version}</version>
     </dependency>
+    <!-- BEGIN: Quarkus extensions for Kafka and SR clients -->
+    <!-- This Quarkus extension registers the many classes that may be loaded reflectively by the Kafka client -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-kafka-client</artifactId>
+    </dependency>
+    <!-- This Quarkus extension registers the many classes that may be loaded reflectively by the SR client -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-confluent-registry-avro</artifactId>
+    </dependency>
+    <!-- END: Quarkus extensions for Kafka and SR clients -->
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-junit5</artifactId>

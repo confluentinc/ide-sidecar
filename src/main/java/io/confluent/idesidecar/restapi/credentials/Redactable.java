@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Objects;
@@ -18,6 +19,7 @@ import java.util.Objects;
  *
  * @see Password
  */
+@RegisterForReflection
 public abstract class Redactable {
 
   public static final String MASKED_VALUE = "*".repeat(8);
