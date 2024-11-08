@@ -175,20 +175,10 @@ public class ClientConfigurator {
       boolean includeSchemaRegistry,
       boolean redact
   ) throws ConnectionNotFoundException, ClusterNotFoundException {
-    // Find the connection and cluster, or fail if either does not exist
-    var connection = connections.getConnectionState(connectionId);
-    var cluster = clusterCache.getKafkaCluster(connectionId, clusterId);
-
-    // Maybe look up the SR for the Kafka cluster
-    SchemaRegistry sr = null;
-    if (includeSchemaRegistry) {
-      sr = clusterCache.getSchemaRegistryForKafkaCluster(connectionId, cluster);
-    }
-    // Return the Consumer config
     return getKafkaClientConfig(
-        connection,
-        cluster,
-        sr,
+        connectionId,
+        clusterId,
+        includeSchemaRegistry,
         redact,
         Map.of()
     );
@@ -217,6 +207,22 @@ public class ClientConfigurator {
       boolean includeSchemaRegistry,
       boolean redact
   ) throws ConnectionNotFoundException, ClusterNotFoundException {
+    return getKafkaClientConfig(
+        connectionId,
+        clusterId,
+        includeSchemaRegistry,
+        redact,
+        Map.of("acks", "all")
+    );
+  }
+
+  protected Map<String, Object> getKafkaClientConfig(
+      String connectionId,
+      String clusterId,
+      boolean includeSchemaRegistry,
+      boolean redact,
+      Map<String, String> defaultProperties
+  ) throws ConnectionNotFoundException, ClusterNotFoundException {
     // Find the connection and cluster, or fail if either does not exist
     var connection = connections.getConnectionState(connectionId);
     var cluster = clusterCache.getKafkaCluster(connectionId, clusterId);
@@ -233,7 +239,7 @@ public class ClientConfigurator {
         cluster,
         sr,
         redact,
-        Map.of("acks", "all")
+        defaultProperties
     );
   }
 
