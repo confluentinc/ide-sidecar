@@ -1,6 +1,6 @@
 package io.confluent.idesidecar.restapi.messageviewer;
 
-import io.confluent.idesidecar.restapi.cache.ClusterCache;
+import io.confluent.idesidecar.restapi.cache.ClientConfigurator;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.util.Properties;
@@ -12,7 +12,7 @@ public class KafkaConsumerFactory {
   private static final ByteArrayDeserializer BYTE_ARRAY_DESERIALIZER = new ByteArrayDeserializer();
 
   @Inject
-  ClusterCache clusterCache;
+  ClientConfigurator configurator;
 
   /**
    * Create a new Kafka consumer client for the given connection and cluster, with the given
@@ -27,17 +27,17 @@ public class KafkaConsumerFactory {
       String clusterId,
       Properties configOverrides
   ) {
-    // Get the consumer config for the given connection and cluster
-    var config = getConsumerConfig(connectionId, clusterId);
+    // Generate the Kafka consumer configuration
+    var config = configurator.getConsumerClientConfig(
+        connectionId,
+        clusterId,
+        false,
+        false
+    );
     // And apply the overrides
-    config.putAll(configOverrides);
-    return new KafkaConsumer<>(config, BYTE_ARRAY_DESERIALIZER, BYTE_ARRAY_DESERIALIZER);
-  }
+    configOverrides.forEach((key, value) -> config.put(key.toString(), value.toString()));
 
-  private Properties getConsumerConfig(String connectionId, String kafkaClusterId) {
-    var kafkaCluster = clusterCache.getKafkaCluster(connectionId, kafkaClusterId);
-    var props = new Properties();
-    props.put("bootstrap.servers", kafkaCluster.bootstrapServers());
-    return props;
+    // And create the consumer
+    return new KafkaConsumer<>(config, BYTE_ARRAY_DESERIALIZER, BYTE_ARRAY_DESERIALIZER);
   }
 }
