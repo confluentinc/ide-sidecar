@@ -74,17 +74,41 @@ class ClusterCacheTest {
         ),
         null
     );
+
+    static final String CONNECTION_2_ID = "c2";
+    static final ConnectionState CONNECTION_2 = ConnectionStates.from(
+            new ConnectionSpec(
+                    CONNECTION_2_ID,
+                    "Conn2",
+                    ConnectionSpec.ConnectionType.CCLOUD
+            ),
+            null
+    );
+
     static final CCloudOrganization ORG_1 = new CCloudOrganization(
         "org1",
         "my-org",
         false,
         CONNECTION_1_ID
     );
+
+    static final CCloudOrganization ORG_2 = new CCloudOrganization(
+            "org2",
+            "my-other-org",
+            false,
+            CONNECTION_2_ID
+    );
     static final CCloudEnvironment ENV_1 = new CCloudEnvironment(
         "env-123",
         "my-env",
         CCloudGovernancePackage.ESSENTIALS
     ).withOrganization(ORG_1).withConnectionId(CONNECTION_1_ID);
+
+    static final CCloudEnvironment ENV_2 = new CCloudEnvironment(
+            "env-456",
+            "my-env-2",
+            CCloudGovernancePackage.ESSENTIALS
+    ).withOrganization(ORG_2).withConnectionId(CONNECTION_2_ID);
     static final CCloudKafkaCluster LKC_1 = new CCloudKafkaCluster(
         "lkc-1",
         "my-kafka-cluster",
@@ -92,6 +116,14 @@ class ClusterCacheTest {
         "us-west-2",
         "pkc-123"
     ).withEnvironment(ENV_1).withOrganization(ORG_1).withConnectionId(CONNECTION_1_ID);
+
+    static final CCloudKafkaCluster LKC_2 = new CCloudKafkaCluster(
+            "lkc-2",
+            "my-other-kafka-cluster",
+            CloudProvider.AWS,
+            "us-west-2",
+            "pkc-456"
+    ).withEnvironment(ENV_2).withOrganization(ORG_2).withConnectionId(CONNECTION_2_ID);
     static final CCloudSchemaRegistry SR_1 = new CCloudSchemaRegistry(
         "lkc-1",
         "http://something.confluent.cloud",
@@ -226,13 +258,47 @@ class ClusterCacheTest {
     }
 
     @Test
-    void shouldClearCacheOnConnectionUpdateAndReCacheDetails() {
-      // When a connection is updated
+    void shouldRemoveCacheOnConnectionUpdate() {
+
+      // When two connections are created
+      cache.onConnectionCreated(CONNECTION_1);
+      cache.onConnectionCreated(CONNECTION_2);
+
+      // and a Kafka cluster is loaded in each connection
+      cache.onLoadingKafkaCluster(
+              new ClusterEvent(CONNECTION_1_ID, ConnectionSpec.ConnectionType.CCLOUD, LKC_1)
+      );
+      cache.onLoadingKafkaCluster(
+              new ClusterEvent(CONNECTION_2_ID, ConnectionSpec.ConnectionType.CCLOUD, LKC_2)
+      );
+
+      // Then there will be a connection cache for both connections
+      assertConnection(CONNECTION_1);
+      assertConnection(CONNECTION_2);
+
+      // and the cache for each connection contains their Kafka cluster
+      assertKafkaCluster(LKC_1);
+      assertKafkaCluster(LKC_2);
+
+      // When one of the connections is updated
       cache.onConnectionUpdated(CONNECTION_1);
 
-      // assert cache is empty
-      assertEquals(0, cache.clustersByConnectionId.size());
+      // then the cache for the connection will have been cleared (no cluster will be found)
+      var clusters = assertConnection(CONNECTION_1);
+      assertThrows(
+              ClusterNotFoundException.class,
+              () -> clusters.getKafkaCluster(LKC_1.id(), false)
+      );
 
+      // but the cache for the other connection is unaffected
+      assertConnection(CONNECTION_2);
+      assertKafkaCluster(LKC_2);
+
+      // and the Kafka cluster for connection 1 will be loaded again
+      expectFindKafkaCluster(CONNECTION_1_ID, LKC_1.id(), LKC_1);
+
+      // when the Kafka cluster is accessed again
+      assertEquals(LKC_1, clusters.getKafkaCluster(LKC_1.id()));
     }
 
     @Test
