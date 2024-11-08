@@ -34,8 +34,6 @@ class FeatureFlagsContextTest extends BaseFeatureFlagsTest implements FeatureFla
 
   CCloudConnectionState ccloudState;
 
-  CCloudConnectionState ccloudState2;
-
   @Inject
   WebClientFactory webClientFactory;
 
@@ -101,7 +99,7 @@ class FeatureFlagsContextTest extends BaseFeatureFlagsTest implements FeatureFla
     assertCCloudContext(flags);
 
     // When the CCloud connection is disconnected
-    flags.onConnectionDisconnected(ccloudState2);
+    flags.onConnectionDisconnected(ccloudState);
 
     // Then the device context should contain the sidecar information
     assertDeviceContextMatchesSidecar(flags);
