@@ -649,6 +649,30 @@
   },
   "components" : {
     "schemas" : {
+      "ApiKeyAndSecret" : {
+        "description" : "Basic authentication credentials",
+        "required" : [ "api_key", "api_secret" ],
+        "type" : "object",
+        "properties" : {
+          "api_key" : {
+            "description" : "The API key to use when connecting to the external service.",
+            "maxLength" : 64,
+            "minLength" : 1,
+            "type" : "string"
+          },
+          "api_secret" : {
+            "description" : "The API secret to use when connecting to the external service.",
+            "type" : "string",
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/ApiSecret"
+            } ]
+          }
+        }
+      },
+      "ApiSecret" : {
+        "description" : "A user-provided API secret that is always masked in responses",
+        "type" : "string"
+      },
       "ApplyTemplateRequest" : {
         "required" : [ "options" ],
         "type" : "object",
@@ -713,12 +737,15 @@
           "username" : {
             "description" : "The username to use when connecting to the external service.",
             "maxLength" : 64,
+            "minLength" : 1,
             "type" : "string"
           },
           "password" : {
             "description" : "The password to use when connecting to the external service.",
-            "maxLength" : 64,
-            "type" : "string"
+            "type" : "string",
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/Password"
+            } ]
           }
         }
       },
@@ -874,6 +901,9 @@
           }
         }
       },
+      "Credentials" : {
+        "type" : "object"
+      },
       "Error" : {
         "description" : "Describes a particular error encountered while performing an operation.",
         "type" : "object",
@@ -1015,7 +1045,7 @@
       },
       "KafkaClusterConfig" : {
         "description" : "Kafka cluster configuration.",
-        "required" : [ "bootstrap_servers" ],
+        "required" : [ "bootstrap_servers", "security_protocol", "ssl_identification_algorithm" ],
         "type" : "object",
         "properties" : {
           "id" : {
@@ -1028,6 +1058,28 @@
             "maxLength" : 256,
             "minLength" : 1,
             "type" : "string"
+          },
+          "credentials" : {
+            "description" : "The credentials for the Kafka cluster, or null if not authentication is required",
+            "type" : "object",
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/Credentials"
+            } ]
+          },
+          "security_protocol" : {
+            "description" : "The security protocol to use when connecting to the Kafka cluster.",
+            "type" : "string",
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/SecurityProtocol"
+            } ]
+          },
+          "ssl_identification_algorithm" : {
+            "description" : "Whether to perform broker hostname verification when using SSL.",
+            "default" : "HTTPS",
+            "type" : "string",
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/SslIdentificationAlgorithm"
+            } ]
           }
         }
       },
@@ -1171,6 +1223,10 @@
           }
         }
       },
+      "Password" : {
+        "description" : "A user-provided password that is always masked in responses",
+        "type" : "string"
+      },
       "Preferences" : {
         "required" : [ "api_version", "kind", "spec" ],
         "type" : "object",
@@ -1227,8 +1283,19 @@
             "maxLength" : 256,
             "minLength" : 1,
             "type" : "string"
+          },
+          "credentials" : {
+            "description" : "The credentials for the Schema Registry, or null if not authentication is required",
+            "type" : "object",
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/Credentials"
+            } ]
           }
         }
+      },
+      "SecurityProtocol" : {
+        "enum" : [ "PLAINTEXT", "SASL_SSL", "SASL_PLAINTEXT", "SSL" ],
+        "type" : "string"
       },
       "SidecarAccessToken" : {
         "type" : "object",
@@ -1292,6 +1359,10 @@
             }
           }
         }
+      },
+      "SslIdentificationAlgorithm" : {
+        "enum" : [ "HTTPS", "NONE" ],
+        "type" : "string"
       },
       "Status" : {
         "enum" : [ "NO_TOKEN", "VALID_TOKEN", "INVALID_TOKEN", "FAILED" ],
