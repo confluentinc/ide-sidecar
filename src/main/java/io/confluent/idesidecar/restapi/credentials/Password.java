@@ -1,7 +1,10 @@
 package io.confluent.idesidecar.restapi.credentials;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import io.confluent.idesidecar.restapi.exceptions.Failure;
+import io.confluent.idesidecar.restapi.exceptions.Failure.Error;
 import io.quarkus.runtime.annotations.RegisterForReflection;
+import java.util.List;
 import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
@@ -12,10 +15,14 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
 @JsonDeserialize(using = Password.Deserializer.class)
 @Schema(
     description = "A user-provided password that is always masked in responses",
-    type = SchemaType.STRING
+    type = SchemaType.STRING,
+    maxLength = ApiSecret.MAX_LENGTH,
+    minLength = 1
 )
 @RegisterForReflection
 public class Password extends Redactable {
+
+  public static final int MAX_LENGTH = 64;
 
   public Password(char[] raw) {
     super(raw);
@@ -30,6 +37,20 @@ public class Password extends Redactable {
     @Override
     protected Password create(char[] value) {
       return new Password(value);
+    }
+  }
+
+  public void validate(
+      List<Failure.Error> errors,
+      String path,
+      String what
+  ) {
+    if (longerThan(Password.MAX_LENGTH)) {
+      errors.add(
+          Error.create()
+               .withDetail("%s password may not be longer than %d characters", what, MAX_LENGTH)
+               .withSource("%s.password", path)
+      );
     }
   }
 }

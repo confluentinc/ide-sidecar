@@ -5,13 +5,11 @@ import static io.vertx.core.http.HttpHeaders.AUTHORIZATION;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.confluent.idesidecar.restapi.exceptions.Failure;
 import io.confluent.idesidecar.restapi.exceptions.Failure.Error;
-import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.SecurityProtocol;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.SslIdentificationAlgorithm;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import io.vertx.core.MultiMap;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.LinkedHashMap;
@@ -24,14 +22,20 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
 @RegisterForReflection
 public record ApiKeyAndSecret(
 
-    @Schema(description = "The API key to use when connecting to the external service.")
-    @Size(min = 1, max = KEY_MAX_LEN)
+    @Schema(
+        description = "The API key to use when connecting to the external service.",
+        maxLength = KEY_MAX_LEN,
+        minLength = 1
+    )
     @JsonProperty(value="api_key")
     @NotNull
     String key,
 
-    @Schema(description = "The API secret to use when connecting to the external service.")
-    @Size(min = 1, max = SECRET_MAX_LEN)
+    @Schema(
+        description = "The API secret to use when connecting to the external service.",
+        maxLength = ApiSecret.MAX_LENGTH,
+        minLength = 1
+    )
     @JsonProperty(value="api_secret")
     @NotNull
     ApiSecret secret
@@ -139,12 +143,8 @@ public record ApiKeyAndSecret(
                .withDetail("%s secret is required", what)
                .withSource("%s.secret", path)
       );
-    } else if (secret.longerThan(SECRET_MAX_LEN)) {
-      errors.add(
-          Error.create()
-               .withDetail("%s secret may not be longer than %d characters", what, SECRET_MAX_LEN)
-               .withSource("%s.secret", path)
-      );
+    } else {
+      secret.validate(errors, path, what);
     }
   }
 }

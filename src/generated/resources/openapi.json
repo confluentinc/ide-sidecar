@@ -662,6 +662,8 @@
           },
           "api_secret" : {
             "description" : "The API secret to use when connecting to the external service.",
+            "maxLength" : 64,
+            "minLength" : 1,
             "type" : "string",
             "allOf" : [ {
               "$ref" : "#/components/schemas/ApiSecret"
@@ -671,6 +673,8 @@
       },
       "ApiSecret" : {
         "description" : "A user-provided API secret that is always masked in responses",
+        "maxLength" : 64,
+        "minLength" : 1,
         "type" : "string"
       },
       "ApplyTemplateRequest" : {
@@ -742,6 +746,8 @@
           },
           "password" : {
             "description" : "The password to use when connecting to the external service.",
+            "maxLength" : 64,
+            "minLength" : 1,
             "type" : "string",
             "allOf" : [ {
               "$ref" : "#/components/schemas/Password"
@@ -1060,11 +1066,17 @@
             "type" : "string"
           },
           "credentials" : {
-            "description" : "The credentials for the Kafka cluster, or null if not authentication is required",
+            "description" : "The credentials for the Kafka cluster, or null if no authentication is required",
             "type" : "object",
             "allOf" : [ {
               "$ref" : "#/components/schemas/Credentials"
-            } ]
+            } ],
+            "oneOf" : [ {
+              "$ref" : "#/components/schemas/BasicCredentials"
+            }, {
+              "$ref" : "#/components/schemas/ApiKeyAndSecret"
+            } ],
+            "nullable" : true
           },
           "security_protocol" : {
             "description" : "The security protocol to use when connecting to the Kafka cluster.",
@@ -1225,6 +1237,8 @@
       },
       "Password" : {
         "description" : "A user-provided password that is always masked in responses",
+        "maxLength" : 64,
+        "minLength" : 1,
         "type" : "string"
       },
       "Preferences" : {
@@ -1285,11 +1299,17 @@
             "type" : "string"
           },
           "credentials" : {
-            "description" : "The credentials for the Schema Registry, or null if not authentication is required",
+            "description" : "The credentials for the Schema Registry, or null if no authentication is required",
             "type" : "object",
             "allOf" : [ {
               "$ref" : "#/components/schemas/Credentials"
-            } ]
+            } ],
+            "oneOf" : [ {
+              "$ref" : "#/components/schemas/BasicCredentials"
+            }, {
+              "$ref" : "#/components/schemas/ApiKeyAndSecret"
+            } ],
+            "nullable" : true
           }
         }
       },

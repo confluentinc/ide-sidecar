@@ -13,6 +13,8 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import io.confluent.idesidecar.restapi.credentials.ApiKeyAndSecret;
+import io.confluent.idesidecar.restapi.credentials.BasicCredentials;
 import io.confluent.idesidecar.restapi.credentials.Credentials;
 import io.confluent.idesidecar.restapi.exceptions.Failure;
 import io.confluent.idesidecar.restapi.exceptions.Failure.Error;
@@ -269,7 +271,7 @@ public record ConnectionSpec(
         errors.add(
             Error.create()
                  .withDetail(
-                     "Schema Registry URI may null (use default local SR) or empty "
+                     "Schema Registry URI may be null (use default local SR) or empty "
                      + "(do not use SR), but may not have only whitespace"
                  )
                  .withSource("%s.schema-registry-uri", path)
@@ -398,8 +400,15 @@ public record ConnectionSpec(
       @NotNull
       String bootstrapServers,
 
-      @Schema(description = "The credentials for the Kafka cluster, "
-                            + "or null if not authentication is required")
+      @Schema(
+          description =
+              "The credentials for the Kafka cluster, or null if no authentication is required",
+          oneOf = {
+              BasicCredentials.class,
+              ApiKeyAndSecret.class,
+          },
+          nullable = true
+      )
       @Null
       Credentials credentials,
 
@@ -493,8 +502,15 @@ public record ConnectionSpec(
       @NotNull
       String uri,
 
-      @Schema(description = "The credentials for the Schema Registry, "
-                            + "or null if not authentication is required")
+      @Schema(
+          description = "The credentials for the Schema Registry, or null if "
+                        + "no authentication is required",
+          oneOf = {
+              BasicCredentials.class,
+              ApiKeyAndSecret.class,
+          },
+          nullable = true
+      )
       @Null
       Credentials credentials
   ) {

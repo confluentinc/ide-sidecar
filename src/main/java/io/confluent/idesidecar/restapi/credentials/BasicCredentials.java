@@ -3,13 +3,11 @@ package io.confluent.idesidecar.restapi.credentials;
 import static io.vertx.core.http.HttpHeaders.AUTHORIZATION;
 
 import io.confluent.idesidecar.restapi.exceptions.Failure.Error;
-import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.SecurityProtocol;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.SslIdentificationAlgorithm;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import io.vertx.core.MultiMap;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.LinkedHashMap;
@@ -21,19 +19,24 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
 @Schema(description = "Basic authentication credentials")
 @RegisterForReflection
 public record BasicCredentials(
-    @Schema(description = "The username to use when connecting to the external service.")
-    @Size(min = 1, max = USERNAME_MAX_LEN)
+    @Schema(
+        description = "The username to use when connecting to the external service.",
+        maxLength = USERNAME_MAX_LEN,
+        minLength = 1
+    )
     @NotNull
     String username,
 
-    @Schema(description = "The password to use when connecting to the external service.")
-    @Size(min = 1, max = PASSWORD_MAX_LEN)
+    @Schema(
+        description = "The password to use when connecting to the external service.",
+        maxLength = Password.MAX_LENGTH,
+        minLength = 1
+    )
     @NotNull
     Password password
 ) implements Credentials {
 
   private static final int USERNAME_MAX_LEN = 64;
-  private static final int PASSWORD_MAX_LEN = 64;
 
   private static final String PLAIN_LOGIN_MODULE_CLASS =
       "org.apache.kafka.common.security.plain.PlainLoginModule";
@@ -134,12 +137,8 @@ public record BasicCredentials(
                .withDetail("%s password is required", what)
                .withSource("%s.password", path)
       );
-    } else if (password.longerThan(PASSWORD_MAX_LEN)) {
-      errors.add(
-          Error.create()
-               .withDetail("%s password may not be longer than %d characters", what, PASSWORD_MAX_LEN)
-               .withSource("%s.password", path)
-      );
+    } else {
+      password.validate(errors, path, what);
     }
   }
 }

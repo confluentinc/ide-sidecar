@@ -21,7 +21,7 @@ import java.util.Optional;
 @JsonTypeInfo(use = JsonTypeInfo.Id.DEDUCTION)
 @JsonSubTypes({
     @Type(value = BasicCredentials.class),
-    @Type(value = ApiKeyAndSecret.class)
+    @Type(value = ApiKeyAndSecret.class),
 })
 @RegisterForReflection
 public interface Credentials {

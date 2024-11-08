@@ -450,11 +450,15 @@ components:
           type: string
         api_secret:
           description: The API secret to use when connecting to the external service.
+          maxLength: 64
+          minLength: 1
           type: string
           allOf:
           - $ref: "#/components/schemas/ApiSecret"
     ApiSecret:
       description: A user-provided API secret that is always masked in responses
+      maxLength: 64
+      minLength: 1
       type: string
     ApplyTemplateRequest:
       required:
@@ -509,6 +513,8 @@ components:
           type: string
         password:
           description: The password to use when connecting to the external service.
+          maxLength: 64
+          minLength: 1
           type: string
           allOf:
           - $ref: "#/components/schemas/Password"
@@ -760,11 +766,15 @@ components:
           minLength: 1
           type: string
         credentials:
-          description: "The credentials for the Kafka cluster, or null if not authentication\
+          description: "The credentials for the Kafka cluster, or null if no authentication\
             \ is required"
           type: object
           allOf:
           - $ref: "#/components/schemas/Credentials"
+          oneOf:
+          - $ref: "#/components/schemas/BasicCredentials"
+          - $ref: "#/components/schemas/ApiKeyAndSecret"
+          nullable: true
         security_protocol:
           description: The security protocol to use when connecting to the Kafka cluster.
           type: string
@@ -877,6 +887,8 @@ components:
           type: integer
     Password:
       description: A user-provided password that is always masked in responses
+      maxLength: 64
+      minLength: 1
       type: string
     Preferences:
       required:
@@ -925,11 +937,15 @@ components:
           minLength: 1
           type: string
         credentials:
-          description: "The credentials for the Schema Registry, or null if not authentication\
+          description: "The credentials for the Schema Registry, or null if no authentication\
             \ is required"
           type: object
           allOf:
           - $ref: "#/components/schemas/Credentials"
+          oneOf:
+          - $ref: "#/components/schemas/BasicCredentials"
+          - $ref: "#/components/schemas/ApiKeyAndSecret"
+          nullable: true
     SecurityProtocol:
       enum:
       - PLAINTEXT
