@@ -177,6 +177,9 @@ ide-sidecar:
     max-retries: 5
 
 quarkus:
+  apicurio-registry:
+    devservices:
+      enabled: false
   application:
     name: ide-sidecar
   banner:
