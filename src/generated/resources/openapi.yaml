@@ -436,6 +436,30 @@ paths:
                 $ref: "#/components/schemas/HealthResponse"
 components:
   schemas:
+    ApiKeyAndSecret:
+      description: Basic authentication credentials
+      required:
+      - api_key
+      - api_secret
+      type: object
+      properties:
+        api_key:
+          description: The API key to use when connecting to the external service.
+          maxLength: 64
+          minLength: 1
+          type: string
+        api_secret:
+          description: The API secret to use when connecting to the external service.
+          maxLength: 64
+          minLength: 1
+          type: string
+          allOf:
+          - $ref: "#/components/schemas/ApiSecret"
+    ApiSecret:
+      description: A user-provided API secret that is always masked in responses
+      maxLength: 64
+      minLength: 1
+      type: string
     ApplyTemplateRequest:
       required:
       - options
@@ -485,11 +509,15 @@ components:
         username:
           description: The username to use when connecting to the external service.
           maxLength: 64
+          minLength: 1
           type: string
         password:
           description: The password to use when connecting to the external service.
           maxLength: 64
+          minLength: 1
           type: string
+          allOf:
+          - $ref: "#/components/schemas/Password"
     CCloudConfig:
       description: Configuration for Confluent Cloud connections
       required:
@@ -614,6 +642,8 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Connection"
+    Credentials:
+      type: object
     Error:
       description: Describes a particular error encountered while performing an operation.
       type: object
@@ -721,6 +751,8 @@ components:
       description: Kafka cluster configuration.
       required:
       - bootstrap_servers
+      - security_protocol
+      - ssl_identification_algorithm
       type: object
       properties:
         id:
@@ -733,6 +765,28 @@ components:
           maxLength: 256
           minLength: 1
           type: string
+        credentials:
+          description: "The credentials for the Kafka cluster, or null if no authentication\
+            \ is required"
+          type: object
+          allOf:
+          - $ref: "#/components/schemas/Credentials"
+          oneOf:
+          - $ref: "#/components/schemas/BasicCredentials"
+          - $ref: "#/components/schemas/ApiKeyAndSecret"
+          nullable: true
+        security_protocol:
+          description: The security protocol to use when connecting to the Kafka cluster.
+          type: string
+          allOf:
+          - $ref: "#/components/schemas/SecurityProtocol"
+        ssl_identification_algorithm:
+          description: Whether to perform broker hostname verification when using
+            SSL.
+          default: HTTPS
+          type: string
+          allOf:
+          - $ref: "#/components/schemas/SslIdentificationAlgorithm"
     LocalConfig:
       description: Configuration when using Confluent Local and optionally a local
         Schema Registry.
@@ -831,6 +885,11 @@ components:
         offset:
           format: int64
           type: integer
+    Password:
+      description: A user-provided password that is always masked in responses
+      maxLength: 64
+      minLength: 1
+      type: string
     Preferences:
       required:
       - api_version
@@ -877,6 +936,23 @@ components:
           maxLength: 256
           minLength: 1
           type: string
+        credentials:
+          description: "The credentials for the Schema Registry, or null if no authentication\
+            \ is required"
+          type: object
+          allOf:
+          - $ref: "#/components/schemas/Credentials"
+          oneOf:
+          - $ref: "#/components/schemas/BasicCredentials"
+          - $ref: "#/components/schemas/ApiKeyAndSecret"
+          nullable: true
+    SecurityProtocol:
+      enum:
+      - PLAINTEXT
+      - SASL_SSL
+      - SASL_PLAINTEXT
+      - SSL
+      type: string
     SidecarAccessToken:
       type: object
       properties:
@@ -919,6 +995,11 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/PartitionConsumeData"
+    SslIdentificationAlgorithm:
+      enum:
+      - HTTPS
+      - NONE
+      type: string
     Status:
       enum:
       - NO_TOKEN
