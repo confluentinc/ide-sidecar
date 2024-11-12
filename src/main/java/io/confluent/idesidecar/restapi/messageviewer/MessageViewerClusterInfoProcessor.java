@@ -12,11 +12,7 @@ import io.quarkus.logging.Log;
 import io.vertx.core.Future;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.ObservesAsync;
-// TODO-- create schemaErrors class cache of caches with read/write/clear methods + bean to find the instance given the connection+cluster keying by id
-// this will be an application-scoped nested static class (double-check possibility), remember to expire after last used 30 seconds
-// add to messageViewerClusterInfoProcessor
-// add clients package
-//
+
 /**
  * Retrieves information about the Kafka and Schema Registry clusters when processing a request
  * for the message viewer API.
@@ -78,7 +74,6 @@ public class MessageViewerClusterInfoProcessor extends
       );
     }
   }
-// find out where this is used-- need anymore?
   void clearCaches() {
     RecordDeserializer.clearCachedFailures();
   }
