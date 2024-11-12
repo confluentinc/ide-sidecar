@@ -1051,7 +1051,7 @@
       },
       "KafkaClusterConfig" : {
         "description" : "Kafka cluster configuration.",
-        "required" : [ "bootstrap_servers", "security_protocol", "ssl_identification_algorithm" ],
+        "required" : [ "bootstrap_servers" ],
         "type" : "object",
         "properties" : {
           "id" : {
@@ -1078,20 +1078,17 @@
             } ],
             "nullable" : true
           },
-          "security_protocol" : {
-            "description" : "The security protocol to use when connecting to the Kafka cluster.",
-            "type" : "string",
-            "allOf" : [ {
-              "$ref" : "#/components/schemas/SecurityProtocol"
-            } ]
+          "ssl" : {
+            "description" : "Whether to communicate with the Kafka cluster over TLS/SSL. Defaults to 'true', but set to 'false' when the Kafka cluster does not support TLS/SSL.",
+            "default" : true,
+            "type" : "boolean",
+            "nullable" : true
           },
-          "ssl_identification_algorithm" : {
-            "description" : "Whether to perform broker hostname verification when using SSL.",
-            "default" : "HTTPS",
-            "type" : "string",
-            "allOf" : [ {
-              "$ref" : "#/components/schemas/SslIdentificationAlgorithm"
-            } ]
+          "verify_ssl_certificates" : {
+            "description" : "Whether to verify the Kafka cluster certificates. Defaults to 'true', but set to 'false' when the Kafka cluster has self-signed certificates.",
+            "default" : true,
+            "type" : "boolean",
+            "nullable" : true
           }
         }
       },
@@ -1313,10 +1310,6 @@
           }
         }
       },
-      "SecurityProtocol" : {
-        "enum" : [ "PLAINTEXT", "SASL_SSL", "SASL_PLAINTEXT", "SSL" ],
-        "type" : "string"
-      },
       "SidecarAccessToken" : {
         "type" : "object",
         "properties" : {
@@ -1379,10 +1372,6 @@
             }
           }
         }
-      },
-      "SslIdentificationAlgorithm" : {
-        "enum" : [ "HTTPS", "NONE" ],
-        "type" : "string"
       },
       "Status" : {
         "enum" : [ "NO_TOKEN", "VALID_TOKEN", "INVALID_TOKEN", "FAILED" ],

@@ -751,8 +751,6 @@ components:
       description: Kafka cluster configuration.
       required:
       - bootstrap_servers
-      - security_protocol
-      - ssl_identification_algorithm
       type: object
       properties:
         id:
@@ -775,18 +773,20 @@ components:
           - $ref: "#/components/schemas/BasicCredentials"
           - $ref: "#/components/schemas/ApiKeyAndSecret"
           nullable: true
-        security_protocol:
-          description: The security protocol to use when connecting to the Kafka cluster.
-          type: string
-          allOf:
-          - $ref: "#/components/schemas/SecurityProtocol"
-        ssl_identification_algorithm:
-          description: Whether to perform broker hostname verification when using
-            SSL.
-          default: HTTPS
-          type: string
-          allOf:
-          - $ref: "#/components/schemas/SslIdentificationAlgorithm"
+        ssl:
+          description: "Whether to communicate with the Kafka cluster over TLS/SSL.\
+            \ Defaults to 'true', but set to 'false' when the Kafka cluster does not\
+            \ support TLS/SSL."
+          default: true
+          type: boolean
+          nullable: true
+        verify_ssl_certificates:
+          description: "Whether to verify the Kafka cluster certificates. Defaults\
+            \ to 'true', but set to 'false' when the Kafka cluster has self-signed\
+            \ certificates."
+          default: true
+          type: boolean
+          nullable: true
     LocalConfig:
       description: Configuration when using Confluent Local and optionally a local
         Schema Registry.
@@ -946,13 +946,6 @@ components:
           - $ref: "#/components/schemas/BasicCredentials"
           - $ref: "#/components/schemas/ApiKeyAndSecret"
           nullable: true
-    SecurityProtocol:
-      enum:
-      - PLAINTEXT
-      - SASL_SSL
-      - SASL_PLAINTEXT
-      - SSL
-      type: string
     SidecarAccessToken:
       type: object
       properties:
@@ -995,11 +988,6 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/PartitionConsumeData"
-    SslIdentificationAlgorithm:
-      enum:
-      - HTTPS
-      - NONE
-      type: string
     Status:
       enum:
       - NO_TOKEN

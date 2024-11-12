@@ -3,8 +3,6 @@ package io.confluent.idesidecar.restapi.credentials;
 import static io.vertx.core.http.HttpHeaders.AUTHORIZATION;
 
 import io.confluent.idesidecar.restapi.exceptions.Failure.Error;
-import io.confluent.idesidecar.restapi.models.ConnectionSpec.SecurityProtocol;
-import io.confluent.idesidecar.restapi.models.ConnectionSpec.SslIdentificationAlgorithm;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import io.vertx.core.MultiMap;
 import jakarta.validation.constraints.NotNull;
@@ -51,16 +49,14 @@ public record BasicCredentials(
       KafkaConnectionOptions options
   ) {
     var config = new LinkedHashMap<String, String>();
-    var protocol = options.securityProtocol();
-    if (protocol != null && protocol != SecurityProtocol.UNKNOWN) {
-      config.put("security.protocol", protocol.toString());
+    if (options.ssl()) {
+      config.put("security.protocol", "SASL_PLAINTEXT");
+    } else {
+      config.put("security.protocol", "PLAINTEXT");
     }
-    var algorithm = options.sslIdentificationAlgorithm();
-    if (algorithm != null && algorithm != SslIdentificationAlgorithm.UNKNOWN) {
-      config.put("ssl.endpoint.identification.algorithm", algorithm.toString());
-    }
-    if (protocol != null) {
-      config.put("sasl.mechanism", "PLAIN");
+    config.put("sasl.mechanism", "PLAIN");
+    if (!options.verifyCertificates()) {
+      config.put("ssl.endpoint.identification.algorithm", "");
     }
     config.put(
         "sasl.jaas.config",

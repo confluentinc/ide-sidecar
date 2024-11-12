@@ -5,8 +5,6 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.confluent.idesidecar.restapi.exceptions.Failure;
-import io.confluent.idesidecar.restapi.models.ConnectionSpec.SecurityProtocol;
-import io.confluent.idesidecar.restapi.models.ConnectionSpec.SslIdentificationAlgorithm;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import io.soabase.recordbuilder.core.RecordBuilder;
 import io.vertx.core.MultiMap;
@@ -28,10 +26,8 @@ public interface Credentials {
 
   @RecordBuilder
   record KafkaConnectionOptions(
-      @NotNull
-      SecurityProtocol securityProtocol,
-      @NotNull
-      SslIdentificationAlgorithm sslIdentificationAlgorithm,
+      boolean ssl,
+      boolean verifyCertificates,
       boolean redact
   ) implements CredentialsKafkaConnectionOptionsBuilder.With {
   }

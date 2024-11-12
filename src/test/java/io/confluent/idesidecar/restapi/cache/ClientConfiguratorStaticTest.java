@@ -14,8 +14,6 @@ import io.confluent.idesidecar.restapi.credentials.BasicCredentials;
 import io.confluent.idesidecar.restapi.credentials.Credentials;
 import io.confluent.idesidecar.restapi.credentials.Credentials.KafkaConnectionOptions;
 import io.confluent.idesidecar.restapi.credentials.Password;
-import io.confluent.idesidecar.restapi.models.ConnectionSpec.SecurityProtocol;
-import io.confluent.idesidecar.restapi.models.ConnectionSpec.SslIdentificationAlgorithm;
 import io.confluent.idesidecar.restapi.models.graph.KafkaCluster;
 import io.confluent.idesidecar.restapi.models.graph.SchemaRegistry;
 import io.confluent.idesidecar.restapi.util.CCloud;
@@ -88,8 +86,8 @@ class ClientConfiguratorStaticTest {
         Credentials kafkaCredentials,
         SchemaRegistry schemaRegistry,
         Credentials srCredentials,
-        SecurityProtocol securityProtocol,
-        boolean trustUnsignedCertificates,
+        boolean ssl,
+        boolean verifyUnsignedCertificates,
         boolean redact,
         String expectedKafkaConfig,
         String expectedSchemaRegistryConfig
@@ -101,7 +99,7 @@ class ClientConfiguratorStaticTest {
             null,
             schemaRegistry,
             null,
-            SecurityProtocol.SSL,
+            true,
             true,
             false,
             """
@@ -118,7 +116,7 @@ class ClientConfiguratorStaticTest {
             null,
             null,
             null,
-            SecurityProtocol.SSL,
+            true,
             true,
             false,
             """
@@ -133,15 +131,15 @@ class ClientConfiguratorStaticTest {
             BASIC_CREDENTIALS,
             schemaRegistry,
             BASIC_CREDENTIALS,
-            SecurityProtocol.PLAINTEXT,
+            false,
             false,
             false,
             """
                 bootstrap.servers=localhost:9092
                 security.protocol=PLAINTEXT
-                ssl.endpoint.identification.algorithm=https
                 sasl.mechanism=PLAIN
                 sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username="%s" password="%s";
+                ssl.endpoint.identification.algorithm=
                 session.timeout.ms=45000
                 """.formatted(USERNAME, PASSWORD),
             """
@@ -156,15 +154,15 @@ class ClientConfiguratorStaticTest {
             BASIC_CREDENTIALS,
             schemaRegistry,
             BASIC_CREDENTIALS,
-            SecurityProtocol.PLAINTEXT,
-            true,
+            false,
+            false,
             true,
             """
                 bootstrap.servers=localhost:9092
                 security.protocol=PLAINTEXT
-                ssl.endpoint.identification.algorithm=
                 sasl.mechanism=PLAIN
                 sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username="%s" password="********";
+                ssl.endpoint.identification.algorithm=
                 session.timeout.ms=45000
                 """.formatted(USERNAME),
             """
@@ -179,13 +177,12 @@ class ClientConfiguratorStaticTest {
             BASIC_CREDENTIALS,
             schemaRegistry,
             BASIC_CREDENTIALS,
-            SecurityProtocol.SSL,
+            true,
             true,
             false,
             """
                 bootstrap.servers=localhost:9092
-                security.protocol=SSL
-                ssl.endpoint.identification.algorithm=
+                security.protocol=SASL_PLAINTEXT
                 sasl.mechanism=PLAIN
                 sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username="%s" password="%s";
                 session.timeout.ms=45000
@@ -202,13 +199,12 @@ class ClientConfiguratorStaticTest {
             BASIC_CREDENTIALS,
             schemaRegistry,
             BASIC_CREDENTIALS,
-            SecurityProtocol.SSL,
+            true,
             true,
             true,
             """
                 bootstrap.servers=localhost:9092
-                security.protocol=SSL
-                ssl.endpoint.identification.algorithm=
+                security.protocol=SASL_PLAINTEXT
                 sasl.mechanism=PLAIN
                 sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username="%s" password="********";
                 session.timeout.ms=45000
@@ -225,13 +221,12 @@ class ClientConfiguratorStaticTest {
             BASIC_CREDENTIALS,
             schemaRegistry,
             BASIC_CREDENTIALS,
-            SecurityProtocol.SSL,
-            false,
+            true,
+            true,
             false,
             """
                 bootstrap.servers=localhost:9092
-                security.protocol=SSL
-                ssl.endpoint.identification.algorithm=https
+                security.protocol=SASL_PLAINTEXT
                 sasl.mechanism=PLAIN
                 sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username="%s" password="%s";
                 session.timeout.ms=45000
@@ -248,13 +243,12 @@ class ClientConfiguratorStaticTest {
             BASIC_CREDENTIALS,
             schemaRegistry,
             API_KEY_AND_SECRET,
-            SecurityProtocol.SSL,
-            false,
+            true,
+            true,
             false,
             """
                 bootstrap.servers=localhost:9092
-                security.protocol=SSL
-                ssl.endpoint.identification.algorithm=https
+                security.protocol=SASL_PLAINTEXT
                 sasl.mechanism=PLAIN
                 sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username="%s" password="%s";
                 session.timeout.ms=45000
@@ -276,8 +270,8 @@ class ClientConfiguratorStaticTest {
               expectGetKafkaCredentialsFromConnection(input.kafkaCredentials);
               expectGetSchemaRegistryCredentialsFromConnection(input.srCredentials);
               var options = new KafkaConnectionOptions(
-                  input.securityProtocol,
-                  input.trustUnsignedCertificates ? SslIdentificationAlgorithm.NONE : SslIdentificationAlgorithm.HTTPS,
+                  input.ssl,
+                  input.verifyUnsignedCertificates,
                   input.redact
               );
               expectGetKafkaConnectionOptions(options);

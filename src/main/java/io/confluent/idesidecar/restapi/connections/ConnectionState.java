@@ -5,8 +5,6 @@ import io.confluent.idesidecar.restapi.credentials.Credentials.KafkaConnectionOp
 import io.confluent.idesidecar.restapi.models.ConnectionMetadata;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
-import io.confluent.idesidecar.restapi.models.ConnectionSpec.SecurityProtocol;
-import io.confluent.idesidecar.restapi.models.ConnectionSpec.SslIdentificationAlgorithm;
 import io.confluent.idesidecar.restapi.models.ConnectionStatus;
 import io.confluent.idesidecar.restapi.resources.ConnectionsResource;
 import io.vertx.core.Future;
@@ -107,14 +105,14 @@ public abstract class ConnectionState {
   public KafkaConnectionOptions getKafkaConnectionOptions(String clusterId) {
     if (spec.kafkaClusterConfig() != null) {
       return new KafkaConnectionOptions(
-          spec.kafkaClusterConfig().securityProtocol(),
-          spec.kafkaClusterConfig().sslIdentificationAlgorithm(),
+          spec.kafkaClusterConfig().sslOrDefault(),
+          spec.kafkaClusterConfig().verifySslCertificatesOrDefault(),
           false
       );
     }
     return new KafkaConnectionOptions(
-        SecurityProtocol.UNKNOWN,
-        SslIdentificationAlgorithm.UNKNOWN,
+        ConnectionSpec.KafkaClusterConfig.DEFAULT_SSL,
+        ConnectionSpec.KafkaClusterConfig.DEFAULT_VERIFY_SSL_CERTIFICATES,
         false
     );
   }

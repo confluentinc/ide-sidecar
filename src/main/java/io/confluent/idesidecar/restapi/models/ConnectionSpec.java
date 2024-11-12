@@ -4,15 +4,10 @@ import static io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionTy
 import static io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType.DIRECT;
 import static io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType.LOCAL;
 
-import com.fasterxml.jackson.annotation.JsonEnumDefaultValue;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.confluent.idesidecar.restapi.credentials.ApiKeyAndSecret;
 import io.confluent.idesidecar.restapi.credentials.BasicCredentials;
 import io.confluent.idesidecar.restapi.credentials.Credentials;
@@ -24,15 +19,12 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Null;
 import jakarta.validation.constraints.Size;
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 @Schema(description = "The connection details that can be set or changed.")
@@ -280,111 +272,6 @@ public record ConnectionSpec(
     }
   }
 
-  @Schema(enumeration = {"PLAINTEXT", "SASL_SSL", "SASL_PLAINTEXT", "SSL"})
-  @JsonDeserialize(using = SecurityProtocol.Deserializer.class)
-  @RegisterForReflection
-  public enum SecurityProtocol {
-    @Schema(description = "Un-authenticated, non-encrypted channel")
-    PLAINTEXT,
-    @Schema(description = "SASL authenticated, non-encrypted channel")
-    SASL_SSL,
-    @Schema(description = "SASL authenticated, SSL channel")
-    SASL_PLAINTEXT,
-    @Schema(description = "SSL channel for mutual TLS")
-    SSL,
-    @Schema(hidden = true)
-    @JsonEnumDefaultValue
-    UNKNOWN;
-
-    public boolean isSslEnabled() {
-      return this == SSL || this == SASL_SSL;
-    }
-
-    /**
-     * A custom deserializer to handle the security protocol literals that cannot be parsed.
-     */
-    public static class Deserializer extends JsonDeserializer<SecurityProtocol> {
-      @Override
-      public SecurityProtocol deserialize(
-          JsonParser p,
-          DeserializationContext ctxt
-      ) throws IOException {
-        try {
-          return SecurityProtocol.valueOf(p.getValueAsString());
-        } catch (IllegalArgumentException e) {
-          return SecurityProtocol.UNKNOWN; // Return default on unknown value
-        }
-      }
-    }
-
-    /**
-     * Get the list of allowed values for this enum, without hidden values.
-     * @return the non-hidden allowed values as a comma-separated string
-     */
-    public static String allowedValues() {
-      return Arrays
-          .stream(values())
-          .filter(v -> v != UNKNOWN)
-          .map(Enum::name)
-          .collect(Collectors.joining(", "));
-    }
-  }
-
-  @Schema(enumeration = {"HTTPS", "NONE"})
-  @JsonDeserialize(using = SslIdentificationAlgorithm.Deserializer.class)
-  @RegisterForReflection
-  public enum SslIdentificationAlgorithm {
-    @Schema(
-        description = "Perform broker hostname verification to prevent man-in-the-middle attacks"
-    )
-    HTTPS("https"),
-    @Schema(description = "No broker hostname verification to allow self-signed certificates")
-    NONE(""),
-    @Schema(hidden = true)
-    @JsonEnumDefaultValue
-    UNKNOWN("unknown");
-
-    private final String literal;
-
-    SslIdentificationAlgorithm(String literal) {
-      this.literal = literal;
-    }
-
-    @Override
-    public String toString() {
-      return literal;
-    }
-
-    /**
-     * A custom deserializer to handle the security protocol literals that cannot be parsed.
-     */
-    public static class Deserializer extends JsonDeserializer<SslIdentificationAlgorithm> {
-      @Override
-      public SslIdentificationAlgorithm deserialize(
-          JsonParser p,
-          DeserializationContext ctxt
-      ) throws IOException {
-        try {
-          return SslIdentificationAlgorithm.valueOf(p.getValueAsString());
-        } catch (IllegalArgumentException e) {
-          return SslIdentificationAlgorithm.UNKNOWN; // Return default on unknown value
-        }
-      }
-    }
-
-    /**
-     * Get the list of allowed values for this enum, without hidden values.
-     * @return the non-hidden allowed values as a comma-separated string
-     */
-    public static String allowedValues() {
-      return Arrays
-          .stream(values())
-          .filter(v -> v != UNKNOWN)
-          .map(Enum::name)
-          .collect(Collectors.joining(", "));
-    }
-  }
-
   @Schema(description = "Kafka cluster configuration.")
   @RegisterForReflection
   public record KafkaClusterConfig(
@@ -412,22 +299,49 @@ public record ConnectionSpec(
       @Null
       Credentials credentials,
 
-      @Schema(description = "The security protocol to use when connecting to the Kafka cluster.")
-      @JsonProperty(value = "security_protocol")
-      @NotNull
-      SecurityProtocol securityProtocol,
+      @Schema(
+          description =
+              "Whether to communicate with the Kafka cluster over TLS/SSL. Defaults to 'true', "
+              + "but set to 'false' when the Kafka cluster does not support TLS/SSL.",
+          defaultValue = KafkaClusterConfig.DEFAULT_SSL_VALUE,
+          nullable = true
+      )
+      @JsonProperty(value = "ssl")
+      @Null
+      Boolean ssl,
 
       @Schema(
-          description = "Whether to perform broker hostname verification when using SSL.",
-          defaultValue = "HTTPS"
+          description =
+              "Whether to verify the Kafka cluster certificates. Defaults to 'true', but set "
+              + "to 'false' when the Kafka cluster has self-signed certificates.",
+          defaultValue = KafkaClusterConfig.DEFAULT_VERIFY_SSL_CERTIFICATES_VALUE,
+          nullable = true
       )
-      @JsonProperty(value = "ssl_identification_algorithm")
-      @NotNull
-      SslIdentificationAlgorithm sslIdentificationAlgorithm
+      @JsonProperty(value = "verify_ssl_certificates")
+      @Null
+      Boolean verifySslCertificates
   ) {
 
+    // Constants used in annotations above
     private static final int ID_MAX_LEN = 64;
     private static final int BOOTSTRAP_SERVERS_MAX_LEN = 256;
+    private static final String DEFAULT_SSL_VALUE = "true";
+    private static final String DEFAULT_VERIFY_SSL_CERTIFICATES_VALUE = "true";
+
+    public static final boolean DEFAULT_SSL = Boolean.valueOf(DEFAULT_SSL_VALUE);
+    public static final boolean DEFAULT_VERIFY_SSL_CERTIFICATES = Boolean.valueOf(
+        DEFAULT_VERIFY_SSL_CERTIFICATES_VALUE
+    );
+
+    @JsonIgnore
+    public boolean sslOrDefault() {
+      return ssl != null ? ssl : DEFAULT_SSL;
+    }
+
+    @JsonIgnore
+    public boolean verifySslCertificatesOrDefault() {
+      return verifySslCertificates != null ? verifySslCertificates : DEFAULT_VERIFY_SSL_CERTIFICATES;
+    }
 
     @JsonIgnore
     public Optional<KafkaEndpoint> asCCloudEndpoint() {
@@ -464,26 +378,6 @@ public record ConnectionSpec(
       }
       if (credentials != null) {
         credentials.validate(errors, "%s.credentials".formatted(path), what);
-      }
-      if (securityProtocol == SecurityProtocol.UNKNOWN) {
-        var values = SecurityProtocol.allowedValues();
-        errors.add(
-            Error.create()
-                 .withDetail("%s security protocol if provided must be one of: %s", what, values)
-                 .withSource("%s.security_protocol", path)
-        );
-      }
-      if (sslIdentificationAlgorithm == SslIdentificationAlgorithm.UNKNOWN) {
-        var values = SslIdentificationAlgorithm.allowedValues();
-        errors.add(
-            Error.create()
-                 .withDetail(
-                     "%s SSL identification algorithm if provided must be one of: %s",
-                     what,
-                     values
-                 )
-                 .withSource("%s.ssl_identification_algorithm", path)
-        );
       }
     }
   }
