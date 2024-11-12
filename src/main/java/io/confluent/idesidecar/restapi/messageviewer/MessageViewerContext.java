@@ -10,7 +10,6 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
 import java.util.Map;
 import java.util.Optional;
-
 /**
  * Stores the context of a request of the message viewer API.
  */
