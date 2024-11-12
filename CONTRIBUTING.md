@@ -219,6 +219,8 @@ Then install GraalVM CE with SDKMAN! by running the following command in the roo
 
     sdk env install
 
+If you set `sdkman_auto_env=true` in the file `~/.sdkman/etc/config`, SDKMAN! will automatically
+switch to the SDKs specified in the `.sdkmanrc` file when you `cd` into this project's directory.
 
 #### Security and pre-commit
 
