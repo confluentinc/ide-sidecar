@@ -184,6 +184,10 @@ quarkus:
     name: ide-sidecar
   banner:
     enabled: false
+  kafka:
+    devservices:
+      # We do not use the Quarkus Kafka devservices container to start the Kafka cluster
+      enabled: false
   log:
     min-level: INFO
     category:
@@ -202,7 +206,7 @@ quarkus:
   jackson:
     fail-on-unknown-properties: true
   native:
-    additional-build-args: --initialize-at-run-time=io.confluent.idesidecar.restapi.auth.CCloudOAuthConfig\,io.confluent.idesidecar.restapi.auth.CCloudOAuthContext\,io.confluent.ide.sidecar.restapi.util.WebClientFactory\,org.apache.kafka.common.security.authenticator.SaslClientAuthenticator\,org.apache.avro.file.DataFileWriter
+    additional-build-args: --initialize-at-run-time=io.confluent.idesidecar.restapi.auth.CCloudOAuthConfig\,io.confluent.idesidecar.restapi.auth.CCloudOAuthContext\,io.confluent.ide.sidecar.restapi.util.WebClientFactory\,org.apache.kafka.common.security.authenticator.SaslClientAuthenticator\,org.apache.avro.file.DataFileWriter\,io.confluent.kafka.schemaregistry.avro.AvroSchemaUtils
     resources:
       includes: templates/callback.html,templates/callback_failure.html,static/templates.zip,feature-flag-defaults.json
   smallrye-health:

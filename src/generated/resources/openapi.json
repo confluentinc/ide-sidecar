@@ -649,6 +649,34 @@
   },
   "components" : {
     "schemas" : {
+      "ApiKeyAndSecret" : {
+        "description" : "Basic authentication credentials",
+        "required" : [ "api_key", "api_secret" ],
+        "type" : "object",
+        "properties" : {
+          "api_key" : {
+            "description" : "The API key to use when connecting to the external service.",
+            "maxLength" : 64,
+            "minLength" : 1,
+            "type" : "string"
+          },
+          "api_secret" : {
+            "description" : "The API secret to use when connecting to the external service.",
+            "maxLength" : 64,
+            "minLength" : 1,
+            "type" : "string",
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/ApiSecret"
+            } ]
+          }
+        }
+      },
+      "ApiSecret" : {
+        "description" : "A user-provided API secret that is always masked in responses",
+        "maxLength" : 64,
+        "minLength" : 1,
+        "type" : "string"
+      },
       "ApplyTemplateRequest" : {
         "required" : [ "options" ],
         "type" : "object",
@@ -713,12 +741,17 @@
           "username" : {
             "description" : "The username to use when connecting to the external service.",
             "maxLength" : 64,
+            "minLength" : 1,
             "type" : "string"
           },
           "password" : {
             "description" : "The password to use when connecting to the external service.",
             "maxLength" : 64,
-            "type" : "string"
+            "minLength" : 1,
+            "type" : "string",
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/Password"
+            } ]
           }
         }
       },
@@ -874,6 +907,9 @@
           }
         }
       },
+      "Credentials" : {
+        "type" : "object"
+      },
       "Error" : {
         "description" : "Describes a particular error encountered while performing an operation.",
         "type" : "object",
@@ -1028,6 +1064,31 @@
             "maxLength" : 256,
             "minLength" : 1,
             "type" : "string"
+          },
+          "credentials" : {
+            "description" : "The credentials for the Kafka cluster, or null if no authentication is required",
+            "type" : "object",
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/Credentials"
+            } ],
+            "oneOf" : [ {
+              "$ref" : "#/components/schemas/BasicCredentials"
+            }, {
+              "$ref" : "#/components/schemas/ApiKeyAndSecret"
+            } ],
+            "nullable" : true
+          },
+          "ssl" : {
+            "description" : "Whether to communicate with the Kafka cluster over TLS/SSL. Defaults to 'true', but set to 'false' when the Kafka cluster does not support TLS/SSL.",
+            "default" : true,
+            "type" : "boolean",
+            "nullable" : true
+          },
+          "verify_ssl_certificates" : {
+            "description" : "Whether to verify the Kafka cluster certificates. Defaults to 'true', but set to 'false' when the Kafka cluster has self-signed certificates.",
+            "default" : true,
+            "type" : "boolean",
+            "nullable" : true
           }
         }
       },
@@ -1171,6 +1232,12 @@
           }
         }
       },
+      "Password" : {
+        "description" : "A user-provided password that is always masked in responses",
+        "maxLength" : 64,
+        "minLength" : 1,
+        "type" : "string"
+      },
       "Preferences" : {
         "required" : [ "api_version", "kind", "spec" ],
         "type" : "object",
@@ -1227,6 +1294,19 @@
             "maxLength" : 256,
             "minLength" : 1,
             "type" : "string"
+          },
+          "credentials" : {
+            "description" : "The credentials for the Schema Registry, or null if no authentication is required",
+            "type" : "object",
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/Credentials"
+            } ],
+            "oneOf" : [ {
+              "$ref" : "#/components/schemas/BasicCredentials"
+            }, {
+              "$ref" : "#/components/schemas/ApiKeyAndSecret"
+            } ],
+            "nullable" : true
           }
         }
       },

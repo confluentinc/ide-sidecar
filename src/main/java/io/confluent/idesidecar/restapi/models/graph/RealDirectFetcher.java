@@ -97,13 +97,15 @@ public class RealDirectFetcher extends ConfluentRestClient implements DirectFetc
         var endpoint = ccloudEndpoint.get();
         cluster = new DirectKafkaCluster(
             endpoint.clusterId().toString(),
-            spec.name() + " Kafka Cluster",
-            uriUtil.getHostAndPort(endpoint.getUri()),
+            endpoint.getUri().toString(),
+            endpoint.getBootstrapServers(),
             connectionId
         );
       } else {
         cluster = new DirectKafkaCluster(
-            orDefault(kafkaConfig.id(), () -> connectionId + "-kafka-cluster"),
+            orDefault(
+                kafkaConfig.id(), () -> connectionId + "-kafka-cluster"
+            ),
             null,
             kafkaConfig.bootstrapServers(),
             connectionId
