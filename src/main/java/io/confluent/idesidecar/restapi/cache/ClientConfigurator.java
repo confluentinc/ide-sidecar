@@ -51,7 +51,6 @@ public class ClientConfigurator {
 
     // First set the bootstrap servers
     props.put("bootstrap.servers", cluster.bootstrapServers());
-    props.put("session.timeout.ms", "45000");
 
     // Second, add any connection properties for Kafka cluster credentials (if defined)
     var options = connection.getKafkaConnectionOptions(cluster.id()).withRedact(redact);
@@ -180,7 +179,9 @@ public class ClientConfigurator {
         clusterId,
         includeSchemaRegistry,
         redact,
-        Map.of()
+        Map.of(
+            "session.timeout.ms", "45000"
+        )
     );
   }
 

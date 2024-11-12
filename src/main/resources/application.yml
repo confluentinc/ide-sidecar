@@ -138,8 +138,8 @@ ide-sidecar:
   # Configuration set by the sidecar when instantiating the Kafka Admin client
   # (We may choose to allow connection-specific overrides in the future)
   admin-client-configs:
-    "default.api.timeout.ms": 3000
-    "request.timeout.ms": 3000
+    "default.api.timeout.ms": 5000
+    "request.timeout.ms": 5000
     "client.id": Confluent for VS Code sidecar ${quarkus.application.version}
   # Configuration set by the sidecar when instantiating Kafka record serializers and deserializers.
   # See https://github.com/confluentinc/schema-registry/blob/master/schema-serializer/src/main/java/io/confluent/kafka/serializers/AbstractKafkaSchemaSerDeConfig.java#L39

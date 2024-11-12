@@ -40,7 +40,6 @@ public record ApiKeyAndSecret(
 ) implements Credentials {
 
   private static final int KEY_MAX_LEN = 64;
-  private static final int SECRET_MAX_LEN = 256;
 
   private static final String PLAIN_LOGIN_MODULE_CLASS =
       "org.apache.kafka.common.security.plain.PlainLoginModule";
@@ -56,9 +55,9 @@ public record ApiKeyAndSecret(
   ) {
     var config = new LinkedHashMap<String, String>();
     if (options.ssl()) {
-      config.put("security.protocol", "SASL_PLAINTEXT");
+      config.put("security.protocol", "SASL_SSL");
     } else {
-      config.put("security.protocol", "PLAINTEXT");
+      config.put("security.protocol", "SASL_PLAINTEXT");
     }
     config.put("sasl.mechanism", "PLAIN");
     if (!options.verifyCertificates()) {

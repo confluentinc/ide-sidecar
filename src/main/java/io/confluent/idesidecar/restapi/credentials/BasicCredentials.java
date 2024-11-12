@@ -50,9 +50,9 @@ public record BasicCredentials(
   ) {
     var config = new LinkedHashMap<String, String>();
     if (options.ssl()) {
-      config.put("security.protocol", "SASL_PLAINTEXT");
+      config.put("security.protocol", "SASL_SSL");
     } else {
-      config.put("security.protocol", "PLAINTEXT");
+      config.put("security.protocol", "SASL_PLAINTEXT");
     }
     config.put("sasl.mechanism", "PLAIN");
     if (!options.verifyCertificates()) {

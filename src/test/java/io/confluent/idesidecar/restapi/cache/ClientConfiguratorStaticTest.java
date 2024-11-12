@@ -104,7 +104,6 @@ class ClientConfiguratorStaticTest {
             false,
             """
                 bootstrap.servers=localhost:9092
-                session.timeout.ms=45000
                 """,
             """
                 schema.registry.url=http://localhost:8081
@@ -121,7 +120,6 @@ class ClientConfiguratorStaticTest {
             false,
             """
                 bootstrap.servers=localhost:9092
-                session.timeout.ms=45000
                 """,
             null
         ),
@@ -136,11 +134,10 @@ class ClientConfiguratorStaticTest {
             false,
             """
                 bootstrap.servers=localhost:9092
-                security.protocol=PLAINTEXT
+                security.protocol=SASL_PLAINTEXT
                 sasl.mechanism=PLAIN
                 sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username="%s" password="%s";
                 ssl.endpoint.identification.algorithm=
-                session.timeout.ms=45000
                 """.formatted(USERNAME, PASSWORD),
             """
                 schema.registry.url=http://localhost:8081
@@ -159,11 +156,11 @@ class ClientConfiguratorStaticTest {
             true,
             """
                 bootstrap.servers=localhost:9092
-                security.protocol=PLAINTEXT
+                security.protocol=SASL_PLAINTEXT
                 sasl.mechanism=PLAIN
                 sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username="%s" password="********";
                 ssl.endpoint.identification.algorithm=
-                session.timeout.ms=45000
+                
                 """.formatted(USERNAME),
             """
                 schema.registry.url=http://localhost:8081
@@ -182,10 +179,9 @@ class ClientConfiguratorStaticTest {
             false,
             """
                 bootstrap.servers=localhost:9092
-                security.protocol=SASL_PLAINTEXT
+                security.protocol=SASL_SSL
                 sasl.mechanism=PLAIN
                 sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username="%s" password="%s";
-                session.timeout.ms=45000
                 """.formatted(USERNAME, PASSWORD),
             """
                 schema.registry.url=http://localhost:8081
@@ -204,10 +200,9 @@ class ClientConfiguratorStaticTest {
             true,
             """
                 bootstrap.servers=localhost:9092
-                security.protocol=SASL_PLAINTEXT
+                security.protocol=SASL_SSL
                 sasl.mechanism=PLAIN
                 sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username="%s" password="********";
-                session.timeout.ms=45000
                 """.formatted(USERNAME),
             """
                 schema.registry.url=http://localhost:8081
@@ -226,10 +221,9 @@ class ClientConfiguratorStaticTest {
             false,
             """
                 bootstrap.servers=localhost:9092
-                security.protocol=SASL_PLAINTEXT
+                security.protocol=SASL_SSL
                 sasl.mechanism=PLAIN
                 sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username="%s" password="%s";
-                session.timeout.ms=45000
                 """.formatted(USERNAME, PASSWORD),
             """
                 schema.registry.url=http://localhost:8081
@@ -248,10 +242,9 @@ class ClientConfiguratorStaticTest {
             false,
             """
                 bootstrap.servers=localhost:9092
-                security.protocol=SASL_PLAINTEXT
+                security.protocol=SASL_SSL
                 sasl.mechanism=PLAIN
                 sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username="%s" password="%s";
-                session.timeout.ms=45000
                 """.formatted(USERNAME, PASSWORD),
             """
                 schema.registry.url=http://localhost:8081
