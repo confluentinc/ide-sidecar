@@ -1,6 +1,5 @@
 package io.confluent.idesidecar.restapi.cache;
 
-
 import graphql.VisibleForTesting;
 import io.confluent.idesidecar.restapi.connections.ConnectionState;
 import io.confluent.idesidecar.restapi.events.ClusterKind;
