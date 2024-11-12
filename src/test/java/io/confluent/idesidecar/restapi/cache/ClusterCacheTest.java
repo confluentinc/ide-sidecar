@@ -1,28 +1,11 @@
 package io.confluent.idesidecar.restapi.cache;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
-
-import io.confluent.idesidecar.restapi.cache.ClusterCache;
 import io.confluent.idesidecar.restapi.connections.ConnectionState;
 import io.confluent.idesidecar.restapi.connections.ConnectionStates;
 import io.confluent.idesidecar.restapi.exceptions.ClusterNotFoundException;
 import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
-import io.confluent.idesidecar.restapi.models.graph.CCloudEnvironment;
-import io.confluent.idesidecar.restapi.models.graph.CCloudGovernancePackage;
-import io.confluent.idesidecar.restapi.models.graph.CCloudKafkaCluster;
-import io.confluent.idesidecar.restapi.models.graph.CCloudOrganization;
-import io.confluent.idesidecar.restapi.models.graph.CCloudSchemaRegistry;
-import io.confluent.idesidecar.restapi.models.graph.CloudProvider;
-import io.confluent.idesidecar.restapi.models.graph.ClusterEvent;
-import io.confluent.idesidecar.restapi.models.graph.KafkaCluster;
-import io.confluent.idesidecar.restapi.models.graph.RealCCloudFetcher;
-import io.confluent.idesidecar.restapi.models.graph.RealLocalFetcher;
+import io.confluent.idesidecar.restapi.models.graph.*;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.smallrye.mutiny.Uni;
@@ -30,6 +13,10 @@ import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 @QuarkusTest
 class ClusterCacheTest {
