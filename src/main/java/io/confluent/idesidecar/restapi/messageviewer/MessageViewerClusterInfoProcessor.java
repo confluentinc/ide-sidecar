@@ -91,15 +91,6 @@ public class MessageViewerClusterInfoProcessor extends
   }
 
   /**
-   * Respond to the connection being updated by clearing cached information.
-   *
-   * @param connection the connection that was prior to update
-   */
-  void onConnectionUpdated(@ObservesAsync @Lifecycle.Updated ConnectionState connection) {
-    clearCaches();
-  }
-
-  /**
    * Respond to the connection being deleted by clearing cached information.
    *
    * @param connection the connection that was deleted
