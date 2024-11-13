@@ -8,12 +8,19 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.confluent.idesidecar.restapi.credentials.ApiKeyAndSecret;
+import io.confluent.idesidecar.restapi.credentials.BasicCredentials;
+import io.confluent.idesidecar.restapi.credentials.Credentials;
+import io.confluent.idesidecar.restapi.exceptions.Failure;
 import io.confluent.idesidecar.restapi.exceptions.Failure.Error;
 import io.confluent.idesidecar.restapi.util.CCloud.KafkaEndpoint;
 import io.confluent.idesidecar.restapi.util.CCloud.SchemaRegistryEndpoint;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Null;
 import jakarta.validation.constraints.Size;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -240,71 +247,213 @@ public record ConnectionSpec(
       @Size(max = 512)
       String schemaRegistryUri
   ) {
+
+    public void validate(
+        List<Error> errors,
+        String path,
+        String what
+    ) {
+      // Note that when the SR URI is blank, we assume the user does not want to use SR.
+      // When the SR URI is null, the user wants to use the SR at the default localhost & port
+      if (schemaRegistryUri != null
+          && !schemaRegistryUri.isEmpty()
+          && schemaRegistryUri.isBlank()
+      ) {
+        // It has non-zero whitespace only, so this is invalid
+        errors.add(
+            Error.create()
+                 .withDetail(
+                     "Schema Registry URI may be null (use default local SR) or empty "
+                     + "(do not use SR), but may not have only whitespace"
+                 )
+                 .withSource("%s.schema-registry-uri", path)
+        );
+      }
+    }
   }
 
   @Schema(description = "Kafka cluster configuration.")
+  @RegisterForReflection
   public record KafkaClusterConfig(
       @Schema(description = "The identifier of the Kafka cluster, if known.")
       @Null
-      @Size(max = 64)
+      @Size(max = ID_MAX_LEN)
       String id,
 
       @Schema(description = "A list of host/port pairs to use for establishing the "
                             + "initial connection to the Kafka cluster.")
       @JsonProperty(value = "bootstrap_servers")
-      @Size(min = 1, max = 256)
+      @Size(min = 1, max = BOOTSTRAP_SERVERS_MAX_LEN)
       @NotNull
-      String bootstrapServers
+      String bootstrapServers,
+
+      @Schema(
+          description =
+              "The credentials for the Kafka cluster, or null if no authentication is required",
+          oneOf = {
+              BasicCredentials.class,
+              ApiKeyAndSecret.class,
+          },
+          nullable = true
+      )
+      @Null
+      Credentials credentials,
+
+      @Schema(
+          description =
+              "Whether to communicate with the Kafka cluster over TLS/SSL. Defaults to 'true', "
+              + "but set to 'false' when the Kafka cluster does not support TLS/SSL.",
+          defaultValue = KafkaClusterConfig.DEFAULT_SSL_VALUE,
+          nullable = true
+      )
+      @JsonProperty(value = "ssl")
+      @Null
+      Boolean ssl,
+
+      @Schema(
+          description =
+              "Whether to verify the Kafka cluster certificates. Defaults to 'true', but set "
+              + "to 'false' when the Kafka cluster has self-signed certificates.",
+          defaultValue = KafkaClusterConfig.DEFAULT_VERIFY_SSL_CERTIFICATES_VALUE,
+          nullable = true
+      )
+      @JsonProperty(value = "verify_ssl_certificates")
+      @Null
+      Boolean verifySslCertificates
   ) {
+
+    // Constants used in annotations above
+    private static final int ID_MAX_LEN = 64;
+    private static final int BOOTSTRAP_SERVERS_MAX_LEN = 256;
+    private static final String DEFAULT_SSL_VALUE = "true";
+    private static final String DEFAULT_VERIFY_SSL_CERTIFICATES_VALUE = "true";
+
+    public static final boolean DEFAULT_SSL = Boolean.valueOf(DEFAULT_SSL_VALUE);
+    public static final boolean DEFAULT_VERIFY_SSL_CERTIFICATES = Boolean.valueOf(
+        DEFAULT_VERIFY_SSL_CERTIFICATES_VALUE
+    );
+
+    @JsonIgnore
+    public boolean sslOrDefault() {
+      return ssl != null ? ssl : DEFAULT_SSL;
+    }
+
+    @JsonIgnore
+    public boolean verifySslCertificatesOrDefault() {
+      return verifySslCertificates != null ? verifySslCertificates : DEFAULT_VERIFY_SSL_CERTIFICATES;
+    }
 
     @JsonIgnore
     public Optional<KafkaEndpoint> asCCloudEndpoint() {
       return KafkaEndpoint.fromKafkaBootstrap(bootstrapServers());
     }
+
+    public void validate(
+        List<Error> errors,
+        String path,
+        String what
+    ) {
+      if (id != null && id.length() > ID_MAX_LEN) {
+        errors.add(
+            Error.create()
+                 .withDetail("%s cluster ID may not be longer than %d characters", what, ID_MAX_LEN)
+                 .withSource("%s.id", path)
+        );
+      }
+      if (bootstrapServers == null || bootstrapServers.isBlank()) {
+        errors.add(
+            Error.create()
+                 .withDetail("%s bootstrap_servers is required and may not be blank", what)
+                 .withSource("%s.bootstrap_servers", path)
+        );
+      } else if (bootstrapServers.length() > BOOTSTRAP_SERVERS_MAX_LEN) {
+        errors.add(
+            Error.create()
+                 .withDetail(
+                     "%s bootstrap_servers must be at most %d characters",
+                     what, BOOTSTRAP_SERVERS_MAX_LEN
+                 )
+                 .withSource("%s.bootstrap_servers", path)
+        );
+      }
+      if (credentials != null) {
+        credentials.validate(errors, "%s.credentials".formatted(path), what);
+      }
+    }
   }
 
   @Schema(description = "Schema Registry configuration.")
+  @RegisterForReflection
   public record SchemaRegistryConfig(
       @Schema(description = "The identifier of the Schema Registry cluster, if known.")
       @Null
-      @Size(max = 64)
+      @Size(max = ID_MAX_LEN)
       String id,
 
       @Schema(description = "The URL of the Schema Registry.")
       @JsonProperty(value = "uri")
-      @Size(min = 1, max = 256)
+      @Size(min = 1, max = URI_MAX_LEN)
       @NotNull
-      String uri
+      String uri,
+
+      @Schema(
+          description = "The credentials for the Schema Registry, or null if "
+                        + "no authentication is required",
+          oneOf = {
+              BasicCredentials.class,
+              ApiKeyAndSecret.class,
+          },
+          nullable = true
+      )
+      @Null
+      Credentials credentials
   ) {
+    private static final int ID_MAX_LEN = 64;
+    private static final int URI_MAX_LEN = 256;
 
     @JsonIgnore
     public Optional<SchemaRegistryEndpoint> asCCloudEndpoint() {
       return SchemaRegistryEndpoint.fromUri(uri());
     }
-  }
 
-  @Schema(description = "Basic authentication credentials")
-  public record BasicCredentials(
-      @Schema(description = "The username to use when connecting to the external service.")
-      @JsonProperty(value = "username")
-      @Size(max = 64)
-      @NotNull
-      String username,
-
-      @Schema(description = "The password to use when connecting to the external service.")
-      @JsonProperty(value = "password")
-      @Size(max = 64)
-      @NotNull
-      // TODO: Wrap in Secret record rather than String, and override toString to
-      //  prevent/limit read access
-      String password
-  ) {
-
-    // TODO: This shouldn't be needed once we define a Secret record, which won't have toString()
-    @Override
-    public String toString() {
-      // Do not print the username, in case this object is logged
-      return "BasicCredentials{username='%s', password=********}".formatted(username);
+    public void validate(
+        List<Error> errors,
+        String path,
+        String what
+    ) {
+      if (id != null && id.length() > 64) {
+        errors.add(
+            Error.create()
+                 .withDetail("%s cluster ID may not be longer than %d characters", what, 64)
+                 .withSource("%s.id", path)
+        );
+      }
+      if (uri == null || uri.isBlank()) {
+        errors.add(
+            Failure.Error.create()
+                         .withDetail("%s URI is required and may not be blank", what)
+                         .withSource("%s.uri", path)
+        );
+      } else if (uri.length() > URI_MAX_LEN) {
+        errors.add(
+            Failure.Error.create()
+                         .withDetail("%s URI must be at most %d characters", what, URI_MAX_LEN)
+                         .withSource("%s.uri", path)
+        );
+      } else {
+        try {
+          new URI(uri);
+        } catch (URISyntaxException e) {
+          errors.add(
+              Failure.Error.create()
+                           .withDetail("%s URI is not a valid URI", what)
+                           .withSource("%s.uri", path)
+          );
+        }
+      }
+      if (credentials != null) {
+        credentials.validate(errors, "%s.credentials".formatted(path), what);
+      }
     }
   }
 
@@ -352,27 +501,12 @@ public record ConnectionSpec(
           // Allow use of the older local config with Schema Registry.
           var local = newSpec.localConfig;
           if (local != null) {
-            // Note that when the SR URI is blank, we assume the user does not want to use SR.
-            // When the SR URI is null, the user wants to use the SR at the default localhost & port
-            var uri = local.schemaRegistryUri;
-            if (uri != null && !uri.isEmpty() && uri.trim().isEmpty()) {
-              // It has non-zero whitespace only, so this is invalid
-              errors.add(
-                  Error.create()
-                       .withDetail(
-                           "Schema Registry URI may null (use default local SR) or empty "
-                           + "(do not use SR), but may not have only whitespace"
-                       )
-                       .withSource("local_config.schema-registry-uri")
-              );
-            }
+            local.validate(errors, "local_config", "Local configuration");
           }
           // But also support the new Schema Registry config
           var sr = newSpec.schemaRegistryConfig();
           if (sr != null) {
-            if (sr.uri == null || sr.uri.isBlank()) {
-              checkRequired(errors, "schema_registry.uri", "Schema Registry URI");
-            }
+            sr.validate(errors, "schema_registry", "Schema Registry");
           }
           // Make sure we're not using both
           if (sr != null && local != null && local.schemaRegistryUri != null) {
@@ -391,19 +525,11 @@ public record ConnectionSpec(
         case DIRECT -> {
           var kafka = newSpec.kafkaClusterConfig();
           if (kafka != null) {
-            if (kafka.bootstrapServers == null || kafka.bootstrapServers.isBlank()) {
-              checkRequired(
-                  errors,
-                  "kafka_cluster.bootstrap_servers",
-                  "Kafka cluster bootstrap_servers"
-              );
-            }
+            kafka.validate(errors, "kafka_cluster", "Kafka cluster");
           }
           var sr = newSpec.schemaRegistryConfig();
           if (sr != null) {
-            if (sr.uri == null || sr.uri.isBlank()) {
-              checkRequired(errors, "schema_registry.uri", "Schema Registry URI");
-            }
+            sr.validate(errors, "schema_registry", "Schema Registry");
           }
           checkLocalConfigNotAllowed(errors, newSpec);
           checkCCloudConfigNotAllowed(errors, newSpec);

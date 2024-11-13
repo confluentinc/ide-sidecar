@@ -10,6 +10,7 @@ import static io.confluent.idesidecar.restapi.cache.ClusterCacheExpectations.exp
 import static io.confluent.idesidecar.restapi.cache.ClusterCacheExpectations.expectKafkaClusterInCache;
 import static io.confluent.idesidecar.restapi.cache.ClusterCacheExpectations.expectKafkaClusterNotInCache;
 import static io.confluent.idesidecar.restapi.cache.ClusterCacheExpectations.expectSchemaRegistryForKafkaClusterInCache;
+import static io.confluent.idesidecar.restapi.cache.ClusterCacheExpectations.expectSchemaRegistryInCache;
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.containsString;
@@ -452,13 +453,20 @@ public class KafkaConsumeResourceTest {
         KAFKA_CLUSTER_ID,
         "http://localhost:%d".formatted(wireMockPort)
     );
-    // Expect a Schema Registry cluster exists
+    // Expect a Schema Registry cluster exists by cluster type
     expectClusterInCache(
         clusterCache,
         CONNECTION_ID,
         SCHEMA_REGISTRY_CLUSTER_ID,
         "http://localhost:%d".formatted(wireMockPort),
         ClusterType.SCHEMA_REGISTRY
+    );
+    // Expect a Schema Registry cluster exists
+    expectSchemaRegistryInCache(
+        clusterCache,
+        CONNECTION_ID,
+        SCHEMA_REGISTRY_CLUSTER_ID,
+        "http://localhost:%d".formatted(wireMockPort)
     );
     // Expect a Schema Registry for the Kafka cluster exists
     expectSchemaRegistryForKafkaClusterInCache(
