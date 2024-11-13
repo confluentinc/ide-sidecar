@@ -191,6 +191,12 @@ public class ClusterCache {
 
   void onConnectionUpdated(@ObservesAsync @Lifecycle.Updated ConnectionState connection) {
     Log.infof("Updated %s", connection.getSpec());
+
+    // Replace the existing cache for this connection with a new one
+    clustersByConnectionId.put(
+            connection.getId(),
+            new Clusters(connection.getId(), connection.getType())
+    );
   }
 
   void onConnectionEstablished(
