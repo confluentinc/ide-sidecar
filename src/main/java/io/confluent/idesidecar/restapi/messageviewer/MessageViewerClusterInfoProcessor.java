@@ -74,6 +74,7 @@ public class MessageViewerClusterInfoProcessor extends
       );
     }
   }
+
   void clearCaches() {
     RecordDeserializer.clearCachedFailures();
   }
