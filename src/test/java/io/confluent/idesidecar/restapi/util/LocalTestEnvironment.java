@@ -3,14 +3,12 @@ package io.confluent.idesidecar.restapi.util;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
 import io.quarkus.test.junit.TestProfile;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
 
+import java.io.IOException;
 import java.time.Duration;
+import java.util.Optional;
 
 /**
  * A {@link TestEnvironment} that starts a local Confluent Local container with Kafka broker and
@@ -19,90 +17,94 @@ import java.time.Duration;
 @TestProfile(NoAccessFilterProfile.class)
 public class LocalTestEnvironment implements TestEnvironment {
 
-  private static final String KAFKA_INTERNAL_LISTENER = "PLAINTEXT://confluent-local-broker-1:29092";
+    private static final String KAFKA_INTERNAL_LISTENER = "PLAINTEXT://confluent-local-broker-1:29092";
 
-  private Network network;
-  private ConfluentLocalKafkaWithRestProxyContainer kafkaWithRestProxy;
-  private SchemaRegistryContainer schemaRegistry;
+    private Network network;
+    private ConfluentLocalKafkaWithRestProxyContainer kafkaWithRestProxy;
+    private SchemaRegistryContainer schemaRegistry;
 
-  public LocalTestEnvironment() {
-  }
+    public LocalTestEnvironment() {
+    }
 
-  @Override
-  public void start() {
-    createNetworkAndContainers();
+    @Override
+    public void start() {
+        createNetworkAndContainers();
 
-    startContainers();
-  }
+        startContainers();
+    }
 
-  @Override
-  public void shutdown() {
-    stopContainers();
-  }
+    @Override
+    public void shutdown() {
+        stopContainers();
+    }
 
-  protected void createNetworkAndContainers() {
-    network = Network.newNetwork();
-    kafkaWithRestProxy = new ConfluentLocalKafkaWithRestProxyContainer()
-        .withNetwork(network)
-        .withNetworkAliases("kafka")
-        .waitingFor(Wait.forLogMessage(
-            ".*Server started, listening for requests.*\\n", 1))
-        // Kafka REST server port
-        .waitingFor(Wait.forListeningPorts(
-            ConfluentLocalKafkaWithRestProxyContainer.REST_PROXY_PORT
-        ));
+    protected void createNetworkAndContainers() {
+        network = Network.newNetwork();
+        try {
+            kafkaWithRestProxy = new ConfluentLocalKafkaWithRestProxyContainer()
+                    .withNetwork(network)
+                    .withNetworkAliases("kafka")
+                    .waitingFor(Wait.forLogMessage(
+                            ".*Server started, listening for requests.*\\n", 1))
+                    // Kafka REST server port
+                    .waitingFor(Wait.forListeningPorts(
+                            ConfluentLocalKafkaWithRestProxyContainer.REST_PROXY_PORT
+                    ));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
-    schemaRegistry = new SchemaRegistryContainer(KAFKA_INTERNAL_LISTENER)
-        .withNetwork(network)
-        .withExposedPorts(8081)
-        .withNetworkAliases("schema-registry")
-        .dependsOn(kafkaWithRestProxy)
-        .waitingFor(Wait.forHttp("/subjects").forStatusCode(200).withStartupTimeout(Duration.ofMinutes(2)));
-  }
+        schemaRegistry = new SchemaRegistryContainer(KAFKA_INTERNAL_LISTENER)
+                .withNetwork(network)
+                .withExposedPorts(8081)
+                .withNetworkAliases("schema-registry")
+                .dependsOn(kafkaWithRestProxy)
+                .waitingFor(Wait.forHttp("/subjects").forStatusCode(200).withStartupTimeout(Duration.ofMinutes(2)));
+    }
 
-  protected void startContainers() {
-    kafkaWithRestProxy.start(); // start first
-    schemaRegistry.start();
-  }
+    protected void startContainers() {
+        kafkaWithRestProxy.start(); // start first
+        schemaRegistry.start();
+    }
 
-  protected void stopContainers() {
-    schemaRegistry.stop(); // stop first
-    kafkaWithRestProxy.stop();
-  }
+    protected void stopContainers() {
+        schemaRegistry.stop(); // stop first
+        kafkaWithRestProxy.stop();
+    }
 
-  @Override
-  public void close() {
-    schemaRegistry.close();
-    kafkaWithRestProxy.close();
-    network.close();
-  }
+    @Override
+    public void close() {
+        schemaRegistry.close();
+        kafkaWithRestProxy.close();
+        network.close();
+    }
 
-  public Optional<ConnectionSpec> localConnectionSpec() {
-    return Optional.of(
-        ConnectionSpec.createLocal(
-            "local-connection",
-            "Local",
-            new ConnectionSpec.LocalConfig(
-                schemaRegistry.endpoint()
-            )
-        )
-    );
-  }
+    public Optional<ConnectionSpec> localConnectionSpec() {
+        return Optional.of(
+                ConnectionSpec.createLocal(
+                        "local-connection",
+                        "Local",
+                        new ConnectionSpec.LocalConfig(
+                                schemaRegistry.endpoint()
+                        )
+                )
+        );
+    }
 
-  public Optional<ConnectionSpec> directConnectionSpec() {
-    return Optional.of(
-        ConnectionSpec.createDirect(
-            "direct-to-local-connection",
-            "Direct to Local",
-            new ConnectionSpec.KafkaClusterConfig(
-                kafkaWithRestProxy.getClusterId(),
-                kafkaWithRestProxy.getKafkaBootstrapServers()
-            ),
-            new ConnectionSpec.SchemaRegistryConfig(
-                schemaRegistry.getClusterId(),
-                schemaRegistry.endpoint()
-            )
-        )
-    );
-  }
+    public Optional<ConnectionSpec> directConnectionSpec() {
+        return Optional.of(
+                ConnectionSpec.createDirect(
+                        "direct-to-local-connection",
+                        "Direct to Local",
+                        new ConnectionSpec.KafkaClusterConfig(
+                                kafkaWithRestProxy.getClusterId(),
+                                kafkaWithRestProxy.getKafkaBootstrapServers()
+                        ),
+                        new ConnectionSpec.SchemaRegistryConfig(
+                                schemaRegistry.getClusterId(),
+                                schemaRegistry.endpoint()
+                        )
+                )
+        );
+    }
 }
