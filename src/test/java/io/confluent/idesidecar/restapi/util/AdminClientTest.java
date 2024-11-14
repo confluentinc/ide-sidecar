@@ -31,7 +31,7 @@ public class AdminClientTest extends AbstractSidecarIT {
 
     @BeforeEach
     public void beforeEach() {
-        super.setupLocalConnection("AdminClientIT");
+        super.setupLocalConnection("AdminClientTest");
     }
 
     private static final String CLUSTER_ID = "fake-cluster-id-here";
@@ -54,7 +54,7 @@ public class AdminClientTest extends AbstractSidecarIT {
 
 
     @Test
-    public void hasAStringID() {
+    public void clusterHasAStringID() {
         assertInstanceOf(String.class, clusterId, "myString should be a String");
     }
 
