@@ -32,12 +32,12 @@ public record ConnectionStatus(
   @JsonProperty(required = true)
   public Authentication authentication() {
     if (ccloud != null) {
-    return new Authentication(
-        Status.from(ccloud.state()),
-        ccloud.requiresAuthenticationAt(),
-        ccloud.user(),
-        ccloud.errors()
-    );
+      return new Authentication(
+          Status.from(ccloud.state()),
+          ccloud.requiresAuthenticationAt(),
+          ccloud.user(),
+          ccloud.errors()
+      );
     }
     return new Authentication(Status.NO_TOKEN, null, null, null);
   }
