@@ -2,8 +2,12 @@ package io.confluent.idesidecar.restapi.cache;
 
 import io.confluent.idesidecar.restapi.clients.ClientConfigurator;
 import io.confluent.idesidecar.restapi.connections.ConnectionState;
-import io.confluent.idesidecar.restapi.credentials.*;
+import io.confluent.idesidecar.restapi.credentials.ApiKeyAndSecret;
+import io.confluent.idesidecar.restapi.credentials.ApiSecret;
+import io.confluent.idesidecar.restapi.credentials.BasicCredentials;
+import io.confluent.idesidecar.restapi.credentials.Credentials;
 import io.confluent.idesidecar.restapi.credentials.Credentials.KafkaConnectionOptions;
+import io.confluent.idesidecar.restapi.credentials.Password;
 import io.confluent.idesidecar.restapi.models.graph.KafkaCluster;
 import io.confluent.idesidecar.restapi.models.graph.SchemaRegistry;
 import io.confluent.idesidecar.restapi.util.CCloud;
@@ -13,10 +17,16 @@ import org.junit.jupiter.api.TestFactory;
 import org.mockito.Mock;
 
 import java.io.StringReader;
-import java.util.*;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Properties;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
