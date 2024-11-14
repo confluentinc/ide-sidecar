@@ -1,6 +1,7 @@
 package io.confluent.idesidecar.restapi.cache;
 
 import com.github.benmanes.caffeine.cache.CaffeineSpec;
+import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -29,11 +30,16 @@ public class KafkaProducerClients extends Clients<KafkaProducer<byte[], byte[]>>
           var config = configurator.getProducerClientConfig(
               connectionId,
               clusterId,
-              true,
-              false
+              true
           );
           // Create the producer
-          return new KafkaProducer<>(config, BYTE_ARRAY_SERIALIZER, BYTE_ARRAY_SERIALIZER);
+          Log.debugf(
+              "Creating producer client for connection %s and cluster %s with configuration:\n  %s",
+              connectionId,
+              clusterId,
+              config
+          );
+          return new KafkaProducer<>(config.asMap(), BYTE_ARRAY_SERIALIZER, BYTE_ARRAY_SERIALIZER);
         }
     );
   }
