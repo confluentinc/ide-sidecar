@@ -295,7 +295,7 @@ public class ClientConfigurator {
     var configs = new LinkedHashMap<>(SERDE_CONFIGS);
     configs.put(
       (isKey ? "key.subject.name.strategy" : "value.subject.name.strategy"),
-      schema.get().subjectNameStrategy().strategyClassName
+      schema.get().subjectNameStrategy().className()
     );
 
     // No need to pass SR auth properties since it will hit
