@@ -1,22 +1,24 @@
 package io.confluent.idesidecar.restapi.kafkarest;
 
+import io.confluent.kafka.schemaregistry.ParsedSchema;
 import io.confluent.kafka.serializers.subject.RecordNameStrategy;
 import io.confluent.kafka.serializers.subject.TopicNameStrategy;
 import io.confluent.kafka.serializers.subject.TopicRecordNameStrategy;
+import io.confluent.kafka.serializers.subject.strategy.SubjectNameStrategy;
 
 import java.util.Optional;
 
 public enum SubjectNameStrategyEnum {
-  TOPIC_NAME("topic_name", TopicNameStrategy.class.getName()),
-  TOPIC_RECORD_NAME("topic_record_name", TopicRecordNameStrategy.class.getName()),
-  RECORD_NAME("record_name", RecordNameStrategy.class.getName());
+  TOPIC_NAME("topic_name", new TopicNameStrategy()),
+  TOPIC_RECORD_NAME("topic_record_name", new TopicRecordNameStrategy()),
+  RECORD_NAME("record_name", new RecordNameStrategy());
 
   private final String value;
-  public final String strategyClassName;
+  private final SubjectNameStrategy strategy;
 
-  SubjectNameStrategyEnum(String value, String strategyClassName) {
+  SubjectNameStrategyEnum(String value, SubjectNameStrategy strategy) {
     this.value = value;
-    this.strategyClassName = strategyClassName;
+    this.strategy = strategy;
   }
 
   public static Optional<SubjectNameStrategyEnum> parse(String subjectNameStrategy) {
@@ -26,5 +28,15 @@ public enum SubjectNameStrategyEnum {
       }
     }
     return Optional.empty();
+  }
+
+  public String className() {
+    return strategy.getClass().getName();
+  }
+
+  public String subjectName(
+      String topic, boolean isKey, ParsedSchema schema
+  ) {
+    return strategy.subjectName(topic, isKey, schema);
   }
 }

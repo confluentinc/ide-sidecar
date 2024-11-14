@@ -22,6 +22,9 @@ public class SchemaManager {
       )
   );
 
+  private static final SubjectNameStrategyEnum DEFAULT_SUBJECT_NAME_STRATEGY =
+      SubjectNameStrategyEnum.TOPIC_NAME;
+
   public Optional<RegisteredSchema> getSchema(
       SchemaRegistryClient schemaRegistryClient,
       String topicName,
@@ -111,8 +114,7 @@ public class SchemaManager {
       boolean isKey
   ) {
     var schema = schemaRegistryClient.getByVersion(
-        // Note: We default to TopicNameStrategy for the subject name for the sake of simplicity.
-        (isKey ? topicName + "-key" : topicName + "-value"),
+        DEFAULT_SUBJECT_NAME_STRATEGY.subjectName(topicName, isKey, null),
         schemaVersion,
         // do not lookup deleted schemas
         false
@@ -122,7 +124,7 @@ public class SchemaManager {
 
     return new RegisteredSchema(
         schema.getSubject(),
-        SubjectNameStrategyEnum.TOPIC_NAME,
+        DEFAULT_SUBJECT_NAME_STRATEGY,
         schema.getId(),
         schema.getVersion(),
         parsedSchema
