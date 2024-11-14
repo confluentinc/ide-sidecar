@@ -202,12 +202,12 @@ class RecordsV3ApiImplIT {
       createSchema(
           "%s-key".formatted(topic),
           "JSON",
-          loadResource("schemas/product.schema.json")
+          loadResource("schemas/product-key.schema.json")
       );
       createSchema(
           "%s-value".formatted(topic),
           "PROTOBUF",
-          loadResource("schemas/product.proto")
+          loadResource("schemas/product-value.proto")
       );
       // Schema version 1 would be created by the above calls,
       // but the following call should fail to find version 40
