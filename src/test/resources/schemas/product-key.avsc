@@ -1,0 +1,10 @@
+{
+  "type": "record",
+  "name": "ProductKey",
+  "fields": [
+    {"name": "id", "type": "int"},
+    {"name": "name", "type": "string"},
+    {"name": "price", "type": "double"},
+    {"name": "tags", "type": {"type": "array", "items": "string"}}
+  ]
+}
