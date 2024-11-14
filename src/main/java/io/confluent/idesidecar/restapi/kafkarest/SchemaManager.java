@@ -5,7 +5,6 @@ import io.confluent.kafka.schemaregistry.ParsedSchema;
 import io.confluent.kafka.schemaregistry.SchemaProvider;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.rest.entities.Schema;
-import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.BadRequestException;
 import java.util.Arrays;
@@ -29,11 +28,10 @@ public class SchemaManager {
       ProduceRequestData produceRequestData,
       boolean isKey
   ) {
-    // If schemaVersion is set, use it to fetch the schema
-    // We don't require the subject to be passed because we use the default TopicNameStrategy
-    // as the subject name strategy. We may choose to support non-default subject name strategies
-    // and that is left as a future enhancement.
-    if (supportsSchemaVersion(produceRequestData)) {
+    // If only the schemaVersion is set, use it to fetch the schema
+    // with the default subject name strategy (TopicNameStrategy)
+    if (onlySchemaVersion(produceRequestData)) {
+      ensureSchemaRegistryClientExists(schemaRegistryClient);
       return Optional.of(getSchemaFromSchemaVersion(
           schemaRegistryClient,
           topicName,
@@ -42,50 +40,76 @@ public class SchemaManager {
       ));
     }
 
+    if (schemaVersionWithSubjectAndSubjectNameStrategy(produceRequestData)) {
+      ensureSchemaRegistryClientExists(schemaRegistryClient);
+      return Optional.of(getSchemaFromSubject(
+          schemaRegistryClient,
+          produceRequestData.getSchemaVersion(),
+          produceRequestData.getSubject(),
+          produceRequestData.getSubjectNameStrategy()
+      ));
+    }
+
     // If any of the other schema related fields are set, disallow the request
     // Note: We can implement support for various combinations of these fields as we see fit.
     if (unsupportedFieldsSet(produceRequestData)) {
       throw new UnsupportedOperationException(
-          "This endpoint does not yet support specifying "
-              + "schema ID, subject, subject name strategy, type, or schema."
+          "This endpoint does not support specifying "
+              + "schema ID, type, schema, standalone subject or subject name strategy."
       );
     }
 
     return Optional.empty();
   }
 
+  private static void ensureSchemaRegistryClientExists(SchemaRegistryClient schemaRegistryClient) {
+    if (schemaRegistryClient == null) {
+      throw new BadRequestException(
+          "Could not find schema registry client to fetch requested schema"
+      );
+    }
+  }
+
   /**
    * Check if the ProduceRequestData contains a non-null schemaVersion and all other
    * schema related fields are null.
    */
-  private static boolean supportsSchemaVersion(ProduceRequestData produceRequestData) {
+  private static boolean onlySchemaVersion(ProduceRequestData produceRequestData) {
     // Only schemaVersion must be set
     return produceRequestData.getSchemaVersion() != null
+        && produceRequestData.getSubject() == null
+        && produceRequestData.getSubjectNameStrategy() == null
         && !unsupportedFieldsSet(produceRequestData);
   }
 
-  @SuppressWarnings("BooleanExpressionComplexity")
+  private static boolean schemaVersionWithSubjectAndSubjectNameStrategy(
+      ProduceRequestData produceRequestData
+  ) {
+    return produceRequestData.getSchemaVersion() != null
+        && produceRequestData.getSubject() != null
+        && produceRequestData.getSubjectNameStrategy() != null
+        && !unsupportedFieldsSet(produceRequestData);
+  }
+
   private static boolean unsupportedFieldsSet(ProduceRequestData produceRequestData) {
-    return (produceRequestData.getSchemaId() != null
-        || produceRequestData.getSubject() != null)
-        || produceRequestData.getSubjectNameStrategy() != null
+    return
+        // schema_id, type and schema must not be set
+        produceRequestData.getSchemaId() != null
         || produceRequestData.getType() != null
-        || produceRequestData.getSchema() != null;
+        || produceRequestData.getSchema() != null ||
+        // Subject and subject name strategy must be set together, or not at all
+        (produceRequestData.getSubject() == null
+            && produceRequestData.getSubjectNameStrategy() != null)
+        || (produceRequestData.getSubject() != null
+        && produceRequestData.getSubjectNameStrategy() == null);
   }
 
   private RegisteredSchema getSchemaFromSchemaVersion(
-      @Nullable SchemaRegistryClient schemaRegistryClient,
+      SchemaRegistryClient schemaRegistryClient,
       String topicName,
       Integer schemaVersion,
       boolean isKey
   ) {
-    if (schemaRegistryClient == null) {
-      if (schemaVersion != null) {
-        throw new BadRequestException("Schema version requested without a schema registry client");
-      }
-      return null;
-    }
-
     var schema = schemaRegistryClient.getByVersion(
         // Note: We default to TopicNameStrategy for the subject name for the sake of simplicity.
         (isKey ? topicName + "-key" : topicName + "-value"),
@@ -94,31 +118,62 @@ public class SchemaManager {
         false
     );
 
-    ParsedSchema parsedSchema;
-    try {
-      parsedSchema = parseSchema(schema);
-    } catch (IllegalArgumentException e) {
-      throw new BadRequestException("Failed to parse schema: %s".formatted(e.getMessage()), e);
-    }
+    var parsedSchema = getParsedSchema(schema);
 
     return new RegisteredSchema(
-        schema.getSubject(), schema.getId(), schema.getVersion(), parsedSchema
+        schema.getSubject(),
+        SubjectNameStrategyEnum.TOPIC_NAME,
+        schema.getId(),
+        schema.getVersion(),
+        parsedSchema
     );
   }
 
-  private ParsedSchema parseSchema(Schema schema) {
+  private RegisteredSchema getSchemaFromSubject(
+      SchemaRegistryClient schemaRegistryClient,
+      Integer schemaVersion,
+      String subject,
+      String subjectNameStrategy
+  ) {
+    var strategy = SubjectNameStrategyEnum.parse(subjectNameStrategy);
+    if (strategy.isEmpty()) {
+        throw new BadRequestException(
+            "Invalid subject name strategy: %s".formatted(subjectNameStrategy)
+        );
+    }
+
+    var schema = schemaRegistryClient.getByVersion(
+        subject,
+        schemaVersion,
+        false
+    );
+
+    var parsedSchema = getParsedSchema(schema);
+
+    return new RegisteredSchema(
+        schema.getSubject(),
+        strategy.get(),
+        schema.getId(),
+        schema.getVersion(),
+        parsedSchema
+    );
+  }
+
+  private ParsedSchema getParsedSchema(Schema schema) {
     var schemaFormat = SchemaFormat.fromSchemaType(schema.getSchemaType());
     var schemaProvider = Optional
         .ofNullable(schemaFormat.schemaProvider())
         .orElseThrow(() ->
-            new IllegalArgumentException("Unsupported schema type: " + schema.getSchemaType()));
+            new BadRequestException("Unsupported schema type: " + schema.getSchemaType()));
     return schemaProvider
         .parseSchema(schema, false)
         .orElseThrow(() -> new BadRequestException("Failed to parse schema"));
   }
 
+
   public record RegisteredSchema(
       String subject,
+      SubjectNameStrategyEnum subjectNameStrategy,
       Integer schemaId,
       Integer schemaVersion,
       ParsedSchema parsedSchema
