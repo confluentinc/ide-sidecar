@@ -592,7 +592,7 @@ public class FeatureFlags {
 
   /**
    * Refresh the evaluation of the LaunchDarkly feature flags using the current LD context,
-   * which can change as connections are established and disconnected.
+   * which can change as connections are established, updated, and disconnected.
    *
    * @param forced true if the flags should be refreshed even if they were refreshed recently
    * @return the latch that can be used to wait for all projects' flags to be evaluated; never null
@@ -666,6 +666,29 @@ public class FeatureFlags {
    * @param connection the connection that was disconnected
    */
   void onConnectionConnected(@ObservesAsync @Lifecycle.Connected ConnectionState connection) {
+    if (connection instanceof CCloudConnectionState ccloudConnection) {
+      updateCCloudContext(ccloudConnection);
+    }
+    refreshFlags(true);
+  }
+
+  /**
+   * Respond to the connection being updated by updating the LD context
+   * and re-evaluating the flags.
+   *
+   * <p>This updates the LaunchDarkly context used to evaluate feature flags to contain:
+   * <ol>
+   *   <li>
+   *     the general {@code Device} context with the {@link #DEVICE_UUID generated device UUID}; and
+   *   </li>
+   *   <li>
+   *     a {@code User} context with the logged in CCloud {@code userResourceId} as the context key
+   *   </li>
+   * </ol>
+   *
+   * @param connection the connection that was dupdated
+   */
+  void onConnectionUpdated(@ObservesAsync @Lifecycle.Connected ConnectionState connection) {
     if (connection instanceof CCloudConnectionState ccloudConnection) {
       updateCCloudContext(ccloudConnection);
     }

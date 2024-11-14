@@ -5,7 +5,6 @@ import io.confluent.idesidecar.restapi.cache.Clients;
 import io.confluent.idesidecar.restapi.cache.ClusterCache;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import java.util.Properties;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 
@@ -17,7 +16,7 @@ public class KafkaProducerClients extends Clients<KafkaProducer<byte[], byte[]>>
   private static final ByteArraySerializer BYTE_ARRAY_SERIALIZER = new ByteArraySerializer();
 
   @Inject
-  ClusterCache clusterCache;
+  ClientConfigurator configurator;
 
   public KafkaProducerClients() {
     super(CaffeineSpec.parse(CAFFEINE_SPEC));
@@ -27,20 +26,17 @@ public class KafkaProducerClients extends Clients<KafkaProducer<byte[], byte[]>>
     return getClient(
         connectionId,
         clusterId,
-        () -> new KafkaProducer<>(
-            getProducerConfig(connectionId, clusterId),
-            BYTE_ARRAY_SERIALIZER,
-            BYTE_ARRAY_SERIALIZER
-        )
+        () -> {
+          // Generate the Kafka producer configuration
+          var config = configurator.getProducerClientConfig(
+              connectionId,
+              clusterId,
+              true,
+              false
+          );
+          // Create the producer
+          return new KafkaProducer<>(config, BYTE_ARRAY_SERIALIZER, BYTE_ARRAY_SERIALIZER);
+        }
     );
-  }
-
-  private Properties getProducerConfig(String connectionId, String kafkaClusterId) {
-    var kafkaCluster = clusterCache.getKafkaCluster(connectionId, kafkaClusterId);
-    var props = new Properties();
-    props.put("bootstrap.servers", kafkaCluster.bootstrapServers());
-    clusterCache.maybeGetSchemaRegistryForKafkaClusterId(connectionId, kafkaClusterId)
-        .ifPresent(sr -> props.put("schema.registry.url", sr.uri()));
-    return props;
   }
 }

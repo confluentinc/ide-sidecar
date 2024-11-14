@@ -27,6 +27,9 @@ public class SchemaRegistryClients extends Clients<SchemaRegistryClient> {
   ClusterCache clusterCache;
 
   @Inject
+  ClientConfigurator configurator;
+
+  @Inject
   SidecarAccessTokenBean accessTokenBean;
 
   @ConfigProperty(name = "ide-sidecar.api.host")
@@ -41,14 +44,21 @@ public class SchemaRegistryClients extends Clients<SchemaRegistryClient> {
     return getClient(
         connectionId,
         clusterId,
-        () -> createClient(
-            sidecarHost,
-            Map.of(
-                RequestHeadersConstants.CONNECTION_ID_HEADER, connectionId,
-                RequestHeadersConstants.CLUSTER_ID_HEADER, clusterId,
-                AUTHORIZATION, "Bearer %s".formatted(accessTokenBean.getToken())
-            )
-        ));
+        () -> {
+          // Generate the Schema Registry client configuration
+          var config = configurator.getSchemaRegistryClientConfig(
+              connectionId,
+              clusterId,
+              false
+          );
+          var headers = Map.of(
+              RequestHeadersConstants.CONNECTION_ID_HEADER, connectionId,
+              RequestHeadersConstants.CLUSTER_ID_HEADER, clusterId,
+              AUTHORIZATION, "Bearer %s".formatted(accessTokenBean.getToken())
+          );
+          // Create the Schema Registry client
+          return createClient(sidecarHost, config, headers);
+        });
   }
 
   public SchemaRegistryClient getClientByKafkaClusterId(
@@ -64,13 +74,14 @@ public class SchemaRegistryClients extends Clients<SchemaRegistryClient> {
 
   private SchemaRegistryClient createClient(
       String srClusterUri,
+      Map<String, Object> configurationProperties,
       Map<String, String> headers
   ) {
     return new CachedSchemaRegistryClient(
         Collections.singletonList(srClusterUri),
         SR_CACHE_SIZE,
         SCHEMA_PROVIDERS,
-        Collections.emptyMap(),
+        configurationProperties,
         headers
     );
   }
