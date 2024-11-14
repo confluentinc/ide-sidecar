@@ -191,7 +191,7 @@ public class ConnectionsResourceTest {
     assertEquals(expectedSpecAsJson, treeActual.get("spec"));
 
     // Verify ConnectionStatus
-    ConnectionStatus expectedStatus = ConnectionStatus.INITIAL_STATUS;
+    ConnectionStatus expectedStatus = ConnectionStatus.INITIAL_CCLOUD_STATUS;
     JsonNode expectedStatusAsJson = asJson(expectedStatus);
     assertTrue(treeActual.has("status"));
     assertEquals(expectedStatusAsJson, treeActual.get("status"));

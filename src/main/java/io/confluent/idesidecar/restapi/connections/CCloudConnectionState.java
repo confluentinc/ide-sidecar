@@ -6,8 +6,9 @@ import io.confluent.idesidecar.restapi.models.ConnectionMetadata;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
 import io.confluent.idesidecar.restapi.models.ConnectionStatus;
-import io.confluent.idesidecar.restapi.models.ConnectionStatus.Authentication;
-import io.confluent.idesidecar.restapi.models.ConnectionStatus.Authentication.Status;
+import io.confluent.idesidecar.restapi.models.ConnectionStatus.CCloudStatus;
+import io.confluent.idesidecar.restapi.models.ConnectionStatus.ConnectedState;
+import io.confluent.idesidecar.restapi.models.ConnectionStatusBuilder;
 import io.confluent.idesidecar.restapi.resources.ConnectionsResource;
 import io.quarkus.logging.Log;
 import io.smallrye.common.constraint.NotNull;
@@ -36,15 +37,23 @@ public class CCloudConnectionState extends ConnectionState {
   /**
    * For connections of type {@link ConnectionType#CCLOUD}, the status is determined as follows:
    * <ul>
-   * <li>{@link Status#NO_TOKEN}, if the connection does not hold all three tokens, i.e., if the
-   * user has not yet authenticated with CCloud.</li>
-   * <li>{@link Status#VALID_TOKEN}, if the connection holds all tokens and if it can perform API
-   * requests against the CCloud API. In this case, it also provides the time at which the user
-   * must re-authenticate with CCloud.</li>
-   * <li>{@link Status#INVALID_TOKEN}, if the connection holds all tokens but cannot perform API
-   * requests against the CCloud API.</li>
-   * <li>{@link Status#FAILED}, if the connection experienced a non-transient error from which it
-   * cannot recover.</li>
+   *   <li>
+   *     {@link ConnectedState#NONE}, if the connection does not hold all three tokens,
+   *     i.e., if the user has not yet authenticated with CCloud.
+   *   </li>
+   *   <li>
+   *     {@link ConnectedState#SUCCESS}, if the connection holds all tokens and if it can perform
+   *     API requests against the CCloud API. In this case, it also provides the time at which
+   *     the user must re-authenticate with CCloud.
+   *   </li>
+   *   <li>
+   *     {@link ConnectedState#EXPIRED}, if the connection holds all tokens but cannot perform API
+   *     requests against the CCloud API.
+   *   </li>
+   *   <li>
+   *     {@link ConnectedState#FAILED}, if the connection experienced a non-transient error
+   *     from which it cannot recover.
+   *   </li>
    * </ul>
    *
    * @return status of connection
@@ -72,14 +81,17 @@ public class CCloudConnectionState extends ConnectionState {
       return getInitialStatusWithErrors(getAuthErrors(oauthContext));
     } else if (oauthContext.hasNonTransientError()) {
       return Future.succeededFuture(
-          new ConnectionStatus(
-              new Authentication(
-                  Status.FAILED,
-                  null,
-                  null,
-                  getAuthErrors(oauthContext)
+          ConnectionStatusBuilder
+              .builder()
+              .ccloud(
+                  new CCloudStatus(
+                      ConnectedState.FAILED,
+                      null,
+                      null,
+                      getAuthErrors(oauthContext)
+                  )
               )
-          )
+              .build()
       );
     } else {
       return oauthContext
@@ -94,22 +106,31 @@ public class CCloudConnectionState extends ConnectionState {
               listener.connected(this);
               // Generate the updated status
               var user = oauthContext.getUser();
-              return new ConnectionStatus(
-                  new Authentication(
-                      Status.VALID_TOKEN,
-                      oauthContext.getEndOfLifetime(),
-                      user != null ? user.asUserInfo() : null,
-                      errors));
+              return ConnectionStatusBuilder
+                  .builder()
+                  .ccloud(
+                    new CCloudStatus(
+                        ConnectedState.SUCCESS,
+                        oauthContext.getEndOfLifetime(),
+                        user != null ? user.asUserInfo() : null,
+                        errors
+                    )
+                  ).build();
             } else {
-              // Notify the listener of no authentication
+              // Notify the listener of no authentication, which we treat as expired
+              // since we already handled non-transient errors above
               listener.disconnected(this);
               // And return updated status
-              return new ConnectionStatus(
-                  new Authentication(
-                      Status.INVALID_TOKEN,
-                      null,
-                      null,
-                      errors));
+              return ConnectionStatusBuilder
+                  .builder()
+                  .ccloud(
+                      new CCloudStatus(
+                          ConnectedState.EXPIRED,
+                          null,
+                          null,
+                          errors
+                      )
+                  ).build();
             }
           });
     }
@@ -147,14 +168,16 @@ public class CCloudConnectionState extends ConnectionState {
 
   private Future<ConnectionStatus> getInitialStatusWithErrors(AuthErrors errors) {
     return Future.succeededFuture(
-        new ConnectionStatus(
-            new Authentication(
-                Status.NO_TOKEN,
-                null,
-                null,
-                errors
-            )
-        )
+        ConnectionStatusBuilder
+            .builder()
+            .ccloud(
+                new CCloudStatus(
+                    ConnectedState.NONE,
+                    null,
+                    null,
+                    errors
+                )
+            ).build()
     );
   }
 
