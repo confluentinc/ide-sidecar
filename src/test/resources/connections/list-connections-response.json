@@ -47,6 +47,9 @@
       {
         "authentication": {
           "status": "NO_TOKEN"
+        },
+        "ccloud": {
+          "state": "NONE"
         }
       }
     }

@@ -6,21 +6,145 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.confluent.idesidecar.restapi.auth.AuthErrors;
 import io.confluent.idesidecar.restapi.models.ConnectionStatus.Authentication.Status;
+import io.soabase.recordbuilder.core.RecordBuilder;
+import jakarta.validation.constraints.Null;
 import java.time.Instant;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 /**
  * Represents the status of a connection.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-public record ConnectionStatus(@JsonProperty(required = true) Authentication authentication) {
+@JsonInclude(Include.NON_NULL)
+@RecordBuilder
+public record ConnectionStatus(
+    @JsonProperty("ccloud")
+    CCloudStatus ccloud,
+
+    @JsonProperty("kafka_cluster")
+    KafkaClusterStatus kafkaCluster,
+
+    @JsonProperty("schema_registry")
+    SchemaRegistryStatus schemaRegistry
+) implements ConnectionStatusBuilder.With {
+
+  // TODO: Remove this once the extension has been updated to use the new status
+  @JsonProperty(required = true)
+  public Authentication authentication() {
+    if (ccloud != null) {
+    return new Authentication(
+        Status.from(ccloud.state()),
+        ccloud.requiresAuthenticationAt(),
+        ccloud.user(),
+        ccloud.errors()
+    );
+    }
+    return new Authentication(Status.NO_TOKEN, null, null, null);
+  }
 
   /**
    * Initial status of any connection. A new connection does not hold any token, does
    * not know the end of the lifetime of its tokens, and has not faced any errors.
    */
   public static final ConnectionStatus INITIAL_STATUS =
-      new ConnectionStatus(new Authentication(Status.NO_TOKEN, null, null, null));
+      new ConnectionStatus(
+          null,
+          null,
+          null
+      );
 
+  public static final ConnectionStatus INITIAL_CCLOUD_STATUS =
+      new ConnectionStatus(
+          new CCloudStatus(ConnectedState.NONE, null, null, null),
+          null,
+          null
+      );
+
+  public enum ConnectedState {
+    @Schema(description = "No connection has been established yet.")
+    NONE,
+    @Schema(description = "Currently attempting to establish the connection.")
+    ATTEMPTING,
+    @Schema(description = "The connection has been successfully established.")
+    SUCCESS,
+    @Schema(description = "The connection has expired and must be re-established.")
+    EXPIRED,
+    @Schema(description = "The connection has failed.")
+    FAILED;
+  }
+
+  @Schema(description = "The status related to CCloud.")
+  @JsonInclude(Include.NON_NULL)
+  @RecordBuilder
+  public record CCloudStatus(
+      @Schema(
+          description = "The state of the connection to CCloud."
+      )
+      @JsonProperty(required = true)
+      ConnectedState state,
+
+      @Schema(description =
+          "If the connection's auth context holds a valid token, this attribute holds the time at "
+          + "which the user must re-authenticate because, for instance, the refresh token reached "
+          + "the end of its absolute lifetime."
+      )
+      @JsonProperty(value = "requires_authentication_at")
+      Instant requiresAuthenticationAt,
+
+      @Schema(description = "Information about the authenticated principal, if known.")
+      @JsonProperty
+      @Null
+      UserInfo user,
+
+      @Schema(description = "Errors related to the connection to the Kafka cluster.")
+      @JsonProperty
+      @Null
+      AuthErrors errors
+  ) implements ConnectionStatusCCloudStatusBuilder.With {
+  }
+
+  @Schema(description = "The status related to the specified Kafka cluster.")
+  @JsonInclude(Include.NON_NULL)
+  @RecordBuilder
+  public record KafkaClusterStatus(
+      @Schema(description = "The state of the connection to the Kafka cluster.")
+      @JsonProperty(required = true)
+      ConnectedState state,
+
+      @Schema(description = "Information about the authenticated principal, if known.")
+      @JsonProperty
+      @Null
+      UserInfo user,
+
+      @Schema(description = "Errors related to the connection to the Kafka cluster.")
+      @JsonProperty
+      @Null
+      AuthErrors errors
+  ) implements ConnectionStatusKafkaClusterStatusBuilder.With {
+  }
+
+  @Schema(description = "The status related to the specified Schema Registry.")
+  @JsonInclude(Include.NON_NULL)
+  @RecordBuilder
+  public record SchemaRegistryStatus(
+      @Schema(description = "The state of the connection to the Schema Registry.")
+      @JsonProperty(required = true)
+      ConnectedState state,
+
+      @Schema(description = "Information about the authenticated principal, if known.")
+      @JsonProperty
+      @Null
+      UserInfo user,
+
+      @Schema(description = "Errors related to the connection to the Schema Registry.")
+      @JsonProperty
+      @Null
+      AuthErrors errors
+  ) implements ConnectionStatusSchemaRegistryStatusBuilder.With {
+  }
+
+  @Schema(description = "The authentication-related status (deprecated).")
+  // TODO: Remove this once the extension has been updated to use the new status
   @JsonInclude(Include.NON_NULL)
   public record Authentication(
       @JsonProperty(required = true) Status status,
@@ -54,7 +178,17 @@ public record ConnectionStatus(@JsonProperty(required = true) Authentication aut
       NO_TOKEN,
       VALID_TOKEN,
       INVALID_TOKEN,
-      FAILED
+      FAILED;
+
+      public static Status from(ConnectedState state) {
+        return switch (state) {
+          case NONE -> NO_TOKEN;
+          case SUCCESS -> VALID_TOKEN;
+          case EXPIRED -> INVALID_TOKEN;
+          case FAILED -> FAILED;
+          default -> throw new IllegalArgumentException("Invalid state: " + state);
+        };
+      }
     }
   }
 

@@ -716,6 +716,7 @@
         }
       },
       "Authentication" : {
+        "description" : "The authentication-related status (deprecated).",
         "required" : [ "status" ],
         "type" : "object",
         "properties" : {
@@ -768,6 +769,41 @@
           }
         }
       },
+      "CCloudStatus" : {
+        "description" : "The status related to CCloud.",
+        "required" : [ "state" ],
+        "type" : "object",
+        "properties" : {
+          "state" : {
+            "description" : "The state of the connection to CCloud.",
+            "type" : "string",
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/ConnectedState"
+            } ]
+          },
+          "requires_authentication_at" : {
+            "description" : "If the connection's auth context holds a valid token, this attribute holds the time at which the user must re-authenticate because, for instance, the refresh token reached the end of its absolute lifetime.",
+            "type" : "string",
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/Instant"
+            } ]
+          },
+          "user" : {
+            "description" : "Information about the authenticated principal, if known.",
+            "type" : "object",
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/UserInfo"
+            } ]
+          },
+          "errors" : {
+            "description" : "Errors related to the connection to the Kafka cluster.",
+            "type" : "object",
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/AuthErrors"
+            } ]
+          }
+        }
+      },
       "CollectionMetadata" : {
         "type" : "object",
         "properties" : {
@@ -782,6 +818,10 @@
             "type" : "integer"
           }
         }
+      },
+      "ConnectedState" : {
+        "enum" : [ "NONE", "ATTEMPTING", "SUCCESS", "EXPIRED", "FAILED" ],
+        "type" : "string"
       },
       "Connection" : {
         "required" : [ "api_version", "kind", "id", "metadata", "spec", "status" ],
@@ -877,6 +917,15 @@
         "required" : [ "authentication" ],
         "type" : "object",
         "properties" : {
+          "ccloud" : {
+            "$ref" : "#/components/schemas/CCloudStatus"
+          },
+          "kafka_cluster" : {
+            "$ref" : "#/components/schemas/KafkaClusterStatus"
+          },
+          "schema_registry" : {
+            "$ref" : "#/components/schemas/SchemaRegistryStatus"
+          },
           "authentication" : {
             "$ref" : "#/components/schemas/Authentication"
           }
@@ -1089,6 +1138,34 @@
             "default" : true,
             "type" : "boolean",
             "nullable" : true
+          }
+        }
+      },
+      "KafkaClusterStatus" : {
+        "description" : "The status related to the specified Kafka cluster.",
+        "required" : [ "state" ],
+        "type" : "object",
+        "properties" : {
+          "state" : {
+            "description" : "The state of the connection to the Kafka cluster.",
+            "type" : "string",
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/ConnectedState"
+            } ]
+          },
+          "user" : {
+            "description" : "Information about the authenticated principal, if known.",
+            "type" : "object",
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/UserInfo"
+            } ]
+          },
+          "errors" : {
+            "description" : "Errors related to the connection to the Kafka cluster.",
+            "type" : "object",
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/AuthErrors"
+            } ]
           }
         }
       },
@@ -1307,6 +1384,34 @@
               "$ref" : "#/components/schemas/ApiKeyAndSecret"
             } ],
             "nullable" : true
+          }
+        }
+      },
+      "SchemaRegistryStatus" : {
+        "description" : "The status related to the specified Schema Registry.",
+        "required" : [ "state" ],
+        "type" : "object",
+        "properties" : {
+          "state" : {
+            "description" : "The state of the connection to the Schema Registry.",
+            "type" : "string",
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/ConnectedState"
+            } ]
+          },
+          "user" : {
+            "description" : "Information about the authenticated principal, if known.",
+            "type" : "object",
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/UserInfo"
+            } ]
+          },
+          "errors" : {
+            "description" : "Errors related to the connection to the Schema Registry.",
+            "type" : "object",
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/AuthErrors"
+            } ]
           }
         }
       },
