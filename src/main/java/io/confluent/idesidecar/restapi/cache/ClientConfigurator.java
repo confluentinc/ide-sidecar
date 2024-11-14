@@ -410,13 +410,10 @@ public class ClientConfigurator {
     }
 
     var configs = new LinkedHashMap<>(SERDE_CONFIGS);
-    if (schema.get().subjectNameStrategy() != null) {
-      // Override the default
-      configs.put(
-          (isKey ? "key.subject.name.strategy" : "value.subject.name.strategy"),
-          schema.get().subjectNameStrategy().strategyClassName
-      );
-    }
+    configs.put(
+      (isKey ? "key.subject.name.strategy" : "value.subject.name.strategy"),
+      schema.get().subjectNameStrategy().strategyClassName
+    );
 
     // No need to pass SR auth properties since it will hit
     // the SR REST proxy in the sidecar, which handles any
