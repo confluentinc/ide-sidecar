@@ -39,7 +39,7 @@ public class CCloudConnectionTest {
         .onComplete(
             testContext.succeeding(connectionStatus ->
                 testContext.verify(() -> {
-                  assertEquals(ConnectionStatus.INITIAL_STATUS, connectionStatus);
+                  assertEquals(ConnectionStatus.INITIAL_CCLOUD_STATUS, connectionStatus);
                   testContext.completeNow();
                 })));
 
