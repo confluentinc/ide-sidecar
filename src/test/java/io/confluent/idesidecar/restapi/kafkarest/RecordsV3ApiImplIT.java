@@ -381,7 +381,7 @@ class RecordsV3ApiImplIT {
               .value(data)
               .build()
       )
-          .statusCode(501)
+          .statusCode(400)
           .body("message", equalTo(
               "This endpoint does not support specifying schema ID, type, schema, standalone subject or subject name strategy."
           ));
