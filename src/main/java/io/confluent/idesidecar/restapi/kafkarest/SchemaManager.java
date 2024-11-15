@@ -10,7 +10,9 @@ import jakarta.ws.rs.BadRequestException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 @ApplicationScoped
 public class SchemaManager {
@@ -31,6 +33,15 @@ public class SchemaManager {
       ProduceRequestData produceRequestData,
       boolean isKey
   ) {
+    // If any of the other schema related fields are set, disallow the request
+    // Note: We can implement support for various combinations of these fields as we see fit.
+    if (!produceRequestIsValid(produceRequestData)) {
+      throw new UnsupportedOperationException(
+          "This endpoint does not support specifying "
+              + "schema ID, type, schema, standalone subject or subject name strategy."
+      );
+    }
+
     // If only the schemaVersion is set, use it to fetch the schema
     // with the default subject name strategy (TopicNameStrategy)
     if (onlySchemaVersion(produceRequestData)) {
@@ -53,15 +64,6 @@ public class SchemaManager {
       ));
     }
 
-    // If any of the other schema related fields are set, disallow the request
-    // Note: We can implement support for various combinations of these fields as we see fit.
-    if (unsupportedFieldsSet(produceRequestData)) {
-      throw new UnsupportedOperationException(
-          "This endpoint does not support specifying "
-              + "schema ID, type, schema, standalone subject or subject name strategy."
-      );
-    }
-
     return Optional.empty();
   }
 
@@ -81,8 +83,7 @@ public class SchemaManager {
     // Only schemaVersion must be set
     return produceRequestData.getSchemaVersion() != null
         && produceRequestData.getSubject() == null
-        && produceRequestData.getSubjectNameStrategy() == null
-        && !unsupportedFieldsSet(produceRequestData);
+        && produceRequestData.getSubjectNameStrategy() == null;
   }
 
   private static boolean schemaVersionWithSubjectAndSubjectNameStrategy(
@@ -90,21 +91,28 @@ public class SchemaManager {
   ) {
     return produceRequestData.getSchemaVersion() != null
         && produceRequestData.getSubject() != null
-        && produceRequestData.getSubjectNameStrategy() != null
-        && !unsupportedFieldsSet(produceRequestData);
+        && produceRequestData.getSubjectNameStrategy() != null;
   }
 
-  private static boolean unsupportedFieldsSet(ProduceRequestData produceRequestData) {
-    return
-        // schema_id, type and schema must not be set
-        produceRequestData.getSchemaId() != null
-        || produceRequestData.getType() != null
-        || produceRequestData.getSchema() != null ||
-        // Subject and subject name strategy must be set together, or not at all
-        (produceRequestData.getSubject() == null
-            && produceRequestData.getSubjectNameStrategy() != null)
-        || (produceRequestData.getSubject() != null
-        && produceRequestData.getSubjectNameStrategy() == null);
+  private static boolean produceRequestIsValid(ProduceRequestData produceRequestData) {
+    // schema_id, type and schema must not be set
+    var unsupportedFields = Stream.of(
+        produceRequestData.getSchemaId(),
+        produceRequestData.getType(),
+        produceRequestData.getSchema()
+    );
+    // All must be null
+    var areUnsupportedFieldsSet = unsupportedFields.allMatch(Objects::isNull);
+
+    // Subject and subject name strategy must be set together, or not at all
+    var subjectAndSubjectNameStrategy = Stream.of(
+        produceRequestData.getSubject(),
+        produceRequestData.getSubjectNameStrategy()
+    ).toList();
+    var validSubject = subjectAndSubjectNameStrategy.stream().allMatch(Objects::isNull)
+        || subjectAndSubjectNameStrategy.stream().noneMatch(Objects::isNull);
+
+    return areUnsupportedFieldsSet && validSubject;
   }
 
   private RegisteredSchema getSchemaFromSchemaVersion(
