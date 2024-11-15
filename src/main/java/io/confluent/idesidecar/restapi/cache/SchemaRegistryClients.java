@@ -4,9 +4,12 @@ import static io.confluent.idesidecar.restapi.kafkarest.SchemaManager.SCHEMA_PRO
 import static jakarta.ws.rs.core.HttpHeaders.AUTHORIZATION;
 
 import io.confluent.idesidecar.restapi.application.SidecarAccessTokenBean;
+import io.confluent.idesidecar.restapi.exceptions.ClusterNotFoundException;
+import io.confluent.idesidecar.restapi.exceptions.SchemaRegistryClusterNotFoundException;
 import io.confluent.idesidecar.restapi.util.RequestHeadersConstants;
 import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
+import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.util.Collections;
@@ -38,17 +41,18 @@ public class SchemaRegistryClients extends Clients<SchemaRegistryClient> {
    * sidecar's Schema Registry proxy routes to forward the request to the correct Schema Registry
    * instance.
    */
-  public SchemaRegistryClient getClient(String connectionId, String clusterId) {
+  public SchemaRegistryClient getClient(String connectionId, String clusterId)
+      throws SchemaRegistryClusterNotFoundException {
+    // Generate the Schema Registry client configuration
+    final var config = configurator.getSchemaRegistryClientConfig(
+        connectionId,
+        clusterId,
+        false
+    );
     return getClient(
         connectionId,
         clusterId,
         () -> {
-          // Generate the Schema Registry client configuration
-          var config = configurator.getSchemaRegistryClientConfig(
-              connectionId,
-              clusterId,
-              false
-          );
           var headers = Map.of(
               RequestHeadersConstants.CONNECTION_ID_HEADER, connectionId,
               RequestHeadersConstants.CLUSTER_ID_HEADER, clusterId,
@@ -59,15 +63,35 @@ public class SchemaRegistryClients extends Clients<SchemaRegistryClient> {
         });
   }
 
+  private Map<String, Object> getSchemaRegistryClientConfig(String connectionId, String clusterId) {
+    try {
+      return configurator.getSchemaRegistryClientConfig(
+          connectionId,
+          clusterId,
+          false
+      );
+    } catch (SchemaRegistryClusterNotFoundException e) {
+      Log.errorf(
+          "Could not find Schema Registry cluster for connection ID %s and cluster ID %s",
+          connectionId, clusterId
+      );
+      throw new RuntimeException(e);
+    }
+  }
+
   public SchemaRegistryClient getClientByKafkaClusterId(
       String connectionId,
       String kafkaClusterId
-  ) {
+  ) throws ClusterNotFoundException {
     var srCluster = clusterCache.maybeGetSchemaRegistryForKafkaClusterId(
         connectionId, kafkaClusterId
     );
 
-    return srCluster.map(sr -> getClient(connectionId, sr.id())).orElse(null);
+    if (srCluster.isPresent()) {
+      return getClient(connectionId, srCluster.get().id());
+    }
+
+    return null;
   }
 
   private SchemaRegistryClient createClient(
