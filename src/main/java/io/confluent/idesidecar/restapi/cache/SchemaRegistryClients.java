@@ -7,6 +7,7 @@ import io.confluent.idesidecar.restapi.application.SidecarAccessTokenBean;
 import io.confluent.idesidecar.restapi.util.RequestHeadersConstants;
 import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
+import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.util.Collections;
@@ -46,8 +47,7 @@ public class SchemaRegistryClients extends Clients<SchemaRegistryClient> {
           // Generate the Schema Registry client configuration
           var config = configurator.getSchemaRegistryClientConfig(
               connectionId,
-              clusterId,
-              false
+              clusterId
           );
           var headers = Map.of(
               RequestHeadersConstants.CONNECTION_ID_HEADER, connectionId,
@@ -55,7 +55,15 @@ public class SchemaRegistryClients extends Clients<SchemaRegistryClient> {
               AUTHORIZATION, "Bearer %s".formatted(accessTokenBean.getToken())
           );
           // Create the Schema Registry client
-          return createClient(sidecarHost, config, headers);
+          var client = createClient(sidecarHost, config.asMap(), headers);
+          Log.debugf(
+              "Created SR client %s for connection %s and cluster %s with configuration:\n  %s",
+              client,
+              connectionId,
+              clusterId,
+              config
+          );
+          return client;
         });
   }
 

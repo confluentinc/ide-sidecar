@@ -12,10 +12,12 @@ import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
 import io.confluent.idesidecar.restapi.models.graph.KafkaCluster;
 import io.confluent.idesidecar.restapi.models.graph.SchemaRegistry;
 import io.confluent.idesidecar.restapi.util.CCloud;
+import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 @ApplicationScoped
@@ -32,16 +34,20 @@ public class ClientConfigurator {
    * are not included.
    *
    * @param connection        the connection
-   * @param cluster           the Kafka cluster to use
-   * @param sr                the Schema Registry to use, or null if not needed
+   * @param clusterId         the ID of the Kafka cluster to use
+   * @param bootstrapServers  the bootstrap servers of the Kafka cluster to use
+   * @param srId              the ID of the Schema Registry to use, or null if not needed
+   * @param srUri             the URI of the Schema Registry to use, or null if not needed
    * @param redact            whether to redact sensitive properties
    * @param defaultProperties the default properties to use; may be overridden by computed values
    * @return the Kafka client configuration properties
    */
-  static Map<String, Object> getKafkaClientConfig(
+  public static Map<String, Object> getKafkaClientConfig(
       ConnectionState connection,
-      KafkaCluster cluster,
-      SchemaRegistry sr,
+      String clusterId,
+      String bootstrapServers,
+      String srId,
+      String srUri,
       boolean redact,
       Map<String, String> defaultProperties
   ) {
@@ -50,19 +56,19 @@ public class ClientConfigurator {
     var props = new LinkedHashMap<String, Object>(defaultProperties);
 
     // First set the bootstrap servers
-    props.put("bootstrap.servers", cluster.bootstrapServers());
+    props.put("bootstrap.servers", bootstrapServers);
 
     // Second, add any connection properties for Kafka cluster credentials (if defined)
-    var options = connection.getKafkaConnectionOptions(cluster.id()).withRedact(redact);
+    var options = connection.getKafkaConnectionOptions(clusterId).withRedact(redact);
     connection
-        .getKafkaCredentials(cluster.id())
+        .getKafkaCredentials(clusterId)
         .flatMap(creds -> creds.kafkaClientProperties(options))
         .ifPresent(props::putAll);
 
     // Add any auth properties for Schema Registry to the Kafka client config,
     // with the "schema.registry." prefix (unless the property already starts with that)
-    if (sr != null) {
-      var additional = getSchemaRegistryClientConfig(connection, sr, redact);
+    if (srUri != null) {
+      var additional = getSchemaRegistryClientConfig(connection, srId, srUri, redact);
       additional.forEach((k, v) -> {
         if (k.startsWith("schema.registry.")) {
           props.put(k, v);
@@ -81,28 +87,34 @@ public class ClientConfigurator {
    * sample configuration for display or logging.
    *
    * @param connection the connection
-   * @param sr         the Schema Registry to use, or null if not needed
+   * @param srId       the ID of the Schema Registry to use
+   * @param srUri      the URI of the Schema Registry to use
    * @param redact     whether to redact sensitive properties
    * @return the Schema Registry client configuration properties
    */
-  static Map<String, Object> getSchemaRegistryClientConfig(
+  public static Map<String, Object> getSchemaRegistryClientConfig(
       ConnectionState connection,
-      SchemaRegistry sr,
+      String srId,
+      String srUri,
       boolean redact
   ) {
     // Find the cluster using the connection ID, and fail if either does not exist
     var props = new LinkedHashMap<String, Object>();
 
     // First set the schema registry URL
-    props.put("schema.registry.url", sr.uri());
+    props.put("schema.registry.url", srUri);
 
-    // CCloud requires the logical cluster ID to be set in the properties
-    var logicalId = sr.logicalId().map(CCloud.LsrcId::id).orElse(null);
+    // CCloud requires the logical cluster ID to be set in the properties, so examine the URL
+    var logicalId = CCloud.SchemaRegistryIdentifier
+        .parse(srUri)
+        .map(CCloud.LsrcId.class::cast)
+        .map(CCloud.LsrcId::id)
+        .orElse(null);
 
     // Add any properties for SR credentials (if defined)
     var options = new Credentials.SchemaRegistryConnectionOptions(redact, logicalId);
     connection
-        .getSchemaRegistryCredentials(sr.id())
+        .getSchemaRegistryCredentials(srId)
         .flatMap(creds -> creds.schemaRegistryClientProperties(options))
         .ifPresent(props::putAll);
     return props;
@@ -117,6 +129,48 @@ public class ClientConfigurator {
   @ConfigProperty(name = "ide-sidecar.admin-client-configs")
   Map<String, String> adminClientSidecarConfigs;
 
+  public static class Configuration {
+    final Supplier<Map<String, Object>> configSupplier;
+    final Supplier<Map<String, Object>> redactedSupplier;
+    final Map<String, Object> overrides = new LinkedHashMap<>();
+
+    Configuration(
+        Supplier<Map<String, Object>> configSupplier,
+        Supplier<Map<String, Object>> redactedSupplier
+    ) {
+      this.configSupplier = configSupplier;
+      this.redactedSupplier = redactedSupplier;
+    }
+
+    public Map<String, Object> asMap() {
+      var result = configSupplier.get();
+      result.putAll(overrides);
+      return result;
+    }
+
+    public Map<String, Object> asRedacted() {
+      var result = redactedSupplier.get();
+      result.putAll(overrides);
+      return result;
+    }
+
+    public Configuration put(String key, Object value) {
+      overrides.put(key, value);
+      return this;
+    }
+
+    public String toString() {
+      return toString("  ");
+    }
+
+    public String toString(String prefix) {
+      return asRedacted()
+          .toString()
+          .replaceAll(",\\s*", ",\n" + prefix)
+          .replaceAll("[{}\\[\\]]", "");
+    }
+  }
+
   /**
    * Get the AdminClient configuration for connection and Kafka cluster with the specified IDs.
    * This method looks up the {@link ConnectionState} and {@link KafkaCluster} objects,
@@ -127,27 +181,38 @@ public class ClientConfigurator {
    *
    * @param connectionId the ID of the connection
    * @param clusterId    the ID of the Kafka cluster
-   * @param redact       whether to redact sensitive properties
    * @return the AdminClient configuration properties
    * @throws ConnectionNotFoundException if the connection does not exist
    * @throws ClusterNotFoundException    if the cluster does not exist
-   * @see #getKafkaClientConfig(ConnectionState, KafkaCluster, SchemaRegistry, boolean, Map)
+   * @see #getKafkaClientConfig
    */
-  public Map<String, Object> getAdminClientConfig(
+  public Configuration getAdminClientConfig(
       String connectionId,
-      String clusterId,
-      boolean redact
+      String clusterId
   ) throws ConnectionNotFoundException, ClusterNotFoundException {
     // Find the connection and cluster, or fail if either does not exist
     var connection = connections.getConnectionState(connectionId);
     var cluster = clusterCache.getKafkaCluster(connectionId, clusterId);
     // Return the AdminClient config
-    return getKafkaClientConfig(
-        connection,
-        cluster,
-        null,
-        redact,
-        adminClientSidecarConfigs
+    return new Configuration(
+        () -> getKafkaClientConfig(
+            connection,
+            cluster.id(),
+            cluster.bootstrapServers(),
+            null,
+            null,
+            false,
+            adminClientSidecarConfigs
+        ),
+        () -> getKafkaClientConfig(
+            connection,
+            cluster.id(),
+            cluster.bootstrapServers(),
+            null,
+            null,
+            true,
+            adminClientSidecarConfigs
+        )
     );
   }
 
@@ -162,25 +227,33 @@ public class ClientConfigurator {
    * @param connectionId          the ID of the connection
    * @param clusterId             the ID of the Kafka cluster
    * @param includeSchemaRegistry whether to include configuration properties for Schema Registry
-   * @param redact                whether to redact sensitive properties
    * @return the AdminClient configuration properties
    * @throws ConnectionNotFoundException if the connection does not exist
    * @throws ClusterNotFoundException    if the cluster does not exist
-   * @see #getKafkaClientConfig(ConnectionState, KafkaCluster, SchemaRegistry, boolean, Map)
+   * @see #getKafkaClientConfig
    */
-  public Map<String, Object> getConsumerClientConfig(
+  public Configuration getConsumerClientConfig(
       String connectionId,
       String clusterId,
-      boolean includeSchemaRegistry,
-      boolean redact
+      boolean includeSchemaRegistry
   ) throws ConnectionNotFoundException, ClusterNotFoundException {
-    return getKafkaClientConfig(
-        connectionId,
-        clusterId,
-        includeSchemaRegistry,
-        redact,
-        Map.of(
-            "session.timeout.ms", "45000"
+    var defaults = Map.of(
+        "session.timeout.ms", "45000"
+    );
+    return new Configuration(
+        () -> getKafkaClientConfig(
+            connectionId,
+            clusterId,
+            includeSchemaRegistry,
+            false,
+            defaults
+        ),
+        () -> getKafkaClientConfig(
+            connectionId,
+            clusterId,
+            includeSchemaRegistry,
+            true,
+            defaults
         )
     );
   }
@@ -196,24 +269,34 @@ public class ClientConfigurator {
    * @param connectionId          the ID of the connection
    * @param clusterId             the ID of the Kafka cluster
    * @param includeSchemaRegistry whether to include configuration properties for Schema Registry
-   * @param redact                whether to redact sensitive properties
    * @return the AdminClient configuration properties
    * @throws ConnectionNotFoundException if the connection does not exist
    * @throws ClusterNotFoundException    if the cluster does not exist
-   * @see #getKafkaClientConfig(ConnectionState, KafkaCluster, SchemaRegistry, boolean, Map)
+   * @see #getKafkaClientConfig
    */
-  public Map<String, Object> getProducerClientConfig(
+  public Configuration getProducerClientConfig(
       String connectionId,
       String clusterId,
-      boolean includeSchemaRegistry,
-      boolean redact
+      boolean includeSchemaRegistry
   ) throws ConnectionNotFoundException, ClusterNotFoundException {
-    return getKafkaClientConfig(
-        connectionId,
-        clusterId,
-        includeSchemaRegistry,
-        redact,
-        Map.of("acks", "all")
+    var defaults = Map.of(
+        "acks", "all"
+    );
+    return new Configuration(
+        () -> getKafkaClientConfig(
+            connectionId,
+            clusterId,
+            includeSchemaRegistry,
+            false,
+            defaults
+        ),
+        () -> getKafkaClientConfig(
+            connectionId,
+            clusterId,
+            includeSchemaRegistry,
+            true,
+            defaults
+        )
     );
   }
 
@@ -232,13 +315,22 @@ public class ClientConfigurator {
     SchemaRegistry sr = null;
     if (includeSchemaRegistry) {
       sr = clusterCache.getSchemaRegistryForKafkaCluster(connectionId, cluster);
+      if (sr != null) {
+        Log.debugf("Using Schema Registry %s for Kafka cluster %s", sr.id(), cluster.id());
+      } else {
+        Log.debugf("Found no Schema Registry for Kafka cluster %s", cluster.id());
+      }
+    } else {
+      Log.debugf("Not using Schema Registry for Kafka cluster %s", cluster.id());
     }
 
     // Get the basic producer config
     return getKafkaClientConfig(
         connection,
-        cluster,
-        sr,
+        cluster.id(),
+        cluster.bootstrapServers(),
+        sr != null ? sr.id() : null,
+        sr != null ? sr.uri() : null,
         redact,
         defaultProperties
     );
@@ -254,20 +346,31 @@ public class ClientConfigurator {
    *
    * @param connectionId     the ID of the connection
    * @param schemaRegistryId the ID of the Schema Registry cluster
-   * @param redact           whether to redact sensitive properties
    * @return the AdminClient configuration properties
    * @throws ConnectionNotFoundException if the connection does not exist
    * @throws ClusterNotFoundException    if the cluster does not exist
-   * @see #getSchemaRegistryClientConfig(ConnectionState, SchemaRegistry, boolean)
+   * @see #getSchemaRegistryClientConfig
    */
-  public Map<String, Object> getSchemaRegistryClientConfig(
+  public Configuration getSchemaRegistryClientConfig(
       String connectionId,
-      String schemaRegistryId,
-      boolean redact
+      String schemaRegistryId
   ) throws ConnectionNotFoundException, ClusterNotFoundException {
     // Find the cluster using the connection ID, and fail if either does not exist
     var sr = clusterCache.getSchemaRegistry(connectionId, schemaRegistryId);
     var connection = connections.getConnectionState(connectionId);
-    return getSchemaRegistryClientConfig(connection, sr, redact);
+    return new Configuration(
+        () -> getSchemaRegistryClientConfig(
+            connection,
+            sr.id(),
+            sr.uri(),
+            false
+        ),
+        () -> getSchemaRegistryClientConfig(
+            connection,
+            sr.id(),
+            sr.uri(),
+            true
+        )
+    );
   }
 }

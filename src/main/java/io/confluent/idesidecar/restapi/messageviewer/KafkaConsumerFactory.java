@@ -1,6 +1,7 @@
 package io.confluent.idesidecar.restapi.messageviewer;
 
 import io.confluent.idesidecar.restapi.cache.ClientConfigurator;
+import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.util.Properties;
@@ -31,13 +32,18 @@ public class KafkaConsumerFactory {
     var config = configurator.getConsumerClientConfig(
         connectionId,
         clusterId,
-        false,
         false
     );
     // And apply the overrides
     configOverrides.forEach((key, value) -> config.put(key.toString(), value.toString()));
 
+    Log.debugf(
+        "Creating consumer for connection %s and cluster %s with configuration:\n  %s",
+        connectionId,
+        clusterId,
+        config
+    );
     // And create the consumer
-    return new KafkaConsumer<>(config, BYTE_ARRAY_DESERIALIZER, BYTE_ARRAY_DESERIALIZER);
+    return new KafkaConsumer<>(config.asMap(), BYTE_ARRAY_DESERIALIZER, BYTE_ARRAY_DESERIALIZER);
   }
 }
