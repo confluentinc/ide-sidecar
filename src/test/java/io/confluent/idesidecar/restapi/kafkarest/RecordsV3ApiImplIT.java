@@ -313,6 +313,130 @@ class RecordsV3ApiImplIT {
           SchemaFormat.PROTOBUF, badData
       );
     }
+
+    static Stream<Arguments> unsupportedSchemaDetails() {
+      return Stream.of(
+          Arguments.of(
+              ProduceRequestData
+                  .builder()
+                  .data(Map.of())
+                  // Schema ID is not supported
+                  .schemaId(1)
+                  .build()
+          ),
+          Arguments.of(
+              ProduceRequestData
+                  .builder()
+                  .data(Map.of())
+                  // Passing raw schema is not supported
+                  .schema("invalid")
+                  // Passing schema type is not supported
+                  .type("AVRO")
+                  .build()
+          ),
+          Arguments.of(
+              ProduceRequestData
+                  .builder()
+                  .data(Map.of())
+                  // Passing schema version is supported
+                  .schemaVersion(1)
+                  // But type is not supported
+                  .type("PROTOBUF")
+                  .build()
+          ),
+          Arguments.of(
+              ProduceRequestData
+                  .builder()
+                  .data(Map.of())
+                  .schemaVersion(1)
+                  // Passing only subject is not supported
+                  .subject("standalone")
+                  .build()
+          ),
+          Arguments.of(
+              ProduceRequestData
+                  .builder()
+                  .data(Map.of())
+                  .schemaVersion(1)
+                  // Passing only subject name strategy is not supported
+                  .subjectNameStrategy("record_name")
+                  .build()
+          )
+      );
+    }
+
+    @ParameterizedTest
+    @MethodSource("unsupportedSchemaDetails")
+    void shouldThrowNotImplementedForUnsupportedSchemaDetails(ProduceRequestData data) {
+      var topic = randomTopicName();
+      createTopic(topic);
+      produceRecordThen(
+          topic,
+          ProduceRequest
+              .builder()
+              .partitionId(null)
+              // Doesn't matter if key or value, the schema details within
+              // should trigger the 501 response
+              .key(data)
+              .value(data)
+              .build()
+      )
+          .statusCode(501)
+          .body("message", equalTo(
+              "This endpoint does not support specifying schema ID, type, schema, standalone subject or subject name strategy."
+          ));
+    }
+
+    @Test
+    void shouldHandleWrongTopicNameStrategy() {
+      var topic = randomTopicName();
+      createTopic(topic);
+
+      // Create a schema called "foo-key" with a JSON schema (uses TopicNameStrategy)
+      var keySchema = createSchema(
+          "foo-key",
+          "JSON",
+          loadResource("schemas/product-key.schema.json")
+      );
+
+      // Try to produce a record with the wrong subject name strategy
+      produceRecordThen(
+          topic,
+          ProduceRequest
+              .builder()
+              .partitionId(null)
+              .key(
+                  ProduceRequestData
+                      .builder()
+                      .schemaVersion(keySchema.getVersion())
+                      // Pass valid data
+                      .data(Map.of(
+                          "id", 123,
+                          "name", "test",
+                          "price", 123.45
+                      ))
+                      // But wrong subject name strategy
+                      .subjectNameStrategy("record_name")
+                      .subject("foo-key")
+                      .build()
+              )
+              .value(
+                  ProduceRequestData
+                      .builder()
+                      .data(Map.of())
+                      .build()
+              )
+              .build()
+      )
+          .statusCode(404)
+          .body("message", equalTo(
+              // The KafkaJsonSchemaSerializer tries to look up the subject
+              // by the record name but fails to find "ProductKey" which is the
+              // "title" of the JSON schema. Nothing gets past the serializer!
+              "Subject 'ProductKey' not found.; error code: 40401")
+          )
+          .body("error_code", equalTo(40401));
+    }
   }
 
 
