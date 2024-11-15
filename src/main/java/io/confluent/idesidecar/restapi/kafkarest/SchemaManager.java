@@ -36,7 +36,7 @@ public class SchemaManager {
     // If any of the other schema related fields are set, disallow the request
     // Note: We can implement support for various combinations of these fields as we see fit.
     if (!produceRequestIsValid(produceRequestData)) {
-      throw new UnsupportedOperationException(
+      throw new BadRequestException(
           "This endpoint does not support specifying "
               + "schema ID, type, schema, standalone subject or subject name strategy."
       );
