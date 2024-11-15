@@ -13,6 +13,7 @@ import com.github.tomakehurst.wiremock.matching.EqualToPattern;
 import io.confluent.idesidecar.restapi.cache.ClusterCache;
 import io.confluent.idesidecar.restapi.connections.CCloudConnectionState;
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
+import io.confluent.idesidecar.restapi.exceptions.ClusterNotFoundException;
 import io.confluent.idesidecar.restapi.models.ClusterType;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
 import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
@@ -143,7 +144,7 @@ class ClusterRestProxyResourceTest {
 
   @ParameterizedTest
   @MethodSource("pathAndClusterTypeSource")
-  void testNonExistentClusterInfoReturns404(String path, ClusterType clusterType) {
+  void testNonExistentClusterInfoReturns404(String path, ClusterType clusterType) throws ClusterNotFoundException {
     ccloudTestUtil.createAuthedConnection(CONNECTION_ID, ConnectionType.CCLOUD);
 
     // And expect the cluster to not be found in the cache
@@ -336,7 +337,7 @@ class ClusterRestProxyResourceTest {
   }
 
   @Test
-  void testUnauthedKafkaRestProxyAgainstCCloud() {
+  void testUnauthedKafkaRestProxyAgainstCCloud() throws ClusterNotFoundException {
     // Given an non-authenticated CCloud connection
     ccloudTestUtil.createConnection(CONNECTION_ID, "My Connection", ConnectionType.CCLOUD);
 
@@ -378,7 +379,7 @@ class ClusterRestProxyResourceTest {
       ConnectionType connectionType,
       ClusterType clusterType,
       String path
-  ) {
+  ) throws ClusterNotFoundException {
     // Given a connection
     ccloudTestUtil.createAuthedConnection(CONNECTION_ID, connectionType);
 

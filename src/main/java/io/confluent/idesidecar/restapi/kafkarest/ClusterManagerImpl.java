@@ -20,8 +20,10 @@ import io.confluent.idesidecar.restapi.kafkarest.model.ClusterData;
 import io.confluent.idesidecar.restapi.kafkarest.model.ClusterDataList;
 import io.confluent.idesidecar.restapi.kafkarest.model.ResourceCollectionMetadata;
 import io.confluent.idesidecar.restapi.kafkarest.model.ResourceMetadata;
+import io.confluent.idesidecar.restapi.models.ClusterType;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.infrastructure.Infrastructure;
+import io.smallrye.mutiny.unchecked.Unchecked;
 import io.vertx.core.http.HttpServerRequest;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
@@ -58,7 +60,7 @@ public class ClusterManagerImpl implements ClusterManager {
         .chain(cid -> {
           if (!cid.id().equals(clusterId)) {
             return Uni.createFrom().failure(new ClusterNotFoundException(
-                "Kafka cluster '%s' not found.".formatted(clusterId)
+                "Kafka cluster '%s' not found.".formatted(clusterId), ClusterType.KAFKA
             ));
           }
           return uniItem(cid);
@@ -103,7 +105,7 @@ public class ClusterManagerImpl implements ClusterManager {
   }
 
   private Uni<ClusterDescribe> describeCluster(String clusterId) {
-    return uniItem(() -> adminClients.getClient(connectionId.get(), clusterId))
+    return uniItem(Unchecked.supplier(() -> adminClients.getClient(connectionId.get(), clusterId)))
         .runSubscriptionOn(Infrastructure.getDefaultWorkerPool())
         .map(Admin::describeCluster)
         .chain(describeClusterResult ->

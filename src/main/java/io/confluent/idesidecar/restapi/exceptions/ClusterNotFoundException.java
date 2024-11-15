@@ -1,23 +1,20 @@
 package io.confluent.idesidecar.restapi.exceptions;
 
+import io.confluent.idesidecar.restapi.models.ClusterType;
+
 /**
  * Exception thrown when a requested Kafka or Schema Registry cluster cannot be found.
  */
-public class ClusterNotFoundException extends RuntimeException {
+public class ClusterNotFoundException extends Exception {
 
-  public ClusterNotFoundException() {
-    super("Cluster not found.");
-  }
+  private final ClusterType clusterType;
 
-  public ClusterNotFoundException(String message) {
+  public ClusterNotFoundException(String message, ClusterType clusterType) {
     super(message);
+    this.clusterType = clusterType;
   }
 
-  public ClusterNotFoundException(String message, Throwable cause) {
-    super(message, cause);
-  }
-
-  public ClusterNotFoundException(Throwable cause) {
-    super(cause);
+  public ClusterType clusterType() {
+    return clusterType;
   }
 }

@@ -125,6 +125,27 @@ public abstract class AbstractSidecarIT extends SidecarClient {
     );
   }
 
+
+  protected SimpleConsumer createSimpleConsumerWithoutSR(
+      SidecarClient.KafkaCluster kafkaCluster
+  ) {
+    // Setup a simple consumer
+    var consumerProps = new Properties();
+    consumerProps.setProperty("bootstrap.servers", kafkaCluster.bootstrapServers());
+    return new SimpleConsumer(
+        new KafkaConsumer<>(
+            consumerProps, new ByteArrayDeserializer(), new ByteArrayDeserializer()
+        ),
+        null,
+        new RecordDeserializer(
+            1,
+            1,
+            10000,
+            3
+        )
+    );
+  }
+
   /**
    * Test classes that extend {@link AbstractSidecarIT} should call this method in their
    * {@code @BeforeEach} method to set up the local connection the test methods will use.
@@ -145,6 +166,10 @@ public abstract class AbstractSidecarIT extends SidecarClient {
    */
   protected <T extends AbstractSidecarIT> void setupLocalConnection(T testClass) {
     setupLocalConnection(testClass.getClass().getSimpleName());
+  }
+
+  protected <T extends AbstractSidecarIT> void setupLocalConnectionWithoutSR(T testClass) {
+    setupLocalConnectionWithoutSR(testClass.getClass().getSimpleName());
   }
 
   /**
@@ -181,6 +206,19 @@ public abstract class AbstractSidecarIT extends SidecarClient {
     current.useBy(this);
   }
 
+  protected void setupLocalConnectionWithoutSR(String testScope) {
+    current = REUSABLE_CONNECTIONS_BY_TEST_SCOPE.computeIfAbsent(testScope, key -> {
+      Log.debug("Begin: Setting up local connection without SR");
+      // This creates the connection with SR config
+      var connectionId = createLocalConnectionWithoutSRTo(TEST_ENVIRONMENT, testScope).id();
+      var kafkaCluster = getKafkaCluster().orElseThrow();
+      var simpleConsumer = createSimpleConsumerWithoutSR(kafkaCluster);
+      Log.debug("End: Setting up local connection without SR");
+      return new ScopedConnection(connectionId, kafkaCluster, null, simpleConsumer);
+    });
+    current.useBy(this);
+  }
+
   /**
    * Test classes that extend {@link AbstractSidecarIT} should call this method in their
    * {@code @BeforeEach} method to set up the local connection the test methods will use.
@@ -201,6 +239,10 @@ public abstract class AbstractSidecarIT extends SidecarClient {
    */
   protected <T extends AbstractSidecarIT> void setupDirectConnection(T testClass) {
     setupDirectConnection(testClass.getClass().getSimpleName());
+  }
+
+  protected <T extends AbstractSidecarIT> void setupDirectConnectionWithoutSR(T testClass) {
+    setupDirectConnectionWithoutSR(testClass.getClass().getSimpleName());
   }
 
   /**
@@ -233,6 +275,19 @@ public abstract class AbstractSidecarIT extends SidecarClient {
       var simpleConsumer = createSimpleConsumer(kafkaCluster, srCluster);
       Log.debug("End: Setting up local connection");
       return new ScopedConnection(connectionId, kafkaCluster, srCluster, simpleConsumer);
+    });
+    current.useBy(this);
+  }
+
+  protected void setupDirectConnectionWithoutSR(String testScope) {
+    current = REUSABLE_CONNECTIONS_BY_TEST_SCOPE.computeIfAbsent(testScope, key -> {
+      Log.debug("Begin: Setting up direct connection without SR");
+      // This creates the connection with SR config
+      var connectionId = createDirectConnectionWithoutSRTo(TEST_ENVIRONMENT, testScope).id();
+      var kafkaCluster = getKafkaCluster().orElseThrow();
+      var simpleConsumer = createSimpleConsumerWithoutSR(kafkaCluster);
+      Log.debug("End: Setting up direct connection without SR");
+      return new ScopedConnection(connectionId, kafkaCluster, null, simpleConsumer);
     });
     current.useBy(this);
   }
