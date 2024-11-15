@@ -12,6 +12,7 @@ import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequest;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceResponse;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceResponseData;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
+import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.infrastructure.Infrastructure;
 import io.soabase.recordbuilder.core.RecordBuilder;
@@ -71,7 +72,17 @@ public class RecordsV3ApiImpl {
         .chain(this::getSchemas)
         .chain(this::serialize)
         .chain(this::sendSerializedRecord)
+        .onFailure(RuntimeException.class)
+        .transform(this::unwrapRootCause)
         .map(this::toProduceResponse);
+  }
+
+  private Throwable unwrapRootCause(Throwable throwable) {
+    if (throwable.getCause() instanceof RestClientException) {
+      return throwable.getCause();
+    }
+
+    return throwable;
   }
 
   /**
@@ -158,8 +169,6 @@ public class RecordsV3ApiImpl {
         // The SchemaRegistryClient uses java.net.HttpURLConnection under the hood
         // which is a synchronous I/O blocking client, so we run this on a worker pool of threads.
         .runSubscriptionOn(Infrastructure.getDefaultWorkerPool())
-        .onFailure(RuntimeException.class)
-        .transform(Throwable::getCause)
         .map(tuple -> c
             .with()
             .keySchema(tuple.getItem1())
@@ -179,14 +188,14 @@ public class RecordsV3ApiImpl {
     return combineUnis(
         () -> recordSerializer.serialize(
             c.srClient,
-            c.keySchema.map(SchemaManager.RegisteredSchema::parsedSchema).orElse(null),
+            c.keySchema,
             c.topicName,
             c.produceRequest.getKey().getData(),
             true
         ),
         () -> recordSerializer.serialize(
             c.srClient,
-            c.valueSchema.map(SchemaManager.RegisteredSchema::parsedSchema).orElse(null),
+            c.valueSchema,
             c.topicName,
             c.produceRequest.getValue().getData(),
             false
