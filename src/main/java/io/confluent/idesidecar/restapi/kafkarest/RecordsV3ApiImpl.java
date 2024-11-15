@@ -21,11 +21,13 @@ import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.HeaderParam;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import java.time.Instant;
 import java.util.Date;
 import java.util.Optional;
@@ -63,18 +65,33 @@ public class RecordsV3ApiImpl {
       @HeaderParam(CONNECTION_ID_HEADER) String connectionId,
       @PathParam("cluster_id") String clusterId,
       @PathParam("topic_name") String topicName,
+      @QueryParam("dry_run") @DefaultValue("false") boolean dryRun,
       @Valid ProduceRequest produceRequest
   ) {
-    return uniItem(ProduceContext.fromRequest(connectionId, clusterId, topicName, produceRequest))
+    var uptoDryRun = uniItem(ProduceContext.fromRequest(connectionId, clusterId, topicName, produceRequest))
         .chain(this::ensureTopicPartitionExists)
         .chain(this::ensureKeyOrValueDataExists)
         .chain(this::fetchClients)
         .chain(this::getSchemas)
         .chain(this::serialize)
-        .chain(this::sendSerializedRecord)
         .onFailure(RuntimeException.class)
-        .transform(this::unwrapRootCause)
-        .map(this::toProduceResponse);
+        .transform(this::unwrapRootCause);
+
+    if (dryRun) {
+      return uptoDryRun
+          // Return a 200 response with the cluster and topic name set.
+          // This should indicate that the request as a whole is valid.
+          .map(c -> ProduceResponse
+              .builder()
+              .clusterId(c.clusterId)
+              .topicName(c.topicName)
+              .build()
+          );
+    } else {
+      return uptoDryRun
+          .chain(this::sendSerializedRecord)
+          .map(this::toProduceResponse);
+    }
   }
 
   private Throwable unwrapRootCause(Throwable throwable) {
