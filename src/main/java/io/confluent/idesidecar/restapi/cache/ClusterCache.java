@@ -389,12 +389,6 @@ public class ClusterCache {
       if (result == null) {
         return Optional.empty();
       }
-      Log.debugf(
-          "Found Schema Registry %s for Kafka Cluster %s in connection %s",
-          result.id(),
-          kafkaClusterId,
-          connectionId
-      );
       return Optional.of(result.spec());
     }
 
@@ -424,8 +418,6 @@ public class ClusterCache {
         String path,
         boolean loadIfMissing
     ) {
-      Log.debugf("Looking for Schema Registry with path %s; connection %s; registries: %s",
-                 path, connectionId, schemaRegistries);
       var result = schemaRegistries
           .stream()
           .filter(info -> info.path().equalsIgnoreCase(path))

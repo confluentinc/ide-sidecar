@@ -2,8 +2,9 @@ package io.confluent.idesidecar.restapi.util;
 
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.utility.DockerImageName;
-
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * A Testcontainers-based implementation of a local Confluent environment,

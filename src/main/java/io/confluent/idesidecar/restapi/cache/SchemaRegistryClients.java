@@ -9,7 +9,6 @@ import io.confluent.idesidecar.restapi.exceptions.SchemaRegistryClusterNotFoundE
 import io.confluent.idesidecar.restapi.util.RequestHeadersConstants;
 import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
-import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.util.Collections;
@@ -61,22 +60,6 @@ public class SchemaRegistryClients extends Clients<SchemaRegistryClient> {
           // Create the Schema Registry client
           return createClient(sidecarHost, config, headers);
         });
-  }
-
-  private Map<String, Object> getSchemaRegistryClientConfig(String connectionId, String clusterId) {
-    try {
-      return configurator.getSchemaRegistryClientConfig(
-          connectionId,
-          clusterId,
-          false
-      );
-    } catch (SchemaRegistryClusterNotFoundException e) {
-      Log.errorf(
-          "Could not find Schema Registry cluster for connection ID %s and cluster ID %s",
-          connectionId, clusterId
-      );
-      throw new RuntimeException(e);
-    }
   }
 
   public SchemaRegistryClient getClientByKafkaClusterId(

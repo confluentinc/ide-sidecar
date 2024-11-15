@@ -15,7 +15,6 @@ import io.confluent.idesidecar.restapi.models.graph.KafkaCluster;
 import io.confluent.idesidecar.restapi.models.graph.SchemaRegistry;
 import io.confluent.idesidecar.restapi.util.CCloud;
 import io.confluent.idesidecar.restapi.util.ConfigUtil;
-import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.util.LinkedHashMap;
@@ -236,7 +235,6 @@ public class ClientConfigurator {
     // Maybe look up the SR for the Kafka cluster
     SchemaRegistry sr = null;
     if (includeSchemaRegistry) {
-      Log.debugf("Looking up Schema Registry for Kafka cluster %s; connection %s", clusterId, connectionId);
       sr = clusterCache.getSchemaRegistryForKafkaCluster(connectionId, cluster);
     }
 
