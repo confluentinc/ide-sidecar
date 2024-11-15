@@ -3,9 +3,7 @@ package io.confluent.idesidecar.restapi.util;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.utility.DockerImageName;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * A Testcontainers-based implementation of a local Confluent environment,
@@ -74,20 +72,25 @@ public class ConfluentLocalKafkaWithRestProxyContainer
   public static final String CLUSTER_ID = "oh-sxaDRTcyAr6pFRbXyzA";
 
   public ConfluentLocalKafkaWithRestProxyContainer() {
-    this(DEFAULT_IMAGE);
+    this(DEFAULT_IMAGE, CONTAINER_NAME);
   }
 
-  public ConfluentLocalKafkaWithRestProxyContainer(String dockerImageName) {
+  public ConfluentLocalKafkaWithRestProxyContainer(String containerName) {
+    this(DEFAULT_IMAGE, containerName);
+  }
+
+  public ConfluentLocalKafkaWithRestProxyContainer(String dockerImageName, String containerName) {
     super(DockerImageName.parse(dockerImageName));
     super.withEnv(getEnvironmentVariables())
         .withExposedPorts(KAFKA_PORT, REST_PROXY_PORT)
         .withCreateContainerCmdModifier(cmd -> cmd
-            .withName(CONTAINER_NAME)
-            .withHostName(CONTAINER_NAME));
+            .withName(containerName)
+            .withHostName(containerName));
     setPortBindings(List.of(
         String.format("%d:%d", REST_PROXY_PORT, REST_PROXY_PORT),
         String.format("%d:%d", KAFKA_PORT, KAFKA_PORT)
     ));
+
   }
 
   public String getClusterId() {
