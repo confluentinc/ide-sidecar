@@ -154,7 +154,7 @@ public class RecordsV3ApiImpl {
         Unchecked.supplier(
             () -> schemaRegistryClients.getClientByKafkaClusterId(c.connectionId, c.clusterId)),
         Unchecked.supplier(
-            () -> kafkaProducerClients.getClient(c.connectionId, c.clusterId,  false))
+            () -> kafkaProducerClients.getClient(c.connectionId, c.clusterId))
     )
         .asTuple()
         // The getClient* methods may end up performing HTTP requests to fetch cluster information,
