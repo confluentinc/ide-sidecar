@@ -90,6 +90,8 @@ public class RecordsV3ApiImpl {
     } else {
       return uptoDryRun
           .chain(this::sendSerializedRecord)
+          .onFailure(RuntimeException.class)
+          .transform(this::unwrapRootCause)
           .map(this::toProduceResponse);
     }
   }
