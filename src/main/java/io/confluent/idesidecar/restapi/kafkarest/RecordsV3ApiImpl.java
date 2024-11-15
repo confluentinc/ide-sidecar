@@ -179,14 +179,14 @@ public class RecordsV3ApiImpl {
     return combineUnis(
         () -> recordSerializer.serialize(
             c.srClient,
-            c.keySchema.map(SchemaManager.RegisteredSchema::parsedSchema).orElse(null),
+            c.keySchema,
             c.topicName,
             c.produceRequest.getKey().getData(),
             true
         ),
         () -> recordSerializer.serialize(
             c.srClient,
-            c.valueSchema.map(SchemaManager.RegisteredSchema::parsedSchema).orElse(null),
+            c.valueSchema,
             c.topicName,
             c.produceRequest.getValue().getData(),
             false
