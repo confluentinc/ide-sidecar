@@ -21,25 +21,17 @@ public class KafkaProducerClients extends Clients<KafkaProducer<byte[], byte[]>>
     super(CaffeineSpec.parse(CAFFEINE_SPEC));
   }
 
-  public KafkaProducer<byte[], byte[]> getClient(String connectionId, String clusterId)
-      throws ClusterNotFoundException {
-    return getClient(
-        connectionId,
-        clusterId,
-        true
-    );
-  }
-
   public KafkaProducer<byte[], byte[]> getClient(
       String connectionId,
-      String clusterId,
-      boolean includeSchemaRegistry
+      String clusterId
   ) throws ClusterNotFoundException {
     // Generate the Kafka producer configuration
     var config = configurator.getProducerClientConfig(
         connectionId,
         clusterId,
-        includeSchemaRegistry,
+        // We don't include SR configuration here because
+        // we don't need it for the producer
+        false,
         false
     );
 
