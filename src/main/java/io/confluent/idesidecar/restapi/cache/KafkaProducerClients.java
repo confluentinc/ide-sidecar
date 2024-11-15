@@ -1,6 +1,7 @@
 package io.confluent.idesidecar.restapi.cache;
 
 import com.github.benmanes.caffeine.cache.CaffeineSpec;
+import io.confluent.idesidecar.restapi.exceptions.ClusterNotFoundException;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -20,21 +21,24 @@ public class KafkaProducerClients extends Clients<KafkaProducer<byte[], byte[]>>
     super(CaffeineSpec.parse(CAFFEINE_SPEC));
   }
 
-  public KafkaProducer<byte[], byte[]> getClient(String connectionId, String clusterId) {
+  public KafkaProducer<byte[], byte[]> getClient(
+      String connectionId,
+      String clusterId
+  ) throws ClusterNotFoundException {
+    // Generate the Kafka producer configuration
+    var config = configurator.getProducerClientConfig(
+        connectionId,
+        clusterId,
+        // We don't include SR configuration here because
+        // we don't need it for the producer
+        false,
+        false
+    );
+
     return getClient(
         connectionId,
         clusterId,
-        () -> {
-          // Generate the Kafka producer configuration
-          var config = configurator.getProducerClientConfig(
-              connectionId,
-              clusterId,
-              true,
-              false
-          );
-          // Create the producer
-          return new KafkaProducer<>(config, BYTE_ARRAY_SERIALIZER, BYTE_ARRAY_SERIALIZER);
-        }
+        () -> new KafkaProducer<>(config, BYTE_ARRAY_SERIALIZER, BYTE_ARRAY_SERIALIZER)
     );
   }
 }

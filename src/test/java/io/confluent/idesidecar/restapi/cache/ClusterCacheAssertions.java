@@ -2,11 +2,12 @@ package io.confluent.idesidecar.restapi.cache;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
 
-import io.confluent.idesidecar.restapi.cache.ClusterCache;
 import io.confluent.idesidecar.restapi.connections.ConnectionState;
 import io.confluent.idesidecar.restapi.exceptions.ClusterNotFoundException;
 import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
+
 
 public class ClusterCacheAssertions {
 
@@ -51,6 +52,8 @@ public class ClusterCacheAssertions {
       assertNotNull(cluster);
     } catch (ConnectionNotFoundException e) {
       // ok
+    } catch (ClusterNotFoundException e) {
+      fail("Cluster not found");
     }
   }
 
@@ -95,6 +98,8 @@ public class ClusterCacheAssertions {
       assertNotNull(cluster);
     } catch (ConnectionNotFoundException e) {
       // ok
+    } catch (ClusterNotFoundException e) {
+      fail("Cluster not found");
     }
   }
 }

@@ -9,6 +9,8 @@ import io.confluent.idesidecar.restapi.models.ClusterType;
 import io.confluent.idesidecar.restapi.models.graph.Cluster;
 import io.confluent.idesidecar.restapi.models.graph.KafkaCluster;
 import io.confluent.idesidecar.restapi.models.graph.SchemaRegistry;
+import org.junit.jupiter.api.Assertions;
+
 import java.util.Optional;
 
 /**
@@ -32,7 +34,7 @@ public class ClusterCacheExpectations {
       String clusterId,
       String clusterUrl,
       ClusterType clusterType
-  ) {
+  ) throws ClusterNotFoundException {
     Cluster mockCluster = switch (clusterType) {
       case KAFKA -> mockKafkaCluster(connectionId, clusterId, clusterUrl);
       case SCHEMA_REGISTRY -> mockSchemaRegistry(connectionId, clusterId, clusterUrl);
@@ -68,12 +70,12 @@ public class ClusterCacheExpectations {
       String connectionId,
       String clusterId,
       ClusterType clusterType
-  ) {
+  ) throws ClusterNotFoundException {
     when(
         cache.getCluster(connectionId, clusterId, clusterType)
     ).thenThrow(
         new ClusterNotFoundException(
-            "Cluster %s not found".formatted(clusterId)
+            "Cluster %s not found".formatted(clusterId), clusterType
         )
     );
   }
@@ -96,7 +98,7 @@ public class ClusterCacheExpectations {
       String connectionId,
       String clusterId,
       String clusterUrl
-  ) {
+  ) throws ClusterNotFoundException {
     var mockCluster = mockKafkaCluster(connectionId, clusterId, clusterUrl);
     when(
         cache.getKafkaCluster(connectionId, clusterId)
@@ -119,13 +121,18 @@ public class ClusterCacheExpectations {
       String connectionId,
       String clusterId
   ) {
-    when(
-        cache.getKafkaCluster(connectionId, clusterId)
-    ).thenThrow(
-        new ClusterNotFoundException(
-            "Kafka Cluster %s not found in connection %s".formatted(clusterId, connectionId)
-        )
-    );
+    try {
+      when(
+          cache.getKafkaCluster(connectionId, clusterId)
+      ).thenThrow(
+          new ClusterNotFoundException(
+              "Kafka Cluster %s not found in connection %s".formatted(clusterId, connectionId),
+              ClusterType.KAFKA
+          )
+      );
+    } catch (ClusterNotFoundException e) {
+      Assertions.fail("Unexpected exception thrown: %s".formatted(e.getMessage()));
+    }
   }
 
   /**
@@ -143,7 +150,8 @@ public class ClusterCacheExpectations {
         cache.forConnection(connectionId)
     ).thenThrow(
         new ClusterNotFoundException(
-            "Connection %s does not exist".formatted(connectionId)
+            "Connection %s does not exist".formatted(connectionId),
+            ClusterType.KAFKA
         )
     );
   }
@@ -162,7 +170,7 @@ public class ClusterCacheExpectations {
       String connectionId,
       String clusterId,
       String clusterUrl
-  ) {
+  ) throws ClusterNotFoundException {
     var mockRegistry = mockSchemaRegistry(connectionId, clusterId, clusterUrl);
     when(
         cache.getSchemaRegistry(connectionId, clusterId)
@@ -188,7 +196,7 @@ public class ClusterCacheExpectations {
       KafkaCluster kafkaCluster,
       String clusterId,
       String clusterUrl
-  ) {
+  ) throws ClusterNotFoundException {
     var mockRegistry = mockSchemaRegistry(connectionId, clusterId, clusterUrl);
     when(
         cache.getSchemaRegistryForKafkaCluster(connectionId, kafkaCluster)
@@ -215,7 +223,7 @@ public class ClusterCacheExpectations {
       ClusterCache cache,
       String connectionId,
       KafkaCluster kafkaCluster
-  ) {
+  ) throws ClusterNotFoundException {
     when(
         cache.getSchemaRegistryForKafkaCluster(connectionId, kafkaCluster)
     ).thenThrow(
@@ -223,7 +231,8 @@ public class ClusterCacheExpectations {
             "Schema Registry not found for Kafka Cluster %s in connection %s".formatted(
                 kafkaCluster.id(),
                 connectionId
-            )
+            ),
+            ClusterType.SCHEMA_REGISTRY
         )
     );
   }
