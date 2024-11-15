@@ -1,6 +1,7 @@
 package io.confluent.idesidecar.restapi.messageviewer;
 
 import io.confluent.idesidecar.restapi.cache.ClientConfigurator;
+import io.confluent.idesidecar.restapi.exceptions.ClusterNotFoundException;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.util.Properties;
@@ -26,7 +27,7 @@ public class KafkaConsumerFactory {
       String connectionId,
       String clusterId,
       Properties configOverrides
-  ) {
+  ) throws ClusterNotFoundException {
     // Generate the Kafka consumer configuration
     var config = configurator.getConsumerClientConfig(
         connectionId,

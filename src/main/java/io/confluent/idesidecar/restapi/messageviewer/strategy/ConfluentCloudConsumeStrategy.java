@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.idesidecar.restapi.cache.SchemaRegistryClients;
 import io.confluent.idesidecar.restapi.connections.CCloudConnectionState;
+import io.confluent.idesidecar.restapi.exceptions.ClusterNotFoundException;
 import io.confluent.idesidecar.restapi.exceptions.ProcessorFailedException;
 import io.confluent.idesidecar.restapi.messageviewer.MessageViewerContext;
 import io.confluent.idesidecar.restapi.messageviewer.RecordDeserializer;
@@ -78,8 +79,10 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
    *
    * @param context The MessageViewerContext to process.
    * @return A Future containing the processed MessageViewerContext.
+   * @throws ClusterNotFoundException If the cluster is not found.
    */
-  public MessageViewerContext postProcess(MessageViewerContext context) {
+  public MessageViewerContext postProcess(MessageViewerContext context)
+      throws ClusterNotFoundException {
     if (context.getProxyResponseStatusCode() >= 300) {
       Log.errorf(
           "Error fetching the messages from ccloud: %s",
@@ -146,7 +149,7 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
   private SimpleConsumeMultiPartitionResponse decodeSchemaEncodedValues(
       MessageViewerContext context,
       SimpleConsumeMultiPartitionResponse rawResponse
-  ) {
+  ) throws ClusterNotFoundException {
     var schemaRegistry = context.getSchemaRegistryInfo();
     if (schemaRegistry == null) {
       return rawResponse;

@@ -8,13 +8,16 @@ import static io.confluent.idesidecar.restapi.util.RequestHeadersConstants.CONNE
 import com.google.protobuf.ByteString;
 import io.confluent.idesidecar.restapi.cache.KafkaProducerClients;
 import io.confluent.idesidecar.restapi.cache.SchemaRegistryClients;
+import io.confluent.idesidecar.restapi.exceptions.ClusterNotFoundException;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequest;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceResponse;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceResponseData;
+import io.confluent.idesidecar.restapi.models.ClusterType;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.infrastructure.Infrastructure;
+import io.smallrye.mutiny.unchecked.Unchecked;
 import io.soabase.recordbuilder.core.RecordBuilder;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
@@ -146,8 +149,10 @@ public class RecordsV3ApiImpl {
    */
   private Uni<ProduceContext> fetchClients(ProduceContext c) {
     return combineUnis(
-        () -> schemaRegistryClients.getClientByKafkaClusterId(c.connectionId, c.clusterId),
-        () -> kafkaProducerClients.getClient(c.connectionId, c.clusterId)
+        Unchecked.supplier(
+            () -> schemaRegistryClients.getClientByKafkaClusterId(c.connectionId, c.clusterId)),
+        Unchecked.supplier(
+            () -> kafkaProducerClients.getClient(c.connectionId, c.clusterId,  false))
     )
         .asTuple()
         // The getClient* methods may end up performing HTTP requests to fetch cluster information,
