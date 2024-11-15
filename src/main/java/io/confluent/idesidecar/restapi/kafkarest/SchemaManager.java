@@ -67,9 +67,9 @@ public class SchemaManager {
 
   private static void ensureSchemaRegistryClientExists(SchemaRegistryClient schemaRegistryClient) {
     if (schemaRegistryClient == null) {
-      throw new BadRequestException(
-          "Could not find schema registry client to fetch requested schema"
-      );
+      throw new BadRequestException("SchemaRegistryClient required but not provided. " +
+          "This connection may not have access to a Schema Registry. Please update " +
+          "the connection configuration to include a Schema Registry.");
     }
   }
 
