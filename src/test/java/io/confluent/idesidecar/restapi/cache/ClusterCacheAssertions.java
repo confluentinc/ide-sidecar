@@ -1,11 +1,13 @@
 package io.confluent.idesidecar.restapi.cache;
 
-import io.confluent.idesidecar.restapi.cache.ClusterCache;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import io.confluent.idesidecar.restapi.connections.ConnectionState;
 import io.confluent.idesidecar.restapi.exceptions.ClusterNotFoundException;
 import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
 
-import static org.junit.jupiter.api.Assertions.*;
 
 public class ClusterCacheAssertions {
 
