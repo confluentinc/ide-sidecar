@@ -26,8 +26,6 @@ abstract class TopicV3ApiImplIT extends AbstractSidecarIT {
         .statusCode(200)
         // Could be at any index
         .body("data.find { it.topic_name == 'test-topic-1' }.topic_name", equalTo("test-topic-1"));
-
-    deleteTopic("test-topic-1");
   }
 
   @Test
@@ -80,8 +78,6 @@ abstract class TopicV3ApiImplIT extends AbstractSidecarIT {
         .statusCode(409)
         .body("error_code", equalTo(409))
         .body("message", equalTo("Topic 'test-topic-2' already exists."));
-
-    deleteTopic("test-topic-2");
   }
 
   @Test
