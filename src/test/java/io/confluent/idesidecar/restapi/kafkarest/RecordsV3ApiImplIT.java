@@ -641,7 +641,7 @@ class RecordsV3ApiImplIT {
           null
       )
           .statusCode(400)
-          .body("message", containsString("This connection does not have a Schema Registry defined."));
+          .body("message", containsString("This connection does not have an associated Schema Registry."));
     }
 
     /**
