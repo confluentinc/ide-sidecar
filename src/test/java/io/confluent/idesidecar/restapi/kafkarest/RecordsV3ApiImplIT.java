@@ -2,6 +2,9 @@ package io.confluent.idesidecar.restapi.kafkarest;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Lists;
+import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequest;
+import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequestData;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequest;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequestBuilder;
 import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
@@ -18,6 +21,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junitpioneer.jupiter.cartesian.ArgumentSets;
 import org.junitpioneer.jupiter.cartesian.CartesianTest;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -37,37 +41,70 @@ class RecordsV3ApiImplIT {
 
   record RecordData(
       SchemaFormat schemaFormat,
+      SubjectNameStrategyEnum subjectNameStrategy,
       String rawSchema,
       Object data
   ) {
 
+    public RecordData(SchemaFormat schemaFormat, String rawSchema, Object data) {
+      this(schemaFormat, null, rawSchema, data);
+    }
+
+    RecordData withSubjectNameStrategy(SubjectNameStrategyEnum subjectNameStrategy) {
+      return new RecordData(schemaFormat, subjectNameStrategy, rawSchema, data);
+    }
+
     @Override
     public String toString() {
-      return "(data = %s, schemaFormat = %s, schema = %s)"
-          .formatted(data, schemaFormat, rawSchema);
+      return "(data = %s, schemaFormat = %s, subjectNameStrategy = %s)"
+          .formatted(data, schemaFormat, subjectNameStrategy);
+    }
+
+    public boolean hasSchema() {
+      return schemaFormat != null && rawSchema != null && subjectNameStrategy != null;
     }
   }
 
-  static RecordData schemaData(SchemaFormat format, String jsonData) {
-    var schema = getProductSchema(format);
+  private static String getSubjectName(
+      String topicName,
+      SubjectNameStrategyEnum strategy,
+      boolean isKey
+  ) {
+    /*
+    https://docs.confluent.io/platform/current/schema-registry/fundamentals/serdes-develop/index.html#how-the-naming-strategies-work
+    */
+    return switch (strategy) {
+      case TOPIC_NAME -> (isKey ? "%s-key" : "%s-value").formatted(topicName);
+      case RECORD_NAME -> (isKey ? "ProductKey" : "ProductValue");
+      case TOPIC_RECORD_NAME -> (isKey ? "%s-ProductKey" : "%s-ProductValue").formatted(topicName);
+    };
+  }
+
+  static RecordData schemaData(SchemaFormat format, Boolean isKey) {
+    var schema = getProductSchema(format, isKey);
 
     try {
-      return new RecordData(format, schema, OBJECT_MAPPER.readTree(jsonData));
+      return new RecordData(
+          format,
+          schema,
+          OBJECT_MAPPER.readTree(HappyPath.PRODUCT_DATA)
+      );
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
   }
 
-  private static String getProductSchema(SchemaFormat format) {
+  private static String getProductSchema(SchemaFormat format, boolean isKey) {
+    var suffix = isKey ? "key" : "value";
     return switch (format) {
       case JSON: {
-        yield loadResource("schemas/product.schema.json").translateEscapes();
+        yield loadResource("schemas/product-%s.schema.json".formatted(suffix)).translateEscapes();
       }
       case AVRO: {
-        yield loadResource("schemas/product.avsc").translateEscapes();
+        yield loadResource("schemas/product-%s.avsc".formatted(suffix)).translateEscapes();
       }
       case PROTOBUF: {
-        yield loadResource("schemas/product.proto").translateEscapes();
+        yield loadResource("schemas/product-%s.proto".formatted(suffix)).translateEscapes();
       }
     };
   }
@@ -165,12 +202,12 @@ class RecordsV3ApiImplIT {
       createSchema(
           "%s-key".formatted(topic),
           "JSON",
-          loadResource("schemas/product.schema.json")
+          loadResource("schemas/product-key.schema.json")
       );
       createSchema(
           "%s-value".formatted(topic),
           "PROTOBUF",
-          loadResource("schemas/product.proto")
+          loadResource("schemas/product-value.proto")
       );
       // Schema version 1 would be created by the above calls,
       // but the following call should fail to find version 40
@@ -234,7 +271,7 @@ class RecordsV3ApiImplIT {
       var keySchema = createSchema(
           "%s-key".formatted(topic),
           keyFormat.schemaProvider().schemaType(),
-          getProductSchema(keyFormat)
+          getProductSchema(keyFormat, true)
       );
 
       produceRecordThen(
@@ -245,7 +282,7 @@ class RecordsV3ApiImplIT {
       var valueSchema = createSchema(
           "%s-value".formatted(topic),
           keyFormat.schemaProvider().schemaType(),
-          getProductSchema(keyFormat)
+          getProductSchema(keyFormat, false)
       );
 
       produceRecordThen(
@@ -276,6 +313,130 @@ class RecordsV3ApiImplIT {
           SchemaFormat.PROTOBUF, badData
       );
     }
+
+    static Stream<Arguments> unsupportedSchemaDetails() {
+      return Stream.of(
+          Arguments.of(
+              ProduceRequestData
+                  .builder()
+                  .data(Map.of())
+                  // Schema ID is not supported
+                  .schemaId(1)
+                  .build()
+          ),
+          Arguments.of(
+              ProduceRequestData
+                  .builder()
+                  .data(Map.of())
+                  // Passing raw schema is not supported
+                  .schema("invalid")
+                  // Passing schema type is not supported
+                  .type("AVRO")
+                  .build()
+          ),
+          Arguments.of(
+              ProduceRequestData
+                  .builder()
+                  .data(Map.of())
+                  // Passing schema version is supported
+                  .schemaVersion(1)
+                  // But type is not supported
+                  .type("PROTOBUF")
+                  .build()
+          ),
+          Arguments.of(
+              ProduceRequestData
+                  .builder()
+                  .data(Map.of())
+                  .schemaVersion(1)
+                  // Passing only subject is not supported
+                  .subject("standalone")
+                  .build()
+          ),
+          Arguments.of(
+              ProduceRequestData
+                  .builder()
+                  .data(Map.of())
+                  .schemaVersion(1)
+                  // Passing only subject name strategy is not supported
+                  .subjectNameStrategy("record_name")
+                  .build()
+          )
+      );
+    }
+
+    @ParameterizedTest
+    @MethodSource("unsupportedSchemaDetails")
+    void shouldThrowNotImplementedForUnsupportedSchemaDetails(ProduceRequestData data) {
+      var topic = randomTopicName();
+      createTopic(topic);
+      produceRecordThen(
+          topic,
+          ProduceRequest
+              .builder()
+              .partitionId(null)
+              // Doesn't matter if key or value, the schema details within
+              // should trigger the 501 response
+              .key(data)
+              .value(data)
+              .build()
+      )
+          .statusCode(400)
+          .body("message", equalTo(
+              "This endpoint does not support specifying schema ID, type, schema, standalone subject or subject name strategy."
+          ));
+    }
+
+    @Test
+    void shouldHandleWrongTopicNameStrategy() {
+      var topic = randomTopicName();
+      createTopic(topic);
+
+      // Create a schema called "foo-key" with a JSON schema (uses TopicNameStrategy)
+      var keySchema = createSchema(
+          "foo-key",
+          "JSON",
+          loadResource("schemas/product-key.schema.json")
+      );
+
+      // Try to produce a record with the wrong subject name strategy
+      produceRecordThen(
+          topic,
+          ProduceRequest
+              .builder()
+              .partitionId(null)
+              .key(
+                  ProduceRequestData
+                      .builder()
+                      .schemaVersion(keySchema.getVersion())
+                      // Pass valid data
+                      .data(Map.of(
+                          "id", 123,
+                          "name", "test",
+                          "price", 123.45
+                      ))
+                      // But wrong subject name strategy
+                      .subjectNameStrategy("record_name")
+                      .subject("foo-key")
+                      .build()
+              )
+              .value(
+                  ProduceRequestData
+                      .builder()
+                      .data(Map.of())
+                      .build()
+              )
+              .build()
+      )
+          .statusCode(404)
+          .body("message", equalTo(
+              // The KafkaJsonSchemaSerializer tries to look up the subject
+              // by the record name but fails to find "ProductKey" which is the
+              // "title" of the JSON schema. Nothing gets past the serializer!
+              "Subject 'ProductKey' not found.; error code: 40401")
+          )
+          .body("error_code", equalTo(40401));
+    }
   }
 
 
@@ -303,7 +464,7 @@ class RecordsV3ApiImplIT {
 
   abstract class HappyPath extends AbstractSidecarIT {
 
-    private static RecordData jsonData(Object data) {
+    private static RecordData schemalessData(Object data) {
       return new RecordData(null, null, data);
     }
 
@@ -316,17 +477,32 @@ class RecordsV3ApiImplIT {
       }
       """;
 
-    private final static List<RecordData> RECORD_DATA_VALUES = List.of(
-        jsonData(null),
-        jsonData("hello"),
-        jsonData(123),
-        jsonData(123.45),
-        jsonData(true),
-        jsonData(List.of("hello", "world")),
-        jsonData(Collections.singletonMap("hello", "world")),
-        schemaData(SchemaFormat.JSON, PRODUCT_DATA),
-        schemaData(SchemaFormat.PROTOBUF, PRODUCT_DATA),
-        schemaData(SchemaFormat.AVRO, PRODUCT_DATA)
+    /**
+     * Generate cartesian product of all schema formats and subject name strategies.
+     * @param isKey whether the schema is for a key or value. This changes the schema name.
+     * @return the list of all possible schema data
+     */
+    private static List<RecordData> getSchemaData(boolean isKey) {
+      return Lists.cartesianProduct(
+              Arrays.stream(SchemaFormat.values()).toList(),
+              Arrays.stream(SubjectNameStrategyEnum.values()).toList())
+          .stream()
+          .map(t ->
+              schemaData(
+                  (SchemaFormat) t.getFirst(), isKey
+              ).withSubjectNameStrategy((SubjectNameStrategyEnum) t.getLast())
+          )
+          .toList();
+    }
+
+    private final static List<RecordData> SCHEMALESS_RECORD_DATA_VALUES = List.of(
+        schemalessData(null),
+        schemalessData("hello"),
+        schemalessData(123),
+        schemalessData(123.45),
+        schemalessData(true),
+        schemalessData(List.of("hello", "world")),
+        schemalessData(Collections.singletonMap("hello", "world"))
     );
 
     /**
@@ -335,8 +511,20 @@ class RecordsV3ApiImplIT {
      */
     static ArgumentSets validKeysAndValues() {
       return ArgumentSets
-          .argumentsForFirstParameter(RECORD_DATA_VALUES)
-          .argumentsForNextParameter(RECORD_DATA_VALUES);
+          // Key
+          .argumentsForFirstParameter(
+              Stream.concat(
+                  SCHEMALESS_RECORD_DATA_VALUES.stream(),
+                  getSchemaData(true).stream()
+              )
+          )
+          // Value
+          .argumentsForNextParameter(
+              Stream.concat(
+                  SCHEMALESS_RECORD_DATA_VALUES.stream(),
+                  getSchemaData(false).stream()
+              )
+          );
     }
 
     private static void assertSame(JsonNode actual, Object expected) {
@@ -359,21 +547,23 @@ class RecordsV3ApiImplIT {
       createTopic(topicName);
 
       Schema keySchema = null, valueSchema = null;
+      String keySubject = null, valueSubject = null;
 
-      // Use TopicNameStrategy by default for subject names
       // Create key schema if not null
-      if (key.rawSchema() != null) {
+      if (key.hasSchema()) {
+        keySubject = getSubjectName(topicName, key.subjectNameStrategy(), true);
         keySchema = createSchema(
-            topicName + "-key",
+            keySubject,
             key.schemaFormat().name(),
             key.rawSchema()
         );
       }
 
       // Create value schema if not null
-      if (value.rawSchema() != null) {
+      if (value.hasSchema()) {
+        valueSubject = getSubjectName(topicName, value.subjectNameStrategy(), false);
         valueSchema = createSchema(
-            topicName + "-value",
+            valueSubject,
             value.schemaFormat().name(),
             value.rawSchema()
         );
@@ -381,12 +571,33 @@ class RecordsV3ApiImplIT {
 
       // Produce record to topic
       var resp = produceRecordThen(
-          null,
           topicName,
-          key.data(),
-          Optional.ofNullable(keySchema).map(Schema::getVersion).orElse(null),
-          value.data(),
-          Optional.ofNullable(valueSchema).map(Schema::getVersion).orElse(null)
+          ProduceRequest
+              .builder()
+              .partitionId(null)
+              .key(
+                  ProduceRequestData
+                      .builder()
+                      .schemaVersion(Optional.ofNullable(keySchema).map(Schema::getVersion).orElse(null))
+                      .data(key.data())
+                      .subject(keySubject)
+                      .subjectNameStrategy(
+                          Optional.ofNullable(key.subjectNameStrategy).map(Enum::toString).orElse(null)
+                      )
+                      .build()
+              )
+              .value(
+                  ProduceRequestData
+                      .builder()
+                      .schemaVersion(Optional.ofNullable(valueSchema).map(Schema::getVersion).orElse(null))
+                      .data(value.data())
+                      .subject(valueSubject)
+                      .subjectNameStrategy(
+                          Optional.ofNullable(value.subjectNameStrategy).map(Enum::toString).orElse(null)
+                      )
+                      .build()
+              )
+              .build()
       );
 
       if (key.data() != null || value.data() != null) {
