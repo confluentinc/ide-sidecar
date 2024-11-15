@@ -12,10 +12,13 @@ import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
 import io.confluent.idesidecar.restapi.models.graph.KafkaCluster;
 import io.confluent.idesidecar.restapi.models.graph.SchemaRegistry;
 import io.confluent.idesidecar.restapi.util.CCloud;
+import io.confluent.kafka.schemaregistry.client.SchemaRegistryClientConfig;
+import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.apache.kafka.clients.CommonClientConfigs;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 @ApplicationScoped
@@ -50,7 +53,7 @@ public class ClientConfigurator {
     var props = new LinkedHashMap<String, Object>(defaultProperties);
 
     // First set the bootstrap servers
-    props.put("bootstrap.servers", cluster.bootstrapServers());
+    props.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, cluster.bootstrapServers());
 
     // Second, add any connection properties for Kafka cluster credentials (if defined)
     var options = connection.getKafkaConnectionOptions(cluster.id()).withRedact(redact);
@@ -64,10 +67,10 @@ public class ClientConfigurator {
     if (sr != null) {
       var additional = getSchemaRegistryClientConfig(connection, sr, redact);
       additional.forEach((k, v) -> {
-        if (k.startsWith("schema.registry.")) {
+        if (k.startsWith(SchemaRegistryClientConfig.CLIENT_NAMESPACE)) {
           props.put(k, v);
         } else {
-          props.put("schema.registry." + k, v);
+          props.put(SchemaRegistryClientConfig.CLIENT_NAMESPACE + k, v);
         }
       });
     }
@@ -94,7 +97,7 @@ public class ClientConfigurator {
     var props = new LinkedHashMap<String, Object>();
 
     // First set the schema registry URL
-    props.put("schema.registry.url", sr.uri());
+    props.put(AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, sr.uri());
 
     // CCloud requires the logical cluster ID to be set in the properties
     var logicalId = sr.logicalId().map(CCloud.LsrcId::id).orElse(null);
@@ -116,6 +119,12 @@ public class ClientConfigurator {
 
   @ConfigProperty(name = "ide-sidecar.admin-client-configs")
   Map<String, String> adminClientSidecarConfigs;
+
+  @ConfigProperty(name = "ide-sidecar.consumer-client-configs")
+  Map<String, String> consumerClientSidecarConfigs;
+
+  @ConfigProperty(name = "ide-sidecar.producer-client-configs")
+  Map<String, String> producerClientSidecarConfigs;
 
   /**
    * Get the AdminClient configuration for connection and Kafka cluster with the specified IDs.
@@ -179,9 +188,7 @@ public class ClientConfigurator {
         clusterId,
         includeSchemaRegistry,
         redact,
-        Map.of(
-            "session.timeout.ms", "45000"
-        )
+        consumerClientSidecarConfigs
     );
   }
 
@@ -213,7 +220,7 @@ public class ClientConfigurator {
         clusterId,
         includeSchemaRegistry,
         redact,
-        Map.of("acks", "all")
+        producerClientSidecarConfigs
     );
   }
 
@@ -234,7 +241,7 @@ public class ClientConfigurator {
       sr = clusterCache.getSchemaRegistryForKafkaCluster(connectionId, cluster);
     }
 
-    // Get the basic producer config
+    // Get the Kafka client config
     return getKafkaClientConfig(
         connection,
         cluster,
