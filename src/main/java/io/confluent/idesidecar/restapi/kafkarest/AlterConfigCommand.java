@@ -1,5 +1,6 @@
 package io.confluent.idesidecar.restapi.kafkarest;
 
+import io.confluent.idesidecar.restapi.kafkarest.model.AlterConfigBatchRequestDataDataInner;
 import org.apache.kafka.clients.admin.AlterConfigOp;
 import org.apache.kafka.clients.admin.ConfigEntry;
 
@@ -18,6 +19,12 @@ public record AlterConfigCommand(
         new ConfigEntry(name, value),
         getOpType()
     );
+  }
+
+  static AlterConfigCommand fromAlterConfigRequestDataInner(
+      AlterConfigBatchRequestDataDataInner inner
+  ) {
+    return new AlterConfigCommand(inner.getName(), inner.getValue(), inner.getOperation());
   }
 
   private AlterConfigOp.OpType getOpType() {
