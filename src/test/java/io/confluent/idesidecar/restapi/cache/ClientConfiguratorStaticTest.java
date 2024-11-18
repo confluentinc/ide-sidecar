@@ -3,7 +3,6 @@ package io.confluent.idesidecar.restapi.cache;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -18,6 +17,7 @@ import io.confluent.idesidecar.restapi.models.graph.KafkaCluster;
 import io.confluent.idesidecar.restapi.models.graph.SchemaRegistry;
 import io.confluent.idesidecar.restapi.util.CCloud;
 import java.io.StringReader;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -89,6 +89,7 @@ class ClientConfiguratorStaticTest {
         boolean ssl,
         boolean verifyUnsignedCertificates,
         boolean redact,
+        Duration timeout,
         String expectedKafkaConfig,
         String expectedSchemaRegistryConfig
     ) {}
@@ -102,6 +103,7 @@ class ClientConfiguratorStaticTest {
             true,
             true,
             false,
+            null,
             """
                 bootstrap.servers=localhost:9092
                 """,
@@ -118,6 +120,7 @@ class ClientConfiguratorStaticTest {
             true,
             true,
             false,
+            null,
             """
                 bootstrap.servers=localhost:9092
                 """,
@@ -132,6 +135,7 @@ class ClientConfiguratorStaticTest {
             false,
             false,
             false,
+            Duration.ofSeconds(10),
             """
                 bootstrap.servers=localhost:9092
                 security.protocol=SASL_PLAINTEXT
@@ -143,6 +147,7 @@ class ClientConfiguratorStaticTest {
                 schema.registry.url=http://localhost:8081
                 basic.auth.credentials.source=USER_INFO
                 basic.auth.user.info=%s:%s
+                schema.registry.request.timeout.ms=10000
                 """.formatted(USERNAME, PASSWORD)
         ),
         new TestInput(
@@ -154,6 +159,7 @@ class ClientConfiguratorStaticTest {
             false,
             false,
             true,
+            null,
             """
                 bootstrap.servers=localhost:9092
                 security.protocol=SASL_PLAINTEXT
@@ -177,6 +183,7 @@ class ClientConfiguratorStaticTest {
             true,
             true,
             false,
+            null,
             """
                 bootstrap.servers=localhost:9092
                 security.protocol=SASL_SSL
@@ -198,6 +205,7 @@ class ClientConfiguratorStaticTest {
             true,
             true,
             true,
+            null,
             """
                 bootstrap.servers=localhost:9092
                 security.protocol=SASL_SSL
@@ -219,6 +227,7 @@ class ClientConfiguratorStaticTest {
             true,
             true,
             false,
+            null,
             """
                 bootstrap.servers=localhost:9092
                 security.protocol=SASL_SSL
@@ -240,6 +249,7 @@ class ClientConfiguratorStaticTest {
             true,
             true,
             false,
+            null,
             """
                 bootstrap.servers=localhost:9092
                 security.protocol=SASL_SSL
@@ -277,6 +287,7 @@ class ClientConfiguratorStaticTest {
                   null,
                   null,
                   input.redact,
+                  input.timeout,
                   Map.of()
               );
               assertMapsEquals(
@@ -292,7 +303,8 @@ class ClientConfiguratorStaticTest {
                     connection,
                     input.schemaRegistry.id(),
                     input.schemaRegistry.uri(),
-                    input.redact
+                    input.redact,
+                    input.timeout
                 );
                 assertMapsEquals(
                     expectedSchemaRegistryConfig,
@@ -313,6 +325,7 @@ class ClientConfiguratorStaticTest {
                     input.schemaRegistry.id(),
                     input.schemaRegistry.uri(),
                     input.redact,
+                    input.timeout,
                     Map.of()
                 );
                 assertMapsEquals(
@@ -338,17 +351,17 @@ class ClientConfiguratorStaticTest {
   }
 
   void expectGetKafkaConnectionOptions(KafkaConnectionOptions options) {
-    when(connection.getKafkaConnectionOptions(eq(KAFKA_CLUSTER_ID)))
+    when(connection.getKafkaConnectionOptions())
         .thenReturn(options);
   }
 
   void expectGetKafkaCredentialsFromConnection(Credentials credentials) {
-    when(connection.getKafkaCredentials(eq(KAFKA_CLUSTER_ID)))
+    when(connection.getKafkaCredentials())
         .thenReturn(Optional.ofNullable(credentials));
   }
 
   void expectGetSchemaRegistryCredentialsFromConnection(Credentials credentials) {
-    when(connection.getSchemaRegistryCredentials(eq(SCHEMA_REGISTRY_ID)))
+    when(connection.getSchemaRegistryCredentials())
         .thenReturn(Optional.ofNullable(credentials));
   }
 
@@ -356,7 +369,7 @@ class ClientConfiguratorStaticTest {
     expected.forEach((k, v) -> {
       var actualValue = actual.get(k);
       assertNotNull(actualValue, "%s: expected key '%s' to be present".formatted(message, k));
-      assertEquals(v, actualValue, "%s: expected value for key '%s' to match '%s' but was '%s'".formatted(message, k, v, actualValue));
+      assertEquals(v.toString(), actualValue.toString(), "%s: expected value for key '%s' to match '%s' but was '%s'".formatted(message, k, v, actualValue));
     });
     assertEquals(expected.size(), actual.size(), "%s: expected %d entries but found %d".formatted(message, expected.size(), actual.size()));
   }

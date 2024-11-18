@@ -15,6 +15,7 @@ import io.confluent.idesidecar.restapi.util.CCloud;
 import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -39,6 +40,7 @@ public class ClientConfigurator {
    * @param srId              the ID of the Schema Registry to use, or null if not needed
    * @param srUri             the URI of the Schema Registry to use, or null if not needed
    * @param redact            whether to redact sensitive properties
+   * @param timeout           the timeout for calls to the cluster
    * @param defaultProperties the default properties to use; may be overridden by computed values
    * @return the Kafka client configuration properties
    */
@@ -49,6 +51,7 @@ public class ClientConfigurator {
       String srId,
       String srUri,
       boolean redact,
+      Duration timeout,
       Map<String, String> defaultProperties
   ) {
 
@@ -59,16 +62,16 @@ public class ClientConfigurator {
     props.put("bootstrap.servers", bootstrapServers);
 
     // Second, add any connection properties for Kafka cluster credentials (if defined)
-    var options = connection.getKafkaConnectionOptions(clusterId).withRedact(redact);
+    var options = connection.getKafkaConnectionOptions().withRedact(redact);
     connection
-        .getKafkaCredentials(clusterId)
+        .getKafkaCredentials()
         .flatMap(creds -> creds.kafkaClientProperties(options))
         .ifPresent(props::putAll);
 
     // Add any auth properties for Schema Registry to the Kafka client config,
     // with the "schema.registry." prefix (unless the property already starts with that)
     if (srUri != null) {
-      var additional = getSchemaRegistryClientConfig(connection, srId, srUri, redact);
+      var additional = getSchemaRegistryClientConfig(connection, srId, srUri, redact, timeout);
       additional.forEach((k, v) -> {
         if (k.startsWith("schema.registry.")) {
           props.put(k, v);
@@ -86,23 +89,29 @@ public class ClientConfigurator {
    * This can optionally redact sensitive values in properties, such as if generating a
    * sample configuration for display or logging.
    *
-   * @param connection the connection
-   * @param srId       the ID of the Schema Registry to use
-   * @param srUri      the URI of the Schema Registry to use
-   * @param redact     whether to redact sensitive properties
+   * @param connection     the connection
+   * @param srId           the ID of the Schema Registry to use
+   * @param srUri          the URI of the Schema Registry to use
+   * @param redact         whether to redact sensitive properties
+   * @param defaultTimeout the timeout for calls to the Schema Registry
    * @return the Schema Registry client configuration properties
    */
   public static Map<String, Object> getSchemaRegistryClientConfig(
       ConnectionState connection,
       String srId,
       String srUri,
-      boolean redact
+      boolean redact,
+      Duration defaultTimeout
   ) {
     // Find the cluster using the connection ID, and fail if either does not exist
     var props = new LinkedHashMap<String, Object>();
 
     // First set the schema registry URL
     props.put("schema.registry.url", srUri);
+
+    if (defaultTimeout != null) {
+      props.put("schema.registry.request.timeout.ms", defaultTimeout.toMillis());
+    }
 
     // CCloud requires the logical cluster ID to be set in the properties, so examine the URL
     var logicalId = CCloud.SchemaRegistryIdentifier
@@ -114,7 +123,7 @@ public class ClientConfigurator {
     // Add any properties for SR credentials (if defined)
     var options = new Credentials.SchemaRegistryConnectionOptions(redact, logicalId);
     connection
-        .getSchemaRegistryCredentials(srId)
+        .getSchemaRegistryCredentials()
         .flatMap(creds -> creds.schemaRegistryClientProperties(options))
         .ifPresent(props::putAll);
     return props;
@@ -202,6 +211,7 @@ public class ClientConfigurator {
             null,
             null,
             false,
+            null,
             adminClientSidecarConfigs
         ),
         () -> getKafkaClientConfig(
@@ -211,6 +221,7 @@ public class ClientConfigurator {
             null,
             null,
             true,
+            null,
             adminClientSidecarConfigs
         )
     );
@@ -332,6 +343,7 @@ public class ClientConfigurator {
         sr != null ? sr.id() : null,
         sr != null ? sr.uri() : null,
         redact,
+        null,
         defaultProperties
     );
   }
@@ -363,13 +375,15 @@ public class ClientConfigurator {
             connection,
             sr.id(),
             sr.uri(),
-            false
+            false,
+            null
         ),
         () -> getSchemaRegistryClientConfig(
             connection,
             sr.id(),
             sr.uri(),
-            true
+            true,
+            null
         )
     );
   }

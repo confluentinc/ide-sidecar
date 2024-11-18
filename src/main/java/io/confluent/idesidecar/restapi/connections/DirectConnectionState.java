@@ -20,17 +20,27 @@ import io.smallrye.common.constraint.Nullable;
 import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpHeaders;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import org.apache.kafka.clients.admin.AdminClient;
+import org.eclipse.microprofile.config.ConfigProvider;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
  * Implementation of the connection state for ({@link ConnectionType#DIRECT} connections where the
  * Kafka and Schema Registry clusters are provided.
  */
 public class DirectConnectionState extends ConnectionState {
+
+  static final Duration TIMEOUT = Duration.ofSeconds(
+      ConfigProvider
+          .getConfig()
+          .getOptionalValue("ide-sidecar.connections.direct.timeout-seconds", Long.class)
+          .orElse(5L)
+  );
 
   public DirectConnectionState() {
     super(null, null);
@@ -63,7 +73,7 @@ public class DirectConnectionState extends ConnectionState {
   }
 
   @Override
-  public Optional<Credentials> getKafkaCredentials(String clusterId) {
+  public Optional<Credentials> getKafkaCredentials() {
     Credentials credentials = spec.kafkaClusterConfig() != null
                               ? spec.kafkaClusterConfig().credentials()
                               : null;
@@ -71,7 +81,7 @@ public class DirectConnectionState extends ConnectionState {
   }
 
   @Override
-  public Optional<Credentials> getSchemaRegistryCredentials(String clusterId) {
+  public Optional<Credentials> getSchemaRegistryCredentials() {
     Credentials credentials = spec.schemaRegistryConfig() != null
                               ? spec.schemaRegistryConfig().credentials()
                               : null;
@@ -109,7 +119,7 @@ public class DirectConnectionState extends ConnectionState {
     // and describing the cluster.
     try (var adminClient = createAdminClient(kafkaConfig)) {
       var clusterDesc = adminClient.describeCluster();
-      var actualClusterId = clusterDesc.clusterId().get(5, TimeUnit.SECONDS);
+      var actualClusterId = clusterDesc.clusterId().get(TIMEOUT.toMillis(), TimeUnit.MILLISECONDS);
       // Set the cluster ID
       getSpec().kafkaClusterConfig().withId(actualClusterId);
       return Future.succeededFuture(
@@ -180,6 +190,7 @@ public class DirectConnectionState extends ConnectionState {
         null,
         null,
         false,
+        null,
         Map.of()
     );
     return AdminClient.create(adminConfig);
@@ -192,7 +203,8 @@ public class DirectConnectionState extends ConnectionState {
         this,
         "temporary-sr-id",
         config.uri(),
-        false
+        false,
+        TIMEOUT
     );
     return new CachedSchemaRegistryClient(
         Collections.singletonList(config.uri()),
