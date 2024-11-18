@@ -30,15 +30,15 @@ public class TopicConfigManagerImpl implements TopicConfigManager {
     );
   }
 
-
-  @Override
-  public Uni<Void> updateKafkaTopicConfig(String clusterId, String topicName, String name, UpdateConfigRequestData updateConfigRequestData) {
-    return null;
-  }
-
-  @Override
-  public Uni<Void> updateKafkaTopicConfigBatch(String clusterId, String topicName, AlterConfigBatchRequestData alterConfigBatchRequestData) {
-    return null;
-  }
+//
+//  @Override
+//  public Uni<Void> updateKafkaTopicConfigBatch(String clusterId, String topicName, AlterConfigBatchRequestData alterConfigBatchRequestData) {
+//    return configManager.alterConfigs(
+//        clusterId,
+//        new ConfigResource(ConfigResource.Type.TOPIC, topicName),
+//        // Convert the AlterConfigBatchRequestData to a list of AlterConfigCommands
+//
+//    );
+//  }
 
 }

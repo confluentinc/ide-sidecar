@@ -14,7 +14,5 @@ public interface TopicConfigManager {
 
   Uni<List<ConfigEntry>> listKafkaTopicConfigs(String clusterId, String topicName);
 
-  Uni<Void> updateKafkaTopicConfig(String clusterId, String topicName, String name, UpdateConfigRequestData updateConfigRequestData);
-
   Uni<Void> updateKafkaTopicConfigBatch(String clusterId, String topicName, AlterConfigBatchRequestData alterConfigBatchRequestData);
 }

@@ -1,7 +1,7 @@
 package io.confluent.idesidecar.restapi.kafkarest;
 
 import io.soabase.recordbuilder.core.RecordBuilder;
-import org.eclipse.microprofile.config.spi.ConfigSource;
+import org.apache.kafka.clients.admin.ConfigEntry;
 
 import java.util.List;
 
@@ -14,7 +14,8 @@ public record TopicConfig (
     boolean isDefault,
     boolean isReadOnly,
     boolean isSensitive,
-    ConfigSource source,
+    ConfigEntry.ConfigSource source,
     List<ConfigSynonym> synonyms
 ) implements AbstractConfig {
+
 }
