@@ -59,16 +59,19 @@ public class ClusterStrategyProcessor extends
 
   public ClusterStrategy chooseStrategy(
       ClusterType clusterType, ConnectionType connectionType) {
-    return switch (connectionType) {
-      case CCLOUD -> clusterType == ClusterType.KAFKA
-          ? confluentCloudKafkaClusterStrategy : confluentCloudSchemaRegistryClusterStrategy;
-      case LOCAL ->
-          clusterType == ClusterType.KAFKA
-              ? confluentLocalKafkaClusterStrategy : confluentLocalSchemaRegistryClusterStrategy;
-      case DIRECT ->
-          clusterType == ClusterType.KAFKA
-          ? directKafkaClusterStrategy : directSchemaRegistryClusterStrategy;
-      case PLATFORM -> null;
+    return switch(clusterType) {
+      case KAFKA -> switch (connectionType) {
+        case CCLOUD -> confluentCloudKafkaClusterStrategy;
+        case LOCAL -> confluentLocalKafkaClusterStrategy;
+        case DIRECT -> directKafkaClusterStrategy;
+        case PLATFORM -> null;
+      };
+      case SCHEMA_REGISTRY -> switch (connectionType) {
+        case CCLOUD -> confluentCloudSchemaRegistryClusterStrategy;
+        case LOCAL -> confluentLocalSchemaRegistryClusterStrategy;
+        case DIRECT -> directSchemaRegistryClusterStrategy;
+        case PLATFORM -> null;
+      };
     };
   }
 }

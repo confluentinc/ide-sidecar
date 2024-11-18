@@ -101,7 +101,7 @@ public record BasicCredentials(
     var headers = MultiMap.caseInsensitiveMultiMap();
     if (username != null || password != null) {
       // base64 encode the username and password
-      var value = "%s:%s".formatted(username, password.asCharArray());
+      var value = "%s:%s".formatted(username, password.asString());
       value = Base64.getEncoder().encodeToString(value.getBytes(StandardCharsets.UTF_8));
       headers.add(AUTHORIZATION, "Basic %s".formatted(value));
     }

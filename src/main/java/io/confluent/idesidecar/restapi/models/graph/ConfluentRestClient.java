@@ -220,7 +220,7 @@ public abstract class ConfluentRestClient {
    * If the response is paginated, this stream will continue to get additional pages as
    * needed until there are no more results or the supplied limits are reached.
    *
-   * @param connectionId   the ID of the connection to use
+   * @param headers        the headers to use for the request
    * @param firstUrl       the URL of the first page of Confluent API resources
    * @param limits         the page limits; may be null if there are no limits
    * @param responseParser the parser for the items on the page
@@ -228,13 +228,12 @@ public abstract class ConfluentRestClient {
    * @return the stream of items
    */
   protected <T> Multi<T> listItems(
-      String connectionId,
+      MultiMap headers,
       String firstUrl,
       PageLimits limits,
       ListParser<T> responseParser
   ) {
     try {
-      MultiMap headers = headersFor(connectionId);
       return Multi
           .createBy()
           .repeating()
@@ -262,18 +261,17 @@ public abstract class ConfluentRestClient {
   /**
    * Get the Confluent API resource at the given URL.
    *
-   * @param connectionId   the ID of the connection to use
+   * @param headers        the headers to use for the request
    * @param responseParser the parser for the items on the page
    * @param <T>            the type of items being returned
    * @return the item
    */
   protected <T> Uni<T> getItem(
-      String connectionId,
+      MultiMap headers,
       String url,
       ItemParser<T> responseParser
   ) {
     try {
-      MultiMap headers = headersFor(connectionId);
       var response = webClientFactory
           .getWebClient()
           .getAbs(url)
