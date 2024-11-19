@@ -27,13 +27,7 @@ public class KafkaProducerClients extends Clients<KafkaProducer<byte[], byte[]>>
         clusterId,
         () -> {
           // Generate the Kafka producer configuration
-          var config = configurator.getProducerClientConfig(
-              connectionId,
-              clusterId,
-              // We don't include SR configuration here because
-              // we don't need it for the producer
-              false
-          );
+          var config = configurator.getProducerClientConfig(connectionId, clusterId);
           // Create the producer
           Log.debugf(
               "Creating producer client for connection %s and cluster %s with configuration:\n  %s",

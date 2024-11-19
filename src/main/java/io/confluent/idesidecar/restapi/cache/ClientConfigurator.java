@@ -282,7 +282,6 @@ public class ClientConfigurator {
    *
    * @param connectionId          the ID of the connection
    * @param clusterId             the ID of the Kafka cluster
-   * @param includeSchemaRegistry whether to include configuration properties for Schema Registry
    * @return the AdminClient configuration properties
    * @throws ConnectionNotFoundException if the connection does not exist
    * @throws ClusterNotFoundException    if the cluster does not exist
@@ -290,8 +289,7 @@ public class ClientConfigurator {
    */
   public Configuration getProducerClientConfig(
       String connectionId,
-      String clusterId,
-      boolean includeSchemaRegistry
+      String clusterId
   ) throws ConnectionNotFoundException, ClusterNotFoundException {
     var defaults = Map.of(
         "acks", "all"
@@ -300,14 +298,14 @@ public class ClientConfigurator {
         () -> getKafkaClientConfig(
             connectionId,
             clusterId,
-            includeSchemaRegistry,
+            false,
             false,
             defaults
         ),
         () -> getKafkaClientConfig(
             connectionId,
             clusterId,
-            includeSchemaRegistry,
+            false,
             true,
             defaults
         )
