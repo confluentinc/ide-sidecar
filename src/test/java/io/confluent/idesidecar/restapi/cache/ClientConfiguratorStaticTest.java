@@ -38,8 +38,8 @@ class ClientConfiguratorStaticTest {
   static final String SCHEMA_REGISTRY_LSRC_ID = "lscr-1234";
   static final String BOOTSTRAP_SERVERS = "localhost:9092";
   static final String SCHEMA_REGISTRY_URL = "http://localhost:8081";
-  static final String SCHEMA_REGISTRY_CCLOUD_URL = "https://psrc-1234.us-west-2.aws.confluent"
-                                                   + ".cloud";
+  static final String SCHEMA_REGISTRY_CCLOUD_URL =
+      "https://psrc-1234.us-west-2.aws.confluent" + ".cloud";
 
   static final String USERNAME = "user123";
   static final String PASSWORD = "my-secret";
@@ -249,15 +249,13 @@ class ClientConfiguratorStaticTest {
     expected.forEach((k, v) -> {
       var actualValue = actual.get(k);
       assertNotNull(actualValue, "%s: expected key '%s' to be present".formatted(message, k));
-      assertEquals(
-          v, actualValue,
+      assertEquals(v, actualValue,
           "%s: expected value for key '%s' to match '%s' but was '%s'".formatted(message, k, v,
               actualValue
           )
       );
     });
-    assertEquals(
-        expected.size(), actual.size(),
+    assertEquals(expected.size(), actual.size(),
         "%s: expected %d entries but found %d".formatted(message, expected.size(), actual.size())
     );
   }
