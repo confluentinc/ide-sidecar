@@ -294,11 +294,30 @@ public class SidecarClient {
     return createConnection(spec);
   }
 
+  public Connection createLocalConnectionWithoutSRTo(TestEnvironment env, String scope) {
+    var spec = env.localConnectionSpec().orElseThrow();
+    // Append the scope to the name of the connection
+    spec = spec.withName( "%s (%s)".formatted(spec.name(), scope));
+    spec = spec.withId( "%s-%s".formatted(spec.id(), scope));
+    // Blank SR URI means no SR
+    spec = spec.withLocalConfig("");
+    return createConnection(spec);
+  }
+
   public Connection createDirectConnectionTo(TestEnvironment env, String scope) {
     var spec = env.directConnectionSpec().orElseThrow();
     // Append the scope to the name of the connection
     spec = spec.withName( "%s (%s)".formatted(spec.name(), scope));
     spec = spec.withId( "%s-%s".formatted(spec.id(), scope));
+    return createConnection(spec);
+  }
+
+  public Connection createDirectConnectionWithoutSRTo(TestEnvironment env, String scope) {
+    var spec = env.directConnectionSpec().orElseThrow();
+    // Append the scope to the name of the connection
+    spec = spec.withName( "%s (%s)".formatted(spec.name(), scope));
+    spec = spec.withId( "%s-%s".formatted(spec.id(), scope));
+    spec = spec.withSchemaRegistry(null);
     return createConnection(spec);
   }
 
