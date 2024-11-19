@@ -484,11 +484,21 @@ class RecordsV3ApiImplIT {
     }
   }
 
-  abstract class HappyPath extends AbstractSidecarIT {
+  private static RecordData schemalessData(Object data) {
+    return new RecordData(null, null, data);
+  }
 
-    private static RecordData schemalessData(Object data) {
-      return new RecordData(null, null, data);
-    }
+  private final static List<RecordData> SCHEMALESS_RECORD_DATA_VALUES = List.of(
+      schemalessData(null),
+      schemalessData("hello"),
+      schemalessData(123),
+      schemalessData(123.45),
+      schemalessData(true),
+      schemalessData(List.of("hello", "world")),
+      schemalessData(Collections.singletonMap("hello", "world"))
+  );
+
+  abstract class HappyPath extends AbstractSidecarIT {
 
     private final static String PRODUCT_DATA = """
       {
@@ -517,15 +527,6 @@ class RecordsV3ApiImplIT {
           .toList();
     }
 
-    private final static List<RecordData> SCHEMALESS_RECORD_DATA_VALUES = List.of(
-        schemalessData(null),
-        schemalessData("hello"),
-        schemalessData(123),
-        schemalessData(123.45),
-        schemalessData(true),
-        schemalessData(List.of("hello", "world")),
-        schemalessData(Collections.singletonMap("hello", "world"))
-    );
 
     /**
      * Valid keys and values inputs used for producing and consuming data.
@@ -549,111 +550,10 @@ class RecordsV3ApiImplIT {
           );
     }
 
-    private static void assertSame(JsonNode actual, Object expected) {
-      if (expected != null) {
-        var parsedKey = OBJECT_MAPPER.convertValue(
-            expected,
-            expected.getClass()
-        );
-        assertEquals(expected, parsedKey);
-      } else {
-        assertTrue(actual.isNull());
-      }
-    }
-
     @CartesianTest
     @CartesianTest.MethodFactory("validKeysAndValues")
     void testProduceAndConsumeData(RecordData key, RecordData value) {
-      var topicName = randomTopicName();
-      // Create topic with a single partition
-      createTopic(topicName);
-
-      Schema keySchema = null, valueSchema = null;
-      String keySubject = null, valueSubject = null;
-
-      // Create key schema if not null
-      if (key.hasSchema()) {
-        keySubject = getSubjectName(topicName, key.subjectNameStrategy(), true);
-        keySchema = createSchema(
-            keySubject,
-            key.schemaFormat().name(),
-            key.rawSchema()
-        );
-      }
-
-      // Create value schema if not null
-      if (value.hasSchema()) {
-        valueSubject = getSubjectName(topicName, value.subjectNameStrategy(), false);
-        valueSchema = createSchema(
-            valueSubject,
-            value.schemaFormat().name(),
-            value.rawSchema()
-        );
-      }
-
-      // Produce record to topic
-      var resp = produceRecordThen(
-          topicName,
-          ProduceRequest
-              .builder()
-              .partitionId(null)
-              .key(
-                  ProduceRequestData
-                      .builder()
-                      .schemaVersion(Optional.ofNullable(keySchema).map(Schema::getVersion).orElse(null))
-                      .data(key.data())
-                      .subject(keySubject)
-                      .subjectNameStrategy(
-                          Optional.ofNullable(key.subjectNameStrategy).map(Enum::toString).orElse(null)
-                      )
-                      .build()
-              )
-              .value(
-                  ProduceRequestData
-                      .builder()
-                      .schemaVersion(Optional.ofNullable(valueSchema).map(Schema::getVersion).orElse(null))
-                      .data(value.data())
-                      .subject(valueSubject)
-                      .subjectNameStrategy(
-                          Optional.ofNullable(value.subjectNameStrategy).map(Enum::toString).orElse(null)
-                      )
-                      .build()
-              )
-              .build()
-      );
-
-      if (key.data() != null || value.data() != null) {
-        resp.statusCode(200);
-        assertTopicHasRecord(key, value, topicName);
-      } else {
-        // A "SadPath" test in a "HappyPath" test?! Blasphemy!
-        // Easier to catch and assert this here than create a separate test case for
-        // passing nulls.
-        resp.statusCode(400)
-            .body("message", equalTo("Key and value data cannot both be null"));
-      }
-    }
-
-    private void assertTopicHasRecord(RecordData key, RecordData value, String topicName) {
-      var consumeResponse = consume(
-          topicName,
-          SimpleConsumeMultiPartitionRequestBuilder
-              .builder()
-              .fromBeginning(true)
-              .maxPollRecords(1)
-              .build()
-      );
-
-      var records = consumeResponse
-          .partitionDataList()
-          // Assuming single partition
-          .getFirst()
-          .records();
-
-      assertEquals(records.size(), 1);
-
-      assertSame(records.getFirst().key(), key.data());
-      assertSame(records.getFirst().value(), value.data());
+      produceAndConsume(this, key, value);
     }
 
     @Test
@@ -694,6 +594,177 @@ class RecordsV3ApiImplIT {
         // in each partition
         assertTrue(records.size() >= 2);
       }
+    }
+  }
+
+  @Nested
+  @Tag("io.confluent.common.utils.IntegrationTest")
+  @TestProfile(NoAccessFilterProfile.class)
+  class LocalProduceRecordWithoutSchemaRegistry extends ProduceRecordWithoutSchemaRegistry {
+
+    @BeforeEach
+    public void beforeEach() {
+      setupLocalConnectionWithoutSR(this);
+    }
+  }
+
+  @Nested
+  @Tag("io.confluent.common.utils.IntegrationTest")
+  @TestProfile(NoAccessFilterProfile.class)
+  class DirectProduceRecordWithoutSchemaRegistry extends ProduceRecordWithoutSchemaRegistry {
+
+    @BeforeEach
+    public void beforeEach() {
+      setupDirectConnectionWithoutSR(this);
+    }
+  }
+
+  /**
+   * Tests that Sidecar can handle producing records without a Schema Registry
+   * defined for the connection.
+   */
+  abstract class ProduceRecordWithoutSchemaRegistry extends AbstractSidecarIT {
+
+    @Test
+    void shouldHandleProducingWithSchemaDetailsToConnectionWithoutSchemaRegistry() {
+      var topic = randomTopicName();
+      createTopic(topic);
+
+      produceRecordThen(
+          null,
+          topic,
+          Map.of(),
+          // Should trigger 400
+          // due to the lack of schema registry
+          1,
+          Map.of(),
+          null
+      )
+          .statusCode(400)
+          .body("message", containsString("This connection does not have an associated Schema Registry."));
+    }
+
+    /**
+     * Valid schemaless keys and values inputs used for producing and consuming data.
+     * @return the sets of keys and sets of values
+     */
+    static ArgumentSets validSchemalessKeysAndValues() {
+      return ArgumentSets
+          .argumentsForFirstParameter(SCHEMALESS_RECORD_DATA_VALUES)
+          .argumentsForNextParameter(SCHEMALESS_RECORD_DATA_VALUES);
+    }
+
+    @CartesianTest
+    @CartesianTest.MethodFactory("validSchemalessKeysAndValues")
+    void testProduceAndConsumeSchemalessData(RecordData key, RecordData value) {
+      produceAndConsume(this, key, value);
+    }
+  }
+
+  private static <T extends AbstractSidecarIT> void produceAndConsume(T test, RecordData key, RecordData value) {
+    var topicName = test.randomTopicName();
+    // Create topic with a single partition
+    test.createTopic(topicName);
+
+    Schema keySchema = null, valueSchema = null;
+    String keySubject = null, valueSubject = null;
+
+    // Create key schema if not null
+    if (key.hasSchema()) {
+      keySubject = getSubjectName(topicName, key.subjectNameStrategy(), true);
+      keySchema = test.createSchema(
+          keySubject,
+          key.schemaFormat().name(),
+          key.rawSchema()
+      );
+    }
+
+    // Create value schema if not null
+    if (value.hasSchema()) {
+      valueSubject = getSubjectName(topicName, value.subjectNameStrategy(), false);
+      valueSchema = test.createSchema(
+          valueSubject,
+          value.schemaFormat().name(),
+          value.rawSchema()
+      );
+    }
+
+    // Produce record to topic
+    var resp = test.produceRecordThen(
+        topicName,
+        ProduceRequest
+            .builder()
+            .partitionId(null)
+            .key(
+                ProduceRequestData
+                    .builder()
+                    .schemaVersion(Optional.ofNullable(keySchema).map(Schema::getVersion).orElse(null))
+                    .data(key.data())
+                    .subject(keySubject)
+                    .subjectNameStrategy(
+                        Optional.ofNullable(key.subjectNameStrategy).map(Enum::toString).orElse(null)
+                    )
+                    .build()
+            )
+            .value(
+                ProduceRequestData
+                    .builder()
+                    .schemaVersion(Optional.ofNullable(valueSchema).map(Schema::getVersion).orElse(null))
+                    .data(value.data())
+                    .subject(valueSubject)
+                    .subjectNameStrategy(
+                        Optional.ofNullable(value.subjectNameStrategy).map(Enum::toString).orElse(null)
+                    )
+                    .build()
+            )
+            .build()
+    );
+
+    if (key.data() != null || value.data() != null) {
+      resp.statusCode(200);
+      assertTopicHasRecord(test, key, value, topicName);
+    } else {
+      // A "SadPath" test in a "HappyPath" test?! Blasphemy!
+      // Easier to catch and assert this here than create a separate test case for
+      // passing nulls.
+      resp.statusCode(400)
+          .body("message", equalTo("Key and value data cannot both be null"));
+    }
+  }
+
+
+  private static <T extends AbstractSidecarIT> void assertTopicHasRecord(
+      T test, RecordData key, RecordData value, String topicName) {
+    var consumeResponse = test.consume(
+        topicName,
+        SimpleConsumeMultiPartitionRequestBuilder
+            .builder()
+            .fromBeginning(true)
+            .maxPollRecords(1)
+            .build()
+    );
+
+    var records = consumeResponse
+        .partitionDataList()
+        // Assuming single partition
+        .getFirst()
+        .records();
+
+    assertEquals(records.size(), 1);
+
+    assertSame(records.getFirst().key(), key.data());
+    assertSame(records.getFirst().value(), value.data());
+  }
+
+  private static void assertSame(JsonNode actual, Object expected) {
+    if (expected != null) {
+      var parsedKey = OBJECT_MAPPER.convertValue(
+          expected,
+          expected.getClass()
+      );
+      assertEquals(expected, parsedKey);
+    } else {
+      assertTrue(actual.isNull());
     }
   }
 

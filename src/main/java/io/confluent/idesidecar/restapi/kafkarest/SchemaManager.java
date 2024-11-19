@@ -67,9 +67,9 @@ public class SchemaManager {
 
   private static void ensureSchemaRegistryClientExists(SchemaRegistryClient schemaRegistryClient) {
     if (schemaRegistryClient == null) {
-      throw new BadRequestException("SchemaRegistryClient required but not provided. " +
-          "This connection may not have access to a Schema Registry. Please update " +
-          "the connection configuration to include a Schema Registry.");
+      throw new BadRequestException("This connection does not have an associated Schema Registry. " +
+          "Either define a Schema Registry for this connection or try again without specifying " +
+          "schema details: schema version, subject or subject name strategy.");
     }
   }
 
