@@ -1,7 +1,6 @@
 {
   "type": "record",
-  "name": "Product",
-  "namespace": "example.avro",
+  "name": "ProductValue",
   "fields": [
     {"name": "id", "type": "int"},
     {"name": "name", "type": "string"},
