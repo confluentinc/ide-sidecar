@@ -33,8 +33,8 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.TimeoutException;
 
 /**
- * A bean that tracks and caches information about clusters available to different connections.
- * The purpose of this cache is to allow processors to quickly find the information about a cluster
+ * A bean that tracks and caches information about clusters available to different connections. The
+ * purpose of this cache is to allow processors to quickly find the information about a cluster
  * given the connection ID and cluster ID.
  *
  * <p>This class uses <a href="https://quarkus.io/guides/cdi#events-and-observers">CDI events</a>
@@ -43,8 +43,8 @@ import java.util.concurrent.TimeoutException;
  * this class drops any cached information for the connection.
  *
  * <p>This class also observes and caches the {@link Cluster} objects loaded for the connections
- * to CCloud, Confluent Platform and Local systems, and provides a quick lookup of those clusters
- * by connection ID and cluster ID.
+ * to CCloud, Confluent Platform and Local systems, and provides a quick lookup of those clusters by
+ * connection ID and cluster ID.
  *
  * <p>Components can then use this cache to quickly obtain information about a {@link Cluster}
  * given the cluster ID and connection ID.
@@ -74,7 +74,7 @@ public class ClusterCache {
    * @param clusterId    the ID of the cluster
    * @return the info for the matching cluster
    * @throws ConnectionNotFoundException if there is no connection with the given ID
-   * @throws ClusterNotFoundException if the cluster was not found
+   * @throws ClusterNotFoundException    if the cluster was not found
    */
   public Cluster getCluster(String connectionId, String clusterId, ClusterType type) {
     return switch (type) {
@@ -90,47 +90,42 @@ public class ClusterCache {
    * @param clusterId    the ID of the cluster
    * @return the info for the matching cluster, or null if none is found
    * @throws ConnectionNotFoundException if there is no connection with the given ID
-   * @throws ClusterNotFoundException if the cluster was not found
+   * @throws ClusterNotFoundException    if the cluster was not found
    */
   public KafkaCluster getKafkaCluster(String connectionId, String clusterId) {
     return forConnection(connectionId).getKafkaCluster(clusterId);
   }
 
   /**
-   * Find the first Kafka cluster accessible over the specified connection. This is useful when
-   * it is known that there is only one Kafka cluster per connection.
+   * Find the first Kafka cluster accessible over the specified connection. This is useful when it
+   * is known that there is only one Kafka cluster per connection.
+   *
    * @param connectionId the ID of the connection
    * @return the info for the first Kafka cluster, or null if none found
    */
   public Optional<KafkaCluster> getKafkaClusterForConnection(String connectionId) {
-    return forConnection(connectionId)
-        .kafkaClusters
-        .values()
-        .stream()
-        .findFirst()
-        .map(ClusterInfo::spec);
+    return forConnection(connectionId).kafkaClusters.values().stream().findFirst().map(
+        ClusterInfo::spec);
   }
 
 
   /**
    * Find the cluster info for the schema registry that is associated with the given Kafka cluster,
-   * accessible over the specified connection.
-   * Typically, the caller will first find the cluster info for a Kafka cluster with a given ID,
-   * and then can find the cluster info for the corresponding schema registry cluster, if
-   * there is such a schema registry.
+   * accessible over the specified connection. Typically, the caller will first find the cluster
+   * info for a Kafka cluster with a given ID, and then can find the cluster info for the
+   * corresponding schema registry cluster, if there is such a schema registry.
    *
    * <p>For CCloud, all Kafka clusters in an environment use the one schema registry in that same
    * environment.
    *
    * @param kafkaCluster the info for the kafka cluster
-   * @return the info for the schema registry that has the same scope as the given Kafka cluster,
-   *         or null if there is none
+   * @return the info for the schema registry that has the same scope as the given Kafka cluster, or
+   *     null if there is none
    * @throws ConnectionNotFoundException if there is no connection with the given ID
-   * @throws ClusterNotFoundException if the cluster was not found
+   * @throws ClusterNotFoundException    if the cluster was not found
    */
   public SchemaRegistry getSchemaRegistryForKafkaCluster(
-      String connectionId,
-      KafkaCluster kafkaCluster
+      String connectionId, KafkaCluster kafkaCluster
   ) {
     return forConnection(connectionId).getSchemaRegistryForKafkaCluster(kafkaCluster);
   }
@@ -138,6 +133,7 @@ public class ClusterCache {
   /**
    * Find the cluster info for the schema registry that is associated with the given Kafka cluster,
    * if one exists. Else, return an empty Optional.
+   *
    * @param connectionId   the ID of the connection
    * @param kafkaClusterId the ID of the Kafka cluster
    * @return the info for the schema registry that is associated with the given Kafka cluster
@@ -156,7 +152,7 @@ public class ClusterCache {
    * @param clusterId    the ID of the schema registry
    * @return the info for the matching cluster, or null if none is found
    * @throws ConnectionNotFoundException if there is no connection with the given ID
-   * @throws ClusterNotFoundException if the cluster was not found
+   * @throws ClusterNotFoundException    if the cluster was not found
    */
   public SchemaRegistry getSchemaRegistry(String connectionId, String clusterId) {
     return forConnection(connectionId).getSchemaRegistry(clusterId);
@@ -176,9 +172,7 @@ public class ClusterCache {
   Clusters forConnection(String connectionId) {
     var cache = clustersByConnectionId.get(connectionId);
     if (cache == null) {
-      throw new ConnectionNotFoundException(
-          "Connection %s does not exist".formatted(connectionId)
-      );
+      throw new ConnectionNotFoundException("Connection %s does not exist".formatted(connectionId));
     }
     return cache;
   }
@@ -193,9 +187,8 @@ public class ClusterCache {
     Log.infof("Updated %s", connection.getSpec());
 
     // Replace the existing cache for this connection with a new one
-    clustersByConnectionId.put(
-            connection.getId(),
-            new Clusters(connection.getId(), connection.getType())
+    clustersByConnectionId.put(connection.getId(),
+        new Clusters(connection.getId(), connection.getType())
     );
   }
 
@@ -222,8 +215,7 @@ public class ClusterCache {
       @ObservesAsync @ClusterKind.Kafka ClusterEvent clusterEvent
   ) {
     Log.infof("Loaded Kafka Cluster %s", clusterEvent);
-    var clusters = createOrGetConnectionClusters(
-        clusterEvent.connectionId(),
+    var clusters = createOrGetConnectionClusters(clusterEvent.connectionId(),
         clusterEvent.connectionType()
     );
     clusters.add(clusterEvent.cluster());
@@ -233,29 +225,19 @@ public class ClusterCache {
       @ObservesAsync @ClusterKind.SchemaRegistry ClusterEvent clusterEvent
   ) {
     Log.infof("Loaded Schema Registry %s", clusterEvent);
-    var clusters = createOrGetConnectionClusters(
-        clusterEvent.connectionId(),
+    var clusters = createOrGetConnectionClusters(clusterEvent.connectionId(),
         clusterEvent.connectionType()
     );
     clusters.add(clusterEvent.cluster());
   }
 
   protected Clusters createOrGetConnectionClusters(
-      String connectionId,
-      ConnectionType type
+      String connectionId, ConnectionType type
   ) {
-    return clustersByConnectionId.putIfAbsent(
-        connectionId,
-        new Clusters(connectionId, type)
-    );
+    return clustersByConnectionId.putIfAbsent(connectionId, new Clusters(connectionId, type));
   }
 
-  record ClusterInfo<SpecT extends Cluster>(
-      String id,
-      ClusterType type,
-      SpecT spec,
-      String path
-  ) {
+  record ClusterInfo<SpecT extends Cluster>(String id, ClusterType type, SpecT spec, String path) {
 
     public static final String BLANK_PATH = "";
   }
@@ -322,8 +304,7 @@ public class ClusterCache {
      */
     @VisibleForTesting
     SchemaRegistry getSchemaRegistry(
-        String registryId,
-        boolean loadIfMissing
+        String registryId, boolean loadIfMissing
     ) {
       return findFirstSchemaRegistryWithId(registryId, loadIfMissing).spec();
     }
@@ -331,13 +312,13 @@ public class ClusterCache {
     /**
      * Find the info for the {@link SchemaRegistry} that is associated with the given Kafka cluster.
      * Typically, the caller will first
-     * {@link #getKafkaCluster(String) find the Kafka cluster with a given ID},
-     * and then use this method to find the corresponding schema registry cluster, if
-     * there is such a schema registry.
+     * {@link #getKafkaCluster(String) find the Kafka cluster with a given ID}, and then use this
+     * method to find the corresponding schema registry cluster, if there is such a schema
+     * registry.
      *
      * @param kafkaCluster the {@link KafkaCluster}
      * @return the info for the schema registry that has the same scope as the given Kafka cluster,
-     *         or null if there is none
+     *     or null if there is none
      * @throws ClusterNotFoundException if the schema registry was not found
      */
     public SchemaRegistry getSchemaRegistryForKafkaCluster(
@@ -349,32 +330,26 @@ public class ClusterCache {
     /**
      * Find the info for the {@link SchemaRegistry} that is associated with the given Kafka cluster.
      * Typically, the caller will first
-     * {@link #getKafkaCluster(String) find the Kafka cluster with a given ID},
-     * and then use this method to find the corresponding schema registry cluster, if
-     * there is such a schema registry.
+     * {@link #getKafkaCluster(String) find the Kafka cluster with a given ID}, and then use this
+     * method to find the corresponding schema registry cluster, if there is such a schema
+     * registry.
      *
      * @param kafkaClusterId the ID of the kafka cluster
      * @param loadIfMissing  true if the cluster information should be loaded if it's not found
      * @return the info for the schema registry that has the same scope as the given Kafka cluster,
-     *         or null if there is none
+     *     or null if there is none
      */
     public SchemaRegistry getSchemaRegistryForKafkaCluster(
-        String kafkaClusterId,
-        boolean loadIfMissing
+        String kafkaClusterId, boolean loadIfMissing
     ) {
-      return maybeSchemaRegistryForKafkaCluster(kafkaClusterId, loadIfMissing).orElseThrow(() ->
-          new ClusterNotFoundException(
+      return maybeSchemaRegistryForKafkaCluster(kafkaClusterId, loadIfMissing).orElseThrow(
+          () -> new ClusterNotFoundException(
               "Schema Registry not found for Kafka Cluster %s in connection %s".formatted(
-                  kafkaClusterId,
-                  connectionId
-              )
-          )
-      );
+                  kafkaClusterId, connectionId)));
     }
 
     public Optional<SchemaRegistry> maybeSchemaRegistryForKafkaCluster(
-        String kafkaClusterId,
-        boolean loadIfMissing
+        String kafkaClusterId, boolean loadIfMissing
     ) {
       // Find the path for this Kafka cluster
       var kafkaCluster = findKafkaCluster(kafkaClusterId, loadIfMissing);
@@ -387,8 +362,7 @@ public class ClusterCache {
     }
 
     protected ClusterInfo<KafkaCluster> findKafkaCluster(
-        String kafkaClusterId,
-        boolean loadIfMissing
+        String kafkaClusterId, boolean loadIfMissing
     ) {
       var result = kafkaClusters.get(kafkaClusterId);
       if (result == null && loadIfMissing) {
@@ -401,21 +375,16 @@ public class ClusterCache {
       }
       if (result == null) {
         throw new ClusterNotFoundException(
-            "Kafka Cluster %s not found in connection %s".formatted(kafkaClusterId, connectionId)
-        );
+            "Kafka Cluster %s not found in connection %s".formatted(kafkaClusterId, connectionId));
       }
       return result;
     }
 
     protected ClusterInfo<SchemaRegistry> findFirstSchemaRegistryWithPath(
-        String path,
-        boolean loadIfMissing
+        String path, boolean loadIfMissing
     ) {
-      var result = schemaRegistries
-          .stream()
-          .filter(info -> info.path().equalsIgnoreCase(path))
-          .findFirst()
-          .orElse(null);
+      var result = schemaRegistries.stream().filter(info -> info.path().equalsIgnoreCase(path))
+                                   .findFirst().orElse(null);
       if (result == null && loadIfMissing) {
         // Try and load the schema registry for this connection
         var registry = loadSchemaRegistryWithPath(path, loadTimeout);
@@ -427,14 +396,10 @@ public class ClusterCache {
     }
 
     protected ClusterInfo<SchemaRegistry> findFirstSchemaRegistryWithId(
-        String id,
-        boolean loadIfMissing
+        String id, boolean loadIfMissing
     ) {
-      var result = schemaRegistries
-          .stream()
-          .filter(info -> info.id().equalsIgnoreCase(id))
-          .findFirst()
-          .orElse(null);
+      var result = schemaRegistries.stream().filter(info -> info.id().equalsIgnoreCase(id))
+                                   .findFirst().orElse(null);
       if (result == null && loadIfMissing) {
         // Try and load the schema registry for this connection
         var registry = loadSchemaRegistryWithId(id, loadTimeout);
@@ -444,8 +409,7 @@ public class ClusterCache {
       }
       if (result == null) {
         throw new ClusterNotFoundException(
-            "Schema Registry %s not found in connection %s".formatted(id, connectionId)
-        );
+            "Schema Registry %s not found in connection %s".formatted(id, connectionId));
       }
       return result;
     }
@@ -463,12 +427,7 @@ public class ClusterCache {
       if (registry instanceof CCloudSchemaRegistry lsrc) {
         path = lsrc.environment().id();
       }
-      var info = new ClusterInfo<SchemaRegistry>(
-          registry.id(),
-          ClusterType.KAFKA,
-          registry,
-          path
-      );
+      var info = new ClusterInfo<SchemaRegistry>(registry.id(), ClusterType.KAFKA, registry, path);
       schemaRegistries.add(info);
       return info;
     }
@@ -478,10 +437,7 @@ public class ClusterCache {
       if (kafkaCluster instanceof CCloudKafkaCluster lkc) {
         path = lkc.environment().id();
       }
-      var info = new ClusterInfo<KafkaCluster>(
-          kafkaCluster.id(),
-          ClusterType.KAFKA,
-          kafkaCluster,
+      var info = new ClusterInfo<KafkaCluster>(kafkaCluster.id(), ClusterType.KAFKA, kafkaCluster,
           path
       );
       kafkaClusters.put(kafkaCluster.id(), info);
@@ -491,23 +447,16 @@ public class ClusterCache {
     protected KafkaCluster loadKafkaCluster(String clusterId, Duration timeout) {
       try {
         return switch (connectionType) {
-          case CCLOUD -> ccloudFetcher.findKafkaCluster(connectionId, clusterId)
-                                      .await()
-                                      .atMost(timeout);
-          case LOCAL -> localFetcher.getKafkaCluster(connectionId)
-                                    .await()
-                                    .atMost(timeout);
-          case DIRECT -> directFetcher.getKafkaCluster(connectionId)
-                                    .await()
-                                    .atMost(timeout);
+          case CCLOUD -> ccloudFetcher.findKafkaCluster(connectionId, clusterId).await().atMost(
+              timeout);
+          case LOCAL -> localFetcher.getKafkaCluster(connectionId).await().atMost(timeout);
+          case DIRECT -> directFetcher.getKafkaCluster(connectionId).await().atMost(timeout);
           case PLATFORM -> null;
         };
       } catch (CompletionException e) {
         if (e.getCause() instanceof TimeoutException) {
-          Log.infof(
-              "Timed out waiting %s to load Kafka cluster %s",
-              TimeUtil.humanReadableDuration(timeout),
-              clusterId
+          Log.infof("Timed out waiting %s to load Kafka cluster %s",
+              TimeUtil.humanReadableDuration(timeout), clusterId
           );
         } else {
           Log.errorf(e, "Failed to load Kafka cluster %s", clusterId);
@@ -519,23 +468,15 @@ public class ClusterCache {
     protected SchemaRegistry loadSchemaRegistryWithId(String id, Duration timeout) {
       try {
         return switch (connectionType) {
-          case CCLOUD -> ccloudFetcher.findSchemaRegistry(connectionId, id)
-                                      .await()
-                                      .atMost(timeout);
-          case LOCAL -> localFetcher.getSchemaRegistry(connectionId)
-                                    .await()
-                                    .atMost(timeout);
-          case DIRECT -> directFetcher.getSchemaRegistry(connectionId)
-                                    .await()
-                                    .atMost(timeout);
+          case CCLOUD -> ccloudFetcher.findSchemaRegistry(connectionId, id).await().atMost(timeout);
+          case LOCAL -> localFetcher.getSchemaRegistry(connectionId).await().atMost(timeout);
+          case DIRECT -> directFetcher.getSchemaRegistry(connectionId).await().atMost(timeout);
           case PLATFORM -> null;
         };
       } catch (CompletionException e) {
         if (e.getCause() instanceof TimeoutException) {
-          Log.infof(
-              "Timed out waiting %s to load Schema Registry %s",
-              TimeUtil.humanReadableDuration(timeout),
-              id
+          Log.infof("Timed out waiting %s to load Schema Registry %s",
+              TimeUtil.humanReadableDuration(timeout), id
           );
         } else {
           Log.errorf(e, "Failed to load Schema Registry %s", id);
@@ -547,23 +488,16 @@ public class ClusterCache {
     protected SchemaRegistry loadSchemaRegistryWithPath(String path, Duration timeout) {
       try {
         return switch (connectionType) {
-          case CCLOUD -> ccloudFetcher.getSchemaRegistry(connectionId, path)
-                                      .await()
-                                      .atMost(timeout);
-          case LOCAL -> localFetcher.getSchemaRegistry(connectionId)
-                                    .await()
-                                    .atMost(timeout);
-          case DIRECT -> directFetcher.getSchemaRegistry(connectionId)
-                                      .await()
-                                      .atMost(timeout);
+          case CCLOUD -> ccloudFetcher.getSchemaRegistry(connectionId, path).await().atMost(
+              timeout);
+          case LOCAL -> localFetcher.getSchemaRegistry(connectionId).await().atMost(timeout);
+          case DIRECT -> directFetcher.getSchemaRegistry(connectionId).await().atMost(timeout);
           case PLATFORM -> null;
         };
       } catch (CompletionException e) {
         if (e.getCause() instanceof TimeoutException) {
-          Log.infof(
-              "Timed out waiting %s to load Schema Registry (path='%s')",
-              TimeUtil.humanReadableDuration(timeout),
-              path
+          Log.infof("Timed out waiting %s to load Schema Registry (path='%s')",
+              TimeUtil.humanReadableDuration(timeout), path
           );
         } else {
           Log.errorf(e, "Failed to load Schema Registry (path='%s')", path);

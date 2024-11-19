@@ -25,6 +25,7 @@ import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
  */
 @RequestScoped
 public class TopicManagerImpl implements TopicManager {
+
   @Inject
   AdminClients adminClients;
 
@@ -38,91 +39,63 @@ public class TopicManagerImpl implements TopicManager {
 
   @Override
   public Uni<TopicDescription> createKafkaTopic(
-      String clusterId,
-      CreateTopicRequestData createTopicRequestData
+      String clusterId, CreateTopicRequestData createTopicRequestData
   ) {
-    return clusterManager.getKafkaCluster(clusterId)
-        .chain(ignored -> uniStage(
-            adminClients
-                .getClient(connectionId.get(), clusterId)
-                .createTopics(List.of(new NewTopic(
-                    createTopicRequestData.getTopicName(),
-                    Optional.ofNullable(createTopicRequestData.getPartitionsCount())
-                        .orElse(1),
-                    Optional.ofNullable(createTopicRequestData.getReplicationFactor())
-                        .orElse(1).shortValue())
-                )).all().toCompletionStage()))
-        .chain(v -> getKafkaTopic(
-            clusterId,
-            createTopicRequestData.getTopicName(),
-            false
-            )
-            // The topic may not be immediately available after creation, so we retry a few times
-            // This is also recommended in the Javadoc for UnknownTopicOrPartitionException
-            // "This exception is retryable because the topic or partition might
-            // subsequently be created."
-            .onFailure(UnknownTopicOrPartitionException.class)
-            .retry()
-            // Exponential backoff with a max of 3 retries
-            // Initial delay of 150ms, max delay of 1s
-            .withBackOff(Duration.ofMillis(150), Duration.ofMillis(1000))
-            .atMost(3)
-        );
+    return clusterManager.getKafkaCluster(clusterId).chain(
+        ignored -> uniStage(adminClients.getClient(connectionId.get(), clusterId).createTopics(
+            List.of(new NewTopic(createTopicRequestData.getTopicName(),
+                Optional.ofNullable(createTopicRequestData.getPartitionsCount()).orElse(1),
+                Optional.ofNullable(createTopicRequestData.getReplicationFactor()).orElse(1)
+                        .shortValue()
+            ))).all().toCompletionStage())).chain(v -> getKafkaTopic(clusterId,
+        createTopicRequestData.getTopicName(), false
+    )
+        // The topic may not be immediately available after creation, so we retry a few times
+        // This is also recommended in the Javadoc for UnknownTopicOrPartitionException
+        // "This exception is retryable because the topic or partition might
+        // subsequently be created."
+        .onFailure(UnknownTopicOrPartitionException.class).retry()
+        // Exponential backoff with a max of 3 retries
+        // Initial delay of 150ms, max delay of 1s
+        .withBackOff(Duration.ofMillis(150), Duration.ofMillis(1000)).atMost(3));
   }
 
   @Override
   public Uni<Void> deleteKafkaTopic(String clusterId, String topicName) {
-    return clusterManager.getKafkaCluster(clusterId).chain(ignored ->
-        uniStage(
-            adminClients.getClient(connectionId.get(), clusterId)
-                .deleteTopics(List.of(topicName))
-                .all()
-                .toCompletionStage())
-    );
+    return clusterManager.getKafkaCluster(clusterId).chain(
+        ignored -> uniStage(adminClients.getClient(connectionId.get(), clusterId).deleteTopics(
+            List.of(topicName)).all().toCompletionStage()));
   }
 
   @Override
   public Uni<TopicDescription> getKafkaTopic(
       String clusterId, String topicName, Boolean includeAuthorizedOperations
   ) {
-    return clusterManager
-        .getKafkaCluster(clusterId)
-        .chain(ignored ->
-            uniStage(
-                adminClients
-                    .getClient(connectionId.get(), clusterId)
-                    .describeTopics(
-                        List.of(topicName), getDescribeTopicsOptions(includeAuthorizedOperations))
-                    .allTopicNames()
-                    .toCompletionStage()
-            ).map(topicDescriptions -> topicDescriptions.values().iterator().next())
-        );
+    return clusterManager.getKafkaCluster(clusterId).chain(
+        ignored -> uniStage(adminClients.getClient(connectionId.get(), clusterId).describeTopics(
+                                            List.of(topicName),
+                                            getDescribeTopicsOptions(includeAuthorizedOperations))
+                                        .allTopicNames().toCompletionStage()).map(
+            topicDescriptions -> topicDescriptions.values().iterator().next()));
   }
 
   private static DescribeTopicsOptions getDescribeTopicsOptions(
       Boolean includeAuthorizedOperations
   ) {
-    return new DescribeTopicsOptions()
-        .includeAuthorizedOperations(
-            Optional.ofNullable(includeAuthorizedOperations).orElse(false)
-        );
+    return new DescribeTopicsOptions().includeAuthorizedOperations(
+        Optional.ofNullable(includeAuthorizedOperations).orElse(false));
   }
 
   public Uni<List<TopicDescription>> listKafkaTopics(
       String clusterId, Boolean includeAuthorizedOperations
   ) {
-    return clusterManager
-        .getKafkaCluster(clusterId)
-        .chain(ignored -> uniStage(
-            adminClients
-                .getClient(connectionId.get(), clusterId).listTopics().names().toCompletionStage()
-        ))
-        .chain(topicNames -> uniStage(
-            adminClients
-                .getClient(connectionId.get(), clusterId)
-                .describeTopics(topicNames, getDescribeTopicsOptions(includeAuthorizedOperations))
-                .allTopicNames()
-                .toCompletionStage())
-        ).map(topicDescriptions -> topicDescriptions.values().stream().toList());
+    return clusterManager.getKafkaCluster(clusterId).chain(
+        ignored -> uniStage(adminClients.getClient(connectionId.get(), clusterId).listTopics()
+                                        .names().toCompletionStage())).chain(
+        topicNames -> uniStage(adminClients.getClient(connectionId.get(), clusterId).describeTopics(
+                                               topicNames,
+                                               getDescribeTopicsOptions(includeAuthorizedOperations)).allTopicNames()
+                                           .toCompletionStage())).map(
+        topicDescriptions -> topicDescriptions.values().stream().toList());
   }
 }

@@ -9,32 +9,29 @@ import io.confluent.idesidecar.restapi.events.Lifecycle;
 import io.quarkus.logging.Log;
 import jakarta.enterprise.event.ObservesAsync;
 import java.util.Map;
-import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
 /**
- * Utilities to obtain and cache clients for a given connection and client ID.
- * Client instances of {@code T} are cached and retrieved by the client ID.
- * You may get creative with this and pass any unique identifier for the client.
+ * Utilities to obtain and cache clients for a given connection and client ID. Client instances of
+ * {@code T} are cached and retrieved by the client ID. You may get creative with this and pass any
+ * unique identifier for the client.
  */
 public abstract class Clients<T extends AutoCloseable> {
 
   /**
-   * Caffeine spec to use for the client cache. By default, this will be an empty spec.
-   * See the
+   * Caffeine spec to use for the client cache. By default, this will be an empty spec. See the
    * <a href="https://github.com/ben-manes/caffeine/wiki/Specification">Caffeine Spec</a>
-   * for more information on the format. Inherited classes may override this method
-   * and return a different spec.
+   * for more information on the format. Inherited classes may override this method and return a
+   * different spec.
    */
   private final CaffeineSpec caffeineSpec;
 
   /**
-   * Store an instance of a Caffeine cache for each connection. The cache will store
-   * clients by client ID and its policy may be configured by the {@link #caffeineSpec}.
+   * Store an instance of a Caffeine cache for each connection. The cache will store clients by
+   * client ID and its policy may be configured by the {@link #caffeineSpec}.
    */
-  private final Map<String, Cache<String, T>> clientsByIdByConnections =
-      new ConcurrentHashMap<>();
+  private final Map<String, Cache<String, T>> clientsByIdByConnections = new ConcurrentHashMap<>();
 
   protected Clients(CaffeineSpec caffeineSpec) {
     this.caffeineSpec = caffeineSpec;
@@ -45,23 +42,18 @@ public abstract class Clients<T extends AutoCloseable> {
   }
 
   /**
-   * Get a client for the given connection and client ID. If the client does not
-   * already exist, it will be created using the provided factory.
+   * Get a client for the given connection and client ID. If the client does not already exist, it
+   * will be created using the provided factory.
    *
-   * @param connectionId     the ID of the connection
-   * @param clientId         the identifier of the client.
-   * @param factory          the method that will create the client if there is not already one
+   * @param connectionId the ID of the connection
+   * @param clientId     the identifier of the client.
+   * @param factory      the method that will create the client if there is not already one
    * @return the client
    */
   public T getClient(
-      String connectionId,
-      String clientId,
-      Supplier<T> factory
+      String connectionId, String clientId, Supplier<T> factory
   ) {
-    return clientsForConnection(connectionId).asMap().computeIfAbsent(
-        clientId,
-        k -> factory.get()
-    );
+    return clientsForConnection(connectionId).asMap().computeIfAbsent(clientId, k -> factory.get());
   }
 
   private Cache<String, T> clientsForConnection(String connectionId) {
@@ -69,13 +61,8 @@ public abstract class Clients<T extends AutoCloseable> {
   }
 
   protected int clientCount() {
-    return clientsByIdByConnections
-        .values()
-        .stream()
-        .map(Cache::asMap)
-        .map(Map::size)
-        .mapToInt(Integer::intValue)
-        .sum();
+    return clientsByIdByConnections.values().stream().map(Cache::asMap).map(Map::size).mapToInt(
+        Integer::intValue).sum();
   }
 
   protected int clientCount(String connectionId) {
@@ -103,15 +90,12 @@ public abstract class Clients<T extends AutoCloseable> {
   }
 
   private Cache<String, T> createCache() {
-    return Caffeine
-        .from(caffeineSpec)
-        .removalListener(this::handleRemoval)
-        .build();
+    return Caffeine.from(caffeineSpec).removalListener(this::handleRemoval).build();
   }
 
   /**
-   * Respond to the connection being disconnected by clearing and closing the
-   * clients that were cached for that connection.
+   * Respond to the connection being disconnected by clearing and closing the clients that were
+   * cached for that connection.
    *
    * @param connection the connection that was disconnected
    */
@@ -122,8 +106,8 @@ public abstract class Clients<T extends AutoCloseable> {
   }
 
   /**
-   * Respond to the connection being deleted by clearing and closing the
-   * Schema Registry clients that were cached for that connection.
+   * Respond to the connection being deleted by clearing and closing the Schema Registry clients
+   * that were cached for that connection.
    *
    * @param connection the connection that was deleted
    */
@@ -132,9 +116,9 @@ public abstract class Clients<T extends AutoCloseable> {
   }
 
   /**
-   * Respond to the connection being updated by clearing and closing the
-   * clients that were cached for that connection. This ensures that the clients
-   * don't use stale connection information.
+   * Respond to the connection being updated by clearing and closing the clients that were cached
+   * for that connection. This ensures that the clients don't use stale connection information.
+   *
    * @param connection the connection that was updated
    */
   void onConnectionUpdated(@ObservesAsync @Lifecycle.Updated ConnectionState connection) {

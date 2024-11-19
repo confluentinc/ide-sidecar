@@ -16,11 +16,12 @@ import java.util.Map;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
- * Create an ApplicationScoped bean to cache SchemaRegistryClient instances
- * by connection ID and schema registry client ID.
+ * Create an ApplicationScoped bean to cache SchemaRegistryClient instances by connection ID and
+ * schema registry client ID.
  */
 @ApplicationScoped
 public class SchemaRegistryClients extends Clients<SchemaRegistryClient> {
+
   private static final int SR_CACHE_SIZE = 10;
 
   @Inject
@@ -36,53 +37,36 @@ public class SchemaRegistryClients extends Clients<SchemaRegistryClient> {
   String sidecarHost;
 
   /**
-   * Get a SchemaRegistryClient for the given connection ID and cluster ID. We rely on the
-   * sidecar's Schema Registry proxy routes to forward the request to the correct Schema Registry
-   * instance.
+   * Get a SchemaRegistryClient for the given connection ID and cluster ID. We rely on the sidecar's
+   * Schema Registry proxy routes to forward the request to the correct Schema Registry instance.
    */
   public SchemaRegistryClient getClient(String connectionId, String clusterId) {
-    return getClient(
-        connectionId,
-        clusterId,
-        () -> {
-          // Generate the Schema Registry client configuration
-          var config = configurator.getSchemaRegistryClientConfig(
-              connectionId,
-              clusterId,
-              false
-          );
-          var headers = Map.of(
-              RequestHeadersConstants.CONNECTION_ID_HEADER, connectionId,
-              RequestHeadersConstants.CLUSTER_ID_HEADER, clusterId,
-              AUTHORIZATION, "Bearer %s".formatted(accessTokenBean.getToken())
-          );
-          // Create the Schema Registry client
-          return createClient(sidecarHost, config, headers);
-        });
+    return getClient(connectionId, clusterId, () -> {
+      // Generate the Schema Registry client configuration
+      var config = configurator.getSchemaRegistryClientConfig(connectionId, clusterId, false);
+      var headers = Map.of(RequestHeadersConstants.CONNECTION_ID_HEADER, connectionId,
+          RequestHeadersConstants.CLUSTER_ID_HEADER, clusterId, AUTHORIZATION,
+          "Bearer %s".formatted(accessTokenBean.getToken())
+      );
+      // Create the Schema Registry client
+      return createClient(sidecarHost, config, headers);
+    });
   }
 
   public SchemaRegistryClient getClientByKafkaClusterId(
-      String connectionId,
-      String kafkaClusterId
+      String connectionId, String kafkaClusterId
   ) {
     var srCluster = clusterCache.maybeGetSchemaRegistryForKafkaClusterId(
-        connectionId, kafkaClusterId
-    );
+        connectionId, kafkaClusterId);
 
     return srCluster.map(sr -> getClient(connectionId, sr.id())).orElse(null);
   }
 
   private SchemaRegistryClient createClient(
-      String srClusterUri,
-      Map<String, Object> configurationProperties,
-      Map<String, String> headers
+      String srClusterUri, Map<String, Object> configurationProperties, Map<String, String> headers
   ) {
-    return new CachedSchemaRegistryClient(
-        Collections.singletonList(srClusterUri),
-        SR_CACHE_SIZE,
-        SCHEMA_PROVIDERS,
-        configurationProperties,
-        headers
+    return new CachedSchemaRegistryClient(Collections.singletonList(srClusterUri), SR_CACHE_SIZE,
+        SCHEMA_PROVIDERS, configurationProperties, headers
     );
   }
 }

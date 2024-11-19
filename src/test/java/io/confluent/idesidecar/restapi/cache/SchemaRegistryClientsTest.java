@@ -88,9 +88,7 @@ public class SchemaRegistryClientsTest {
     }
 
     void assertClientExists(String id, SchemaRegistryClient expected) {
-      var result = clients.getClient(
-          CONNECTION_ID,
-          id,
+      var result = clients.getClient(CONNECTION_ID, id,
           () -> fail("Did not expect to create a new client")
       );
       assertSame(expected, result);

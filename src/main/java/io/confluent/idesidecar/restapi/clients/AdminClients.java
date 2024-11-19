@@ -2,7 +2,6 @@ package io.confluent.idesidecar.restapi.clients;
 
 import com.github.benmanes.caffeine.cache.CaffeineSpec;
 import io.confluent.idesidecar.restapi.cache.Clients;
-import io.confluent.idesidecar.restapi.cache.ClusterCache;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.apache.kafka.clients.admin.AdminClient;
@@ -24,22 +23,19 @@ public class AdminClients extends Clients<AdminClient> {
   }
 
   /**
-   * Get an AdminClient for the given connection ID and Kafka cluster ID.
-   * If the client does not already exist, it will be created.
+   * Get an AdminClient for the given connection ID and Kafka cluster ID. If the client does not
+   * already exist, it will be created.
+   *
    * @param connectionId The connection ID
    * @param clusterId    The cluster ID
    * @return The AdminClient
    */
   public AdminClient getClient(String connectionId, String clusterId) {
-    return getClient(
-        connectionId,
-        clusterId,
-        () -> {
-          // Generate the Kafka admin client configuration
-          var config = configurator.getAdminClientConfig(connectionId, clusterId, false);
-          // Create the admin client
-          return AdminClient.create(config);
-        }
-    );
+    return getClient(connectionId, clusterId, () -> {
+      // Generate the Kafka admin client configuration
+      var config = configurator.getAdminClientConfig(connectionId, clusterId, false);
+      // Create the admin client
+      return AdminClient.create(config);
+    });
   }
 }
