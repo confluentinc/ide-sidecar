@@ -60,6 +60,10 @@
       # How often to check?
       interval-seconds: 60
 
+vscode:
+  extension:
+    version: unknown
+  version: unknown
 ide-sidecar:
   api:
     group: gateway
@@ -138,19 +142,19 @@ ide-sidecar:
   # Configuration set by the sidecar when instantiating the Kafka Admin client
   # (We may choose to allow connection-specific overrides in the future)
   admin-client-configs:
-    "client.id": Confluent for VS Code sidecar ${quarkus.application.version} - Admin
+    "client.id": Confluent for VS Code sidecar ${vscode.extension.version} - Admin
     "default.api.timeout.ms": 5000
     "request.timeout.ms": 5000
   # Configuration set by the sidecar when instantiating the Kafka Consumer
   # (We may choose to allow connection-specific overrides in the future)
   consumer-client-configs:
-    "client.id": Confluent for VS Code sidecar ${quarkus.application.version} - Consumer
+    "client.id": Confluent for VS Code sidecar ${vscode.extension.version} - Consumer
     "session.timeout.ms": 45000
   # Configuration set by the sidecar when instantiating the Kafka Producer
   # (We may choose to allow connection-specific overrides in the future)
   producer-client-configs:
     acks: all
-    "client.id": Confluent for VS Code sidecar ${quarkus.application.version} - Producer
+    "client.id": Confluent for VS Code sidecar ${vscode.extension.version} - Producer
   # Configuration set by the sidecar when instantiating Kafka record serializers and deserializers.
   # See https://github.com/confluentinc/schema-registry/blob/master/schema-serializer/src/main/java/io/confluent/kafka/serializers/AbstractKafkaSchemaSerDeConfig.java#L39
   # for a full list of available configs.
