@@ -13,8 +13,8 @@ import static io.confluent.idesidecar.restapi.util.MutinyUtil.uniItem;
 import static io.confluent.idesidecar.restapi.util.MutinyUtil.uniStage;
 import static io.confluent.idesidecar.restapi.util.RequestHeadersConstants.CONNECTION_ID_HEADER;
 
-import io.confluent.idesidecar.restapi.cache.AdminClients;
 import io.confluent.idesidecar.restapi.cache.ClusterCache;
+import io.confluent.idesidecar.restapi.clients.AdminClients;
 import io.confluent.idesidecar.restapi.exceptions.ClusterNotFoundException;
 import io.confluent.idesidecar.restapi.kafkarest.model.ClusterData;
 import io.confluent.idesidecar.restapi.kafkarest.model.ClusterDataList;
@@ -54,16 +54,13 @@ public class ClusterManagerImpl implements ClusterManager {
 
   @Override
   public Uni<ClusterData> getKafkaCluster(String clusterId) {
-    return describeCluster(clusterId)
-        .chain(cid -> {
-          if (!cid.id().equals(clusterId)) {
-            return Uni.createFrom().failure(new ClusterNotFoundException(
-                "Kafka cluster '%s' not found.".formatted(clusterId)
-            ));
-          }
-          return uniItem(cid);
-        })
-        .map(this::fromClusterId);
+    return describeCluster(clusterId).chain(cid -> {
+      if (!cid.id().equals(clusterId)) {
+        return Uni.createFrom().failure(
+            new ClusterNotFoundException("Kafka cluster '%s' not found.".formatted(clusterId)));
+      }
+      return uniItem(cid);
+    }).map(this::fromClusterId);
   }
 
   @Override
@@ -75,79 +72,61 @@ public class ClusterManagerImpl implements ClusterManager {
         .runSubscriptionOn(Infrastructure.getDefaultWorkerPool())
         // Call describeCluster if the cluster info is present
         // else return null
-        .chain(clusterInfo -> clusterInfo
-            .map(kafkaClusterInfo -> this.describeCluster(kafkaClusterInfo.id()))
-            .orElse(Uni.createFrom().nullItem())
-        )
+        .chain(clusterInfo -> clusterInfo.map(
+                                             kafkaClusterInfo -> this.describeCluster(kafkaClusterInfo.id()))
+                                         .orElse(Uni.createFrom().nullItem()))
         // Call describeCluster on each cluster ID
         .chain(clusterId -> uniItem(getClusterDataList(clusterId)));
   }
 
   private ClusterDataList getClusterDataList(ClusterDescribe cluster) {
-    return ClusterDataList
-        .builder()
-        .metadata(ResourceCollectionMetadata
-            .builder()
-            .self(forClusters().getRelated())
-            // We don't support pagination
-            .next(null)
-            .build()
-        )
-        .kind("KafkaClusterList")
-        .data(Optional
-            .ofNullable(cluster)
-            .stream()
-            .map(this::fromClusterId)
-            .collect(Collectors.toList())
-        ).build();
+    return ClusterDataList.builder().metadata(ResourceCollectionMetadata.builder().self(
+                                                                            forClusters().getRelated())
+                                                                        // We don't support
+                                                                        // pagination
+                                                                        .next(null).build()).kind(
+        "KafkaClusterList").data(Optional.ofNullable(cluster).stream().map(this::fromClusterId)
+                                         .collect(Collectors.toList())).build();
   }
 
   private Uni<ClusterDescribe> describeCluster(String clusterId) {
-    return uniItem(() -> adminClients.getClient(connectionId.get(), clusterId))
-        .runSubscriptionOn(Infrastructure.getDefaultWorkerPool())
-        .map(Admin::describeCluster)
-        .chain(describeClusterResult ->
-            uniStage(describeClusterResult.clusterId().toCompletionStage())
-                .map(id -> new ClusterDescribe(describeClusterResult).withId(id)))
-        .chain(cid -> uniStage(cid.result.controller().toCompletionStage()).map(Node::id)
-            .map(cid::withControllerId)
-        ).chain(cid -> uniStage(cid.result.nodes().toCompletionStage())
-            .map(cid::withNodes)
-        );
+    return uniItem(() -> adminClients.getClient(connectionId.get(), clusterId)).runSubscriptionOn(
+                                                                                   Infrastructure.getDefaultWorkerPool()).map(Admin::describeCluster).chain(
+                                                                                   describeClusterResult -> uniStage(
+                                                                                       describeClusterResult.clusterId().toCompletionStage()).map(
+                                                                                       id -> new ClusterDescribe(describeClusterResult).withId(id))).chain(cid -> uniStage(
+                                                                                   cid.result.controller().toCompletionStage()).map(Node::id).map(cid::withControllerId))
+                                                                               .chain(
+                                                                                   cid -> uniStage(
+                                                                                       cid.result.nodes()
+                                                                                                 .toCompletionStage()).map(
+                                                                                       cid::withNodes));
   }
 
   private ClusterData fromClusterId(ClusterDescribe cluster) {
-    return ClusterData
-        .builder()
-        .kind("KafkaCluster")
-        .metadata(ResourceMetadata
-            .builder()
-            .self(forCluster(cluster.id()).getRelated())
-            // TODO: Construct resource name based on the connection/cluster type
-            .resourceName(null)
-            .build()
-        )
-        .clusterId(cluster.id())
-        .acls(forAcls(cluster.id()))
-        .brokerConfigs(forBrokerConfigs(cluster.id()))
-        .brokers(forBrokers(cluster.id()))
-        .controller(forController(cluster.id(), cluster.controllerId()))
-        .consumerGroups(forConsumerGroups(cluster.id()))
-        .topics(forTopics(cluster.id()))
-        .partitionReassignments(forAllPartitionReassignments(cluster.id()))
-        .build();
+    return ClusterData.builder().kind("KafkaCluster").metadata(ResourceMetadata.builder().self(
+                                                                                   forCluster(cluster.id()).getRelated())
+                                                                               // TODO: Construct
+                                                                               //  resource name
+                                                                               //  based on the
+                                                                               //  connection
+                                                                               //  /cluster type
+                                                                               .resourceName(null)
+                                                                               .build()).clusterId(
+                          cluster.id()).acls(forAcls(cluster.id())).brokerConfigs(forBrokerConfigs(cluster.id()))
+                      .brokers(forBrokers(cluster.id())).controller(
+            forController(cluster.id(), cluster.controllerId())).consumerGroups(
+            forConsumerGroups(cluster.id())).topics(forTopics(cluster.id())).partitionReassignments(
+            forAllPartitionReassignments(cluster.id())).build();
   }
 
   /**
-   * Record to hold the KafkaFuture results of the describeCluster operation.
-   * Used to pass the results between the various stages of the Uni chain.
+   * Record to hold the KafkaFuture results of the describeCluster operation. Used to pass the
+   * results between the various stages of the Uni chain.
    */
-  private record ClusterDescribe(
-      DescribeClusterResult result,
-      String id,
-      Integer controllerId,
-      Collection<Node> nodes
-  ) {
+  private record ClusterDescribe(DescribeClusterResult result, String id, Integer controllerId,
+                                 Collection<Node> nodes) {
+
     ClusterDescribe(DescribeClusterResult result) {
       this(result, null, null, null);
     }

@@ -1,6 +1,7 @@
-package io.confluent.idesidecar.restapi.cache;
+package io.confluent.idesidecar.restapi.clients;
 
 import com.github.benmanes.caffeine.cache.CaffeineSpec;
+import io.confluent.idesidecar.restapi.cache.Clients;
 import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -23,8 +24,9 @@ public class AdminClients extends Clients<AdminClient> {
   }
 
   /**
-   * Get an AdminClient for the given connection ID and Kafka cluster ID.
-   * If the client does not already exist, it will be created.
+   * Get an AdminClient for the given connection ID and Kafka cluster ID. If the client does not
+   * already exist, it will be created.
+   *
    * @param connectionId The connection ID
    * @param clusterId    The cluster ID
    * @return The AdminClient
@@ -37,7 +39,8 @@ public class AdminClients extends Clients<AdminClient> {
           // Generate the Kafka admin client configuration
           var config = configurator.getAdminClientConfig(connectionId, clusterId);
           Log.debugf(
-              "Creating schema registry client for connection %s and cluster %s with configuration:\n  %s",
+              "Creating schema registry client for connection %s and cluster %s with "
+              + "configuration:\n  %s",
               connectionId,
               clusterId,
               config
