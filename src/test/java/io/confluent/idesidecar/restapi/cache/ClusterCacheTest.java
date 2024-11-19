@@ -144,7 +144,7 @@ class ClusterCacheTest {
     }
 
     @Test
-    void shouldFindAlreadyLoadedKafkaClusterForConnectionButNoSchemaRegistry() throws ClusterNotFoundException {
+    void shouldFindAlreadyLoadedKafkaClusterForConnectionButNoSchemaRegistry() {
       // When a connection is created
       cache.onConnectionCreated(CONNECTION_1);
 
@@ -173,7 +173,7 @@ class ClusterCacheTest {
     }
 
     @Test
-    void shouldFindAlreadyLoadedKafkaClusterForConnectionAndLazilyLoadSchemaRegistry() throws ClusterNotFoundException {
+    void shouldFindAlreadyLoadedKafkaClusterForConnectionAndLazilyLoadSchemaRegistry() {
       // When a connection is created
       cache.onConnectionCreated(CONNECTION_1);
 
@@ -199,7 +199,7 @@ class ClusterCacheTest {
     }
 
     @Test
-    void shouldFindAlreadyLoadedKafkaClusterAndSchemaRegistryForConnection() throws ClusterNotFoundException {
+    void shouldFindAlreadyLoadedKafkaClusterAndSchemaRegistryForConnection() {
       // When a connection is created
       cache.onConnectionCreated(CONNECTION_1);
 
@@ -228,7 +228,7 @@ class ClusterCacheTest {
     }
 
     @Test
-    void shouldFindAlreadyLoadedSchemaRegistryForConnectionAndLazilyLoadKafkaCluster() throws ClusterNotFoundException {
+    void shouldFindAlreadyLoadedSchemaRegistryForConnectionAndLazilyLoadKafkaCluster() {
       // When a connection is created
       cache.onConnectionCreated(CONNECTION_1);
 
@@ -254,7 +254,7 @@ class ClusterCacheTest {
     }
 
     @Test
-    void shouldRemoveCacheOnConnectionUpdate() throws ClusterNotFoundException {
+    void shouldRemoveCacheOnConnectionUpdate() {
 
       // When two connections are created
       cache.onConnectionCreated(CONNECTION_1);
@@ -376,7 +376,7 @@ class ClusterCacheTest {
     return result;
   }
 
-  void assertKafkaCluster(KafkaCluster cluster) throws ClusterNotFoundException {
+  void assertKafkaCluster(KafkaCluster cluster) {
     var clusters = cache.forConnection(cluster.connectionId());
     assertNotNull(clusters);
     assertEquals(

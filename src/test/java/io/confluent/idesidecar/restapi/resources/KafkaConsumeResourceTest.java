@@ -16,7 +16,6 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -26,7 +25,6 @@ import com.github.tomakehurst.wiremock.matching.EqualToPattern;
 import io.confluent.idesidecar.restapi.cache.ClusterCache;
 import io.confluent.idesidecar.restapi.connections.CCloudConnectionState;
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
-import io.confluent.idesidecar.restapi.exceptions.ClusterNotFoundException;
 import io.confluent.idesidecar.restapi.models.ClusterType;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
 import io.confluent.idesidecar.restapi.testutil.JsonMatcher;
@@ -414,7 +412,7 @@ public class KafkaConsumeResourceTest {
 
   @Disabled  // Find a way to inject mock consumer for local kafka cluster
   @Test
-  void testConsumeNoWorkyForConfluentLocal() throws ClusterNotFoundException {
+  void testConsumeNoWorkyForConfluentLocal() {
     ccloudTestUtil.createAuthedConnection(CONNECTION_ID, ConnectionType.LOCAL);
     expectKafkaClusterInCache(
         clusterCache,
@@ -447,40 +445,37 @@ public class KafkaConsumeResourceTest {
   private void setupSimpleConsumeApi() {
     // Create connection and cache its cluster
     ccloudTestUtil.createAuthedConnection(CONNECTION_ID, ConnectionType.CCLOUD);
-    try {
-      // Expect a Kafka cluster exists
-      var mockKafkaCluster = expectKafkaClusterInCache(
-          clusterCache,
-          CONNECTION_ID,
-          KAFKA_CLUSTER_ID,
-          "http://localhost:%d".formatted(wireMockPort)
-      );
-      // Expect a Schema Registry cluster exists by cluster type
-      expectClusterInCache(
-          clusterCache,
-          CONNECTION_ID,
-          SCHEMA_REGISTRY_CLUSTER_ID,
-          "http://localhost:%d".formatted(wireMockPort),
-          ClusterType.SCHEMA_REGISTRY
-      );
-      // Expect a Schema Registry cluster exists
-      expectSchemaRegistryInCache(
-          clusterCache,
-          CONNECTION_ID,
-          SCHEMA_REGISTRY_CLUSTER_ID,
-          "http://localhost:%d".formatted(wireMockPort)
-      );
-      // Expect a Schema Registry for the Kafka cluster exists
-      expectSchemaRegistryForKafkaClusterInCache(
-          clusterCache,
-          CONNECTION_ID,
-          mockKafkaCluster,
-          SCHEMA_REGISTRY_CLUSTER_ID,
-          "http://localhost:%d".formatted(wireMockPort)
-      );
-    } catch (ClusterNotFoundException e) {
-      fail("Cluster not found");
-    }
+
+    // Expect a Kafka cluster exists
+    var mockKafkaCluster = expectKafkaClusterInCache(
+        clusterCache,
+        CONNECTION_ID,
+        KAFKA_CLUSTER_ID,
+        "http://localhost:%d".formatted(wireMockPort)
+    );
+    // Expect a Schema Registry cluster exists by cluster type
+    expectClusterInCache(
+        clusterCache,
+        CONNECTION_ID,
+        SCHEMA_REGISTRY_CLUSTER_ID,
+        "http://localhost:%d".formatted(wireMockPort),
+        ClusterType.SCHEMA_REGISTRY
+    );
+    // Expect a Schema Registry cluster exists
+    expectSchemaRegistryInCache(
+        clusterCache,
+        CONNECTION_ID,
+        SCHEMA_REGISTRY_CLUSTER_ID,
+        "http://localhost:%d".formatted(wireMockPort)
+    );
+    // Expect a Schema Registry for the Kafka cluster exists
+    expectSchemaRegistryForKafkaClusterInCache(
+        clusterCache,
+        CONNECTION_ID,
+        mockKafkaCluster,
+        SCHEMA_REGISTRY_CLUSTER_ID,
+        "http://localhost:%d".formatted(wireMockPort)
+    );
 
     var schemaLessTopicConsumeCCloudResponse = loadResource("message-viewer/ccloud-message.json");
 

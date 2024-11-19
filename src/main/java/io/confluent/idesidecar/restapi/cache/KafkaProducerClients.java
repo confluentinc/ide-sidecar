@@ -30,7 +30,9 @@ public class KafkaProducerClients extends Clients<KafkaProducer<byte[], byte[]>>
           var config = configurator.getProducerClientConfig(
               connectionId,
               clusterId,
-              true
+              // We don't include SR configuration here because
+              // we don't need it for the producer
+              false
           );
           // Create the producer
           Log.debugf(

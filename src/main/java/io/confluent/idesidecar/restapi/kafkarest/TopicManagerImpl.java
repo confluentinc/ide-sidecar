@@ -6,7 +6,6 @@ import static io.confluent.idesidecar.restapi.util.RequestHeadersConstants.CONNE
 import io.confluent.idesidecar.restapi.cache.AdminClients;
 import io.confluent.idesidecar.restapi.kafkarest.model.CreateTopicRequestData;
 import io.smallrye.mutiny.Uni;
-import io.smallrye.mutiny.unchecked.Unchecked;
 import io.vertx.core.http.HttpServerRequest;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
@@ -43,8 +42,8 @@ public class TopicManagerImpl implements TopicManager {
       CreateTopicRequestData createTopicRequestData
   ) {
     return clusterManager.getKafkaCluster(clusterId)
-        .chain(ignored -> uniStage(Unchecked.supplier(
-            () -> adminClients
+        .chain(ignored -> uniStage(
+            adminClients
                 .getClient(connectionId.get(), clusterId)
                 .createTopics(List.of(new NewTopic(
                     createTopicRequestData.getTopicName(),
@@ -52,7 +51,7 @@ public class TopicManagerImpl implements TopicManager {
                         .orElse(1),
                     Optional.ofNullable(createTopicRequestData.getReplicationFactor())
                         .orElse(1).shortValue())
-                )).all().toCompletionStage())))
+                )).all().toCompletionStage()))
         .chain(v -> getKafkaTopic(
             clusterId,
             createTopicRequestData.getTopicName(),
@@ -74,12 +73,11 @@ public class TopicManagerImpl implements TopicManager {
   @Override
   public Uni<Void> deleteKafkaTopic(String clusterId, String topicName) {
     return clusterManager.getKafkaCluster(clusterId).chain(ignored ->
-        uniStage(Unchecked.supplier(
-            () -> adminClients
-                .getClient(connectionId.get(), clusterId)
+        uniStage(
+            adminClients.getClient(connectionId.get(), clusterId)
                 .deleteTopics(List.of(topicName))
                 .all()
-                .toCompletionStage()))
+                .toCompletionStage())
     );
   }
 
@@ -90,13 +88,13 @@ public class TopicManagerImpl implements TopicManager {
     return clusterManager
         .getKafkaCluster(clusterId)
         .chain(ignored ->
-            uniStage(Unchecked.supplier(
-                () -> adminClients
+            uniStage(
+                adminClients
                     .getClient(connectionId.get(), clusterId)
                     .describeTopics(
                         List.of(topicName), getDescribeTopicsOptions(includeAuthorizedOperations))
                     .allTopicNames()
-                    .toCompletionStage())
+                    .toCompletionStage()
             ).map(topicDescriptions -> topicDescriptions.values().iterator().next())
         );
   }
@@ -115,16 +113,16 @@ public class TopicManagerImpl implements TopicManager {
   ) {
     return clusterManager
         .getKafkaCluster(clusterId)
-        .chain(ignored -> uniStage(Unchecked.supplier(
-            () -> adminClients
+        .chain(ignored -> uniStage(
+            adminClients
                 .getClient(connectionId.get(), clusterId).listTopics().names().toCompletionStage()
-        )))
-        .chain(topicNames -> uniStage(Unchecked.supplier(
-            () -> adminClients
+        ))
+        .chain(topicNames -> uniStage(
+            adminClients
                 .getClient(connectionId.get(), clusterId)
                 .describeTopics(topicNames, getDescribeTopicsOptions(includeAuthorizedOperations))
                 .allTopicNames()
-                .toCompletionStage()))
+                .toCompletionStage())
         ).map(topicDescriptions -> topicDescriptions.values().stream().toList());
   }
 }
