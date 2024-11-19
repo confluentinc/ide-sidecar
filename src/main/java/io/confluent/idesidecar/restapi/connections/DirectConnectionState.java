@@ -34,15 +34,20 @@ import org.eclipse.microprofile.config.ConfigProvider;
  */
 public class DirectConnectionState extends ConnectionState {
 
-  static final Duration TIMEOUT = Duration.ofSeconds(ConfigProvider.getConfig().getOptionalValue(
-      "ide-sidecar.connections.direct.timeout-seconds", Long.class).orElse(5L));
+  static final Duration TIMEOUT = Duration.ofSeconds(
+      ConfigProvider
+          .getConfig()
+          .getOptionalValue("ide-sidecar.connections.direct.timeout-seconds", Long.class)
+          .orElse(5L)
+  );
 
   public DirectConnectionState() {
     super(null, null);
   }
 
   public DirectConnectionState(
-      @NotNull ConnectionSpec spec, @Nullable StateChangedListener listener
+      @NotNull ConnectionSpec spec,
+      @Nullable StateChangedListener listener
   ) {
     super(spec, listener);
   }
@@ -50,10 +55,12 @@ public class DirectConnectionState extends ConnectionState {
   public MultiMap getAuthenticationHeaders(ClusterType clusterType) {
     var headers = HttpHeaders.headers();
     var credentials = switch (clusterType) {
-      case KAFKA ->
-          spec.kafkaClusterConfig() != null ? spec.kafkaClusterConfig().credentials() : null;
-      case SCHEMA_REGISTRY ->
-          spec.schemaRegistryConfig() != null ? spec.schemaRegistryConfig().credentials() : null;
+      case KAFKA -> spec.kafkaClusterConfig() != null
+                    ? spec.kafkaClusterConfig().credentials()
+                    : null;
+      case SCHEMA_REGISTRY -> spec.schemaRegistryConfig() != null
+                              ? spec.schemaRegistryConfig().credentials()
+                              : null;
       default -> null;
     };
     if (credentials != null) {
@@ -64,26 +71,34 @@ public class DirectConnectionState extends ConnectionState {
 
   @Override
   public Optional<Credentials> getKafkaCredentials() {
-    Credentials credentials =
-        spec.kafkaClusterConfig() != null ? spec.kafkaClusterConfig().credentials() : null;
+    Credentials credentials = spec.kafkaClusterConfig() != null
+                              ? spec.kafkaClusterConfig().credentials()
+                              : null;
     return Optional.ofNullable(credentials);
   }
 
   @Override
   public Optional<Credentials> getSchemaRegistryCredentials() {
-    Credentials credentials =
-        spec.schemaRegistryConfig() != null ? spec.schemaRegistryConfig().credentials() : null;
+    Credentials credentials = spec.schemaRegistryConfig() != null
+                              ? spec.schemaRegistryConfig().credentials()
+                              : null;
     return Optional.ofNullable(credentials);
   }
 
   @Override
   public Future<ConnectionStatus> getConnectionStatus() {
-    return Future.join(getKafkaConnectionStatus(), getSchemaRegistryConnectionStatus()).map(cf -> {
+    return Future.join(
+        getKafkaConnectionStatus(),
+        getSchemaRegistryConnectionStatus()
+    ).map(cf -> {
       var futures = cf.list();
       var kafkaStatus = (KafkaClusterStatus) futures.get(0);
       var srStatus = (SchemaRegistryStatus) futures.get(1);
-      return ConnectionStatusBuilder.builder().kafkaCluster(kafkaStatus).schemaRegistry(srStatus)
-                                    .build();
+      return ConnectionStatusBuilder
+          .builder()
+          .kafkaCluster(kafkaStatus)
+          .schemaRegistry(srStatus)
+          .build();
     });
   }
 
@@ -91,7 +106,11 @@ public class DirectConnectionState extends ConnectionState {
     var kafkaConfig = spec.kafkaClusterConfig();
     if (kafkaConfig == null) {
       return Future.succeededFuture(
-          ConnectionStatusKafkaClusterStatusBuilder.builder().state(ConnectedState.NONE).build());
+          ConnectionStatusKafkaClusterStatusBuilder
+              .builder()
+              .state(ConnectedState.NONE)
+              .build()
+      );
     }
     // There is a Kafka configuration, so validate the connection by creating an AdminClient
     // and describing the cluster.
@@ -101,13 +120,23 @@ public class DirectConnectionState extends ConnectionState {
       // Set the cluster ID
       getSpec().kafkaClusterConfig().withId(actualClusterId);
       return Future.succeededFuture(
-          ConnectionStatusKafkaClusterStatusBuilder.builder().state(ConnectedState.SUCCESS)
-                                                   .build());
+          ConnectionStatusKafkaClusterStatusBuilder
+              .builder()
+              .state(ConnectedState.SUCCESS)
+              .build()
+      );
     } catch (Exception e) {
       // The connection failed, so successfully return the failed state
-      return Future.succeededFuture(ConnectionStatusKafkaClusterStatusBuilder.builder().state(
-          ConnectedState.FAILED).errors(new AuthErrors().withSignIn(
-          "Failed to connect to Kafka cluster: %s".formatted(e.getMessage()))).build());
+      return Future.succeededFuture(
+          ConnectionStatusKafkaClusterStatusBuilder
+              .builder()
+              .state(ConnectedState.FAILED)
+              .errors(
+                  new AuthErrors().withSignIn(
+                      "Failed to connect to Kafka cluster: %s".formatted(e.getMessage())
+                  )
+              ).build()
+      );
     }
   }
 
@@ -116,20 +145,34 @@ public class DirectConnectionState extends ConnectionState {
     var schemaRegistryConfig = spec.schemaRegistryConfig();
     if (schemaRegistryConfig == null) {
       return Future.succeededFuture(
-          ConnectionStatusSchemaRegistryStatusBuilder.builder().state(ConnectedState.NONE).build());
+          ConnectionStatusSchemaRegistryStatusBuilder
+              .builder()
+              .state(ConnectedState.NONE)
+              .build()
+      );
     }
     // There is a Schema Registry configuration, so validate the connection by creating a
     // SchemaRegistryClient and getting the mode.
     try (var srClient = createSchemaRegistryClient(schemaRegistryConfig)) {
       srClient.getMode();
       return Future.succeededFuture(
-          ConnectionStatusSchemaRegistryStatusBuilder.builder().state(ConnectedState.SUCCESS)
-                                                     .build());
+          ConnectionStatusSchemaRegistryStatusBuilder
+              .builder()
+              .state(ConnectedState.SUCCESS)
+              .build()
+      );
     } catch (Exception e) {
       // The connection failed, so successfully return the failed state
-      return Future.succeededFuture(ConnectionStatusSchemaRegistryStatusBuilder.builder().state(
-          ConnectedState.FAILED).errors(new AuthErrors().withSignIn(
-          "Failed to connect to Schema Registry: %s".formatted(e.getMessage()))).build());
+      return Future.succeededFuture(
+          ConnectionStatusSchemaRegistryStatusBuilder
+              .builder()
+              .state(ConnectedState.FAILED)
+              .errors(
+                  new AuthErrors().withSignIn(
+                      "Failed to connect to Schema Registry: %s".formatted(e.getMessage())
+                  )
+              ).build()
+      );
     }
   }
 
@@ -137,8 +180,15 @@ public class DirectConnectionState extends ConnectionState {
       ConnectionSpec.KafkaClusterConfig config
   ) {
     // Create the configuration for an AdminClient
-    var adminConfig = ClientConfigurator.getKafkaClientConfig(this, "temporary-kafka-id",
-        config.bootstrapServers(), null, null, false, null, Map.of()
+    var adminConfig = ClientConfigurator.getKafkaClientConfig(
+        this,
+        "temporary-kafka-id",
+        config.bootstrapServers(),
+        null,
+        null,
+        false,
+        null,
+        Map.of()
     );
     return AdminClient.create(adminConfig);
   }
@@ -146,10 +196,16 @@ public class DirectConnectionState extends ConnectionState {
   SchemaRegistryClient createSchemaRegistryClient(
       ConnectionSpec.SchemaRegistryConfig config
   ) {
-    var srClientConfig = ClientConfigurator.getSchemaRegistryClientConfig(this, "temporary-sr-id",
-        config.uri(), false, TIMEOUT
+    var srClientConfig = ClientConfigurator.getSchemaRegistryClientConfig(
+        this,
+        "temporary-sr-id",
+        config.uri(),
+        false,
+        TIMEOUT
     );
-    return new CachedSchemaRegistryClient(Collections.singletonList(config.uri()), 10,
+    return new CachedSchemaRegistryClient(
+        Collections.singletonList(config.uri()),
+        10,
         srClientConfig
     );
   }
