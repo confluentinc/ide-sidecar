@@ -2,14 +2,10 @@ package io.confluent.idesidecar.restapi.messageviewer.strategy;
 
 import io.confluent.idesidecar.restapi.messageviewer.KafkaConsumerFactory;
 import io.confluent.idesidecar.restapi.cache.SchemaRegistryClients;
-import io.confluent.idesidecar.restapi.exceptions.ClusterNotFoundException;
 import io.confluent.idesidecar.restapi.messageviewer.MessageViewerContext;
 import io.confluent.idesidecar.restapi.messageviewer.RecordDeserializer;
 import io.confluent.idesidecar.restapi.messageviewer.SimpleConsumer;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
-import io.confluent.idesidecar.restapi.models.graph.SchemaRegistry;
-import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
-import io.smallrye.mutiny.unchecked.Unchecked;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -39,13 +35,12 @@ public class NativeConsumeStrategy implements ConsumeStrategy {
     return vertx.executeBlocking(() -> consumeMessages(context));
   }
 
-  public MessageViewerContext consumeMessages(MessageViewerContext context)
-    throws ClusterNotFoundException {
+  public MessageViewerContext consumeMessages(MessageViewerContext context) {
     var request = context.getConsumeRequest();
     var topic = context.getTopicName();
     var schemaRegistryClient = Optional
         .ofNullable(context.getSchemaRegistryInfo())
-        .map(Unchecked.function(info -> schemaRegistryClients.getClient(context.getConnectionId(), info.id())))
+        .map(info -> schemaRegistryClients.getClient(context.getConnectionId(), info.id()))
         .orElse(null);
 
     var consumer = consumerFactory.getClient(

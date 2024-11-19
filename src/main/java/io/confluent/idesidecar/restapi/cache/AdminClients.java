@@ -1,7 +1,6 @@
 package io.confluent.idesidecar.restapi.cache;
 
 import com.github.benmanes.caffeine.cache.CaffeineSpec;
-import io.confluent.idesidecar.restapi.exceptions.ClusterNotFoundException;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.apache.kafka.clients.admin.AdminClient;
@@ -29,14 +28,13 @@ public class AdminClients extends Clients<AdminClient> {
    * @param clusterId    The cluster ID
    * @return The AdminClient
    */
-  public AdminClient getClient(String connectionId, String clusterId)
-      throws ClusterNotFoundException {
-    // Generate the Kafka admin client configuration
-    final var config = configurator.getAdminClientConfig(connectionId, clusterId, false);
+  public AdminClient getClient(String connectionId, String clusterId) {
     return getClient(
         connectionId,
         clusterId,
         () -> {
+          // Generate the Kafka admin client configuration
+          var config = configurator.getAdminClientConfig(connectionId, clusterId, false);
           // Create the admin client
           return AdminClient.create(config);
         }

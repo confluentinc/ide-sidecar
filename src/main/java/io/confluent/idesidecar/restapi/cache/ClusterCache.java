@@ -6,7 +6,6 @@ import io.confluent.idesidecar.restapi.events.ClusterKind;
 import io.confluent.idesidecar.restapi.events.Lifecycle;
 import io.confluent.idesidecar.restapi.exceptions.ClusterNotFoundException;
 import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
-import io.confluent.idesidecar.restapi.exceptions.SchemaRegistryClusterNotFoundException;
 import io.confluent.idesidecar.restapi.models.ClusterType;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
 import io.confluent.idesidecar.restapi.models.graph.CCloudKafkaCluster;
@@ -77,8 +76,7 @@ public class ClusterCache {
    * @throws ConnectionNotFoundException if there is no connection with the given ID
    * @throws ClusterNotFoundException if the cluster was not found
    */
-  public Cluster getCluster(String connectionId, String clusterId, ClusterType type)
-      throws ClusterNotFoundException {
+  public Cluster getCluster(String connectionId, String clusterId, ClusterType type) {
     return switch (type) {
       case KAFKA -> getKafkaCluster(connectionId, clusterId);
       case SCHEMA_REGISTRY -> getSchemaRegistry(connectionId, clusterId);
@@ -94,8 +92,7 @@ public class ClusterCache {
    * @throws ConnectionNotFoundException if there is no connection with the given ID
    * @throws ClusterNotFoundException if the cluster was not found
    */
-  public KafkaCluster getKafkaCluster(String connectionId, String clusterId)
-      throws ClusterNotFoundException {
+  public KafkaCluster getKafkaCluster(String connectionId, String clusterId) {
     return forConnection(connectionId).getKafkaCluster(clusterId);
   }
 
@@ -134,7 +131,7 @@ public class ClusterCache {
   public SchemaRegistry getSchemaRegistryForKafkaCluster(
       String connectionId,
       KafkaCluster kafkaCluster
-  ) throws ClusterNotFoundException {
+  ) {
     return forConnection(connectionId).getSchemaRegistryForKafkaCluster(kafkaCluster);
   }
 
@@ -148,7 +145,7 @@ public class ClusterCache {
    */
   public Optional<SchemaRegistry> maybeGetSchemaRegistryForKafkaClusterId(
       String connectionId, String kafkaClusterId
-  ) throws ClusterNotFoundException {
+  ) {
     return forConnection(connectionId).maybeSchemaRegistryForKafkaCluster(kafkaClusterId, true);
   }
 
@@ -159,10 +156,9 @@ public class ClusterCache {
    * @param clusterId    the ID of the schema registry
    * @return the info for the matching cluster, or null if none is found
    * @throws ConnectionNotFoundException if there is no connection with the given ID
-   * @throws SchemaRegistryClusterNotFoundException if the cluster was not found
+   * @throws ClusterNotFoundException if the cluster was not found
    */
-  public SchemaRegistry getSchemaRegistry(String connectionId, String clusterId)
-      throws SchemaRegistryClusterNotFoundException {
+  public SchemaRegistry getSchemaRegistry(String connectionId, String clusterId) {
     return forConnection(connectionId).getSchemaRegistry(clusterId);
   }
 
@@ -288,8 +284,7 @@ public class ClusterCache {
      * @return the info for the matching cluster, or null if none is found
      * @throws ClusterNotFoundException if the cluster was not found
      */
-    protected KafkaCluster getKafkaCluster(String kafkaClusterId)
-        throws ClusterNotFoundException {
+    protected KafkaCluster getKafkaCluster(String kafkaClusterId) {
       return getKafkaCluster(kafkaClusterId, true);
     }
 
@@ -302,8 +297,7 @@ public class ClusterCache {
      * @throws ClusterNotFoundException if the cluster was not found
      */
     @VisibleForTesting
-    KafkaCluster getKafkaCluster(String kafkaClusterId, boolean loadIfMissing)
-        throws ClusterNotFoundException {
+    KafkaCluster getKafkaCluster(String kafkaClusterId, boolean loadIfMissing) {
       return findKafkaCluster(kafkaClusterId, loadIfMissing).spec();
     }
 
@@ -312,9 +306,9 @@ public class ClusterCache {
      *
      * @param registryId the ID of the Schema Registry
      * @return the info for the matching cluster, or null if none is found
-     * @throws SchemaRegistryClusterNotFoundException if the schema registry was not found
+     * @throws ClusterNotFoundException if the schema registry was not found
      */
-    protected SchemaRegistry getSchemaRegistry(String registryId) throws SchemaRegistryClusterNotFoundException {
+    protected SchemaRegistry getSchemaRegistry(String registryId) {
       return getSchemaRegistry(registryId, true);
     }
 
@@ -324,13 +318,13 @@ public class ClusterCache {
      * @param registryId    the ID of the Schema Registry
      * @param loadIfMissing true if the cluster information should be loaded if it's not found
      * @return the info for the matching cluster, or null if none is found
-     * @throws SchemaRegistryClusterNotFoundException if the schema registry was not found
+     * @throws ClusterNotFoundException if the schema registry was not found
      */
     @VisibleForTesting
     SchemaRegistry getSchemaRegistry(
         String registryId,
         boolean loadIfMissing
-    ) throws SchemaRegistryClusterNotFoundException {
+    ) {
       return findFirstSchemaRegistryWithId(registryId, loadIfMissing).spec();
     }
 
@@ -348,7 +342,7 @@ public class ClusterCache {
      */
     public SchemaRegistry getSchemaRegistryForKafkaCluster(
         KafkaCluster kafkaCluster
-    ) throws ClusterNotFoundException {
+    ) {
       return getSchemaRegistryForKafkaCluster(kafkaCluster.id(), true);
     }
 
@@ -367,9 +361,9 @@ public class ClusterCache {
     public SchemaRegistry getSchemaRegistryForKafkaCluster(
         String kafkaClusterId,
         boolean loadIfMissing
-    ) throws ClusterNotFoundException {
+    ) {
       return maybeSchemaRegistryForKafkaCluster(kafkaClusterId, loadIfMissing).orElseThrow(() ->
-          new SchemaRegistryClusterNotFoundException(
+          new ClusterNotFoundException(
               "Schema Registry not found for Kafka Cluster %s in connection %s".formatted(
                   kafkaClusterId,
                   connectionId
@@ -381,7 +375,7 @@ public class ClusterCache {
     public Optional<SchemaRegistry> maybeSchemaRegistryForKafkaCluster(
         String kafkaClusterId,
         boolean loadIfMissing
-    ) throws ClusterNotFoundException {
+    ) {
       // Find the path for this Kafka cluster
       var kafkaCluster = findKafkaCluster(kafkaClusterId, loadIfMissing);
       // Find the schema registry that has the same path as the Kafka cluster
@@ -395,7 +389,7 @@ public class ClusterCache {
     protected ClusterInfo<KafkaCluster> findKafkaCluster(
         String kafkaClusterId,
         boolean loadIfMissing
-    ) throws ClusterNotFoundException {
+    ) {
       var result = kafkaClusters.get(kafkaClusterId);
       if (result == null && loadIfMissing) {
         // It's not found, so try to load it
@@ -407,8 +401,7 @@ public class ClusterCache {
       }
       if (result == null) {
         throw new ClusterNotFoundException(
-            "Kafka Cluster %s not found in connection %s".formatted(kafkaClusterId, connectionId),
-            ClusterType.KAFKA
+            "Kafka Cluster %s not found in connection %s".formatted(kafkaClusterId, connectionId)
         );
       }
       return result;
@@ -436,7 +429,7 @@ public class ClusterCache {
     protected ClusterInfo<SchemaRegistry> findFirstSchemaRegistryWithId(
         String id,
         boolean loadIfMissing
-    ) throws SchemaRegistryClusterNotFoundException {
+    ) {
       var result = schemaRegistries
           .stream()
           .filter(info -> info.id().equalsIgnoreCase(id))
@@ -450,7 +443,7 @@ public class ClusterCache {
         }
       }
       if (result == null) {
-        throw new SchemaRegistryClusterNotFoundException(
+        throw new ClusterNotFoundException(
             "Schema Registry %s not found in connection %s".formatted(id, connectionId)
         );
       }

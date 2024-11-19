@@ -9,7 +9,6 @@ import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
 import io.confluent.idesidecar.restapi.credentials.Credentials;
 import io.confluent.idesidecar.restapi.exceptions.ClusterNotFoundException;
 import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
-import io.confluent.idesidecar.restapi.exceptions.SchemaRegistryClusterNotFoundException;
 import io.confluent.idesidecar.restapi.kafkarest.SchemaManager;
 import io.confluent.idesidecar.restapi.models.graph.KafkaCluster;
 import io.confluent.idesidecar.restapi.models.graph.SchemaRegistry;
@@ -261,14 +260,14 @@ public class ClientConfigurator {
    * @param redact           whether to redact sensitive properties
    * @return the AdminClient configuration properties
    * @throws ConnectionNotFoundException if the connection does not exist
-   * @throws SchemaRegistryClusterNotFoundException    if the cluster does not exist
+   * @throws ClusterNotFoundException    if the cluster does not exist
    * @see #getSchemaRegistryClientConfig(ConnectionState, SchemaRegistry, boolean)
    */
   public Map<String, Object> getSchemaRegistryClientConfig(
       String connectionId,
       String schemaRegistryId,
       boolean redact
-  ) throws ConnectionNotFoundException, SchemaRegistryClusterNotFoundException {
+  ) throws ConnectionNotFoundException, ClusterNotFoundException {
     // Find the cluster using the connection ID, and fail if either does not exist
     var sr = clusterCache.getSchemaRegistry(connectionId, schemaRegistryId);
     var connection = connections.getConnectionState(connectionId);
