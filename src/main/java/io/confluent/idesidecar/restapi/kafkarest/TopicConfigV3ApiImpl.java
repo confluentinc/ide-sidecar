@@ -1,6 +1,11 @@
 package io.confluent.idesidecar.restapi.kafkarest;
 
-import io.confluent.idesidecar.restapi.kafkarest.model.*;
+import io.confluent.idesidecar.restapi.kafkarest.model.AlterConfigBatchRequestData;
+import io.confluent.idesidecar.restapi.kafkarest.model.ConfigSynonymData;
+import io.confluent.idesidecar.restapi.kafkarest.model.ResourceCollectionMetadata;
+import io.confluent.idesidecar.restapi.kafkarest.model.ResourceMetadata;
+import io.confluent.idesidecar.restapi.kafkarest.model.TopicConfigData;
+import io.confluent.idesidecar.restapi.kafkarest.model.TopicConfigDataList;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.groups.UniOnItemIgnore;
 import jakarta.enterprise.context.RequestScoped;
@@ -12,6 +17,7 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.POST;
+import jakarta.ws.rs.core.MediaType;
 import org.apache.kafka.clients.admin.ConfigEntry;
 import org.apache.kafka.clients.admin.TopicDescription;
 
@@ -32,7 +38,7 @@ public class TopicConfigV3ApiImpl {
 
   @GET
   @Path("{topic_name}/configs")
-  @Produces({ "application/json", "text/html" })
+  @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_HTML })
   public Uni<TopicConfigDataList> listKafkaTopicConfigs(
       @PathParam("cluster_id") String clusterId,
       @PathParam("topic_name") String topicName
@@ -47,8 +53,8 @@ public class TopicConfigV3ApiImpl {
 
   @POST
   @Path("{topic_name}/configs:alter")
-  @Consumes({ "application/json" })
-  @Produces({ "application/json", "text/html" })
+  @Consumes({ MediaType.APPLICATION_JSON })
+  @Produces({ MediaType.APPLICATION_JSON, MediaType.TEXT_HTML })
   public Uni<Void> updateKafkaTopicConfigBatch(
       @PathParam("cluster_id") String clusterId,
       @PathParam("topic_name") String topicName,
