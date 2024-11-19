@@ -68,7 +68,7 @@ public abstract class Redactable {
    */
   @JsonIgnore
   public final String asString() {
-    return new String(this.asCharArray());
+    return new String(raw);
   }
 
   /**

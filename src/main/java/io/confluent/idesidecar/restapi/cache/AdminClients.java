@@ -1,6 +1,7 @@
 package io.confluent.idesidecar.restapi.cache;
 
 import com.github.benmanes.caffeine.cache.CaffeineSpec;
+import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.apache.kafka.clients.admin.AdminClient;
@@ -34,9 +35,15 @@ public class AdminClients extends Clients<AdminClient> {
         clusterId,
         () -> {
           // Generate the Kafka admin client configuration
-          var config = configurator.getAdminClientConfig(connectionId, clusterId, false);
+          var config = configurator.getAdminClientConfig(connectionId, clusterId);
+          Log.debugf(
+              "Creating schema registry client for connection %s and cluster %s with configuration:\n  %s",
+              connectionId,
+              clusterId,
+              config
+          );
           // Create the admin client
-          return AdminClient.create(config);
+          return AdminClient.create(config.asMap());
         }
     );
   }

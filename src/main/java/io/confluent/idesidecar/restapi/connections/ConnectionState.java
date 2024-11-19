@@ -99,10 +99,9 @@ public abstract class ConnectionState {
   /**
    * Get the Kafka connection options for the Kafka cluster with the supplied ID.
    *
-   * @param clusterId the ID of the Kafka cluster
    * @return the connection options; never null
    */
-  public KafkaConnectionOptions getKafkaConnectionOptions(String clusterId) {
+  public KafkaConnectionOptions getKafkaConnectionOptions() {
     if (spec.kafkaClusterConfig() != null) {
       return new KafkaConnectionOptions(
           spec.kafkaClusterConfig().sslOrDefault(),
@@ -120,22 +119,20 @@ public abstract class ConnectionState {
   /**
    * Get the {@link Credentials} for the Kafka cluster with the supplied ID.
    *
-   * @param clusterId the Kafka cluster ID
    * @return the credentials or empty if the cluster ID is not known or
    *         the cluster requires no credentials
    */
-  public Optional<Credentials> getKafkaCredentials(String clusterId) {
+  public Optional<Credentials> getKafkaCredentials() {
     return Optional.empty();
   }
 
   /**
    * Get the {@link Credentials} for the Schema Registry with the supplied ID.
    *
-   * @param clusterId the Kafka cluster ID
    * @return the credentials or empty if the cluster ID is not known or
    *         the cluster requires no credentials
    */
-  public Optional<Credentials> getSchemaRegistryCredentials(String clusterId) {
+  public Optional<Credentials> getSchemaRegistryCredentials() {
     return Optional.empty();
   }
 }

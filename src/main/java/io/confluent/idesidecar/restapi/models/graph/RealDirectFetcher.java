@@ -2,12 +2,14 @@ package io.confluent.idesidecar.restapi.models.graph;
 
 import static io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType.DIRECT;
 
+import io.confluent.idesidecar.restapi.connections.CCloudConnectionState;
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
 import io.confluent.idesidecar.restapi.connections.DirectConnectionState;
 import io.confluent.idesidecar.restapi.events.ClusterKind;
 import io.confluent.idesidecar.restapi.events.Lifecycle;
 import io.confluent.idesidecar.restapi.events.ServiceKind;
 import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
+import io.confluent.idesidecar.restapi.models.ClusterType;
 import io.confluent.idesidecar.restapi.models.Connection;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import io.smallrye.mutiny.Uni;
@@ -52,15 +54,31 @@ public class RealDirectFetcher extends ConfluentRestClient implements DirectFetc
   // information from a Kafka REST URL endpoint, if it is available.
   // That is left to future improvements.
 
+  /**
+   * Construct the headers that will be used for REST requests made by this fetcher.
+   * This {@link RealDirectFetcher} will only submit REST requests to the Kafka REST proxy
+   * of a direct connection, in order to discover the Kafka cluster details.
+   * It will never submit REST requests to a direct connection's Schema Registry.
+   *
+   * <p>Therefore, this method only constructs the headers using the direct connection's
+   * Kafka credentials.
+   *
+   * @param connectionId the connection ID
+   * @return the headers
+   * @throws ConnectionNotFoundException if the connection does not exist or is not a
+   *                                     direct connection
+   */
   @Override
   protected MultiMap headersFor(String connectionId) throws ConnectionNotFoundException {
     var connectionState = connections.getConnectionState(connectionId);
+    // Direct connections might only use the Kafka REST proxy of a direct connection
+    // (and never the SR REST API). So not use REST clients, so don't include the headers in the request
     if (connectionState instanceof DirectConnectionState directConnectionState) {
-      return directConnectionState.getAuthenticationHeaders();
-    } else {
-      throw new ConnectionNotFoundException(
-          String.format("Connection with ID=%s is not a Direct connection.", connectionId));
+      return directConnectionState.getAuthenticationHeaders(ClusterType.KAFKA);
     }
+    throw new ConnectionNotFoundException(
+        String.format("Connection with ID=%s is not a direct connection.", connectionId)
+    );
   }
 
   <ClusterT extends Cluster> ClusterT onLoad(String connectionId, ClusterT cluster) {

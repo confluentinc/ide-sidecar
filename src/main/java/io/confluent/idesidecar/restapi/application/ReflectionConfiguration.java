@@ -6,8 +6,17 @@ import com.sun.security.auth.module.KeyStoreLoginModule;
 import io.confluent.idesidecar.scaffolding.models.TemplateManifest;
 import io.confluent.kafka.schemaregistry.avro.AvroSchema;
 import io.confluent.kafka.schemaregistry.client.rest.entities.ErrorMessage;
+import io.confluent.kafka.schemaregistry.client.rest.entities.ExtendedSchema;
+import io.confluent.kafka.schemaregistry.client.rest.entities.Mode;
+import io.confluent.kafka.schemaregistry.client.rest.entities.Rule;
+import io.confluent.kafka.schemaregistry.client.rest.entities.RuleKind;
+import io.confluent.kafka.schemaregistry.client.rest.entities.RuleMode;
+import io.confluent.kafka.schemaregistry.client.rest.entities.RuleSet;
 import io.confluent.kafka.schemaregistry.client.rest.entities.Schema;
+import io.confluent.kafka.schemaregistry.client.rest.entities.SchemaEntity;
+import io.confluent.kafka.schemaregistry.client.rest.entities.SchemaRegistryServerVersion;
 import io.confluent.kafka.schemaregistry.client.rest.entities.SchemaString;
+import io.confluent.kafka.schemaregistry.client.rest.entities.SchemaTags;
 import io.confluent.kafka.schemaregistry.client.rest.entities.SchemaTypeConverter;
 import io.confluent.kafka.schemaregistry.client.rest.entities.requests.RegisterSchemaRequest;
 import io.confluent.kafka.schemaregistry.json.JsonSchema;
@@ -82,7 +91,18 @@ import org.apache.kafka.common.serialization.ByteArrayDeserializer;
         OAuthBearerUnsecuredValidatorCallbackHandler.class,
         OAuthBearerUnsecuredLoginCallbackHandler.class,
         SaslClientCallbackHandler.class,
-        ScramServerCallbackHandler.class
+        ScramServerCallbackHandler.class,
+        // Schema Registry client classes that are not registered in
+        // https://github.com/quarkusio/quarkus/blob/3.16.3/extensions/schema-registry/confluent/common/deployment/src/main/java/io/quarkus/confluent/registry/common/ConfluentRegistryClientProcessor.java
+        Mode.class,
+        ExtendedSchema.class,
+        Rule.class,
+        RuleKind.class,
+        RuleMode.class,
+        RuleSet.class,
+        SchemaEntity.class,
+        SchemaTags.class,
+        SchemaRegistryServerVersion.class,
     }
 )
 public class ReflectionConfiguration {

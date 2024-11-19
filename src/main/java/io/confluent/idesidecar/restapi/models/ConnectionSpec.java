@@ -16,6 +16,7 @@ import io.confluent.idesidecar.restapi.exceptions.Failure.Error;
 import io.confluent.idesidecar.restapi.util.CCloud.KafkaEndpoint;
 import io.confluent.idesidecar.restapi.util.CCloud.SchemaRegistryEndpoint;
 import io.quarkus.runtime.annotations.RegisterForReflection;
+import io.soabase.recordbuilder.core.RecordBuilder;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Null;
 import jakarta.validation.constraints.Size;
@@ -30,6 +31,7 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
 @Schema(description = "The connection details that can be set or changed.")
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
+@RecordBuilder
 public record ConnectionSpec(
     @Schema(description = "The unique identifier of the connection resource.")
     @Size(min = 1, max = 64)
@@ -48,7 +50,7 @@ public record ConnectionSpec(
     @JsonProperty(KAFKA_CLUSTER_CONFIG_FIELD_NAME) KafkaClusterConfig kafkaClusterConfig,
     @Schema(description = "The details for connecting to a Schema Registry.")
     @JsonProperty(SCHEMA_REGISTRY_CONFIG_FIELD_NAME) SchemaRegistryConfig schemaRegistryConfig
-) {
+) implements ConnectionSpecBuilder.With {
 
   public static final String CCLOUD_CONFIG_FIELD_NAME = "ccloud_config";
   public static final String LOCAL_CONFIG_FIELD_NAME = "local_config";
@@ -274,6 +276,7 @@ public record ConnectionSpec(
 
   @Schema(description = "Kafka cluster configuration.")
   @RegisterForReflection
+  @RecordBuilder
   public record KafkaClusterConfig(
       @Schema(description = "The identifier of the Kafka cluster, if known.")
       @Null
@@ -320,7 +323,7 @@ public record ConnectionSpec(
       @JsonProperty(value = "verify_ssl_certificates")
       @Null
       Boolean verifySslCertificates
-  ) {
+  ) implements ConnectionSpecKafkaClusterConfigBuilder.With {
 
     // Constants used in annotations above
     private static final int ID_MAX_LEN = 64;
@@ -384,6 +387,7 @@ public record ConnectionSpec(
 
   @Schema(description = "Schema Registry configuration.")
   @RegisterForReflection
+  @RecordBuilder
   public record SchemaRegistryConfig(
       @Schema(description = "The identifier of the Schema Registry cluster, if known.")
       @Null
@@ -407,7 +411,8 @@ public record ConnectionSpec(
       )
       @Null
       Credentials credentials
-  ) {
+  ) implements ConnectionSpecSchemaRegistryConfigBuilder.With {
+
     private static final int ID_MAX_LEN = 64;
     private static final int URI_MAX_LEN = 256;
 
