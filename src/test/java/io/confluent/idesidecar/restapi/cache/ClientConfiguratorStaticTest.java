@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import io.confluent.idesidecar.restapi.clients.ClientConfigurator;
 import io.confluent.idesidecar.restapi.connections.ConnectionState;
 import io.confluent.idesidecar.restapi.credentials.ApiKeyAndSecret;
 import io.confluent.idesidecar.restapi.credentials.ApiSecret;
@@ -37,7 +38,8 @@ class ClientConfiguratorStaticTest {
   static final String SCHEMA_REGISTRY_LSRC_ID = "lscr-1234";
   static final String BOOTSTRAP_SERVERS = "localhost:9092";
   static final String SCHEMA_REGISTRY_URL = "http://localhost:8081";
-  static final String SCHEMA_REGISTRY_CCLOUD_URL = "https://psrc-1234.us-west-2.aws.confluent.cloud";
+  static final String SCHEMA_REGISTRY_CCLOUD_URL = "https://psrc-1234.us-west-2.aws.confluent"
+                                                   + ".cloud";
 
   static final String USERNAME = "user123";
   static final String PASSWORD = "my-secret";
@@ -53,10 +55,14 @@ class ClientConfiguratorStaticTest {
       new ApiSecret(API_SECRET.toCharArray())
   );
 
-  @Mock ConnectionState connection;
-  @Mock KafkaCluster kafka;
-  @Mock SchemaRegistry schemaRegistry;
-  @Mock SchemaRegistry ccloudSchemaRegistry;
+  @Mock
+  ConnectionState connection;
+  @Mock
+  KafkaCluster kafka;
+  @Mock
+  SchemaRegistry schemaRegistry;
+  @Mock
+  SchemaRegistry ccloudSchemaRegistry;
 
   @BeforeEach
   void beforeEach() {
@@ -75,7 +81,8 @@ class ClientConfiguratorStaticTest {
     ccloudSchemaRegistry = mock(SchemaRegistry.class);
     when(ccloudSchemaRegistry.id()).thenReturn(SCHEMA_REGISTRY_LSRC_ID);
     when(ccloudSchemaRegistry.uri()).thenReturn(SCHEMA_REGISTRY_CCLOUD_URL);
-    when(ccloudSchemaRegistry.logicalId()).thenReturn(Optional.of(new CCloud.LsrcId(SCHEMA_REGISTRY_LSRC_ID)));
+    when(ccloudSchemaRegistry.logicalId()).thenReturn(
+        Optional.of(new CCloud.LsrcId(SCHEMA_REGISTRY_LSRC_ID)));
   }
 
   @TestFactory
@@ -92,7 +99,9 @@ class ClientConfiguratorStaticTest {
         Duration timeout,
         String expectedKafkaConfig,
         String expectedSchemaRegistryConfig
-    ) {}
+    ) {
+
+    }
     var inputs = Stream.of(
         new TestInput(
             "No credentials",
@@ -166,7 +175,7 @@ class ClientConfiguratorStaticTest {
                 sasl.mechanism=PLAIN
                 sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username="%s" password="********";
                 ssl.endpoint.identification.algorithm=
-                
+                                
                 """.formatted(USERNAME),
             """
                 schema.registry.url=http://localhost:8081
@@ -298,7 +307,8 @@ class ClientConfiguratorStaticTest {
               if (input.schemaRegistry != null) {
                 assertNotNull(input.expectedSchemaRegistryConfig);
                 // The Schema Registry config should match
-                var expectedSchemaRegistryConfig = loadProperties(input.expectedSchemaRegistryConfig);
+                var expectedSchemaRegistryConfig = loadProperties(
+                    input.expectedSchemaRegistryConfig);
                 var srConfig = ClientConfigurator.getSchemaRegistryClientConfig(
                     connection,
                     input.schemaRegistry.id(),
@@ -309,12 +319,13 @@ class ClientConfiguratorStaticTest {
                 assertMapsEquals(
                     expectedSchemaRegistryConfig,
                     srConfig,
-                    "Expected Schema Registry config to match for '%s' test case".formatted(input.displayName)
+                    "Expected Schema Registry config to match for '%s' test case".formatted(
+                        input.displayName)
                 );
 
                 // And the kafka config with SR matches
                 var expectedKafkaConfigWithSr = new HashMap<>(expectedKafkaConfig);
-                expectedSchemaRegistryConfig.forEach((k,v) -> {
+                expectedSchemaRegistryConfig.forEach((k, v) -> {
                   var prefix = k.startsWith("schema.registry.") ? "" : "schema.registry.";
                   expectedKafkaConfigWithSr.put(prefix + k, v);
                 });
@@ -331,7 +342,8 @@ class ClientConfiguratorStaticTest {
                 assertMapsEquals(
                     expectedKafkaConfigWithSr,
                     kafkaConfigWithSr,
-                    "Expected Kafka config with SR to match for '%s' test case".formatted(input.displayName)
+                    "Expected Kafka config with SR to match for '%s' test case".formatted(
+                        input.displayName)
                 );
               }
             }
@@ -369,8 +381,16 @@ class ClientConfiguratorStaticTest {
     expected.forEach((k, v) -> {
       var actualValue = actual.get(k);
       assertNotNull(actualValue, "%s: expected key '%s' to be present".formatted(message, k));
-      assertEquals(v.toString(), actualValue.toString(), "%s: expected value for key '%s' to match '%s' but was '%s'".formatted(message, k, v, actualValue));
+      assertEquals(
+          v.toString(), actualValue.toString(),
+          "%s: expected value for key '%s' to match '%s' but was '%s'".formatted(message, k, v,
+              actualValue
+          )
+      );
     });
-    assertEquals(expected.size(), actual.size(), "%s: expected %d entries but found %d".formatted(message, expected.size(), actual.size()));
+    assertEquals(
+        expected.size(), actual.size(),
+        "%s: expected %d entries but found %d".formatted(message, expected.size(), actual.size())
+    );
   }
 }

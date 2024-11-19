@@ -5,7 +5,7 @@ import static io.quarkus.arc.impl.UncaughtExceptions.LOGGER;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.confluent.idesidecar.restapi.cache.SchemaRegistryClients;
+import io.confluent.idesidecar.restapi.clients.SchemaRegistryClients;
 import io.confluent.idesidecar.restapi.connections.CCloudConnectionState;
 import io.confluent.idesidecar.restapi.exceptions.ProcessorFailedException;
 import io.confluent.idesidecar.restapi.messageviewer.MessageViewerContext;
@@ -35,6 +35,7 @@ import java.util.Optional;
  */
 @ApplicationScoped
 public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
+
   static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
   static final Base64.Decoder BASE64_DECODER = Base64.getDecoder();
   static final Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
@@ -55,22 +56,18 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
     context.setProxyRequestMethod(HttpMethod.POST);
     context.setProxyRequestAbsoluteUrl(constructCCloudURL(context));
     var connectionState = (CCloudConnectionState) context.getConnectionState();
-    context.setProxyRequestHeaders(connectionState
-        .getOauthContext()
-        .getDataPlaneAuthenticationHeaders()
-        .add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-    );
+    context.setProxyRequestHeaders(
+        connectionState.getOauthContext().getDataPlaneAuthenticationHeaders()
+                       .add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON));
     if (context.getRequestBody() != null) {
       context.setProxyRequestBody(context.getRequestBody());
     } else {
       context.setProxyRequestBody(Buffer.buffer("{}"));
     }
     ProxyHttpClient<MessageViewerContext> proxyHttpClient = new ProxyHttpClient<>(webClientFactory);
-    return proxyHttpClient.send(context).compose(processedCtx ->
-        vertx
-            .createSharedWorkerExecutor("consume-worker")
-            .executeBlocking(() -> postProcess(processedCtx))
-    );
+    return proxyHttpClient.send(context).compose(
+        processedCtx -> vertx.createSharedWorkerExecutor("consume-worker")
+                             .executeBlocking(() -> postProcess(processedCtx)));
   }
 
   /**
@@ -81,16 +78,10 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
    */
   public MessageViewerContext postProcess(MessageViewerContext context) {
     if (context.getProxyResponseStatusCode() >= 300) {
-      Log.errorf(
-          "Error fetching the messages from ccloud: %s",
-          context.getProxyResponseBody());
-      throw new ProcessorFailedException(
-          context.failf(
-              context.getProxyResponseStatusCode(),
-              "Error fetching the messages from ccloud: %s".formatted(
-                  context.getProxyResponseBody())
-          )
-      );
+      Log.errorf("Error fetching the messages from ccloud: %s", context.getProxyResponseBody());
+      throw new ProcessorFailedException(context.failf(context.getProxyResponseStatusCode(),
+          "Error fetching the messages from ccloud: %s".formatted(context.getProxyResponseBody())
+      ));
     }
     final String rawTopicRowsResponse = context.getProxyResponseBody().toString();
     if (rawTopicRowsResponse == null || rawTopicRowsResponse.isEmpty()) {
@@ -98,25 +89,20 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
     }
 
     try {
-      SimpleConsumeMultiPartitionResponse data = OBJECT_MAPPER.readValue(
-          rawTopicRowsResponse,
+      SimpleConsumeMultiPartitionResponse data = OBJECT_MAPPER.readValue(rawTopicRowsResponse,
           SimpleConsumeMultiPartitionResponse.class
       );
       var processedPartitionResponse = decodeSchemaEncodedValues(context, data);
       context.setConsumeResponse(processedPartitionResponse);
       return context;
     } catch (JsonProcessingException e) {
-      LOGGER.error("Error parsing the messages from ccloud : \n message ='"
-          + rawTopicRowsResponse + "' \n Error: '" + e.getMessage() + "'");
-      throw new ProcessorFailedException(
-              context.failf(
-                  500,
-                  "We tried to consume records from the topic=\"%s\" (cluster_id=\"%s\") but "
-                  + "observed the following error: %s.",
-                  context.getTopicName(),
-                  context.getClusterId(),
-                  rawTopicRowsResponse)
-          );
+      LOGGER.error("Error parsing the messages from ccloud : \n message ='" + rawTopicRowsResponse
+                   + "' \n Error: '" + e.getMessage() + "'");
+      throw new ProcessorFailedException(context.failf(500,
+          "We tried to consume records from the topic=\"%s\" (cluster_id=\"%s\") but "
+          + "observed the following error: %s.", context.getTopicName(), context.getClusterId(),
+          rawTopicRowsResponse
+      ));
     }
   }
 
@@ -129,10 +115,9 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
   private MessageViewerContext handleEmptyOrNullResponseFromCCloud(
       MessageViewerContext context
   ) {
-    var data = new SimpleConsumeMultiPartitionResponse(
-        context.getClusterId(),
-        context.getTopicName(),
-        new ArrayList<>());
+    var data = new SimpleConsumeMultiPartitionResponse(context.getClusterId(),
+        context.getTopicName(), new ArrayList<>()
+    );
     context.setConsumeResponse(data);
     return context;
   }
@@ -144,8 +129,7 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
    * @param rawResponse The MultiPartitionConsumeResponse to decode.
    */
   private SimpleConsumeMultiPartitionResponse decodeSchemaEncodedValues(
-      MessageViewerContext context,
-      SimpleConsumeMultiPartitionResponse rawResponse
+      MessageViewerContext context, SimpleConsumeMultiPartitionResponse rawResponse
   ) {
     var schemaRegistry = context.getSchemaRegistryInfo();
     if (schemaRegistry == null) {
@@ -158,14 +142,10 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
       return rawResponse;
     }
 
-    var processedPartitions = rawResponse
-        .partitionDataList().stream()
-        .map(partitionData -> processPartition(partitionData, context, schemaRegistryClient))
-        .toList();
+    var processedPartitions = rawResponse.partitionDataList().stream().map(
+        partitionData -> processPartition(partitionData, context, schemaRegistryClient)).toList();
 
-    return new SimpleConsumeMultiPartitionResponse(
-        rawResponse.clusterId(),
-        rawResponse.topicName(),
+    return new SimpleConsumeMultiPartitionResponse(rawResponse.clusterId(), rawResponse.topicName(),
         processedPartitions
     );
   }
@@ -179,46 +159,24 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
    * @return All records of the partition with decoded keys and values.
    */
   private PartitionConsumeData processPartition(
-      PartitionConsumeData partitionConsumeData,
-      MessageViewerContext context,
+      PartitionConsumeData partitionConsumeData, MessageViewerContext context,
       SchemaRegistryClient schemaRegistryClient
   ) {
 
-    var processedRecords = partitionConsumeData
-        .records().stream()
-        .map(record -> {
-          var keyData = deserialize(
-              record.key(),
-              schemaRegistryClient,
-              context.getTopicName(),
-              true
-          );
-          var valueData = deserialize(
-              record.value(),
-              schemaRegistryClient,
-              context.getTopicName(),
-              false
-          );
+    var processedRecords = partitionConsumeData.records().stream().map(record -> {
+      var keyData = deserialize(record.key(), schemaRegistryClient, context.getTopicName(), true);
+      var valueData = deserialize(record.value(), schemaRegistryClient, context.getTopicName(),
+          false
+      );
 
-          return new PartitionConsumeRecord(
-              record.partitionId(),
-              record.offset(),
-              record.timestamp(),
-              record.timestampType(),
-              record.headers(),
-              keyData.value(),
-              valueData.value(),
-              keyData.errorMessage(),
-              valueData.errorMessage(),
-              record.exceededFields()
-          );
-        })
-        .toList();
+      return new PartitionConsumeRecord(record.partitionId(), record.offset(), record.timestamp(),
+          record.timestampType(), record.headers(), keyData.value(), valueData.value(),
+          keyData.errorMessage(), valueData.errorMessage(), record.exceededFields()
+      );
+    }).toList();
 
-    return new PartitionConsumeData(
-        partitionConsumeData.partitionId(),
-        partitionConsumeData.nextOffset(),
-        processedRecords
+    return new PartitionConsumeData(partitionConsumeData.partitionId(),
+        partitionConsumeData.nextOffset(), processedRecords
     );
   }
 
@@ -233,19 +191,13 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
    * @return The decoded value.
    */
   private RecordDeserializer.DecodedResult deserialize(
-      JsonNode data,
-      SchemaRegistryClient schemaRegistryClient,
-      String topicName,
-      boolean isKey
+      JsonNode data, SchemaRegistryClient schemaRegistryClient, String topicName, boolean isKey
   ) {
     if (data.has("__raw__")) {
       // We know that Confluent Cloud encodes raw data in Base64, so decode appropriately.
       try {
-        return deserializer.deserialize(
-            BASE64_DECODER.decode(data.get("__raw__").asText()),
-            schemaRegistryClient,
-            topicName,
-            isKey,
+        return deserializer.deserialize(BASE64_DECODER.decode(data.get("__raw__").asText()),
+            schemaRegistryClient, topicName, isKey,
             // If deserialize fails, we want to return the raw data unchanged.
             Optional.of(BASE64_ENCODER::encode)
         );
@@ -256,11 +208,8 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
         return new RecordDeserializer.DecodedResult(data, e.getMessage());
       }
     } else {
-      return deserializer.deserialize(
-          data.asText().getBytes(StandardCharsets.UTF_8),
-          schemaRegistryClient,
-          topicName,
-          isKey
+      return deserializer.deserialize(data.asText().getBytes(StandardCharsets.UTF_8),
+          schemaRegistryClient, topicName, isKey
       );
     }
   }
@@ -274,9 +223,7 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
   protected String constructCCloudURL(MessageViewerContext ctx) {
     // Replace with the actual URL after graphQL code is merged.
     final String hostName = ctx.getKafkaClusterInfo().uri();
-    return hostName
-        + "/kafka/v3/clusters/" + ctx.getClusterId()
-        + "/internal/topics/" + ctx.getTopicName()
-        + "/partitions/-/records:consume_guarantee_progress";
+    return hostName + "/kafka/v3/clusters/" + ctx.getClusterId() + "/internal/topics/"
+           + ctx.getTopicName() + "/partitions/-/records:consume_guarantee_progress";
   }
 }

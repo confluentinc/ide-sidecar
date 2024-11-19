@@ -1,7 +1,7 @@
 package io.confluent.idesidecar.restapi.connections;
 
 import io.confluent.idesidecar.restapi.auth.AuthErrors;
-import io.confluent.idesidecar.restapi.cache.ClientConfigurator;
+import io.confluent.idesidecar.restapi.clients.ClientConfigurator;
 import io.confluent.idesidecar.restapi.credentials.Credentials;
 import io.confluent.idesidecar.restapi.models.ClusterType;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
@@ -27,7 +27,6 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.eclipse.microprofile.config.ConfigProvider;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
  * Implementation of the connection state for ({@link ConnectionType#DIRECT} connections where the
@@ -56,14 +55,12 @@ public class DirectConnectionState extends ConnectionState {
   public MultiMap getAuthenticationHeaders(ClusterType clusterType) {
     var headers = HttpHeaders.headers();
     var credentials = switch (clusterType) {
-      case KAFKA ->
-          spec.kafkaClusterConfig() != null
-          ? spec.kafkaClusterConfig().credentials()
-          : null;
-      case SCHEMA_REGISTRY ->
-          spec.schemaRegistryConfig() != null
-          ? spec.schemaRegistryConfig().credentials()
-          : null;
+      case KAFKA -> spec.kafkaClusterConfig() != null
+                    ? spec.kafkaClusterConfig().credentials()
+                    : null;
+      case SCHEMA_REGISTRY -> spec.schemaRegistryConfig() != null
+                              ? spec.schemaRegistryConfig().credentials()
+                              : null;
       default -> null;
     };
     if (credentials != null) {
