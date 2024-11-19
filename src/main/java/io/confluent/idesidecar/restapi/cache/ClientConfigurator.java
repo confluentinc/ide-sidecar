@@ -420,4 +420,37 @@ public class ClientConfigurator {
     // necessary auth.
     return configs;
   }
+
+  private static final Map<String, String> SERDE_CONFIGS = ConfigUtil
+      .asMap("ide-sidecar.serde-configs");
+
+  /**
+   * Get the Kafka Serializer/Deserializer configuration for a given
+   * {@link SchemaManager.RegisteredSchema}, or the default configuration if no schema is provided.
+   * @param schema the schema to use, if present
+   * @param isKey  whether the schema is for a key or value
+   * @return the Serde configuration properties as a map
+   */
+  public Map<String, String> getSerdeConfigs(
+      Optional<SchemaManager.RegisteredSchema> schema,
+      boolean isKey
+  ) {
+    if (schema.isEmpty()) {
+      return SERDE_CONFIGS;
+    }
+
+    var configs = new LinkedHashMap<>(SERDE_CONFIGS);
+    if (schema.get().subjectNameStrategy() != null) {
+      // Override the default
+      configs.put(
+          (isKey ? "key.subject.name.strategy" : "value.subject.name.strategy"),
+          schema.get().subjectNameStrategy().strategyClassName
+      );
+    }
+
+    // No need to pass SR auth properties since it will hit
+    // the SR REST proxy in the sidecar, which handles any
+    // necessary auth.
+    return configs;
+  }
 }
