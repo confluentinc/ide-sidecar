@@ -11,7 +11,7 @@ public record AlterConfigCommand(
 ) {
 
   AlterConfigCommand(String name, String value, String operation) {
-    this(name, value, AlterConfigOperation.fromValue(operation));
+    this(name, value, AlterConfigOperation.fromValue(name, operation));
   }
 
   AlterConfigOp toAlterConfigOp() {
@@ -33,7 +33,7 @@ public record AlterConfigCommand(
     } else if (operation == AlterConfigOperation.DELETE) {
       return AlterConfigOp.OpType.DELETE;
     }
-    throw new UnknownAlterConfigOperation(operation.toString());
+    throw new UnknownAlterConfigOperation(name, operation.toString());
   }
 
   enum AlterConfigOperation {
@@ -51,13 +51,13 @@ public record AlterConfigCommand(
       return String.valueOf(value);
     }
 
-    public static AlterConfigOperation fromValue(String value) {
+    public static AlterConfigOperation fromValue(String name, String value) {
       for (AlterConfigOperation b : AlterConfigOperation.values()) {
         if (String.valueOf(b.value).equalsIgnoreCase(value)) {
           return b;
         }
       }
-      throw new UnknownAlterConfigOperation(value);
+      throw new UnknownAlterConfigOperation(name, value);
     }
   }
 }

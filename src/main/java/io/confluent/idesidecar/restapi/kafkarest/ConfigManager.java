@@ -14,12 +14,10 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.NotFoundException;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AlterConfigsOptions;
-import org.apache.kafka.clients.admin.Config;
 import org.apache.kafka.clients.admin.ConfigEntry;
 import org.apache.kafka.clients.admin.DescribeConfigsOptions;
 import org.apache.kafka.common.config.ConfigResource;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -32,35 +30,24 @@ public class ConfigManager {
 
   @Inject
   AdminClients adminClients;
-
-  @Inject
-  ClusterManager clusterManager;
-
   @Inject
   HttpServerRequest request;
 
   Supplier<String> connectionId = () -> request.getHeader(CONNECTION_ID_HEADER);
 
   public Uni<List<ConfigEntry>> listConfigs(String clusterId, ConfigResource resourceId) {
-    return clusterManager
-        .getKafkaCluster(clusterId)
-        .onItem()
-        .transformToUni(ignored -> listConfigs(clusterId, List.of(resourceId)))
+    return getAdminClient(clusterId)
+        .chain(adminClient -> uniStage(() -> adminClient
+            .describeConfigs(List.of(resourceId), new DescribeConfigsOptions().includeSynonyms(true))
+            .all()
+            .toCompletionStage())
+        )
         .onItem()
         .transform(configs -> configs
             .get(resourceId)
             .entries()
             .stream()
             .toList()
-        );
-  }
-
-  private Uni<Map<ConfigResource, Config>> listConfigs(String clusterId, List<ConfigResource> resourceIds) {
-    return getAdminClient(clusterId)
-        .chain(adminClient -> uniStage(() -> adminClient
-            .describeConfigs(resourceIds, new DescribeConfigsOptions().includeSynonyms(true))
-            .all()
-            .toCompletionStage())
         );
   }
 

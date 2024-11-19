@@ -2,12 +2,18 @@ package io.confluent.idesidecar.restapi.kafkarest;
 
 import io.confluent.idesidecar.restapi.kafkarest.model.*;
 import io.smallrye.mutiny.Uni;
+import io.smallrye.mutiny.groups.UniOnItemIgnore;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
-import jakarta.ws.rs.*;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.POST;
 import org.apache.kafka.clients.admin.ConfigEntry;
-import org.jetbrains.annotations.NotNull;
+import org.apache.kafka.clients.admin.TopicDescription;
 
 import java.util.List;
 
@@ -16,7 +22,10 @@ import java.util.List;
  */
 @RequestScoped
 @Path("/internal/kafka/v3/clusters/{cluster_id}/topics")
-public class TopicConfigsV3ApiImpl {
+public class TopicConfigV3ApiImpl {
+
+  @Inject
+  TopicManager topicManager;
 
   @Inject
   TopicConfigManager topicConfigsManager;
@@ -25,13 +34,15 @@ public class TopicConfigsV3ApiImpl {
   @Path("{topic_name}/configs")
   @Produces({ "application/json", "text/html" })
   public Uni<TopicConfigDataList> listKafkaTopicConfigs(
-      @PathParam("cluster_id")
-      String clusterId,@PathParam("topic_name") String topicName
+      @PathParam("cluster_id") String clusterId,
+      @PathParam("topic_name") String topicName
   ) {
-    return topicConfigsManager
-        .listKafkaTopicConfigs(clusterId, topicName)
-        .onItem()
-        .transform(configs -> getTopicConfigDataList(clusterId, topicName, configs));
+    return ensureTopicExists(clusterId, topicName)
+        .andSwitchTo(() -> topicConfigsManager
+            .listKafkaTopicConfigs(clusterId, topicName)
+            .onItem()
+            .transform(configs -> getTopicConfigDataList(clusterId, topicName, configs))
+        );
   }
 
   @POST
@@ -43,9 +54,18 @@ public class TopicConfigsV3ApiImpl {
       @PathParam("topic_name") String topicName,
       @Valid AlterConfigBatchRequestData alterConfigBatchRequestData
   ) {
-    return topicConfigsManager.updateKafkaTopicConfigBatch(
-        clusterId, topicName, alterConfigBatchRequestData
-    );
+    return ensureTopicExists(clusterId, topicName)
+        .andSwitchTo(() -> topicConfigsManager
+            .updateKafkaTopicConfigBatch(
+                clusterId, topicName, alterConfigBatchRequestData)
+        );
+  }
+
+  private UniOnItemIgnore<TopicDescription> ensureTopicExists(String clusterId, String topicName) {
+    return topicManager
+        .getKafkaTopic(clusterId, topicName, false)
+        .onItem()
+        .ignore();
   }
 
   private static TopicConfigDataList getTopicConfigDataList(
@@ -100,7 +120,7 @@ public class TopicConfigsV3ApiImpl {
         .synonyms(entry
             .synonyms()
             .stream()
-            .map(TopicConfigsV3ApiImpl::getConfigSynonymData)
+            .map(TopicConfigV3ApiImpl::getConfigSynonymData)
             .toList()
         ).build();
   }
