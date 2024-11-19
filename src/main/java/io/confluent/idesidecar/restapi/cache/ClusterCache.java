@@ -395,8 +395,7 @@ public class ClusterCache {
         // It's not found, so try to load it
         var newCluster = loadKafkaCluster(kafkaClusterId, loadTimeout);
         if (newCluster != null) {
-          result = add(newCluster);
-          return result;
+          return add(newCluster);
         }
       }
       if (result == null) {
@@ -439,7 +438,7 @@ public class ClusterCache {
         // Try and load the schema registry for this connection
         var registry = loadSchemaRegistryWithId(id, loadTimeout);
         if (registry != null) {
-          add(registry);
+          return add(registry);
         }
       }
       if (result == null) {
@@ -465,7 +464,7 @@ public class ClusterCache {
       }
       var info = new ClusterInfo<SchemaRegistry>(
           registry.id(),
-          ClusterType.KAFKA,
+          ClusterType.SCHEMA_REGISTRY,
           registry,
           path
       );

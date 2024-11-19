@@ -106,7 +106,7 @@ public record ApiKeyAndSecret(
     var headers = MultiMap.caseInsensitiveMultiMap();
     if (key != null || secret != null) {
       // base64 encode the username and password
-      var value = "%s:%s".formatted(key, secret.asCharArray());
+      var value = "%s:%s".formatted(key, secret.asString());
       value = Base64.getEncoder().encodeToString(value.getBytes(StandardCharsets.UTF_8));
       headers.add(AUTHORIZATION, "Basic %s".formatted(value));
     }

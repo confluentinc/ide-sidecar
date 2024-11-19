@@ -112,6 +112,9 @@ ide-sidecar:
         brokers-list-uri: ${ide-sidecar.connections.confluent-local.default.kafkarest-uri}/v3/clusters/%s/brokers
         broker-adv-listeners-config-uri: ${ide-sidecar.connections.confluent-local.default.kafkarest-uri}/v3/clusters/%s/brokers/%s/configs/advertised.listeners
         kafka-topic-uri: ${outpost.connections.confluent-local.default.kafkarest-uri}/v3/clusters/%s/topics/%s
+
+    direct:
+      timeout-seconds: 5
   feature-flags:
     refresh-interval-seconds: 60
     ide-project:

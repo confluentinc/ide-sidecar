@@ -103,7 +103,8 @@ public class RealLocalFetcher extends ConfluentLocalRestClient implements LocalF
   @Override
   public Uni<ConfluentLocalKafkaCluster> getKafkaCluster(String connectionId) {
     var uri = CONFLUENT_LOCAL_CLUSTERS_URI;
-    return listItems(connectionId, uri, null, this::parseKafkaClusterList)
+    var headers = headersFor(connectionId);
+    return listItems(headers, uri, null, this::parseKafkaClusterList)
         // Return null if Confluent Local is not available
         .onFailure(ConnectException.class).recoverWithItem(throwable -> null)
         .map(cluster -> cluster.withConnectionId(connectionId))
@@ -129,9 +130,10 @@ public class RealLocalFetcher extends ConfluentLocalRestClient implements LocalF
 
   Uni<ConfluentLocalKafkaCluster> withBrokerDetails(ConfluentLocalKafkaCluster cluster) {
     var connectionId = cluster.connectionId();
+    var headers = headersFor(connectionId);
     var uri = CONFLUENT_LOCAL_BROKERS_URI.formatted(cluster.id());
     try {
-      return listItems(connectionId, uri, null, this::parseKafkaBrokerList)
+      return listItems(headers, uri, null, this::parseKafkaBrokerList)
           // Return null if Confluent Local is not available
           .onFailure(ConnectException.class)
           .recoverWithItem(throwable -> null)
@@ -140,7 +142,7 @@ public class RealLocalFetcher extends ConfluentLocalRestClient implements LocalF
             var url = CONFLUENT_LOCAL_BROKER_ADVERTISED_LISTENER_URI.formatted(
                 cluster.id(), broker.brokerId()
             );
-            return getItem(connectionId, url, this::parseConfigResponse);
+            return getItem(headers, url, this::parseConfigResponse);
           })
           .collect()
           .asList()
@@ -174,7 +176,8 @@ public class RealLocalFetcher extends ConfluentLocalRestClient implements LocalF
 
     Log.debugf("Looking for Schema Registry at %s for connection %s", uri, connectionId);
     final String configUri = uri + "/config";
-    return getItem(connectionId, configUri, this::parseSchemaRegistryConfig)
+    var headers = headersFor(connectionId);
+    return getItem(headers, configUri, this::parseSchemaRegistryConfig)
         .onFailure(ConnectException.class).recoverWithItem(throwable -> null)
         .onItem()
         .transformToUni(response -> {

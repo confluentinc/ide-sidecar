@@ -10,6 +10,7 @@ import io.confluent.idesidecar.restapi.events.ClusterKind;
 import io.confluent.idesidecar.restapi.events.Lifecycle;
 import io.confluent.idesidecar.restapi.events.ServiceKind;
 import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
+import io.confluent.idesidecar.restapi.models.ClusterType;
 import io.confluent.idesidecar.restapi.models.Connection;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
 import io.confluent.idesidecar.restapi.util.Crn;
@@ -103,7 +104,8 @@ public class RealCCloudFetcher extends ConfluentCloudRestClient implements CClou
     // First get the information about the current organization
     var orgDetails = currentOrgDetails(connectionId);
     // Then fetch all the organizations this user is part of
-    return listItems(connectionId, CONFLUENT_CLOUD_ORGS_URI, null, this::parseOrgList)
+    var headers = headersFor(connectionId);
+    return listItems(headers, CONFLUENT_CLOUD_ORGS_URI, null, this::parseOrgList)
         // and add the connection ID to all organization objects
         .map(org -> org.withConnectionId(connectionId))
         .map(org -> org.withCurrentOrganization(orgDetails));
@@ -113,7 +115,8 @@ public class RealCCloudFetcher extends ConfluentCloudRestClient implements CClou
   public Multi<CCloudEnvironment> getEnvironments(String connectionId, PageLimits limits) {
     // First get the information about the current organization
     var orgDetails = currentOrgDetails(connectionId);
-    return listItems(connectionId, CONFLUENT_CLOUD_ENVS_URI, limits, this::parseEnvList)
+    var headers = headersFor(connectionId);
+    return listItems(headers, CONFLUENT_CLOUD_ENVS_URI, limits, this::parseEnvList)
         // and add the connection ID to all environment objects
         .map(env -> env.withConnectionId(connectionId))
         .map(env -> env.withCurrentOrganization(orgDetails));
@@ -125,8 +128,9 @@ public class RealCCloudFetcher extends ConfluentCloudRestClient implements CClou
       String envId,
       PageLimits limits
   ) {
+    var headers = headersFor(connectionId);
     return listItems(
-        connectionId,
+        headers,
         CONFLUENT_CLOUD_LKCS_URI.formatted(envId),
         limits,
         this::parseLkcList
@@ -146,8 +150,12 @@ public class RealCCloudFetcher extends ConfluentCloudRestClient implements CClou
    */
   @Override
   public Uni<CCloudSchemaRegistry> getSchemaRegistry(String connectionId, String envId) {
+    var headers = headersFor(connectionId);
     return getItem(
-        connectionId, CONFLUENT_CLOUD_SRS_URI.formatted(envId), this::parseSchemaRegistryList)
+        headers,
+        CONFLUENT_CLOUD_SRS_URI.formatted(envId),
+        this::parseSchemaRegistryList
+    )
         .onItem()
         .transformToUni(response -> {
           // Convert the raw response item to the representation
