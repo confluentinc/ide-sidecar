@@ -12,12 +12,15 @@ import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
 import io.confluent.idesidecar.restapi.models.graph.KafkaCluster;
 import io.confluent.idesidecar.restapi.models.graph.SchemaRegistry;
 import io.confluent.idesidecar.restapi.util.CCloud;
+import io.confluent.kafka.schemaregistry.client.SchemaRegistryClientConfig;
+import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig;
 import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.apache.kafka.clients.CommonClientConfigs;
 import java.util.function.Supplier;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
@@ -59,7 +62,7 @@ public class ClientConfigurator {
     var props = new LinkedHashMap<String, Object>(defaultProperties);
 
     // First set the bootstrap servers
-    props.put("bootstrap.servers", bootstrapServers);
+    props.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
 
     // Second, add any connection properties for Kafka cluster credentials (if defined)
     var options = connection.getKafkaConnectionOptions().withRedact(redact);
@@ -73,10 +76,10 @@ public class ClientConfigurator {
     if (srUri != null) {
       var additional = getSchemaRegistryClientConfig(connection, srId, srUri, redact, timeout);
       additional.forEach((k, v) -> {
-        if (k.startsWith("schema.registry.")) {
+        if (k.startsWith(SchemaRegistryClientConfig.CLIENT_NAMESPACE)) {
           props.put(k, v);
         } else {
-          props.put("schema.registry." + k, v);
+          props.put(SchemaRegistryClientConfig.CLIENT_NAMESPACE + k, v);
         }
       });
     }
@@ -107,7 +110,7 @@ public class ClientConfigurator {
     var props = new LinkedHashMap<String, Object>();
 
     // First set the schema registry URL
-    props.put("schema.registry.url", srUri);
+    props.put(AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, srUri);
 
     if (defaultTimeout != null) {
       props.put("schema.registry.request.timeout.ms", defaultTimeout.toMillis());
@@ -137,6 +140,12 @@ public class ClientConfigurator {
 
   @ConfigProperty(name = "ide-sidecar.admin-client-configs")
   Map<String, String> adminClientSidecarConfigs;
+
+  @ConfigProperty(name = "ide-sidecar.consumer-client-configs")
+  Map<String, String> consumerClientSidecarConfigs;
+
+  @ConfigProperty(name = "ide-sidecar.producer-client-configs")
+  Map<String, String> producerClientSidecarConfigs;
 
   public static class Configuration {
     final Supplier<Map<String, Object>> configSupplier;
@@ -248,23 +257,20 @@ public class ClientConfigurator {
       String clusterId,
       boolean includeSchemaRegistry
   ) throws ConnectionNotFoundException, ClusterNotFoundException {
-    var defaults = Map.of(
-        "session.timeout.ms", "45000"
-    );
     return new Configuration(
         () -> getKafkaClientConfig(
             connectionId,
             clusterId,
             includeSchemaRegistry,
             false,
-            defaults
+            consumerClientSidecarConfigs
         ),
         () -> getKafkaClientConfig(
             connectionId,
             clusterId,
             includeSchemaRegistry,
             true,
-            defaults
+            consumerClientSidecarConfigs
         )
     );
   }
@@ -290,23 +296,20 @@ public class ClientConfigurator {
       String clusterId,
       boolean includeSchemaRegistry
   ) throws ConnectionNotFoundException, ClusterNotFoundException {
-    var defaults = Map.of(
-        "acks", "all"
-    );
     return new Configuration(
         () -> getKafkaClientConfig(
             connectionId,
             clusterId,
             includeSchemaRegistry,
             false,
-            defaults
+            producerClientSidecarConfigs
         ),
         () -> getKafkaClientConfig(
             connectionId,
             clusterId,
             includeSchemaRegistry,
             true,
-            defaults
+            producerClientSidecarConfigs
         )
     );
   }
@@ -335,7 +338,7 @@ public class ClientConfigurator {
       Log.debugf("Not using Schema Registry for Kafka cluster %s", cluster.id());
     }
 
-    // Get the basic producer config
+    // Get the Kafka client config
     return getKafkaClientConfig(
         connection,
         cluster.id(),
