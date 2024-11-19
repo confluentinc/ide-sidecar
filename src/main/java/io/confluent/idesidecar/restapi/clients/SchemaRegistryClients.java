@@ -1,9 +1,11 @@
-package io.confluent.idesidecar.restapi.cache;
+package io.confluent.idesidecar.restapi.clients;
 
 import static io.confluent.idesidecar.restapi.kafkarest.SchemaManager.SCHEMA_PROVIDERS;
 import static jakarta.ws.rs.core.HttpHeaders.AUTHORIZATION;
 
 import io.confluent.idesidecar.restapi.application.SidecarAccessTokenBean;
+import io.confluent.idesidecar.restapi.cache.Clients;
+import io.confluent.idesidecar.restapi.cache.ClusterCache;
 import io.confluent.idesidecar.restapi.util.RequestHeadersConstants;
 import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
@@ -15,11 +17,12 @@ import java.util.Map;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
- * Create an ApplicationScoped bean to cache SchemaRegistryClient instances
- * by connection ID and schema registry client ID.
+ * Create an ApplicationScoped bean to cache SchemaRegistryClient instances by connection ID and
+ * schema registry client ID.
  */
 @ApplicationScoped
 public class SchemaRegistryClients extends Clients<SchemaRegistryClient> {
+
   private static final int SR_CACHE_SIZE = 10;
 
   @Inject
@@ -35,9 +38,8 @@ public class SchemaRegistryClients extends Clients<SchemaRegistryClient> {
   String sidecarHost;
 
   /**
-   * Get a SchemaRegistryClient for the given connection ID and cluster ID. We rely on the
-   * sidecar's Schema Registry proxy routes to forward the request to the correct Schema Registry
-   * instance.
+   * Get a SchemaRegistryClient for the given connection ID and cluster ID. We rely on the sidecar's
+   * Schema Registry proxy routes to forward the request to the correct Schema Registry instance.
    */
   public SchemaRegistryClient getClient(String connectionId, String clusterId) {
     return getClient(
@@ -64,7 +66,8 @@ public class SchemaRegistryClients extends Clients<SchemaRegistryClient> {
               config
           );
           return client;
-        });
+        }
+    );
   }
 
   public SchemaRegistryClient getClientByKafkaClusterId(
