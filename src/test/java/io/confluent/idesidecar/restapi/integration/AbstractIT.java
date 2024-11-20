@@ -1,13 +1,8 @@
-/*
- * Copyright [2024 - 2024] Confluent Inc.
- */
-
 package io.confluent.idesidecar.restapi.integration;
 
 import static io.confluent.idesidecar.restapi.kafkarest.SchemaManager.SCHEMA_PROVIDERS;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import io.confluent.idesidecar.restapi.cache.ClientConfigurator;
+import io.confluent.idesidecar.restapi.clients.ClientConfigurator;
 import io.confluent.idesidecar.restapi.connections.ConnectionState;
 import io.confluent.idesidecar.restapi.connections.ConnectionStates;
 import io.confluent.idesidecar.restapi.messageviewer.RecordDeserializer;
@@ -87,11 +82,6 @@ public abstract class AbstractIT extends SidecarClient implements ITSuite {
   public void afterEach() {
     // Delete all the content in the test environment, so it doesn't leak into other tests
     deleteAllContent();
-  }
-
-  @Override
-  public SidecarClient sidecarClient() {
-    return this;
   }
 
   /**
