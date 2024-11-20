@@ -1,7 +1,7 @@
 package io.confluent.idesidecar.restapi.integration;
 
-import io.confluent.idesidecar.restapi.kafkarest.RecordsV3ApiErrorsSuite;
-import io.confluent.idesidecar.restapi.kafkarest.RecordsV3ApiSuite;
+import io.confluent.idesidecar.restapi.kafkarest.RecordsV3ErrorsSuite;
+import io.confluent.idesidecar.restapi.kafkarest.RecordsV3Suite;
 import io.confluent.idesidecar.restapi.kafkarest.RecordsV3DryRunSuite;
 import io.confluent.idesidecar.restapi.kafkarest.api.ClusterV3Suite;
 import io.confluent.idesidecar.restapi.kafkarest.api.PartitionV3Suite;
@@ -43,7 +43,7 @@ public class LocalITs {
     @Tag("io.confluent.common.utils.IntegrationTest")
     @TestProfile(NoAccessFilterProfile.class)
     @Nested
-    class RecordTests extends AbstractIT implements RecordsV3ApiSuite, RecordsV3DryRunSuite {
+    class RecordTests extends AbstractIT implements RecordsV3Suite, RecordsV3DryRunSuite {
 
       @Override
       public TestEnvironment environment() {
@@ -61,7 +61,7 @@ public class LocalITs {
     @Tag("io.confluent.common.utils.IntegrationTest")
     @TestProfile(NoAccessFilterProfile.class)
     @Nested
-    class RecordFailureTests extends AbstractIT implements RecordsV3ApiErrorsSuite {
+    class RecordFailureTests extends AbstractIT implements RecordsV3ErrorsSuite {
 
       @Override
       public TestEnvironment environment() {
@@ -160,7 +160,7 @@ public class LocalITs {
     @Tag("io.confluent.common.utils.IntegrationTest")
     @TestProfile(NoAccessFilterProfile.class)
     @Nested
-    class RecordTests extends AbstractIT implements RecordsV3ApiSuite, RecordsV3DryRunSuite {
+    class RecordTests extends AbstractIT implements RecordsV3Suite, RecordsV3DryRunSuite {
 
       @Override
       public TestEnvironment environment() {
@@ -178,7 +178,7 @@ public class LocalITs {
     @Tag("io.confluent.common.utils.IntegrationTest")
     @TestProfile(NoAccessFilterProfile.class)
     @Nested
-    class RecordFailureTests extends AbstractIT implements RecordsV3ApiErrorsSuite {
+    class RecordFailureTests extends AbstractIT implements RecordsV3ErrorsSuite {
 
       @Override
       public TestEnvironment environment() {

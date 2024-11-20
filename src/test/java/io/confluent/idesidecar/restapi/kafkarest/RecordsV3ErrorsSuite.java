@@ -18,7 +18,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.junitpioneer.jupiter.cartesian.ArgumentSets;
 import org.junitpioneer.jupiter.cartesian.CartesianTest;
 
-public interface RecordsV3ApiErrorsSuite extends ITSuite {
+public interface RecordsV3ErrorsSuite extends ITSuite {
 
   @Test
   default void shouldThrowNotFoundWhenClusterDoesNotExist() {
@@ -158,7 +158,7 @@ public interface RecordsV3ApiErrorsSuite extends ITSuite {
     var keySchema = createSchema(
         "%s-key".formatted(topic),
         keyFormat.schemaProvider().schemaType(),
-        RecordsV3ApiSuite.getProductSchema(keyFormat, true)
+        RecordsV3Suite.getProductSchema(keyFormat, true)
     );
 
     produceRecordThen(
@@ -169,7 +169,7 @@ public interface RecordsV3ApiErrorsSuite extends ITSuite {
     var valueSchema = createSchema(
         "%s-value".formatted(topic),
         keyFormat.schemaProvider().schemaType(),
-        RecordsV3ApiSuite.getProductSchema(keyFormat, false)
+        RecordsV3Suite.getProductSchema(keyFormat, false)
     );
 
     produceRecordThen(

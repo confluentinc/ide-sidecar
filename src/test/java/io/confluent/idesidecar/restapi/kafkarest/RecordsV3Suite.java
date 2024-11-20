@@ -23,7 +23,7 @@ import org.junit.jupiter.api.Test;
 import org.junitpioneer.jupiter.cartesian.ArgumentSets;
 import org.junitpioneer.jupiter.cartesian.CartesianTest;
 
-public interface RecordsV3ApiSuite extends ITSuite {
+public interface RecordsV3Suite extends ITSuite {
 
   ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
