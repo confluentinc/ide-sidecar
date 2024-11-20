@@ -442,9 +442,18 @@ public class SidecarClient implements SidecarClientApi {
       String topicName,
       ProduceRequest request
   ) {
+    return produceRecordThen(topicName, request, false);
+  }
+
+  public ValidatableResponse produceRecordThen(
+      String topicName,
+      ProduceRequest request,
+      Boolean dryRun
+  ) {
     return fromCluster(currentKafkaClusterId, () ->
         givenDefault()
             .body(request)
+            .queryParam("dry_run", dryRun)
             .post("/kafka/v3/clusters/{cluster_id}/topics/%s/records".formatted(topicName))
             .then()
     );

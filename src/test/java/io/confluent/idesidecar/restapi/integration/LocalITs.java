@@ -2,6 +2,7 @@ package io.confluent.idesidecar.restapi.integration;
 
 import io.confluent.idesidecar.restapi.kafkarest.RecordsV3ApiErrorsSuite;
 import io.confluent.idesidecar.restapi.kafkarest.RecordsV3ApiSuite;
+import io.confluent.idesidecar.restapi.kafkarest.RecordsV3DryRunSuite;
 import io.confluent.idesidecar.restapi.kafkarest.api.ClusterV3Suite;
 import io.confluent.idesidecar.restapi.kafkarest.api.PartitionV3Suite;
 import io.confluent.idesidecar.restapi.kafkarest.api.TopicConfigV3Suite;
@@ -42,7 +43,7 @@ public class LocalITs {
     @Tag("io.confluent.common.utils.IntegrationTest")
     @TestProfile(NoAccessFilterProfile.class)
     @Nested
-    class RecordTests extends AbstractIT implements RecordsV3ApiSuite {
+    class RecordTests extends AbstractIT implements RecordsV3ApiSuite, RecordsV3DryRunSuite {
 
       @Override
       public TestEnvironment environment() {
@@ -159,7 +160,7 @@ public class LocalITs {
     @Tag("io.confluent.common.utils.IntegrationTest")
     @TestProfile(NoAccessFilterProfile.class)
     @Nested
-    class RecordTests extends AbstractIT implements RecordsV3ApiSuite {
+    class RecordTests extends AbstractIT implements RecordsV3ApiSuite, RecordsV3DryRunSuite {
 
       @Override
       public TestEnvironment environment() {

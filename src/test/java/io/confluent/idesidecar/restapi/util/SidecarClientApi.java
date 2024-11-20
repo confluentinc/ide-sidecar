@@ -165,6 +165,12 @@ public interface SidecarClientApi {
       ProduceRequest request
   );
 
+  ValidatableResponse produceRecordThen(
+      String topicName,
+      ProduceRequest request,
+      Boolean dryRun
+  );
+
   ProduceRequest createProduceRequest(
       Integer partitionId,
       Object key,
