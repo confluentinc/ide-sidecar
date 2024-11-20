@@ -98,11 +98,6 @@ public class RecordDeserializer {
   }
 
   @VisibleForTesting
-  static void clearCachedFailures() {
-    // This method is no longer needed as the cache is managed by SchemaErrors
-  }
-
-  @VisibleForTesting
   static int getSchemaIdFromRawBytes(byte[] rawBytes) {
     if (rawBytes == null || rawBytes.length < 5) {
       throw new IllegalArgumentException("Invalid raw bytes for extracting schema ID.");
