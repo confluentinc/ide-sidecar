@@ -1,6 +1,6 @@
 package io.confluent.idesidecar.restapi.messageviewer;
 
-import io.confluent.idesidecar.restapi.cache.ClientConfigurator;
+import io.confluent.idesidecar.restapi.clients.ClientConfigurator;
 import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;

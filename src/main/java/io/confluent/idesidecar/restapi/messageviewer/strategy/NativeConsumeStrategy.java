@@ -1,7 +1,7 @@
 package io.confluent.idesidecar.restapi.messageviewer.strategy;
 
 import io.confluent.idesidecar.restapi.messageviewer.KafkaConsumerFactory;
-import io.confluent.idesidecar.restapi.cache.SchemaRegistryClients;
+import io.confluent.idesidecar.restapi.clients.SchemaRegistryClients;
 import io.confluent.idesidecar.restapi.messageviewer.MessageViewerContext;
 import io.confluent.idesidecar.restapi.messageviewer.RecordDeserializer;
 import io.confluent.idesidecar.restapi.messageviewer.SimpleConsumer;

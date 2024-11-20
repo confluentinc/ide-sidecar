@@ -3,7 +3,7 @@ package io.confluent.idesidecar.restapi.kafkarest;
 import static io.confluent.idesidecar.restapi.util.MutinyUtil.uniStage;
 import static io.confluent.idesidecar.restapi.util.RequestHeadersConstants.CONNECTION_ID_HEADER;
 
-import io.confluent.idesidecar.restapi.cache.AdminClients;
+import io.confluent.idesidecar.restapi.clients.AdminClients;
 import io.confluent.idesidecar.restapi.kafkarest.model.CreateTopicRequestData;
 import io.smallrye.mutiny.Uni;
 import io.vertx.core.http.HttpServerRequest;
