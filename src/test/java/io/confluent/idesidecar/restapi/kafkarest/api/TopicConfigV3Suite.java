@@ -3,14 +3,14 @@ package io.confluent.idesidecar.restapi.kafkarest.api;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 
-import io.confluent.idesidecar.restapi.util.AbstractSidecarIT;
+import io.confluent.idesidecar.restapi.integration.ITSuite;
 import org.junit.jupiter.api.Test;
 import java.util.List;
 
-abstract class TopicConfigV3ApiImplIT extends AbstractSidecarIT {
+public interface TopicConfigV3Suite extends ITSuite {
 
   @Test
-  void shouldListTopicConfigs() {
+  default void shouldListTopicConfigs() {
     createTopic("test-topic-1");
 
     // List topic configs with default values
@@ -18,7 +18,7 @@ abstract class TopicConfigV3ApiImplIT extends AbstractSidecarIT {
   }
 
   @Test
-  void shouldBatchAlterTopicConfigs() {
+  default void shouldBatchAlterTopicConfigs() {
     // Create topic
     createTopic("test-topic-2");
 
@@ -95,7 +95,7 @@ abstract class TopicConfigV3ApiImplIT extends AbstractSidecarIT {
   }
 
   @Test
-  void shouldValidateOnlyBatchAlterTopicConfigs() {
+  default void shouldValidateOnlyBatchAlterTopicConfigs() {
     // Create topic
     createTopic("test-topic-3");
 
@@ -130,7 +130,7 @@ abstract class TopicConfigV3ApiImplIT extends AbstractSidecarIT {
   }
 
   @Test
-  void shouldThrowBadRequestOnInvalidConfiguration() {
+  default void shouldThrowBadRequestOnInvalidConfiguration() {
     // Create topic
     createTopic("test-topic-4");
 
@@ -183,7 +183,7 @@ abstract class TopicConfigV3ApiImplIT extends AbstractSidecarIT {
   }
 
   @Test
-  void shouldThrowBadRequestOnDuplicateConfiguration() {
+  default void shouldThrowBadRequestOnDuplicateConfiguration() {
     // Create topic
     createTopic("test-topic-5");
 
@@ -217,7 +217,7 @@ abstract class TopicConfigV3ApiImplIT extends AbstractSidecarIT {
   }
 
   @Test
-  void shouldThrowBadRequestOnUnknownOperation() {
+  default void shouldThrowBadRequestOnUnknownOperation() {
     // Create topic
     createTopic("test-topic-5");
 
@@ -243,7 +243,7 @@ abstract class TopicConfigV3ApiImplIT extends AbstractSidecarIT {
   }
 
   @Test
-  void shouldThrowBadRequestOnEmptyConfiguration() {
+  default void shouldThrowBadRequestOnEmptyConfiguration() {
     // Create topic
     createTopic("test-topic-5");
 
@@ -261,7 +261,7 @@ abstract class TopicConfigV3ApiImplIT extends AbstractSidecarIT {
   }
 
   @Test
-  void shouldRaise404ForNonExistentTopic() {
+  default void shouldRaise404ForNonExistentTopic() {
     givenDefault()
         .get("/internal/kafka/v3/clusters/{cluster_id}/topics/non-existent-topic/configs")
         .then()
@@ -279,7 +279,7 @@ abstract class TopicConfigV3ApiImplIT extends AbstractSidecarIT {
   }
 
   @Test
-  void shouldRaise404OnNonExistentCluster() {
+  default void shouldRaise404OnNonExistentCluster() {
     givenConnectionId()
         .when()
         .get("/internal/kafka/v3/clusters/non-existent-cluster/topics/foo/configs")

@@ -37,7 +37,7 @@ public class LocalTestEnvironment implements TestEnvironment {
 
   @Override
   public void shutdown() {
-    stopContainers();
+    close();
   }
 
   protected void createNetworkAndContainers() {
@@ -70,10 +70,8 @@ public class LocalTestEnvironment implements TestEnvironment {
     kafkaWithRestProxy.stop();
   }
 
-  @Override
   public void close() {
-    schemaRegistry.close();
-    kafkaWithRestProxy.close();
+    stopContainers();
     network.close();
   }
 

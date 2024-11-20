@@ -1,7 +1,3 @@
-/*
- * Copyright [2024 - 2024] Confluent Inc.
- */
-
 package io.confluent.idesidecar.restapi.cache;
 
 import io.confluent.idesidecar.restapi.connections.ConnectionState;
@@ -41,9 +37,7 @@ public class ClientConfigurator {
    * are not included.
    *
    * @param connection        the connection
-   * @param clusterId         the ID of the Kafka cluster to use
    * @param bootstrapServers  the bootstrap servers of the Kafka cluster to use
-   * @param srId              the ID of the Schema Registry to use, or null if not needed
    * @param srUri             the URI of the Schema Registry to use, or null if not needed
    * @param redact            whether to redact sensitive properties
    * @param timeout           the timeout for calls to the cluster
@@ -52,9 +46,7 @@ public class ClientConfigurator {
    */
   public static Map<String, Object> getKafkaClientConfig(
       ConnectionState connection,
-      String clusterId,
       String bootstrapServers,
-      String srId,
       String srUri,
       boolean redact,
       Duration timeout,
@@ -77,7 +69,7 @@ public class ClientConfigurator {
     // Add any auth properties for Schema Registry to the Kafka client config,
     // with the "schema.registry." prefix (unless the property already starts with that)
     if (srUri != null) {
-      var additional = getSchemaRegistryClientConfig(connection, srId, srUri, redact, timeout);
+      var additional = getSchemaRegistryClientConfig(connection, srUri, redact, timeout);
       additional.forEach((k, v) -> {
         if (k.startsWith(SchemaRegistryClientConfig.CLIENT_NAMESPACE)) {
           props.put(k, v);
@@ -96,7 +88,6 @@ public class ClientConfigurator {
    * sample configuration for display or logging.
    *
    * @param connection     the connection
-   * @param srId           the ID of the Schema Registry to use
    * @param srUri          the URI of the Schema Registry to use
    * @param redact         whether to redact sensitive properties
    * @param defaultTimeout the timeout for calls to the Schema Registry
@@ -104,7 +95,6 @@ public class ClientConfigurator {
    */
   public static Map<String, Object> getSchemaRegistryClientConfig(
       ConnectionState connection,
-      String srId,
       String srUri,
       boolean redact,
       Duration defaultTimeout
@@ -218,9 +208,7 @@ public class ClientConfigurator {
     return new Configuration(
         () -> getKafkaClientConfig(
             connection,
-            cluster.id(),
             cluster.bootstrapServers(),
-            null,
             null,
             false,
             null,
@@ -228,9 +216,7 @@ public class ClientConfigurator {
         ),
         () -> getKafkaClientConfig(
             connection,
-            cluster.id(),
             cluster.bootstrapServers(),
-            null,
             null,
             true,
             null,
@@ -344,9 +330,7 @@ public class ClientConfigurator {
     // Get the Kafka client config
     return getKafkaClientConfig(
         connection,
-        cluster.id(),
         cluster.bootstrapServers(),
-        sr != null ? sr.id() : null,
         sr != null ? sr.uri() : null,
         redact,
         null,
@@ -379,14 +363,12 @@ public class ClientConfigurator {
     return new Configuration(
         () -> getSchemaRegistryClientConfig(
             connection,
-            sr.id(),
             sr.uri(),
             false,
             null
         ),
         () -> getSchemaRegistryClientConfig(
             connection,
-            sr.id(),
             sr.uri(),
             true,
             null
