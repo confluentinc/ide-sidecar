@@ -184,9 +184,7 @@ public class DirectConnectionState extends ConnectionState {
     // Create the configuration for an AdminClient
     var adminConfig = ClientConfigurator.getKafkaClientConfig(
         this,
-        "temporary-kafka-id",
         config.bootstrapServers(),
-        null,
         null,
         false,
         null,
@@ -200,7 +198,6 @@ public class DirectConnectionState extends ConnectionState {
   ) {
     var srClientConfig = ClientConfigurator.getSchemaRegistryClientConfig(
         this,
-        "temporary-sr-id",
         config.uri(),
         false,
         TIMEOUT
