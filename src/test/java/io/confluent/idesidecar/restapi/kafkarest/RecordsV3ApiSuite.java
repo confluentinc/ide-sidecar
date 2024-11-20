@@ -7,13 +7,18 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Lists;
 import io.confluent.idesidecar.restapi.integration.ITSuite;
+import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequest;
+import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequestData;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequest;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequestBuilder;
 import io.confluent.kafka.schemaregistry.client.rest.entities.Schema;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.junitpioneer.jupiter.cartesian.ArgumentSets;
 import org.junitpioneer.jupiter.cartesian.CartesianTest;
@@ -24,18 +29,75 @@ public interface RecordsV3ApiSuite extends ITSuite {
 
   record RecordData(
       SchemaFormat schemaFormat,
+      SubjectNameStrategyEnum subjectNameStrategy,
       String rawSchema,
       Object data
   ) {
 
+    public RecordData(SchemaFormat schemaFormat, String rawSchema, Object data) {
+      this(schemaFormat, null, rawSchema, data);
+    }
+
+    RecordData withSubjectNameStrategy(SubjectNameStrategyEnum subjectNameStrategy) {
+      return new RecordData(schemaFormat, subjectNameStrategy, rawSchema, data);
+    }
+
     @Override
     public String toString() {
-      return "(data = %s, schemaFormat = %s, schema = %s)"
-          .formatted(data, schemaFormat, rawSchema);
+      return "(data = %s, schemaFormat = %s, subjectNameStrategy = %s)"
+          .formatted(data, schemaFormat, subjectNameStrategy);
+    }
+
+    public boolean hasSchema() {
+      return schemaFormat != null && rawSchema != null && subjectNameStrategy != null;
     }
   }
 
-  static RecordData jsonData(Object data) {
+  static String getSubjectName(
+      String topicName,
+      SubjectNameStrategyEnum strategy,
+      boolean isKey
+  ) {
+    /*
+    https://docs.confluent.io/platform/current/schema-registry/fundamentals/serdes-develop/index.html#how-the-naming-strategies-work
+    */
+    return switch (strategy) {
+      case TOPIC_NAME -> (isKey ? "%s-key" : "%s-value").formatted(topicName);
+      case RECORD_NAME -> (isKey ? "ProductKey" : "ProductValue");
+      case TOPIC_RECORD_NAME -> (isKey ? "%s-ProductKey" : "%s-ProductValue").formatted(topicName);
+    };
+  }
+
+  static RecordData schemaData(SchemaFormat format, Boolean isKey) {
+    var schema = getProductSchema(format, isKey);
+
+    try {
+      return new RecordData(
+          format,
+          schema,
+          OBJECT_MAPPER.readTree(PRODUCT_DATA)
+      );
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  static String getProductSchema(SchemaFormat format, boolean isKey) {
+    var suffix = isKey ? "key" : "value";
+    return switch (format) {
+      case JSON: {
+        yield loadResource("schemas/product-%s.schema.json".formatted(suffix)).translateEscapes();
+      }
+      case AVRO: {
+        yield loadResource("schemas/product-%s.avsc".formatted(suffix)).translateEscapes();
+      }
+      case PROTOBUF: {
+        yield loadResource("schemas/product-%s.proto".formatted(suffix)).translateEscapes();
+      }
+    };
+  }
+
+  static RecordData schemalessData(Object data) {
     return new RecordData(null, null, data);
   }
 
@@ -48,17 +110,33 @@ public interface RecordsV3ApiSuite extends ITSuite {
       }
       """;
 
-  List<RecordData> RECORD_DATA_VALUES = List.of(
-      jsonData(null),
-      jsonData("hello"),
-      jsonData(123),
-      jsonData(123.45),
-      jsonData(true),
-      jsonData(List.of("hello", "world")),
-      jsonData(Collections.singletonMap("hello", "world")),
-      schemaData(SchemaFormat.JSON, PRODUCT_DATA),
-      schemaData(SchemaFormat.PROTOBUF, PRODUCT_DATA),
-      schemaData(SchemaFormat.AVRO, PRODUCT_DATA)
+  /**
+   * Generate cartesian product of all schema formats and subject name strategies.
+   * @param isKey whether the schema is for a key or value. This changes the schema name.
+   * @return the list of all possible schema data
+   */
+  static List<RecordData> getSchemaData(boolean isKey) {
+    return Lists
+        .cartesianProduct(
+            Arrays.stream(SchemaFormat.values()).toList(),
+            Arrays.stream(SubjectNameStrategyEnum.values()).toList())
+        .stream()
+        .map(t ->
+            schemaData(
+                (SchemaFormat) t.getFirst(), isKey
+            ).withSubjectNameStrategy((SubjectNameStrategyEnum) t.getLast())
+        )
+        .toList();
+  }
+
+  List<RecordData> SCHEMALESS_RECORD_DATA_VALUES = List.of(
+      schemalessData(null),
+      schemalessData("hello"),
+      schemalessData(123),
+      schemalessData(123.45),
+      schemalessData(true),
+      schemalessData(List.of("hello", "world")),
+      schemalessData(Collections.singletonMap("hello", "world"))
   );
 
   static RecordData schemaData(SchemaFormat format, String jsonData) {
@@ -103,10 +181,21 @@ public interface RecordsV3ApiSuite extends ITSuite {
    */
   static ArgumentSets validKeysAndValues() {
     return ArgumentSets
-        .argumentsForFirstParameter(RECORD_DATA_VALUES)
-        .argumentsForNextParameter(RECORD_DATA_VALUES);
+        // Key
+        .argumentsForFirstParameter(
+            Stream.concat(
+                SCHEMALESS_RECORD_DATA_VALUES.stream(),
+                getSchemaData(true).stream()
+            )
+        )
+        // Value
+        .argumentsForNextParameter(
+            Stream.concat(
+                SCHEMALESS_RECORD_DATA_VALUES.stream(),
+                getSchemaData(false).stream()
+            )
+        );
   }
-
   @CartesianTest
   @CartesianTest.MethodFactory("validKeysAndValues")
   default void testProduceAndConsumeData(RecordData key, RecordData value) {
@@ -115,21 +204,23 @@ public interface RecordsV3ApiSuite extends ITSuite {
     createTopic(topicName);
 
     Schema keySchema = null, valueSchema = null;
+    String keySubject = null, valueSubject = null;
 
-    // Use TopicNameStrategy by default for subject names
     // Create key schema if not null
-    if (key.rawSchema() != null) {
+    if (key.hasSchema()) {
+      keySubject = getSubjectName(topicName, key.subjectNameStrategy(), true);
       keySchema = createSchema(
-          topicName + "-key",
+          keySubject,
           key.schemaFormat().name(),
           key.rawSchema()
       );
     }
 
     // Create value schema if not null
-    if (value.rawSchema() != null) {
+    if (value.hasSchema()) {
+      valueSubject = getSubjectName(topicName, value.subjectNameStrategy(), false);
       valueSchema = createSchema(
-          topicName + "-value",
+          valueSubject,
           value.schemaFormat().name(),
           value.rawSchema()
       );
@@ -137,12 +228,33 @@ public interface RecordsV3ApiSuite extends ITSuite {
 
     // Produce record to topic
     var resp = produceRecordThen(
-        null,
         topicName,
-        key.data(),
-        Optional.ofNullable(keySchema).map(Schema::getVersion).orElse(null),
-        value.data(),
-        Optional.ofNullable(valueSchema).map(Schema::getVersion).orElse(null)
+        ProduceRequest
+            .builder()
+            .partitionId(null)
+            .key(
+                ProduceRequestData
+                    .builder()
+                    .schemaVersion(Optional.ofNullable(keySchema).map(Schema::getVersion).orElse(null))
+                    .data(key.data())
+                    .subject(keySubject)
+                    .subjectNameStrategy(
+                        Optional.ofNullable(key.subjectNameStrategy).map(Enum::toString).orElse(null)
+                    )
+                    .build()
+            )
+            .value(
+                ProduceRequestData
+                    .builder()
+                    .schemaVersion(Optional.ofNullable(valueSchema).map(Schema::getVersion).orElse(null))
+                    .data(value.data())
+                    .subject(valueSubject)
+                    .subjectNameStrategy(
+                        Optional.ofNullable(value.subjectNameStrategy).map(Enum::toString).orElse(null)
+                    )
+                    .build()
+            )
+            .build()
     );
 
     if (key.data() != null || value.data() != null) {
@@ -157,7 +269,7 @@ public interface RecordsV3ApiSuite extends ITSuite {
     }
   }
 
-  default void assertTopicHasRecord(RecordData key, RecordData value, String topicName) {
+  private void assertTopicHasRecord(RecordData key, RecordData value, String topicName) {
     var consumeResponse = consume(
         topicName,
         SimpleConsumeMultiPartitionRequestBuilder

@@ -438,6 +438,18 @@ public class SidecarClient implements SidecarClientApi {
     );
   }
 
+  public ValidatableResponse produceRecordThen(
+      String topicName,
+      ProduceRequest request
+  ) {
+    return fromCluster(currentKafkaClusterId, () ->
+        givenDefault()
+            .body(request)
+            .post("/kafka/v3/clusters/{cluster_id}/topics/%s/records".formatted(topicName))
+            .then()
+    );
+  }
+
   public ProduceRequest createProduceRequest(
       Integer partitionId,
       Object key,

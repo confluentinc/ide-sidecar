@@ -6,6 +6,8 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.matchesRegex;
 
 import io.confluent.idesidecar.restapi.integration.ITSuite;
+import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequest;
+import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequestData;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -87,12 +89,12 @@ public interface RecordsV3ApiErrorsSuite extends ITSuite {
     createSchema(
         "%s-key".formatted(topic),
         "JSON",
-        loadResource("schemas/product.schema.json")
+        loadResource("schemas/product-key.schema.json")
     );
     createSchema(
         "%s-value".formatted(topic),
         "PROTOBUF",
-        loadResource("schemas/product.proto")
+        loadResource("schemas/product-value.proto")
     );
     // Schema version 1 would be created by the above calls,
     // but the following call should fail to find version 40
@@ -156,7 +158,7 @@ public interface RecordsV3ApiErrorsSuite extends ITSuite {
     var keySchema = createSchema(
         "%s-key".formatted(topic),
         keyFormat.schemaProvider().schemaType(),
-        RecordsV3ApiSuite.getProductSchema(keyFormat)
+        RecordsV3ApiSuite.getProductSchema(keyFormat, true)
     );
 
     produceRecordThen(
@@ -167,7 +169,7 @@ public interface RecordsV3ApiErrorsSuite extends ITSuite {
     var valueSchema = createSchema(
         "%s-value".formatted(topic),
         keyFormat.schemaProvider().schemaType(),
-        RecordsV3ApiSuite.getProductSchema(keyFormat)
+        RecordsV3ApiSuite.getProductSchema(keyFormat, false)
     );
 
     produceRecordThen(
@@ -197,5 +199,129 @@ public interface RecordsV3ApiErrorsSuite extends ITSuite {
     shouldThrowBadRequestIfSchemaIsNotCompatibleWithData(
         SchemaFormat.PROTOBUF, badData
     );
+  }
+
+  static Stream<Arguments> unsupportedSchemaDetails() {
+    return Stream.of(
+        Arguments.of(
+            ProduceRequestData
+                .builder()
+                .data(Map.of())
+                // Schema ID is not supported
+                .schemaId(1)
+                .build()
+        ),
+        Arguments.of(
+            ProduceRequestData
+                .builder()
+                .data(Map.of())
+                // Passing raw schema is not supported
+                .schema("invalid")
+                // Passing schema type is not supported
+                .type("AVRO")
+                .build()
+        ),
+        Arguments.of(
+            ProduceRequestData
+                .builder()
+                .data(Map.of())
+                // Passing schema version is supported
+                .schemaVersion(1)
+                // But type is not supported
+                .type("PROTOBUF")
+                .build()
+        ),
+        Arguments.of(
+            ProduceRequestData
+                .builder()
+                .data(Map.of())
+                .schemaVersion(1)
+                // Passing only subject is not supported
+                .subject("standalone")
+                .build()
+        ),
+        Arguments.of(
+            ProduceRequestData
+                .builder()
+                .data(Map.of())
+                .schemaVersion(1)
+                // Passing only subject name strategy is not supported
+                .subjectNameStrategy("record_name")
+                .build()
+        )
+    );
+  }
+
+  @ParameterizedTest
+  @MethodSource("unsupportedSchemaDetails")
+  default void shouldThrowNotImplementedForUnsupportedSchemaDetails(ProduceRequestData data) {
+    var topic = randomTopicName();
+    createTopic(topic);
+    produceRecordThen(
+        topic,
+        ProduceRequest
+            .builder()
+            .partitionId(null)
+            // Doesn't matter if key or value, the schema details within
+            // should trigger the 501 response
+            .key(data)
+            .value(data)
+            .build()
+    )
+        .statusCode(400)
+        .body("message", equalTo(
+            "This endpoint does not support specifying schema ID, type, schema, standalone subject or subject name strategy."
+        ));
+  }
+
+  @Test
+  default void shouldHandleWrongTopicNameStrategy() {
+    var topic = randomTopicName();
+    createTopic(topic);
+
+    // Create a schema called "foo-key" with a JSON schema (uses TopicNameStrategy)
+    var keySchema = createSchema(
+        "foo-key",
+        "JSON",
+        loadResource("schemas/product-key.schema.json")
+    );
+
+    // Try to produce a record with the wrong subject name strategy
+    produceRecordThen(
+        topic,
+        ProduceRequest
+            .builder()
+            .partitionId(null)
+            .key(
+                ProduceRequestData
+                    .builder()
+                    .schemaVersion(keySchema.getVersion())
+                    // Pass valid data
+                    .data(Map.of(
+                        "id", 123,
+                        "name", "test",
+                        "price", 123.45
+                    ))
+                    // But wrong subject name strategy
+                    .subjectNameStrategy("record_name")
+                    .subject("foo-key")
+                    .build()
+            )
+            .value(
+                ProduceRequestData
+                    .builder()
+                    .data(Map.of())
+                    .build()
+            )
+            .build()
+    )
+        .statusCode(404)
+        .body("message", equalTo(
+            // The KafkaJsonSchemaSerializer tries to look up the subject
+            // by the record name but fails to find "ProductKey" which is the
+            // "title" of the JSON schema. Nothing gets past the serializer!
+            "Subject 'ProductKey' not found.; error code: 40401")
+        )
+        .body("error_code", equalTo(40401));
   }
 }

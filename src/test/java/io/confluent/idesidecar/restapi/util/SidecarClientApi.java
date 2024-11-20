@@ -160,6 +160,11 @@ public interface SidecarClientApi {
       Integer valueSchemaVersion
   );
 
+  ValidatableResponse produceRecordThen(
+      String topicName,
+      ProduceRequest request
+  );
+
   ProduceRequest createProduceRequest(
       Integer partitionId,
       Object key,

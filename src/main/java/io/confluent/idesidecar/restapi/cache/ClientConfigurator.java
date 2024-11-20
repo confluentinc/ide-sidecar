@@ -1,7 +1,3 @@
-/*
- * Copyright [2024 - 2024] Confluent Inc.
- */
-
 package io.confluent.idesidecar.restapi.cache;
 
 import io.confluent.idesidecar.restapi.connections.ConnectionState;
@@ -9,16 +5,19 @@ import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
 import io.confluent.idesidecar.restapi.credentials.Credentials;
 import io.confluent.idesidecar.restapi.exceptions.ClusterNotFoundException;
 import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
+import io.confluent.idesidecar.restapi.kafkarest.SchemaManager;
 import io.confluent.idesidecar.restapi.models.graph.KafkaCluster;
 import io.confluent.idesidecar.restapi.models.graph.SchemaRegistry;
 import io.confluent.idesidecar.restapi.util.CCloud;
 import io.quarkus.logging.Log;
+import io.confluent.idesidecar.restapi.util.ConfigUtil;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Supplier;
+import java.util.Optional;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 @ApplicationScoped
@@ -372,5 +371,35 @@ public class ClientConfigurator {
             null
         )
     );
+  }
+
+  private static final Map<String, String> SERDE_CONFIGS = ConfigUtil
+      .asMap("ide-sidecar.serde-configs");
+
+  /**
+   * Get the Kafka Serializer/Deserializer configuration for a given
+   * {@link SchemaManager.RegisteredSchema}, or the default configuration if no schema is provided.
+   * @param schema the schema to use, if present
+   * @param isKey  whether the schema is for a key or value
+   * @return the Serde configuration properties as a map
+   */
+  public Map<String, String> getSerdeConfigs(
+      Optional<SchemaManager.RegisteredSchema> schema,
+      boolean isKey
+  ) {
+    if (schema.isEmpty()) {
+      return SERDE_CONFIGS;
+    }
+
+    var configs = new LinkedHashMap<>(SERDE_CONFIGS);
+    configs.put(
+      (isKey ? "key.subject.name.strategy" : "value.subject.name.strategy"),
+      schema.get().subjectNameStrategy().className()
+    );
+
+    // No need to pass SR auth properties since it will hit
+    // the SR REST proxy in the sidecar, which handles any
+    // necessary auth.
+    return configs;
   }
 }

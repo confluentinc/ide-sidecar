@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Message;
-import io.confluent.idesidecar.restapi.util.ConfigUtil;
+import io.confluent.idesidecar.restapi.cache.ClientConfigurator;
 import io.confluent.kafka.schemaregistry.ParsedSchema;
 import io.confluent.kafka.schemaregistry.avro.AvroSchema;
 import io.confluent.kafka.schemaregistry.avro.AvroSchemaUtils;
@@ -18,9 +18,11 @@ import io.confluent.kafka.serializers.KafkaJsonSerializer;
 import io.confluent.kafka.serializers.json.KafkaJsonSchemaSerializer;
 import io.confluent.kafka.serializers.protobuf.KafkaProtobufSerializer;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
 import java.io.IOException;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Encapsulates logic to serialize data based on the schema type. Defaults to JSON serialization
@@ -28,14 +30,16 @@ import java.util.Map;
  */
 @ApplicationScoped
 public class RecordSerializer {
+
+  @Inject
+  ClientConfigurator clientConfigurator;
+
   private static final ObjectMapper objectMapper = new ObjectMapper();
 
-  private static final Map<String, String> SERDE_CONFIGS = ConfigUtil
-      .asMap("ide-sidecar.serde-configs");
 
   public ByteString serialize(
       SchemaRegistryClient client,
-      ParsedSchema parsedSchema,
+      Optional<SchemaManager.RegisteredSchema> schema,
       String topicName,
       Object data,
       boolean isKey
@@ -44,27 +48,30 @@ public class RecordSerializer {
       return null;
     }
 
-    if (parsedSchema == null) {
-      return serializeJson(topicName, data, isKey);
+    var serdeConfigs = clientConfigurator.getSerdeConfigs(schema, isKey);
+    if (schema.isEmpty()) {
+      return serializeJson(topicName, serdeConfigs, data, isKey);
     }
-
     var jsonNode = objectMapper.valueToTree(data);
+    var parsedSchema = schema.get().parsedSchema();
     return switch (SchemaFormat.fromSchemaType(parsedSchema.schemaType())) {
-      case AVRO -> serializeAvro(client, parsedSchema, topicName, jsonNode, isKey);
-      case JSON -> serializeJsonSchema(client, parsedSchema, topicName, jsonNode, isKey);
-      case PROTOBUF -> serializeProtobuf(client, parsedSchema, topicName, jsonNode, isKey);
+      case AVRO -> serializeAvro(
+          client, parsedSchema, serdeConfigs, topicName, jsonNode, isKey);
+      case JSON -> serializeJsonSchema(client, parsedSchema, serdeConfigs, topicName, jsonNode, isKey);
+      case PROTOBUF -> serializeProtobuf(client, parsedSchema, serdeConfigs, topicName, jsonNode, isKey);
     };
   }
 
   private ByteString serializeAvro(
       SchemaRegistryClient client,
       ParsedSchema parsedSchema,
+      Map<String, String> configs,
       String topicName,
       JsonNode data,
       boolean isKey
   ) {
     try (var avroSerializer = new KafkaAvroSerializer(client)) {
-      avroSerializer.configure(SERDE_CONFIGS, isKey);
+      avroSerializer.configure(configs, isKey);
       var schema = (AvroSchema) parsedSchema;
       var record = wrappedToObject(() -> AvroSchemaUtils.toObject(data, schema));
       return ByteString.copyFrom(avroSerializer.serialize(topicName, record));
@@ -74,12 +81,13 @@ public class RecordSerializer {
   private ByteString serializeJsonSchema(
       SchemaRegistryClient client,
       ParsedSchema parsedSchema,
+      Map<String, String> configs,
       String topicName,
       JsonNode data,
       boolean isKey
   ) {
     try (var jsonschemaSerializer = new KafkaJsonSchemaSerializer<>(client)) {
-      jsonschemaSerializer.configure(SERDE_CONFIGS, isKey);
+      jsonschemaSerializer.configure(configs, isKey);
       var schema = (JsonSchema) parsedSchema;
       var record = wrappedToObject(() -> JsonSchemaUtils.toObject(data, schema));
       return ByteString.copyFrom(jsonschemaSerializer.serialize(topicName, record));
@@ -89,12 +97,13 @@ public class RecordSerializer {
   private ByteString serializeProtobuf(
       SchemaRegistryClient client,
       ParsedSchema parsedSchema,
+      Map<String, String> configs,
       String topicName,
       JsonNode data,
       boolean isKey
   ) {
     try (var protobufSerializer = new KafkaProtobufSerializer<>(client)) {
-      protobufSerializer.configure(SERDE_CONFIGS, isKey);
+      protobufSerializer.configure(configs, isKey);
       var schema = (ProtobufSchema) parsedSchema;
       var record = (Message) wrappedToObject(() -> ProtobufSchemaUtils.toObject(data, schema));
       return ByteString.copyFrom(protobufSerializer.serialize(topicName, record));
@@ -120,9 +129,14 @@ public class RecordSerializer {
     }
   }
 
-  private ByteString serializeJson(String topicName, Object data, boolean isKey) {
+  private ByteString serializeJson(
+      String topicName,
+      Map<String, ?> configs,
+      Object data,
+      boolean isKey
+  ) {
     try (var kafkaJsonSerializer = new KafkaJsonSerializer<>()) {
-      kafkaJsonSerializer.configure(SERDE_CONFIGS, isKey);
+      kafkaJsonSerializer.configure(configs, isKey);
       return ByteString.copyFrom(kafkaJsonSerializer.serialize(topicName, data));
     }
   }

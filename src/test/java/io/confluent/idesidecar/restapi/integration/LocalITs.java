@@ -4,6 +4,7 @@ import io.confluent.idesidecar.restapi.kafkarest.RecordsV3ApiErrorsSuite;
 import io.confluent.idesidecar.restapi.kafkarest.RecordsV3ApiSuite;
 import io.confluent.idesidecar.restapi.kafkarest.api.ClusterV3Suite;
 import io.confluent.idesidecar.restapi.kafkarest.api.PartitionV3Suite;
+import io.confluent.idesidecar.restapi.kafkarest.api.TopicConfigV3Suite;
 import io.confluent.idesidecar.restapi.kafkarest.api.TopicV3Suite;
 import io.confluent.idesidecar.restapi.messageviewer.SimpleConsumerSuite;
 import io.confluent.idesidecar.restapi.resources.KafkaConsumeSuite;
@@ -78,6 +79,24 @@ public class LocalITs {
     @TestProfile(NoAccessFilterProfile.class)
     @Nested
     class TopicTests extends AbstractIT implements TopicV3Suite, PartitionV3Suite {
+
+      @Override
+      public TestEnvironment environment() {
+        return TEST_ENVIRONMENT;
+      }
+
+      @BeforeEach
+      @Override
+      public void setupConnection() {
+        setupConnection(this, TestEnvironment::localConnectionSpec);
+      }
+    }
+
+    @QuarkusIntegrationTest
+    @Tag("io.confluent.common.utils.IntegrationTest")
+    @TestProfile(NoAccessFilterProfile.class)
+    @Nested
+    class TopicConfigTests extends AbstractIT implements TopicConfigV3Suite {
 
       @Override
       public TestEnvironment environment() {
@@ -177,6 +196,24 @@ public class LocalITs {
     @TestProfile(NoAccessFilterProfile.class)
     @Nested
     class TopicTests extends AbstractIT implements TopicV3Suite, PartitionV3Suite {
+
+      @Override
+      public TestEnvironment environment() {
+        return TEST_ENVIRONMENT;
+      }
+
+      @BeforeEach
+      @Override
+      public void setupConnection() {
+        setupConnection(CONNECTION_SCOPE, TestEnvironment::directConnectionSpec);
+      }
+    }
+
+    @QuarkusIntegrationTest
+    @Tag("io.confluent.common.utils.IntegrationTest")
+    @TestProfile(NoAccessFilterProfile.class)
+    @Nested
+    class TopicConfigTests extends AbstractIT implements TopicConfigV3Suite {
 
       @Override
       public TestEnvironment environment() {

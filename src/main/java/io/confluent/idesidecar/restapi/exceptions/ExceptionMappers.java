@@ -1,6 +1,7 @@
 package io.confluent.idesidecar.restapi.exceptions;
 
 import io.confluent.idesidecar.restapi.exceptions.Failure.Error;
+import io.confluent.idesidecar.restapi.kafkarest.UnknownAlterConfigOperation;
 import io.confluent.idesidecar.restapi.util.UuidFactory;
 import io.confluent.idesidecar.scaffolding.exceptions.InvalidTemplateOptionsProvided;
 import io.confluent.idesidecar.scaffolding.exceptions.TemplateNotFoundException;
@@ -17,6 +18,8 @@ import org.apache.kafka.common.errors.ApiException;
 import org.apache.kafka.common.errors.TimeoutException;
 import org.apache.kafka.common.errors.TopicExistsException;
 import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
+import org.apache.kafka.common.errors.InvalidConfigurationException;
+import org.apache.kafka.common.errors.InvalidRequestException;
 import org.jboss.resteasy.reactive.server.ServerExceptionMapper;
 
 /**
@@ -292,7 +295,7 @@ public class ExceptionMappers {
   public Response mapRestClientException(RestClientException exception) {
     var error = io.confluent.idesidecar.restapi.kafkarest.model.Error
         .builder()
-        .errorCode(exception.getStatus())
+        .errorCode(exception.getErrorCode())
         .message(exception.getMessage()).build();
     return Response
         .status(exception.getStatus())
@@ -303,6 +306,45 @@ public class ExceptionMappers {
 
   @ServerExceptionMapper
   public Response mapBadRequestException(BadRequestException exception) {
+    var error = io.confluent.idesidecar.restapi.kafkarest.model.Error
+        .builder()
+        .errorCode(Status.BAD_REQUEST.getStatusCode())
+        .message(exception.getMessage()).build();
+    return Response
+        .status(Status.BAD_REQUEST)
+        .entity(error)
+        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+        .build();
+  }
+
+  @ServerExceptionMapper
+  public Response mapUnknownAlterConfigOperation(UnknownAlterConfigOperation exception) {
+    var error = io.confluent.idesidecar.restapi.kafkarest.model.Error
+        .builder()
+        .errorCode(Status.BAD_REQUEST.getStatusCode())
+        .message(exception.getMessage()).build();
+    return Response
+        .status(Status.BAD_REQUEST)
+        .entity(error)
+        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+        .build();
+  }
+
+  @ServerExceptionMapper
+  public Response mapKafkaInvalidConfigurationException(InvalidConfigurationException exception) {
+    var error = io.confluent.idesidecar.restapi.kafkarest.model.Error
+        .builder()
+        .errorCode(Status.BAD_REQUEST.getStatusCode())
+        .message(exception.getMessage()).build();
+    return Response
+        .status(Status.BAD_REQUEST)
+        .entity(error)
+        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+        .build();
+  }
+
+  @ServerExceptionMapper
+  public Response mapKafkaInvalidRequestException(InvalidRequestException exception) {
     var error = io.confluent.idesidecar.restapi.kafkarest.model.Error
         .builder()
         .errorCode(Status.BAD_REQUEST.getStatusCode())
