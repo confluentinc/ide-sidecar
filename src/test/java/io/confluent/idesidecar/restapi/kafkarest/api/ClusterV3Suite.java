@@ -2,14 +2,14 @@ package io.confluent.idesidecar.restapi.kafkarest.api;
 
 import static org.hamcrest.Matchers.equalTo;
 
-import io.confluent.idesidecar.restapi.util.AbstractSidecarIT;
+import io.confluent.idesidecar.restapi.integration.ITSuite;
 import io.confluent.idesidecar.restapi.util.ConfluentLocalKafkaWithRestProxyContainer;
 import org.junit.jupiter.api.Test;
 
-abstract class ClusterV3ApiImplIT extends AbstractSidecarIT {
+public interface ClusterV3Suite extends ITSuite {
 
   @Test
-  void shouldListKafkaClusters() {
+  default void shouldListKafkaClusters() {
     givenConnectionId()
         .when()
         .get("/internal/kafka/v3/clusters")
@@ -21,7 +21,7 @@ abstract class ClusterV3ApiImplIT extends AbstractSidecarIT {
   }
 
   @Test
-  void shouldGetKafkaCluster() {
+  default void shouldGetKafkaCluster() {
     givenConnectionId()
         .when()
         .get("/internal/kafka/v3/clusters/{cluster_id}",
@@ -32,7 +32,7 @@ abstract class ClusterV3ApiImplIT extends AbstractSidecarIT {
   }
 
   @Test
-  void shouldReturn404WhenClusterNotFound() {
+  default void shouldReturn404WhenClusterNotFound() {
     givenConnectionId()
         .when()
         .get("/internal/kafka/v3/clusters/{cluster_id}",
@@ -44,12 +44,12 @@ abstract class ClusterV3ApiImplIT extends AbstractSidecarIT {
   }
 
   @Test
-  void shouldRaiseErrorWhenConnectionIdIsMissing() {
+  default void shouldRaiseErrorWhenGettingClustersAndConnectionIdIsMissing() {
     shouldRaiseErrorWhenConnectionIdIsMissing("/internal/kafka/v3/clusters");
   }
 
   @Test
-  void shouldRaiseErrorWhenConnectionNotFound() {
+  default void shouldRaiseErrorWhenGettingClustersAndConnectionNotFound() {
     shouldRaiseErrorWhenConnectionNotFound("/internal/kafka/v3/clusters");
   }
 }
