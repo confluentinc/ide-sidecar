@@ -295,7 +295,7 @@ public class ExceptionMappers {
   public Response mapRestClientException(RestClientException exception) {
     var error = io.confluent.idesidecar.restapi.kafkarest.model.Error
         .builder()
-        .errorCode(exception.getStatus())
+        .errorCode(exception.getErrorCode())
         .message(exception.getMessage()).build();
     return Response
         .status(exception.getStatus())
