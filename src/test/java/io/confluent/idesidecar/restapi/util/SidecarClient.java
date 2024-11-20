@@ -46,7 +46,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import org.eclipse.microprofile.config.ConfigProvider;
 
-public class SidecarClient {
+public class SidecarClient implements SidecarClientApi {
 
   private static final AtomicInteger CONNECTION_COUNTER = new AtomicInteger(0);
   private static final String CONNECTION_ID_TEMPLATE = "test-connection-%d";
@@ -172,12 +172,12 @@ public class SidecarClient {
 
   public void deleteAllContent() {
     usedSchemaRegistries.forEach(sr -> {
-      useConnection(sr.connectionId);
-      deleteAllSubjects(sr.id);
+      useConnection(sr.connectionId());
+      deleteAllSubjects(sr.id());
     });
     usedKafkaClusters.forEach(kafka -> {
-      useConnection(kafka.connectionId);
-      deleteAllTopics(kafka.id);
+      useConnection(kafka.connectionId());
+      deleteAllTopics(kafka.id());
     });
   }
 
@@ -286,12 +286,20 @@ public class SidecarClient {
     return connection;
   }
 
+  public Connection createLocalConnectionTo(TestEnvironment env, Class<?> scope) {
+    return createLocalConnectionTo(env, scope.getName());
+  }
+
   public Connection createLocalConnectionTo(TestEnvironment env, String scope) {
     var spec = env.localConnectionSpec().orElseThrow();
     // Append the scope to the name of the connection
     spec = spec.withName( "%s (%s)".formatted(spec.name(), scope));
     spec = spec.withId( "%s-%s".formatted(spec.id(), scope));
     return createConnection(spec);
+  }
+
+  public Connection createDirectConnectionTo(TestEnvironment env, Class<?> scope) {
+    return createDirectConnectionTo(env, scope.getName());
   }
 
   public Connection createDirectConnectionTo(TestEnvironment env, String scope) {
@@ -540,12 +548,6 @@ public class SidecarClient {
         .extract()
         .body()
         .as(Schema.class);
-  }
-
-  public record SchemaRegistry(String connectionId, String id, String uri) {
-  }
-
-  public record KafkaCluster(String connectionId, String id, String bootstrapServers) {
   }
 
   public Optional<SchemaRegistry> getSchemaRegistryCluster() {
