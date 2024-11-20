@@ -1,9 +1,11 @@
-package io.confluent.idesidecar.restapi.cache;
+package io.confluent.idesidecar.restapi.clients;
 
 import static io.confluent.idesidecar.restapi.kafkarest.SchemaManager.SCHEMA_PROVIDERS;
 import static jakarta.ws.rs.core.HttpHeaders.AUTHORIZATION;
 
 import io.confluent.idesidecar.restapi.application.SidecarAccessTokenBean;
+import io.confluent.idesidecar.restapi.cache.Clients;
+import io.confluent.idesidecar.restapi.cache.ClusterCache;
 import io.confluent.idesidecar.restapi.util.RequestHeadersConstants;
 import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;

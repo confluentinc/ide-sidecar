@@ -68,7 +68,7 @@ public abstract class Clients<T extends AutoCloseable> {
     return clientsByIdByConnections.computeIfAbsent(connectionId, k -> createCache());
   }
 
-  int clientCount() {
+  protected int clientCount() {
     return clientsByIdByConnections
         .values()
         .stream()
@@ -78,11 +78,11 @@ public abstract class Clients<T extends AutoCloseable> {
         .sum();
   }
 
-  int clientCount(String connectionId) {
+  protected int clientCount(String connectionId) {
     return clientsForConnection(connectionId).asMap().size();
   }
 
-  void clearClients(String connectionId) {
+  protected void clearClients(String connectionId) {
     var oldCache = clientsByIdByConnections.put(connectionId, createCache());
     if (oldCache != null) {
       // Invalidation will trigger the removal listener, which will close the clients
