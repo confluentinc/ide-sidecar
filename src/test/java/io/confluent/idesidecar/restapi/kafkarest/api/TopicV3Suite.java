@@ -3,13 +3,13 @@ package io.confluent.idesidecar.restapi.kafkarest.api;
 import static io.confluent.idesidecar.restapi.util.ConfluentLocalKafkaWithRestProxyContainer.CLUSTER_ID;
 import static org.hamcrest.Matchers.equalTo;
 
-import io.confluent.idesidecar.restapi.util.AbstractSidecarIT;
+import io.confluent.idesidecar.restapi.integration.ITSuite;
 import org.junit.jupiter.api.Test;
 
-abstract class TopicV3ApiImplIT extends AbstractSidecarIT {
+public interface TopicV3Suite extends ITSuite {
 
   @Test
-  void shouldCreateKafkaTopic() {
+  default void shouldCreateKafkaTopic() {
     createTopic("test-topic-1");
 
     // Get topic should contain the topic name
@@ -31,7 +31,7 @@ abstract class TopicV3ApiImplIT extends AbstractSidecarIT {
   }
 
   @Test
-  void shouldDeleteKafkaTopic() {
+  default void shouldDeleteKafkaTopic() {
     createTopic("test-topic-delete-me");
 
     // Delete topic should return 204
@@ -49,7 +49,7 @@ abstract class TopicV3ApiImplIT extends AbstractSidecarIT {
   }
 
   @Test
-  void shouldRaise404WhenGettingNonExistentTopic() {
+  default void shouldRaise404WhenGettingNonExistentTopic() {
     givenDefault()
         .get("/internal/kafka/v3/clusters/{cluster_id}/topics/non-existent-topic")
         .then()
@@ -59,7 +59,7 @@ abstract class TopicV3ApiImplIT extends AbstractSidecarIT {
   }
 
   @Test
-  void shouldRaise404WhenDeletingNonExistentTopic() {
+  default void shouldRaise404WhenDeletingNonExistentTopic() {
     givenDefault()
         .delete("/internal/kafka/v3/clusters/{cluster_id}/topics/non-existent-topic")
         .then()
@@ -69,7 +69,7 @@ abstract class TopicV3ApiImplIT extends AbstractSidecarIT {
   }
 
   @Test
-  void shouldRaise409WhenCreatingExistingTopic() throws Exception {
+  default void shouldRaise409WhenCreatingExistingTopic() throws Exception {
     createTopic("test-topic-2");
 
     givenDefault()
@@ -85,7 +85,7 @@ abstract class TopicV3ApiImplIT extends AbstractSidecarIT {
   }
 
   @Test
-  void shouldRaise404OnNonExistentCluster() {
+  default void shouldRaise404OnNonExistentCluster() {
     givenConnectionId()
         .when()
         .get("/internal/kafka/v3/clusters/non-existent-cluster/topics")
@@ -96,14 +96,14 @@ abstract class TopicV3ApiImplIT extends AbstractSidecarIT {
   }
 
   @Test
-  void shouldRaiseErrorWhenConnectionNotFound() {
+  default void shouldRaiseErrorWhenGettingTopicsAndConnectionNotFound() {
     shouldRaiseErrorWhenConnectionNotFound(
         "/internal/kafka/v3/clusters/%s/topics".formatted(CLUSTER_ID)
     );
   }
 
   @Test
-  void shouldRaiseErrorWhenConnectionIdIsMissing() {
+  default void shouldRaiseErrorWhenGettingTopicsAndConnectionIdIsMissing() {
     shouldRaiseErrorWhenConnectionIdIsMissing(
         "/internal/kafka/v3/clusters/%s/topics".formatted(CLUSTER_ID)
     );

@@ -7,11 +7,11 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.protobuf.util.JsonFormat;
+import io.confluent.idesidecar.restapi.integration.ITSuite;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequest;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequestBuilder;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
 import io.confluent.idesidecar.restapi.proto.Message.MyMessage;
-import io.confluent.idesidecar.restapi.util.AbstractSidecarIT;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -24,9 +24,9 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-abstract class KafkaConsumeResourceIT extends AbstractSidecarIT {
+public interface KafkaConsumeSuite extends ITSuite {
 
-  void createTopicAndProduceRecords(
+  default void createTopicAndProduceRecords(
       String topicName,
       int partitions,
       String[][] sampleRecords
@@ -37,7 +37,7 @@ abstract class KafkaConsumeResourceIT extends AbstractSidecarIT {
     }
   }
 
-  void assertConsumerRecords(SimpleConsumeMultiPartitionResponse response, String[][] expectedRecords) {
+  default void assertConsumerRecords(SimpleConsumeMultiPartitionResponse response, String[][] expectedRecords) {
     var partitionDataList = response.partitionDataList();
     assertNotNull(partitionDataList);
     assertFalse(partitionDataList.isEmpty(), "partition_data_list should not be empty");
@@ -87,7 +87,7 @@ abstract class KafkaConsumeResourceIT extends AbstractSidecarIT {
 
   @ParameterizedTest
   @MethodSource("consumeRequestParameters")
-  void testConsumeRequestParameters(
+  default void testConsumeRequestParameters(
       SimpleConsumeMultiPartitionRequest request
   ) {
     var topicName = randomTopicName();
@@ -106,7 +106,7 @@ abstract class KafkaConsumeResourceIT extends AbstractSidecarIT {
   }
 
   @Test
-  void testConsumeFromMultiplePartitions_withMaxPollRecordsLimit() {
+  default void testConsumeFromMultiplePartitions_withMaxPollRecordsLimit() {
     // Test that the Kafka consumer respects the "max_poll_records" limit
     // and returns only the specified number of records when consuming
     // from multiple partitions in a Kafka topic. The max limit is 2000 (MAX_POLL_RECORDS_LIMIT)
@@ -135,7 +135,7 @@ abstract class KafkaConsumeResourceIT extends AbstractSidecarIT {
   }
 
   @Test
-  void testConsumeFromMultiplePartitions_enforcesMaxPollRecordsAcrossPartitions() {
+  default void testConsumeFromMultiplePartitions_enforcesMaxPollRecordsAcrossPartitions() {
     // Test that the Kafka consumer enforces the "max_poll_records" limit
     // across multiple partitions, ensuring that the total number of records
     // returned does not exceed the specified limit, regardless of how
@@ -171,7 +171,7 @@ abstract class KafkaConsumeResourceIT extends AbstractSidecarIT {
   }
 
   @Test
-  void testConsumeFromSpecificPartitionAndOffset() {
+  default void testConsumeFromSpecificPartitionAndOffset() {
     // Test that the Kafka consumer can retrieve records starting from a specific partition
     // and offset. First, consume all records from the topic and retrieve the next offset
     // for a specific partition. Then, issue a new consume request starting from a specified
@@ -235,7 +235,7 @@ abstract class KafkaConsumeResourceIT extends AbstractSidecarIT {
   }
 
   @Test
-  void testConsumeWithMessageSizeLimitAcrossPartitions() {
+  default void testConsumeWithMessageSizeLimitAcrossPartitions() {
     // Test that the Kafka consumer respects the "message_max_bytes" limit when consuming records
     // from multiple partitions. The test ensures that records exceeding the specified message size
     // limit are partially consumed, with their values being omitted and marked as
@@ -290,7 +290,7 @@ abstract class KafkaConsumeResourceIT extends AbstractSidecarIT {
    * 6. Checks that no "exceeded fields" flag is set during consumption.
    */
   @Test
-  public void testShouldDecodeProfobufMessagesUsingSRInMessageViewer() throws Exception {
+  default void testShouldDecodeProfobufMessagesUsingSRInMessageViewer() throws Exception {
     var topic = "myProtobufTopic" + UUID.randomUUID();
     createTopicAndProduceRecords(topic, 1, null);
 
@@ -360,7 +360,7 @@ abstract class KafkaConsumeResourceIT extends AbstractSidecarIT {
   }
 
   @Test
-  public void testConcurrentConsumeRequests() {
+  default void testConcurrentConsumeRequests() {
     var topicName = "test_topic_concurrent_requests";
     var sampleRecords = new String[][]{
         {"key-record0", "value-record0"},
