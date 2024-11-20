@@ -3,13 +3,13 @@ package io.confluent.idesidecar.restapi.kafkarest.api;
 import static io.confluent.idesidecar.restapi.util.ConfluentLocalKafkaWithRestProxyContainer.CLUSTER_ID;
 import static org.hamcrest.Matchers.equalTo;
 
-import io.confluent.idesidecar.restapi.util.AbstractSidecarIT;
+import io.confluent.idesidecar.restapi.integration.ITSuite;
 import org.junit.jupiter.api.Test;
 
-abstract class PartitionV3ApiImplIT extends AbstractSidecarIT {
+public interface PartitionV3Suite extends ITSuite {
 
   @Test
-  void shouldListTopicPartitions() {
+  default void shouldListTopicPartitions() {
     createTopic("topic-multiple-partitions", 3, 1);
 
     givenDefault()
@@ -20,7 +20,7 @@ abstract class PartitionV3ApiImplIT extends AbstractSidecarIT {
   }
 
   @Test
-  void shouldGetTopicPartition() {
+  default void shouldGetTopicPartition() {
     createTopic("topic-single-partition", 1, 1);
 
     givenDefault()
@@ -32,7 +32,7 @@ abstract class PartitionV3ApiImplIT extends AbstractSidecarIT {
   }
 
   @Test
-  void shouldThrow404WhenGettingPartitionForNonExistentTopic() {
+  default void shouldThrow404WhenGettingPartitionForNonExistentTopic() {
     givenDefault()
         .when()
         .get("/internal/kafka/v3/clusters/{cluster_id}/topics/test-non-existent/partitions/0")
@@ -48,7 +48,7 @@ abstract class PartitionV3ApiImplIT extends AbstractSidecarIT {
   }
 
   @Test
-  void shouldThrow404WhenGettingNonExistentPartition() {
+  default void shouldThrow404WhenGettingNonExistentPartition() {
     createTopic("topic-single-partition", 1, 1);
 
     givenDefault()
@@ -63,14 +63,14 @@ abstract class PartitionV3ApiImplIT extends AbstractSidecarIT {
   }
 
   @Test
-  void shouldRaiseErrorWhenConnectionNotFound() {
+  default void shouldRaiseErrorWhenGettingPartitionsAndConnectionNotFound() {
     shouldRaiseErrorWhenConnectionNotFound(
         "/internal/kafka/v3/clusters/%s/topics/my-topic/partitions".formatted(CLUSTER_ID)
     );
   }
 
   @Test
-  void shouldRaiseErrorWhenConnectionIdIsMissing() {
+  default void shouldRaiseErrorWhenGettingPartitionsAndConnectionIdIsMissing() {
     shouldRaiseErrorWhenConnectionIdIsMissing(
         "/internal/kafka/v3/clusters/%s/topics/my-topic/partitions".formatted(CLUSTER_ID)
     );
