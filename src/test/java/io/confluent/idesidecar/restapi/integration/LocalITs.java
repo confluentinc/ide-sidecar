@@ -1,5 +1,7 @@
 package io.confluent.idesidecar.restapi.integration;
 
+import io.confluent.idesidecar.restapi.integration.connection.DirectConnectionSuite;
+import io.confluent.idesidecar.restapi.integration.connection.LocalConnectionSuite;
 import io.confluent.idesidecar.restapi.kafkarest.RecordsV3ErrorsSuite;
 import io.confluent.idesidecar.restapi.kafkarest.RecordsV3Suite;
 import io.confluent.idesidecar.restapi.kafkarest.RecordsV3DryRunSuite;
@@ -38,6 +40,23 @@ public class LocalITs {
 
   @Nested
   class LocalConnectionTests {
+
+    @QuarkusIntegrationTest
+    @Tag("io.confluent.common.utils.IntegrationTest")
+    @TestProfile(NoAccessFilterProfile.class)
+    @Nested
+    class ConnectionAndGraphQL extends AbstractIT implements LocalConnectionSuite {
+
+      @Override
+      public TestEnvironment environment() {
+        return TEST_ENVIRONMENT;
+      }
+
+      @Override
+      public void setupConnection() {
+        deleteAllConnections();
+      }
+    }
 
     @QuarkusIntegrationTest
     @Tag("io.confluent.common.utils.IntegrationTest")
@@ -150,6 +169,23 @@ public class LocalITs {
 
   @Nested
   class DirectConnectionWithoutCredentialsTests {
+
+    @QuarkusIntegrationTest
+    @Tag("io.confluent.common.utils.IntegrationTest")
+    @TestProfile(NoAccessFilterProfile.class)
+    @Nested
+    class ConnectionAndGraphQL extends AbstractIT implements DirectConnectionSuite {
+
+      @Override
+      public TestEnvironment environment() {
+        return TEST_ENVIRONMENT;
+      }
+
+      @Override
+      public void setupConnection() {
+        deleteAllConnections();
+      }
+    }
 
     /**
      * All tests that create connections with this scope will reuse the same connection.
