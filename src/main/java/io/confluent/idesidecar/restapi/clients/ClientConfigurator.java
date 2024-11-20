@@ -2,8 +2,9 @@
  * Copyright [2024 - 2024] Confluent Inc.
  */
 
-package io.confluent.idesidecar.restapi.cache;
+package io.confluent.idesidecar.restapi.clients;
 
+import io.confluent.idesidecar.restapi.cache.ClusterCache;
 import io.confluent.idesidecar.restapi.connections.ConnectionState;
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
 import io.confluent.idesidecar.restapi.credentials.Credentials;
