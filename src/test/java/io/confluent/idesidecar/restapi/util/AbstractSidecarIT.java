@@ -6,6 +6,7 @@ package io.confluent.idesidecar.restapi.util;
 
 import static io.confluent.idesidecar.restapi.kafkarest.SchemaManager.SCHEMA_PROVIDERS;
 
+import io.confluent.idesidecar.restapi.clients.SchemaErrors;
 import io.confluent.idesidecar.restapi.messageviewer.RecordDeserializer;
 import io.confluent.idesidecar.restapi.messageviewer.SimpleConsumer;
 import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
@@ -97,6 +98,7 @@ public abstract class AbstractSidecarIT extends SidecarClient {
       SidecarClient.KafkaCluster kafkaCluster,
       SidecarClient.SchemaRegistry srCluster
   ) {
+    final SchemaErrors schemaErrors;
     // Setup a simple consumer
     var consumerProps = new Properties();
     var sidecarHost = sidecarHost();
@@ -120,7 +122,8 @@ public abstract class AbstractSidecarIT extends SidecarClient {
             1,
             1,
             10000,
-            3
+            3,
+            new SchemaErrors()
         )
     );
   }
