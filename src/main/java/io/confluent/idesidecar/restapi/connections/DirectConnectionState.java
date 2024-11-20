@@ -1,7 +1,7 @@
 package io.confluent.idesidecar.restapi.connections;
 
 import io.confluent.idesidecar.restapi.auth.AuthErrors;
-import io.confluent.idesidecar.restapi.cache.ClientConfigurator;
+import io.confluent.idesidecar.restapi.clients.ClientConfigurator;
 import io.confluent.idesidecar.restapi.credentials.Credentials;
 import io.confluent.idesidecar.restapi.models.ClusterType;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
