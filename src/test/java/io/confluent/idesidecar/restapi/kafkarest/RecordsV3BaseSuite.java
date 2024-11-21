@@ -52,7 +52,7 @@ public interface RecordsV3BaseSuite extends ITSuite {
     }
   }
 
-  default RecordData schemaData(SchemaFormat format, Boolean isKey) {
+  static RecordData schemaData(SchemaFormat format, Boolean isKey) {
     var schema = getProductSchema(format, isKey);
 
     try {
@@ -66,7 +66,7 @@ public interface RecordsV3BaseSuite extends ITSuite {
     }
   }
 
-  default String getProductSchema(SchemaFormat format, boolean isKey) {
+  static String getProductSchema(SchemaFormat format, boolean isKey) {
     var suffix = isKey ? "key" : "value";
     return switch (format) {
       case JSON: {
@@ -95,7 +95,7 @@ public interface RecordsV3BaseSuite extends ITSuite {
    * @param isKey whether the schema is for a key or value. This changes the schema name.
    * @return the list of all possible schema data
    */
-  default List<RecordData> getSchemaData(boolean isKey) {
+  static List<RecordData> getSchemaData(boolean isKey) {
     return Lists
         .cartesianProduct(
             Arrays.stream(SchemaFormat.values()).toList(),

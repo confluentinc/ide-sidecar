@@ -157,7 +157,7 @@ public interface RecordsV3ErrorsSuite extends RecordsV3BaseSuite {
     var keySchema = createSchema(
         "%s-key".formatted(topic),
         keyFormat.schemaProvider().schemaType(),
-        getProductSchema(keyFormat, true)
+        RecordsV3BaseSuite.getProductSchema(keyFormat, true)
     );
 
     produceRecordThen(
@@ -168,7 +168,7 @@ public interface RecordsV3ErrorsSuite extends RecordsV3BaseSuite {
     var valueSchema = createSchema(
         "%s-value".formatted(topic),
         keyFormat.schemaProvider().schemaType(),
-        getProductSchema(keyFormat, false)
+        RecordsV3BaseSuite.getProductSchema(keyFormat, false)
     );
 
     produceRecordThen(

@@ -16,20 +16,20 @@ public interface RecordsV3Suite extends RecordsV3BaseSuite {
    * Valid keys and values inputs used for producing and consuming data.
    * @return the sets of keys and sets of values
    */
-  default ArgumentSets validKeysAndValues() {
+  static ArgumentSets validKeysAndValues() {
     return ArgumentSets
         // Key
         .argumentsForFirstParameter(
             Stream.concat(
                 SCHEMALESS_RECORD_DATA_VALUES.stream(),
-                getSchemaData(true).stream()
+                RecordsV3BaseSuite.getSchemaData(true).stream()
             )
         )
         // Value
         .argumentsForNextParameter(
             Stream.concat(
                 SCHEMALESS_RECORD_DATA_VALUES.stream(),
-                getSchemaData(false).stream()
+                RecordsV3BaseSuite.getSchemaData(false).stream()
             )
         );
   }
