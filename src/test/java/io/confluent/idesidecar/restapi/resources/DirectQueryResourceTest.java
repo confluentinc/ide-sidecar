@@ -21,7 +21,6 @@ public class DirectQueryResourceTest extends ConfluentQueryResourceTestBase {
 
   static final String CONNECTION_ID = "direct-1";
   static final String CONNECTION_NAME = "Direct 1";
-  static final String KAFKA_CLUSTER_ID = "kafka-cluster-1";
   static final String KAFKA_BOOTSTRAP_SERVERS = "localhost:9092";
   static final String SCHEMA_REGISTRY_ID = "schema-registry-1";
   static final String SCHEMA_REGISTRY_URL = "http://localhost:8081";
@@ -104,7 +103,6 @@ public class DirectQueryResourceTest extends ConfluentQueryResourceTestBase {
     KafkaClusterConfig kafkaConfig = null;
     if (withKafka) {
       kafkaConfig = new KafkaClusterConfig(
-          KAFKA_CLUSTER_ID,
           KAFKA_BOOTSTRAP_SERVERS,
           null,
           null,

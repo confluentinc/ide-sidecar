@@ -691,13 +691,34 @@ public class SidecarClient implements SidecarClientApi {
 
   public ValidatableResponse submitDirectConnectionsGraphQL() {
     return submitGraphQL(
-        loadLocalConnectionsGraphQL()
+        loadDirectConnectionsGraphQL()
     );
   }
 
   public ValidatableResponse submitCCloudConnectionsGraphQL() {
     return submitGraphQL(
-        loadLocalConnectionsGraphQL()
+        loadCCloudConnectionsGraphQL()
     );
   }
+
+  public boolean localConnectionsGraphQLResponseContains(String connectionId) {
+    return submitLocalConnectionsGraphQL()
+        .extract()
+        .response()
+        .jsonPath()
+        .getList("data.localConnections", Map.class)
+        .stream()
+        .anyMatch(m -> m.get("id").equals(connectionId));
+  }
+
+  public boolean directConnectionsGraphQLResponseContains(String connectionId) {
+    return submitDirectConnectionsGraphQL()
+        .extract()
+        .response()
+        .jsonPath()
+        .getList("data.directConnections", Map.class)
+        .stream()
+        .anyMatch(m -> m.get("id").equals(connectionId));
+  }
+
 }
