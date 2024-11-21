@@ -199,96 +199,7 @@ public interface RecordsV3Suite extends ITSuite {
   @CartesianTest
   @CartesianTest.MethodFactory("validKeysAndValues")
   default void testProduceAndConsumeData(RecordData key, RecordData value) {
-    var topicName = randomTopicName();
-    // Create topic with a single partition
-    createTopic(topicName);
-
-    Schema keySchema = null, valueSchema = null;
-    String keySubject = null, valueSubject = null;
-
-    // Create key schema if not null
-    if (key.hasSchema()) {
-      keySubject = getSubjectName(topicName, key.subjectNameStrategy(), true);
-      keySchema = createSchema(
-          keySubject,
-          key.schemaFormat().name(),
-          key.rawSchema()
-      );
-    }
-
-    // Create value schema if not null
-    if (value.hasSchema()) {
-      valueSubject = getSubjectName(topicName, value.subjectNameStrategy(), false);
-      valueSchema = createSchema(
-          valueSubject,
-          value.schemaFormat().name(),
-          value.rawSchema()
-      );
-    }
-
-    // Produce record to topic
-    var resp = produceRecordThen(
-        topicName,
-        ProduceRequest
-            .builder()
-            .partitionId(null)
-            .key(
-                ProduceRequestData
-                    .builder()
-                    .schemaVersion(Optional.ofNullable(keySchema).map(Schema::getVersion).orElse(null))
-                    .data(key.data())
-                    .subject(keySubject)
-                    .subjectNameStrategy(
-                        Optional.ofNullable(key.subjectNameStrategy).map(Enum::toString).orElse(null)
-                    )
-                    .build()
-            )
-            .value(
-                ProduceRequestData
-                    .builder()
-                    .schemaVersion(Optional.ofNullable(valueSchema).map(Schema::getVersion).orElse(null))
-                    .data(value.data())
-                    .subject(valueSubject)
-                    .subjectNameStrategy(
-                        Optional.ofNullable(value.subjectNameStrategy).map(Enum::toString).orElse(null)
-                    )
-                    .build()
-            )
-            .build()
-    );
-
-    if (key.data() != null || value.data() != null) {
-      resp.statusCode(200);
-      assertTopicHasRecord(key, value, topicName);
-    } else {
-      // A "SadPath" test in a "HappyPath" test?! Blasphemy!
-      // Easier to catch and assert this here than create a separate test case for
-      // passing nulls.
-      resp.statusCode(400)
-          .body("message", equalTo("Key and value data cannot both be null"));
-    }
-  }
-
-  private void assertTopicHasRecord(RecordData key, RecordData value, String topicName) {
-    var consumeResponse = consume(
-        topicName,
-        SimpleConsumeMultiPartitionRequestBuilder
-            .builder()
-            .fromBeginning(true)
-            .maxPollRecords(1)
-            .build()
-    );
-
-    var records = consumeResponse
-        .partitionDataList()
-        // Assuming single partition
-        .getFirst()
-        .records();
-
-    assertEquals(records.size(), 1);
-
-    assertSame(records.getFirst().key(), key.data());
-    assertSame(records.getFirst().value(), value.data());
+    produceAndConsume(this, key, value);
   }
 
   @Test
@@ -329,5 +240,99 @@ public interface RecordsV3Suite extends ITSuite {
       // in each partition
       assertTrue(records.size() >= 2);
     }
+  }
+
+  static <T extends ITSuite> void produceAndConsume(T test, RecordData key, RecordData value) {
+    var topicName = test.randomTopicName();
+    // Create topic with a single partition
+    test.createTopic(topicName);
+
+    Schema keySchema = null, valueSchema = null;
+    String keySubject = null, valueSubject = null;
+
+    // Create key schema if not null
+    if (key.hasSchema()) {
+      keySubject = getSubjectName(topicName, key.subjectNameStrategy(), true);
+      keySchema = test.createSchema(
+          keySubject,
+          key.schemaFormat().name(),
+          key.rawSchema()
+      );
+    }
+
+    // Create value schema if not null
+    if (value.hasSchema()) {
+      valueSubject = getSubjectName(topicName, value.subjectNameStrategy(), false);
+      valueSchema = test.createSchema(
+          valueSubject,
+          value.schemaFormat().name(),
+          value.rawSchema()
+      );
+    }
+
+    // Produce record to topic
+    var resp = test.produceRecordThen(
+        topicName,
+        ProduceRequest
+            .builder()
+            .partitionId(null)
+            .key(
+                ProduceRequestData
+                    .builder()
+                    .schemaVersion(Optional.ofNullable(keySchema).map(Schema::getVersion).orElse(null))
+                    .data(key.data())
+                    .subject(keySubject)
+                    .subjectNameStrategy(
+                        Optional.ofNullable(key.subjectNameStrategy).map(Enum::toString).orElse(null)
+                    )
+                    .build()
+            )
+            .value(
+                ProduceRequestData
+                    .builder()
+                    .schemaVersion(Optional.ofNullable(valueSchema).map(Schema::getVersion).orElse(null))
+                    .data(value.data())
+                    .subject(valueSubject)
+                    .subjectNameStrategy(
+                        Optional.ofNullable(value.subjectNameStrategy).map(Enum::toString).orElse(null)
+                    )
+                    .build()
+            )
+            .build()
+    );
+
+    if (key.data() != null || value.data() != null) {
+      resp.statusCode(200);
+      assertTopicHasRecord(test, key, value, topicName);
+    } else {
+      // A "SadPath" test in a "HappyPath" test?! Blasphemy!
+      // Easier to catch and assert this here than create a separate test case for
+      // passing nulls.
+      resp.statusCode(400)
+          .body("message", equalTo("Key and value data cannot both be null"));
+    }
+  }
+
+  static <T extends ITSuite> void assertTopicHasRecord(
+      T test, RecordData key, RecordData value, String topicName) {
+    var consumeResponse = test.consume(
+        topicName,
+        SimpleConsumeMultiPartitionRequestBuilder
+            .builder()
+            .fromBeginning(true)
+            .maxPollRecords(1)
+            .build()
+    );
+
+    var records = consumeResponse
+        .partitionDataList()
+        // Assuming single partition
+        .getFirst()
+        .records();
+
+    assertEquals(records.size(), 1);
+
+    assertSame(records.getFirst().key(), key.data());
+    assertSame(records.getFirst().value(), value.data());
   }
 }
