@@ -10,6 +10,8 @@ import io.confluent.idesidecar.restapi.events.ServiceKind;
 import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
 import io.confluent.idesidecar.restapi.models.ClusterType;
 import io.confluent.idesidecar.restapi.models.Connection;
+import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
+import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 import io.quarkus.logging.Log;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import io.smallrye.mutiny.Uni;
@@ -17,8 +19,10 @@ import io.vertx.core.MultiMap;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
+import java.io.IOException;
 import java.util.List;
 import java.util.function.Supplier;
+import org.apache.kafka.clients.admin.AdminClient;
 
 /**
  * A {@link DirectFetcher} that uses the {@link ConnectionStateManager} to find direct
@@ -108,71 +112,106 @@ public class RealDirectFetcher extends ConfluentRestClient implements DirectFetc
   public Uni<DirectKafkaCluster> getKafkaCluster(String connectionId) {
     var state = connections.getConnectionState(connectionId);
     if (state instanceof DirectConnectionState directState) {
-      var spec = state.getSpec();
-      // Use the admin API to obtain the cluster ID
-      return directState.withAdminClient(adminClient -> {
-        var kafkaConfig = spec.kafkaClusterConfig();
-        var describeResult = adminClient.describeCluster();
-        return Uni
-            .createFrom()
-            .completionStage(describeResult.clusterId().toCompletionStage())
-            .map(clusterId ->
-              new DirectKafkaCluster(
-                  clusterId,
-                  null,
-                  kafkaConfig.bootstrapServers(),
-                  connectionId
-              )
-            ).map(cluster -> {
-              // Emit an event that this cluster was loaded
-              onLoad(connectionId, cluster);
-              // And return the cluster
-              return cluster;
-            });
-      }).orElseGet(() -> Uni.createFrom().nullItem());
+      // If there is a Kafka cluster configured, get the details
+      return directState.withAdminClient(
+          adminClient -> getKafkaCluster(directState, adminClient),
+          error -> {
+            Log.infof(
+                "Unable to connect to the Kafka cluster at %s for connection '%s'",
+                state.getSpec().kafkaClusterConfig().bootstrapServers(),
+                connectionId,
+                error
+            );
+            return Uni.createFrom().<DirectKafkaCluster>nullItem();
+          }
+      ).orElseGet(
+          // There was no Kafka cluster configured, so return no info
+          () -> Uni.createFrom().nullItem()
+      );
     }
     // Unexpectedly not a direct connection
     Log.errorf("Connection with ID=%s is not a direct connection.", connectionId);
     return Uni.createFrom().nullItem();
   }
 
+  protected Uni<DirectKafkaCluster> getKafkaCluster(
+      DirectConnectionState state,
+      AdminClient adminClient
+  ) {
+    var spec = state.getSpec();
+    var kafkaConfig = spec.kafkaClusterConfig();
+    return Uni
+        .createFrom()
+        .completionStage(
+            // Use the client to get the cluster ID, to verify that we can connect
+            adminClient.describeCluster().clusterId().toCompletionStage()
+        )
+        .map(clusterId ->
+            new DirectKafkaCluster(
+                clusterId,
+                null,
+                kafkaConfig.bootstrapServers(),
+                state.getId()
+            )
+        ).map(cluster -> {
+          // Emit an event that this cluster was loaded
+          onLoad(state.getId(), cluster);
+          // And return the cluster
+          return cluster;
+        });
+  }
+
   public Uni<DirectSchemaRegistry> getSchemaRegistry(String connectionId) {
     var state = connections.getConnectionState(connectionId);
     if (state instanceof DirectConnectionState directState) {
-      var spec = state.getSpec();
       // Use the admin API to obtain the cluster ID
-      return directState.withSchemaRegistryClient(srClient -> {
-        Uni<DirectSchemaRegistry> result;
-        try {
-          var mode = srClient.getMode(); // unused, but we know we can connect
-          var srConfig = spec.schemaRegistryConfig();
-          var ccloudEndpoint = srConfig.asCCloudEndpoint();
-          DirectSchemaRegistry cluster;
-          if (ccloudEndpoint.isPresent()) {
-            var endpoint = ccloudEndpoint.get();
-            cluster = new DirectSchemaRegistry(
-                endpoint.clusterId().toString(),
-                endpoint.getUri().toString(),
-                connectionId
-            );
-          } else {
-            cluster = new DirectSchemaRegistry(
-                orDefault(srConfig.id(), () -> connectionId + "-schema-registry"),
-                srConfig.uri(),
-                connectionId
-            );
+      return directState.withSchemaRegistryClient(
+          srClient -> getSchemaRegistry(directState, srClient),
+          error -> {
+              Log.infof(
+                  "Unable to connect to the Schema Registry at %s for connection '%s'",
+                  state.getSpec().schemaRegistryConfig().uri(),
+                  connectionId,
+                  error
+              );
+              return Uni.createFrom().<DirectSchemaRegistry>nullItem();
           }
-          result = Uni.createFrom().item(cluster);
-        } catch (Throwable t) {
-          Log.debugf("Failed to create schema registry client for connection ID=%s", connectionId, t);
-          result = Uni.createFrom().nullItem();
-        }
-        return result;
-      }).orElseGet(() -> Uni.createFrom().nullItem());
+      ).orElseGet(
+          // There was no Schema Registry configured, so return no info
+          () -> Uni.createFrom().nullItem()
+      );
     }
     // Unexpectedly not a direct connection
     Log.errorf("Connection with ID=%s is not a direct connection.", connectionId);
     return Uni.createFrom().nullItem();
+  }
+
+  protected Uni<DirectSchemaRegistry> getSchemaRegistry(
+      DirectConnectionState state,
+      SchemaRegistryClient srClient
+  ) throws RestClientException, IOException {
+    // Use the client to get *some* information, to verify that we can connect
+    var mode = srClient.getMode(); // unused
+
+    // Construct the cluster object
+    var srConfig = state.getSpec().schemaRegistryConfig();
+    var ccloudEndpoint = srConfig.asCCloudEndpoint();
+    DirectSchemaRegistry cluster;
+    if (ccloudEndpoint.isPresent()) {
+      var endpoint = ccloudEndpoint.get();
+      cluster = new DirectSchemaRegistry(
+          endpoint.clusterId().toString(),
+          endpoint.getUri().toString(),
+          state.getId()
+      );
+    } else {
+      cluster = new DirectSchemaRegistry(
+          orDefault(srConfig.id(), () -> state.getId() + "-schema-registry"),
+          srConfig.uri(),
+          state.getId()
+      );
+    }
+    return Uni.createFrom().item(cluster);
   }
 
   private String orDefault(String value, Supplier<String> defaultValue) {
