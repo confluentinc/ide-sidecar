@@ -3,11 +3,13 @@ package io.confluent.idesidecar.restapi.integration;
 import io.confluent.idesidecar.restapi.kafkarest.RecordsV3ErrorsSuite;
 import io.confluent.idesidecar.restapi.kafkarest.RecordsV3Suite;
 import io.confluent.idesidecar.restapi.kafkarest.RecordsV3DryRunSuite;
+import io.confluent.idesidecar.restapi.kafkarest.RecordsV3WithoutSRSuite;
 import io.confluent.idesidecar.restapi.kafkarest.api.ClusterV3Suite;
 import io.confluent.idesidecar.restapi.kafkarest.api.PartitionV3Suite;
 import io.confluent.idesidecar.restapi.kafkarest.api.TopicConfigV3Suite;
 import io.confluent.idesidecar.restapi.kafkarest.api.TopicV3Suite;
 import io.confluent.idesidecar.restapi.messageviewer.SimpleConsumerSuite;
+import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.resources.KafkaConsumeSuite;
 import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
 import io.confluent.idesidecar.restapi.util.LocalTestEnvironment;
@@ -19,6 +21,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Tag;
+import java.util.Optional;
 
 public class LocalITs {
 
@@ -54,6 +57,31 @@ public class LocalITs {
       @Override
       public void setupConnection() {
         setupConnection(this, TestEnvironment::localConnectionSpec);
+      }
+    }
+
+    @QuarkusIntegrationTest
+    @Tag("io.confluent.common.utils.IntegrationTest")
+    @TestProfile(NoAccessFilterProfile.class)
+    @Nested
+    class RecordTestsWithoutSR extends AbstractIT implements RecordsV3WithoutSRSuite {
+
+      @Override
+      public TestEnvironment environment() {
+        return TEST_ENVIRONMENT;
+      }
+
+      @BeforeEach
+      @Override
+      public void setupConnection() {
+        setupConnection(this, Optional.of(
+            ConnectionSpec.createLocal(
+                "local-connection-without-sr",
+                "Local connection without Schema Registry",
+                // Disable Schema Registry
+                new ConnectionSpec.LocalConfig("")
+            )
+        ));
       }
     }
 

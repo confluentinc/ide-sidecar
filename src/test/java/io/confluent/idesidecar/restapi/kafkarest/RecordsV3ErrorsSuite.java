@@ -5,7 +5,6 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.matchesRegex;
 
-import io.confluent.idesidecar.restapi.integration.ITSuite;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequest;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequestData;
 import java.util.List;
@@ -18,7 +17,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.junitpioneer.jupiter.cartesian.ArgumentSets;
 import org.junitpioneer.jupiter.cartesian.CartesianTest;
 
-public interface RecordsV3ErrorsSuite extends ITSuite {
+public interface RecordsV3ErrorsSuite extends RecordsV3BaseSuite {
 
   @Test
   default void shouldThrowNotFoundWhenClusterDoesNotExist() {
@@ -158,7 +157,7 @@ public interface RecordsV3ErrorsSuite extends ITSuite {
     var keySchema = createSchema(
         "%s-key".formatted(topic),
         keyFormat.schemaProvider().schemaType(),
-        RecordsV3Suite.getProductSchema(keyFormat, true)
+        RecordsV3BaseSuite.getProductSchema(keyFormat, true)
     );
 
     produceRecordThen(
@@ -169,7 +168,7 @@ public interface RecordsV3ErrorsSuite extends ITSuite {
     var valueSchema = createSchema(
         "%s-value".formatted(topic),
         keyFormat.schemaProvider().schemaType(),
-        RecordsV3Suite.getProductSchema(keyFormat, false)
+        RecordsV3BaseSuite.getProductSchema(keyFormat, false)
     );
 
     produceRecordThen(
