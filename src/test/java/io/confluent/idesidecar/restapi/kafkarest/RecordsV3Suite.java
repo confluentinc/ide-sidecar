@@ -199,9 +199,13 @@ public interface RecordsV3Suite extends ITSuite {
   @CartesianTest
   @CartesianTest.MethodFactory("validKeysAndValues")
   default void testProduceAndConsumeData(RecordData key, RecordData value) {
-    var topicName = randomTopicName();
+    produceAndConsume(this, key, value);
+  }
+
+  static <T extends ITSuite> void produceAndConsume(T test, RecordData key, RecordData value) {
+    var topicName = test.randomTopicName();
     // Create topic with a single partition
-    createTopic(topicName);
+    test.createTopic(topicName);
 
     Schema keySchema = null, valueSchema = null;
     String keySubject = null, valueSubject = null;
@@ -209,7 +213,7 @@ public interface RecordsV3Suite extends ITSuite {
     // Create key schema if not null
     if (key.hasSchema()) {
       keySubject = getSubjectName(topicName, key.subjectNameStrategy(), true);
-      keySchema = createSchema(
+      keySchema = test.createSchema(
           keySubject,
           key.schemaFormat().name(),
           key.rawSchema()
@@ -219,7 +223,7 @@ public interface RecordsV3Suite extends ITSuite {
     // Create value schema if not null
     if (value.hasSchema()) {
       valueSubject = getSubjectName(topicName, value.subjectNameStrategy(), false);
-      valueSchema = createSchema(
+      valueSchema = test.createSchema(
           valueSubject,
           value.schemaFormat().name(),
           value.rawSchema()
@@ -227,7 +231,7 @@ public interface RecordsV3Suite extends ITSuite {
     }
 
     // Produce record to topic
-    var resp = produceRecordThen(
+    var resp = test.produceRecordThen(
         topicName,
         ProduceRequest
             .builder()
@@ -259,7 +263,7 @@ public interface RecordsV3Suite extends ITSuite {
 
     if (key.data() != null || value.data() != null) {
       resp.statusCode(200);
-      assertTopicHasRecord(key, value, topicName);
+      assertTopicHasRecord(test, key, value, topicName);
     } else {
       // A "SadPath" test in a "HappyPath" test?! Blasphemy!
       // Easier to catch and assert this here than create a separate test case for
@@ -269,8 +273,9 @@ public interface RecordsV3Suite extends ITSuite {
     }
   }
 
-  private void assertTopicHasRecord(RecordData key, RecordData value, String topicName) {
-    var consumeResponse = consume(
+  static <T extends ITSuite> void assertTopicHasRecord(
+      T test, RecordData key, RecordData value, String topicName) {
+    var consumeResponse = test.consume(
         topicName,
         SimpleConsumeMultiPartitionRequestBuilder
             .builder()
