@@ -30,8 +30,7 @@ public class Connection extends BaseModel<ConnectionSpec, ConnectionMetadata> {
   public static Connection from(
       ConnectionState connectionState
   ) {
-    // By default, a connection does not hold any tokens
-    return from(connectionState, ConnectionStatus.INITIAL_STATUS);
+    return from(connectionState, connectionState.getInitialStatus());
   }
 
   /**
