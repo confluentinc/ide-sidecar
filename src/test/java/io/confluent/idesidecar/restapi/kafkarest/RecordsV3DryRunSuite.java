@@ -5,14 +5,13 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import io.confluent.idesidecar.restapi.integration.ITSuite;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequest;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequestData;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequestBuilder;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 
-public interface RecordsV3DryRunSuite extends ITSuite {
+public interface RecordsV3DryRunSuite extends RecordsV3BaseSuite {
 
   @Test
   default void shouldDryRunProduceRecord() {
