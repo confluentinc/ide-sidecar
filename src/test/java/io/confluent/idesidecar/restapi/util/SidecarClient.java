@@ -202,8 +202,13 @@ public class SidecarClient implements SidecarClientApi {
   }
 
   public void useClusters(KafkaCluster kafkaCluster, SchemaRegistry schemaRegistry) {
-    currentKafkaClusterId = kafkaCluster.id();
-    usedKafkaClusters.add(kafkaCluster);
+    if (kafkaCluster != null) {
+      currentKafkaClusterId = kafkaCluster.id();
+      usedKafkaClusters.add(kafkaCluster);
+    } else {
+      currentKafkaClusterId = null;
+    }
+
     if (schemaRegistry != null) {
       currentSchemaClusterId = schemaRegistry.id();
       usedSchemaRegistries.add(schemaRegistry);
@@ -600,7 +605,9 @@ public class SidecarClient implements SidecarClientApi {
     // Find the connection
     while (localConnections.hasNext()) {
       var connection = localConnections.next();
-      if (connection.has("id") && connection.get("id").asText().equals(connectionId)) {
+      if (connection.has("id")
+          && connection.get("id").asText().equals(connectionId)
+          && !connection.get("schemaRegistry").isNull()) {
         var clusterId = connection.get("schemaRegistry").get("id").asText();
         var clusterUri = connection.get("schemaRegistry").get("uri").asText();
         return Optional.of(

@@ -70,7 +70,14 @@ public abstract class AbstractIT extends SidecarClient implements ITSuite {
     void useBy(SidecarClient client) {
       client.useConnection(spec.id());
       client.useClusters(kafkaCluster, srCluster);
-      client.setCurrentCluster(kafkaCluster.id());
+
+      if (kafkaCluster != null) {
+        client.setCurrentCluster(kafkaCluster.id());
+      } else if (srCluster != null) {
+        client.setCurrentCluster(srCluster.id());
+      } else {
+        throw new IllegalStateException("No cluster to use");
+      }
     }
   }
 
@@ -333,8 +340,8 @@ public abstract class AbstractIT extends SidecarClient implements ITSuite {
       createConnection(spec);
 
       // Get the clusters we'll use
-      var kafkaCluster = getKafkaCluster().orElseThrow();
-      var srCluster = getSchemaRegistryCluster().orElseThrow();
+      var kafkaCluster = getKafkaCluster().orElse(null);
+      var srCluster = getSchemaRegistryCluster().orElse(null);
 
       // Create the simple consumer
       var connection = ConnectionStates.from(connectionSpec, null);
