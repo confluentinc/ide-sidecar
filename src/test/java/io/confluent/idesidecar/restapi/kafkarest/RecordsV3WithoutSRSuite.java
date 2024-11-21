@@ -1,17 +1,12 @@
 package io.confluent.idesidecar.restapi.kafkarest;
 
-import io.confluent.idesidecar.restapi.integration.ITSuite;
 import org.junit.jupiter.api.Test;
 import org.junitpioneer.jupiter.cartesian.ArgumentSets;
 import org.junitpioneer.jupiter.cartesian.CartesianTest;
-
 import java.util.Map;
-
-import static io.confluent.idesidecar.restapi.kafkarest.RecordsV3Suite.SCHEMALESS_RECORD_DATA_VALUES;
-import static io.confluent.idesidecar.restapi.kafkarest.RecordsV3Suite.produceAndConsume;
 import static org.hamcrest.Matchers.containsString;
 
-public interface RecordsV3WithoutSRSuite extends ITSuite {
+public interface RecordsV3WithoutSRSuite extends RecordsV3BaseSuite {
 
   @Test
   default void shouldHandleProducingWithSchemaDetailsToConnectionWithoutSchemaRegistry() {
@@ -40,7 +35,7 @@ public interface RecordsV3WithoutSRSuite extends ITSuite {
 
   @CartesianTest
   @CartesianTest.MethodFactory("validSchemalessKeysAndValues")
-  default void testProduceAndConsumeSchemalessData(RecordsV3Suite.RecordData key, RecordsV3Suite.RecordData value) {
-    produceAndConsume(this, key, value);
+  default void testProduceAndConsumeSchemalessData(RecordData key, RecordData value) {
+    produceAndConsume(key, value);
   }
 }
