@@ -15,6 +15,7 @@ import io.confluent.idesidecar.restapi.models.ConnectionStatusKafkaClusterStatus
 import io.confluent.idesidecar.restapi.models.ConnectionStatusSchemaRegistryStatusBuilder;
 import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
+import io.quarkus.logging.Log;
 import io.smallrye.common.constraint.NotNull;
 import io.smallrye.common.constraint.Nullable;
 import io.vertx.core.Future;
@@ -25,6 +26,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.eclipse.microprofile.config.ConfigProvider;
 
@@ -41,6 +43,20 @@ public class DirectConnectionState extends ConnectionState {
           .orElse(5L)
   );
 
+  static final ConnectionStatus INITIAL_STATUS = new ConnectionStatus(
+      null,
+      new KafkaClusterStatus(
+          ConnectedState.ATTEMPTING,
+          null,
+          null
+      ),
+      new SchemaRegistryStatus(
+          ConnectedState.ATTEMPTING,
+          null,
+          null
+      )
+  );
+
   public DirectConnectionState() {
     super(null, null);
   }
@@ -50,6 +66,11 @@ public class DirectConnectionState extends ConnectionState {
       @Nullable StateChangedListener listener
   ) {
     super(spec, listener);
+  }
+
+  @Override
+  public ConnectionStatus getInitialStatus() {
+    return INITIAL_STATUS;
   }
 
   public MultiMap getAuthenticationHeaders(ClusterType clusterType) {
@@ -105,76 +126,105 @@ public class DirectConnectionState extends ConnectionState {
   }
 
   protected Future<KafkaClusterStatus> getKafkaConnectionStatus() {
-    var kafkaConfig = spec.kafkaClusterConfig();
-    if (kafkaConfig == null) {
+    return withAdminClient(adminClient -> {
+      // There is a Kafka configuration, so validate the connection by creating an AdminClient
+      // and describing the cluster.
+      try {
+        var clusterId = adminClient
+            .describeCluster()
+            .clusterId()
+            .get(TIMEOUT.toMillis(), TimeUnit.MILLISECONDS);
+        return Future.succeededFuture(
+            ConnectionStatusKafkaClusterStatusBuilder
+                .builder()
+                .state(ConnectedState.SUCCESS)
+                .build()
+        );
+      } catch (Exception e) {
+        // The connection failed
+        Throwable cause = e;
+        if (e instanceof java.util.concurrent.ExecutionException) {
+          cause = e.getCause();
+        }
+        // so successfully return the failed state
+        return Future.succeededFuture(
+            ConnectionStatusKafkaClusterStatusBuilder
+                .builder()
+                .state(ConnectedState.FAILED)
+                .errors(
+                    new AuthErrors().withSignIn(
+                        "Failed to connect to Kafka cluster: %s".formatted(cause.getMessage())
+                    )
+                ).build()
+        );
+      }
+    }).orElseGet(() -> {
+      // There is no Kafka cluster configuration, so return the NONE state
       return Future.succeededFuture(
           ConnectionStatusKafkaClusterStatusBuilder
               .builder()
               .state(ConnectedState.NONE)
               .build()
       );
-    }
-    // There is a Kafka configuration, so validate the connection by creating an AdminClient
-    // and describing the cluster.
-    try (var adminClient = createAdminClient(kafkaConfig)) {
-      var clusterDesc = adminClient.describeCluster();
-      var actualClusterId = clusterDesc.clusterId().get(TIMEOUT.toMillis(), TimeUnit.MILLISECONDS);
-      // Set the cluster ID
-      getSpec().kafkaClusterConfig().withId(actualClusterId);
-      return Future.succeededFuture(
-          ConnectionStatusKafkaClusterStatusBuilder
-              .builder()
-              .state(ConnectedState.SUCCESS)
-              .build()
-      );
-    } catch (Exception e) {
-      // The connection failed, so successfully return the failed state
-      return Future.succeededFuture(
-          ConnectionStatusKafkaClusterStatusBuilder
-              .builder()
-              .state(ConnectedState.FAILED)
-              .errors(
-                  new AuthErrors().withSignIn(
-                      "Failed to connect to Kafka cluster: %s".formatted(e.getMessage())
-                  )
-              ).build()
-      );
-    }
+    });
   }
 
   protected Future<SchemaRegistryStatus> getSchemaRegistryConnectionStatus() {
-
-    var schemaRegistryConfig = spec.schemaRegistryConfig();
-    if (schemaRegistryConfig == null) {
+    return withSchemaRegistryClient(srClient -> {
+      // There is a configuration, so validate the connection by creating a SchemaRegistryClient
+      // and getting the global mode.
+      try {
+        srClient.getMode();
+        return Future.succeededFuture(
+            ConnectionStatusSchemaRegistryStatusBuilder
+                .builder()
+                .state(ConnectedState.SUCCESS)
+                .build()
+        );
+      } catch (Exception e) {
+        // The connection failed, so successfully return the failed state
+        return Future.succeededFuture(
+            ConnectionStatusSchemaRegistryStatusBuilder
+                .builder()
+                .state(ConnectedState.FAILED)
+                .errors(
+                    new AuthErrors().withSignIn(
+                        "Failed to connect to Schema Registry: %s".formatted(e.getMessage())
+                    )
+                ).build()
+        );
+      }
+    }).orElseGet(() -> {
+      // There is no Schema Registry configuration, so return the NONE state
       return Future.succeededFuture(
           ConnectionStatusSchemaRegistryStatusBuilder
               .builder()
               .state(ConnectedState.NONE)
               .build()
-      );
+          );
+    });
+  }
+
+  /**
+   * If there is a Kafka cluster configuration, then execute the given operation with
+   * an {@link AdminClient}. The operation should handle exceptions.
+   *
+   * @param operation the function to execute with the AdminClient
+   * @return the result of the operation, or empty if the operation was not called or threw
+   *         an exception
+   */
+  public <T> Optional<T> withAdminClient(Function<AdminClient, T> operation) {
+    var kafkaClusterConfig = spec.kafkaClusterConfig();
+    if (kafkaClusterConfig == null) {
+      return Optional.empty();
     }
-    // There is a Schema Registry configuration, so validate the connection by creating a
-    // SchemaRegistryClient and getting the mode.
-    try (var srClient = createSchemaRegistryClient(schemaRegistryConfig)) {
-      srClient.getMode();
-      return Future.succeededFuture(
-          ConnectionStatusSchemaRegistryStatusBuilder
-              .builder()
-              .state(ConnectedState.SUCCESS)
-              .build()
+    try (var adminClient = createAdminClient(kafkaClusterConfig)) {
+      return Optional.ofNullable(
+          operation.apply(adminClient)
       );
     } catch (Exception e) {
-      // The connection failed, so successfully return the failed state
-      return Future.succeededFuture(
-          ConnectionStatusSchemaRegistryStatusBuilder
-              .builder()
-              .state(ConnectedState.FAILED)
-              .errors(
-                  new AuthErrors().withSignIn(
-                      "Failed to connect to Schema Registry: %s".formatted(e.getMessage())
-                  )
-              ).build()
-      );
+      Log.errorf("Failed to create and call AdminClient client: %s", e.getMessage(), e);
+      return Optional.empty();
     }
   }
 
@@ -191,6 +241,29 @@ public class DirectConnectionState extends ConnectionState {
         Map.of()
     );
     return AdminClient.create(adminConfig);
+  }
+
+  /**
+   * If there is a Schema Registry configuration, then execute the given operation with
+   * an {@link SchemaRegistryClient}. The operation should handle exceptions.
+   *
+   * @param operation the function to execute with the client
+   * @return the result of the operation, or empty if the operation was not called or threw
+   *         an exception
+   */
+  public <T> Optional<T> withSchemaRegistryClient(Function<SchemaRegistryClient, T> operation) {
+    var srConfig = spec.schemaRegistryConfig();
+    if (srConfig == null) {
+      return Optional.empty();
+    }
+    try (var srClient = createSchemaRegistryClient(srConfig)) {
+      return Optional.ofNullable(
+          operation.apply(srClient)
+      );
+    } catch (Exception e) {
+      Log.errorf("Failed to create and call Schema Registry client: %s", e.getMessage(), e);
+      return Optional.empty();
+    }
   }
 
   SchemaRegistryClient createSchemaRegistryClient(

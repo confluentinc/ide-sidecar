@@ -345,4 +345,10 @@ public abstract class AbstractIT extends SidecarClient implements ITSuite {
     });
     current.useBy(this);
   }
+
+  @Override
+  public void deleteAllConnections() {
+    super.deleteAllConnections();
+    REUSABLE_CONNECTIONS_BY_TEST_SCOPE.clear();
+  }
 }

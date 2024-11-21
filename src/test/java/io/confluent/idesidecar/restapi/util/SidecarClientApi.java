@@ -215,4 +215,8 @@ public interface SidecarClientApi {
   ValidatableResponse submitDirectConnectionsGraphQL() ;
 
   ValidatableResponse submitCCloudConnectionsGraphQL();
+
+  boolean localConnectionsGraphQLResponseContains(String connectionId);
+
+  boolean directConnectionsGraphQLResponseContains(String connectionId);
 }

@@ -21,6 +21,17 @@ import java.util.HashSet;
  */
 public class CCloudConnectionState extends ConnectionState {
 
+  static final ConnectionStatus INITIAL_STATUS = new ConnectionStatus(
+      new CCloudStatus(
+          ConnectedState.NONE,
+          null,
+          null,
+          null
+      ),
+      null,
+      null
+  );
+
   private final CCloudOAuthContext oauthContext = new CCloudOAuthContext();
 
   CCloudConnectionState() {
@@ -32,6 +43,11 @@ public class CCloudConnectionState extends ConnectionState {
       @Nullable StateChangedListener listener
   ) {
     super(spec, listener);
+  }
+
+  @Override
+  public ConnectionStatus getInitialStatus() {
+    return INITIAL_STATUS;
   }
 
   /**
