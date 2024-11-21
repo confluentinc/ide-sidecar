@@ -6,8 +6,8 @@ import static io.confluent.idesidecar.restapi.util.MutinyUtil.uniStage;
 import static io.confluent.idesidecar.restapi.util.RequestHeadersConstants.CONNECTION_ID_HEADER;
 
 import com.google.protobuf.ByteString;
-import io.confluent.idesidecar.restapi.cache.KafkaProducerClients;
-import io.confluent.idesidecar.restapi.cache.SchemaRegistryClients;
+import io.confluent.idesidecar.restapi.clients.KafkaProducerClients;
+import io.confluent.idesidecar.restapi.clients.SchemaRegistryClients;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequest;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceResponse;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceResponseData;

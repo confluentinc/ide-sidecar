@@ -5,7 +5,7 @@ import static io.confluent.idesidecar.restapi.util.MutinyUtil.uniStage;
 import static io.confluent.idesidecar.restapi.util.RequestHeadersConstants.CONNECTION_ID_HEADER;
 import static java.util.Collections.singletonMap;
 
-import io.confluent.idesidecar.restapi.cache.AdminClients;
+import io.confluent.idesidecar.restapi.clients.AdminClients;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.infrastructure.Infrastructure;
 import io.vertx.core.http.HttpServerRequest;

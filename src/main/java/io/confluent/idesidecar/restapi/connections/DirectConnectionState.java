@@ -1,7 +1,7 @@
 package io.confluent.idesidecar.restapi.connections;
 
 import io.confluent.idesidecar.restapi.auth.AuthErrors;
-import io.confluent.idesidecar.restapi.cache.ClientConfigurator;
+import io.confluent.idesidecar.restapi.clients.ClientConfigurator;
 import io.confluent.idesidecar.restapi.credentials.Credentials;
 import io.confluent.idesidecar.restapi.models.ClusterType;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
@@ -27,7 +27,6 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.eclipse.microprofile.config.ConfigProvider;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
  * Implementation of the connection state for ({@link ConnectionType#DIRECT} connections where the
@@ -185,9 +184,7 @@ public class DirectConnectionState extends ConnectionState {
     // Create the configuration for an AdminClient
     var adminConfig = ClientConfigurator.getKafkaClientConfig(
         this,
-        "temporary-kafka-id",
         config.bootstrapServers(),
-        null,
         null,
         false,
         null,
@@ -201,7 +198,6 @@ public class DirectConnectionState extends ConnectionState {
   ) {
     var srClientConfig = ClientConfigurator.getSchemaRegistryClientConfig(
         this,
-        "temporary-sr-id",
         config.uri(),
         false,
         TIMEOUT

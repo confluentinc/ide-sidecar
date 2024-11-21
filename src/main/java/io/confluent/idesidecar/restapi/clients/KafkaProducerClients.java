@@ -1,6 +1,8 @@
-package io.confluent.idesidecar.restapi.cache;
+package io.confluent.idesidecar.restapi.clients;
 
 import com.github.benmanes.caffeine.cache.CaffeineSpec;
+import io.confluent.idesidecar.restapi.cache.Clients;
+import io.confluent.idesidecar.restapi.clients.ClientConfigurator;
 import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
