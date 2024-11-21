@@ -46,4 +46,8 @@ public interface TestEnvironment {
     }
     return spec;
   }
+
+  default String name() {
+    return getClass().getSimpleName();
+  }
 }

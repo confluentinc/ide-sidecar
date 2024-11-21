@@ -278,11 +278,6 @@ public record ConnectionSpec(
   @RegisterForReflection
   @RecordBuilder
   public record KafkaClusterConfig(
-      @Schema(description = "The identifier of the Kafka cluster, if known.")
-      @Null
-      @Size(max = ID_MAX_LEN)
-      String id,
-
       @Schema(description = "A list of host/port pairs to use for establishing the "
                             + "initial connection to the Kafka cluster.")
       @JsonProperty(value = "bootstrap_servers")
@@ -356,13 +351,6 @@ public record ConnectionSpec(
         String path,
         String what
     ) {
-      if (id != null && id.length() > ID_MAX_LEN) {
-        errors.add(
-            Error.create()
-                 .withDetail("%s cluster ID may not be longer than %d characters", what, ID_MAX_LEN)
-                 .withSource("%s.id", path)
-        );
-      }
       if (bootstrapServers == null || bootstrapServers.isBlank()) {
         errors.add(
             Error.create()
