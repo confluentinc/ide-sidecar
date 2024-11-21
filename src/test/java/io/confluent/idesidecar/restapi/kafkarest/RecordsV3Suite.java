@@ -202,46 +202,6 @@ public interface RecordsV3Suite extends ITSuite {
     produceAndConsume(this, key, value);
   }
 
-  @Test
-  default void shouldProduceRecordToPartition() {
-    var topicName = randomTopicName();
-    createTopic(topicName, 5, 1);
-
-    produceRecord(0, topicName, null, "value0");
-    produceRecord(0, topicName, null, "value1");
-    produceRecord(1, topicName, null, "value2");
-    produceRecord(1, topicName, null, "value3");
-    produceRecord(2, topicName, null, "value4");
-    produceRecord(2, topicName, null, "value5");
-    produceRecord(3, topicName, null, "value6");
-    produceRecord(3, topicName, null, "value7");
-    produceRecord(4, topicName, null, "value8");
-    produceRecord(4, topicName, null, "value9");
-
-    var resp = consume(topicName, SimpleConsumeMultiPartitionRequestBuilder
-        .builder()
-        .fromBeginning(true)
-        .partitionOffsets(
-            List.of(
-                new SimpleConsumeMultiPartitionRequest.PartitionOffset(0, 0),
-                new SimpleConsumeMultiPartitionRequest.PartitionOffset(1, 0),
-                new SimpleConsumeMultiPartitionRequest.PartitionOffset(2, 0),
-                new SimpleConsumeMultiPartitionRequest.PartitionOffset(3, 0),
-                new SimpleConsumeMultiPartitionRequest.PartitionOffset(4, 0)
-            ))
-        .build()
-    );
-
-    for (var partition : resp.partitionDataList()) {
-      var records = partition.records();
-
-      // Assert greater than or equal to 2 since consume API
-      // may return more records than asked for, but there should be at least 2 records
-      // in each partition
-      assertTrue(records.size() >= 2);
-    }
-  }
-
   static <T extends ITSuite> void produceAndConsume(T test, RecordData key, RecordData value) {
     var topicName = test.randomTopicName();
     // Create topic with a single partition
@@ -334,5 +294,45 @@ public interface RecordsV3Suite extends ITSuite {
 
     assertSame(records.getFirst().key(), key.data());
     assertSame(records.getFirst().value(), value.data());
+  }
+
+  @Test
+  default void shouldProduceRecordToPartition() {
+    var topicName = randomTopicName();
+    createTopic(topicName, 5, 1);
+
+    produceRecord(0, topicName, null, "value0");
+    produceRecord(0, topicName, null, "value1");
+    produceRecord(1, topicName, null, "value2");
+    produceRecord(1, topicName, null, "value3");
+    produceRecord(2, topicName, null, "value4");
+    produceRecord(2, topicName, null, "value5");
+    produceRecord(3, topicName, null, "value6");
+    produceRecord(3, topicName, null, "value7");
+    produceRecord(4, topicName, null, "value8");
+    produceRecord(4, topicName, null, "value9");
+
+    var resp = consume(topicName, SimpleConsumeMultiPartitionRequestBuilder
+        .builder()
+        .fromBeginning(true)
+        .partitionOffsets(
+            List.of(
+                new SimpleConsumeMultiPartitionRequest.PartitionOffset(0, 0),
+                new SimpleConsumeMultiPartitionRequest.PartitionOffset(1, 0),
+                new SimpleConsumeMultiPartitionRequest.PartitionOffset(2, 0),
+                new SimpleConsumeMultiPartitionRequest.PartitionOffset(3, 0),
+                new SimpleConsumeMultiPartitionRequest.PartitionOffset(4, 0)
+            ))
+        .build()
+    );
+
+    for (var partition : resp.partitionDataList()) {
+      var records = partition.records();
+
+      // Assert greater than or equal to 2 since consume API
+      // may return more records than asked for, but there should be at least 2 records
+      // in each partition
+      assertTrue(records.size() >= 2);
+    }
   }
 }
