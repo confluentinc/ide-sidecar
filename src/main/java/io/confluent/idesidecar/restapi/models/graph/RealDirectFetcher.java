@@ -164,7 +164,7 @@ public class RealDirectFetcher extends ConfluentRestClient implements DirectFetc
   public Uni<DirectSchemaRegistry> getSchemaRegistry(String connectionId) {
     var state = connections.getConnectionState(connectionId);
     if (state instanceof DirectConnectionState directState) {
-      // Use the admin API to obtain the cluster ID
+      // Use the SR client to obtain the cluster ID
       return directState.withSchemaRegistryClient(
           srClient -> getSchemaRegistry(directState, srClient),
           error -> {
