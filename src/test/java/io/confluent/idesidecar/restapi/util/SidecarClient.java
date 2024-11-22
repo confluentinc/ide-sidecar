@@ -277,6 +277,32 @@ public class SidecarClient implements SidecarClientApi {
     currentClusterId = clusterId;
   }
 
+  @Override
+  public ValidatableResponse testConnectionWithResponse(ConnectionSpec spec) {
+    return given()
+        .contentType(ContentType.JSON)
+        .body(spec)
+        .queryParam("dry_run", true)
+        .post("%s/gateway/v1/connections".formatted(sidecarHost))
+        .then();
+  }
+
+  @Override
+  public Connection testConnection(ConnectionSpec spec) {
+    var response = given()
+        .contentType(ContentType.JSON)
+        .body(spec)
+        .queryParam("dry_run", true)
+        .post("%s/gateway/v1/connections".formatted(sidecarHost))
+        .then()
+        .statusCode(200);
+    var connection = response.extract().response().body().as(Connection.class);
+    assertEquals(spec.id(), connection.id());
+    // Do not use this connection for subsequent operations
+    return connection;
+  }
+
+  @Override
   public Connection createConnection(ConnectionSpec spec) {
     var response = given()
         .contentType(ContentType.JSON)
@@ -285,7 +311,11 @@ public class SidecarClient implements SidecarClientApi {
         .then()
         .statusCode(200);
     var connection = response.extract().response().body().as(Connection.class);
-    assertEquals(spec.id(), connection.id());
+    if (spec.id() != null) {
+      assertEquals(spec.id(), connection.id());
+    } else {
+      assertNotNull(connection.id());
+    }
     // Use this connection for subsequent operations
     currentConnectionId = connection.id();
     return connection;

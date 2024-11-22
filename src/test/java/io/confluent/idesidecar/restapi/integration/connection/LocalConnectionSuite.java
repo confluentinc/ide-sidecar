@@ -5,6 +5,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.startsWith;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -13,10 +14,64 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import io.confluent.idesidecar.restapi.integration.ITSuite;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
 import io.confluent.idesidecar.restapi.models.ConnectionStatus.Authentication.Status;
+import io.restassured.http.ContentType;
 import jakarta.ws.rs.core.MediaType;
 import org.junit.jupiter.api.Test;
 
 public interface LocalConnectionSuite extends ITSuite {
+
+  @Test
+  default void shouldTestLocalConnection() {
+    // Not all environments support local connections
+    var spec = environment().localConnectionSpec().orElse(null);
+    assertNotNull(spec, "Expected environment %s has local connection spec".formatted(environment().name()));
+
+    // Test the connection and mark it as the one we'll use
+    testConnectionWithResponse(spec)
+        .statusCode(200)
+        .contentType(ContentType.JSON)
+        .body("api_version", equalTo("gateway/v1"))
+        .body("kind", equalTo("Connection"))
+        .body("metadata.self", startsWith("http://localhost:26637/gateway/v1/connections/"))
+        .body("metadata.resource_name", nullValue())
+        .body("id", equalTo(spec.id()))
+        .body("spec.id", equalTo(spec.id()))
+        .body("spec.name", equalTo(spec.name()))
+        .body("spec.type", equalTo(ConnectionType.LOCAL.name()))
+        .body("spec.local_config", notNullValue())
+        .body("spec.kafka_cluster", nullValue())
+        .body("spec.schema_registry", nullValue())
+        .body("status.authentication.status", equalTo(Status.NO_TOKEN.name()))
+        .body("status.kafka_cluster", nullValue())
+        .body("status.schema_registry", nullValue());
+
+  }
+
+  @Test
+  default void shouldTestLocalConnectionWithoutId() {
+    // Not all environments support local connections
+    var spec = environment().localConnectionSpec().orElse(null);
+    assertNotNull(spec, "Expected environment %s has local connection spec".formatted(environment().name()));
+
+    // Test the connection with a spec that has no ID
+    testConnectionWithResponse(spec.withId(null))
+        .statusCode(200)
+        .contentType(ContentType.JSON)
+        .body("api_version", equalTo("gateway/v1"))
+        .body("kind", equalTo("Connection"))
+        .body("metadata.self", startsWith("http://localhost:26637/gateway/v1/connections/"))
+        .body("metadata.resource_name", nullValue())
+        .body("id", nullValue())
+        .body("spec.id", nullValue())
+        .body("spec.name", equalTo(spec.name()))
+        .body("spec.type", equalTo(ConnectionType.LOCAL.name()))
+        .body("spec.local_config", notNullValue())
+        .body("spec.kafka_cluster", nullValue())
+        .body("spec.schema_registry", nullValue())
+        .body("status.authentication.status", equalTo(Status.NO_TOKEN.name()))
+        .body("status.kafka_cluster", nullValue())
+        .body("status.schema_registry", nullValue());
+  }
 
   @Test
   default void shouldCreateAndListAndGetAndDeleteLocalConnection() {
