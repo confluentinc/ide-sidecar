@@ -46,7 +46,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import org.eclipse.microprofile.config.ConfigProvider;
 
-public class SidecarClient {
+public class SidecarClient implements SidecarClientApi {
 
   private static final AtomicInteger CONNECTION_COUNTER = new AtomicInteger(0);
   private static final String CONNECTION_ID_TEMPLATE = "test-connection-%d";
@@ -172,12 +172,12 @@ public class SidecarClient {
 
   public void deleteAllContent() {
     usedSchemaRegistries.forEach(sr -> {
-      useConnection(sr.connectionId);
-      deleteAllSubjects(sr.id);
+      useConnection(sr.connectionId());
+      deleteAllSubjects(sr.id());
     });
     usedKafkaClusters.forEach(kafka -> {
-      useConnection(kafka.connectionId);
-      deleteAllTopics(kafka.id);
+      useConnection(kafka.connectionId());
+      deleteAllTopics(kafka.id());
     });
   }
 
@@ -202,8 +202,13 @@ public class SidecarClient {
   }
 
   public void useClusters(KafkaCluster kafkaCluster, SchemaRegistry schemaRegistry) {
-    currentKafkaClusterId = kafkaCluster.id();
-    usedKafkaClusters.add(kafkaCluster);
+    if (kafkaCluster != null) {
+      currentKafkaClusterId = kafkaCluster.id();
+      usedKafkaClusters.add(kafkaCluster);
+    } else {
+      currentKafkaClusterId = null;
+    }
+
     if (schemaRegistry != null) {
       currentSchemaClusterId = schemaRegistry.id();
       usedSchemaRegistries.add(schemaRegistry);
@@ -286,12 +291,20 @@ public class SidecarClient {
     return connection;
   }
 
+  public Connection createLocalConnectionTo(TestEnvironment env, Class<?> scope) {
+    return createLocalConnectionTo(env, scope.getName());
+  }
+
   public Connection createLocalConnectionTo(TestEnvironment env, String scope) {
     var spec = env.localConnectionSpec().orElseThrow();
     // Append the scope to the name of the connection
     spec = spec.withName( "%s (%s)".formatted(spec.name(), scope));
     spec = spec.withId( "%s-%s".formatted(spec.id(), scope));
     return createConnection(spec);
+  }
+
+  public Connection createDirectConnectionTo(TestEnvironment env, Class<?> scope) {
+    return createDirectConnectionTo(env, scope.getName());
   }
 
   public Connection createDirectConnectionTo(TestEnvironment env, String scope) {
@@ -551,12 +564,6 @@ public class SidecarClient {
         .as(Schema.class);
   }
 
-  public record SchemaRegistry(String connectionId, String id, String uri) {
-  }
-
-  public record KafkaCluster(String connectionId, String id, String bootstrapServers) {
-  }
-
   public Optional<SchemaRegistry> getSchemaRegistryCluster() {
     return getSchemaRegistryCluster("localConnections", currentConnectionId).or(
         () -> getSchemaRegistryCluster("directConnections", currentConnectionId)
@@ -598,7 +605,9 @@ public class SidecarClient {
     // Find the connection
     while (localConnections.hasNext()) {
       var connection = localConnections.next();
-      if (connection.has("id") && connection.get("id").asText().equals(connectionId)) {
+      if (connection.has("id")
+          && connection.get("id").asText().equals(connectionId)
+          && !connection.get("schemaRegistry").isNull()) {
         var clusterId = connection.get("schemaRegistry").get("id").asText();
         var clusterUri = connection.get("schemaRegistry").get("uri").asText();
         return Optional.of(
@@ -689,13 +698,34 @@ public class SidecarClient {
 
   public ValidatableResponse submitDirectConnectionsGraphQL() {
     return submitGraphQL(
-        loadLocalConnectionsGraphQL()
+        loadDirectConnectionsGraphQL()
     );
   }
 
   public ValidatableResponse submitCCloudConnectionsGraphQL() {
     return submitGraphQL(
-        loadLocalConnectionsGraphQL()
+        loadCCloudConnectionsGraphQL()
     );
   }
+
+  public boolean localConnectionsGraphQLResponseContains(String connectionId) {
+    return submitLocalConnectionsGraphQL()
+        .extract()
+        .response()
+        .jsonPath()
+        .getList("data.localConnections", Map.class)
+        .stream()
+        .anyMatch(m -> m.get("id").equals(connectionId));
+  }
+
+  public boolean directConnectionsGraphQLResponseContains(String connectionId) {
+    return submitDirectConnectionsGraphQL()
+        .extract()
+        .response()
+        .jsonPath()
+        .getList("data.directConnections", Map.class)
+        .stream()
+        .anyMatch(m -> m.get("id").equals(connectionId));
+  }
+
 }

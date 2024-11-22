@@ -10,7 +10,7 @@ import java.util.Optional;
 /**
  * A test environment that provides a {@link SidecarClient} to interact with the Sidecar REST API.
  */
-public interface TestEnvironment extends AutoCloseable {
+public interface TestEnvironment {
 
   void start();
 
@@ -45,5 +45,9 @@ public interface TestEnvironment extends AutoCloseable {
       spec = spec.map(s -> s.withSchemaRegistry(null));
     }
     return spec;
+  }
+
+  default String name() {
+    return getClass().getSimpleName();
   }
 }

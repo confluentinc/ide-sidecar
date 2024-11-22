@@ -3,10 +3,7 @@ package io.confluent.idesidecar.restapi.util;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
 import io.quarkus.test.junit.TestProfile;
-import java.util.HashSet;
 import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
 
@@ -37,7 +34,7 @@ public class LocalTestEnvironment implements TestEnvironment {
 
   @Override
   public void shutdown() {
-    stopContainers();
+    close();
   }
 
   protected void createNetworkAndContainers() {
@@ -70,10 +67,8 @@ public class LocalTestEnvironment implements TestEnvironment {
     kafkaWithRestProxy.stop();
   }
 
-  @Override
   public void close() {
-    schemaRegistry.close();
-    kafkaWithRestProxy.close();
+    stopContainers();
     network.close();
   }
 
@@ -95,7 +90,6 @@ public class LocalTestEnvironment implements TestEnvironment {
             "direct-to-local-connection",
             "Direct to Local",
             new ConnectionSpec.KafkaClusterConfig(
-                kafkaWithRestProxy.getClusterId(),
                 kafkaWithRestProxy.getKafkaBootstrapServers(),
                 null,
                 null,

@@ -283,9 +283,7 @@ class ClientConfiguratorStaticTest {
               // The Kafka config without SR should match
               var kafkaConfig = ClientConfigurator.getKafkaClientConfig(
                   connection,
-                  input.kafkaCluster.id(),
                   input.kafkaCluster.bootstrapServers(),
-                  null,
                   null,
                   input.redact,
                   input.timeout,
@@ -302,7 +300,6 @@ class ClientConfiguratorStaticTest {
                 var expectedSchemaRegistryConfig = loadProperties(input.expectedSchemaRegistryConfig);
                 var srConfig = ClientConfigurator.getSchemaRegistryClientConfig(
                     connection,
-                    input.schemaRegistry.id(),
                     input.schemaRegistry.uri(),
                     input.redact,
                     input.timeout
@@ -321,9 +318,7 @@ class ClientConfiguratorStaticTest {
                 });
                 var kafkaConfigWithSr = ClientConfigurator.getKafkaClientConfig(
                     connection,
-                    input.kafkaCluster.id(),
                     input.kafkaCluster.bootstrapServers(),
-                    input.schemaRegistry.id(),
                     input.schemaRegistry.uri(),
                     input.redact,
                     input.timeout,

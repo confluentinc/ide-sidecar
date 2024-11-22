@@ -3,12 +3,12 @@ package io.confluent.idesidecar.restapi.messageviewer;
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import io.confluent.idesidecar.restapi.integration.ITSuite;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequest;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequestBuilder;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeData;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeRecord;
 import io.confluent.idesidecar.restapi.proto.Message.MyMessage;
-import io.confluent.idesidecar.restapi.util.AbstractSidecarIT;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,10 +17,13 @@ import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 
-abstract class SimpleConsumerIT extends AbstractSidecarIT {
+public interface SimpleConsumerSuite extends ITSuite {
+
+  @Override
+  SimpleConsumer simpleConsumer();
 
   @Test
-  void testAvroProduceAndConsume() {
+  default void testAvroProduceAndConsume() {
     // When we create a topic
     var topic = randomTopicName();
     createTopic(topic);
@@ -62,7 +65,7 @@ abstract class SimpleConsumerIT extends AbstractSidecarIT {
   }
 
   @Test
-  public void testProtoProduceAndConsumeMultipleRecords() {
+  default void testProtoProduceAndConsumeMultipleRecords() {
     // When we create a topic
     var topic = randomTopicName();
     createTopic(topic);
@@ -126,7 +129,7 @@ abstract class SimpleConsumerIT extends AbstractSidecarIT {
   }
 
   @Test
-  public void testJsonProducerAndConsumer() {
+  default void testJsonProducerAndConsumer() {
     // When we create a topic
     String topic = randomTopicName();
     createTopic(topic);
@@ -163,7 +166,7 @@ abstract class SimpleConsumerIT extends AbstractSidecarIT {
   }
 
   @Test
-  public void testProduceAndConsumeMultipleStringRecords() {
+  default void testProduceAndConsumeMultipleStringRecords() {
     // When we create a topic
     String topic = randomTopicName();
     createTopic(topic);

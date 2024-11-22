@@ -69,6 +69,10 @@ public abstract class ConnectionState {
     return Future.succeededFuture(ConnectionStatus.INITIAL_STATUS);
   }
 
+  public ConnectionStatus getInitialStatus() {
+    return ConnectionStatus.INITIAL_STATUS;
+  }
+
   public ConnectionMetadata getConnectionMetadata() {
     return ConnectionMetadata.from(
         null,
