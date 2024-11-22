@@ -21,19 +21,6 @@ import java.util.Objects;
 public class Connection extends BaseModel<ConnectionSpec, ConnectionMetadata> {
 
   /**
-   * Create a connection from the given connection state. The metadata and spec are obtained
-   * from the connection state, and the status is set to {@link ConnectionStatus#INITIAL_STATUS}.
-   *
-   * @param connectionState the state of the connection
-   * @return the connection
-   */
-  public static Connection from(
-      ConnectionState connectionState
-  ) {
-    return from(connectionState, connectionState.getInitialStatus());
-  }
-
-  /**
    * Create a connection from the given connection state, resource path and status.
    *
    * @param connectionState the state of the connection
