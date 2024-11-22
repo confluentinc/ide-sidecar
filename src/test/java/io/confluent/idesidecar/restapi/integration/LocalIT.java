@@ -25,7 +25,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Tag;
 import java.util.Optional;
 
-public class LocalITs {
+public class LocalIT {
 
   private static final LocalTestEnvironment TEST_ENVIRONMENT = new LocalTestEnvironment();
 

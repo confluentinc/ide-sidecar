@@ -3,7 +3,7 @@ package io.confluent.idesidecar.restapi.integration;
 import io.confluent.idesidecar.restapi.util.LocalTestEnvironment;
 import org.junit.jupiter.api.Nested;
 
-public class ConfluentPlatformITs {
+public class ConfluentPlatformIT {
 
   /**
    * Use the <a href="https://testcontainers.com/guides/testcontainers-container-lifecycle/#_using_singleton_containers">Singleton Container</a>
