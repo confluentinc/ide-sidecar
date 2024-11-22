@@ -1,7 +1,7 @@
 package io.confluent.idesidecar.restapi.messageviewer;
 
-import static io.confluent.idesidecar.restapi.messageviewer.RecordDeserializer.clearCachedFailures;
 import static io.confluent.idesidecar.restapi.messageviewer.RecordDeserializer.getSchemaIdFromRawBytes;
+import static io.confluent.idesidecar.restapi.messageviewer.RecordDeserializer.schemaErrors;
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -10,6 +10,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.TextNode;
+import io.confluent.idesidecar.restapi.clients.SchemaErrors;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
 import io.confluent.kafka.schemaregistry.avro.AvroSchema;
 import io.confluent.kafka.schemaregistry.avro.AvroSchemaProvider;
@@ -42,6 +43,8 @@ public class RecordDeserializerTest {
 
   private static final int VALID_SCHEMA_ID = 10008;
 
+  static final String CONNECTION_1_ID = "c1";
+
   /**
    * Data containing valid schema ID of 10008, and nothing else.
    * 00000000 00000000 00100111 00011000
@@ -53,13 +56,24 @@ public class RecordDeserializerTest {
 
   RecordDeserializer recordDeserializer;
 
+ MessageViewerContext context = new MessageViewerContext(
+        null,
+            null,
+            null,
+            null,
+            null,
+                    CONNECTION_1_ID,
+            "testClusterId",
+                    SAMPLE_TOPIC_NAME);
+
   @BeforeEach
   public void setup() throws RestClientException, IOException {
     recordDeserializer = new RecordDeserializer(
         1,
         1,
         10000,
-        0
+        0,
+        new SchemaErrors()
     );
     schemaRegistryClient = new SimpleMockSchemaRegistryClient(
         Arrays.asList(
@@ -72,18 +86,18 @@ public class RecordDeserializerTest {
 
   @AfterEach
   public void tearDown() {
-    clearCachedFailures();
+    schemaErrors.clearByConnectionId(CONNECTION_1_ID);
   }
 
   @ParameterizedTest
   @ValueSource(booleans = {true, false})
   public void testDecodeAndDeserialize_NullOrEmptyBase64(boolean isKey) {
     assertNullResult(
-        recordDeserializer.deserialize(null, schemaRegistryClient, "", isKey));
+        recordDeserializer.deserialize(null, schemaRegistryClient, context, isKey));
     assertEmptyResult(
-        recordDeserializer.deserialize(new byte[]{}, schemaRegistryClient, "", isKey));
+        recordDeserializer.deserialize(new byte[]{}, schemaRegistryClient, context, isKey));
     assertEmptyResult(
-        recordDeserializer.deserialize("".getBytes(), schemaRegistryClient, "", isKey));
+        recordDeserializer.deserialize("".getBytes(), schemaRegistryClient, context, isKey));
   }
 
   private void assertNullResult(RecordDeserializer.DecodedResult result) {
@@ -110,7 +124,7 @@ public class RecordDeserializerTest {
     var record = recordDeserializer.deserialize(
         decodedBytes,
         schemaRegistryClient,
-        SAMPLE_TOPIC_NAME,
+        context,
         false
     );
     assertNotNull(record);
@@ -144,7 +158,7 @@ public class RecordDeserializerTest {
         // Remove the last byte to make the base64 string invalid
         Arrays.copyOfRange(decodedBytes, 0, decodedBytes.length - 1),
         schemaRegistryClient,
-        SAMPLE_TOPIC_NAME,
+        context,
         false
     );
     assertNotNull(record);
@@ -166,7 +180,7 @@ public class RecordDeserializerTest {
     var record = recordDeserializer.deserialize(
         decodedBytes,
         schemaRegistryClient,
-        SAMPLE_TOPIC_NAME,
+        context,
         false
     );
     assertNotNull(record);
@@ -198,7 +212,7 @@ public class RecordDeserializerTest {
     var record = recordDeserializer.deserialize(
         decodedBytes,
         schemaRegistryClient,
-        SAMPLE_TOPIC_NAME,
+        context,
         false
     );
     assertNotNull(record);
@@ -232,7 +246,7 @@ public class RecordDeserializerTest {
   @ParameterizedTest
   @ValueSource(booleans = {true, false})
   void parseJsonNodeShouldReturnNullNodeWhenReceivingNullValue(boolean isKey) {
-    var resp = recordDeserializer.deserialize(null, null, "foo", isKey);
+    var resp = recordDeserializer.deserialize(null, null, context, isKey);
     assertTrue(resp.value().isNull());
     assertNull(resp.errorMessage());
   }
@@ -241,7 +255,7 @@ public class RecordDeserializerTest {
   @ValueSource(booleans = {true, false})
   void parseJsonNodeShouldReturnEmptyStringWhenReceivingEmptyByteArray(boolean isKey) {
     var emptyArray = new byte[0];
-    var resp = recordDeserializer.deserialize(emptyArray, null, "foo", isKey);
+    var resp = recordDeserializer.deserialize(emptyArray, null, context, isKey);
     assertEquals(new TextNode(""), resp.value());
     assertNull(resp.errorMessage());
   }
@@ -251,7 +265,7 @@ public class RecordDeserializerTest {
   void parseJsonNodeShouldReturnStringIfByteArrayDoesNotStartWithMagicByte(boolean isKey) {
     var rawString = "Team DTX";
     var byteArray = rawString.getBytes(StandardCharsets.UTF_8);
-    var resp = recordDeserializer.deserialize(byteArray, null, "foo", isKey);
+    var resp = recordDeserializer.deserialize(byteArray, null, context, isKey);
     assertEquals(new TextNode(rawString), resp.value());
     assertNull(resp.errorMessage());
   }
@@ -268,7 +282,7 @@ public class RecordDeserializerTest {
 
     // Expect parsing to fail, should return byte array as string
     var magicByteAsString = new String(new byte[]{RecordDeserializer.MAGIC_BYTE}, StandardCharsets.UTF_8);
-    var resp = recordDeserializer.deserialize(byteArrayWithMagicByte, null, "foo", isKey);
+    var resp = recordDeserializer.deserialize(byteArrayWithMagicByte, null, context, isKey);
     assertEquals(new TextNode(magicByteAsString + rawString), resp.value());
     assertEquals("The value references a schema but we can't find the schema registry", resp.errorMessage());
   }
@@ -324,7 +338,7 @@ public class RecordDeserializerTest {
             // Has a schema ID, so we'll actually try to fetch the schema
             VALID_SCHEMA_ID_BYTES,
             smc,
-            SAMPLE_TOPIC_NAME,
+            context,
             isKey,
             Optional.of(Base64.getEncoder()::encode)
         );
@@ -437,7 +451,7 @@ public class RecordDeserializerTest {
       Boolean isKey,
       CachedSchemaRegistryClient mockedSRClient
   ) throws IOException, RestClientException {
-    clearCachedFailures();
+    schemaErrors.clearByConnectionId(CONNECTION_1_ID);
 
     var recordDeserializer = getDeserializer(maxRetries);
 
@@ -447,7 +461,7 @@ public class RecordDeserializerTest {
         // Has a schema ID, so we'll actually try to fetch the schema
         VALID_SCHEMA_ID_BYTES,
         mockedSRClient,
-        SAMPLE_TOPIC_NAME,
+        context,
         isKey
     );
 
@@ -460,7 +474,7 @@ public class RecordDeserializerTest {
         resp = recordDeserializer.deserialize(
             VALID_SCHEMA_ID_BYTES,
             mockedSRClient,
-            SAMPLE_TOPIC_NAME,
+            context,
             isKey
         );
       } catch (Exception e) {
@@ -474,7 +488,7 @@ public class RecordDeserializerTest {
     // Assert after trying to deserialize with the same schema ID
     verify(mockedSRClient, times(expectedTries)).getSchemaById(anyInt());
 
-    clearCachedFailures();
+    schemaErrors.clearByConnectionId(CONNECTION_1_ID);
   }
 
   private RecordDeserializer getDeserializer(int maxRetries) {
@@ -483,7 +497,8 @@ public class RecordDeserializerTest {
         1,
         1,
         10000,
-        maxRetries
+        3,
+        new SchemaErrors()
     );
   }
 
@@ -507,7 +522,7 @@ public class RecordDeserializerTest {
               recordDeserializer.deserialize(
                   VALID_SCHEMA_ID_BYTES,
                   mockedSRClient,
-                  SAMPLE_TOPIC_NAME,
+                  context,
                   // We don't care about isKey
                   false
               );
