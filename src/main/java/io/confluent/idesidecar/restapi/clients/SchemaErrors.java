@@ -65,21 +65,8 @@ public class SchemaErrors {
     return null;
   }
 
-  public void writeConnectionIdError(String connectionId, String error) {
-    for (Map<String, String> subCache : cacheOfCaches.values()) {
-      if (subCache.containsKey(connectionId)){
-        subCache.put(connectionId, error);
-        return;
-      }
-    }
-  }
-
   public void clearByConnectionId(String connectionId) {
-    for (Map<String, String> subCache : cacheOfCaches.values()) {
-      if (subCache.containsKey(connectionId)) {
-        subCache.remove(connectionId);
+    cacheOfCaches.remove(connectionId);
         return;
       }
     }
-  }
-}
