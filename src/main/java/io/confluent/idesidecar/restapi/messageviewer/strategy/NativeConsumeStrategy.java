@@ -52,7 +52,8 @@ public class NativeConsumeStrategy implements ConsumeStrategy {
       var simpleConsumer = new SimpleConsumer(
           consumer,
           schemaRegistryClient,
-          recordDeserializer
+          recordDeserializer,
+          context
       );
       var consumedData = simpleConsumer.consume(topic, request);
       context.setConsumeResponse(new SimpleConsumeMultiPartitionResponse(

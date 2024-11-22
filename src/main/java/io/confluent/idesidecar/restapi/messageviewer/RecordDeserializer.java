@@ -9,12 +9,11 @@ import com.fasterxml.jackson.databind.node.TextNode;
 import com.fasterxml.jackson.dataformat.avro.AvroFactory;
 import com.fasterxml.jackson.dataformat.avro.AvroMapper;
 import com.fasterxml.jackson.dataformat.avro.AvroSchema;
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.JsonFormat;
 import graphql.VisibleForTesting;
+import io.confluent.idesidecar.restapi.clients.SchemaErrors;
 import io.confluent.idesidecar.restapi.kafkarest.SchemaFormat;
 import io.confluent.idesidecar.restapi.util.ConfigUtil;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
@@ -29,6 +28,7 @@ import io.smallrye.mutiny.infrastructure.Infrastructure;
 import io.smallrye.mutiny.unchecked.Unchecked;
 import io.soabase.recordbuilder.core.RecordBuilder;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.ConnectException;
@@ -64,10 +64,7 @@ public class RecordDeserializer {
   private static final ObjectMapper AVRO_OBJECT_MAPPER = new AvroMapper(new AvroFactory());
   public static final byte MAGIC_BYTE = 0x0;
   private static final Duration CACHE_FAILED_SCHEMA_ID_FETCH_DURATION = Duration.ofSeconds(30);
-  private static final Cache<Integer, String> SCHEMA_FETCH_ERROR_CACHE = Caffeine.newBuilder()
-      .expireAfterWrite(CACHE_FAILED_SCHEMA_ID_FETCH_DURATION)
-      .build();
-
+  public static SchemaErrors schemaErrors = new SchemaErrors();
   private final Duration schemaFetchRetryInitialBackoff;
   private final Duration schemaFetchRetryMaxBackoff;
   private final Duration schemaFetchTimeout;
@@ -81,12 +78,14 @@ public class RecordDeserializer {
       @ConfigProperty(name = "ide-sidecar.schema-fetch-retry.timeout-ms")
       long schemaFetchTimeoutMs,
       @ConfigProperty(name = "ide-sidecar.schema-fetch-retry.max-retries")
-      int schemaFetchMaxRetries
+      int schemaFetchMaxRetries,
+      SchemaErrors schemaErrors
   ) {
     this.schemaFetchRetryInitialBackoff = Duration.ofMillis(schemaFetchRetryInitialBackoffMs);
     this.schemaFetchRetryMaxBackoff = Duration.ofMillis(schemaFetchRetryMaxBackoffMs);
     this.schemaFetchTimeout = Duration.ofMillis(schemaFetchTimeoutMs);
     this.schemaFetchMaxRetries = schemaFetchMaxRetries;
+    RecordDeserializer.schemaErrors = schemaErrors;
   }
 
   @RecordBuilder
@@ -94,10 +93,6 @@ public class RecordDeserializer {
       implements RecordDeserializerDecodedResultBuilder.With {
   }
 
-  @VisibleForTesting
-  static void clearCachedFailures() {
-    SCHEMA_FETCH_ERROR_CACHE.invalidateAll();
-  }
 
   /**
    * Extracts the schema ID from the raw bytes.
@@ -207,7 +202,7 @@ public class RecordDeserializer {
    * @param bytes                The byte array to parse
    * @param schemaRegistryClient The SchemaRegistryClient used for deserialization of
    *                             Schema Registry encoded data
-   * @param topic                The name of the topic, used for Schema Registry deserialization
+   * @param context              The message viewer context.
    * @param isKey                Whether the data is a key or value
    * @param encoderOnFailure     A function to apply to the byte array if deserialization fails.
    * @return A DecodedResult containing either:
@@ -220,7 +215,7 @@ public class RecordDeserializer {
   public DecodedResult deserialize(
       byte[] bytes,
       SchemaRegistryClient schemaRegistryClient,
-      String topic,
+      MessageViewerContext context,
       boolean isKey,
       Optional<Function<byte[], byte[]>> encoderOnFailure
   ) {
@@ -231,7 +226,7 @@ public class RecordDeserializer {
 
     final int schemaId = getSchemaIdFromRawBytes(bytes);
     // Check if schema retrieval has failed recently
-    var cachedError = SCHEMA_FETCH_ERROR_CACHE.getIfPresent(schemaId);
+    var cachedError = schemaErrors.readSchemaIdByConnectionId(context.getConnectionId(), schemaId);
     if (cachedError != null) {
       return new DecodedResult(
           // If the schema fetch failed, we can't decode the data, so we just return the raw bytes.
@@ -256,10 +251,11 @@ public class RecordDeserializer {
           .atMost(schemaFetchTimeout);
 
       var schemaType = SchemaFormat.fromSchemaType(parsedSchema.schemaType());
+      var topicName = context.getTopicName();
       var deserializedData = switch (schemaType) {
-        case AVRO -> handleAvro(bytes, topic, schemaRegistryClient, isKey);
-        case PROTOBUF -> handleProtobuf(bytes, topic, schemaRegistryClient, isKey);
-        case JSON -> handleJson(bytes, topic, schemaRegistryClient, isKey);
+        case AVRO -> handleAvro(bytes, topicName, schemaRegistryClient, isKey);
+        case PROTOBUF -> handleProtobuf(bytes, topicName, schemaRegistryClient, isKey);
+        case JSON -> handleJson(bytes, topicName, schemaRegistryClient, isKey);
       };
       return RecordDeserializerDecodedResultBuilder
           .builder()
@@ -272,7 +268,7 @@ public class RecordDeserializer {
         //            network-related IOExceptions, to prevent the sidecar from
         //            bombarding the Schema Registry servers with requests for every
         //            consumed message when we encounter a schema fetch error.
-        cacheSchemaFetchError(exc, schemaId);
+        cacheSchemaFetchError(exc, schemaId, context);
         return new DecodedResult(onFailure(encoderOnFailure, bytes), e.getMessage());
       } else if (
           exc instanceof SerializationException
@@ -324,13 +320,13 @@ public class RecordDeserializer {
   public DecodedResult deserialize(
       byte[] bytes,
       SchemaRegistryClient schemaRegistryClient,
-      String topic,
+      MessageViewerContext context,
       boolean isKey
   ) {
-    return deserialize(bytes, schemaRegistryClient, topic, isKey, Optional.empty());
+    return deserialize(bytes, schemaRegistryClient, context, isKey, Optional.empty());
   }
 
-  private static void cacheSchemaFetchError(Throwable e, int schemaId) {
+  private static void cacheSchemaFetchError(Throwable e, int schemaId, MessageViewerContext context) {
     var retryTime = Instant.now().plus(CACHE_FAILED_SCHEMA_ID_FETCH_DURATION);
     var timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
         .withZone(ZoneId.systemDefault());
@@ -347,7 +343,7 @@ public class RecordDeserializer {
         schemaId,
         e.getMessage()
     );
-    SCHEMA_FETCH_ERROR_CACHE.put(schemaId, errorMessage);
+    schemaErrors.writeSchemaIdByConnectionId(context.getConnectionId(), schemaId, errorMessage);
   }
 
   /**

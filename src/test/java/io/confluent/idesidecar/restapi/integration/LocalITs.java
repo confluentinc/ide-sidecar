@@ -10,6 +10,7 @@ import io.confluent.idesidecar.restapi.kafkarest.api.ClusterV3Suite;
 import io.confluent.idesidecar.restapi.kafkarest.api.PartitionV3Suite;
 import io.confluent.idesidecar.restapi.kafkarest.api.TopicConfigV3Suite;
 import io.confluent.idesidecar.restapi.kafkarest.api.TopicV3Suite;
+import io.confluent.idesidecar.restapi.messageviewer.MessageViewerContext;
 import io.confluent.idesidecar.restapi.messageviewer.SimpleConsumerSuite;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.resources.KafkaConsumeSuite;
@@ -50,6 +51,10 @@ public class LocalITs {
     @Nested
     class ConnectionAndGraphQL extends AbstractIT implements LocalConnectionSuite {
 
+      protected ConnectionAndGraphQL(MessageViewerContext context) {
+        super(context);
+      }
+
       @Override
       public TestEnvironment environment() {
         return TEST_ENVIRONMENT;
@@ -66,6 +71,10 @@ public class LocalITs {
     @TestProfile(NoAccessFilterProfile.class)
     @Nested
     class RecordTests extends AbstractIT implements RecordsV3Suite, RecordsV3DryRunSuite {
+
+      protected RecordTests(MessageViewerContext context) {
+        super(context);
+      }
 
       @Override
       public TestEnvironment environment() {
@@ -84,6 +93,10 @@ public class LocalITs {
     @TestProfile(NoAccessFilterProfile.class)
     @Nested
     class RecordTestsWithoutSR extends AbstractIT implements RecordsV3WithoutSRSuite {
+
+      protected RecordTestsWithoutSR(MessageViewerContext context) {
+        super(context);
+      }
 
       @Override
       public TestEnvironment environment() {
@@ -110,6 +123,10 @@ public class LocalITs {
     @Nested
     class RecordFailureTests extends AbstractIT implements RecordsV3ErrorsSuite {
 
+      protected RecordFailureTests(MessageViewerContext context) {
+        super(context);
+      }
+
       @Override
       public TestEnvironment environment() {
         return TEST_ENVIRONMENT;
@@ -127,6 +144,10 @@ public class LocalITs {
     @TestProfile(NoAccessFilterProfile.class)
     @Nested
     class TopicTests extends AbstractIT implements TopicV3Suite, PartitionV3Suite {
+
+      protected TopicTests(MessageViewerContext context) {
+        super(context);
+      }
 
       @Override
       public TestEnvironment environment() {
@@ -146,6 +167,10 @@ public class LocalITs {
     @Nested
     class TopicConfigTests extends AbstractIT implements TopicConfigV3Suite {
 
+      protected TopicConfigTests(MessageViewerContext context) {
+        super(context);
+      }
+
       @Override
       public TestEnvironment environment() {
         return TEST_ENVIRONMENT;
@@ -164,6 +189,10 @@ public class LocalITs {
     @Nested
     class ClustersTests extends AbstractIT implements ClusterV3Suite {
 
+      protected ClustersTests(MessageViewerContext context) {
+        super(context);
+      }
+
       @Override
       public TestEnvironment environment() {
         return TEST_ENVIRONMENT;
@@ -181,6 +210,10 @@ public class LocalITs {
     @TestProfile(NoAccessFilterProfile.class)
     @Nested
     class ConsumptionTests extends AbstractIT implements SimpleConsumerSuite, KafkaConsumeSuite {
+
+      protected ConsumptionTests(MessageViewerContext context) {
+        super(context);
+      }
 
       @Override
       public TestEnvironment environment() {
@@ -204,6 +237,12 @@ public class LocalITs {
     @Nested
     class ConnectionAndGraphQL extends AbstractIT implements DirectConnectionSuite {
 
+      protected ConnectionAndGraphQL(
+          MessageViewerContext context
+      ) {
+        super(context);
+      }
+
       @Override
       public TestEnvironment environment() {
         return TEST_ENVIRONMENT;
@@ -226,6 +265,10 @@ public class LocalITs {
     @Nested
     class RecordTests extends AbstractIT implements RecordsV3Suite, RecordsV3DryRunSuite {
 
+      protected RecordTests(MessageViewerContext context) {
+        super(context);
+      }
+
       @Override
       public TestEnvironment environment() {
         return TEST_ENVIRONMENT;
@@ -243,6 +286,10 @@ public class LocalITs {
     @TestProfile(NoAccessFilterProfile.class)
     @Nested
     class RecordFailureTests extends AbstractIT implements RecordsV3ErrorsSuite {
+
+      protected RecordFailureTests(MessageViewerContext context) {
+        super(context);
+      }
 
       @Override
       public TestEnvironment environment() {
@@ -262,6 +309,10 @@ public class LocalITs {
     @Nested
     class TopicTests extends AbstractIT implements TopicV3Suite, PartitionV3Suite {
 
+      protected TopicTests(MessageViewerContext context) {
+        super(context);
+      }
+
       @Override
       public TestEnvironment environment() {
         return TEST_ENVIRONMENT;
@@ -279,6 +330,10 @@ public class LocalITs {
     @TestProfile(NoAccessFilterProfile.class)
     @Nested
     class TopicConfigTests extends AbstractIT implements TopicConfigV3Suite {
+
+      protected TopicConfigTests(MessageViewerContext context) {
+        super(context);
+      }
 
       @Override
       public TestEnvironment environment() {
@@ -298,6 +353,10 @@ public class LocalITs {
     @Nested
     class ClustersTests extends AbstractIT implements ClusterV3Suite {
 
+      protected ClustersTests(MessageViewerContext context) {
+        super(context);
+      }
+
       @Override
       public TestEnvironment environment() {
         return TEST_ENVIRONMENT;
@@ -315,6 +374,10 @@ public class LocalITs {
     @TestProfile(NoAccessFilterProfile.class)
     @Nested
     class ConsumptionTests extends AbstractIT implements SimpleConsumerSuite, KafkaConsumeSuite {
+
+      protected ConsumptionTests(MessageViewerContext context) {
+        super(context);
+      }
 
       @Override
       public TestEnvironment environment() {

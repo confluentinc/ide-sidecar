@@ -10,6 +10,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.TextNode;
+import io.confluent.idesidecar.restapi.clients.SchemaErrors;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
 import io.confluent.kafka.schemaregistry.avro.AvroSchema;
 import io.confluent.kafka.schemaregistry.avro.AvroSchemaProvider;
@@ -59,7 +60,8 @@ public class RecordDeserializerTest {
         1,
         1,
         10000,
-        0
+        0,
+        new SchemaErrors()
     );
     schemaRegistryClient = new SimpleMockSchemaRegistryClient(
         Arrays.asList(
@@ -483,7 +485,8 @@ public class RecordDeserializerTest {
         1,
         1,
         10000,
-        maxRetries
+        3,
+        new SchemaErrors()
     );
   }
 
