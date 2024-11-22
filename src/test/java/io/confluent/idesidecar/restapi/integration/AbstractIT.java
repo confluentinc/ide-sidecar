@@ -1,6 +1,7 @@
 package io.confluent.idesidecar.restapi.integration;
 
 import static io.confluent.idesidecar.restapi.kafkarest.SchemaManager.SCHEMA_PROVIDERS;
+import static io.confluent.idesidecar.restapi.messageviewer.RecordDeserializer.schemaErrors;
 
 import io.confluent.idesidecar.restapi.clients.ClientConfigurator;
 import io.confluent.idesidecar.restapi.connections.ConnectionState;
@@ -9,6 +10,7 @@ import io.confluent.idesidecar.restapi.messageviewer.RecordDeserializer;
 import io.confluent.idesidecar.restapi.messageviewer.SimpleConsumer;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.util.LocalTestEnvironment;
+import io.confluent.idesidecar.restapi.messageviewer.MessageViewerContext;
 import io.confluent.idesidecar.restapi.util.RequestHeadersConstants;
 import io.confluent.idesidecar.restapi.util.SidecarClient;
 import io.confluent.idesidecar.restapi.util.TestEnvironment;
@@ -61,6 +63,18 @@ import org.junit.jupiter.api.AfterEach;
  */
 public abstract class AbstractIT extends SidecarClient implements ITSuite {
 
+  protected AbstractIT(MessageViewerContext context) {
+    this.context = new MessageViewerContext(
+        null,
+        null,
+        null,
+        null,
+        null,
+        "testConnectionId",
+        "testClusterId",
+        "testTopicName");
+  }
+
   record ScopedConnection(
       ConnectionSpec spec,
       KafkaCluster kafkaCluster,
@@ -84,6 +98,9 @@ public abstract class AbstractIT extends SidecarClient implements ITSuite {
   private static final Map<String, ScopedConnection> REUSABLE_CONNECTIONS_BY_TEST_SCOPE = new ConcurrentHashMap<>();
 
   protected ScopedConnection current;
+
+  protected final MessageViewerContext context;
+
 
   @AfterEach
   public void afterEach() {
@@ -130,11 +147,14 @@ public abstract class AbstractIT extends SidecarClient implements ITSuite {
         new ByteArrayDeserializer(),
         new ByteArrayDeserializer()
     );
+
     var deserializer = new RecordDeserializer(
         1,
         1,
         10000,
-        3
+        3,
+        schemaErrors
+
     );
     CachedSchemaRegistryClient srClient = null;
     if (sr != null) {
@@ -149,7 +169,7 @@ public abstract class AbstractIT extends SidecarClient implements ITSuite {
           )
       );
     }
-    return new SimpleConsumer(consumer, srClient, deserializer);
+    return new SimpleConsumer(consumer, srClient, deserializer,context);
   }
 
   /**

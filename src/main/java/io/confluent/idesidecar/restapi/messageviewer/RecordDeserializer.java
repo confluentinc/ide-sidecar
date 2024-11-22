@@ -64,7 +64,7 @@ public class RecordDeserializer {
   private static final ObjectMapper AVRO_OBJECT_MAPPER = new AvroMapper(new AvroFactory());
   public static final byte MAGIC_BYTE = 0x0;
   private static final Duration CACHE_FAILED_SCHEMA_ID_FETCH_DURATION = Duration.ofSeconds(30);
-  protected static SchemaErrors schemaErrors = new SchemaErrors();
+  public static SchemaErrors schemaErrors = new SchemaErrors();
   private final Duration schemaFetchRetryInitialBackoff;
   private final Duration schemaFetchRetryMaxBackoff;
   private final Duration schemaFetchTimeout;
