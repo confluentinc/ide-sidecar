@@ -1,6 +1,9 @@
 package io.confluent.idesidecar.restapi.messageviewer;
 
+import static io.confluent.idesidecar.restapi.messageviewer.RecordDeserializer.schemaErrors;
+
 import io.confluent.idesidecar.restapi.cache.ClusterCache;
+import io.confluent.idesidecar.restapi.clients.SchemaErrors;
 import io.confluent.idesidecar.restapi.connections.ConnectionState;
 import io.confluent.idesidecar.restapi.events.Lifecycle;
 import io.confluent.idesidecar.restapi.exceptions.ClusterNotFoundException;
@@ -75,10 +78,6 @@ public class MessageViewerClusterInfoProcessor extends
     }
   }
 
-  void clearCaches() {
-    RecordDeserializer.clearCachedFailures();
-  }
-
   /**
    * Respond to the connection being disconnected by clearing cached information.
    *
@@ -87,7 +86,7 @@ public class MessageViewerClusterInfoProcessor extends
   void onConnectionDisconnected(
       @ObservesAsync @Lifecycle.Disconnected ConnectionState connection
   ) {
-    clearCaches();
+    schemaErrors.clearByConnectionId(connection.getId());
   }
 
   /**
@@ -96,7 +95,7 @@ public class MessageViewerClusterInfoProcessor extends
    * @param connection the connection that was deleted
    */
   void onConnectionDeleted(@ObservesAsync @Lifecycle.Deleted ConnectionState connection) {
-    clearCaches();
+    schemaErrors.clearByConnectionId(connection.getId());
   }
 }
 

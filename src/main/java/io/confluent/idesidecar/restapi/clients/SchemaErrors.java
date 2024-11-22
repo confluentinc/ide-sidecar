@@ -7,30 +7,30 @@ import java.util.concurrent.ConcurrentHashMap;
 @ApplicationScoped
 public class SchemaErrors {
 
-  private final Map<String, Map<String, String>> cacheOfCaches = new ConcurrentHashMap<>();
+  private static final Map<String, Map<String, String>> cacheOfCaches = new ConcurrentHashMap<>();
 
-  private String generateKey(String connectionId, String clusterId) {
+  private static String generateKey(String connectionId, String clusterId) {
     return connectionId + ":" + clusterId;
   }
 
-  private String generateSchemaKey(int schemaId) {
-    return "schema:" + schemaId;
+  private String generateSchemaKey(String connectionId, int schemaId) {
+    return connectionId + ":" + schemaId;
   }
 
-  public Map<String, String> getSubCache(String key) {
+  public static Map<String, String> getSubCache(String key) {
     return cacheOfCaches.computeIfAbsent(key, k -> new ConcurrentHashMap<>());
   }
 
   // Methods for connection and cluster ID
-  public String readByConnectionId(String connectionId, String clusterId) {
+  public String readClusterIdByConnectionId(String connectionId, String clusterId) {
     return getSubCache(generateKey(connectionId, clusterId)).get(clusterId);
   }
 
-  public void writeByConnectionId(String connectionId, String clusterId, String error) {
+  public void writeClusterErrorByConnectionId(String connectionId, String clusterId, String error) {
     getSubCache(generateKey(connectionId, clusterId)).put(clusterId, error);
   }
 
-  public void clearByConnectionId(String connectionId, String clusterId) {
+  public static void clearClusterErrorByConnectionId(String connectionId, String clusterId) {
     Map<String, String> subCache = getSubCache(generateKey(connectionId, clusterId));
     subCache.remove(clusterId);
     if (subCache.isEmpty()) {
@@ -39,45 +39,45 @@ public class SchemaErrors {
   }
 
   // Methods for schema ID
-  public String readBySchemaId(int schemaId) {
-    return getSubCache(generateSchemaKey(schemaId)).get(String.valueOf(schemaId));
+  public String readSchemaIdByConnectionId(String connectionId, int schemaId) {
+    return getSubCache(generateSchemaKey(connectionId, schemaId)).get(String.valueOf(schemaId));
   }
 
-  public void writeBySchemaId(int schemaId, String error) {
-    getSubCache(generateSchemaKey(schemaId)).put(String.valueOf(schemaId), error);
+  public void writeSchemaIdByConnectionId(String connectionId, int schemaId, String error) {
+    getSubCache(generateSchemaKey(connectionId, schemaId)).put(String.valueOf(schemaId), error);
   }
 
-  public void clearBySchemaId(int schemaId) {
-    Map<String, String> subCache = getSubCache(generateSchemaKey(schemaId));
+  public void clearSchemaIdByConnectionId(String connectionId, int schemaId) {
+    Map<String, String> subCache = getSubCache(generateSchemaKey(connectionId, schemaId));
     subCache.remove(String.valueOf(schemaId));
     if (subCache.isEmpty()) {
-      cacheOfCaches.remove(generateSchemaKey(schemaId));
+      cacheOfCaches.remove(generateSchemaKey(connectionId, schemaId));
     }
   }
 
-  // Methods for cluster ID
-  public String readByClusterId(String clusterId) {
+  // Methods for connection ID
+  public String readConnectionId(String connectionId) {
     for (Map<String, String> subCache : cacheOfCaches.values()) {
-      if (subCache.containsKey(clusterId)) {
-        return subCache.get(clusterId);
+      if (subCache.containsKey(connectionId)) {
+        return subCache.get(connectionId);
       }
     }
     return null;
   }
 
-  public void writeByClusterId(String clusterId, String error) {
+  public void writeConnectionIdError(String connectionId, String error) {
     for (Map<String, String> subCache : cacheOfCaches.values()) {
-      if (subCache.containsKey(clusterId)) {
-        subCache.put(clusterId, error);
+      if (subCache.containsKey(connectionId)){
+        subCache.put(connectionId, error);
         return;
       }
     }
   }
 
-  public void clearByClusterId(String clusterId) {
+  public void clearByConnectionId(String connectionId) {
     for (Map<String, String> subCache : cacheOfCaches.values()) {
-      if (subCache.containsKey(clusterId)) {
-        subCache.remove(clusterId);
+      if (subCache.containsKey(connectionId)) {
+        subCache.remove(connectionId);
         return;
       }
     }
