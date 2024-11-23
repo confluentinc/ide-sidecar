@@ -41,25 +41,26 @@ public class LocalIT {
     TEST_ENVIRONMENT.shutdown();
   }
 
+  @QuarkusIntegrationTest
+  @Tag("io.confluent.common.utils.IntegrationTest")
+  @TestProfile(NoAccessFilterProfile.class)
+  @Nested
+  class ConnectionTests extends AbstractIT implements DirectConnectionSuite, LocalConnectionSuite {
+
+    @Override
+    public TestEnvironment environment() {
+      return TEST_ENVIRONMENT;
+    }
+
+    @BeforeEach
+    @Override
+    public void setupConnection() {
+      deleteAllConnections();
+    }
+  }
+
   @Nested
   class LocalConnectionTests {
-
-    @QuarkusIntegrationTest
-    @Tag("io.confluent.common.utils.IntegrationTest")
-    @TestProfile(NoAccessFilterProfile.class)
-    @Nested
-    class ConnectionAndGraphQL extends AbstractIT implements LocalConnectionSuite {
-
-      @Override
-      public TestEnvironment environment() {
-        return TEST_ENVIRONMENT;
-      }
-
-      @Override
-      public void setupConnection() {
-        deleteAllConnections();
-      }
-    }
 
     @QuarkusIntegrationTest
     @Tag("io.confluent.common.utils.IntegrationTest")
@@ -197,23 +198,6 @@ public class LocalIT {
 
   @Nested
   class DirectConnectionWithoutCredentialsTests {
-
-    @QuarkusIntegrationTest
-    @Tag("io.confluent.common.utils.IntegrationTest")
-    @TestProfile(NoAccessFilterProfile.class)
-    @Nested
-    class ConnectionAndGraphQL extends AbstractIT implements DirectConnectionSuite {
-
-      @Override
-      public TestEnvironment environment() {
-        return TEST_ENVIRONMENT;
-      }
-
-      @Override
-      public void setupConnection() {
-        deleteAllConnections();
-      }
-    }
 
     /**
      * All tests that create connections with this scope will reuse the same connection.
