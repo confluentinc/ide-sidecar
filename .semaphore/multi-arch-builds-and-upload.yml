@@ -21,6 +21,7 @@ global_job_config:
 
 blocks:
   - name: "Build Native Executable (MacOS AMD64)"
+    dependencies: []
     run:
       when: "branch =~ '.*'"
     task:
@@ -44,6 +45,7 @@ blocks:
           commands_file: build_native_executable_epilogue.sh
 
   - name: "Build Native Executable (MacOS ARM64)"
+    dependencies: []
     run:
       when: "branch =~ '.*'"
     task:
@@ -67,6 +69,7 @@ blocks:
           commands_file: build_native_executable_epilogue.sh
 
   - name: "Build Native Executable (Linux AMD64)"
+    dependencies: []
     run:
       when: "branch =~ '.*'"
     task:
@@ -89,6 +92,7 @@ blocks:
           commands_file: build_native_executable_epilogue.sh
 
   - name: "Build Native Executable (Linux ARM64)"
+    dependencies: []
     run:
       when: "branch =~ '.*'"
     task:
