@@ -1,0 +1,145 @@
+version: v1.0
+name: multi-arch-builds-and-upload
+agent:
+  machine:
+    type: s1-prod-ubuntu20-04-amd64-1
+
+execution_time_limit:
+  hours: 1
+
+global_job_config:
+  prologue:
+    commands:
+      - checkout
+      - make ci-bin-sem-cache-restore
+      - make docker-login-ci
+  epilogue:
+    always:
+      commands:
+        - make ci-bin-sem-cache-store
+        - make store-test-results-to-semaphore
+
+blocks:
+  - name: "Build Native Executable (MacOS AMD64)"
+    run:
+      when: "branch =~ '.*'"
+    task:
+      agent:
+        machine:
+          type: s1-prod-macos-13-5-amd64
+      prologue:
+        commands_file: build_native_executable_prologue.sh
+      env_vars:
+        - name: OS
+          value: macos
+        - name: ARCH
+          value: amd64
+      jobs:
+        - name: "Build Native Executable (MacOS AMD64)"
+          commands:
+            - make mvn-package-native
+            - make ci-sign-notarize-macos-executable
+      epilogue:
+        on_pass:
+          commands_file: build_native_executable_epilogue.sh
+
+  - name: "Build Native Executable (MacOS ARM64)"
+    run:
+      when: "branch =~ '.*'"
+    task:
+      agent:
+        machine:
+          type: s1-prod-macos-13-5-arm64
+      prologue:
+        commands_file: build_native_executable_prologue.sh
+      env_vars:
+        - name: OS
+          value: macos
+        - name: ARCH
+          value: arm64
+      jobs:
+        - name: "Build Native Executable (MacOS ARM64)"
+          commands:
+            - make mvn-package-native
+            - make ci-sign-notarize-macos-executable
+      epilogue:
+        on_pass:
+          commands_file: build_native_executable_epilogue.sh
+
+  - name: "Build Native Executable (Linux AMD64)"
+    run:
+      when: "branch =~ '.*'"
+    task:
+      agent:
+        machine:
+          type: s1-prod-ubuntu20-04-amd64-2
+      prologue:
+        commands_file: build_native_executable_prologue.sh
+      env_vars:
+        - name: OS
+          value: linux
+        - name: ARCH
+          value: amd64
+      jobs:
+        - name: "Build Native Executable (Linux AMD64)"
+          commands:
+            - make mvn-package-native
+      epilogue:
+        on_pass:
+          commands_file: build_native_executable_epilogue.sh
+
+  - name: "Build Native Executable (Linux ARM64)"
+    run:
+      when: "branch =~ '.*'"
+    task:
+      agent:
+        machine:
+          type: s1-prod-ubuntu20-04-arm64-2
+      prologue:
+        commands_file: build_native_executable_prologue.sh
+      env_vars:
+        - name: OS
+          value: linux
+        - name: ARCH
+          value: arm64
+      jobs:
+        - name: "Build Native Executable (Linux ARM64)"
+          commands:
+            - make mvn-package-native
+      epilogue:
+        on_pass:
+          commands_file: build_native_executable_epilogue.sh
+
+  - name: "Upload native executables to GitHub Releases"
+    run:
+      when: "branch =~ '.*'"
+    dependencies:
+      - "Build Native Executable (MacOS AMD64)"
+      - "Build Native Executable (MacOS ARM64)"
+      - "Build Native Executable (Linux AMD64)"
+      - "Build Native Executable (Linux ARM64)"
+    task:
+      prologue:
+        commands:
+          - checkout
+          - git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'
+          - git fetch --all --tags
+          - git checkout $(sem-context get release_version)
+          - artifact pull workflow native-executables/
+      jobs:
+        - name: "Upload native executables to GitHub Releases"
+          commands:
+            - make upload-artifacts-to-github-release
+
+after_pipeline:
+  task:
+    jobs:
+      - name: Publish Test Results to Semaphore
+        commands:
+          - test-results gen-pipeline-report || echo "Could not publish pipeline test result report due to probably no test results to publish"
+
+promotions:
+  - name: "Windows Build Test Release"
+    pipeline_file: windows.yml
+    auto_promote:
+      when: "result = 'passed' and branch =~ '.*'"
