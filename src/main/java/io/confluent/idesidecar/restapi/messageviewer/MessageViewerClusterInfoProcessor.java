@@ -1,7 +1,5 @@
 package io.confluent.idesidecar.restapi.messageviewer;
 
-import static io.confluent.idesidecar.restapi.messageviewer.RecordDeserializer.schemaErrors;
-
 import io.confluent.idesidecar.restapi.cache.ClusterCache;
 import io.confluent.idesidecar.restapi.clients.SchemaErrors;
 import io.confluent.idesidecar.restapi.connections.ConnectionState;
@@ -15,6 +13,7 @@ import io.quarkus.logging.Log;
 import io.vertx.core.Future;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.ObservesAsync;
+import jakarta.inject.Inject;
 
 /**
  * Retrieves information about the Kafka and Schema Registry clusters when processing a request
@@ -23,6 +22,9 @@ import jakarta.enterprise.event.ObservesAsync;
 @ApplicationScoped
 public class MessageViewerClusterInfoProcessor extends
     Processor<MessageViewerContext, Future<MessageViewerContext>> {
+
+  @Inject
+  SchemaErrors schemaErrors;
 
   private final ClusterCache clusterCache;
 
@@ -86,7 +88,7 @@ public class MessageViewerClusterInfoProcessor extends
   void onConnectionDisconnected(
       @ObservesAsync @Lifecycle.Disconnected ConnectionState connection
   ) {
-    schemaErrors.clearByConnectionId(connection.getId());
+    schemaErrors.clearByConnectionId(new SchemaErrors.ConnectionId(connection.getId()));
   }
 
   /**
@@ -95,7 +97,7 @@ public class MessageViewerClusterInfoProcessor extends
    * @param connection the connection that was deleted
    */
   void onConnectionDeleted(@ObservesAsync @Lifecycle.Deleted ConnectionState connection) {
-    schemaErrors.clearByConnectionId(connection.getId());
+    schemaErrors.clearByConnectionId(new SchemaErrors.ConnectionId(connection.getId()));
   }
 }
 

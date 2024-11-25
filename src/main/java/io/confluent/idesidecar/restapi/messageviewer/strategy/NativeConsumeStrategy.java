@@ -40,11 +40,12 @@ public class NativeConsumeStrategy implements ConsumeStrategy {
     var topic = context.getTopicName();
     var schemaRegistryClient = Optional
         .ofNullable(context.getSchemaRegistryInfo())
-        .map(info -> schemaRegistryClients.getClient(context.getConnectionId(), info.id()))
+        .map(info -> schemaRegistryClients.getClient(
+            String.valueOf(context.getConnectionId()), info.id()))
         .orElse(null);
 
     var consumer = consumerFactory.getClient(
-        context.getConnectionId(),
+        String.valueOf(context.getConnectionId()),
         context.getClusterId(),
         request.consumerConfigOverrides()
     );

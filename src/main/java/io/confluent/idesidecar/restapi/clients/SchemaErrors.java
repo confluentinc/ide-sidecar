@@ -1,29 +1,51 @@
 package io.confluent.idesidecar.restapi.clients;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import io.confluent.idesidecar.restapi.connections.ConnectionState;
+import io.confluent.idesidecar.restapi.events.Lifecycle;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.ObservesAsync;
+import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @ApplicationScoped
 public class SchemaErrors {
 
-  private static final Map<String, Map<String, String>> cacheOfCaches = new ConcurrentHashMap<>();
+  public record ConnectionId(String id) {
+  }
+  public record SchemaId(String clusterId, int schemaId) {}
+  public record Error(String message) {}
 
-  public static Map<String, String> getSubCache(String key) {
-    return cacheOfCaches.computeIfAbsent(key, k -> new ConcurrentHashMap<>());
+  private static final Duration SCHEMA_FETCH_ERROR_TTL = Duration.ofSeconds(30);
+
+  public static final Map<ConnectionId, Cache<SchemaId, SchemaErrors.Error>> cacheOfCaches = new ConcurrentHashMap<>();
+  public static Cache<SchemaId, Error> getSubCache(ConnectionId key) {
+    return cacheOfCaches.computeIfAbsent(key, k -> Caffeine.newBuilder()
+                                                           .expireAfterAccess(SCHEMA_FETCH_ERROR_TTL)
+                                                           .build());
   }
 
   // Methods for schema ID
-  public String readSchemaIdByConnectionId(String connectionId, int schemaId) {
-    return getSubCache(connectionId).get(String.valueOf(schemaId));
+  public Error readSchemaIdByConnectionId(ConnectionId connectionId, SchemaId schemaId) {
+    return getSubCache(connectionId).getIfPresent(schemaId);
   }
 
-  public void writeSchemaIdByConnectionId(String connectionId, int schemaId, String error) {
-    getSubCache(connectionId).put(String.valueOf(schemaId), error);
+  public void writeSchemaIdByConnectionId(ConnectionId connectionId, SchemaId schemaId, Error error) {
+    getSubCache(connectionId).put(schemaId, error);
   }
 
-  public void clearByConnectionId(String connectionId) {
-    cacheOfCaches.remove(connectionId);
-    return;
+  public void clearByConnectionId(ConnectionId connectionId) {
+    cacheOfCaches.remove(connectionId, getSubCache(connectionId));
       }
+
+  public void onConnectionChange(@ObservesAsync @Lifecycle.Deleted @Lifecycle.Created @Lifecycle.Updated ConnectionState connection) {
+    cacheOfCaches.remove(new ConnectionId(connection.getId()));
+  }
+
+  public void wipeOutFirstLevelCache(){
+    cacheOfCaches.clear();
+  }
+
     }

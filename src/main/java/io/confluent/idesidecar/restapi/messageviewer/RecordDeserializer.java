@@ -60,11 +60,12 @@ public class RecordDeserializer {
   private static final Map<String, String> SERDE_CONFIGS = ConfigUtil
       .asMap("ide-sidecar.serde-configs");
 
+  @Inject
+  SchemaErrors schemaErrors;
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
   private static final ObjectMapper AVRO_OBJECT_MAPPER = new AvroMapper(new AvroFactory());
   public static final byte MAGIC_BYTE = 0x0;
   private static final Duration CACHE_FAILED_SCHEMA_ID_FETCH_DURATION = Duration.ofSeconds(30);
-  public static SchemaErrors schemaErrors = new SchemaErrors();
   private final Duration schemaFetchRetryInitialBackoff;
   private final Duration schemaFetchRetryMaxBackoff;
   private final Duration schemaFetchTimeout;
@@ -85,7 +86,7 @@ public class RecordDeserializer {
     this.schemaFetchRetryMaxBackoff = Duration.ofMillis(schemaFetchRetryMaxBackoffMs);
     this.schemaFetchTimeout = Duration.ofMillis(schemaFetchTimeoutMs);
     this.schemaFetchMaxRetries = schemaFetchMaxRetries;
-    RecordDeserializer.schemaErrors = schemaErrors;
+    this.schemaErrors= schemaErrors;
   }
 
   @RecordBuilder
@@ -223,16 +224,15 @@ public class RecordDeserializer {
     if (result.isPresent()) {
       return result.get();
     }
-
-    final int schemaId = getSchemaIdFromRawBytes(bytes);
+    SchemaErrors.SchemaId schemaId = new SchemaErrors.SchemaId(context.getClusterId(), getSchemaIdFromRawBytes(bytes));
     // Check if schema retrieval has failed recently
-    var cachedError = schemaErrors.readSchemaIdByConnectionId(context.getConnectionId(), schemaId);
-    if (cachedError != null) {
+    if (schemaErrors.readSchemaIdByConnectionId(new SchemaErrors.ConnectionId(context.getConnectionId()), schemaId) != null) {
       return new DecodedResult(
           // If the schema fetch failed, we can't decode the data, so we just return the raw bytes.
           // We apply the encoderOnFailure function to the bytes before returning them.
           onFailure(encoderOnFailure, bytes),
-          cachedError
+          String.valueOf(
+              schemaErrors.readSchemaIdByConnectionId(new SchemaErrors.ConnectionId(context.getConnectionId()), schemaId))
       );
     }
 
@@ -241,7 +241,7 @@ public class RecordDeserializer {
       // and retry if the operation fails due to a retryable exception.
       var parsedSchema = Uni
           .createFrom()
-          .item(Unchecked.supplier(() -> schemaRegistryClient.getSchemaById(schemaId)))
+          .item(Unchecked.supplier(() -> schemaRegistryClient.getSchemaById(schemaId.schemaId())))
           .onFailure(this::isRetryableException)
           .retry()
           .withBackOff(schemaFetchRetryInitialBackoff, schemaFetchRetryMaxBackoff)
@@ -326,24 +326,26 @@ public class RecordDeserializer {
     return deserialize(bytes, schemaRegistryClient, context, isKey, Optional.empty());
   }
 
-  private static void cacheSchemaFetchError(Throwable e, int schemaId, MessageViewerContext context) {
+  private void cacheSchemaFetchError(
+      Throwable e, SchemaErrors.SchemaId schemaId, MessageViewerContext context
+  ) {
     var retryTime = Instant.now().plus(CACHE_FAILED_SCHEMA_ID_FETCH_DURATION);
     var timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
         .withZone(ZoneId.systemDefault());
     Log.errorf(
         "Failed to retrieve schema with ID %d. Will try again in %d seconds at %s. Error: %s",
-        schemaId,
+        schemaId.schemaId(),
         CACHE_FAILED_SCHEMA_ID_FETCH_DURATION.getSeconds(),
         timeFormatter.format(retryTime),
         e.getMessage(),
         e
     );
-    var errorMessage = String.format(
+    SchemaErrors.Error errorMessage = new SchemaErrors.Error(String.format(
         "Failed to retrieve schema with ID %d: %s",
-        schemaId,
+        schemaId.schemaId(),
         e.getMessage()
-    );
-    schemaErrors.writeSchemaIdByConnectionId(context.getConnectionId(), schemaId, errorMessage);
+    ));
+    schemaErrors.writeSchemaIdByConnectionId(new SchemaErrors.ConnectionId(context.getConnectionId()), schemaId, errorMessage);
   }
 
   /**

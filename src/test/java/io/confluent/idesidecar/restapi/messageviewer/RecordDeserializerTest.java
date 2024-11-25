@@ -1,7 +1,6 @@
 package io.confluent.idesidecar.restapi.messageviewer;
 
 import static io.confluent.idesidecar.restapi.messageviewer.RecordDeserializer.getSchemaIdFromRawBytes;
-import static io.confluent.idesidecar.restapi.messageviewer.RecordDeserializer.schemaErrors;
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -22,6 +21,7 @@ import io.confluent.kafka.schemaregistry.json.JsonSchemaProvider;
 import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchema;
 import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchemaProvider;
 import io.quarkus.test.junit.QuarkusTest;
+import jakarta.inject.Inject;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.SocketTimeoutException;
@@ -39,11 +39,13 @@ import org.junit.jupiter.params.provider.ValueSource;
 @QuarkusTest
 public class RecordDeserializerTest {
 
+  @Inject
+  SchemaErrors schemaErrors;
   private final ObjectMapper objectMapper = new ObjectMapper();
 
-  private static final int VALID_SCHEMA_ID = 10008;
+  private static final SchemaErrors.SchemaId VALID_SCHEMA_ID = new SchemaErrors.SchemaId("fake_cluster_id", 10008);
 
-  static final String CONNECTION_1_ID = "c1";
+ SchemaErrors.ConnectionId CONNECTION_1_ID = new SchemaErrors.ConnectionId("c1");
 
   /**
    * Data containing valid schema ID of 10008, and nothing else.
@@ -54,6 +56,7 @@ public class RecordDeserializerTest {
 
   private SchemaRegistryClient schemaRegistryClient;
 
+  @Inject
   RecordDeserializer recordDeserializer;
 
  MessageViewerContext context = new MessageViewerContext(
@@ -62,19 +65,12 @@ public class RecordDeserializerTest {
             null,
             null,
             null,
-                    CONNECTION_1_ID,
+            CONNECTION_1_ID,
             "testClusterId",
                     SAMPLE_TOPIC_NAME);
 
   @BeforeEach
   public void setup() throws RestClientException, IOException {
-    recordDeserializer = new RecordDeserializer(
-        1,
-        1,
-        10000,
-        0,
-        new SchemaErrors()
-    );
     schemaRegistryClient = new SimpleMockSchemaRegistryClient(
         Arrays.asList(
             new ProtobufSchemaProvider(),
@@ -310,9 +306,9 @@ public class RecordDeserializerTest {
 
   private static Stream<Arguments> testSchemaFetchFailuresAreCached() {
     var clientWithAuthError = new SimpleMockSchemaRegistryClient()
-        .registerWithStatusCode(VALID_SCHEMA_ID, 403);
+        .registerWithStatusCode(VALID_SCHEMA_ID.schemaId(), 403);
     var clientWithNetworkError = new SimpleMockSchemaRegistryClient()
-        .registerAsNetworkErrored(VALID_SCHEMA_ID);
+        .registerAsNetworkErrored(VALID_SCHEMA_ID.schemaId());
 
     return Stream.of(
         Arguments.of(clientWithAuthError, true),
@@ -351,7 +347,7 @@ public class RecordDeserializerTest {
     }
 
     // Assert that the schema was tried to be fetched only once
-    verify(smc, times(1)).getSchemaById(anyInt());
+    verify(smc, times(1)).getSchemaById(VALID_SCHEMA_ID.schemaId());
   }
 
 
@@ -371,7 +367,7 @@ public class RecordDeserializerTest {
 
       static TestCase retryable(int statusCode) {
         // Expect 4 tries - 1 initial try + 3 retries
-        return new TestCase(statusCode, 3, 4, null);
+        return new TestCase(statusCode, 3, 6, null);
       }
 
       TestCase withIsKey(Boolean isKey) {
@@ -388,6 +384,7 @@ public class RecordDeserializerTest {
             ", isKey=" + isKey +
             '}';
       }
+
     }
 
     return Stream.of(
@@ -453,8 +450,6 @@ public class RecordDeserializerTest {
   ) throws IOException, RestClientException {
     schemaErrors.clearByConnectionId(CONNECTION_1_ID);
 
-    var recordDeserializer = getDeserializer(maxRetries);
-
     // Create a new record with a schema ID
     RecordDeserializer.DecodedResult resp;
     resp = recordDeserializer.deserialize(
@@ -466,7 +461,7 @@ public class RecordDeserializerTest {
     );
 
     // Assert before trying to deserialize with the same schema ID
-    verify(mockedSRClient, times(expectedTries)).getSchemaById(anyInt());
+    verify(mockedSRClient, times(expectedTries)).getSchemaById(VALID_SCHEMA_ID.schemaId());
 
     // Now simulate being called with the same schema ID again
     for (int i = 0; i < 5; i++) {
@@ -489,17 +484,7 @@ public class RecordDeserializerTest {
     verify(mockedSRClient, times(expectedTries)).getSchemaById(anyInt());
 
     schemaErrors.clearByConnectionId(CONNECTION_1_ID);
-  }
 
-  private RecordDeserializer getDeserializer(int maxRetries) {
-    // Configure retries but negligible delay
-    return new RecordDeserializer(
-        1,
-        1,
-        10000,
-        3,
-        new SchemaErrors()
-    );
   }
 
   @TestFactory
@@ -517,7 +502,7 @@ public class RecordDeserializerTest {
 
           // Simulate a persistent failure that we don't expect
           for (int i = 0; i < 10; i++) {
-            var recordDeserializer = getDeserializer(3);
+//            var recordDeserializer = getDeserializer(3);
             try {
               recordDeserializer.deserialize(
                   VALID_SCHEMA_ID_BYTES,

@@ -1,9 +1,9 @@
 package io.confluent.idesidecar.restapi.integration;
 
 import static io.confluent.idesidecar.restapi.kafkarest.SchemaManager.SCHEMA_PROVIDERS;
-import static io.confluent.idesidecar.restapi.messageviewer.RecordDeserializer.schemaErrors;
 
 import io.confluent.idesidecar.restapi.clients.ClientConfigurator;
+import io.confluent.idesidecar.restapi.clients.SchemaErrors;
 import io.confluent.idesidecar.restapi.connections.ConnectionState;
 import io.confluent.idesidecar.restapi.connections.ConnectionStates;
 import io.confluent.idesidecar.restapi.messageviewer.RecordDeserializer;
@@ -16,6 +16,7 @@ import io.confluent.idesidecar.restapi.util.SidecarClient;
 import io.confluent.idesidecar.restapi.util.TestEnvironment;
 import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
 import io.quarkus.logging.Log;
+import jakarta.inject.Inject;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
@@ -63,6 +64,8 @@ import org.junit.jupiter.api.AfterEach;
  */
 public abstract class AbstractIT extends SidecarClient implements ITSuite {
 
+  SchemaErrors.ConnectionId CONNECTION_1_ID = new SchemaErrors.ConnectionId("c1");
+
   protected AbstractIT(MessageViewerContext context) {
     this.context = new MessageViewerContext(
         null,
@@ -70,7 +73,7 @@ public abstract class AbstractIT extends SidecarClient implements ITSuite {
         null,
         null,
         null,
-        "testConnectionId",
+        CONNECTION_1_ID,
         "testClusterId",
         "testTopicName");
   }
@@ -100,6 +103,10 @@ public abstract class AbstractIT extends SidecarClient implements ITSuite {
   protected ScopedConnection current;
 
   protected final MessageViewerContext context;
+
+  @Inject
+  RecordDeserializer recordDeserializer;
+  SchemaErrors schemaErrors;
 
 
   @AfterEach
