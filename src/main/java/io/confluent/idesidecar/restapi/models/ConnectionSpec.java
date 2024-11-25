@@ -255,21 +255,39 @@ public record ConnectionSpec(
         String path,
         String what
     ) {
-      // Note that when the SR URI is blank, we assume the user does not want to use SR.
+      // Note that when the SR URI is an empty string, we assume the user does not want to use SR.
       // When the SR URI is null, the user wants to use the SR at the default localhost & port
-      if (schemaRegistryUri != null
-          && !schemaRegistryUri.isEmpty()
-          && schemaRegistryUri.isBlank()
-      ) {
-        // It has non-zero whitespace only, so this is invalid
-        errors.add(
-            Error.create()
-                 .withDetail(
-                     "Schema Registry URI may be null (use default local SR) or empty "
-                     + "(do not use SR), but may not have only whitespace"
-                 )
-                 .withSource("%s.schema-registry-uri", path)
-        );
+      if (schemaRegistryUri != null && !schemaRegistryUri.isEmpty()) {
+        if (schemaRegistryUri.isBlank()) {
+          // It has non-zero whitespace only, so this is invalid
+          errors.add(
+              Error.create()
+                   .withDetail(
+                       "Schema Registry URI may be null (use default local SR) or empty "
+                       + "(do not use SR), but may not have only whitespace"
+                   )
+                   .withSource("%s.schema-registry-uri", path)
+          );
+        } else {
+          // The URI is not blank or empty, so check if it's a valid URI
+          try {
+            var uri = new URI(schemaRegistryUri);
+            var scheme = uri.getScheme();
+            if (!"https".equals(scheme) && !"http".equals(scheme)) {
+              errors.add(
+                  Error.create()
+                       .withDetail("Schema Registry URI must use 'http' or 'https'")
+                       .withSource("%s.schema-registry-uri", path)
+              );
+            }
+          } catch (URISyntaxException e) {
+            errors.add(
+                Error.create()
+                     .withDetail("Schema Registry URI is not a valid URI")
+                     .withSource("%s.schema-registry-uri", path)
+            );
+          }
+        }
       }
     }
   }
@@ -434,8 +452,17 @@ public record ConnectionSpec(
                          .withSource("%s.uri", path)
         );
       } else {
+        // Check if the URI is valid
         try {
-          new URI(uri);
+          var uriObj = new URI(uri);
+          var scheme = uriObj.getScheme();
+          if (!"https".equals(scheme) && !"http".equals(scheme)) {
+            errors.add(
+                Error.create()
+                     .withDetail("%s URI must use 'http' or 'https'", what)
+                     .withSource("%s.uri", path)
+            );
+          }
         } catch (URISyntaxException e) {
           errors.add(
               Failure.Error.create()
