@@ -143,40 +143,36 @@ public class ConnectionStateManager {
    */
   public ConnectionState testConnectionState(
       ConnectionSpec spec
-  ) throws CreateConnectionException, InvalidInputException {
-    final ConnectionSpec originalSpec = spec;
-    // Validate the spec (with a random ID
-    if (spec.id() == null) {
-      // Generate a new ID so the validation does not fail
-      spec = spec.withId(idFactory.getRandomUuid());
-    } else if (connectionStates.containsKey(spec.id())) {
-      throw new CreateConnectionException(
-          String.format("There is already a connection with ID '%s'.", spec.id())
-      );
-    }
-    var errors = spec.validate();
-    if (!errors.isEmpty()) {
-      throw new InvalidInputException(errors);
-    }
-
-    // Use the original spec, and do not specify a listener
-    return ConnectionStates.from(originalSpec, null);
+  ) throws CreateConnectionException {
+    return createConnectionState(spec, true);
   }
 
-  public synchronized ConnectionState createConnectionState(
+  /**
+   * Validate the given connection spec and when valid create a new connection with that spec.
+   *
+   * @param spec the specification for the connection
+   * @return the new connection state
+   * @throws CreateConnectionException if the spec includes an ID that already exists
+   * @throws InvalidInputException if the spec is not valid
+   */
+  public ConnectionState createConnectionState(
       ConnectionSpec spec
   ) throws CreateConnectionException {
+    return createConnectionState(spec, false);
+  }
+
+  private synchronized ConnectionState createConnectionState(
+      ConnectionSpec spec,
+      boolean dryRun
+  ) throws CreateConnectionException {
+    final ConnectionSpec originalSpec = spec;
     if (spec.id() == null) {
       // Generate a new ID for this new spec
       spec = spec.withId(idFactory.getRandomUuid());
     }
     if (connectionStates.containsKey(spec.id())) {
       throw new CreateConnectionException(
-          String.format(
-              "Connection id %s already present. Cannot create another connection %s",
-              spec.id(),
-              spec.id()
-          )
+          String.format("There is already a connection with ID '%s'.", spec.id())
       );
     }
     // Validate the spec
@@ -185,10 +181,16 @@ public class ConnectionStateManager {
       throw new InvalidInputException(errors);
     }
 
+    if (dryRun) {
+      // Use the original spec (without the generated ID), and do not specify a listener
+      return ConnectionStates.from(originalSpec, null);
+    }
+
+    // Otherwise create the connection state and store it
     var connection = ConnectionStates.from(spec, stateChangeListener);
     connectionStates.put(spec.id(), connection);
 
-    // Fire a event
+    // And fire a event signaling the creation
     Events.fireAsyncEvent(
         connectionStateEvents,
         connection,
