@@ -860,6 +860,66 @@ public class ConnectionsResourceTest {
                 .withDetail("Schema Registry password is required")
         ),
         new TestInput(
+            "Local spec is invalid with malformed Schema Registry URI (old config)",
+            """
+            {
+              "name": "Connection 1",
+              "type": "LOCAL",
+              "local_config": {
+                "schema-registry-uri": "this-is-not a valid URI"
+              }
+            }
+            """,
+            createError()
+                .withSource("local_config.schema-registry-uri")
+                .withDetail("Schema Registry URI is not a valid URI")
+        ),
+        new TestInput(
+            "Local spec is invalid with malformed Schema Registry URI (new config)",
+            """
+            {
+              "name": "Connection 1",
+              "type": "LOCAL",
+              "schema_registry": {
+                "uri": "this-is-not a valid URI"
+              }
+            }
+            """,
+            createError()
+                .withSource("schema_registry.uri")
+                .withDetail("Schema Registry URI is not a valid URI")
+        ),
+        new TestInput(
+            "Local spec is invalid with file Schema Registry URI (old config)",
+            """
+            {
+              "name": "Connection 1",
+              "type": "LOCAL",
+              "local_config": {
+                "schema-registry-uri": "file://path/to/non/existent/file.txt"
+              }
+            }
+            """,
+            createError()
+                .withSource("local_config.schema-registry-uri")
+                .withDetail("Schema Registry URI must use 'http' or 'https'")
+        ),
+        new TestInput(
+            "Local spec is invalid with file Schema Registry URI (new config)",
+            """
+            {
+              "name": "Connection 1",
+              "type": "LOCAL",
+              "schema_registry": {
+                "uri": "file://path/to/non/existent/file.txt"
+              }
+            }
+            """,
+            createError()
+                .withSource("schema_registry.uri")
+                .withDetail("Schema Registry URI must use 'http' or 'https'")
+        ),
+        new TestInput(
             "Local spec is invalid with CCloud spec",
             """
             {
