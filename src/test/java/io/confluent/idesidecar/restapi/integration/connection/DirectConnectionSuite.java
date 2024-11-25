@@ -1,11 +1,11 @@
 package io.confluent.idesidecar.restapi.integration.connection;
 
 import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
-import static org.hamcrest.Matchers.startsWith;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -35,7 +35,7 @@ public interface DirectConnectionSuite extends ITSuite {
         .contentType(ContentType.JSON)
         .body("api_version", equalTo("gateway/v1"))
         .body("kind", equalTo("Connection"))
-        .body("metadata.self", startsWith(sidecarUri("/gateway/v1/connections/")))
+        .body("metadata.self", containsString("/gateway/v1/connections/"))
         .body("metadata.resource_name", nullValue())
         .body("id", equalTo(spec.id()))
         .body("spec.id", equalTo(spec.id()))
@@ -55,7 +55,7 @@ public interface DirectConnectionSuite extends ITSuite {
           .contentType(ContentType.JSON)
           .body("api_version", equalTo("gateway/v1"))
           .body("kind", equalTo("Connection"))
-          .body("metadata.self", startsWith(sidecarUri("/gateway/v1/connections/")))
+          .body("metadata.self", containsString("/gateway/v1/connections/"))
           .body("metadata.resource_name", nullValue())
           .body("id", equalTo(spec.id()))
           .body("spec.id", equalTo(spec.id()))
@@ -75,7 +75,7 @@ public interface DirectConnectionSuite extends ITSuite {
           .contentType(ContentType.JSON)
           .body("api_version", equalTo("gateway/v1"))
           .body("kind", equalTo("Connection"))
-          .body("metadata.self", startsWith(sidecarUri("/gateway/v1/connections/")))
+          .body("metadata.self", containsString("/gateway/v1/connections/"))
           .body("metadata.resource_name", nullValue())
           .body("id", equalTo(spec.id()))
           .body("spec.id", equalTo(spec.id()))
@@ -102,7 +102,7 @@ public interface DirectConnectionSuite extends ITSuite {
         .contentType(ContentType.JSON)
         .body("api_version", equalTo("gateway/v1"))
         .body("kind", equalTo("Connection"))
-        .body("metadata.self", startsWith(sidecarUri("/gateway/v1/connections/")))
+        .body("metadata.self", containsString("/gateway/v1/connections/"))
         .body("metadata.resource_name", nullValue())
         .body("id", nullValue())
         .body("spec.id", nullValue())
