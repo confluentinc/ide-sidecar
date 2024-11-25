@@ -94,6 +94,13 @@ paths:
     post:
       tags:
       - Connections Resource
+      parameters:
+      - name: dry_run
+        in: query
+        schema:
+          description: Whether to check the connection without creating it
+          default: false
+          type: boolean
       requestBody:
         content:
           application/json:
