@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.confluent.idesidecar.restapi.integration.ITSuite;
+import io.confluent.idesidecar.restapi.models.Connection;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
 import io.confluent.idesidecar.restapi.models.ConnectionStatus.Authentication.Status;
 import io.restassured.http.ContentType;
@@ -43,7 +44,8 @@ public interface LocalConnectionSuite extends ITSuite {
         .body("spec.schema_registry", nullValue())
         .body("status.authentication.status", equalTo(Status.NO_TOKEN.name()))
         .body("status.kafka_cluster", nullValue())
-        .body("status.schema_registry", nullValue());
+        .body("status.schema_registry", nullValue())
+        .extract().body().as(Connection.class);
 
   }
 
@@ -70,7 +72,8 @@ public interface LocalConnectionSuite extends ITSuite {
         .body("spec.schema_registry", nullValue())
         .body("status.authentication.status", equalTo(Status.NO_TOKEN.name()))
         .body("status.kafka_cluster", nullValue())
-        .body("status.schema_registry", nullValue());
+        .body("status.schema_registry", nullValue())
+        .extract().body().as(Connection.class);
   }
 
   @Test
@@ -115,7 +118,8 @@ public interface LocalConnectionSuite extends ITSuite {
         .body(
             "status.authentication.status",
             equalTo(Status.NO_TOKEN.name())
-        );
+        )
+        .extract().body().as(Connection.class);
 
     // Query for resources
     submitLocalConnectionsGraphQL()
@@ -149,7 +153,8 @@ public interface LocalConnectionSuite extends ITSuite {
         .body(
             "status.authentication.status",
             equalTo(Status.NO_TOKEN.name())
-        );
+        )
+        .extract().body().as(Connection.class);
 
     // Query for resources
     submitLocalConnectionsGraphQL()
