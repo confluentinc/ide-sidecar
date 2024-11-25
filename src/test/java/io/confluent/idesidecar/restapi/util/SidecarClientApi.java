@@ -56,6 +56,10 @@ public interface SidecarClientApi {
 
   String sidecarHost();
 
+  default String sidecarUri(String endpointPath) {
+    return "%s%s".formatted(sidecarHost(), endpointPath);
+  }
+
   void createTopic(String topicName, int partitions, int replicationFactor);
 
   String currentConnectionId();
