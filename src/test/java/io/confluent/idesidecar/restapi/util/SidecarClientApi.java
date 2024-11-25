@@ -96,6 +96,10 @@ public interface SidecarClientApi {
 
   void setCurrentCluster(String clusterId);
 
+  ValidatableResponse testConnectionWithResponse(ConnectionSpec spec);
+
+  Connection testConnection(ConnectionSpec spec);
+
   Connection createConnection(ConnectionSpec spec);
 
   Connection createLocalConnectionTo(TestEnvironment env, String scope);
