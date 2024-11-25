@@ -255,10 +255,10 @@ public record ConnectionSpec(
         String path,
         String what
     ) {
-      if (schemaRegistryUri != null) {
-        // Note that when the SR URI is blank, we assume the user does not want to use SR.
-        // When the SR URI is null, the user wants to use the SR at the default localhost & port
-        if (!schemaRegistryUri.isEmpty() && schemaRegistryUri.isBlank()) {
+      // Note that when the SR URI is an empty string, we assume the user does not want to use SR.
+      // When the SR URI is null, the user wants to use the SR at the default localhost & port
+      if (schemaRegistryUri != null && !schemaRegistryUri.isEmpty()) {
+        if (schemaRegistryUri.isBlank()) {
           // It has non-zero whitespace only, so this is invalid
           errors.add(
               Error.create()
