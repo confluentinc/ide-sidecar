@@ -137,7 +137,7 @@
           "name" : "dry_run",
           "in" : "query",
           "schema" : {
-            "description" : "Whether to check the connection without creating it",
+            "description" : "Whether to validate the connection spec and determine the connection status without creating the connection",
             "default" : false,
             "type" : "boolean"
           }
