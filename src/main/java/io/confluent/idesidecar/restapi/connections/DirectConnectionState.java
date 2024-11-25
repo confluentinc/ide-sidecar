@@ -48,18 +48,16 @@ public class DirectConnectionState extends ConnectionState {
           .orElse(5L)
   );
 
-  static final ConnectionStatus INITIAL_STATUS = new ConnectionStatus(
+  static final KafkaClusterStatus KAFKA_INITIAL_STATUS = new KafkaClusterStatus(
+      ConnectedState.ATTEMPTING,
       null,
-      new KafkaClusterStatus(
-          ConnectedState.ATTEMPTING,
-          null,
-          null
-      ),
-      new SchemaRegistryStatus(
-          ConnectedState.ATTEMPTING,
-          null,
-          null
-      )
+      null
+  );
+
+  static final SchemaRegistryStatus SR_INITIAL_STATUS = new SchemaRegistryStatus(
+      ConnectedState.ATTEMPTING,
+      null,
+      null
   );
 
   public DirectConnectionState() {
@@ -75,7 +73,11 @@ public class DirectConnectionState extends ConnectionState {
 
   @Override
   public ConnectionStatus getInitialStatus() {
-    return INITIAL_STATUS;
+    return new ConnectionStatus(
+        null,
+        spec.kafkaClusterConfig() != null ? KAFKA_INITIAL_STATUS : null,
+        spec.schemaRegistryConfig() != null ? SR_INITIAL_STATUS : null
+    );
   }
 
   public MultiMap getAuthenticationHeaders(ClusterType clusterType) {
@@ -177,13 +179,8 @@ public class DirectConnectionState extends ConnectionState {
         }
     ).orElseGet(
         () -> {
-            // There is no Kafka cluster configuration, so return the NONE state
-            return Future.succeededFuture(
-                ConnectionStatusKafkaClusterStatusBuilder
-                    .builder()
-                    .state(ConnectedState.NONE)
-                    .build()
-            );
+            // There is no Kafka cluster configuration, so return a null Kafka status
+            return Future.succeededFuture(null);
         }
     );
   }
@@ -221,13 +218,8 @@ public class DirectConnectionState extends ConnectionState {
               ).build()
       );
     }).orElseGet(() -> {
-      // There is no Schema Registry configuration, so return the NONE state
-      return Future.succeededFuture(
-          ConnectionStatusSchemaRegistryStatusBuilder
-              .builder()
-              .state(ConnectedState.NONE)
-              .build()
-          );
+      // There is no Schema Registry configuration, so return no status for SR
+      return Future.succeededFuture(null);
     });
   }
 
