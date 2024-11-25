@@ -200,12 +200,25 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
               false
           );
 
+          var decodedHeaders = record
+              .headers()
+              .stream()
+              .map(header -> {
+                var decodedValue = new String(
+                    BASE64_DECODER.decode(header.value()), StandardCharsets.UTF_8
+                );
+                return new SimpleConsumeMultiPartitionResponse.PartitionConsumeRecordHeader(
+                    header.key(),
+                    decodedValue
+                );
+              });
+
           return new PartitionConsumeRecord(
               record.partitionId(),
               record.offset(),
               record.timestamp(),
               record.timestampType(),
-              record.headers(),
+              decodedHeaders.toList(),
               keyData.value(),
               valueData.value(),
               keyData.errorMessage(),
