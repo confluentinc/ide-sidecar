@@ -87,7 +87,9 @@ public class ConnectionsResource {
   public Uni<Connection> createConnection(
       ConnectionSpec connectionSpec,
       @Schema(
-          description = "Whether to check the connection without creating it",
+          description =
+              "Whether to validate the connection spec and determine the connection status "
+              + "without creating the connection",
           defaultValue = "false"
       )
       @QueryParam("dry_run")
