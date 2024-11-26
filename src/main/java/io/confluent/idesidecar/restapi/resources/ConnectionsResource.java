@@ -20,6 +20,7 @@ import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -61,11 +62,37 @@ public class ConnectionsResource {
   @POST
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
-  public Connection createConnection(ConnectionSpec connectionSpec)
-      throws ConnectionNotFoundException, CreateConnectionException {
-
-    var newSpec = connectionStateManager.createConnectionState(connectionSpec);
-    return Connection.from(newSpec);
+  public Uni<Connection> createConnection(
+      ConnectionSpec connectionSpec,
+      @Schema(
+          description =
+              "Whether to validate the connection spec and determine the connection status "
+              + "without creating the connection",
+          defaultValue = "false"
+      )
+      @QueryParam("dry_run")
+      boolean dryRun
+  ) throws ConnectionNotFoundException, CreateConnectionException {
+    if (dryRun) {
+      // Just test the connection and return the status
+      var testedState = connectionStateManager.testConnectionState(connectionSpec);
+      // Get the status of the connection
+      var futureStatus = testedState.checkStatus();
+      // And create a uni that will complete when the status is available
+      return Uni
+          .createFrom()
+          .completionStage(futureStatus.toCompletionStage())
+          .map(connectionStatus ->
+              Connection.from(testedState, connectionStatus)
+          );
+    }
+    // Create a real connection state and return the connection using the initial status
+    var newState = connectionStateManager.createConnectionState(connectionSpec);
+    return Uni
+        .createFrom()
+        .item(
+            Connection.from(newState)
+        );
   }
 
   @GET

@@ -56,6 +56,10 @@ public interface SidecarClientApi {
 
   String sidecarHost();
 
+  default String sidecarUri(String endpointPath) {
+    return "%s%s".formatted(sidecarHost(), endpointPath);
+  }
+
   void createTopic(String topicName, int partitions, int replicationFactor);
 
   String currentConnectionId();
@@ -95,6 +99,10 @@ public interface SidecarClientApi {
   void useConnection(String connectionId);
 
   void setCurrentCluster(String clusterId);
+
+  ValidatableResponse testConnectionWithResponse(ConnectionSpec spec);
+
+  Connection testConnection(ConnectionSpec spec);
 
   Connection createConnection(ConnectionSpec spec);
 

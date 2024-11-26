@@ -5,7 +5,12 @@ const brokers = ["{{ cc_bootstrap_server }}"];
 
 const kafka = new Kafka({
   kafkaJS: {
-    clientId: "{{ client_id }}",
+    {{#confluent.client_id}}
+    clientId: "{{ confluent.client_id }}",
+    {{/confluent.client_id}}
+    {{^confluent.client_id}}
+    clientId: "javascript-producer",
+    {{/confluent.client_id}}
     brokers: brokers,
     connectionTimeout: 10000,
     ssl: true,
@@ -40,7 +45,7 @@ const run = async () => {
 
       producer.send({
         topic: "{{ cc_topic }}",
-        messages: [{ key: JSON.stringify(messageKey), value: JSON.stringify(messageValue) }],
+        messages: [{key: JSON.stringify(messageKey), value: JSON.stringify(messageValue) }],
       });
       i++;
       await new Promise((resolve) => setTimeout(resolve, 1000));

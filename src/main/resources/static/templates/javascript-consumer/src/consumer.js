@@ -5,6 +5,12 @@ require("dotenv").config();
 const kafka = new Kafka({
     kafkaJS: {
         brokers:  ["{{ cc_bootstrap_server }}"],
+        {{#confluent.client_id}}
+        clientId: "{{ confluent.client_id }}",
+        {{/confluent.client_id}}
+        {{^confluent.client_id}}
+        clientId: "javascript-consumer",
+        {{/confluent.client_id}}
         ssl: true,
         sasl: {
             mechanism: 'plain',
