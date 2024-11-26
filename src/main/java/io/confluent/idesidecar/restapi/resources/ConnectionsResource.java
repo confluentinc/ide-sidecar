@@ -49,35 +49,13 @@ public class ConnectionsResource {
 
   @GET
   @Produces(MediaType.APPLICATION_JSON)
-  public Uni<ConnectionsList> listConnections() {
-    return Uni.createFrom()
-        .item(() -> connectionStateManager.getConnectionStates())
-        .onItem().transformToUni(connectionStates -> {
-          var connectionFutures = connectionStates
-              .stream()
-              .map(connection -> Uni
-                  .createFrom()
-                  .completionStage(() -> getConnectionModel(connection.getSpec().id())))
-              .collect(Collectors.toList());
-          if (connectionFutures.isEmpty()) {
-            Log.debug("Returning no connections");
-            return Uni
-                .createFrom()
-                .item(new ConnectionsList());
-          }
-          Log.debugf("Returning %d connections", connectionFutures.size());
-          return Uni
-              .combine()
-              .all()
-              .unis(connectionFutures)
-              .with(connections -> {
-                var connectionList = connections
-                    .stream()
-                    .map(connection -> (Connection) connection)
-                    .collect(Collectors.toList());
-                return new ConnectionsList(connectionList);
-              });
-        });
+  public ConnectionsList listConnections() {
+    var connections = connectionStateManager
+        .getConnectionStates()
+        .stream()
+        .map(connection -> getConnectionModel(connection.getSpec().id()))
+        .toList();
+    return new ConnectionsList(connections);
   }
 
   @POST
@@ -93,8 +71,9 @@ public class ConnectionsResource {
   @GET
   @Path("/{id}")
   @Produces(MediaType.APPLICATION_JSON)
-  public Uni<Connection> getConnection(@PathParam("id") String id) {
-    return Uni.createFrom().completionStage(() -> getConnectionModel(id));
+  public Connection getConnection(@PathParam("id") String id) {
+    ConnectionState connectionState = connectionStateManager.getConnectionState(id);
+    return Connection.from(connectionState);
   }
 
   @PUT
@@ -134,7 +113,7 @@ public class ConnectionsResource {
   public Uni<Connection> updateConnection(@PathParam("id") String id, ConnectionSpec spec) {
     return connectionStateManager
         .updateSpecForConnectionState(id, spec)
-        .chain(ignored -> Uni.createFrom().completionStage(() -> getConnectionModel(id)));
+        .chain(ignored -> Uni.createFrom().item(() -> getConnectionModel(id)));
   }
 
   @DELETE
@@ -143,15 +122,8 @@ public class ConnectionsResource {
     connectionStateManager.deleteConnectionState(id);
   }
 
-  private CompletionStage<Connection> getConnectionModel(String id) {
-    try {
-      ConnectionState connectionState = connectionStateManager.getConnectionState(id);
-      return connectionState
-          .getConnectionStatus()
-          .map(connectionStatus -> Connection.from(connectionState, connectionStatus))
-          .toCompletionStage();
-    } catch (ConnectionNotFoundException e) {
-      return CompletableFuture.failedFuture(e);
-    }
+  private Connection getConnectionModel(String id) {
+    ConnectionState connectionState = connectionStateManager.getConnectionState(id);
+    return Connection.from(connectionState);
   }
 }

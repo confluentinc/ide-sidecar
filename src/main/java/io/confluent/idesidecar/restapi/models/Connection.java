@@ -22,7 +22,7 @@ public class Connection extends BaseModel<ConnectionSpec, ConnectionMetadata> {
 
   /**
    * Create a connection from the given connection state. The metadata and spec are obtained
-   * from the connection state, and the status is set to {@link ConnectionStatus#INITIAL_STATUS}.
+   * from the connection state.
    *
    * @param connectionState the state of the connection
    * @return the connection
@@ -30,24 +30,10 @@ public class Connection extends BaseModel<ConnectionSpec, ConnectionMetadata> {
   public static Connection from(
       ConnectionState connectionState
   ) {
-    return from(connectionState, connectionState.getInitialStatus());
-  }
-
-  /**
-   * Create a connection from the given connection state, resource path and status.
-   *
-   * @param connectionState the state of the connection
-   * @param status          the status of the connection
-   * @return the connection
-   */
-  public static Connection from(
-      ConnectionState connectionState,
-      ConnectionStatus status
-  ) {
     return new Connection(
         connectionState.getConnectionMetadata(),
         connectionState.getSpec(),
-        status
+        connectionState.getStatus()
     );
   }
 

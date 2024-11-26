@@ -8,7 +8,9 @@ import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
 import io.confluent.idesidecar.restapi.models.ConnectionStatus;
 import io.confluent.idesidecar.restapi.resources.ConnectionsResource;
 import io.vertx.core.Future;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Base class holding default implementations for interacting with connection states.
@@ -46,6 +48,8 @@ public abstract class ConnectionState {
 
   protected ConnectionSpec spec;
 
+  protected AtomicReference<ConnectionStatus> status = new AtomicReference<>(null);
+
   protected final StateChangedListener listener;
 
   protected ConnectionState(ConnectionSpec spec, StateChangedListener listener) {
@@ -65,13 +69,11 @@ public abstract class ConnectionState {
     this.spec = in;
   }
 
-  public Future<ConnectionStatus> getConnectionStatus() {
-    return Future.succeededFuture(ConnectionStatus.INITIAL_STATUS);
+  public ConnectionStatus getStatus() {
+    return Objects.requireNonNullElse(status.get(), ConnectionStatus.INITIAL_STATUS);
   }
 
-  public ConnectionStatus getInitialStatus() {
-    return ConnectionStatus.INITIAL_STATUS;
-  }
+  public abstract Future<ConnectionStatus> checkStatus();
 
   public ConnectionMetadata getConnectionMetadata() {
     return ConnectionMetadata.from(
