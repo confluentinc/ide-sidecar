@@ -37,7 +37,7 @@ public class SchemaErrors {
   }
 
   public void clearByConnectionId(ConnectionId connectionId) {
-    cacheOfCaches.remove(connectionId, getSubCache(connectionId));
+    cacheOfCaches.remove(connectionId);
       }
 
   public void onConnectionChange(@ObservesAsync @Lifecycle.Deleted @Lifecycle.Created @Lifecycle.Updated ConnectionState connection) {

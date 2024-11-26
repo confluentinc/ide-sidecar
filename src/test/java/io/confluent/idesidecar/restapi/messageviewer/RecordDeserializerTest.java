@@ -39,6 +39,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 @QuarkusTest
 public class RecordDeserializerTest {
+  @Inject
   RecordDeserializer recordDeserializer;
   @Inject
   SchemaErrors schemaErrors;
@@ -69,13 +70,7 @@ public class RecordDeserializerTest {
 
   @BeforeEach
   public void setup() throws RestClientException, IOException {
-    recordDeserializer = new RecordDeserializer(
-        1,
-        1,
-        10000,
-        0,
-        new SchemaErrors()
-    );
+
     schemaRegistryClient = new SimpleMockSchemaRegistryClient(
         Arrays.asList(
             new ProtobufSchemaProvider(),
@@ -316,10 +311,10 @@ public class RecordDeserializerTest {
         .registerAsNetworkErrored(VALID_SCHEMA_ID.schemaId());
 
     return Stream.of(
-        Arguments.of(clientWithAuthError, true),
-        Arguments.of(clientWithAuthError, false),
-        Arguments.of(clientWithNetworkError, true),
-        Arguments.of(clientWithNetworkError, false)
+        Arguments.of(clientWithAuthError, true, 0),
+        Arguments.of(clientWithAuthError, false, 0),
+        Arguments.of(clientWithNetworkError, true, 3),
+        Arguments.of(clientWithNetworkError, false, 3)
     );
   }
 
@@ -327,13 +322,14 @@ public class RecordDeserializerTest {
   @MethodSource
   public void testSchemaFetchFailuresAreCached(
       SimpleMockSchemaRegistryClient smc,
-      boolean isKey
+      boolean isKey,
+      int expectedRetries
   ) throws RestClientException, IOException {
     smc = spy(smc);
     // Assume we have 5 records with the same schema ID
     // We should only fetch the schema once, and then cache the failure for the rest
     RecordDeserializer.DecodedResult resp = null;
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 10; i++) {
       try {
         resp = recordDeserializer.deserialize(
             // Has a schema ID, so we'll actually try to fetch the schema
@@ -352,7 +348,8 @@ public class RecordDeserializerTest {
     }
 
     // Assert that the schema was tried to be fetched only once
-    verify(smc, times(1)).getSchemaById(VALID_SCHEMA_ID.schemaId());
+        var initialHit = 1;
+        verify(smc, times(initialHit + expectedRetries)).getSchemaById(VALID_SCHEMA_ID.schemaId());
   }
 
 
