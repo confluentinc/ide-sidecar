@@ -72,12 +72,32 @@ public class DirectConnectionState extends ConnectionState {
   }
 
   @Override
-  public ConnectionStatus getInitialStatus() {
+  protected ConnectionStatus getInitialStatus() {
     return new ConnectionStatus(
         null,
         spec.kafkaClusterConfig() != null ? KAFKA_INITIAL_STATUS : null,
         spec.schemaRegistryConfig() != null ? SR_INITIAL_STATUS : null
     );
+  }
+
+  /**
+   * Check if the connection to the Kafka cluster is currently connected.
+   *
+   * @return true if the Kafka component is connected
+   */
+  public boolean isKafkaConnected() {
+    var status = getConnectionStatus();
+    return status.kafkaCluster() != null && status.kafkaCluster().isConnected();
+  }
+
+  /**
+   * Check if the connection to the Schema Registry is currently connected.
+   *
+   * @return true if the Kafka component is connected
+   */
+  public boolean isSchemaRegistryConnected() {
+    var status = getConnectionStatus();
+    return status.schemaRegistry() != null && status.schemaRegistry().isConnected();
   }
 
   public MultiMap getAuthenticationHeaders(ClusterType clusterType) {
@@ -116,7 +136,7 @@ public class DirectConnectionState extends ConnectionState {
   }
 
   @Override
-  public Future<ConnectionStatus> getConnectionStatus() {
+  protected Future<ConnectionStatus> doRefreshConnectionStatus() {
     return Future.join(
         getKafkaConnectionStatus(),
         getSchemaRegistryConnectionStatus()
@@ -263,7 +283,7 @@ public class DirectConnectionState extends ConnectionState {
     }
   }
 
-  AdminClient createAdminClient(
+  protected AdminClient createAdminClient(
       ConnectionSpec.KafkaClusterConfig config
   ) {
     // Create the configuration for an AdminClient
@@ -314,7 +334,7 @@ public class DirectConnectionState extends ConnectionState {
     }
   }
 
-  SchemaRegistryClient createSchemaRegistryClient(
+  protected SchemaRegistryClient createSchemaRegistryClient(
       ConnectionSpec.SchemaRegistryConfig config
   ) {
     var srClientConfig = ClientConfigurator.getSchemaRegistryClientConfig(

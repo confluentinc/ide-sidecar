@@ -26,7 +26,7 @@ public class LocalConnectionTest {
         mockListener
     );
 
-    connectionState.getConnectionStatus()
+    connectionState.refreshConnectionStatus()
         .onComplete(
             testContext.succeeding(connectionStatus ->
                 testContext.verify(() -> {
