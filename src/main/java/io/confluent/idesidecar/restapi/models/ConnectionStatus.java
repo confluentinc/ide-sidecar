@@ -1,5 +1,6 @@
 package io.confluent.idesidecar.restapi.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -40,6 +41,30 @@ public record ConnectionStatus(
       );
     }
     return new Authentication(Status.NO_TOKEN, null, null, null);
+  }
+
+  /**
+   * Return whether the supplied connection has been successfully established with some or all
+   * components.
+   *
+   * @return true if the connection has been established for at least one component,
+   *         or false otherwise
+   */
+  @JsonIgnore
+  public boolean isConnected() {
+    return ccloud != null && ccloud.isConnected()
+        || kafkaCluster != null && kafkaCluster.isConnected()
+        || schemaRegistry != null && schemaRegistry.isConnected();
+  }
+
+  public interface StateOwner {
+
+    ConnectedState state();
+
+    @JsonIgnore
+    default boolean isConnected() {
+      return state() == ConnectedState.SUCCESS;
+    }
   }
 
   /**
@@ -100,7 +125,7 @@ public record ConnectionStatus(
       @JsonProperty
       @Null
       AuthErrors errors
-  ) implements ConnectionStatusCCloudStatusBuilder.With {
+  ) implements StateOwner, ConnectionStatusCCloudStatusBuilder.With {
   }
 
   @Schema(description = "The status related to the specified Kafka cluster.")
@@ -120,7 +145,7 @@ public record ConnectionStatus(
       @JsonProperty
       @Null
       AuthErrors errors
-  ) implements ConnectionStatusKafkaClusterStatusBuilder.With {
+  ) implements StateOwner, ConnectionStatusKafkaClusterStatusBuilder.With {
   }
 
   @Schema(description = "The status related to the specified Schema Registry.")
@@ -140,7 +165,7 @@ public record ConnectionStatus(
       @JsonProperty
       @Null
       AuthErrors errors
-  ) implements ConnectionStatusSchemaRegistryStatusBuilder.With {
+  ) implements StateOwner, ConnectionStatusSchemaRegistryStatusBuilder.With {
   }
 
   @Schema(description = "The authentication-related status (deprecated).")
