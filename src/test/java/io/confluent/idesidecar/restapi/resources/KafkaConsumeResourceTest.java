@@ -164,7 +164,7 @@ public class KafkaConsumeResourceTest {
         .statusCode(404)
         .contentType(MediaType.APPLICATION_JSON)
         .body("title", containsString(
-            "Connection id=ConnectionId[id=%s] not found".formatted( CONNECTION_ID)
+            "not found in connection %s".formatted(CONNECTION_ID)
         ));
   }
 

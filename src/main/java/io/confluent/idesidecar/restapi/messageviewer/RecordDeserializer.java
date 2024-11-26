@@ -59,7 +59,7 @@ public class RecordDeserializer {
 
   private static final Map<String, String> SERDE_CONFIGS = ConfigUtil
       .asMap("ide-sidecar.serde-configs");
-
+  private final int schemaFetchMaxRetries;
   @Inject
   SchemaErrors schemaErrors;
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
@@ -69,7 +69,6 @@ public class RecordDeserializer {
   private final Duration schemaFetchRetryInitialBackoff;
   private final Duration schemaFetchRetryMaxBackoff;
   private final Duration schemaFetchTimeout;
-  private final int schemaFetchMaxRetries;
 
   public RecordDeserializer(
       @ConfigProperty(name = "ide-sidecar.schema-fetch-retry.initial-backoff-ms")

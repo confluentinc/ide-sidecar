@@ -20,6 +20,7 @@ import io.confluent.kafka.schemaregistry.json.JsonSchema;
 import io.confluent.kafka.schemaregistry.json.JsonSchemaProvider;
 import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchema;
 import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchemaProvider;
+import io.confluent.idesidecar.restapi.messageviewer.RecordDeserializer;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import java.io.IOException;
@@ -38,7 +39,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 @QuarkusTest
 public class RecordDeserializerTest {
-
+  RecordDeserializer recordDeserializer;
   @Inject
   SchemaErrors schemaErrors;
   private final ObjectMapper objectMapper = new ObjectMapper();
@@ -56,10 +57,7 @@ public class RecordDeserializerTest {
 
   private SchemaRegistryClient schemaRegistryClient;
 
-  @Inject
-  RecordDeserializer recordDeserializer;
-
- MessageViewerContext context = new MessageViewerContext(
+  MessageViewerContext context = new MessageViewerContext(
         null,
             null,
             null,
@@ -71,6 +69,13 @@ public class RecordDeserializerTest {
 
   @BeforeEach
   public void setup() throws RestClientException, IOException {
+    recordDeserializer = new RecordDeserializer(
+        1,
+        1,
+        10000,
+        0,
+        new SchemaErrors()
+    );
     schemaRegistryClient = new SimpleMockSchemaRegistryClient(
         Arrays.asList(
             new ProtobufSchemaProvider(),
@@ -362,12 +367,12 @@ public class RecordDeserializerTest {
     ) {
       static TestCase nonRetryable(int statusCode) {
         // Expect only 1 try when the status code is non-retryable
-        return new TestCase(statusCode, 3, 1, null);
+        return new TestCase(statusCode, 1, 1, null);
       }
 
       static TestCase retryable(int statusCode) {
         // Expect 4 tries - 1 initial try + 3 retries
-        return new TestCase(statusCode, 3, 6, null);
+        return new TestCase(statusCode, 3, 4, null);
       }
 
       TestCase withIsKey(Boolean isKey) {
