@@ -4,9 +4,11 @@ import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.asJson;
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.asObject;
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
 import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.startsWith;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -31,6 +33,7 @@ import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.SchemaRegistryConfig;
 import io.confluent.idesidecar.restapi.models.ConnectionStatus;
 import io.confluent.idesidecar.restapi.models.ConnectionStatus.Authentication.Status;
+import io.confluent.idesidecar.restapi.models.ConnectionStatus.ConnectedState;
 import io.confluent.idesidecar.restapi.models.ConnectionsList;
 import io.confluent.idesidecar.restapi.models.ObjectMetadata;
 import io.confluent.idesidecar.restapi.util.CCloudTestUtil.AccessToken;
@@ -156,10 +159,125 @@ public class ConnectionsResourceTest {
 
   @Test
   @TestHTTPEndpoint(ConnectionsResource.class)
+  void testLocalConnectionDryRun_returnsConnectionWithoutCreatingConnection() {
+    var requestSpec = asObject(
+        loadResource("connections/create-connection-request.json"),
+        ConnectionSpec.class
+    );
+
+    for (int i = 0; i < 2; i++) {
+      var actualResponse = given()
+          .contentType(ContentType.JSON)
+          .queryParam("dry_run", true)
+          .body(requestSpec)
+          .when().post()
+          .then()
+          .statusCode(200)
+          .contentType(ContentType.JSON)
+          .body("api_version", equalTo("gateway/v1"))
+          .body("kind", equalTo("Connection"))
+          .body("metadata.self", startsWith("http://localhost:26637/gateway/v1/connections/"))
+          .body("metadata.resource_name", nullValue())
+          .body("id", equalTo(requestSpec.id()))
+          .body("spec.id", equalTo(requestSpec.id()))
+          .body("spec.name", equalTo(requestSpec.name()))
+          .body("spec.type", equalTo(ConnectionType.LOCAL.name()))
+          .body("status.authentication.status", equalTo(Status.NO_TOKEN.name()));
+
+      // Verify it can be deserialized
+      var testedConnection = actualResponse.extract().as(Connection.class);
+      assertNotNull(testedConnection);
+
+      // And the tested connection does not really exist
+      given()
+          .contentType(ContentType.JSON)
+          .when().get("/{id}", testedConnection.id())
+          .then()
+          .statusCode(404);
+    }
+  }
+
+  @Test
+  @TestHTTPEndpoint(ConnectionsResource.class)
+  void testLocalConnectionDryRunWithoutId_returnsConnectionWithoutCreatingConnection() {
+    var requestSpec = asObject(
+        loadResource("connections/create-connection-request.json"),
+        ConnectionSpec.class
+    ).withId(null); // remove the ID
+
+    // Expect the ID generator to be called (when generating the ID only for validation).
+    // This will not be included in the response.
+    var generatedId = "99a2b4ce-7a87-4dd2-b967-fe9f34fcbea4";
+    Mockito.when(uuidFactory.getRandomUuid()).thenReturn(generatedId);
+    var actualResponse = given()
+        .contentType(ContentType.JSON)
+        .queryParam("dry_run", true)
+        .body(requestSpec)
+        .when().post()
+        .then()
+        .statusCode(200)
+        .contentType(ContentType.JSON)
+        .body("api_version", equalTo("gateway/v1"))
+        .body("kind", equalTo("Connection"))
+        .body("metadata.self", startsWith("http://localhost:26637/gateway/v1/connections/"))
+        .body("metadata.resource_name", nullValue())
+        .body("id", nullValue())
+        .body("spec.id", nullValue())
+        .body("spec.name", equalTo(requestSpec.name()))
+        .body("spec.type", equalTo(ConnectionType.LOCAL.name()))
+        .body("status.authentication.status", equalTo(Status.NO_TOKEN.name()));
+
+    // Verify it can be deserialized
+    var testedConnection = actualResponse.extract().as(Connection.class);
+    assertNotNull(testedConnection);
+  }
+
+  @Test
+  @TestHTTPEndpoint(ConnectionsResource.class)
+  void createCCloudConnectionDryRun_returnsConnectionWithoutCreatingConnection() {
+    var requestSpec = new ConnectionSpec("c-1", "Connection 1", ConnectionType.CCLOUD);
+
+    for (int i = 0; i < 2; i++) {
+      var actualResponse = given()
+          .contentType(ContentType.JSON)
+          .queryParam("dry_run", true)
+          .body(requestSpec)
+          .when().post()
+          .then()
+          .statusCode(200)
+          .contentType(ContentType.JSON)
+          .body("api_version", equalTo("gateway/v1"))
+          .body("kind", equalTo("Connection"))
+          .body("metadata.self", startsWith("http://localhost:26637/gateway/v1/connections/"))
+          .body("metadata.resource_name", nullValue())
+          .body("metadata.sign_in_uri", startsWith("https://login.confluent.io/oauth/authorize?response_type=code&code_challenge_method="))
+          .body("id", equalTo(requestSpec.id()))
+          .body("spec.id", equalTo(requestSpec.id()))
+          .body("spec.name", equalTo(requestSpec.name()))
+          .body("spec.type", equalTo(ConnectionType.CCLOUD.name()))
+          .body("status.authentication.status", equalTo(Status.NO_TOKEN.name()))
+          .body("status.ccloud.state", equalTo(ConnectedState.NONE.name()));
+
+      // Verify it can be deserialized
+      var testedConnection = actualResponse.extract().as(Connection.class);
+      assertNotNull(testedConnection);
+
+      // And the tested connection does not really exist
+      given()
+          .contentType(ContentType.JSON)
+          .when().get("/{id}", "c-1")
+          .then()
+          .statusCode(404);
+    }
+  }
+
+  @Test
+  @TestHTTPEndpoint(ConnectionsResource.class)
   void getConnection_withoutToken_shouldReturnWithStatus() {
     List<ConnectionSpec> specs = Arrays.asList(
         new ConnectionSpec("c-1", "Connection 1", ConnectionType.CCLOUD)
     );
+
     // Create connection
     var actualResponse = given()
         .contentType(ContentType.JSON)
