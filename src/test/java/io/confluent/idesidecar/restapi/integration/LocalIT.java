@@ -48,10 +48,6 @@ public class LocalIT {
   @Nested
   class ConnectionTests extends AbstractIT implements DirectConnectionSuite, LocalConnectionSuite {
 
-    protected ConnectionTests(MessageViewerContext context) {
-      super(context);
-    }
-
     @Override
     public TestEnvironment environment() {
       return TEST_ENVIRONMENT;
@@ -71,7 +67,6 @@ public class LocalIT {
     @Tag("io.confluent.common.utils.IntegrationTest")
     @TestProfile(NoAccessFilterProfile.class)
     @Nested
-
     class RecordTests extends AbstractIT implements RecordsV3Suite, RecordsV3DryRunSuite {
 
       protected RecordTests(MessageViewerContext context) {
