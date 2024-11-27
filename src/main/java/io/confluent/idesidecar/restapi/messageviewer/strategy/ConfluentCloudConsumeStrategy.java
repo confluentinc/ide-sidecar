@@ -28,6 +28,7 @@ import jakarta.ws.rs.core.MediaType;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -200,12 +201,14 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
               false
           );
 
+          var decodedHeaders = decodeHeaders(record);
+
           return new PartitionConsumeRecord(
               record.partitionId(),
               record.offset(),
               record.timestamp(),
               record.timestampType(),
-              record.headers(),
+              decodedHeaders,
               keyData.value(),
               valueData.value(),
               keyData.errorMessage(),
@@ -220,6 +223,37 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
         partitionConsumeData.nextOffset(),
         processedRecords
     );
+  }
+
+  private List<SimpleConsumeMultiPartitionResponse.PartitionConsumeRecordHeader>
+  decodeHeaders(PartitionConsumeRecord record) {
+    return record
+        .headers()
+        .stream()
+        .map(header -> {
+          String decodedValue;
+          try {
+            decodedValue = new String(
+                BASE64_DECODER.decode(header.value()), StandardCharsets.UTF_8
+            );
+          } catch (IllegalArgumentException e) {
+            // For whatever reason, we couldn't decode the Base64 encoded header value.
+            // Perhaps the API changed or the data is corrupted. Either way,
+            // we log a warning and return the raw value.
+            Log.debugf(e, "Failed to base64 decode header value '%s' from Confluent Cloud" +
+                    "(partition: %d, offset: %d)",
+                header.value(), record.partitionId(), record.offset()
+            );
+            decodedValue = header.value();
+          }
+
+          return new SimpleConsumeMultiPartitionResponse.PartitionConsumeRecordHeader(
+              // Key is untouched, as it is not base64 encoded.
+              header.key(),
+              decodedValue
+          );
+        })
+        .toList();
   }
 
   /**
