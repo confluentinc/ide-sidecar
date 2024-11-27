@@ -26,28 +26,14 @@ public class CCloudConnectionTest {
   private static final int AWAIT_COMPLETION_TIMEOUT_SEC = 5;
 
   @Test
-  void getConnectionStatusShouldReturnInitialStatusForCCloudConnectionsWithoutTokens()
-      throws Throwable {
+  void getConnectionStatusShouldReturnInitialStatusForCCloudConnectionsWithoutTokens() {
     var mockListener = mock(StateChangedListener.class);
-    var testContext = new VertxTestContext();
     var connectionState = ConnectionStates.from(
         new ConnectionSpec("1", "foo", ConnectionType.CCLOUD),
         mockListener
     );
 
-    connectionState.getConnectionStatus()
-        .onComplete(
-            testContext.succeeding(connectionStatus ->
-                testContext.verify(() -> {
-                  assertEquals(ConnectionStatus.INITIAL_CCLOUD_STATUS, connectionStatus);
-                  testContext.completeNow();
-                })));
-
-    assertTrue(testContext.awaitCompletion(AWAIT_COMPLETION_TIMEOUT_SEC, TimeUnit.SECONDS));
-
-    if (testContext.failed()) {
-      throw testContext.causeOfFailure();
-    }
+    assertEquals(ConnectionStatus.INITIAL_CCLOUD_STATUS, connectionState.getStatus());
   }
 
   @Test
@@ -62,11 +48,14 @@ public class CCloudConnectionTest {
         true,
         false
     );
-    connectionState.getConnectionStatus()
+    connectionState.checkStatus()
         .onComplete(
-            testContext.succeeding(connectionStatus ->
+            testContext.succeeding(ignored ->
                 testContext.verify(() -> {
-                  assertEquals(Status.NO_TOKEN, connectionStatus.authentication().status());
+                  assertEquals(
+                      Status.NO_TOKEN,
+                      connectionState.getStatus().authentication().status()
+                  );
                   testContext.completeNow();
                 })));
 
@@ -89,11 +78,14 @@ public class CCloudConnectionTest {
         true,
         false
     );
-    connectionState.getConnectionStatus()
+    connectionState.checkStatus()
         .onComplete(
-            testContext.succeeding(connectionStatus ->
+            testContext.succeeding(ignored ->
                 testContext.verify(() -> {
-                  assertEquals(Status.NO_TOKEN, connectionStatus.authentication().status());
+                  assertEquals(
+                      Status.NO_TOKEN,
+                      connectionState.getStatus().authentication().status()
+                  );
                   testContext.completeNow();
                 })));
 
@@ -116,11 +108,14 @@ public class CCloudConnectionTest {
         false,
         false
     );
-    connectionState.getConnectionStatus()
+    connectionState.checkStatus()
         .onComplete(
-            testContext.succeeding(connectionStatus ->
+            testContext.succeeding(ignored ->
                 testContext.verify(() -> {
-                  assertEquals(Status.NO_TOKEN, connectionStatus.authentication().status());
+                  assertEquals(
+                      Status.NO_TOKEN,
+                      connectionState.getStatus().authentication().status()
+                  );
                   testContext.completeNow();
                 })));
 
@@ -143,11 +138,14 @@ public class CCloudConnectionTest {
         true,
         false
     );
-    connectionState.getConnectionStatus()
+    connectionState.checkStatus()
         .onComplete(
-            testContext.succeeding(connectionStatus ->
+            testContext.succeeding(ignored ->
                 testContext.verify(() -> {
-                  assertEquals(Status.VALID_TOKEN, connectionStatus.authentication().status());
+                  assertEquals(
+                      Status.VALID_TOKEN,
+                      connectionState.getStatus().authentication().status()
+                  );
                   testContext.completeNow();
                 })));
 
@@ -170,11 +168,14 @@ public class CCloudConnectionTest {
         true,
         false
     );
-    connectionState.getConnectionStatus()
+    connectionState.checkStatus()
         .onComplete(
-            testContext.succeeding(connectionStatus ->
+            testContext.succeeding(ignored ->
                 testContext.verify(() -> {
-                  assertEquals(Status.INVALID_TOKEN, connectionStatus.authentication().status());
+                  assertEquals(
+                      Status.INVALID_TOKEN,
+                      connectionState.getStatus().authentication().status()
+                  );
                   testContext.completeNow();
                 })));
 
@@ -197,11 +198,14 @@ public class CCloudConnectionTest {
         true,
         true
     );
-    connectionState.getConnectionStatus()
+    connectionState.checkStatus()
         .onComplete(
-            testContext.succeeding(connectionStatus ->
+            testContext.succeeding(ignored ->
                 testContext.verify(() -> {
-                  assertEquals(Status.FAILED, connectionStatus.authentication().status());
+                  assertEquals(
+                      Status.FAILED,
+                      connectionState.getStatus().authentication().status()
+                  );
                   testContext.completeNow();
                 })));
 

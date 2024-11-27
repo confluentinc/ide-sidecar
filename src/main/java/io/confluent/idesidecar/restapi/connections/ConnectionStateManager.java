@@ -14,6 +14,7 @@ import io.confluent.idesidecar.restapi.exceptions.Failure.Error;
 import io.confluent.idesidecar.restapi.exceptions.InvalidInputException;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.util.UuidFactory;
+import io.quarkus.scheduler.Scheduled;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
@@ -22,7 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.UUID;
+import java.util.function.Predicate;
 
 /**
  * The {@link ConnectionStateManager} allows to manage a set of {@link ConnectionState}s. It
@@ -134,7 +135,7 @@ public class ConnectionStateManager {
   /**
    * Test whether the given connection spec is valid and can be used to create a connection state.
    * This does not store the resulting connection state, and does not
-   * {@link ConnectionState#getConnectionStatus()} of the resulting connection state.
+   * {@link ConnectionState#getStatus()} of the resulting connection state.
    *
    * @param spec the specification for the connection
    * @return the connection state that would have been created
@@ -293,5 +294,33 @@ public class ConnectionStateManager {
   // This method should be only used in tests.
   public void clearAllConnectionStates() {
     connectionStates.clear();
+  }
+
+  @Scheduled(every = "${ide-sidecar.connections.ccloud.check-connection-status-interval-seconds}s")
+  public void checkConfluentCloudConnectionStatuses() {
+    checkConnectionStatuses(connectionState -> connectionState instanceof CCloudConnectionState);
+  }
+
+  @Scheduled(
+      every = "${ide-sidecar.connections.confluent-local.check-connection-status-interval-seconds}s"
+  )
+  public void checkLocalConnectionStatuses() {
+    checkConnectionStatuses(connectionState -> connectionState instanceof LocalConnectionState);
+  }
+
+  @Scheduled(every = "${ide-sidecar.connections.direct.check-connection-status-interval-seconds}s")
+  public void checkDirectConnectionStatuses() {
+    checkConnectionStatuses(connectionState -> connectionState instanceof DirectConnectionState);
+  }
+
+  /**
+   * Checks the status of all managed connections that match a given predicate.
+   *
+   * @param predicate The predicate that connections must match to be checked.
+   */
+  public void checkConnectionStatuses(Predicate<ConnectionState> predicate) {
+    getConnectionStates().stream()
+        .filter(predicate)
+        .forEach(ConnectionState::checkStatus);
   }
 }

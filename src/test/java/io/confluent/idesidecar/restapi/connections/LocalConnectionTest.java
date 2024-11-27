@@ -15,29 +15,14 @@ import org.junit.jupiter.api.Test;
 @QuarkusTest
 public class LocalConnectionTest {
 
-  private static final int AWAIT_COMPLETION_TIMEOUT_SEC = 5;
-
   @Test
-  void getConnectionStatusShouldReturnInitialStatusForLocalConnections() throws Throwable {
+  void getConnectionStatusShouldReturnInitialStatusForLocalConnections() {
     var mockListener = mock(ConnectionState.StateChangedListener.class);
-    var testContext = new VertxTestContext();
     var connectionState = ConnectionStates.from(
         new ConnectionSpec("1", "foo", ConnectionType.LOCAL),
         mockListener
     );
 
-    connectionState.getConnectionStatus()
-        .onComplete(
-            testContext.succeeding(connectionStatus ->
-                testContext.verify(() -> {
-                  Assertions.assertEquals(ConnectionStatus.INITIAL_STATUS, connectionStatus);
-                  testContext.completeNow();
-                })));
-
-    assertTrue(testContext.awaitCompletion(AWAIT_COMPLETION_TIMEOUT_SEC, TimeUnit.SECONDS));
-
-    if (testContext.failed()) {
-      throw testContext.causeOfFailure();
-    }
+    Assertions.assertEquals(ConnectionStatus.INITIAL_STATUS, connectionState.getStatus());
   }
 }

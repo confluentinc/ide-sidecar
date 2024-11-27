@@ -21,17 +21,6 @@ import java.util.HashSet;
  */
 public class CCloudConnectionState extends ConnectionState {
 
-  static final ConnectionStatus INITIAL_STATUS = new ConnectionStatus(
-      new CCloudStatus(
-          ConnectedState.NONE,
-          null,
-          null,
-          null
-      ),
-      null,
-      null
-  );
-
   private final CCloudOAuthContext oauthContext = new CCloudOAuthContext();
 
   CCloudConnectionState() {
@@ -45,9 +34,17 @@ public class CCloudConnectionState extends ConnectionState {
     super(spec, listener);
   }
 
-  @Override
   public ConnectionStatus getInitialStatus() {
-    return INITIAL_STATUS;
+    return new ConnectionStatus(
+        new CCloudStatus(
+            ConnectedState.NONE,
+            null,
+            null,
+            null
+        ),
+        null,
+        null
+    );
   }
 
   /**
@@ -75,7 +72,7 @@ public class CCloudConnectionState extends ConnectionState {
    * @return status of connection
    */
   @Override
-  public Future<ConnectionStatus> getConnectionStatus() {
+  public Future<ConnectionStatus> checkStatus() {
     var missingTokens = new HashSet<String>();
     if (oauthContext.getRefreshToken() == null) {
       missingTokens.add("Refresh token");
@@ -86,17 +83,16 @@ public class CCloudConnectionState extends ConnectionState {
     if (oauthContext.getDataPlaneToken() == null) {
       missingTokens.add("Data plane token");
     }
-
+    var newStatus = Future.succeededFuture(status.get());
     if (!missingTokens.isEmpty()) {
       Log.infof(
           "Authentication flow for connection with ID=%s seems to be not completed because "
               + "it does not hold the following tokens: %s.",
           getId(),
           String.join(", ", missingTokens));
-
-      return getInitialStatusWithErrors(getAuthErrors(oauthContext));
+      newStatus = getInitialStatusWithErrors(getAuthErrors(oauthContext));
     } else if (oauthContext.hasNonTransientError()) {
-      return Future.succeededFuture(
+      newStatus = Future.succeededFuture(
           ConnectionStatusBuilder
               .builder()
               .ccloud(
@@ -110,7 +106,7 @@ public class CCloudConnectionState extends ConnectionState {
               .build()
       );
     } else {
-      return oauthContext
+      newStatus = oauthContext
           .checkAuthenticationStatus()
           // Consider token as invalid if any exception is thrown while we check the status
           .recover(failure -> Future.succeededFuture(false))
@@ -150,6 +146,7 @@ public class CCloudConnectionState extends ConnectionState {
             }
           });
     }
+    return newStatus.andThen(cs -> status.set(cs.result()));
   }
 
   /**
