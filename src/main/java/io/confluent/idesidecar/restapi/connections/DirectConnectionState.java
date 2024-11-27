@@ -27,6 +27,7 @@ import java.net.UnknownHostException;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -71,7 +72,6 @@ public class DirectConnectionState extends ConnectionState {
     super(spec, listener);
   }
 
-  @Override
   public ConnectionStatus getInitialStatus() {
     return new ConnectionStatus(
         null,
@@ -115,21 +115,33 @@ public class DirectConnectionState extends ConnectionState {
     return Optional.ofNullable(credentials);
   }
 
+  /**
+   *
+   * @return
+   */
   @Override
-  public Future<ConnectionStatus> getConnectionStatus() {
-    return Future.join(
-        getKafkaConnectionStatus(),
-        getSchemaRegistryConnectionStatus()
-    ).map(cf -> {
-      var futures = cf.list();
-      var kafkaStatus = (KafkaClusterStatus) futures.get(0);
-      var srStatus = (SchemaRegistryStatus) futures.get(1);
-      return ConnectionStatusBuilder
-          .builder()
-          .kafkaCluster(kafkaStatus)
-          .schemaRegistry(srStatus)
-          .build();
-    });
+  public ConnectionStatus getStatus() {
+    return Objects.requireNonNullElse(status.get(), getInitialStatus());
+  }
+
+  @Override
+  public Future<ConnectionStatus> checkStatus() {
+    return Future
+        .join(
+            getKafkaConnectionStatus(),
+            getSchemaRegistryConnectionStatus()
+        )
+        .map(cf -> {
+          var futures = cf.list();
+          var kafkaStatus = (KafkaClusterStatus) futures.get(0);
+          var srStatus = (SchemaRegistryStatus) futures.get(1);
+          return ConnectionStatusBuilder
+              .builder()
+              .kafkaCluster(kafkaStatus)
+              .schemaRegistry(srStatus)
+              .build();
+        })
+        .andThen(cs -> status.set(cs.result()));
   }
 
   protected Future<KafkaClusterStatus> getKafkaConnectionStatus() {
