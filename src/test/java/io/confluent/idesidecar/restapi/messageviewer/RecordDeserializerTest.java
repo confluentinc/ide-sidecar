@@ -1,6 +1,5 @@
 package io.confluent.idesidecar.restapi.messageviewer;
 
-import static io.confluent.idesidecar.restapi.messageviewer.RecordDeserializer.clearCachedFailures;
 import static io.confluent.idesidecar.restapi.messageviewer.RecordDeserializer.getSchemaIdFromRawBytes;
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
 import static org.junit.jupiter.api.Assertions.*;
@@ -10,6 +9,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.TextNode;
+import io.confluent.idesidecar.restapi.clients.SchemaErrors;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
 import io.confluent.kafka.schemaregistry.avro.AvroSchema;
 import io.confluent.kafka.schemaregistry.avro.AvroSchemaProvider;
@@ -21,6 +21,7 @@ import io.confluent.kafka.schemaregistry.json.JsonSchemaProvider;
 import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchema;
 import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchemaProvider;
 import io.quarkus.test.junit.QuarkusTest;
+import jakarta.inject.Inject;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.SocketTimeoutException;
@@ -37,10 +38,15 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 @QuarkusTest
 public class RecordDeserializerTest {
-
+  @Inject
+  RecordDeserializer recordDeserializer;
+  @Inject
+  SchemaErrors schemaErrors;
   private final ObjectMapper objectMapper = new ObjectMapper();
 
-  private static final int VALID_SCHEMA_ID = 10008;
+  private static final SchemaErrors.SchemaId VALID_SCHEMA_ID = new SchemaErrors.SchemaId("fake_cluster_id", 10008);
+
+  SchemaErrors.ConnectionId CONNECTION_1_ID = new SchemaErrors.ConnectionId("c1");
 
   /**
    * Data containing valid schema ID of 10008, and nothing else.
@@ -51,16 +57,19 @@ public class RecordDeserializerTest {
 
   private SchemaRegistryClient schemaRegistryClient;
 
-  RecordDeserializer recordDeserializer;
+  MessageViewerContext context = new MessageViewerContext(
+      null,
+      null,
+      null,
+      null,
+      null,
+      CONNECTION_1_ID,
+      "testClusterId",
+      SAMPLE_TOPIC_NAME);
 
   @BeforeEach
   public void setup() throws RestClientException, IOException {
-    recordDeserializer = new RecordDeserializer(
-        1,
-        1,
-        10000,
-        0
-    );
+
     schemaRegistryClient = new SimpleMockSchemaRegistryClient(
         Arrays.asList(
             new ProtobufSchemaProvider(),
@@ -72,18 +81,18 @@ public class RecordDeserializerTest {
 
   @AfterEach
   public void tearDown() {
-    clearCachedFailures();
+    schemaErrors.clearByConnectionId(CONNECTION_1_ID);
   }
 
   @ParameterizedTest
   @ValueSource(booleans = {true, false})
   public void testDecodeAndDeserialize_NullOrEmptyBase64(boolean isKey) {
     assertNullResult(
-        recordDeserializer.deserialize(null, schemaRegistryClient, "", isKey));
+        recordDeserializer.deserialize(null, schemaRegistryClient, context, isKey));
     assertEmptyResult(
-        recordDeserializer.deserialize(new byte[]{}, schemaRegistryClient, "", isKey));
+        recordDeserializer.deserialize(new byte[]{}, schemaRegistryClient, context, isKey));
     assertEmptyResult(
-        recordDeserializer.deserialize("".getBytes(), schemaRegistryClient, "", isKey));
+        recordDeserializer.deserialize("".getBytes(), schemaRegistryClient, context, isKey));
   }
 
   private void assertNullResult(RecordDeserializer.DecodedResult result) {
@@ -110,7 +119,7 @@ public class RecordDeserializerTest {
     var record = recordDeserializer.deserialize(
         decodedBytes,
         schemaRegistryClient,
-        SAMPLE_TOPIC_NAME,
+        context,
         false
     );
     assertNotNull(record);
@@ -144,7 +153,7 @@ public class RecordDeserializerTest {
         // Remove the last byte to make the base64 string invalid
         Arrays.copyOfRange(decodedBytes, 0, decodedBytes.length - 1),
         schemaRegistryClient,
-        SAMPLE_TOPIC_NAME,
+        context,
         false
     );
     assertNotNull(record);
@@ -166,7 +175,7 @@ public class RecordDeserializerTest {
     var record = recordDeserializer.deserialize(
         decodedBytes,
         schemaRegistryClient,
-        SAMPLE_TOPIC_NAME,
+        context,
         false
     );
     assertNotNull(record);
@@ -198,7 +207,7 @@ public class RecordDeserializerTest {
     var record = recordDeserializer.deserialize(
         decodedBytes,
         schemaRegistryClient,
-        SAMPLE_TOPIC_NAME,
+        context,
         false
     );
     assertNotNull(record);
@@ -232,7 +241,7 @@ public class RecordDeserializerTest {
   @ParameterizedTest
   @ValueSource(booleans = {true, false})
   void parseJsonNodeShouldReturnNullNodeWhenReceivingNullValue(boolean isKey) {
-    var resp = recordDeserializer.deserialize(null, null, "foo", isKey);
+    var resp = recordDeserializer.deserialize(null, null, context, isKey);
     assertTrue(resp.value().isNull());
     assertNull(resp.errorMessage());
   }
@@ -241,7 +250,7 @@ public class RecordDeserializerTest {
   @ValueSource(booleans = {true, false})
   void parseJsonNodeShouldReturnEmptyStringWhenReceivingEmptyByteArray(boolean isKey) {
     var emptyArray = new byte[0];
-    var resp = recordDeserializer.deserialize(emptyArray, null, "foo", isKey);
+    var resp = recordDeserializer.deserialize(emptyArray, null, context, isKey);
     assertEquals(new TextNode(""), resp.value());
     assertNull(resp.errorMessage());
   }
@@ -251,7 +260,7 @@ public class RecordDeserializerTest {
   void parseJsonNodeShouldReturnStringIfByteArrayDoesNotStartWithMagicByte(boolean isKey) {
     var rawString = "Team DTX";
     var byteArray = rawString.getBytes(StandardCharsets.UTF_8);
-    var resp = recordDeserializer.deserialize(byteArray, null, "foo", isKey);
+    var resp = recordDeserializer.deserialize(byteArray, null, context, isKey);
     assertEquals(new TextNode(rawString), resp.value());
     assertNull(resp.errorMessage());
   }
@@ -268,7 +277,7 @@ public class RecordDeserializerTest {
 
     // Expect parsing to fail, should return byte array as string
     var magicByteAsString = new String(new byte[]{RecordDeserializer.MAGIC_BYTE}, StandardCharsets.UTF_8);
-    var resp = recordDeserializer.deserialize(byteArrayWithMagicByte, null, "foo", isKey);
+    var resp = recordDeserializer.deserialize(byteArrayWithMagicByte, null, context, isKey);
     assertEquals(new TextNode(magicByteAsString + rawString), resp.value());
     assertEquals("The value references a schema but we can't find the schema registry", resp.errorMessage());
   }
@@ -296,15 +305,15 @@ public class RecordDeserializerTest {
 
   private static Stream<Arguments> testSchemaFetchFailuresAreCached() {
     var clientWithAuthError = new SimpleMockSchemaRegistryClient()
-        .registerWithStatusCode(VALID_SCHEMA_ID, 403);
+        .registerWithStatusCode(VALID_SCHEMA_ID.schemaId(), 403);
     var clientWithNetworkError = new SimpleMockSchemaRegistryClient()
-        .registerAsNetworkErrored(VALID_SCHEMA_ID);
+        .registerAsNetworkErrored(VALID_SCHEMA_ID.schemaId());
 
     return Stream.of(
-        Arguments.of(clientWithAuthError, true),
-        Arguments.of(clientWithAuthError, false),
-        Arguments.of(clientWithNetworkError, true),
-        Arguments.of(clientWithNetworkError, false)
+        Arguments.of(clientWithAuthError, true, 0),
+        Arguments.of(clientWithAuthError, false, 0),
+        Arguments.of(clientWithNetworkError, true, 3),
+        Arguments.of(clientWithNetworkError, false, 3)
     );
   }
 
@@ -312,19 +321,20 @@ public class RecordDeserializerTest {
   @MethodSource
   public void testSchemaFetchFailuresAreCached(
       SimpleMockSchemaRegistryClient smc,
-      boolean isKey
+      boolean isKey,
+      int expectedRetries
   ) throws RestClientException, IOException {
     smc = spy(smc);
     // Assume we have 5 records with the same schema ID
     // We should only fetch the schema once, and then cache the failure for the rest
     RecordDeserializer.DecodedResult resp = null;
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 10; i++) {
       try {
         resp = recordDeserializer.deserialize(
             // Has a schema ID, so we'll actually try to fetch the schema
             VALID_SCHEMA_ID_BYTES,
             smc,
-            SAMPLE_TOPIC_NAME,
+            context,
             isKey,
             Optional.of(Base64.getEncoder()::encode)
         );
@@ -337,7 +347,8 @@ public class RecordDeserializerTest {
     }
 
     // Assert that the schema was tried to be fetched only once
-    verify(smc, times(1)).getSchemaById(anyInt());
+    var initialHit = 1;
+    verify(smc, times(initialHit + expectedRetries)).getSchemaById(VALID_SCHEMA_ID.schemaId());
   }
 
 
@@ -352,7 +363,7 @@ public class RecordDeserializerTest {
     ) {
       static TestCase nonRetryable(int statusCode) {
         // Expect only 1 try when the status code is non-retryable
-        return new TestCase(statusCode, 3, 1, null);
+        return new TestCase(statusCode, 1, 1, null);
       }
 
       static TestCase retryable(int statusCode) {
@@ -374,6 +385,7 @@ public class RecordDeserializerTest {
             ", isKey=" + isKey +
             '}';
       }
+
     }
 
     return Stream.of(
@@ -437,9 +449,7 @@ public class RecordDeserializerTest {
       Boolean isKey,
       CachedSchemaRegistryClient mockedSRClient
   ) throws IOException, RestClientException {
-    clearCachedFailures();
-
-    var recordDeserializer = getDeserializer(maxRetries);
+    schemaErrors.clearByConnectionId(CONNECTION_1_ID);
 
     // Create a new record with a schema ID
     RecordDeserializer.DecodedResult resp;
@@ -447,12 +457,12 @@ public class RecordDeserializerTest {
         // Has a schema ID, so we'll actually try to fetch the schema
         VALID_SCHEMA_ID_BYTES,
         mockedSRClient,
-        SAMPLE_TOPIC_NAME,
+        context,
         isKey
     );
 
     // Assert before trying to deserialize with the same schema ID
-    verify(mockedSRClient, times(expectedTries)).getSchemaById(anyInt());
+    verify(mockedSRClient, times(expectedTries)).getSchemaById(VALID_SCHEMA_ID.schemaId());
 
     // Now simulate being called with the same schema ID again
     for (int i = 0; i < 5; i++) {
@@ -460,7 +470,7 @@ public class RecordDeserializerTest {
         resp = recordDeserializer.deserialize(
             VALID_SCHEMA_ID_BYTES,
             mockedSRClient,
-            SAMPLE_TOPIC_NAME,
+            context,
             isKey
         );
       } catch (Exception e) {
@@ -474,17 +484,8 @@ public class RecordDeserializerTest {
     // Assert after trying to deserialize with the same schema ID
     verify(mockedSRClient, times(expectedTries)).getSchemaById(anyInt());
 
-    clearCachedFailures();
-  }
+    schemaErrors.clearByConnectionId(CONNECTION_1_ID);
 
-  private RecordDeserializer getDeserializer(int maxRetries) {
-    // Configure retries but negligible delay
-    return new RecordDeserializer(
-        1,
-        1,
-        10000,
-        maxRetries
-    );
   }
 
   @TestFactory
@@ -502,12 +503,12 @@ public class RecordDeserializerTest {
 
           // Simulate a persistent failure that we don't expect
           for (int i = 0; i < 10; i++) {
-            var recordDeserializer = getDeserializer(3);
+//            var recordDeserializer = getDeserializer(3);
             try {
               recordDeserializer.deserialize(
                   VALID_SCHEMA_ID_BYTES,
                   mockedSRClient,
-                  SAMPLE_TOPIC_NAME,
+                  context,
                   // We don't care about isKey
                   false
               );
