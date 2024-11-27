@@ -86,6 +86,7 @@ public class LocalIT {
     @Nested
     class RecordTestsWithoutSR extends AbstractIT implements RecordsV3WithoutSRSuite {
 
+
       @Override
       public TestEnvironment environment() {
         return TEST_ENVIRONMENT;
@@ -111,6 +112,7 @@ public class LocalIT {
     @Nested
     class RecordFailureTests extends AbstractIT implements RecordsV3ErrorsSuite {
 
+
       @Override
       public TestEnvironment environment() {
         return TEST_ENVIRONMENT;
@@ -128,6 +130,7 @@ public class LocalIT {
     @TestProfile(NoAccessFilterProfile.class)
     @Nested
     class TopicTests extends AbstractIT implements TopicV3Suite, PartitionV3Suite {
+
 
       @Override
       public TestEnvironment environment() {
@@ -165,6 +168,7 @@ public class LocalIT {
     @Nested
     class ClustersTests extends AbstractIT implements ClusterV3Suite {
 
+
       @Override
       public TestEnvironment environment() {
         return TEST_ENVIRONMENT;
@@ -183,6 +187,7 @@ public class LocalIT {
     @Nested
     class ConsumptionTests extends AbstractIT implements SimpleConsumerSuite, KafkaConsumeSuite {
 
+
       @Override
       public TestEnvironment environment() {
         return TEST_ENVIRONMENT;
@@ -198,7 +203,6 @@ public class LocalIT {
 
   @Nested
   class DirectConnectionWithoutCredentialsTests {
-
     /**
      * All tests that create connections with this scope will reuse the same connection.
      */
@@ -228,6 +232,7 @@ public class LocalIT {
     @Nested
     class RecordFailureTests extends AbstractIT implements RecordsV3ErrorsSuite {
 
+
       @Override
       public TestEnvironment environment() {
         return TEST_ENVIRONMENT;
@@ -246,6 +251,7 @@ public class LocalIT {
     @Nested
     class TopicTests extends AbstractIT implements TopicV3Suite, PartitionV3Suite {
 
+
       @Override
       public TestEnvironment environment() {
         return TEST_ENVIRONMENT;
@@ -263,6 +269,7 @@ public class LocalIT {
     @TestProfile(NoAccessFilterProfile.class)
     @Nested
     class TopicConfigTests extends AbstractIT implements TopicConfigV3Suite {
+
 
       @Override
       public TestEnvironment environment() {

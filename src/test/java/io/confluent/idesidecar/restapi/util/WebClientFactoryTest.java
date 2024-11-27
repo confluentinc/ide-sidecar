@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Test;
 
 @QuarkusTest
 public class WebClientFactoryTest {
-
   @Inject WebClientFactory webClientFactory;
 
   @Test

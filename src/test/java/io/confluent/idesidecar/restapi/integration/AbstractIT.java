@@ -3,8 +3,10 @@ package io.confluent.idesidecar.restapi.integration;
 import static io.confluent.idesidecar.restapi.kafkarest.SchemaManager.SCHEMA_PROVIDERS;
 
 import io.confluent.idesidecar.restapi.clients.ClientConfigurator;
+import io.confluent.idesidecar.restapi.clients.SchemaErrors;
 import io.confluent.idesidecar.restapi.connections.ConnectionState;
 import io.confluent.idesidecar.restapi.connections.ConnectionStates;
+import io.confluent.idesidecar.restapi.messageviewer.MessageViewerContext;
 import io.confluent.idesidecar.restapi.messageviewer.RecordDeserializer;
 import io.confluent.idesidecar.restapi.messageviewer.SimpleConsumer;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
@@ -60,6 +62,18 @@ import org.junit.jupiter.api.AfterEach;
  * connections that remain at the end of each test, giving a clean slate to the next test method.
  */
 public abstract class AbstractIT extends SidecarClient implements ITSuite {
+
+  static SchemaErrors.ConnectionId VALID_CONNECTION_ID = new SchemaErrors.ConnectionId("c1");
+
+  private static MessageViewerContext messageViewerContext = new MessageViewerContext(
+      null,
+      null,
+      null,
+      null,
+      null,
+VALID_CONNECTION_ID,
+      null,
+      null);
 
   record ScopedConnection(
       ConnectionSpec spec,
@@ -134,7 +148,8 @@ public abstract class AbstractIT extends SidecarClient implements ITSuite {
         1,
         1,
         10000,
-        3
+        3,
+        new SchemaErrors()
     );
     CachedSchemaRegistryClient srClient = null;
     if (sr != null) {
@@ -149,7 +164,7 @@ public abstract class AbstractIT extends SidecarClient implements ITSuite {
           )
       );
     }
-    return new SimpleConsumer(consumer, srClient, deserializer);
+    return new SimpleConsumer(consumer, srClient, deserializer, messageViewerContext);
   }
 
   /**
