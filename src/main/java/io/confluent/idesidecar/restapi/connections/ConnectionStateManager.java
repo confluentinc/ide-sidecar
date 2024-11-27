@@ -314,8 +314,9 @@ public class ConnectionStateManager {
   }
 
   /**
+   * Checks the status of all managed connections that match a given predicate.
    *
-   * @param predicate
+   * @param predicate The predicate that connections must match to be checked.
    */
   public void checkConnectionStatuses(Predicate<ConnectionState> predicate) {
     getConnectionStates().stream()
