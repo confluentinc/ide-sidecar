@@ -15,7 +15,6 @@ import io.smallrye.common.constraint.NotNull;
 import io.smallrye.common.constraint.Nullable;
 import io.vertx.core.Future;
 import java.util.HashSet;
-import java.util.Objects;
 
 /**
  * Implementation of the connection state for Confluent Cloud ({@link ConnectionType#CCLOUD}).
