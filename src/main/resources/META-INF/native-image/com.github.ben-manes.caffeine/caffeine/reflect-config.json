@@ -12,6 +12,10 @@
     "allDeclaredConstructors": true
   },
   {
+    "name": "com.github.benmanes.caffeine.cache.SSA",
+    "allDeclaredConstructors": true
+  },
+  {
     "name": "com.github.benmanes.caffeine.cache.SSLA",
     "allDeclaredConstructors": true
   },

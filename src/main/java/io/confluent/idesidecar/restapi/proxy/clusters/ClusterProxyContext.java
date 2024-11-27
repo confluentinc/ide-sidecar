@@ -4,6 +4,7 @@ import io.confluent.idesidecar.restapi.models.ClusterType;
 import io.confluent.idesidecar.restapi.models.graph.Cluster;
 import io.confluent.idesidecar.restapi.proxy.ProxyContext;
 import io.confluent.idesidecar.restapi.proxy.clusters.strategy.ClusterStrategy;
+import io.vertx.codegen.annotations.Nullable;
 import io.vertx.core.MultiMap;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
@@ -29,7 +30,7 @@ public class ClusterProxyContext extends ProxyContext {
       HttpMethod requestMethod,
       Buffer requestBody,
       Map<String, String> requestPathParams,
-      String connectionId,
+      @Nullable String connectionId,
       String clusterId,
       ClusterType clusterType
   ) {
