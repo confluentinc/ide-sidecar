@@ -15,31 +15,14 @@ import org.junit.jupiter.api.Test;
 @QuarkusTest
 public class PlatformConnectionTest {
 
-  private static final int AWAIT_COMPLETION_TIMEOUT_SEC = 5;
-
   @Test
-  void getConnectionStatusShouldReturnInitialStatusForConfluentPlatformConnections()
-      throws Throwable {
-
+  void getConnectionStatusShouldReturnInitialStatusForConfluentPlatformConnections() {
     var mockListener = mock(ConnectionState.StateChangedListener.class);
-    var testContext = new VertxTestContext();
     var connectionState = ConnectionStates.from(
         new ConnectionSpec("1", "foo", ConnectionType.PLATFORM),
         mockListener
     );
 
-    connectionState.getConnectionStatus()
-        .onComplete(
-            testContext.succeeding(connectionStatus ->
-                testContext.verify(() -> {
-                  assertEquals(ConnectionStatus.INITIAL_STATUS, connectionStatus);
-                  testContext.completeNow();
-                })));
-
-    assertTrue(testContext.awaitCompletion(AWAIT_COMPLETION_TIMEOUT_SEC, TimeUnit.SECONDS));
-
-    if (testContext.failed()) {
-      throw testContext.causeOfFailure();
-    }
+    assertEquals(ConnectionStatus.INITIAL_STATUS, connectionState.getStatus());
   }
 }
