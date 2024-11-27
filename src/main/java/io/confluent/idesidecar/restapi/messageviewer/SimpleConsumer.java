@@ -42,7 +42,8 @@ public class SimpleConsumer {
   public <context> SimpleConsumer(
       KafkaConsumer<byte[], byte[]> consumer,
       SchemaRegistryClient sr,
-      RecordDeserializer recordDeserializer, MessageViewerContext context
+      RecordDeserializer recordDeserializer,
+      MessageViewerContext context
   ) {
     this.consumer = consumer;
     this.schemaRegistryClient = sr;
