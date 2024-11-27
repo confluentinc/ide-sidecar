@@ -29,6 +29,8 @@ public class SidecarInfoTest {
       OperatingSystemType os,
       SidecarInfo.VsCode vscode,
       String vscodeVersionPrefix
+
+      //could add expected useragent
   ) {
     Map<String, String> asProperties() {
       // Construct the "system" properties from the input
@@ -191,6 +193,9 @@ public class SidecarInfoTest {
             () -> {
               // Construct a SidecarInfo object from the input
               SidecarInfo sidecar = createSidecarInfo(input);
+
+
+              //ASSERT USER AGENT AS EXPECTED
 
               // Verify the output matches
               assertEquals(input.os, sidecar.osType());
