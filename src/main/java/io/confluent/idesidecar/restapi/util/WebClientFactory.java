@@ -115,7 +115,6 @@ public class WebClientFactory {
   WebClientOptions getDefaultWebClientOptions() {
     var clientOptions = new WebClientOptions();
     clientOptions.setConnectTimeout((int) WEBCLIENT_CONNECT_TIMEOUT_SECONDS.toMillis());
-
     if (OperatingSystemType.current() == OperatingSystemType.Windows) {
       var pemTrustOptions = new PemTrustOptions();
       addCertsFromBuiltInTrustStore(pemTrustOptions);
