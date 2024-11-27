@@ -225,7 +225,7 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
     );
   }
 
-  private static List<SimpleConsumeMultiPartitionResponse.PartitionConsumeRecordHeader>
+  private List<SimpleConsumeMultiPartitionResponse.PartitionConsumeRecordHeader>
   decodeHeaders(PartitionConsumeRecord record) {
     return record
         .headers()
@@ -240,7 +240,10 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
             // For whatever reason, we couldn't decode the Base64 encoded header value.
             // Perhaps the API changed or the data is corrupted. Either way,
             // we log a warning and return the raw value.
-            Log.warn("Failed to base64 decode header value from Confluent Cloud", e);
+            Log.debugf(e, "Failed to base64 decode header value '%s' from Confluent Cloud" +
+                    "(partition: %d, offset: %d)",
+                header.value(), record.partitionId(), record.offset()
+            );
             decodedValue = header.value();
           }
 
