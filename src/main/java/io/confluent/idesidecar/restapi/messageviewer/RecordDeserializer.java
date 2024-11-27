@@ -60,7 +60,7 @@ public class RecordDeserializer {
   private static final Map<String, String> SERDE_CONFIGS = ConfigUtil
       .asMap("ide-sidecar.serde-configs");
   private final int schemaFetchMaxRetries;
-  @Inject
+
   SchemaErrors schemaErrors;
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
   private static final ObjectMapper AVRO_OBJECT_MAPPER = new AvroMapper(new AvroFactory());
@@ -70,6 +70,7 @@ public class RecordDeserializer {
   private final Duration schemaFetchRetryMaxBackoff;
   private final Duration schemaFetchTimeout;
 
+  @Inject
   public RecordDeserializer(
       @ConfigProperty(name = "ide-sidecar.schema-fetch-retry.initial-backoff-ms")
       long schemaFetchRetryInitialBackoffMs,
@@ -85,7 +86,7 @@ public class RecordDeserializer {
     this.schemaFetchRetryMaxBackoff = Duration.ofMillis(schemaFetchRetryMaxBackoffMs);
     this.schemaFetchTimeout = Duration.ofMillis(schemaFetchTimeoutMs);
     this.schemaFetchMaxRetries = schemaFetchMaxRetries;
-    this.schemaErrors= schemaErrors;
+    this.schemaErrors = schemaErrors;
   }
 
   @RecordBuilder

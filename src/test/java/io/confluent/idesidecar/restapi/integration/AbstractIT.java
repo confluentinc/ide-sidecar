@@ -6,17 +6,16 @@ import io.confluent.idesidecar.restapi.clients.ClientConfigurator;
 import io.confluent.idesidecar.restapi.clients.SchemaErrors;
 import io.confluent.idesidecar.restapi.connections.ConnectionState;
 import io.confluent.idesidecar.restapi.connections.ConnectionStates;
+import io.confluent.idesidecar.restapi.messageviewer.MessageViewerContext;
 import io.confluent.idesidecar.restapi.messageviewer.RecordDeserializer;
 import io.confluent.idesidecar.restapi.messageviewer.SimpleConsumer;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.util.LocalTestEnvironment;
-import io.confluent.idesidecar.restapi.messageviewer.MessageViewerContext;
 import io.confluent.idesidecar.restapi.util.RequestHeadersConstants;
 import io.confluent.idesidecar.restapi.util.SidecarClient;
 import io.confluent.idesidecar.restapi.util.TestEnvironment;
 import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
 import io.quarkus.logging.Log;
-import jakarta.inject.Inject;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
@@ -64,19 +63,17 @@ import org.junit.jupiter.api.AfterEach;
  */
 public abstract class AbstractIT extends SidecarClient implements ITSuite {
 
-  SchemaErrors.ConnectionId CONNECTION_1_ID = new SchemaErrors.ConnectionId("c1");
+  static SchemaErrors.ConnectionId VALID_CONNECTION_ID = new SchemaErrors.ConnectionId("c1");
 
-  protected AbstractIT(MessageViewerContext context) {
-    this.context = new MessageViewerContext(
-        null,
-        null,
-        null,
-        null,
-        null,
-        CONNECTION_1_ID,
-        "testClusterId",
-        "testTopicName");
-  }
+  private static MessageViewerContext messageViewerContext = new MessageViewerContext(
+      null,
+      null,
+      null,
+      null,
+      null,
+VALID_CONNECTION_ID,
+      null,
+      null);
 
   record ScopedConnection(
       ConnectionSpec spec,
@@ -101,13 +98,6 @@ public abstract class AbstractIT extends SidecarClient implements ITSuite {
   private static final Map<String, ScopedConnection> REUSABLE_CONNECTIONS_BY_TEST_SCOPE = new ConcurrentHashMap<>();
 
   protected ScopedConnection current;
-
-  protected final MessageViewerContext context;
-
-  @Inject
-  RecordDeserializer recordDeserializer;
-  SchemaErrors schemaErrors;
-
 
   @AfterEach
   public void afterEach() {
@@ -154,14 +144,12 @@ public abstract class AbstractIT extends SidecarClient implements ITSuite {
         new ByteArrayDeserializer(),
         new ByteArrayDeserializer()
     );
-
     var deserializer = new RecordDeserializer(
         1,
         1,
         10000,
         3,
-        schemaErrors
-
+        new SchemaErrors()
     );
     CachedSchemaRegistryClient srClient = null;
     if (sr != null) {
@@ -176,7 +164,7 @@ public abstract class AbstractIT extends SidecarClient implements ITSuite {
           )
       );
     }
-    return new SimpleConsumer(consumer, srClient, deserializer,context);
+    return new SimpleConsumer(consumer, srClient, deserializer, messageViewerContext);
   }
 
   /**
