@@ -39,7 +39,7 @@ public class SimpleConsumer {
   private final MessageViewerContext context;
 
 
-  public <context> SimpleConsumer(
+  public SimpleConsumer(
       KafkaConsumer<byte[], byte[]> consumer,
       SchemaRegistryClient sr,
       RecordDeserializer recordDeserializer,
