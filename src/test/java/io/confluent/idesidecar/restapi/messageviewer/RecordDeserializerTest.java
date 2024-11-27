@@ -503,6 +503,7 @@ public class RecordDeserializerTest {
 
           // Simulate a persistent failure that we don't expect
           for (int i = 0; i < 10; i++) {
+//            var recordDeserializer = getDeserializer(3);
             try {
               recordDeserializer.deserialize(
                   VALID_SCHEMA_ID_BYTES,
