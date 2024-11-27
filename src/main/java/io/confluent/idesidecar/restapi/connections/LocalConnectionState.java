@@ -24,9 +24,4 @@ public class LocalConnectionState extends ConnectionState {
     // Notify the never-null listener of successful connection, even though no auth is used
     this.listener.connected(this);
   }
-
-  @Override
-  public Future<ConnectionStatus> checkStatus() {
-    return Future.succeededFuture(ConnectionStatus.INITIAL_STATUS);
-  }
 }

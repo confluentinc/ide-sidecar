@@ -22,17 +22,6 @@ import java.util.Objects;
  */
 public class CCloudConnectionState extends ConnectionState {
 
-  static final ConnectionStatus INITIAL_STATUS = new ConnectionStatus(
-      new CCloudStatus(
-          ConnectedState.NONE,
-          null,
-          null,
-          null
-      ),
-      null,
-      null
-  );
-
   private final CCloudOAuthContext oauthContext = new CCloudOAuthContext();
 
   CCloudConnectionState() {
@@ -46,13 +35,17 @@ public class CCloudConnectionState extends ConnectionState {
     super(spec, listener);
   }
 
-  /**
-   *
-   * @return
-   */
-  @Override
-  public ConnectionStatus getStatus() {
-    return Objects.requireNonNullElse(status.get(), INITIAL_STATUS);
+  public ConnectionStatus getInitialStatus() {
+    return new ConnectionStatus(
+        new CCloudStatus(
+            ConnectedState.NONE,
+            null,
+            null,
+            null
+        ),
+        null,
+        null
+    );
   }
 
   /**

@@ -22,9 +22,4 @@ public class PlatformConnectionState extends ConnectionState {
   ) {
     super(spec, listener);
   }
-
-  @Override
-  public Future<ConnectionStatus> checkStatus() {
-    return Future.succeededFuture(ConnectionStatus.INITIAL_STATUS);
-  }
 }

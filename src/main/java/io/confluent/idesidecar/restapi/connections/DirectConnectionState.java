@@ -115,15 +115,6 @@ public class DirectConnectionState extends ConnectionState {
     return Optional.ofNullable(credentials);
   }
 
-  /**
-   *
-   * @return
-   */
-  @Override
-  public ConnectionStatus getStatus() {
-    return Objects.requireNonNullElse(status.get(), getInitialStatus());
-  }
-
   @Override
   public Future<ConnectionStatus> checkStatus() {
     return Future

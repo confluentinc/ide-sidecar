@@ -70,10 +70,16 @@ public abstract class ConnectionState {
   }
 
   public ConnectionStatus getStatus() {
-    return Objects.requireNonNullElse(status.get(), ConnectionStatus.INITIAL_STATUS);
+    return Objects.requireNonNullElse(status.get(), getInitialStatus());
   }
 
-  public abstract Future<ConnectionStatus> checkStatus();
+  public ConnectionStatus getInitialStatus() {
+    return ConnectionStatus.INITIAL_STATUS;
+  }
+
+  public Future<ConnectionStatus> checkStatus() {
+    return Future.succeededFuture(getInitialStatus());
+  }
 
   public ConnectionMetadata getConnectionMetadata() {
     return ConnectionMetadata.from(
