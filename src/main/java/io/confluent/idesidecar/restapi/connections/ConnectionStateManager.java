@@ -22,7 +22,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.UUID;
 
 /**
  * The {@link ConnectionStateManager} allows to manage a set of {@link ConnectionState}s. It
@@ -134,7 +133,7 @@ public class ConnectionStateManager {
   /**
    * Test whether the given connection spec is valid and can be used to create a connection state.
    * This does not store the resulting connection state, and does not
-   * {@link ConnectionState#getConnectionStatus()} of the resulting connection state.
+   * {@link ConnectionState#refreshStatus()} of the resulting connection state.
    *
    * @param spec the specification for the connection
    * @return the connection state that would have been created

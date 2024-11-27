@@ -9,6 +9,7 @@ import io.confluent.idesidecar.restapi.models.ConnectionStatus;
 import io.confluent.idesidecar.restapi.resources.ConnectionsResource;
 import io.vertx.core.Future;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Base class holding default implementations for interacting with connection states.
@@ -46,11 +47,14 @@ public abstract class ConnectionState {
 
   protected ConnectionSpec spec;
 
+  private final AtomicReference<ConnectionStatus> cachedStatus = new AtomicReference<>();
+
   protected final StateChangedListener listener;
 
   protected ConnectionState(ConnectionSpec spec, StateChangedListener listener) {
     this.spec = spec;
     this.listener = listener != null ? listener : StateChangedListener.NO_OP;
+    this.cachedStatus.set(getInitialStatus());
   }
 
   public ConnectionSpec getSpec() {
@@ -65,12 +69,52 @@ public abstract class ConnectionState {
     this.spec = in;
   }
 
-  public Future<ConnectionStatus> getConnectionStatus() {
-    return Future.succeededFuture(ConnectionStatus.INITIAL_STATUS);
+  /**
+   * Obtain the most recently-obtained status of the connection.
+   *
+   * @return the connection status; never null
+   */
+  public ConnectionStatus getStatus() {
+    return this.cachedStatus.get();
   }
 
-  public ConnectionStatus getInitialStatus() {
+  /**
+   * Return the status for a newly-created connection. This method can be overridden by subclasses
+   * to provide a different initial status.
+   *
+   * @return the initial status; never null
+   */
+  protected ConnectionStatus getInitialStatus() {
     return ConnectionStatus.INITIAL_STATUS;
+  }
+
+  /**
+   * Attempt to {@link #doRefreshConnectionStatus() refresh the connection status and
+   * update the {@link #getStatus() cached results}.
+   *
+   * <p>This method always calls {@link #doRefreshConnectionStatus()} and then on success updates
+   * the {@link #getStatus() cached connection status}.
+   *
+   * @return the future that will complete with the updated connection status
+   * @see #getConnectionStatus()
+   * @see #doRefreshConnectionStatus()
+   */
+  public final Future<ConnectionStatus> refreshStatus() {
+    // Always set the cached status when the future completes successfully
+    return doRefreshConnectionStatus().onSuccess(this.cachedStatus::set);
+  }
+
+  /**
+   * Refresh the connection status. By default, this simply returns a completed future with the
+   * {@link #getInitialStatus() initial status}. Subclasses should override this method to
+   * implement the actual connection status refresh logic.
+   *
+   * @return the future that will complete with the updated connection status
+   * @see #refreshStatus()
+   * @see #getStatus()
+   */
+  protected Future<ConnectionStatus> doRefreshConnectionStatus() {
+    return Future.succeededFuture(getInitialStatus());
   }
 
   public ConnectionMetadata getConnectionMetadata() {

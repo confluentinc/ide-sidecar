@@ -99,7 +99,7 @@ public class ConnectionsResource {
       // Just test the connection and return the status
       var testedState = connectionStateManager.testConnectionState(connectionSpec);
       // Get the status of the connection
-      var futureStatus = testedState.getConnectionStatus();
+      var futureStatus = testedState.refreshStatus();
       // And create a uni that will complete when the status is available
       return Uni
           .createFrom()
@@ -108,12 +108,12 @@ public class ConnectionsResource {
               Connection.from(testedState, connectionStatus)
           );
     }
-    // Create a real connection state and return the connection using the initial status
+    // Create a real connection state and return the connection using the latest status
     var newState = connectionStateManager.createConnectionState(connectionSpec);
     return Uni
         .createFrom()
         .item(
-            Connection.from(newState, newState.getInitialStatus())
+            Connection.from(newState, newState.getStatus())
         );
   }
 
@@ -174,7 +174,7 @@ public class ConnectionsResource {
     try {
       ConnectionState connectionState = connectionStateManager.getConnectionState(id);
       return connectionState
-          .getConnectionStatus()
+          .refreshStatus()
           .map(connectionStatus -> Connection.from(connectionState, connectionStatus))
           .toCompletionStage();
     } catch (ConnectionNotFoundException e) {

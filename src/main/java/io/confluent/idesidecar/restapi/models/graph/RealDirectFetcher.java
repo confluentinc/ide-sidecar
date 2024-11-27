@@ -112,6 +112,11 @@ public class RealDirectFetcher extends ConfluentRestClient implements DirectFetc
   public Uni<DirectKafkaCluster> getKafkaCluster(String connectionId) {
     var state = connections.getConnectionState(connectionId);
     if (state instanceof DirectConnectionState directState) {
+      if (!directState.isKafkaConnected()) {
+        // Either there is no Kafka cluster configured or it is not connected, so return no info
+        Log.debugf("Skipping connection '%s' since Kafka is not connected.", connectionId);
+        return Uni.createFrom().nullItem();
+      }
       // If there is a Kafka cluster configured, get the details
       return directState.withAdminClient(
           adminClient -> getKafkaCluster(directState, adminClient),
@@ -164,6 +169,11 @@ public class RealDirectFetcher extends ConfluentRestClient implements DirectFetc
   public Uni<DirectSchemaRegistry> getSchemaRegistry(String connectionId) {
     var state = connections.getConnectionState(connectionId);
     if (state instanceof DirectConnectionState directState) {
+      if (!directState.isSchemaRegistryConnected()) {
+        // Either there is no Schema Registry configured or it is not connected, so return no info
+        Log.debugf("Skipping connection '%s' since Schema Registry is not connected.", connectionId);
+        return Uni.createFrom().nullItem();
+      }
       // Use the SR client to obtain the cluster ID
       return directState.withSchemaRegistryClient(
           srClient -> getSchemaRegistry(directState, srClient),

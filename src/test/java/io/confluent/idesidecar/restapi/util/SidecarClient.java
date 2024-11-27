@@ -316,6 +316,15 @@ public class SidecarClient implements SidecarClientApi {
     } else {
       assertNotNull(connection.id());
     }
+
+    // Get the connection to make sure the status is updated
+    // TODO: This can be removed once we fix issue #181 https://github.com/confluentinc/ide-sidecar/issues/181
+    given()
+        .when()
+        .get("%s/gateway/v1/connections/%s".formatted(sidecarHost, connection.id()))
+        .then()
+        .statusCode(200);
+
     // Use this connection for subsequent operations
     currentConnectionId = connection.id();
     return connection;
@@ -575,7 +584,7 @@ public class SidecarClient implements SidecarClientApi {
       await()
            .pollDelay(Duration.ofMillis(20))
            .pollInterval(Duration.ofMillis(10))
-           .atMost(Duration.ofMillis(100))
+           .atMost(Duration.ofMillis(250))
            .until(()->getLatestSchemaVersion(subject, currentSchemaClusterId) != null);
 
         return getLatestSchemaVersion(subject, currentSchemaClusterId);
