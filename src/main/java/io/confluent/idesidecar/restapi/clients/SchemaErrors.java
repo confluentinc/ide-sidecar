@@ -58,13 +58,7 @@ public class SchemaErrors {
     cacheOfCaches.remove(connectionId);
   }
 
-  public void onConnectionChange(
-      @ObservesAsync
-      @Lifecycle.Deleted
-      @Lifecycle.Created
-      @Lifecycle.Updated
-      ConnectionState connection
-  ) {
+  public void onConnectionChange(@ObservesAsync @Lifecycle.Deleted @Lifecycle.Created @Lifecycle.Updated ConnectionState connection) {
     cacheOfCaches.remove(new ConnectionId(connection.getId()));
   }
 }
