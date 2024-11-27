@@ -324,7 +324,7 @@ public class ConnectionsResourceTest {
   }
 
   @Test
-  void getConnection_withToken_shouldReturnWithStatusIncludingUserAndOrg() throws Throwable {
+  void getConnection_withToken_shouldReturnWithStatusIncludingUserAndOrg() {
     var connectionId = "c-1";
     var connectionName = "Connection 1";
     var connectionType = ConnectionType.CCLOUD;
@@ -368,7 +368,7 @@ public class ConnectionsResourceTest {
   }
 
   @Test
-  void getConnection_withToken_failedAuthCheck_shouldReturnWithErrors() throws Throwable {
+  void getConnection_withToken_failedAuthCheck_shouldReturnWithErrors() {
     var connectionId = "c-1";
     var connectionName = "Connection 1";
     var connectionType = ConnectionType.CCLOUD;
@@ -631,7 +631,7 @@ public class ConnectionsResourceTest {
   }
 
   @Test
-  void updateConnectionCCloudOrganizationIdWithSameId() throws Throwable {
+  void updateConnectionCCloudOrganizationIdWithSameId() {
     // Create authenticated connection
     var connectionId = "c1";
     var connectionName = "Connection 1";
@@ -673,7 +673,7 @@ public class ConnectionsResourceTest {
   }
 
   @Test
-  void updateUnauthedConnectionCCloudOrganization() throws Throwable {
+  void updateUnauthedConnectionCCloudOrganization() {
     // Create unauthenticated CCloud connection
     var connectionId = "c1";
     var connectionSpec = ccloudTestUtil.createConnection(
@@ -1840,11 +1840,23 @@ public class ConnectionsResourceTest {
     return url == null ? null : url.replaceAll("localhost:\\d+", "");
   }
 
+  /**
+   * Checks the status of a given connection and, after completing the status check, runs an
+   * {@link ExecutionBlock} of code that can perform assertions. The {@link ExecutionBlock} runs on
+   * a {@link VertxTestContext} and must call {@link VertxTestContext#completeNow()} at the end so
+   * that the {@link VertxTestContext} can be completed succesfully. This method will let the test
+   * <code>fail()</code> if the {@link VertxTestContext} has failed.
+   *
+   * @param connectionId The ID of the connection
+   * @param testContext The {@link VertxTestContext} instance used for executing the
+   *                    {@link ExecutionBlock}
+   * @param block The {@link ExecutionBlock} that's executed after completing the status check
+   */
   void checkConnectionStatusAndThen(
       String connectionId,
       VertxTestContext testContext,
       ExecutionBlock block
-  ) throws Throwable {
+  ) {
     connectionStateManager.getConnectionState(connectionId)
         .checkStatus()
         .onComplete(testContext.succeeding(ignored -> testContext.verify(block)));
