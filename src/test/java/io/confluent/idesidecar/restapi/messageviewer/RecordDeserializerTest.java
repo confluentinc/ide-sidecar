@@ -63,9 +63,9 @@ public class RecordDeserializerTest {
       null,
       null,
       null,
-       CONNECTION_1_ID,
+      CONNECTION_1_ID,
       "testClusterId",
-       SAMPLE_TOPIC_NAME);
+      SAMPLE_TOPIC_NAME);
 
   @BeforeEach
   public void setup() throws RestClientException, IOException {
