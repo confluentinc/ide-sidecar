@@ -30,13 +30,11 @@ public class SchemaErrors {
   public static final Map<ConnectionId, Cache<SchemaId, SchemaErrors.Error>> cacheOfCaches = new ConcurrentHashMap<>();
 
   public static Cache<SchemaId, Error> getSubCache(ConnectionId key) {
-    return cacheOfCaches.computeIfAbsent(key, k -> Caffeine.newBuilder()
-                                                           .expireAfterAccess(
-                                                               SCHEMA_FETCH_ERROR_TTL)
-                                                           .build());
+    return cacheOfCaches.computeIfAbsent(
+        key,
+        k -> Caffeine.newBuilder().expireAfterAccess(SCHEMA_FETCH_ERROR_TTL).build());
   }
 
-  // Methods for schema ID
   public Error readSchemaIdByConnectionId(
       ConnectionId connectionId,
       SchemaId schemaId

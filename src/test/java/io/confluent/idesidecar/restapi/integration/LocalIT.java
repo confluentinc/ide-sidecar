@@ -67,7 +67,6 @@ public class LocalIT {
     @TestProfile(NoAccessFilterProfile.class)
     @Nested
     class RecordTests extends AbstractIT implements RecordsV3Suite, RecordsV3DryRunSuite {
-
       @Override
       public TestEnvironment environment() {
         return TEST_ENVIRONMENT;

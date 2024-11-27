@@ -46,7 +46,7 @@ public class RecordDeserializerTest {
 
   private static final SchemaErrors.SchemaId VALID_SCHEMA_ID = new SchemaErrors.SchemaId("fake_cluster_id", 10008);
 
- SchemaErrors.ConnectionId CONNECTION_1_ID = new SchemaErrors.ConnectionId("c1");
+  SchemaErrors.ConnectionId CONNECTION_1_ID = new SchemaErrors.ConnectionId("c1");
 
   /**
    * Data containing valid schema ID of 10008, and nothing else.
@@ -58,14 +58,14 @@ public class RecordDeserializerTest {
   private SchemaRegistryClient schemaRegistryClient;
 
   MessageViewerContext context = new MessageViewerContext(
-        null,
-            null,
-            null,
-            null,
-            null,
-            CONNECTION_1_ID,
-            "testClusterId",
-                    SAMPLE_TOPIC_NAME);
+      null,
+      null,
+      null,
+      null,
+      null,
+       CONNECTION_1_ID,
+      "testClusterId",
+       SAMPLE_TOPIC_NAME);
 
   @BeforeEach
   public void setup() throws RestClientException, IOException {
@@ -347,8 +347,8 @@ public class RecordDeserializerTest {
     }
 
     // Assert that the schema was tried to be fetched only once
-        var initialHit = 1;
-        verify(smc, times(initialHit + expectedRetries)).getSchemaById(VALID_SCHEMA_ID.schemaId());
+    var initialHit = 1;
+    verify(smc, times(initialHit + expectedRetries)).getSchemaById(VALID_SCHEMA_ID.schemaId());
   }
 
 

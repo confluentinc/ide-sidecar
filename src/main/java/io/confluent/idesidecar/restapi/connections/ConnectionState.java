@@ -1,6 +1,5 @@
 package io.confluent.idesidecar.restapi.connections;
 
-import io.confluent.idesidecar.restapi.clients.SchemaErrors;
 import io.confluent.idesidecar.restapi.credentials.Credentials;
 import io.confluent.idesidecar.restapi.credentials.Credentials.KafkaConnectionOptions;
 import io.confluent.idesidecar.restapi.models.ConnectionMetadata;
