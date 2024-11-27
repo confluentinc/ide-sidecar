@@ -89,10 +89,10 @@ public abstract class ConnectionState {
   }
 
   /**
-   * Attempt to {@link #doRefreshConnectionStatus() refresh the connection status and
+   * Attempt to {@link #doRefreshStatus() refresh the connection status and
    * update the {@link #getStatus() cached results}.
    *
-   * <p>This method always calls {@link #doRefreshConnectionStatus()} and then on success updates
+   * <p>This method always calls {@link #doRefreshStatus()} and then on success updates
    * the {@link #getStatus() cached connection status}.
    *
    * @return the future that will complete with the updated connection status
@@ -101,7 +101,7 @@ public abstract class ConnectionState {
    */
   public final Future<ConnectionStatus> refreshStatus() {
     // Always set the cached status when the future completes successfully
-    return doRefreshConnectionStatus().onSuccess(this.cachedStatus::set);
+    return doRefreshStatus().onSuccess(this.cachedStatus::set);
   }
 
   /**
@@ -113,7 +113,7 @@ public abstract class ConnectionState {
    * @see #refreshStatus()
    * @see #getStatus()
    */
-  protected Future<ConnectionStatus> doRefreshConnectionStatus() {
+  protected Future<ConnectionStatus> doRefreshStatus() {
     return Future.succeededFuture(getInitialStatus());
   }
 

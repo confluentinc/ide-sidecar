@@ -136,7 +136,7 @@ public class DirectConnectionState extends ConnectionState {
   }
 
   @Override
-  protected Future<ConnectionStatus> doRefreshConnectionStatus() {
+  protected Future<ConnectionStatus> doRefreshStatus() {
     return Future.join(
         getKafkaConnectionStatus(),
         getSchemaRegistryConnectionStatus()

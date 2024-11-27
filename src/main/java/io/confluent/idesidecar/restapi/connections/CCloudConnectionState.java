@@ -75,7 +75,7 @@ public class CCloudConnectionState extends ConnectionState {
    * @return status of connection
    */
   @Override
-  protected Future<ConnectionStatus> doRefreshConnectionStatus() {
+  protected Future<ConnectionStatus> doRefreshStatus() {
     var missingTokens = new HashSet<String>();
     if (oauthContext.getRefreshToken() == null) {
       missingTokens.add("Refresh token");
