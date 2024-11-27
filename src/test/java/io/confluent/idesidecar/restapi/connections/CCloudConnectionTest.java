@@ -35,7 +35,7 @@ public class CCloudConnectionTest {
         mockListener
     );
 
-    connectionState.getConnectionStatus()
+    connectionState.refreshStatus()
         .onComplete(
             testContext.succeeding(connectionStatus ->
                 testContext.verify(() -> {
@@ -62,7 +62,7 @@ public class CCloudConnectionTest {
         true,
         false
     );
-    connectionState.getConnectionStatus()
+    connectionState.refreshStatus()
         .onComplete(
             testContext.succeeding(connectionStatus ->
                 testContext.verify(() -> {
@@ -89,7 +89,7 @@ public class CCloudConnectionTest {
         true,
         false
     );
-    connectionState.getConnectionStatus()
+    connectionState.refreshStatus()
         .onComplete(
             testContext.succeeding(connectionStatus ->
                 testContext.verify(() -> {
@@ -116,7 +116,7 @@ public class CCloudConnectionTest {
         false,
         false
     );
-    connectionState.getConnectionStatus()
+    connectionState.refreshStatus()
         .onComplete(
             testContext.succeeding(connectionStatus ->
                 testContext.verify(() -> {
@@ -143,7 +143,7 @@ public class CCloudConnectionTest {
         true,
         false
     );
-    connectionState.getConnectionStatus()
+    connectionState.refreshStatus()
         .onComplete(
             testContext.succeeding(connectionStatus ->
                 testContext.verify(() -> {
@@ -170,7 +170,7 @@ public class CCloudConnectionTest {
         true,
         false
     );
-    connectionState.getConnectionStatus()
+    connectionState.refreshStatus()
         .onComplete(
             testContext.succeeding(connectionStatus ->
                 testContext.verify(() -> {
@@ -197,7 +197,7 @@ public class CCloudConnectionTest {
         true,
         true
     );
-    connectionState.getConnectionStatus()
+    connectionState.refreshStatus()
         .onComplete(
             testContext.succeeding(connectionStatus ->
                 testContext.verify(() -> {
