@@ -190,13 +190,13 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
           var keyData = deserialize(
               record.key(),
               schemaRegistryClient,
-              context.getTopicName(),
+              context,
               true
           );
           var valueData = deserialize(
               record.value(),
               schemaRegistryClient,
-              context.getTopicName(),
+              context,
               false
           );
 
@@ -229,13 +229,13 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
    *
    * @param data                 The JsonNode containing the message data.
    * @param schemaRegistryClient The SchemaRegistryClient to use for decoding.
-   * @param topicName            The name of the topic.
+   * @param context              The message viewer context.
    * @return The decoded value.
    */
   private RecordDeserializer.DecodedResult deserialize(
       JsonNode data,
       SchemaRegistryClient schemaRegistryClient,
-      String topicName,
+      MessageViewerContext context,
       boolean isKey
   ) {
     if (data.has("__raw__")) {
@@ -244,7 +244,7 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
         return deserializer.deserialize(
             BASE64_DECODER.decode(data.get("__raw__").asText()),
             schemaRegistryClient,
-            topicName,
+            context,
             isKey,
             // If deserialize fails, we want to return the raw data unchanged.
             Optional.of(BASE64_ENCODER::encode)
@@ -259,7 +259,7 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
       return deserializer.deserialize(
           data.asText().getBytes(StandardCharsets.UTF_8),
           schemaRegistryClient,
-          topicName,
+          context,
           isKey
       );
     }

@@ -37,6 +37,8 @@
       enabled: false
       # How often to check?
       interval-seconds: 60
+    schema-fetch-retry:
+      max-retries: 3
   quarkus:
     wiremock:
       devservices:

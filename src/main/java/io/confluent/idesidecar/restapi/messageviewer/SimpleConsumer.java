@@ -36,15 +36,19 @@ public class SimpleConsumer {
   private final SchemaRegistryClient schemaRegistryClient;
   private final KafkaConsumer<byte[], byte[]> consumer;
   private final RecordDeserializer recordDeserializer;
+  private final MessageViewerContext context;
 
-  public SimpleConsumer(
+
+  public <context> SimpleConsumer(
       KafkaConsumer<byte[], byte[]> consumer,
       SchemaRegistryClient sr,
-      RecordDeserializer recordDeserializer
+      RecordDeserializer recordDeserializer,
+      MessageViewerContext context
   ) {
     this.consumer = consumer;
     this.schemaRegistryClient = sr;
     this.recordDeserializer = recordDeserializer;
+    this.context = context;
   }
 
   @SuppressWarnings("CyclomaticComplexity")
@@ -304,7 +308,7 @@ public class SimpleConsumer {
         .of(recordDeserializer.deserialize(
             consumerRecord.key(),
             schemaRegistryClient,
-            consumerRecord.topic(),
+            context,
             true)
         );
     Optional<RecordDeserializer.DecodedResult> valueResult = valueExceeded
@@ -312,7 +316,7 @@ public class SimpleConsumer {
         .of(recordDeserializer.deserialize(
             consumerRecord.value(),
             schemaRegistryClient,
-            consumerRecord.topic(),
+            context,
             false)
         );
 
