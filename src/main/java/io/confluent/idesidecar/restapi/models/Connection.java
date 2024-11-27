@@ -30,7 +30,7 @@ public class Connection extends BaseModel<ConnectionSpec, ConnectionMetadata> {
     return new Connection(
         connectionState.getConnectionMetadata(),
         connectionState.getSpec(),
-        connectionState.getConnectionStatus()
+        connectionState.getStatus()
     );
   }
 

@@ -86,7 +86,7 @@ public class DirectConnectionState extends ConnectionState {
    * @return true if the Kafka component is connected
    */
   public boolean isKafkaConnected() {
-    var status = getConnectionStatus();
+    var status = getStatus();
     return status.kafkaCluster() != null && status.kafkaCluster().isConnected();
   }
 
@@ -96,7 +96,7 @@ public class DirectConnectionState extends ConnectionState {
    * @return true if the Kafka component is connected
    */
   public boolean isSchemaRegistryConnected() {
-    var status = getConnectionStatus();
+    var status = getStatus();
     return status.schemaRegistry() != null && status.schemaRegistry().isConnected();
   }
 
