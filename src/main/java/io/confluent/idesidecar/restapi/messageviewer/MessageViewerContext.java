@@ -1,5 +1,6 @@
 package io.confluent.idesidecar.restapi.messageviewer;
 
+import io.confluent.idesidecar.restapi.clients.SchemaErrors;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequest;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
 import io.confluent.idesidecar.restapi.models.graph.KafkaCluster;
@@ -29,7 +30,7 @@ public class MessageViewerContext extends ProxyContext {
       HttpMethod requestMethod,
       SimpleConsumeMultiPartitionRequest requestBody,
       Map<String, String> requestPathParams,
-      String connectionId,
+      SchemaErrors.ConnectionId connectionId,
       String clusterId,
       String topicName
   ) {
@@ -42,7 +43,7 @@ public class MessageViewerContext extends ProxyContext {
             .map(body -> Buffer.buffer(body.toJsonString()))
             .orElse(null),
         requestPathParams,
-        connectionId
+        connectionId.id()
     );
     this.clusterId = clusterId;
     this.topicName = topicName;
