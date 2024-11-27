@@ -28,7 +28,7 @@ public class PlatformConnectionTest {
         mockListener
     );
 
-    connectionState.getConnectionStatus()
+    connectionState.refreshStatus()
         .onComplete(
             testContext.succeeding(connectionStatus ->
                 testContext.verify(() -> {

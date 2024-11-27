@@ -46,7 +46,7 @@ public class CCloudConnectionState extends ConnectionState {
   }
 
   @Override
-  public ConnectionStatus getInitialStatus() {
+  protected ConnectionStatus getInitialStatus() {
     return INITIAL_STATUS;
   }
 
@@ -75,7 +75,7 @@ public class CCloudConnectionState extends ConnectionState {
    * @return status of connection
    */
   @Override
-  public Future<ConnectionStatus> getConnectionStatus() {
+  protected Future<ConnectionStatus> doRefreshStatus() {
     var missingTokens = new HashSet<String>();
     if (oauthContext.getRefreshToken() == null) {
       missingTokens.add("Refresh token");
