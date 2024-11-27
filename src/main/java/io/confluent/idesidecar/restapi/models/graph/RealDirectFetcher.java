@@ -170,7 +170,7 @@ public class RealDirectFetcher extends ConfluentRestClient implements DirectFetc
     var state = connections.getConnectionState(connectionId);
     if (state instanceof DirectConnectionState directState) {
       if (!directState.isSchemaRegistryConnected()) {
-        // Either there is no Kafka cluster configured or it is not connected, so return no info
+        // Either there is no Schema Registry configured or it is not connected, so return no info
         Log.debugf("Skipping connection '%s' since Schema Registry is not connected.", connectionId);
         return Uni.createFrom().nullItem();
       }
