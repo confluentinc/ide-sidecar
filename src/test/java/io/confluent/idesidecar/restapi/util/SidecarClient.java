@@ -24,6 +24,7 @@ import io.confluent.idesidecar.restapi.models.Connection;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.LocalConfig;
+import io.confluent.idesidecar.restapi.models.ConnectionStatus.ConnectedState;
 import io.confluent.idesidecar.restapi.models.ConnectionsList;
 import io.confluent.kafka.schemaregistry.client.rest.entities.Schema;
 import io.quarkus.logging.Log;
@@ -304,28 +305,42 @@ public class SidecarClient implements SidecarClientApi {
 
   @Override
   public Connection createConnection(ConnectionSpec spec) {
-    var response = given()
+    // Create connection
+    given()
         .contentType(ContentType.JSON)
         .body(spec)
         .post("%s/gateway/v1/connections".formatted(sidecarHost))
         .then()
-        .statusCode(200);
-    var connection = response.extract().response().body().as(Connection.class);
-    if (spec.id() != null) {
-      assertEquals(spec.id(), connection.id());
-    } else {
-      assertNotNull(connection.id());
+        .statusCode(200)
+        .body("spec.id", equalTo(spec.id()));
+
+    // If the connection spec configures a Kafka cluster or a Schema Registry, wait until the
+    // connection to the Kafka cluster or Schema registry has been established
+    if (spec.kafkaClusterConfig() != null || spec.schemaRegistryConfig() != null) {
+      await().atMost(Duration.ofSeconds(10)).until(() -> {
+        var connection = given()
+            .when()
+            .get("%s/gateway/v1/connections/%s".formatted(sidecarHost, spec.id()))
+            .then()
+            .statusCode(200)
+            .extract().response().body().as(Connection.class);
+        return (
+            connection.status().kafkaCluster() != null &&
+                connection.status().kafkaCluster().state().equals(ConnectedState.SUCCESS)
+        ) || (
+            connection.status().schemaRegistry() != null &&
+                connection.status().schemaRegistry().state().equals(ConnectedState.SUCCESS)
+        );
+      });
     }
 
-    // Get the connection to make sure the status is updated
-    // TODO: This can be removed once we fix issue #181 https://github.com/confluentinc/ide-sidecar/issues/181
-    given()
+    // Get and use this connection for subsequent operations
+    var connection = given()
         .when()
-        .get("%s/gateway/v1/connections/%s".formatted(sidecarHost, connection.id()))
+        .get("%s/gateway/v1/connections/%s".formatted(sidecarHost, spec.id()))
         .then()
-        .statusCode(200);
-
-    // Use this connection for subsequent operations
+        .statusCode(200)
+        .extract().response().body().as(Connection.class);
     currentConnectionId = connection.id();
     return connection;
   }

@@ -1,6 +1,7 @@
 package io.confluent.idesidecar.restapi.integration.connection;
 
 import static io.restassured.RestAssured.given;
+import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
@@ -19,6 +20,7 @@ import io.confluent.idesidecar.restapi.models.ConnectionStatus.Authentication.St
 import io.confluent.idesidecar.restapi.models.ConnectionStatus.ConnectedState;
 import io.restassured.http.ContentType;
 import jakarta.ws.rs.core.MediaType;
+import java.time.Duration;
 import org.junit.jupiter.api.Test;
 
 public interface DirectConnectionSuite extends ITSuite {
@@ -154,6 +156,24 @@ public interface DirectConnectionSuite extends ITSuite {
     // Update the spec to include the generated ID
     spec = spec.withId(connection.id());
 
+    // Wait until the status has been updated
+    final var expectedKafkaStateName = expectedKafkaState.name();
+    final var expectedSrStateName = expectedSrState.name();
+    await().atMost(Duration.ofSeconds(10)).until(() -> {
+      try {
+        given()
+            .when()
+            .get("/gateway/v1/connections/{id}", connection.id())
+            .then()
+            .statusCode(200)
+            .body("status.kafka_cluster.state", equalTo(expectedKafkaStateName))
+            .body("status.schema_registry.state", equalTo(expectedSrStateName));
+        return true;
+      } catch (AssertionError e) {
+        return false;
+      }
+    });
+
     // Get the connection again
     var connection2 = given()
         .when()
@@ -168,8 +188,6 @@ public interface DirectConnectionSuite extends ITSuite {
         .body("spec.local_config", nullValue())
         .body("spec.ccloud_config", nullValue())
         .body("spec.kafka_cluster.bootstrap_servers", equalTo(spec.kafkaClusterConfig().bootstrapServers()))
-        .body("status.kafka_cluster.state", equalTo(expectedKafkaState.name()))
-        .body("status.schema_registry.state", equalTo(expectedSrState.name()))
         .extract().body().as(Connection.class);
 
     if (startedWithKafka) {
@@ -221,9 +239,23 @@ public interface DirectConnectionSuite extends ITSuite {
           .body("spec.ccloud_config", nullValue())
           .body("spec.kafka_cluster.bootstrap_servers", equalTo(specNoSr.kafkaClusterConfig().bootstrapServers()))
           .body("spec.schema_registry", nullValue())
-          .body("status.kafka_cluster.state", equalTo(ConnectedState.SUCCESS.name()))
-          .body("status.schema_registry", nullValue())
           .extract().body().as(Connection.class);
+
+      // Wait until the status has been updated
+      await().atMost(Duration.ofSeconds(10)).until(() -> {
+        try {
+          given()
+              .when()
+              .get("/gateway/v1/connections/{id}", connection.id())
+              .then()
+              .statusCode(200)
+              .body("status.kafka_cluster.state", equalTo(ConnectedState.SUCCESS.name()))
+              .body("status.schema_registry.state", nullValue());
+          return true;
+        } catch (AssertionError e) {
+          return false;
+        }
+      });
 
       // Query for resources
       submitDirectConnectionsGraphQL()
