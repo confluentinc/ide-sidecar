@@ -125,12 +125,12 @@ public class CCloudConnectionState extends ConnectionState {
               return ConnectionStatusBuilder
                   .builder()
                   .ccloud(
-                    new CCloudStatus(
-                        ConnectedState.SUCCESS,
-                        oauthContext.getEndOfLifetime(),
-                        user != null ? user.asUserInfo() : null,
-                        errors
-                    )
+                      new CCloudStatus(
+                          ConnectedState.SUCCESS,
+                          oauthContext.getEndOfLifetime(),
+                          user != null ? user.asUserInfo() : null,
+                          errors
+                      )
                   ).build();
             } else {
               // Notify the listener of no authentication, which we treat as expired
