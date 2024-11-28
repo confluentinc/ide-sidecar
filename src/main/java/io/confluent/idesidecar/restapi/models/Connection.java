@@ -35,7 +35,7 @@ public class Connection extends BaseModel<ConnectionSpec, ConnectionMetadata> {
   }
 
   /**
-   * Create a connection from the given connection state and given status.
+   * Create a connection from the given connection state and status.
    *
    * @param connectionState the state of the connection
    * @param status          the status of the connection
