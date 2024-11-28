@@ -26,7 +26,7 @@ public class CCloudConnectionTest {
   private static final int AWAIT_COMPLETION_TIMEOUT_SEC = 5;
 
   @Test
-  void getStatusShouldReturnInitialStatusForNewCCloudConnections() {
+  void getStatusShouldReturnInitialStatusForNewConnections() {
     var mockListener = mock(StateChangedListener.class);
     var connectionState = ConnectionStates.from(
         new ConnectionSpec("1", "foo", ConnectionType.CCLOUD),
@@ -36,9 +36,7 @@ public class CCloudConnectionTest {
   }
 
   @Test
-  void refreshStatusShouldReturnInitialStatusForCCloudConnectionsWithoutTokens()
-      throws Throwable {
-
+  void refreshStatusShouldReturnInitialStatusForConnectionsWithoutTokens() throws Throwable {
     var mockListener = mock(StateChangedListener.class);
     var connectionState = ConnectionStates.from(
         new ConnectionSpec("1", "foo", ConnectionType.CCLOUD),
@@ -65,9 +63,7 @@ public class CCloudConnectionTest {
   }
 
   @Test
-  void refreshStatusShouldReturnNoTokenForCCloudConnectionsIfRefreshTokenIsMissing()
-      throws Throwable {
-
+  void refreshStatusShouldReturnNoTokenIfRefreshTokenIsMissing() throws Throwable {
     var testContext = new VertxTestContext();
     var connectionState = spyCCloudConnectionState(
         true,
@@ -95,9 +91,7 @@ public class CCloudConnectionTest {
   }
 
   @Test
-  void refreshStatusShouldReturnNoTokenForCCloudConnectionsIfControlPlaneTokenIsMissing()
-      throws Throwable {
-
+  void refreshStatusShouldReturnNoTokenIfControlPlaneTokenIsMissing() throws Throwable {
     var testContext = new VertxTestContext();
     var connectionState = spyCCloudConnectionState(
         true,
@@ -125,9 +119,7 @@ public class CCloudConnectionTest {
   }
 
   @Test
-  void refreshStatusShouldReturnNoTokenForCCloudConnectionsIfDataPlaneTokenIsMissing()
-      throws Throwable {
-
+  void refreshStatusShouldReturnNoTokenIfDataPlaneTokenIsMissing() throws Throwable {
     var testContext = new VertxTestContext();
     var connectionState = spyCCloudConnectionState(
         true,
@@ -155,9 +147,7 @@ public class CCloudConnectionTest {
   }
 
   @Test
-  void refreshStatusShouldReturnValidTokenForCCloudConnectionsThatCanAuthenticate()
-      throws Throwable {
-
+  void refreshStatusShouldReturnValidTokenIfAuthenticationSucceeds() throws Throwable {
     var testContext = new VertxTestContext();
     var connectionState = spyCCloudConnectionState(
         true,
@@ -185,9 +175,7 @@ public class CCloudConnectionTest {
   }
 
   @Test
-  void refreshStatusShouldReturnInvalidTokenForCCloudConnectionsThatCannotAuthenticate()
-      throws Throwable {
-
+  void refreshStatusShouldReturnInvalidTokenIfAuthenticationFails() throws Throwable {
     var testContext = new VertxTestContext();
     var connectionState = spyCCloudConnectionState(
         false,
@@ -215,9 +203,7 @@ public class CCloudConnectionTest {
   }
 
   @Test
-  void refreshStatusShouldReturnFailedForCCloudConnectionsThatExperiencedNonTransientError()
-      throws Throwable {
-
+  void refreshStatusShouldReturnFailedForConnectionsWithNonTransientError() throws Throwable {
     var testContext = new VertxTestContext();
     var connectionState = spyCCloudConnectionState(
         false,

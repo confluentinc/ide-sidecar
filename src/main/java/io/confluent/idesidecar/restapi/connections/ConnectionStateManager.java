@@ -318,11 +318,11 @@ public class ConnectionStateManager {
   }
 
   /**
-   * Refreshes the status of all managed connections that match a given predicate.
+   * Refreshes the statuses of all connections that match a given predicate.
    *
    * @param predicate The predicate that connections must match to be refreshed.
    */
-  private void refreshConnectionStatuses(Predicate<ConnectionState> predicate) {
+  void refreshConnectionStatuses(Predicate<ConnectionState> predicate) {
     getConnectionStates().stream()
         .filter(predicate)
         .forEach(ConnectionState::refreshStatus);

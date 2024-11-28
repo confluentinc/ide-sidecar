@@ -19,7 +19,7 @@ public class PlatformConnectionTest {
   private static final int AWAIT_COMPLETION_TIMEOUT_SEC = 5;
 
   @Test
-  void getStatusShouldReturnInitialStatusForNewConfluentPlatformConnections() {
+  void getStatusShouldReturnInitialStatusForNewConnections() {
     var mockListener = mock(StateChangedListener.class);
     var connectionState = ConnectionStates.from(
         new ConnectionSpec("1", "foo", ConnectionType.PLATFORM),
@@ -29,7 +29,7 @@ public class PlatformConnectionTest {
   }
 
   @Test
-  void refreshStatusShouldReturnInitialStatusForConfluentPlatformConnections() throws Throwable {
+  void refreshStatusShouldReturnInitialStatus() throws Throwable {
     var mockListener = mock(ConnectionState.StateChangedListener.class);
     var connectionState = ConnectionStates.from(
         new ConnectionSpec("1", "foo", ConnectionType.PLATFORM),

@@ -20,7 +20,7 @@ public class LocalConnectionTest {
   private static final int AWAIT_COMPLETION_TIMEOUT_SEC = 5;
 
   @Test
-  void getStatusShouldReturnInitialStatusForNewLocalConnections() {
+  void getStatusShouldReturnInitialStatusForNewConnections() {
     var mockListener = mock(StateChangedListener.class);
     var connectionState = ConnectionStates.from(
         new ConnectionSpec("1", "foo", ConnectionType.LOCAL),
@@ -30,7 +30,7 @@ public class LocalConnectionTest {
   }
 
   @Test
-  void refreshStatusShouldReturnInitialStatusForLocalConnections() throws Throwable {
+  void refreshStatusShouldReturnInitialStatus() throws Throwable {
     var mockListener = mock(ConnectionState.StateChangedListener.class);
     var connectionState = ConnectionStates.from(
         new ConnectionSpec("1", "foo", ConnectionType.LOCAL),
