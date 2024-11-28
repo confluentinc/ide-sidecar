@@ -324,13 +324,11 @@ public class SidecarClient implements SidecarClientApi {
             .then()
             .statusCode(200)
             .extract().response().body().as(Connection.class);
-        return (
-            connection.status().kafkaCluster() != null &&
-                connection.status().kafkaCluster().state().equals(ConnectedState.SUCCESS)
-        ) || (
-            connection.status().schemaRegistry() != null &&
-                connection.status().schemaRegistry().state().equals(ConnectedState.SUCCESS)
-        );
+        var kafkaClusterIsConnected = connection.status().kafkaCluster() != null &&
+            connection.status().kafkaCluster().state().equals(ConnectedState.SUCCESS);
+        var schemaRegistryIsConnected = connection.status().schemaRegistry() != null &&
+            connection.status().schemaRegistry().state().equals(ConnectedState.SUCCESS);
+        return kafkaClusterIsConnected || schemaRegistryIsConnected;
       });
     }
 
