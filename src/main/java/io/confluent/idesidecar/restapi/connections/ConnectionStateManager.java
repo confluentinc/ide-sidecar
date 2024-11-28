@@ -14,6 +14,7 @@ import io.confluent.idesidecar.restapi.exceptions.Failure.Error;
 import io.confluent.idesidecar.restapi.exceptions.InvalidInputException;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.util.UuidFactory;
+import io.quarkus.scheduler.Scheduled;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
@@ -22,6 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Predicate;
 
 /**
  * The {@link ConnectionStateManager} allows to manage a set of {@link ConnectionState}s. It
@@ -292,5 +294,33 @@ public class ConnectionStateManager {
   // This method should be only used in tests.
   public void clearAllConnectionStates() {
     connectionStates.clear();
+  }
+
+  @Scheduled(every = "${ide-sidecar.connections.ccloud.check-connection-status-interval-seconds}s")
+  public void checkConfluentCloudConnectionStatuses() {
+    checkConnectionStatuses(CCloudConnectionState.class::isInstance);
+  }
+
+  @Scheduled(
+      every = "${ide-sidecar.connections.confluent-local.check-connection-status-interval-seconds}s"
+  )
+  public void checkLocalConnectionStatuses() {
+    checkConnectionStatuses(LocalConnectionState.class::isInstance);
+  }
+
+  @Scheduled(every = "${ide-sidecar.connections.direct.check-connection-status-interval-seconds}s")
+  public void checkDirectConnectionStatuses() {
+    checkConnectionStatuses(DirectConnectionState.class::isInstance);
+  }
+
+  /**
+   * Checks the status of all managed connections that match a given predicate.
+   *
+   * @param predicate The predicate that connections must match to be checked.
+   */
+  public void checkConnectionStatuses(Predicate<ConnectionState> predicate) {
+    getConnectionStates().stream()
+        .filter(predicate)
+        .forEach(ConnectionState::refreshStatus);
   }
 }
