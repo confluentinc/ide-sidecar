@@ -13,11 +13,14 @@ import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
 import io.confluent.idesidecar.restapi.util.UuidFactory;
 import io.quarkus.test.InjectMock;
+import io.quarkus.test.Mock;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
+import java.util.List;
 import java.util.concurrent.CompletionException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 @QuarkusTest
 class ConnectionStateManagerTest {
@@ -190,6 +193,20 @@ class ConnectionStateManagerTest {
         NullPointerException.class,
         () -> manager.getConnectionStateByInternalId(null)
     );
+  }
+
+  @Test
+  void refreshConnectionStatusesShouldRefreshOnlyConnectionsMatchingProvidedPredicate() {
+    var connectionManager = Mockito.spy(ConnectionStateManager.class);
+    var confluentCloudConnection = Mockito.spy(CCloudConnectionState.class);
+    var localConnection = Mockito.spy(LocalConnectionState.class);
+    when(connectionManager.getConnectionStates())
+        .thenReturn(List.of(confluentCloudConnection, localConnection));
+
+    connectionManager.refreshConnectionStatuses(CCloudConnectionState.class::isInstance);
+
+    Mockito.verify(confluentCloudConnection, Mockito.times(1)).refreshStatus();
+    Mockito.verify(localConnection, Mockito.never()).refreshStatus();
   }
 
   void assertConnectionNotFound(String id) {
