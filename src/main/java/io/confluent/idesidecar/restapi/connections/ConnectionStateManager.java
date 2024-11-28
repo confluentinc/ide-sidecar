@@ -296,7 +296,9 @@ public class ConnectionStateManager {
     connectionStates.clear();
   }
 
-  @Scheduled(every = "${ide-sidecar.connections.ccloud.check-connection-status-interval-seconds}s")
+  @Scheduled(
+      every = "${ide-sidecar.connections.ccloud.check-connection-status-interval-seconds}s"
+  )
   public void checkConfluentCloudConnectionStatuses() {
     checkConnectionStatuses(CCloudConnectionState.class::isInstance);
   }
@@ -308,15 +310,17 @@ public class ConnectionStateManager {
     checkConnectionStatuses(LocalConnectionState.class::isInstance);
   }
 
-  @Scheduled(every = "${ide-sidecar.connections.direct.check-connection-status-interval-seconds}s")
+  @Scheduled(
+      every = "${ide-sidecar.connections.direct.check-connection-status-interval-seconds}s"
+  )
   public void checkDirectConnectionStatuses() {
     checkConnectionStatuses(DirectConnectionState.class::isInstance);
   }
 
   /**
-   * Checks the status of all managed connections that match a given predicate.
+   * Refreshes the status of all managed connections that match a given predicate.
    *
-   * @param predicate The predicate that connections must match to be checked.
+   * @param predicate The predicate that connections must match to be refreshed.
    */
   public void checkConnectionStatuses(Predicate<ConnectionState> predicate) {
     getConnectionStates().stream()
