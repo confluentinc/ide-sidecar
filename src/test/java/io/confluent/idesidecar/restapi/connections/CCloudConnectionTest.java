@@ -26,20 +26,32 @@ public class CCloudConnectionTest {
   private static final int AWAIT_COMPLETION_TIMEOUT_SEC = 5;
 
   @Test
-  void getConnectionStatusShouldReturnInitialStatusForCCloudConnectionsWithoutTokens()
-      throws Throwable {
+  void getStatusShouldReturnInitialStatusForNewConnections() {
     var mockListener = mock(StateChangedListener.class);
-    var testContext = new VertxTestContext();
+    var connectionState = ConnectionStates.from(
+        new ConnectionSpec("1", "foo", ConnectionType.CCLOUD),
+        mockListener
+    );
+    assertEquals(ConnectionStatus.INITIAL_CCLOUD_STATUS, connectionState.getStatus());
+  }
+
+  @Test
+  void refreshStatusShouldReturnInitialStatusForConnectionsWithoutTokens() throws Throwable {
+    var mockListener = mock(StateChangedListener.class);
     var connectionState = ConnectionStates.from(
         new ConnectionSpec("1", "foo", ConnectionType.CCLOUD),
         mockListener
     );
 
+    var testContext = new VertxTestContext();
     connectionState.refreshStatus()
         .onComplete(
-            testContext.succeeding(connectionStatus ->
+            testContext.succeeding(status ->
                 testContext.verify(() -> {
-                  assertEquals(ConnectionStatus.INITIAL_CCLOUD_STATUS, connectionStatus);
+                  assertEquals(
+                      ConnectionStatus.INITIAL_CCLOUD_STATUS,
+                      status
+                  );
                   testContext.completeNow();
                 })));
 
@@ -51,9 +63,7 @@ public class CCloudConnectionTest {
   }
 
   @Test
-  void getConnectionStatusShouldReturnNoTokenForCCloudConnectionsIfRefreshTokenIsMissing()
-      throws Throwable {
-
+  void refreshStatusShouldReturnNoTokenIfRefreshTokenIsMissing() throws Throwable {
     var testContext = new VertxTestContext();
     var connectionState = spyCCloudConnectionState(
         true,
@@ -64,9 +74,12 @@ public class CCloudConnectionTest {
     );
     connectionState.refreshStatus()
         .onComplete(
-            testContext.succeeding(connectionStatus ->
+            testContext.succeeding(status ->
                 testContext.verify(() -> {
-                  assertEquals(Status.NO_TOKEN, connectionStatus.authentication().status());
+                  assertEquals(
+                      Status.NO_TOKEN,
+                      status.authentication().status()
+                  );
                   testContext.completeNow();
                 })));
 
@@ -78,9 +91,7 @@ public class CCloudConnectionTest {
   }
 
   @Test
-  void getConnectionStatusShouldReturnNoTokenForCCloudConnectionsIfControlPlaneTokenIsMissing()
-      throws Throwable {
-
+  void refreshStatusShouldReturnNoTokenIfControlPlaneTokenIsMissing() throws Throwable {
     var testContext = new VertxTestContext();
     var connectionState = spyCCloudConnectionState(
         true,
@@ -91,9 +102,12 @@ public class CCloudConnectionTest {
     );
     connectionState.refreshStatus()
         .onComplete(
-            testContext.succeeding(connectionStatus ->
+            testContext.succeeding(status ->
                 testContext.verify(() -> {
-                  assertEquals(Status.NO_TOKEN, connectionStatus.authentication().status());
+                  assertEquals(
+                      Status.NO_TOKEN,
+                      status.authentication().status()
+                  );
                   testContext.completeNow();
                 })));
 
@@ -105,9 +119,7 @@ public class CCloudConnectionTest {
   }
 
   @Test
-  void getConnectionStatusShouldReturnNoTokenForCCloudConnectionsIfDataPlaneTokenIsMissing()
-      throws Throwable {
-
+  void refreshStatusShouldReturnNoTokenIfDataPlaneTokenIsMissing() throws Throwable {
     var testContext = new VertxTestContext();
     var connectionState = spyCCloudConnectionState(
         true,
@@ -118,9 +130,12 @@ public class CCloudConnectionTest {
     );
     connectionState.refreshStatus()
         .onComplete(
-            testContext.succeeding(connectionStatus ->
+            testContext.succeeding(status ->
                 testContext.verify(() -> {
-                  assertEquals(Status.NO_TOKEN, connectionStatus.authentication().status());
+                  assertEquals(
+                      Status.NO_TOKEN,
+                      status.authentication().status()
+                  );
                   testContext.completeNow();
                 })));
 
@@ -132,9 +147,7 @@ public class CCloudConnectionTest {
   }
 
   @Test
-  void getConnectionStatusShouldReturnValidTokenForCCloudConnectionsThatCanAuthenticate()
-      throws Throwable {
-
+  void refreshStatusShouldReturnValidTokenIfAuthenticationSucceeds() throws Throwable {
     var testContext = new VertxTestContext();
     var connectionState = spyCCloudConnectionState(
         true,
@@ -145,9 +158,12 @@ public class CCloudConnectionTest {
     );
     connectionState.refreshStatus()
         .onComplete(
-            testContext.succeeding(connectionStatus ->
+            testContext.succeeding(status ->
                 testContext.verify(() -> {
-                  assertEquals(Status.VALID_TOKEN, connectionStatus.authentication().status());
+                  assertEquals(
+                      Status.VALID_TOKEN,
+                      status.authentication().status()
+                  );
                   testContext.completeNow();
                 })));
 
@@ -159,9 +175,7 @@ public class CCloudConnectionTest {
   }
 
   @Test
-  void getConnectionStatusShouldReturnInvalidTokenForCCloudConnectionsThatCannotAuthenticate()
-      throws Throwable {
-
+  void refreshStatusShouldReturnInvalidTokenIfAuthenticationFails() throws Throwable {
     var testContext = new VertxTestContext();
     var connectionState = spyCCloudConnectionState(
         false,
@@ -172,9 +186,12 @@ public class CCloudConnectionTest {
     );
     connectionState.refreshStatus()
         .onComplete(
-            testContext.succeeding(connectionStatus ->
+            testContext.succeeding(status ->
                 testContext.verify(() -> {
-                  assertEquals(Status.INVALID_TOKEN, connectionStatus.authentication().status());
+                  assertEquals(
+                      Status.INVALID_TOKEN,
+                      status.authentication().status()
+                  );
                   testContext.completeNow();
                 })));
 
@@ -186,9 +203,7 @@ public class CCloudConnectionTest {
   }
 
   @Test
-  void getConnectionStatusShouldReturnFailedForCCloudConnectionsThatExperiencedNonTransientError()
-      throws Throwable {
-
+  void refreshStatusShouldReturnFailedForConnectionsWithNonTransientError() throws Throwable {
     var testContext = new VertxTestContext();
     var connectionState = spyCCloudConnectionState(
         false,
@@ -199,9 +214,12 @@ public class CCloudConnectionTest {
     );
     connectionState.refreshStatus()
         .onComplete(
-            testContext.succeeding(connectionStatus ->
+            testContext.succeeding(status ->
                 testContext.verify(() -> {
-                  assertEquals(Status.FAILED, connectionStatus.authentication().status());
+                  assertEquals(
+                      Status.FAILED,
+                      status.authentication().status()
+                  );
                   testContext.completeNow();
                 })));
 
