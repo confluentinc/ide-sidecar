@@ -298,19 +298,19 @@ public class ConnectionStateManager {
 
   @Scheduled(every = "${ide-sidecar.connections.ccloud.check-connection-status-interval-seconds}s")
   public void checkConfluentCloudConnectionStatuses() {
-    checkConnectionStatuses(connectionState -> connectionState instanceof CCloudConnectionState);
+    checkConnectionStatuses(CCloudConnectionState.class::isInstance);
   }
 
   @Scheduled(
       every = "${ide-sidecar.connections.confluent-local.check-connection-status-interval-seconds}s"
   )
   public void checkLocalConnectionStatuses() {
-    checkConnectionStatuses(connectionState -> connectionState instanceof LocalConnectionState);
+    checkConnectionStatuses(LocalConnectionState.class::isInstance);
   }
 
   @Scheduled(every = "${ide-sidecar.connections.direct.check-connection-status-interval-seconds}s")
   public void checkDirectConnectionStatuses() {
-    checkConnectionStatuses(connectionState -> connectionState instanceof DirectConnectionState);
+    checkConnectionStatuses(DirectConnectionState.class::isInstance);
   }
 
   /**
