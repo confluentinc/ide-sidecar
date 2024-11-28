@@ -93,7 +93,7 @@ ide-sidecar:
         # URI redirect to tell the VS Code extension if the auth flow completed successfully or not
         vscode-extension-uri: vscode://confluentinc.vscode-confluent/authCallback
         scope: email openid offline_access
-      refresh-connection-status-interval-seconds: 5
+      refresh-status-interval-seconds: 5
       refresh-token:
         absolute-lifetime-seconds: 28800
         max-refresh-attempts: 50
@@ -113,7 +113,7 @@ ide-sidecar:
         kafkarest-hostname: rest-proxy
         cluster-name: confluent-local
         schema-registry-uri: http://localhost:8081
-      refresh-connection-status-interval-seconds: 5
+      refresh-status-interval-seconds: 5
       resources:
         clusters-list-uri: ${ide-sidecar.connections.confluent-local.default.kafkarest-uri}/v3/clusters
         brokers-list-uri: ${ide-sidecar.connections.confluent-local.default.kafkarest-uri}/v3/clusters/%s/brokers
@@ -121,7 +121,7 @@ ide-sidecar:
         kafka-topic-uri: ${outpost.connections.confluent-local.default.kafkarest-uri}/v3/clusters/%s/topics/%s
 
     direct:
-      refresh-connection-status-interval-seconds: 5
+      refresh-status-interval-seconds: 5
       timeout-seconds: 5
   feature-flags:
     refresh-interval-seconds: 60
