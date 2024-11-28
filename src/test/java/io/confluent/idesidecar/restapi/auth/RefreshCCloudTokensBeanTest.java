@@ -28,8 +28,7 @@ class RefreshCCloudTokensBeanTest {
   @Inject
   RefreshCCloudTokensBean refreshCCloudTokensBean;
 
-  @Test
-  @RetryingTest(5)
+  @RetryingTest(maxAttempts = 5)
   void refreshTokensShouldConsiderOnlyCCloudConnections() {
     var confluentCloudConnection = (CCloudConnectionState) createdSpiedConnectionState(
         "1", "1", ConnectionType.CCLOUD);
@@ -45,9 +44,8 @@ class RefreshCCloudTokensBeanTest {
     Mockito.verify(confluentCloudConnection, Mockito.atLeastOnce()).getOauthContext();
   }
 
-  @Test
   @DisabledIfSystemProperty(named = "os.name", matches = ".*Windows.*")
-  @RetryingTest(5)
+  @RetryingTest(maxAttempts = 5)
   void refreshTokensShouldRefreshOnlyConnectionsEligibleForATokenRefreshAttempt() {
     // Connection eligible for a token refresh attempt
     var eligibleConnection = (CCloudConnectionState) createdSpiedConnectionState(
