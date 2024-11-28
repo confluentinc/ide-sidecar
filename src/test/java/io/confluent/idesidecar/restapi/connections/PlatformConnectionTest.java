@@ -25,7 +25,6 @@ public class PlatformConnectionTest {
         new ConnectionSpec("1", "foo", ConnectionType.PLATFORM),
         mockListener
     );
-
     assertEquals(ConnectionStatus.INITIAL_STATUS, connectionState.getStatus());
   }
 
@@ -40,9 +39,9 @@ public class PlatformConnectionTest {
     var testContext = new VertxTestContext();
     connectionState.refreshStatus()
         .onComplete(
-            testContext.succeeding(connectionStatus ->
+            testContext.succeeding(status ->
                 testContext.verify(() -> {
-                  assertEquals(ConnectionStatus.INITIAL_STATUS, connectionStatus);
+                  assertEquals(ConnectionStatus.INITIAL_STATUS, status);
                   testContext.completeNow();
                 })));
 

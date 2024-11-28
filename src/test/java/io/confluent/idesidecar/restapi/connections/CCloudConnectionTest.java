@@ -32,7 +32,6 @@ public class CCloudConnectionTest {
         new ConnectionSpec("1", "foo", ConnectionType.CCLOUD),
         mockListener
     );
-
     assertEquals(ConnectionStatus.INITIAL_CCLOUD_STATUS, connectionState.getStatus());
   }
 
@@ -49,11 +48,11 @@ public class CCloudConnectionTest {
     var testContext = new VertxTestContext();
     connectionState.refreshStatus()
         .onComplete(
-            testContext.succeeding(ignored ->
+            testContext.succeeding(status ->
                 testContext.verify(() -> {
                   assertEquals(
                       ConnectionStatus.INITIAL_CCLOUD_STATUS,
-                      connectionState.getStatus()
+                      status
                   );
                   testContext.completeNow();
                 })));
@@ -79,11 +78,11 @@ public class CCloudConnectionTest {
     );
     connectionState.refreshStatus()
         .onComplete(
-            testContext.succeeding(ignored ->
+            testContext.succeeding(status ->
                 testContext.verify(() -> {
                   assertEquals(
                       Status.NO_TOKEN,
-                      connectionState.getStatus().authentication().status()
+                      status.authentication().status()
                   );
                   testContext.completeNow();
                 })));
@@ -109,11 +108,11 @@ public class CCloudConnectionTest {
     );
     connectionState.refreshStatus()
         .onComplete(
-            testContext.succeeding(ignored ->
+            testContext.succeeding(status ->
                 testContext.verify(() -> {
                   assertEquals(
                       Status.NO_TOKEN,
-                      connectionState.getStatus().authentication().status()
+                      status.authentication().status()
                   );
                   testContext.completeNow();
                 })));
@@ -139,11 +138,11 @@ public class CCloudConnectionTest {
     );
     connectionState.refreshStatus()
         .onComplete(
-            testContext.succeeding(ignored ->
+            testContext.succeeding(status ->
                 testContext.verify(() -> {
                   assertEquals(
                       Status.NO_TOKEN,
-                      connectionState.getStatus().authentication().status()
+                      status.authentication().status()
                   );
                   testContext.completeNow();
                 })));
@@ -169,11 +168,11 @@ public class CCloudConnectionTest {
     );
     connectionState.refreshStatus()
         .onComplete(
-            testContext.succeeding(ignored ->
+            testContext.succeeding(status ->
                 testContext.verify(() -> {
                   assertEquals(
                       Status.VALID_TOKEN,
-                      connectionState.getStatus().authentication().status()
+                      status.authentication().status()
                   );
                   testContext.completeNow();
                 })));
@@ -199,11 +198,11 @@ public class CCloudConnectionTest {
     );
     connectionState.refreshStatus()
         .onComplete(
-            testContext.succeeding(ignored ->
+            testContext.succeeding(status ->
                 testContext.verify(() -> {
                   assertEquals(
                       Status.INVALID_TOKEN,
-                      connectionState.getStatus().authentication().status()
+                      status.authentication().status()
                   );
                   testContext.completeNow();
                 })));
@@ -229,11 +228,11 @@ public class CCloudConnectionTest {
     );
     connectionState.refreshStatus()
         .onComplete(
-            testContext.succeeding(ignored ->
+            testContext.succeeding(status ->
                 testContext.verify(() -> {
                   assertEquals(
                       Status.FAILED,
-                      connectionState.getStatus().authentication().status()
+                      status.authentication().status()
                   );
                   testContext.completeNow();
                 })));

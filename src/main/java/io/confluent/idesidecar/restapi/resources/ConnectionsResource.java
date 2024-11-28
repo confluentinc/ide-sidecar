@@ -95,8 +95,7 @@ public class ConnectionsResource {
   @Path("/{id}")
   @Produces(MediaType.APPLICATION_JSON)
   public Connection getConnection(@PathParam("id") String id) {
-    ConnectionState connectionState = connectionStateManager.getConnectionState(id);
-    return Connection.from(connectionState);
+    return getConnectionModel(id);
   }
 
   @PUT

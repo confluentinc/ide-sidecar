@@ -156,7 +156,7 @@ public interface DirectConnectionSuite extends ITSuite {
     // Update the spec to include the generated ID
     spec = spec.withId(connection.id());
 
-    // Wait until the status has been updated
+    // Wait until the statuses have been updated to the expected states
     final var expectedKafkaStateName = expectedKafkaState.name();
     final var expectedSrStateName = expectedSrState.name();
     await().atMost(Duration.ofSeconds(10)).until(() -> {
@@ -241,7 +241,7 @@ public interface DirectConnectionSuite extends ITSuite {
           .body("spec.schema_registry", nullValue())
           .extract().body().as(Connection.class);
 
-      // Wait until the status has been updated
+      // Wait until the statuses have been updated to the expected states
       await().atMost(Duration.ofSeconds(10)).until(() -> {
         try {
           given()

@@ -55,7 +55,6 @@ import jakarta.inject.Inject;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.junit.jupiter.api.AfterEach;
@@ -333,7 +332,7 @@ public class ConnectionsResourceTest {
     ccloudTestUtil.createAuthedConnection(connectionId, connectionName, connectionType);
 
     var testContext = new VertxTestContext();
-    checkConnectionStatusAndThen(connectionId, testContext, () -> {
+    refreshConnectionStatusAndThen(connectionId, testContext, () -> {
       // Get Connection
       var actualGetConnection = given()
           .contentType(ContentType.JSON)
@@ -342,13 +341,13 @@ public class ConnectionsResourceTest {
           .statusCode(200)
           .contentType(ContentType.JSON)
           .extract().body().asString();
-      JsonNode treeActual = asJson(actualGetConnection);
-      ConnectionSpec expectedSpec = new ConnectionSpec(
+      var treeActual = asJson(actualGetConnection);
+      var expectedSpec = new ConnectionSpec(
           connectionId,
           "Connection 1",
           ConnectionType.CCLOUD
       );
-      JsonNode expectedSpecAsJson = asJson(expectedSpec);
+      var expectedSpecAsJson = asJson(expectedSpec);
       // Verify ConnectionSpec
       assertTrue(treeActual.has("spec"));
       assertEquals(expectedSpecAsJson, treeActual.get("spec"));
@@ -387,7 +386,7 @@ public class ConnectionsResourceTest {
             .atPriority(50));
 
     var testContext = new VertxTestContext();
-    checkConnectionStatusAndThen(connectionId, testContext, () -> {
+    refreshConnectionStatusAndThen(connectionId, testContext, () -> {
       // Get Connection
       var connection = given()
           .contentType(ContentType.JSON)
@@ -645,7 +644,7 @@ public class ConnectionsResourceTest {
     var connectionSpec = connectionStateManager.getConnectionSpec("c1");
 
     var testContext = new VertxTestContext();
-    checkConnectionStatusAndThen(connectionId, testContext, () -> {
+    refreshConnectionStatusAndThen(connectionId, testContext, () -> {
       assertAuthStatus(connectionId, "VALID_TOKEN");
 
       assertCurrentOrganizationForConnection(
@@ -680,7 +679,7 @@ public class ConnectionsResourceTest {
         connectionId, "Connection 1", ConnectionType.CCLOUD);
 
     var testContext = new VertxTestContext();
-    checkConnectionStatusAndThen(connectionId, testContext, () -> {
+    refreshConnectionStatusAndThen(connectionId, testContext, () -> {
       given()
           .contentType(ContentType.JSON)
           .body(connectionSpec.withCCloudOrganizationId("d6fc52f8-ae8a-405c-9692-e997965b730dc"))
@@ -704,7 +703,7 @@ public class ConnectionsResourceTest {
         "Development Org",
         null
     );
-    checkConnectionStatusAndThen(connectionId, testContext, () -> {
+    refreshConnectionStatusAndThen(connectionId, testContext, () -> {
       assertAuthStatus(connectionId, "VALID_TOKEN");
       testContext.completeNow();
     });
@@ -723,7 +722,7 @@ public class ConnectionsResourceTest {
     );
 
     var testContext = new VertxTestContext();
-    checkConnectionStatusAndThen(connectionId, testContext, () -> {
+    refreshConnectionStatusAndThen(connectionId, testContext, () -> {
       assertAuthStatus(connectionId, "VALID_TOKEN")
           .body("spec.ccloud_config.organization_id", is(nullValue()));
       var refreshedTokens = ccloudTestUtil.expectRefreshTokenExchangeRequest(
@@ -748,7 +747,7 @@ public class ConnectionsResourceTest {
         .statusCode(400)
         .body("errors.size()", is(1))
         .body("errors[0].title", is("Invalid organization ID"));
-    checkConnectionStatusAndThen(connectionId, testContext, () -> {
+    refreshConnectionStatusAndThen(connectionId, testContext, () -> {
       // Validate that the connection state is unchanged
       assertAuthStatus("c1", "VALID_TOKEN")
           .body("spec.ccloud_config.organization_id", is(nullValue()));
@@ -768,7 +767,7 @@ public class ConnectionsResourceTest {
     );
 
     var testContext = new VertxTestContext();
-    checkConnectionStatusAndThen(connectionId, testContext, () -> {
+    refreshConnectionStatusAndThen(connectionId, testContext, () -> {
       assertAuthStatus("c1", "VALID_TOKEN")
           .body("spec.ccloud_config.organization_id", is("1a507773-d2cb-4055-917e-ffb205f3c433"));
       testContext.completeNow();
@@ -781,7 +780,7 @@ public class ConnectionsResourceTest {
         new ConnectionSpec(connectionSpec.id(), connectionSpec.name(), connectionSpec.type()),
         "Development Org"
     );
-    checkConnectionStatusAndThen(connectionId, testContext, () -> {
+    refreshConnectionStatusAndThen(connectionId, testContext, () -> {
       assertAuthStatus("c1", "VALID_TOKEN")
           .body("spec.ccloud_config.organization_id", is(nullValue()));
 
@@ -1841,18 +1840,19 @@ public class ConnectionsResourceTest {
   }
 
   /**
-   * Checks the status of a given connection and, after completing the status check, runs an
+   * Refreshes the status of a given connection and, after completing the refresh, runs an
    * {@link ExecutionBlock} of code that can perform assertions. The {@link ExecutionBlock} runs on
    * a {@link VertxTestContext} and must call {@link VertxTestContext#completeNow()} at the end so
-   * that the {@link VertxTestContext} can be completed succesfully. This method will let the test
-   * <code>fail()</code> if the {@link VertxTestContext} has failed.
+   * that the {@link VertxTestContext} can be completed successfully. Note that this method will let
+   * the test <code>fail()</code> if the {@link VertxTestContext} has failed.
    *
    * @param connectionId The ID of the connection
    * @param testContext The {@link VertxTestContext} instance used for executing the
    *                    {@link ExecutionBlock}
-   * @param block The {@link ExecutionBlock} that's executed after completing the status check
+   * @param block The {@link ExecutionBlock} that should be executed after completing the status
+   *              refresh
    */
-  void checkConnectionStatusAndThen(
+  void refreshConnectionStatusAndThen(
       String connectionId,
       VertxTestContext testContext,
       ExecutionBlock block
@@ -1860,7 +1860,6 @@ public class ConnectionsResourceTest {
     connectionStateManager.getConnectionState(connectionId)
         .refreshStatus()
         .onComplete(testContext.succeeding(ignored -> testContext.verify(block)));
-
     if (testContext.failed()) {
       fail();
     }

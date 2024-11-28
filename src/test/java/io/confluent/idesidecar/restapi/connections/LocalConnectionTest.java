@@ -26,7 +26,6 @@ public class LocalConnectionTest {
         new ConnectionSpec("1", "foo", ConnectionType.LOCAL),
         mockListener
     );
-
     assertEquals(ConnectionStatus.INITIAL_STATUS, connectionState.getStatus());
   }
 
@@ -41,9 +40,9 @@ public class LocalConnectionTest {
     var testContext = new VertxTestContext();
     connectionState.refreshStatus()
         .onComplete(
-            testContext.succeeding(connectionStatus ->
+            testContext.succeeding(status ->
                 testContext.verify(() -> {
-                  Assertions.assertEquals(ConnectionStatus.INITIAL_STATUS, connectionStatus);
+                  Assertions.assertEquals(ConnectionStatus.INITIAL_STATUS, status);
                   testContext.completeNow();
                 })));
 
