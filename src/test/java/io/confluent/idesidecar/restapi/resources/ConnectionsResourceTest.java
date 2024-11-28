@@ -1858,7 +1858,7 @@ public class ConnectionsResourceTest {
       ExecutionBlock block
   ) {
     connectionStateManager.getConnectionState(connectionId)
-        .checkStatus()
+        .refreshStatus()
         .onComplete(testContext.succeeding(ignored -> testContext.verify(block)));
 
     if (testContext.failed()) {

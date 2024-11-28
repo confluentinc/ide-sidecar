@@ -21,8 +21,7 @@ import java.util.Objects;
 public class Connection extends BaseModel<ConnectionSpec, ConnectionMetadata> {
 
   /**
-   * Create a connection from the given connection state. The metadata, spec, and status are
-   * obtained from the connection state.
+   * Create a connection from the given connection state.
    *
    * @param connectionState the state of the connection
    * @return the connection
@@ -49,7 +48,7 @@ public class Connection extends BaseModel<ConnectionSpec, ConnectionMetadata> {
     return new Connection(
         connectionState.getConnectionMetadata(),
         connectionState.getSpec(),
-        connectionState.getStatus()
+        status
     );
   }
 

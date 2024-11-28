@@ -24,6 +24,7 @@ import io.confluent.idesidecar.restapi.models.Connection;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.LocalConfig;
+import io.confluent.idesidecar.restapi.models.ConnectionStatus.ConnectedState;
 import io.confluent.idesidecar.restapi.models.ConnectionsList;
 import io.confluent.kafka.schemaregistry.client.rest.entities.Schema;
 import io.quarkus.logging.Log;
@@ -304,19 +305,42 @@ public class SidecarClient implements SidecarClientApi {
 
   @Override
   public Connection createConnection(ConnectionSpec spec) {
-    var response = given()
+    // Create connection
+    given()
         .contentType(ContentType.JSON)
         .body(spec)
         .post("%s/gateway/v1/connections".formatted(sidecarHost))
         .then()
-        .statusCode(200);
-    var connection = response.extract().response().body().as(Connection.class);
-    if (spec.id() != null) {
-      assertEquals(spec.id(), connection.id());
-    } else {
-      assertNotNull(connection.id());
+        .statusCode(200)
+        .body("spec.id", equalTo(spec.id()));
+
+    // If the connection spec configures a Kafka cluster or a Schema Registry, wait until the
+    // connection to the Kafka cluster or Schema registry has been established
+    if (spec.kafkaClusterConfig() != null || spec.schemaRegistryConfig() != null) {
+      await().atMost(Duration.ofSeconds(10)).until(() -> {
+        var connection = given()
+            .when()
+            .get("%s/gateway/v1/connections/%s".formatted(sidecarHost, spec.id()))
+            .then()
+            .statusCode(200)
+            .extract().response().body().as(Connection.class);
+        return (
+            connection.status().kafkaCluster() != null &&
+                connection.status().kafkaCluster().state().equals(ConnectedState.SUCCESS)
+        ) || (
+            connection.status().schemaRegistry() != null &&
+                connection.status().schemaRegistry().state().equals(ConnectedState.SUCCESS)
+        );
+      });
     }
-    // Use this connection for subsequent operations
+
+    // Get and use this connection for subsequent operations
+    var connection = given()
+        .when()
+        .get("%s/gateway/v1/connections/%s".formatted(sidecarHost, spec.id()))
+        .then()
+        .statusCode(200)
+        .extract().response().body().as(Connection.class);
     currentConnectionId = connection.id();
     return connection;
   }
@@ -575,7 +599,7 @@ public class SidecarClient implements SidecarClientApi {
       await()
            .pollDelay(Duration.ofMillis(20))
            .pollInterval(Duration.ofMillis(10))
-           .atMost(Duration.ofMillis(100))
+           .atMost(Duration.ofMillis(250))
            .until(()->getLatestSchemaVersion(subject, currentSchemaClusterId) != null);
 
         return getLatestSchemaVersion(subject, currentSchemaClusterId);

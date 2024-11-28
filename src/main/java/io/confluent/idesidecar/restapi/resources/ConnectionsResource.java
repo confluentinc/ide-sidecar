@@ -8,7 +8,6 @@ import io.confluent.idesidecar.restapi.exceptions.Failure;
 import io.confluent.idesidecar.restapi.models.Connection;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionsList;
-import io.quarkus.logging.Log;
 import io.smallrye.common.annotation.Blocking;
 import io.smallrye.mutiny.Uni;
 import jakarta.inject.Inject;
@@ -22,9 +21,6 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-import java.util.stream.Collectors;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
@@ -77,7 +73,7 @@ public class ConnectionsResource {
       // Just test the connection and return the status
       var testedState = connectionStateManager.testConnectionState(connectionSpec);
       // Get the status of the connection
-      var futureStatus = testedState.checkStatus();
+      var futureStatus = testedState.refreshStatus();
       // And create a uni that will complete when the status is available
       return Uni
           .createFrom()
@@ -86,12 +82,12 @@ public class ConnectionsResource {
               Connection.from(testedState, connectionStatus)
           );
     }
-    // Create a real connection state and return the connection using the initial status
+    // Create a real connection state and return the connection using the latest status
     var newState = connectionStateManager.createConnectionState(connectionSpec);
     return Uni
         .createFrom()
         .item(
-            Connection.from(newState)
+            Connection.from(newState, newState.getStatus())
         );
   }
 
@@ -150,7 +146,8 @@ public class ConnectionsResource {
   }
 
   private Connection getConnectionModel(String id) {
-    ConnectionState connectionState = connectionStateManager.getConnectionState(id);
-    return Connection.from(connectionState);
+    return Connection.from(
+        connectionStateManager.getConnectionState(id)
+    );
   }
 }

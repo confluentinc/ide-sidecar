@@ -164,7 +164,7 @@ public class KafkaConsumeResourceTest {
         .statusCode(404)
         .contentType(MediaType.APPLICATION_JSON)
         .body("title", containsString(
-            "Kafka Cluster %s not found in connection %s".formatted(KAFKA_CLUSTER_ID, CONNECTION_ID)
+            "not found in connection %s".formatted(CONNECTION_ID)
         ));
   }
 

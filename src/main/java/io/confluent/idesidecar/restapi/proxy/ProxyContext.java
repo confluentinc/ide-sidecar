@@ -4,6 +4,7 @@ import io.confluent.idesidecar.restapi.connections.ConnectionState;
 import io.confluent.idesidecar.restapi.exceptions.Failure;
 import io.confluent.idesidecar.restapi.exceptions.Failure.Error;
 import io.confluent.idesidecar.restapi.util.UuidFactory;
+import io.vertx.codegen.annotations.Nullable;
 import io.vertx.core.MultiMap;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
@@ -24,7 +25,7 @@ public class ProxyContext {
   final Buffer requestBody;
   final Map<String, String> requestPathParams;
 
-  final String connectionId;
+  final @Nullable String connectionId;
   ConnectionState connectionState;
 
   // Everything needed to construct the proxy request
@@ -43,7 +44,7 @@ public class ProxyContext {
   private static final UuidFactory uuidFactory = new UuidFactory();
 
   public ProxyContext(String requestUri, MultiMap requestHeaders, HttpMethod requestMethod,
-      Buffer requestBody, Map<String, String> requestPathParams, String connectionId) {
+      Buffer requestBody, Map<String, String> requestPathParams, @Nullable String connectionId) {
     this.requestUri = requestUri;
     this.requestHeaders = requestHeaders;
     this.requestMethod = requestMethod;
@@ -146,7 +147,7 @@ public class ProxyContext {
     this.proxyResponseStatusCode = proxyResponseStatusCode;
   }
 
-  public String getConnectionId() {
+  public @Nullable String getConnectionId() {
     return connectionId;
   }
 }

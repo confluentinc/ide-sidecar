@@ -135,7 +135,7 @@ public class ConnectionStateManager {
   /**
    * Test whether the given connection spec is valid and can be used to create a connection state.
    * This does not store the resulting connection state, and does not
-   * {@link ConnectionState#getStatus()} of the resulting connection state.
+   * {@link ConnectionState#refreshStatus()} of the resulting connection state.
    *
    * @param spec the specification for the connection
    * @return the connection state that would have been created
@@ -321,6 +321,6 @@ public class ConnectionStateManager {
   public void checkConnectionStatuses(Predicate<ConnectionState> predicate) {
     getConnectionStates().stream()
         .filter(predicate)
-        .forEach(ConnectionState::checkStatus);
+        .forEach(ConnectionState::refreshStatus);
   }
 }
