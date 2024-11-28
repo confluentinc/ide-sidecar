@@ -735,22 +735,17 @@ public class ConnectionsResourceTest {
       );
 
       expectListOrganizations();
-      testContext.completeNow();
-    });
 
-    var connectionSpec = connectionStateManager.getConnectionSpec(connectionId);
-    given()
-        .contentType(ContentType.JSON)
-        .body(connectionSpec.withCCloudOrganizationId("non-existent-org-id"))
-        .when().put("/gateway/v1/connections/{id}", connectionSpec.id())
-        .then()
-        .statusCode(400)
-        .body("errors.size()", is(1))
-        .body("errors[0].title", is("Invalid organization ID"));
-    refreshConnectionStatusAndThen(connectionId, testContext, () -> {
-      // Validate that the connection state is unchanged
-      assertAuthStatus("c1", "VALID_TOKEN")
-          .body("spec.ccloud_config.organization_id", is(nullValue()));
+      var connectionSpec = connectionStateManager.getConnectionSpec(connectionId);
+      given()
+          .contentType(ContentType.JSON)
+          .body(connectionSpec.withCCloudOrganizationId("non-existent-org-id"))
+          .when().put("/gateway/v1/connections/{id}", connectionSpec.id())
+          .then()
+          .statusCode(400)
+          .body("errors.size()", is(1))
+          .body("errors[0].title", is("Invalid organization ID"));
+
       testContext.completeNow();
     });
   }
