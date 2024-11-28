@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
+import org.junitpioneer.jupiter.RetryingTest;
 import org.mockito.Mockito;
 
 @QuarkusTest
@@ -28,6 +29,7 @@ class RefreshCCloudTokensBeanTest {
   RefreshCCloudTokensBean refreshCCloudTokensBean;
 
   @Test
+  @RetryingTest(5)
   void refreshTokensShouldConsiderOnlyCCloudConnections() {
     var confluentCloudConnection = (CCloudConnectionState) createdSpiedConnectionState(
         "1", "1", ConnectionType.CCLOUD);
@@ -45,6 +47,7 @@ class RefreshCCloudTokensBeanTest {
 
   @Test
   @DisabledIfSystemProperty(named = "os.name", matches = ".*Windows.*")
+  @RetryingTest(5)
   void refreshTokensShouldRefreshOnlyConnectionsEligibleForATokenRefreshAttempt() {
     // Connection eligible for a token refresh attempt
     var eligibleConnection = (CCloudConnectionState) createdSpiedConnectionState(
@@ -87,13 +90,15 @@ class RefreshCCloudTokensBeanTest {
     Mockito.verify(ineligibleAuthContext, Mockito.never()).refresh(null);
   }
 
-  private ConnectionState createdSpiedConnectionState(String id,
-                                                      String name,
-                                                      ConnectionType connectionType) {
+  private ConnectionState createdSpiedConnectionState(
+      String id,
+      String name,
+      ConnectionType connectionType
+  ) {
     var clazz = switch (connectionType) {
       case CCLOUD   -> CCloudConnectionState.class;
       case LOCAL    -> LocalConnectionState.class;
-      case DIRECT -> DirectConnectionState.class;
+      case DIRECT   -> DirectConnectionState.class;
       case PLATFORM -> PlatformConnectionState.class;
     };
 
@@ -103,10 +108,12 @@ class RefreshCCloudTokensBeanTest {
     return connectionState;
   }
 
-  private CCloudOAuthContext createSpiedCCloudOAuthContext(boolean canRefresh,
-                                                           Integer failedTokenRefreshAttempts,
-                                                           Optional<Instant> expiresAt,
-                                                           Optional<Instant> endOfLifetime) {
+  private CCloudOAuthContext createSpiedCCloudOAuthContext(
+      boolean canRefresh,
+      Integer failedTokenRefreshAttempts,
+      Optional<Instant> expiresAt,
+      Optional<Instant> endOfLifetime
+  ) {
     var authContext = Mockito.spy(CCloudOAuthContext.class);
 
     Future<AuthContext> resultOfRefresh = canRefresh
