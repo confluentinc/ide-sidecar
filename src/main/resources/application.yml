@@ -73,14 +73,18 @@ ide-sidecar:
     host: http://localhost:${quarkus.http.port}
     version: v1
   connections:
-    # We are using the STAG environment of CCloud for now (available at https://stag.cpdev.cloud/)
     ccloud:
-      resources:
-        homepage-uri: https://confluent.cloud/
-        org-list-uri: https://confluent.cloud/api/org/v2/organizations
-        env-list-uri: https://confluent.cloud/api/org/v2/environments
-        lkc-list-uri: https://confluent.cloud/api/cmk/v2/clusters?environment=%s
-        sr-list-uri: https://confluent.cloud/api/srcm/v3/clusters?environment=%s
+      check-token-expiration:
+        interval-seconds: 5
+      control-plane-token:
+        exchange-uri: https://confluent.cloud/api/sessions
+        check-jwt-uri: https://confluent.cloud/api/check_jwt
+        life-time-seconds: 300
+      data-plane-token:
+        exchange-uri: https://confluent.cloud/api/access_tokens
+      id-token:
+        exchange-uri: https://login.confluent.io/oauth/token
+        life-time-seconds: 60
       oauth:
         authorize-uri: https://login.confluent.io/oauth/authorize
         client-id: Q93zdbI3FnltpEa9G1gg6tiMuoDDBkwS
@@ -89,20 +93,16 @@ ide-sidecar:
         # URI redirect to tell the VS Code extension if the auth flow completed successfully or not
         vscode-extension-uri: vscode://confluentinc.vscode-confluent/authCallback
         scope: email openid offline_access
-      check-token-expiration:
-        interval-seconds: 5
+      refresh-status-interval-seconds: 5
       refresh-token:
         absolute-lifetime-seconds: 28800
         max-refresh-attempts: 50
-      id-token:
-        exchange-uri: https://login.confluent.io/oauth/token
-        life-time-seconds: 60
-      control-plane-token:
-        exchange-uri: https://confluent.cloud/api/sessions
-        check-jwt-uri: https://confluent.cloud/api/check_jwt
-        life-time-seconds: 300
-      data-plane-token:
-        exchange-uri: https://confluent.cloud/api/access_tokens
+      resources:
+        homepage-uri: https://confluent.cloud/
+        org-list-uri: https://confluent.cloud/api/org/v2/organizations
+        env-list-uri: https://confluent.cloud/api/org/v2/environments
+        lkc-list-uri: https://confluent.cloud/api/cmk/v2/clusters?environment=%s
+        sr-list-uri: https://confluent.cloud/api/srcm/v3/clusters?environment=%s
 
     confluent-local:
       # We assume that the user is running the confluent-local image with
@@ -113,6 +113,7 @@ ide-sidecar:
         kafkarest-hostname: rest-proxy
         cluster-name: confluent-local
         schema-registry-uri: http://localhost:8081
+      refresh-status-interval-seconds: 5
       resources:
         clusters-list-uri: ${ide-sidecar.connections.confluent-local.default.kafkarest-uri}/v3/clusters
         brokers-list-uri: ${ide-sidecar.connections.confluent-local.default.kafkarest-uri}/v3/clusters/%s/brokers
@@ -120,6 +121,7 @@ ide-sidecar:
         kafka-topic-uri: ${outpost.connections.confluent-local.default.kafkarest-uri}/v3/clusters/%s/topics/%s
 
     direct:
+      refresh-status-interval-seconds: 5
       timeout-seconds: 5
   feature-flags:
     refresh-interval-seconds: 60

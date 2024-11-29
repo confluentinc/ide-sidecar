@@ -1,8 +1,10 @@
 package io.confluent.idesidecar.restapi.connections;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
+import io.confluent.idesidecar.restapi.connections.ConnectionState.StateChangedListener;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
 import io.confluent.idesidecar.restapi.models.ConnectionStatus;
@@ -18,19 +20,29 @@ public class LocalConnectionTest {
   private static final int AWAIT_COMPLETION_TIMEOUT_SEC = 5;
 
   @Test
-  void getConnectionStatusShouldReturnInitialStatusForLocalConnections() throws Throwable {
+  void getStatusShouldReturnInitialStatusForNewConnections() {
+    var mockListener = mock(StateChangedListener.class);
+    var connectionState = ConnectionStates.from(
+        new ConnectionSpec("1", "foo", ConnectionType.LOCAL),
+        mockListener
+    );
+    assertEquals(ConnectionStatus.INITIAL_STATUS, connectionState.getStatus());
+  }
+
+  @Test
+  void refreshStatusShouldReturnInitialStatus() throws Throwable {
     var mockListener = mock(ConnectionState.StateChangedListener.class);
-    var testContext = new VertxTestContext();
     var connectionState = ConnectionStates.from(
         new ConnectionSpec("1", "foo", ConnectionType.LOCAL),
         mockListener
     );
 
+    var testContext = new VertxTestContext();
     connectionState.refreshStatus()
         .onComplete(
-            testContext.succeeding(connectionStatus ->
+            testContext.succeeding(status ->
                 testContext.verify(() -> {
-                  Assertions.assertEquals(ConnectionStatus.INITIAL_STATUS, connectionStatus);
+                  Assertions.assertEquals(ConnectionStatus.INITIAL_STATUS, status);
                   testContext.completeNow();
                 })));
 
