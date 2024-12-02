@@ -61,7 +61,7 @@ public class RecordDeserializer {
       .asMap("ide-sidecar.serde-configs");
   private final int schemaFetchMaxRetries;
 
-  SchemaErrors schemaErrors;
+  private final SchemaErrors schemaErrors;
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
   private static final ObjectMapper AVRO_OBJECT_MAPPER = new AvroMapper(new AvroFactory());
   public static final byte MAGIC_BYTE = 0x0;
