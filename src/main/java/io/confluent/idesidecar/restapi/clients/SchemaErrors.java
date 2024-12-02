@@ -41,7 +41,7 @@ public class SchemaErrors {
 
   // The time-to-live duration for schema fetch errors in the cache.
   @ConfigProperty(name = "ide-sidecar.schema-fetch-error-ttl")
-  Duration schemaFetchErrorTtl;
+  long schemaFetchErrorTtl;
 
   public static final Map<ConnectionId, Cache<SchemaId, SchemaErrors.Error>> cacheOfCaches = new ConcurrentHashMap<>();
 
@@ -49,7 +49,7 @@ public class SchemaErrors {
   public Cache<SchemaId, Error> getSubCache(ConnectionId key) {
     return cacheOfCaches.computeIfAbsent(
         key,
-        k -> Caffeine.newBuilder().expireAfterAccess(schemaFetchErrorTtl).build());
+        k -> Caffeine.newBuilder().expireAfterAccess(Duration.ofSeconds(schemaFetchErrorTtl)).build());
   }
 
   // Reads a schema error from the cache using both the connection id and the schema id.
