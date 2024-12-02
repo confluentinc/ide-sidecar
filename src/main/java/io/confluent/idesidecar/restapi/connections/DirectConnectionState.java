@@ -10,6 +10,9 @@ import io.confluent.idesidecar.restapi.models.ConnectionStatus;
 import io.confluent.idesidecar.restapi.models.ConnectionStatus.ConnectedState;
 import io.confluent.idesidecar.restapi.models.ConnectionStatus.KafkaClusterStatus;
 import io.confluent.idesidecar.restapi.models.ConnectionStatus.SchemaRegistryStatus;
+import io.confluent.idesidecar.restapi.models.ConnectionStatusBuilder;
+import io.confluent.idesidecar.restapi.models.ConnectionStatusKafkaClusterStatusBuilder;
+import io.confluent.idesidecar.restapi.models.ConnectionStatusSchemaRegistryStatusBuilder;
 import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
@@ -141,11 +144,11 @@ public class DirectConnectionState extends ConnectionState {
       var futures = cf.list();
       var kafkaStatus = (KafkaClusterStatus) futures.get(0);
       var srStatus = (SchemaRegistryStatus) futures.get(1);
-      return new ConnectionStatus(
-          null,
-          kafkaStatus,
-          srStatus
-      );
+      return ConnectionStatusBuilder
+          .builder()
+          .kafkaCluster(kafkaStatus)
+          .schemaRegistry(srStatus)
+          .build();
     });
   }
 
@@ -159,11 +162,11 @@ public class DirectConnectionState extends ConnectionState {
               .clusterId()
               .get(TIMEOUT.toMillis(), TimeUnit.MILLISECONDS);
           return Future.succeededFuture(
-              new KafkaClusterStatus(
-                  ConnectedState.SUCCESS,
-                  null,
-                  null
-              ));
+              ConnectionStatusKafkaClusterStatusBuilder
+                  .builder()
+                  .state(ConnectedState.SUCCESS)
+                  .build()
+          );
         },
         error -> {
           // The connection failed in some way
@@ -186,16 +189,18 @@ public class DirectConnectionState extends ConnectionState {
             );
           }
           return Future.succeededFuture(
-             new KafkaClusterStatus(
-                 ConnectedState.FAILED,
-                 null,
-                 null
-             ));
+              ConnectionStatusKafkaClusterStatusBuilder
+                  .builder()
+                  .state(ConnectedState.FAILED)
+                  .errors(
+                      new AuthErrors().withSignIn(message)
+                  ).build()
+          );
         }
     ).orElseGet(
         () -> {
-            // There is no Kafka cluster configuration, so return a null Kafka status
-            return Future.succeededFuture(null);
+          // There is no Kafka cluster configuration, so return a null Kafka status
+          return Future.succeededFuture(null);
         }
     );
   }
@@ -206,11 +211,11 @@ public class DirectConnectionState extends ConnectionState {
       // and getting the global mode.
       srClient.getMode();
       return Future.succeededFuture(
-          new SchemaRegistryStatus(
-              ConnectedState.SUCCESS,
-              null,
-              null
-      ));
+          ConnectionStatusSchemaRegistryStatusBuilder
+              .builder()
+              .state(ConnectedState.SUCCESS)
+              .build()
+      );
     }, error -> {
       var cause = unwrap(error);
       var message = "Failed to connect to Schema Registry: %s".formatted(cause.getMessage());
@@ -225,11 +230,12 @@ public class DirectConnectionState extends ConnectionState {
       }
       // The connection failed, so successfully return the failed state
       return Future.succeededFuture(
-          new SchemaRegistryStatus(
-              ConnectedState.FAILED,
-              null,
-              null
-          )
+          ConnectionStatusSchemaRegistryStatusBuilder
+              .builder()
+              .state(ConnectedState.FAILED)
+              .errors(
+                  new AuthErrors().withSignIn(message)
+              ).build()
       );
     }).orElseGet(() -> {
       // There is no Schema Registry configuration, so return no status for SR
