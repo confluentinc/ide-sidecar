@@ -108,7 +108,9 @@ public class KafkaConsumeResource {
         routingContext.request().method(),
         requestBody,
         routingContext.pathParams(),
-        new SchemaErrors.ConnectionId(routingContext.request().getHeader(RequestHeadersConstants.CONNECTION_ID_HEADER)),
+        new SchemaErrors.ConnectionId(
+            routingContext.request().getHeader(RequestHeadersConstants.CONNECTION_ID_HEADER)
+        ),
         clusterId,
         topicName
     );
