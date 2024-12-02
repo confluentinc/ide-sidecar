@@ -41,7 +41,7 @@ public class NativeConsumeStrategy implements ConsumeStrategy {
     var schemaRegistryClient = Optional
         .ofNullable(context.getSchemaRegistryInfo())
         .map(info -> schemaRegistryClients.getClient(
-            String.valueOf(context.getConnectionId()), info.id()))
+            context.getConnectionId(), info.id()))
         .orElse(null);
 
     var consumer = consumerFactory.getClient(
