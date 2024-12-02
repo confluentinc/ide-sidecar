@@ -2,6 +2,7 @@
 ---
 "%test":
   ide-sidecar:
+    schema-fetch-error-ttl: 30
     connections:
       ccloud:
         id-token:
@@ -37,7 +38,6 @@
       enabled: false
       # How often to check?
       interval-seconds: 60
-    schema-fetch-error-ttl: 30000
     schema-fetch-retry:
       max-retries: 3
   quarkus:
