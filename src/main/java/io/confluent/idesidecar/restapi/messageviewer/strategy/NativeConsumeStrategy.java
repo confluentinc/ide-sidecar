@@ -45,7 +45,7 @@ public class NativeConsumeStrategy implements ConsumeStrategy {
         .orElse(null);
 
     var consumer = consumerFactory.getClient(
-        String.valueOf(context.getConnectionId()),
+        context.getConnectionId(),
         context.getClusterId(),
         request.consumerConfigOverrides()
     );
