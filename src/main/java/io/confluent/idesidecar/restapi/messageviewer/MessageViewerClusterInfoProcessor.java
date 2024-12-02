@@ -23,8 +23,6 @@ import jakarta.inject.Inject;
 public class MessageViewerClusterInfoProcessor extends
     Processor<MessageViewerContext, Future<MessageViewerContext>> {
 
-  @Inject
-  SchemaErrors schemaErrors;
 
   private final ClusterCache clusterCache;
 

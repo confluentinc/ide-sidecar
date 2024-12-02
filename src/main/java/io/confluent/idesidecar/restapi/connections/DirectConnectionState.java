@@ -199,8 +199,8 @@ public class DirectConnectionState extends ConnectionState {
         }
     ).orElseGet(
         () -> {
-          // There is no Kafka cluster configuration, so return a null Kafka status
-          return Future.succeededFuture(null);
+            // There is no Kafka cluster configuration, so return a null Kafka status
+            return Future.succeededFuture(null);
         }
     );
   }
