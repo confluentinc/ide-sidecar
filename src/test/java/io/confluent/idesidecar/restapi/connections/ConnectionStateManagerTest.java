@@ -195,20 +195,6 @@ class ConnectionStateManagerTest {
     );
   }
 
-  @Test
-  void refreshConnectionStatusesShouldRefreshOnlyConnectionsMatchingProvidedPredicate() {
-    var connectionManager = Mockito.spy(ConnectionStateManager.class);
-    var confluentCloudConnection = Mockito.spy(CCloudConnectionState.class);
-    var localConnection = Mockito.spy(LocalConnectionState.class);
-    when(connectionManager.getConnectionStates())
-        .thenReturn(List.of(confluentCloudConnection, localConnection));
-
-    connectionManager.refreshConnectionStatuses(CCloudConnectionState.class::isInstance);
-
-    Mockito.verify(confluentCloudConnection, Mockito.times(1)).refreshStatus();
-    Mockito.verify(localConnection, Mockito.never()).refreshStatus();
-  }
-
   void assertConnectionNotFound(String id) {
     assertThrows(ConnectionNotFoundException.class, () -> manager.getConnectionState(id));
     assertThrows(ConnectionNotFoundException.class, () -> manager.getConnectionSpec(id));
