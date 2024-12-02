@@ -4,6 +4,8 @@
 
 package io.confluent.idesidecar.restapi.application;
 
+import static jdk.internal.util.StaticProperty.osArch;
+
 import io.confluent.idesidecar.restapi.util.OperatingSystemType;
 import io.confluent.idesidecar.restapi.util.OperatingSystemType.Properties;
 import io.quarkus.logging.Log;
@@ -116,7 +118,6 @@ public class SidecarInfo {
   public String version() {
     return VERSION;
   }
-
   public OperatingSystemType osType() {
     return osType;
   }
@@ -133,6 +134,10 @@ public class SidecarInfo {
     return vscode;
   }
 
+  public String osArch() {
+    return System.getProperty("os.arch", "unknown");
+  }
+
   @Override
   public String toString() {
     return "OS: %s %s (%s); VS Code %s, extension version %s".formatted(
@@ -147,5 +152,15 @@ public class SidecarInfo {
   static String getSystemOrEnvProperty(String name) {
     var result = System.getProperty(name);
     return result != null ? result : System.getenv(name);
+  }
+
+
+  public String getUserAgent(){
+   return "Confluent-for-VSCode/v%s (https://confluent.io; support@confluent.io) sidecar/v%s (%s/%s)".formatted(
+        vsCode(),
+        VERSION,
+        osName(),
+        osArch()
+   );
   }
 }
