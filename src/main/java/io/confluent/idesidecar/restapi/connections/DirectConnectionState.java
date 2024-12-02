@@ -10,9 +10,6 @@ import io.confluent.idesidecar.restapi.models.ConnectionStatus;
 import io.confluent.idesidecar.restapi.models.ConnectionStatus.ConnectedState;
 import io.confluent.idesidecar.restapi.models.ConnectionStatus.KafkaClusterStatus;
 import io.confluent.idesidecar.restapi.models.ConnectionStatus.SchemaRegistryStatus;
-import io.confluent.idesidecar.restapi.models.ConnectionStatusBuilder;
-import io.confluent.idesidecar.restapi.models.ConnectionStatusKafkaClusterStatusBuilder;
-import io.confluent.idesidecar.restapi.models.ConnectionStatusSchemaRegistryStatusBuilder;
 import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
@@ -144,11 +141,11 @@ public class DirectConnectionState extends ConnectionState {
       var futures = cf.list();
       var kafkaStatus = (KafkaClusterStatus) futures.get(0);
       var srStatus = (SchemaRegistryStatus) futures.get(1);
-      return ConnectionStatusBuilder
-          .builder()
-          .kafkaCluster(kafkaStatus)
-          .schemaRegistry(srStatus)
-          .build();
+      return new ConnectionStatus(
+          null,
+          kafkaStatus,
+          srStatus
+      );
     });
   }
 
@@ -162,11 +159,11 @@ public class DirectConnectionState extends ConnectionState {
               .clusterId()
               .get(TIMEOUT.toMillis(), TimeUnit.MILLISECONDS);
           return Future.succeededFuture(
-              ConnectionStatusKafkaClusterStatusBuilder
-                  .builder()
-                  .state(ConnectedState.SUCCESS)
-                  .build()
-          );
+              new KafkaClusterStatus(
+                  ConnectedState.SUCCESS,
+                  null,
+                  null
+              ));
         },
         error -> {
           // The connection failed in some way
@@ -189,13 +186,11 @@ public class DirectConnectionState extends ConnectionState {
             );
           }
           return Future.succeededFuture(
-              ConnectionStatusKafkaClusterStatusBuilder
-                  .builder()
-                  .state(ConnectedState.FAILED)
-                  .errors(
-                      new AuthErrors().withSignIn(message)
-                  ).build()
-          );
+             new KafkaClusterStatus(
+                 ConnectedState.FAILED,
+                 null,
+                 null
+             ));
         }
     ).orElseGet(
         () -> {
@@ -211,11 +206,11 @@ public class DirectConnectionState extends ConnectionState {
       // and getting the global mode.
       srClient.getMode();
       return Future.succeededFuture(
-          ConnectionStatusSchemaRegistryStatusBuilder
-              .builder()
-              .state(ConnectedState.SUCCESS)
-              .build()
-      );
+          new SchemaRegistryStatus(
+              ConnectedState.SUCCESS,
+              null,
+              null
+      ));
     }, error -> {
       var cause = unwrap(error);
       var message = "Failed to connect to Schema Registry: %s".formatted(cause.getMessage());
@@ -230,12 +225,11 @@ public class DirectConnectionState extends ConnectionState {
       }
       // The connection failed, so successfully return the failed state
       return Future.succeededFuture(
-          ConnectionStatusSchemaRegistryStatusBuilder
-              .builder()
-              .state(ConnectedState.FAILED)
-              .errors(
-                  new AuthErrors().withSignIn(message)
-              ).build()
+          new SchemaRegistryStatus(
+              ConnectedState.FAILED,
+              null,
+              null
+          )
       );
     }).orElseGet(() -> {
       // There is no Schema Registry configuration, so return no status for SR

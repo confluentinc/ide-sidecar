@@ -79,25 +79,4 @@ public class MessageViewerClusterInfoProcessor extends
       );
     }
   }
-
-  /**
-   * Respond to the connection being disconnected by clearing cached information.
-   *
-   * @param connection the connection that was disconnected
-   */
-  void onConnectionDisconnected(
-      @ObservesAsync @Lifecycle.Disconnected ConnectionState connection
-  ) {
-    schemaErrors.clearByConnectionId(new SchemaErrors.ConnectionId(connection.getId()));
-  }
-
-  /**
-   * Respond to the connection being deleted by clearing cached information.
-   *
-   * @param connection the connection that was deleted
-   */
-  void onConnectionDeleted(@ObservesAsync @Lifecycle.Deleted ConnectionState connection) {
-    schemaErrors.clearByConnectionId(new SchemaErrors.ConnectionId(connection.getId()));
-  }
 }
-
