@@ -21,8 +21,12 @@ public class RefreshCCloudTokensBean {
   private static final Integer MAX_TOKEN_REFRESH_ATTEMPTS = ConfigProvider.getConfig()
       .getValue("ide-sidecar.connections.ccloud.refresh-token.max-refresh-attempts", Integer.class);
 
+  final ConnectionStateManager connectionStateManager;
+
   @Inject
-  ConnectionStateManager connectionStateManager;
+  RefreshCCloudTokensBean(ConnectionStateManager connectionStateManager) {
+    this.connectionStateManager = connectionStateManager;
+  }
 
   /**
    * Recurring job that gets executed every
