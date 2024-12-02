@@ -363,7 +363,7 @@ public class RecordDeserializerTest {
     ) {
       static TestCase nonRetryable(int statusCode) {
         // Expect only 1 try when the status code is non-retryable
-        return new TestCase(statusCode, 1, 1, null);
+        return new TestCase(statusCode, 3, 1, null);
       }
 
       static TestCase retryable(int statusCode) {
