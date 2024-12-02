@@ -24,7 +24,6 @@ import io.confluent.idesidecar.restapi.models.Connection;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.LocalConfig;
-import io.confluent.idesidecar.restapi.models.ConnectionStatus.ConnectedState;
 import io.confluent.idesidecar.restapi.models.ConnectionsList;
 import io.confluent.kafka.schemaregistry.client.rest.entities.Schema;
 import io.quarkus.logging.Log;
