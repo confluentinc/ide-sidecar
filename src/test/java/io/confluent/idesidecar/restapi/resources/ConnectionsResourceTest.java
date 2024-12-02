@@ -13,6 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -48,6 +49,8 @@ import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 import io.restassured.http.ContentType;
 import io.restassured.response.ValidatableResponse;
+import io.vertx.junit5.VertxTestContext;
+import io.vertx.junit5.VertxTestContext.ExecutionBlock;
 import jakarta.inject.Inject;
 import java.util.Arrays;
 import java.util.List;
@@ -328,36 +331,39 @@ public class ConnectionsResourceTest {
     // Create authenticated connection
     ccloudTestUtil.createAuthedConnection(connectionId, connectionName, connectionType);
 
-    // Get Connection
-    var actualGetConnection = given()
-        .contentType(ContentType.JSON)
-        .when().get("/gateway/v1/connections/{id}", connectionId)
-        .then()
-        .statusCode(200)
-        .contentType(ContentType.JSON)
-        .extract().body().asString();
+    var testContext = new VertxTestContext();
+    refreshConnectionStatusAndThen(connectionId, testContext, () -> {
+      // Get Connection
+      var actualGetConnection = given()
+          .contentType(ContentType.JSON)
+          .when().get("/gateway/v1/connections/{id}", connectionId)
+          .then()
+          .statusCode(200)
+          .contentType(ContentType.JSON)
+          .extract().body().asString();
+      var treeActual = asJson(actualGetConnection);
+      var expectedSpec = new ConnectionSpec(
+          connectionId,
+          "Connection 1",
+          ConnectionType.CCLOUD
+      );
+      var expectedSpecAsJson = asJson(expectedSpec);
+      // Verify ConnectionSpec
+      assertTrue(treeActual.has("spec"));
+      assertEquals(expectedSpecAsJson, treeActual.get("spec"));
 
-    // Verify ConnectionSpec
-    JsonNode treeActual = asJson(actualGetConnection);
-    ConnectionSpec expectedSpec = new ConnectionSpec(
-        connectionId,
-        "Connection 1",
-        ConnectionType.CCLOUD
-    );
-    JsonNode expectedSpecAsJson = asJson(expectedSpec);
-    assertTrue(treeActual.has("spec"));
-    assertEquals(expectedSpecAsJson, treeActual.get("spec"));
+      // Verify ConnectionStatus
+      assertTrue(treeActual.has("status"));
+      assertTrue(treeActual.get("status").has("authentication"));
+      var authenticationStatus = treeActual.get("status").get("authentication");
 
-    // Verify ConnectionStatus
-    assertTrue(treeActual.has("status"));
-    assertTrue(treeActual.get("status").has("authentication"));
-    var authenticationStatus = treeActual.get("status").get("authentication");
+      // Verify that token is valid
+      assertEquals(Status.VALID_TOKEN.name(), authenticationStatus.get("status").textValue());
 
-    // Verify that token is valid
-    assertEquals(Status.VALID_TOKEN.name(), authenticationStatus.get("status").textValue());
-
-    // Status should include user and organization because token is valid
-    assertTrue(treeActual.get("status").get("authentication").has("user"));
+      // Status should include user and organization because token is valid
+      assertTrue(treeActual.get("status").get("authentication").has("user"));
+      testContext.completeNow();
+    });
   }
 
   @Test
@@ -379,29 +385,36 @@ public class ConnectionsResourceTest {
                     .withBody("invalid_json"))
             .atPriority(50));
 
-    // Get Connection
-    var connection = given()
-        .contentType(ContentType.JSON)
-        .when().get("/gateway/v1/connections/{id}", connectionId)
-        .then()
-        .statusCode(200)
-        .contentType(ContentType.JSON)
-        .extract().body().asString();
+    var testContext = new VertxTestContext();
+    refreshConnectionStatusAndThen(connectionId, testContext, () -> {
+      // Get Connection
+      var connection = given()
+          .contentType(ContentType.JSON)
+          .when().get("/gateway/v1/connections/{id}", connectionId)
+          .then()
+          .statusCode(200)
+          .contentType(ContentType.JSON)
+          .extract().body().asString();
 
-    // Verify ConnectionSpec
-    JsonNode connectionAsJson = asJson(connection);
+      // Verify ConnectionSpec
+      var connectionAsJson = asJson(connection);
 
-    // Verify ConnectionStatus
-    assertTrue(connectionAsJson.has("status"));
-    assertTrue(connectionAsJson.get("status").has("authentication"));
-    var authenticationStatus = connectionAsJson.get("status").get("authentication");
+      // Verify ConnectionStatus
+      assertTrue(connectionAsJson.has("status"));
+      assertTrue(connectionAsJson.get("status").has("authentication"));
+      var authenticationStatus = connectionAsJson.get("status").get("authentication");
 
-    // Verify that token is valid
-    assertEquals(Status.INVALID_TOKEN.name(), authenticationStatus.get("status").textValue());
+      // Verify that token is valid
+      assertEquals(
+          Status.INVALID_TOKEN.name(),
+          authenticationStatus.get("status").textValue()
+      );
 
-    // Verify that error related to auth status check is present
-    assertTrue(authenticationStatus.has("errors"));
-    assertTrue(authenticationStatus.get("errors").has("auth_status_check"));
+      // Verify that error related to auth status check is present
+      assertTrue(authenticationStatus.has("errors"));
+      assertTrue(authenticationStatus.get("errors").has("auth_status_check"));
+      testContext.completeNow();
+    });
   }
 
   @Test
@@ -619,137 +632,159 @@ public class ConnectionsResourceTest {
   @Test
   void updateConnectionCCloudOrganizationIdWithSameId() {
     // Create authenticated connection
+    var connectionId = "c1";
+    var connectionName = "Connection 1";
+    var orgName = "Development Org";
     var accessTokens = ccloudTestUtil.createAuthedCCloudConnection(
-        "c1",
-        "Connection 1",
-        "Development Org",
+        connectionId,
+        connectionName,
+        orgName,
         null
     );
     var connectionSpec = connectionStateManager.getConnectionSpec("c1");
 
-    assertAuthStatus("c1", "VALID_TOKEN");
+    var testContext = new VertxTestContext();
+    refreshConnectionStatusAndThen(connectionId, testContext, () -> {
+      assertAuthStatus(connectionId, "VALID_TOKEN");
 
-    assertCurrentOrganizationForConnection(
-        "Development Org",
-        "23b1185e-d874-4f61-81d6-c9c61aa8969c"
-    );
+      assertCurrentOrganizationForConnection(
+          orgName,
+          "23b1185e-d874-4f61-81d6-c9c61aa8969c"
+      );
 
-    // Update org to Development Org with the same ID and expect the current org to
-    // remain the same
-    var updatedAccessTokens = updateCCloudOrganization(
-        accessTokens,
-        connectionSpec,
-        "Development Org"
-    );
+      // Update org to Development Org with the same ID and expect the current org to
+      // remain the same
+      updateCCloudOrganization(
+          accessTokens,
+          connectionSpec,
+          orgName
+      );
 
-    assertCurrentOrganizationForConnection(
-        "Development Org",
-        "23b1185e-d874-4f61-81d6-c9c61aa8969c"
-    );
+      assertCurrentOrganizationForConnection(
+          orgName,
+          "23b1185e-d874-4f61-81d6-c9c61aa8969c"
+      );
 
-    // Expect tokens to have been refreshed and is still valid
-    assertAuthStatus("c1", "VALID_TOKEN");
+      // Expect tokens to have been refreshed and is still valid
+      assertAuthStatus(connectionId, "VALID_TOKEN");
+      testContext.completeNow();
+    });
   }
 
   @Test
   void updateUnauthedConnectionCCloudOrganization() {
     // Create unauthenticated CCloud connection
+    var connectionId = "c1";
     var connectionSpec = ccloudTestUtil.createConnection(
-        "c1", "Connection 1", ConnectionType.CCLOUD);
+        connectionId, "Connection 1", ConnectionType.CCLOUD);
 
-    given()
-        .contentType(ContentType.JSON)
-        .body(connectionSpec.withCCloudOrganizationId("d6fc52f8-ae8a-405c-9692-e997965b730dc"))
-        .when().put("/gateway/v1/connections/{id}", connectionSpec.id())
-        .then()
-        .statusCode(401)
-        .body("errors.size()", is(1))
-        .body("errors[0].title", is("Unauthorized"));
+    var testContext = new VertxTestContext();
+    refreshConnectionStatusAndThen(connectionId, testContext, () -> {
+      given()
+          .contentType(ContentType.JSON)
+          .body(connectionSpec.withCCloudOrganizationId("d6fc52f8-ae8a-405c-9692-e997965b730dc"))
+          .when().put("/gateway/v1/connections/{id}", connectionSpec.id())
+          .then()
+          .statusCode(401)
+          .body("errors.size()", is(1))
+          .body("errors[0].title", is("Unauthorized"));
 
-    // The above update should have triggered a failed auth refresh, which is fine
-    assertAuthStatus("c1", "NO_TOKEN")
-        // Validate that we don't update the connection state due to failed refresh
-        .body("status.authentication.errors.token_refresh", is(nullValue()));
+      // The above update should have triggered a failed auth refresh, which is fine
+      assertAuthStatus(connectionId, "NO_TOKEN")
+          // Validate that we don't update the connection state due to failed refresh
+          .body("status.authentication.errors.token_refresh", is(nullValue()));
+
+      testContext.completeNow();
+    });
 
     // Let's authenticate the connection now
     ccloudTestUtil.authenticateCCloudConnection(
-        "c1",
+        connectionId,
         "Development Org",
         null
     );
-
-    assertAuthStatus("c1", "VALID_TOKEN");
+    refreshConnectionStatusAndThen(connectionId, testContext, () -> {
+      assertAuthStatus(connectionId, "VALID_TOKEN");
+      testContext.completeNow();
+    });
   }
 
 
   @Test
-  void updateConnectionCCloudOrganizationToNonExistentOrg() {
+  void updateConnectionCCloudOrganizationToNonExistentOrg() throws Throwable {
     // Start with default org
+    var connectionId = "c1";
     var accessTokens = ccloudTestUtil.createAuthedCCloudConnection(
-        "c1",
+        connectionId,
         "Connection 1",
         "Development Org",
         null
     );
 
-    assertAuthStatus("c1", "VALID_TOKEN")
-        .body("spec.ccloud_config.organization_id", is(nullValue()));
+    var testContext = new VertxTestContext();
+    refreshConnectionStatusAndThen(connectionId, testContext, () -> {
+      assertAuthStatus(connectionId, "VALID_TOKEN")
+          .body("spec.ccloud_config.organization_id", is(nullValue()));
+      var refreshedTokens = ccloudTestUtil.expectRefreshTokenExchangeRequest(
+          accessTokens.refresh_token()
+      );
 
-    var refreshedTokens = ccloudTestUtil.expectRefreshTokenExchangeRequest(
-        accessTokens.refresh_token()
-    );
+      ccloudTestUtil.expectInvalidResourceIdOnControlPlaneTokenExchange(
+          refreshedTokens.id_token(),
+          "non-existent-org-id"
+      );
 
-    ccloudTestUtil.expectInvalidResourceIdOnControlPlaneTokenExchange(
-        refreshedTokens.id_token(),
-        "non-existent-org-id"
-    );
+      expectListOrganizations();
 
-    expectListOrganizations();
+      var connectionSpec = connectionStateManager.getConnectionSpec(connectionId);
+      given()
+          .contentType(ContentType.JSON)
+          .body(connectionSpec.withCCloudOrganizationId("non-existent-org-id"))
+          .when().put("/gateway/v1/connections/{id}", connectionSpec.id())
+          .then()
+          .statusCode(400)
+          .body("errors.size()", is(1))
+          .body("errors[0].title", is("Invalid organization ID"));
 
-    var connectionSpec = connectionStateManager.getConnectionSpec("c1");
-    given()
-        .contentType(ContentType.JSON)
-        .body(connectionSpec.withCCloudOrganizationId("non-existent-org-id"))
-        .when().put("/gateway/v1/connections/{id}", connectionSpec.id())
-        .then()
-        .statusCode(400)
-        .body("errors.size()", is(1))
-        .body("errors[0].title", is("Invalid organization ID"));
-
-    // Validate that the connection state is unchanged
-    assertAuthStatus("c1", "VALID_TOKEN")
-        .body("spec.ccloud_config.organization_id", is(nullValue()));
+      testContext.completeNow();
+    });
   }
 
   @Test
-  void updateConnectionCCloudOrganizationToDefault() {
+  void updateConnectionCCloudOrganizationToDefault() throws Throwable {
     // Start with non-default org
+    var connectionId = "c1";
     var accessTokens = ccloudTestUtil.createAuthedCCloudConnection(
-        "c1",
+        connectionId,
         "Connection 1",
         "Staging Org",
         "1a507773-d2cb-4055-917e-ffb205f3c433"
     );
 
-    assertAuthStatus("c1", "VALID_TOKEN")
-        .body("spec.ccloud_config.organization_id", is("1a507773-d2cb-4055-917e-ffb205f3c433"));
+    var testContext = new VertxTestContext();
+    refreshConnectionStatusAndThen(connectionId, testContext, () -> {
+      assertAuthStatus("c1", "VALID_TOKEN")
+          .body("spec.ccloud_config.organization_id", is("1a507773-d2cb-4055-917e-ffb205f3c433"));
+      testContext.completeNow();
+    });
 
-
-    var connectionSpec = connectionStateManager.getConnectionSpec("c1");
+    var connectionSpec = connectionStateManager.getConnectionSpec(connectionId);
     updateCCloudOrganization(
         accessTokens,
         // Set ccloud_config to null
         new ConnectionSpec(connectionSpec.id(), connectionSpec.name(), connectionSpec.type()),
         "Development Org"
     );
+    refreshConnectionStatusAndThen(connectionId, testContext, () -> {
+      assertAuthStatus("c1", "VALID_TOKEN")
+          .body("spec.ccloud_config.organization_id", is(nullValue()));
 
-    assertAuthStatus("c1", "VALID_TOKEN")
-        .body("spec.ccloud_config.organization_id", is(nullValue()));
-
-    assertCurrentOrganizationForConnection(
-        "Development Org",
-        "23b1185e-d874-4f61-81d6-c9c61aa8969c"
-    );
+      assertCurrentOrganizationForConnection(
+          "Development Org",
+          "23b1185e-d874-4f61-81d6-c9c61aa8969c"
+      );
+      testContext.completeNow();
+    });
   }
 
   private Error createError() {
@@ -1797,6 +1832,32 @@ public class ConnectionsResourceTest {
 
   protected String linkWithoutPort(String url) {
     return url == null ? null : url.replaceAll("localhost:\\d+", "");
+  }
+
+  /**
+   * Refreshes the status of a given connection and, after completing the refresh, runs an
+   * {@link ExecutionBlock} of code that can perform assertions. The {@link ExecutionBlock} runs on
+   * a {@link VertxTestContext} and must call {@link VertxTestContext#completeNow()} at the end so
+   * that the {@link VertxTestContext} can be completed successfully. Note that this method will let
+   * the test <code>fail()</code> if the {@link VertxTestContext} has failed.
+   *
+   * @param connectionId The ID of the connection
+   * @param testContext The {@link VertxTestContext} instance used for executing the
+   *                    {@link ExecutionBlock}
+   * @param block The {@link ExecutionBlock} that should be executed after completing the status
+   *              refresh
+   */
+  void refreshConnectionStatusAndThen(
+      String connectionId,
+      VertxTestContext testContext,
+      ExecutionBlock block
+  ) {
+    connectionStateManager.getConnectionState(connectionId)
+        .refreshStatus()
+        .onComplete(testContext.succeeding(ignored -> testContext.verify(block)));
+    if (testContext.failed()) {
+      fail();
+    }
   }
 }
 

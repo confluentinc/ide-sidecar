@@ -8,10 +8,8 @@ import io.confluent.idesidecar.restapi.connections.LocalConnectionState;
 import io.confluent.idesidecar.restapi.connections.PlatformConnectionState;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
-import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.vertx.core.Future;
-import jakarta.inject.Inject;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -21,12 +19,6 @@ import org.mockito.Mockito;
 
 @QuarkusTest
 class RefreshCCloudTokensBeanTest {
-  @InjectMock
-  ConnectionStateManager connectionStateManager;
-
-  @Inject
-  RefreshCCloudTokensBean refreshCCloudTokensBean;
-
   @Test
   void refreshTokensShouldConsiderOnlyCCloudConnections() {
     var confluentCloudConnection = (CCloudConnectionState) createdSpiedConnectionState(
@@ -36,15 +28,18 @@ class RefreshCCloudTokensBeanTest {
         confluentCloudConnection,
         localConnection
     );
+    var connectionStateManager = Mockito.spy(ConnectionStateManager.class);
     Mockito.when(connectionStateManager.getConnectionStates()).thenReturn(connections);
+
+    var refreshCCloudTokensBean = new RefreshCCloudTokensBean(connectionStateManager);
 
     refreshCCloudTokensBean.refreshTokens();
 
     Mockito.verify(confluentCloudConnection, Mockito.atLeastOnce()).getOauthContext();
   }
 
-  @Test
   @DisabledIfSystemProperty(named = "os.name", matches = ".*Windows.*")
+  @Test
   void refreshTokensShouldRefreshOnlyConnectionsEligibleForATokenRefreshAttempt() {
     // Connection eligible for a token refresh attempt
     var eligibleConnection = (CCloudConnectionState) createdSpiedConnectionState(
@@ -78,7 +73,10 @@ class RefreshCCloudTokensBeanTest {
         "local", "name", ConnectionType.LOCAL);
 
     var connections = List.of(eligibleConnection, ineligibleConnection, localConnection);
+    var connectionStateManager = Mockito.spy(ConnectionStateManager.class);
     Mockito.when(connectionStateManager.getConnectionStates()).thenReturn(connections);
+
+    var refreshCCloudTokensBean = new RefreshCCloudTokensBean(connectionStateManager);
 
     refreshCCloudTokensBean.refreshTokens();
 
@@ -87,13 +85,15 @@ class RefreshCCloudTokensBeanTest {
     Mockito.verify(ineligibleAuthContext, Mockito.never()).refresh(null);
   }
 
-  private ConnectionState createdSpiedConnectionState(String id,
-                                                      String name,
-                                                      ConnectionType connectionType) {
+  private ConnectionState createdSpiedConnectionState(
+      String id,
+      String name,
+      ConnectionType connectionType
+  ) {
     var clazz = switch (connectionType) {
       case CCLOUD   -> CCloudConnectionState.class;
       case LOCAL    -> LocalConnectionState.class;
-      case DIRECT -> DirectConnectionState.class;
+      case DIRECT   -> DirectConnectionState.class;
       case PLATFORM -> PlatformConnectionState.class;
     };
 
@@ -103,10 +103,12 @@ class RefreshCCloudTokensBeanTest {
     return connectionState;
   }
 
-  private CCloudOAuthContext createSpiedCCloudOAuthContext(boolean canRefresh,
-                                                           Integer failedTokenRefreshAttempts,
-                                                           Optional<Instant> expiresAt,
-                                                           Optional<Instant> endOfLifetime) {
+  private CCloudOAuthContext createSpiedCCloudOAuthContext(
+      boolean canRefresh,
+      Integer failedTokenRefreshAttempts,
+      Optional<Instant> expiresAt,
+      Optional<Instant> endOfLifetime
+  ) {
     var authContext = Mockito.spy(CCloudOAuthContext.class);
 
     Future<AuthContext> resultOfRefresh = canRefresh

@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
+import io.confluent.idesidecar.restapi.connections.ConnectionState.StateChangedListener;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
 import io.confluent.idesidecar.restapi.models.ConnectionStatus;
@@ -18,21 +19,29 @@ public class PlatformConnectionTest {
   private static final int AWAIT_COMPLETION_TIMEOUT_SEC = 5;
 
   @Test
-  void getConnectionStatusShouldReturnInitialStatusForConfluentPlatformConnections()
-      throws Throwable {
+  void getStatusShouldReturnInitialStatusForNewConnections() {
+    var mockListener = mock(StateChangedListener.class);
+    var connectionState = ConnectionStates.from(
+        new ConnectionSpec("1", "foo", ConnectionType.PLATFORM),
+        mockListener
+    );
+    assertEquals(ConnectionStatus.INITIAL_STATUS, connectionState.getStatus());
+  }
 
+  @Test
+  void refreshStatusShouldReturnInitialStatus() throws Throwable {
     var mockListener = mock(ConnectionState.StateChangedListener.class);
-    var testContext = new VertxTestContext();
     var connectionState = ConnectionStates.from(
         new ConnectionSpec("1", "foo", ConnectionType.PLATFORM),
         mockListener
     );
 
+    var testContext = new VertxTestContext();
     connectionState.refreshStatus()
         .onComplete(
-            testContext.succeeding(connectionStatus ->
+            testContext.succeeding(status ->
                 testContext.verify(() -> {
-                  assertEquals(ConnectionStatus.INITIAL_STATUS, connectionStatus);
+                  assertEquals(ConnectionStatus.INITIAL_STATUS, status);
                   testContext.completeNow();
                 })));
 
