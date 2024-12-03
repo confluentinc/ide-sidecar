@@ -31,79 +31,10 @@ public class WebClientFactoryTest {
 
   WireMock wireMock;
 
-//  @BeforeEach
-//  void registerWireMockRoutes() {
-//    ccloudTestUtil = new CCloudTestUtil(wireMock, connectionStateManager);
-//    ccloudTestUtil.registerWireMockRoutesForCCloudOAuth(
-//        FAKE_AUTHORIZATION_CODE,
-//        "Development Org",
-//        null
-//    );
-//  }
-
   @AfterEach
   void resetWireMock() {
     wireMock.removeMappings();
   }
-
-  //EXAMPLES
-//  public static void whenLaunchDarklyReturns(
-//      WireMock wireMock,
-//      UrlPattern urlPattern,
-//      int responseStatus,
-//      String responseJson
-//  ) {
-//    wireMock.register(
-//        WireMock
-//            .get(urlPattern)
-//            .willReturn(
-//                WireMock
-//                    .aResponse()
-//                    .withStatus(responseStatus)
-//                    .withBody(responseJson)
-//            )
-//            .atPriority(100)
-//    );
-//  }
-//  @Test
-//  void testConsumePropagatesNon200StatusFromCCloud() {
-//    setupSimpleConsumeApi();
-//    wireMock.register(
-//        WireMock
-//            .post(CCLOUD_SIMPLE_CONSUME_API_PATH.formatted(
-//                KAFKA_CLUSTER_ID, "topic_429"))
-//            .withHeader(
-//                "Authorization",
-//                new EqualToPattern("Bearer %s".formatted(getDataPlaneToken()))
-//            )
-//            .willReturn(
-//                WireMock
-//                    .aResponse()
-//                    .withStatus(429)
-//                    .withHeader("Content-Type", "application/json")
-//                    .withHeader("x-connection-id", CONNECTION_ID)
-//                    .withHeader("x-cluster-id", KAFKA_CLUSTER_ID)
-//                    .withBody("Too many requests.")
-//            )
-//            .atPriority(100));
-//    final String path = "/gateway/v1/clusters/%s/topics/%s/partitions/-/consume"
-//        .formatted(KAFKA_CLUSTER_ID, "topic_429");
-//    // Now trying to hit the cluster proxy endpoint
-//    // should return a 429 Too many requests error.
-//    given()
-//        .when()
-//        .contentType(ContentType.JSON)
-//        .header("x-connection-id", CONNECTION_ID)
-//        .body("{}")
-//        .header("x-cluster-id", KAFKA_CLUSTER_ID)
-//        .post(path)
-//        .then()
-//        .statusCode(429)
-//        .contentType(MediaType.APPLICATION_JSON)
-//        .body("title", containsString(
-//            "Error fetching the messages from ccloud"))
-//        .body("title", containsString("Too many requests"));
-//  }
 
 @Test
 void getDefaultWebClientOptionsIncludesUserAgent() {
@@ -111,27 +42,26 @@ void getDefaultWebClientOptionsIncludesUserAgent() {
   Assertions.assertTrue(userAgent.contains("support@confluent.io) sidecar/"));
 }
 
-@Test
-public static void webClientOptionsShouldContainUserAgentOnCreation(
-    WireMock wireMock,
-    UrlPattern urlPattern,
-    int responseStatus,
-    String responseJson) {
+  @Test
+  public void webClientOptionsShouldContainUserAgentOnCreation(
+      WireMock wireMock,
+      UrlPattern urlPattern,
+      int responseStatus,
+      String responseJson) {
 
-    wireMock.register(
-        WireMock
-            .get(urlPattern)
-            .willReturn(
-                WireMock
-                    .aResponse()
-                    .withStatus(responseStatus)
-                    .withBody(responseJson)
-            )
-            .atPriority(100)
-    );
+      wireMock.register(
+          WireMock
+              .get(urlPattern)
+              .willReturn(
+                  WireMock
+                      .aResponse()
+                      .withStatus(responseStatus)
+                      .withBody(responseJson)
+              )
+              .atPriority(100)
+      );
 
 }
-
 
   @Test
   void getWebClientShouldReturnTheSameInstanceWhenCalledMultipleTimes() {
