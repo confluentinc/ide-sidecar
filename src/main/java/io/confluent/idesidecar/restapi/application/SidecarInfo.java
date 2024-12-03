@@ -4,8 +4,6 @@
 
 package io.confluent.idesidecar.restapi.application;
 
-import static jdk.internal.util.StaticProperty.osArch;
-
 import io.confluent.idesidecar.restapi.util.OperatingSystemType;
 import io.confluent.idesidecar.restapi.util.OperatingSystemType.Properties;
 import io.quarkus.logging.Log;
