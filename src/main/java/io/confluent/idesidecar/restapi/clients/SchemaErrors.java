@@ -9,6 +9,27 @@ import jakarta.enterprise.event.ObservesAsync;
 import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+
+/**
+ * The SchemaErrors class manages schema error caching for different connections.
+ * It uses Caffeine cache to store and retrieve schema errors based on connection and schema IDs.
+ *
+ * <p>This class is application-scoped and observes connection lifecycle events to manage the cache.
+ * It provides methods to read, write, and clear schema errors for specific connections.
+ *
+ * <p>Configuration properties:
+ * <ul>
+ *   <li>`ide-sidecar.schema-fetch-error-ttl`: The time-to-live duration for schema fetch errors in the cache.</li>
+ * </ul>
+ *
+ * <p>Records:
+ * <ul>
+ *   <li>`ConnectionId`: Represents a unique connection identifier.</li>
+ *   <li>`SchemaId`: Represents a unique schema identifier within a cluster.</li>
+ *   <li>`Error`: Represents an error message associated with a schema.</li>
+ * </ul>
+ */
 
 @ApplicationScoped
 public class SchemaErrors {
@@ -25,16 +46,19 @@ public class SchemaErrors {
 
   }
 
-  private static final Duration SCHEMA_FETCH_ERROR_TTL = Duration.ofSeconds(30);
+  @ConfigProperty(name = "ide-sidecar.schema-fetch-error-ttl")
+  long schemaFetchErrorTtl;
 
   public static final Map<ConnectionId, Cache<SchemaId, SchemaErrors.Error>> cacheOfCaches = new ConcurrentHashMap<>();
 
-  public static Cache<SchemaId, Error> getSubCache(ConnectionId key) {
+ // getSubCache(ConnectionId key): Retrieves or creates a sub-cache for a specific connection.
+  public Cache<SchemaId, Error> getSubCache(ConnectionId key) {
     return cacheOfCaches.computeIfAbsent(
         key,
-        k -> Caffeine.newBuilder().expireAfterAccess(SCHEMA_FETCH_ERROR_TTL).build());
+        k -> Caffeine.newBuilder().expireAfterAccess(Duration.ofSeconds(schemaFetchErrorTtl)).build());
   }
 
+  // readSchemaIdByConnectionId(ConnectionId connectionId, SchemaId schemaId): Reads a schema error from the cache.
   public Error readSchemaIdByConnectionId(
       ConnectionId connectionId,
       SchemaId schemaId
@@ -42,6 +66,7 @@ public class SchemaErrors {
     return getSubCache(connectionId).getIfPresent(schemaId);
   }
 
+  // writeSchemaIdByConnectionId(ConnectionId connectionId, SchemaId schemaId, Error error)`: Writes a schema error to the cache.
   public void writeSchemaIdByConnectionId(
       ConnectionId connectionId,
       SchemaId schemaId,
@@ -50,12 +75,14 @@ public class SchemaErrors {
     getSubCache(connectionId).put(schemaId, error);
   }
 
+  // clearByConnectionId(ConnectionId connectionId)`: Clears the cache for a specific connection.
   public void clearByConnectionId(
       ConnectionId connectionId
   ) {
     cacheOfCaches.remove(connectionId);
   }
 
+  // onConnectionChange(ConnectionState connection)`: Removes the cache by connections id in response to lifecycle events.
   public void onConnectionChange(@ObservesAsync @Lifecycle.Deleted @Lifecycle.Created @Lifecycle.Updated ConnectionState connection) {
     cacheOfCaches.remove(new ConnectionId(connection.getId()));
   }
