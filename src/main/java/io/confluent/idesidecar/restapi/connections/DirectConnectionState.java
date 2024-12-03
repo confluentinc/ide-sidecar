@@ -76,7 +76,8 @@ public class DirectConnectionState extends ConnectionState {
     return new ConnectionStatus(
         null,
         spec.kafkaClusterConfig() != null ? KAFKA_INITIAL_STATUS : null,
-        spec.schemaRegistryConfig() != null ? SR_INITIAL_STATUS : null
+        spec.schemaRegistryConfig() != null ? SR_INITIAL_STATUS : null,
+        null
     );
   }
 

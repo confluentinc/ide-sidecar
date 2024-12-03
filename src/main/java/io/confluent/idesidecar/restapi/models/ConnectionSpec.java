@@ -49,13 +49,56 @@ public record ConnectionSpec(
                           + "Apache Kafka cluster.")
     @JsonProperty(KAFKA_CLUSTER_CONFIG_FIELD_NAME) KafkaClusterConfig kafkaClusterConfig,
     @Schema(description = "The details for connecting to a Schema Registry.")
-    @JsonProperty(SCHEMA_REGISTRY_CONFIG_FIELD_NAME) SchemaRegistryConfig schemaRegistryConfig
+    @JsonProperty(SCHEMA_REGISTRY_CONFIG_FIELD_NAME) SchemaRegistryConfig schemaRegistryConfig,
+    @Schema(description = "The details for connecting to a Confluent Platform MDS.")
+    @JsonProperty(MDS_CONFIG_FIELD_NAME) MdsConfig mdsConfig
 ) implements ConnectionSpecBuilder.With {
 
   public static final String CCLOUD_CONFIG_FIELD_NAME = "ccloud_config";
   public static final String LOCAL_CONFIG_FIELD_NAME = "local_config";
   public static final String KAFKA_CLUSTER_CONFIG_FIELD_NAME = "kafka_cluster";
   public static final String SCHEMA_REGISTRY_CONFIG_FIELD_NAME = "schema_registry";
+  public static final String MDS_CONFIG_FIELD_NAME = "mds";
+
+  public static final int URI_MIN_LEN = 8; // at the very least 'http://x'
+  public static final int URI_MAX_LEN = 512;
+
+  /**
+   * Validate URI used in configuration components. For safety reasons, all SR and MDS URIs
+   * must use {@code http} or {@code https}, and therefore the absolute minimum length is
+   * {@value #URI_MIN_LEN} (e.g., {@code http://x}).
+   * Note that other schemes like {@code file} are not allowed and may result in vulnerabilities.
+   *
+   * @param errors the list of errors to append to
+   * @param uri    the URI to validate
+   * @param path   the inclusive path to the URI field in the configuration
+   * @param what   the description of the URI field
+   */
+  static void validateUri(
+      List<Error> errors,
+      String uri,
+      String path,
+      String what
+  ) {
+    // Check if the URI is valid
+    try {
+      var uriObj = new URI(uri);
+      var scheme = uriObj.getScheme();
+      if (!"https".equals(scheme) && !"http".equals(scheme)) {
+        errors.add(
+            Error.create()
+                 .withDetail("%s URI must use 'http' or 'https'", what)
+                 .withSource("%s", path)
+        );
+      }
+    } catch (URISyntaxException e) {
+      errors.add(
+          Failure.Error.create()
+                       .withDetail("%s URI is not a valid URI", what)
+                       .withSource("%s", path)
+      );
+    }
+  }
 
   public enum ConnectionType {
     @Schema(description = "Connection type when using Confluent Local.")
@@ -77,6 +120,7 @@ public record ConnectionSpec(
         ccloudConfig,
         null,
         null,
+        null,
         null
     );
   }
@@ -88,6 +132,7 @@ public record ConnectionSpec(
         LOCAL,
         null,
         localConfig != null ? localConfig : new LocalConfig(null),
+        null,
         null,
         null
     );
@@ -105,12 +150,13 @@ public record ConnectionSpec(
         null,
         null,
         kafkaConfig,
-        srConfig
+        srConfig,
+        null
     );
   }
 
   public ConnectionSpec(String id, String name, ConnectionType type) {
-    this(id, name, type, null, null, null, null);
+    this(id, name, type, null, null, null, null, null);
   }
 
   public ConnectionSpec withId(String id) {
@@ -121,7 +167,8 @@ public record ConnectionSpec(
         ccloudConfig,
         localConfig,
         kafkaClusterConfig,
-        schemaRegistryConfig
+        schemaRegistryConfig,
+        mdsConfig
     );
   }
 
@@ -133,7 +180,8 @@ public record ConnectionSpec(
         ccloudConfig,
         localConfig,
         kafkaClusterConfig,
-        schemaRegistryConfig
+        schemaRegistryConfig,
+        mdsConfig
     );
   }
 
@@ -151,7 +199,8 @@ public record ConnectionSpec(
         ccloudConfig,
         new LocalConfig(srUri),
         kafkaClusterConfig,
-        schemaRegistryConfig
+        schemaRegistryConfig,
+        mdsConfig
     );
   }
 
@@ -166,7 +215,8 @@ public record ConnectionSpec(
         ccloudConfig,
         null,
         kafkaClusterConfig,
-        schemaRegistryConfig
+        schemaRegistryConfig,
+        mdsConfig
     );
   }
 
@@ -184,7 +234,8 @@ public record ConnectionSpec(
         new CCloudConfig(ccloudOrganizationId),
         localConfig,
         kafkaClusterConfig,
-        schemaRegistryConfig
+        schemaRegistryConfig,
+        mdsConfig
     );
   }
 
@@ -202,7 +253,8 @@ public record ConnectionSpec(
         ccloudConfig,
         localConfig,
         kafkaClusterConfig,
-        schemaRegistryConfig
+        schemaRegistryConfig,
+        mdsConfig
     );
   }
 
@@ -220,7 +272,8 @@ public record ConnectionSpec(
         ccloudConfig,
         localConfig,
         kafkaClusterConfig,
-        schemaRegistryConfig
+        schemaRegistryConfig,
+        mdsConfig
     );
   }
 
@@ -246,7 +299,7 @@ public record ConnectionSpec(
       @Schema(description = "The URL of the Schema Registry running locally.")
       @JsonProperty(value = "schema-registry-uri")
       @Null
-      @Size(max = 512)
+      @Size(min = URI_MIN_LEN, max = URI_MAX_LEN)
       String schemaRegistryUri
   ) {
 
@@ -270,23 +323,12 @@ public record ConnectionSpec(
           );
         } else {
           // The URI is not blank or empty, so check if it's a valid URI
-          try {
-            var uri = new URI(schemaRegistryUri);
-            var scheme = uri.getScheme();
-            if (!"https".equals(scheme) && !"http".equals(scheme)) {
-              errors.add(
-                  Error.create()
-                       .withDetail("Schema Registry URI must use 'http' or 'https'")
-                       .withSource("%s.schema-registry-uri", path)
-              );
-            }
-          } catch (URISyntaxException e) {
-            errors.add(
-                Error.create()
-                     .withDetail("Schema Registry URI is not a valid URI")
-                     .withSource("%s.schema-registry-uri", path)
-            );
-          }
+          validateUri(
+              errors,
+              schemaRegistryUri,
+              "%s.schema-registry-uri".formatted(path),
+              "Schema Registry"
+          );
         }
       }
     }
@@ -402,7 +444,7 @@ public record ConnectionSpec(
 
       @Schema(description = "The URL of the Schema Registry.")
       @JsonProperty(value = "uri")
-      @Size(min = 1, max = URI_MAX_LEN)
+      @Size(min = URI_MIN_LEN, max = URI_MAX_LEN)
       @NotNull
       String uri,
 
@@ -420,7 +462,6 @@ public record ConnectionSpec(
   ) implements ConnectionSpecSchemaRegistryConfigBuilder.With {
 
     private static final int ID_MAX_LEN = 64;
-    private static final int URI_MAX_LEN = 256;
 
     @JsonIgnore
     public Optional<SchemaRegistryEndpoint> asCCloudEndpoint() {
@@ -453,23 +494,56 @@ public record ConnectionSpec(
         );
       } else {
         // Check if the URI is valid
-        try {
-          var uriObj = new URI(uri);
-          var scheme = uriObj.getScheme();
-          if (!"https".equals(scheme) && !"http".equals(scheme)) {
-            errors.add(
-                Error.create()
-                     .withDetail("%s URI must use 'http' or 'https'", what)
-                     .withSource("%s.uri", path)
-            );
-          }
-        } catch (URISyntaxException e) {
-          errors.add(
-              Failure.Error.create()
-                           .withDetail("%s URI is not a valid URI", what)
-                           .withSource("%s.uri", path)
-          );
-        }
+        validateUri(errors, uri, "%s.uri".formatted(path), what);
+      }
+      if (credentials != null) {
+        credentials.validate(errors, "%s.credentials".formatted(path), what);
+      }
+    }
+  }
+
+  @Schema(description = "Confluent Platform MDS configuration.")
+  @RegisterForReflection
+  @RecordBuilder
+  public record MdsConfig(
+      @Schema(description = "The URL of the Confluent Platform MDS.")
+      @JsonProperty(value = "uri")
+      @Size(min = URI_MIN_LEN, max = URI_MAX_LEN)
+      @NotNull
+      String uri,
+
+      @Schema(
+          description = "The credentials for MDS, or null if no authentication is required",
+          oneOf = {
+              // TODO: Add other MDS credential types, including OAuth2
+              BasicCredentials.class
+          },
+          nullable = true
+      )
+      @Null
+      Credentials credentials
+  ) implements ConnectionSpecMdsConfigBuilder.With {
+
+    public void validate(
+        List<Error> errors,
+        String path,
+        String what
+    ) {
+      if (uri == null || uri.isBlank()) {
+        errors.add(
+            Failure.Error.create()
+                         .withDetail("%s URI is required and may not be blank", what)
+                         .withSource("%s.uri", path)
+        );
+      } else if (uri.length() > URI_MAX_LEN) {
+        errors.add(
+            Failure.Error.create()
+                         .withDetail("%s URI must be at most %d characters", what, URI_MAX_LEN)
+                         .withSource("%s.uri", path)
+        );
+      } else {
+        // Check if the URI is valid
+        validateUri(errors, uri, "%s.uri".formatted(path), what);
       }
       if (credentials != null) {
         credentials.validate(errors, "%s.credentials".formatted(path), what);
@@ -518,6 +592,7 @@ public record ConnectionSpec(
         case LOCAL -> {
           checkCCloudConfigNotAllowed(errors, newSpec);
           checkKafkaClusterNotAllowed(errors, newSpec);
+          checkMdsNotAllowed(errors, newSpec);
           // Allow use of the older local config with Schema Registry.
           var local = newSpec.localConfig;
           if (local != null) {
@@ -541,6 +616,7 @@ public record ConnectionSpec(
           checkLocalConfigNotAllowed(errors, newSpec);
           checkKafkaClusterNotAllowed(errors, newSpec);
           checkSchemaRegistryNotAllowed(errors, newSpec);
+          checkMdsNotAllowed(errors, newSpec);
         }
         case DIRECT -> {
           var kafka = newSpec.kafkaClusterConfig();
@@ -553,8 +629,22 @@ public record ConnectionSpec(
           }
           checkLocalConfigNotAllowed(errors, newSpec);
           checkCCloudConfigNotAllowed(errors, newSpec);
+          checkMdsNotAllowed(errors, newSpec);
         }
         case PLATFORM -> {
+          if (newSpec.mdsConfig() != null) {
+            newSpec.mdsConfig().validate(errors, "mds", "Confluent Platform MDS");
+          } else {
+            errors.add(
+                Error.create()
+                     .withDetail("Confluent Platform MDS configuration is required")
+                     .withSource("mds")
+            );
+          }
+          checkLocalConfigNotAllowed(errors, newSpec);
+          checkCCloudConfigNotAllowed(errors, newSpec);
+          checkKafkaClusterNotAllowed(errors, newSpec);
+          checkSchemaRegistryNotAllowed(errors, newSpec);
         }
         default -> {
           errors.add(
@@ -607,6 +697,17 @@ public record ConnectionSpec(
           errors,
           SCHEMA_REGISTRY_CONFIG_FIELD_NAME,
           "Schema Registry configuration",
+          "type is %s".formatted(newSpec.type)
+      );
+    }
+  }
+
+  void checkMdsNotAllowed(List<Error> errors, ConnectionSpec newSpec) {
+    if (newSpec.mdsConfig != null) {
+      checkAllowedWhen(
+          errors,
+          MDS_CONFIG_FIELD_NAME,
+          "Confluent Platform MDS configuration",
           "type is %s".formatted(newSpec.type)
       );
     }
