@@ -157,7 +157,7 @@ public class SidecarInfo {
    return "Confluent-for-VSCode/v%s (https://confluent.io; support@confluent.io) sidecar/v%s (%s/%s)".formatted(
         vsCode(),
         VERSION,
-        osName(),
+        osType(),
         osArch()
    );
   }

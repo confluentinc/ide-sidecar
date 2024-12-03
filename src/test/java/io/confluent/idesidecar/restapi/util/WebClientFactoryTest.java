@@ -1,67 +1,87 @@
 package io.confluent.idesidecar.restapi.util;
 
 
-import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
-import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.containsString;
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import com.github.tomakehurst.wiremock.matching.EqualToPattern;
+import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.matching.UrlPattern;
-import io.confluent.idesidecar.restapi.featureflags.FeatureFlags;
 import io.quarkiverse.wiremock.devservice.ConnectWireMock;
-import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
-import io.restassured.http.ContentType;
+import io.vertx.core.Vertx;
+import io.vertx.ext.web.client.WebClient;
+import io.vertx.ext.web.client.WebClientOptions;
 import jakarta.inject.Inject;
-import jakarta.ws.rs.core.MediaType;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import com.github.tomakehurst.wiremock.client.WireMock;
-import io.quarkiverse.wiremock.devservice.ConnectWireMock;
 
 @QuarkusTest
 @ConnectWireMock
 public class WebClientFactoryTest {
   @Inject WebClientFactory webClientFactory;
 
-//  @InjectMock
-//  WebClientFactory webClientFactory;
-
   WireMock wireMock;
+  WireMockServer wireMockServer;
 
+  @BeforeEach
+  public void setup() {
+    wireMockServer = new WireMockServer(options().dynamicPort());
+    wireMockServer.start();
+    WireMock.configureFor("localhost", wireMockServer.port());
+  }
   @AfterEach
   void resetWireMock() {
+    wireMockServer.stop();
     wireMock.removeMappings();
   }
 
-@Test
-void getDefaultWebClientOptionsIncludesUserAgent() {
-  var userAgent = webClientFactory.getDefaultWebClientOptions().getUserAgent();
-  Assertions.assertTrue(userAgent.contains("support@confluent.io) sidecar/"));
-}
+  @Test
+  void getDefaultWebClientOptionsIncludesUserAgent() {
+    var userAgent = webClientFactory.getDefaultWebClientOptions().getUserAgent();
+    Assertions.assertTrue(userAgent.contains("support@confluent.io) sidecar/"));
+  }
+
 
   @Test
-  public void webClientOptionsShouldContainUserAgentOnCreation(
-      WireMock wireMock,
-      UrlPattern urlPattern,
-      int responseStatus,
-      String responseJson) {
+  public void webClientOptionsShouldContainUserAgentOnCreation() {
+    UrlPattern urlPattern = urlEqualTo("/some-endpoint");
+    // Register the WireMock stub
+    wireMockServer.stubFor(
+        WireMock.get(urlPattern)
+                .willReturn(
+                    aResponse()
+                        .withStatus(200)
+                        .withBody("{\"message\":\"success\"}")
+                )
+    );
 
-      wireMock.register(
-          WireMock
-              .get(urlPattern)
-              .willReturn(
-                  WireMock
-                      .aResponse()
-                      .withStatus(responseStatus)
-                      .withBody(responseJson)
-              )
-              .atPriority(100)
-      );
+    // Create a WebClient instance with the correct port
+    WebClient webClient = WebClient.create(
+        Vertx.vertx(), new WebClientOptions().setDefaultHost("localhost").setUserAgent("Confluent-for-VSCode/").setDefaultPort(wireMockServer.port()));
 
-}
+    // Make a request using the WebClient
+    webClient.get("/some-endpoint")
+             .send()
+             .onSuccess(response -> {
+               // Verify the response
+               assertEquals(200, response.statusCode());
+             })
+             .onFailure(Throwable::printStackTrace)
+             .toCompletionStage()
+             .toCompletableFuture()
+             .join(); // Ensure the request completes before the test ends
+
+    // Verify that the request contains the User-Agent header
+    wireMockServer.verify(
+        WireMock.getRequestedFor(urlPattern)
+                .withHeader("User-Agent", WireMock.matching(".*Confluent-for-VSCode/*"))
+    );
+  }
 
   @Test
   void getWebClientShouldReturnTheSameInstanceWhenCalledMultipleTimes() {
