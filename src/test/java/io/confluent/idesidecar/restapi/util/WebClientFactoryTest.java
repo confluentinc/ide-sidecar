@@ -19,6 +19,7 @@ import io.vertx.ext.web.client.WebClientOptions;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
+import org.junit.Assert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -68,7 +69,8 @@ public class WebClientFactoryTest {
     WebClient webClient = WebClient.create(
         Vertx.vertx(), new WebClientOptions()
             .setDefaultHost("localhost")
-            .setUserAgent("Confluent-for-VSCode/v1.2.3 (https://confluent.io; support@confluent.io) sidecar/v20.1.2 (Solaris 4/x86_64)")
+            .setUserAgent("Confluent-for-VSCode/v%s (https://confluent.io; support@confluent.io) sidecar/v%s (%s/%s)"
+                .formatted(sidecarInfo.vsCode(),sidecarInfo.version(),sidecarInfo.osType(), sidecarInfo.osArch()))
             .setDefaultPort(wireMockServer.port()));
 
     webClient.get("/some-endpoint")
@@ -87,8 +89,10 @@ public class WebClientFactoryTest {
         WireMock.getRequestedFor(urlPattern)
                 .withHeader("User-Agent",
                     WireMock
-                        .equalTo("Confluent-for-VSCode/v1.2.3 (https://confluent.io; support@confluent.io) sidecar/v20.1.2 (Solaris 4/x86_64)"))
-    );
+                        .equalTo(("Confluent-for-VSCode/v%s (https://confluent.io; support@confluent.io) sidecar/v%s (%s/%s)"
+                                      .formatted(sidecarInfo.vsCode(), sidecarInfo.version(),sidecarInfo.osType(), sidecarInfo.osArch())))
+    ));
+
   }
 
   @Test
