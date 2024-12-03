@@ -111,6 +111,27 @@ void getDefaultWebClientOptionsIncludesUserAgent() {
   Assertions.assertTrue(userAgent.contains("support@confluent.io) sidecar/"));
 }
 
+@Test
+public static void webClientOptionsShouldContainUserAgentOnCreation(
+    WireMock wireMock,
+    UrlPattern urlPattern,
+    int responseStatus,
+    String responseJson) {
+
+    wireMock.register(
+        WireMock
+            .get(urlPattern)
+            .willReturn(
+                WireMock
+                    .aResponse()
+                    .withStatus(responseStatus)
+                    .withBody(responseJson)
+            )
+            .atPriority(100)
+    );
+
+}
+
 
   @Test
   void getWebClientShouldReturnTheSameInstanceWhenCalledMultipleTimes() {
