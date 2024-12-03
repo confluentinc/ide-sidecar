@@ -24,7 +24,6 @@ import org.junit.jupiter.api.Test;
 @ConnectWireMock
 public class WebClientFactoryTest {
   @Inject WebClientFactory webClientFactory;
-
   WireMock wireMock;
   WireMockServer wireMockServer;
 
@@ -62,9 +61,11 @@ public class WebClientFactoryTest {
 
     // Create a WebClient instance with the correct port
     WebClient webClient = WebClient.create(
-        Vertx.vertx(), new WebClientOptions().setDefaultHost("localhost").setUserAgent("Confluent-for-VSCode/").setDefaultPort(wireMockServer.port()));
+        Vertx.vertx(), new WebClientOptions()
+            .setDefaultHost("localhost")
+            .setUserAgent("Confluent-for-VSCode/v1.2.3 (https://confluent.io; support@confluent.io) sidecar/v20.1.2 (Solaris 4/x86_64)")
+            .setDefaultPort(wireMockServer.port()));
 
-    // Make a request using the WebClient
     webClient.get("/some-endpoint")
              .send()
              .onSuccess(response -> {
@@ -79,7 +80,7 @@ public class WebClientFactoryTest {
     // Verify that the request contains the User-Agent header
     wireMockServer.verify(
         WireMock.getRequestedFor(urlPattern)
-                .withHeader("User-Agent", WireMock.matching(".*Confluent-for-VSCode/*"))
+                .withHeader("User-Agent", WireMock.equalTo("Confluent-for-VSCode/v1.2.3 (https://confluent.io; support@confluent.io) sidecar/v20.1.2 (Solaris 4/x86_64)"))
     );
   }
 
