@@ -118,6 +118,7 @@ public class SidecarInfo {
   public String version() {
     return VERSION;
   }
+
   public OperatingSystemType osType() {
     return osType;
   }
