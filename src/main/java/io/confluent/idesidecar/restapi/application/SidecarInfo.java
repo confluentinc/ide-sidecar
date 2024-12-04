@@ -23,6 +23,7 @@ import org.eclipse.microprofile.config.ConfigProvider;
  *   <li>{@link #osName()} -- the value of the '{@value #OS_NAME_KEY}' system property</li>
  *   <li>{@link #osVersion()} -- the value of the '{@value #OS_VERSION_KEY}' system property</li>
  *   <li>{@link #osType()} -- enumeration derived from the {@value #OS_NAME_KEY} system property
+ *   <li>{@link #osArch()} -- value derived from the {@value #OS_ARCH_KEY} system property
  * </ul>
  *
  * <p>The VS Code information is obtained first from the system properties if
@@ -64,7 +65,9 @@ public class SidecarInfo {
     return matcher.find() ? matcher.group(1) : value;
   }
 
+  static final String OS_ARCH_KEY = "os.arch";
   static final String OS_NAME_KEY = "os.name";
+  static final String OS_TYPE_KEY = "os.type";
   static final String OS_VERSION_KEY = "os.version";
   static final String VSCODE_VERSION_ENV = "VSCODE_VERSION";
   static final String VSCODE_VERSION_KEY = "vscode.version";
@@ -133,6 +136,10 @@ public class SidecarInfo {
     return vscode;
   }
 
+  public String osArch() {
+    return System.getProperty(OS_ARCH_KEY, "unknown");
+  }
+
   @Override
   public String toString() {
     return "OS: %s %s (%s); VS Code %s, extension version %s".formatted(
@@ -147,5 +154,14 @@ public class SidecarInfo {
   static String getSystemOrEnvProperty(String name) {
     var result = System.getProperty(name);
     return result != null ? result : System.getenv(name);
+  }
+
+  public String getUserAgent() {
+   return "Confluent-for-VSCode/v%s (https://confluent.io; support@confluent.io) sidecar/v%s (%s/%s)".formatted(
+       vsCode().map(VsCode::extensionVersion).orElse("unknown"),
+        version(),
+        osType(),
+        osArch()
+   );
   }
 }
