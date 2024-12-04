@@ -155,10 +155,10 @@ public class SidecarInfo {
     return result != null ? result : System.getenv(name);
   }
 
-  public String getUserAgent(){
+  public String getUserAgent() {
    return "Confluent-for-VSCode/v%s (https://confluent.io; support@confluent.io) sidecar/v%s (%s/%s)".formatted(
-        vsCode(),
-        VERSION,
+       vsCode().map(VsCode::extensionVersion).orElse("unknown"),
+        version(),
         osType(),
         osArch()
    );

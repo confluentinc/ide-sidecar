@@ -4,7 +4,10 @@ package io.confluent.idesidecar.restapi.util;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
+import static org.junit.Assert.assertSame;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.when;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
@@ -17,6 +20,7 @@ import io.vertx.core.Vertx;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.WebClientOptions;
 import jakarta.inject.Inject;
+import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,11 +30,10 @@ import org.junit.jupiter.api.Test;
 @ConnectWireMock
 public class WebClientFactoryTest {
   @Inject WebClientFactory webClientFactory;
+  @Inject SidecarInfo sidecarInfo;
+
   WireMock wireMock;
   WireMockServer wireMockServer;
-
-  @InjectSpy
-  SidecarInfo sidecarInfo;
 
   @BeforeEach
   public void setup() {
@@ -38,6 +41,7 @@ public class WebClientFactoryTest {
     wireMockServer.start();
     WireMock.configureFor("localhost", wireMockServer.port());
   }
+
   @AfterEach
   void resetWireMock() {
     wireMockServer.stop();
@@ -47,7 +51,7 @@ public class WebClientFactoryTest {
   @Test
   void getDefaultWebClientOptionsIncludesUserAgent() {
     var userAgent = webClientFactory.getDefaultWebClientOptions().getUserAgent();
-    Assertions.assertTrue(userAgent.contains("support@confluent.io) sidecar/"));
+    assertTrue(userAgent.contains("support@confluent.io) sidecar/"));
   }
 
 
@@ -64,34 +68,31 @@ public class WebClientFactoryTest {
                 )
     );
 
+    String userAgent = sidecarInfo.getUserAgent();
+
     // Create a WebClient instance with the correct port
     WebClient webClient = WebClient.create(
-        Vertx.vertx(), new WebClientOptions()
+        Vertx.vertx(),
+        new WebClientOptions()
             .setDefaultHost("localhost")
-            .setUserAgent("Confluent-for-VSCode/v%s (https://confluent.io; support@confluent.io) sidecar/v%s (%s/%s)"
-                .formatted(sidecarInfo.vsCode(),sidecarInfo.version(),sidecarInfo.osType(), sidecarInfo.osArch()))
-            .setDefaultPort(wireMockServer.port()));
-
-    webClient.get("/some-endpoint")
-             .send()
-             .onSuccess(response -> {
-               // Verify the response
-               assertEquals(200, response.statusCode());
-             })
-             .onFailure(Throwable::printStackTrace)
-             .toCompletionStage()
-             .toCompletableFuture()
-             .join(); // Ensure the request completes before the test ends
-
+            .setUserAgent(
+                "Confluent-for-VSCode/v%s (https://confluent.io; support@confluent.io) sidecar/v%s (%s/%s)".formatted(
+                    sidecarInfo.vsCode(),
+                    sidecarInfo.version(),
+                    sidecarInfo.osType(),
+                    sidecarInfo.osArch()
+                )
+            )
+            .setDefaultPort(wireMockServer.port())
+    );
     // Verify that the request contains the User-Agent header
     wireMockServer.verify(
         WireMock.getRequestedFor(urlPattern)
                 .withHeader("User-Agent",
                     WireMock
-                        .equalTo(("Confluent-for-VSCode/v%s (https://confluent.io; support@confluent.io) sidecar/v%s (%s/%s)"
-                                      .formatted(sidecarInfo.vsCode(), sidecarInfo.version(),sidecarInfo.osType(), sidecarInfo.osArch())))
-    ));
-
+                        .equalTo((userAgent))
+                )
+    );
   }
 
   @Test
@@ -99,6 +100,6 @@ public class WebClientFactoryTest {
     var firstInstance = webClientFactory.getWebClient();
     var secondInstance = webClientFactory.getWebClient();
 
-    Assertions.assertSame(firstInstance, secondInstance);
+    assertSame(firstInstance, secondInstance);
   }
 }

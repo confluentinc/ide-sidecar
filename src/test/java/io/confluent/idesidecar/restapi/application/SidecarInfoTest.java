@@ -69,7 +69,7 @@ public class SidecarInfoTest {
             OperatingSystemType.Linux,
             new SidecarInfo.VsCode("20.1.2", "1.2.3"),
             null,
-            "Confluent-for-VSCode/v%s (https://confluent.io; support@confluent.io) sidecar/v%s (Linux/x86_64)".formatted(
+            "Confluent-for-VSCode/v%s (https://confluent.io; support@confluent.io) sidecar/v%s (linux/x86_64)".formatted(
                 vscodeVersion,
                 SidecarInfo.VERSION)
         ),
@@ -80,7 +80,7 @@ public class SidecarInfoTest {
             OperatingSystemType.Linux,
             new SidecarInfo.VsCode("20.1.2", "1.2.3"),
             "v",
-            "Confluent-for-VSCode/v%s (https://confluent.io; support@confluent.io) sidecar/v%s (Linux/x86_64)".formatted(
+            "Confluent-for-VSCode/v%s (https://confluent.io; support@confluent.io) sidecar/v%s (linux/x86_64)".formatted(
                 vscodeVersion,
                 SidecarInfo.VERSION)
         ),
@@ -91,7 +91,7 @@ public class SidecarInfoTest {
             OperatingSystemType.Linux,
             null,
             null,
-            "Confluent-for-VSCode/v%s (https://confluent.io; support@confluent.io) sidecar/v%s (Linux/x86_64)".formatted(
+            "Confluent-for-VSCode/v%s (https://confluent.io; support@confluent.io) sidecar/v%s (linux/x86_64)".formatted(
                 vscodeVersion,
                 SidecarInfo.VERSION)
         ),
@@ -103,7 +103,7 @@ public class SidecarInfoTest {
             OperatingSystemType.MacOS,
             new SidecarInfo.VsCode("20.1.2", "1.2.3"),
             "",
-            "Confluent-for-VSCode/v%s (https://confluent.io; support@confluent.io) sidecar/v%s (Mac OS X/x86_64)".formatted(
+            "Confluent-for-VSCode/v%s (https://confluent.io; support@confluent.io) sidecar/v%s (macosx/x86_64)".formatted(
                 vscodeVersion,
                 SidecarInfo.VERSION)
         ),
@@ -115,7 +115,7 @@ public class SidecarInfoTest {
             new SidecarInfo.VsCode("20.1.2", "1.2.3"),
             "v",
             " \n"
-            + "Confluent-for-VSCode/v%s (https://confluent.io; support@confluent.io) sidecar/v%s (Mac OS X/x86_64)".formatted(
+            + "Confluent-for-VSCode/v%s (https://confluent.io; support@confluent.io) sidecar/v%s (macosx/x86_64)".formatted(
                 vscodeVersion,
                 SidecarInfo.VERSION)
         ),
@@ -126,7 +126,7 @@ public class SidecarInfoTest {
             OperatingSystemType.MacOS,
             null,
             null,
-            "Confluent-for-VSCode/v%s (https://confluent.io; support@confluent.io) sidecar/v%s (Mac OS X/x86_64)".formatted(
+            "Confluent-for-VSCode/v%s (https://confluent.io; support@confluent.io) sidecar/v%s (macosx/x86_64)".formatted(
                 vscodeVersion,
                 SidecarInfo.VERSION)
         ),
@@ -138,7 +138,7 @@ public class SidecarInfoTest {
             OperatingSystemType.Windows,
             new SidecarInfo.VsCode("20.1.2", "1.2.3"),
             "",
-            "Confluent-for-VSCode/v%s (https://confluent.io; support@confluent.io) sidecar/v%s (Windows 10/x86_64)".formatted(
+            "Confluent-for-VSCode/v%s (https://confluent.io; support@confluent.io) sidecar/v%s (windows/x86_64)".formatted(
                 vscodeVersion,
                 SidecarInfo.VERSION
             )
@@ -150,7 +150,7 @@ public class SidecarInfoTest {
             OperatingSystemType.Windows,
             new SidecarInfo.VsCode("20.1.2", "1.2.3"),
             "v",
-            "Confluent-for-VSCode/v%s (https://confluent.io; support@confluent.io) sidecar/v%s (Windows 10/x86_64)".formatted(
+            "Confluent-for-VSCode/v%s (https://confluent.io; support@confluent.io) sidecar/v%s (windows/x86_64)".formatted(
                 vscodeVersion,
                 SidecarInfo.VERSION
             )
@@ -162,7 +162,7 @@ public class SidecarInfoTest {
             OperatingSystemType.Windows,
             null,
             null,
-            "Confluent-for-VSCode/v%s (https://confluent.io; support@confluent.io) sidecar/v%s (Windows 10/x86_64)".formatted(
+            "Confluent-for-VSCode/v%s (https://confluent.io; support@confluent.io) sidecar/v%s (windows/x86_64)".formatted(
                 vscodeVersion,
                 SidecarInfo.VERSION
             )
@@ -175,7 +175,7 @@ public class SidecarInfoTest {
             OperatingSystemType.Windows,
             new SidecarInfo.VsCode("20.1.2", "1.2.3"),
             "",
-            "Confluent-for-VSCode/v%s (https://confluent.io; support@confluent.io) sidecar/v%s (Windows 11/x86_64)".formatted(
+            "Confluent-for-VSCode/v%s (https://confluent.io; support@confluent.io) sidecar/v%s (windows/x86_64)".formatted(
                 vscodeVersion,
                 SidecarInfo.VERSION
             )
@@ -187,7 +187,7 @@ public class SidecarInfoTest {
             OperatingSystemType.Windows,
             new SidecarInfo.VsCode("20.1.2", "1.2.3"),
             "v",
-            "Confluent-for-VSCode/v%s (https://confluent.io; support@confluent.io) sidecar/v%s (Windows 11/x86_64)".formatted(
+            "Confluent-for-VSCode/v%s (https://confluent.io; support@confluent.io) sidecar/v%s (windows/x86_64)".formatted(
                 vscodeVersion,
                 SidecarInfo.VERSION
             )
@@ -199,7 +199,7 @@ public class SidecarInfoTest {
             OperatingSystemType.Windows,
             null,
             null,
-            "Confluent-for-VSCode/v%s (https://confluent.io; support@confluent.io) sidecar/v%s (Windows 11/x86_64)".formatted(
+            "Confluent-for-VSCode/v%s (https://confluent.io; support@confluent.io) sidecar/v%s (windows/x86_64)".formatted(
                 vscodeVersion,
                 SidecarInfo.VERSION
             )
@@ -212,7 +212,7 @@ public class SidecarInfoTest {
             OperatingSystemType.Other,
             new SidecarInfo.VsCode("20.1.2", "1.2.3"),
             "",
-            "Confluent-for-VSCode/v%s (https://confluent.io; support@confluent.io) sidecar/v%s (Solaris 4/x86_64)".formatted(
+            "Confluent-for-VSCode/v%s (https://confluent.io; support@confluent.io) sidecar/v%s (solaris/x86_64)".formatted(
                 vscodeVersion,
                 SidecarInfo.VERSION
             )
@@ -224,7 +224,7 @@ public class SidecarInfoTest {
             OperatingSystemType.Other,
             new SidecarInfo.VsCode("20.1.2", "1.2.3"),
             "v",
-            "Confluent-for-VSCode/v%s (https://confluent.io; support@confluent.io) sidecar/v%s (Solaris 4/x86_64)".formatted(
+            "Confluent-for-VSCode/v%s (https://confluent.io; support@confluent.io) sidecar/v%s (solaris/x86_64)".formatted(
                 vscodeVersion,
                 SidecarInfo.VERSION)
         ),
@@ -235,7 +235,7 @@ public class SidecarInfoTest {
             OperatingSystemType.Other,
             null,
             null,
-            "Confluent-for-VSCode/v%s (https://confluent.io; support@confluent.io) sidecar/v%s (Solaris 4/x86_64)".formatted(
+            "Confluent-for-VSCode/v%s (https://confluent.io; support@confluent.io) sidecar/v%s (solaris/x86_64)".formatted(
                 vscodeVersion,
                 SidecarInfo.VERSION)
         )
@@ -249,7 +249,7 @@ public class SidecarInfoTest {
               SidecarInfo sidecar = createSidecarInfo(input);
 
               // Verify the output matches
-              assert(input.userAgent).contains("support@confluent.io) sidecar/");
+              assertEquals(input.userAgent, sidecar.getUserAgent());
               assertEquals(input.os, sidecar.osType());
               assertEquals(input.osName, sidecar.osName());
               assertEquals(input.osVersion, sidecar.osVersion());
