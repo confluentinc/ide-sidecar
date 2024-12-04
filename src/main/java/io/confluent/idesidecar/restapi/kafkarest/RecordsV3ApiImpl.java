@@ -11,6 +11,7 @@ import io.confluent.idesidecar.restapi.clients.SchemaRegistryClients;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequest;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceResponse;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceResponseData;
+import io.confluent.idesidecar.restapi.util.ExceptionUtil;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 import io.smallrye.mutiny.Uni;
@@ -75,7 +76,7 @@ public class RecordsV3ApiImpl {
         .chain(this::getSchemas)
         .chain(this::serialize)
         .onFailure(RuntimeException.class)
-        .transform(this::unwrapRootCause);
+        .transform(ExceptionUtil::unwrap);
 
     if (dryRun) {
       return uptoDryRun
@@ -91,17 +92,9 @@ public class RecordsV3ApiImpl {
       return uptoDryRun
           .chain(this::sendSerializedRecord)
           .onFailure(RuntimeException.class)
-          .transform(this::unwrapRootCause)
+          .transform(ExceptionUtil::unwrap)
           .map(this::toProduceResponse);
     }
-  }
-
-  private Throwable unwrapRootCause(Throwable throwable) {
-    if (throwable.getCause() instanceof RestClientException) {
-      return throwable.getCause();
-    }
-
-    return throwable;
   }
 
   /**
