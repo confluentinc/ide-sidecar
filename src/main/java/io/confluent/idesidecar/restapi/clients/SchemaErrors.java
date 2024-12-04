@@ -51,14 +51,25 @@ public class SchemaErrors {
 
   public static final Map<ConnectionId, Cache<SchemaId, SchemaErrors.Error>> cacheOfCaches = new ConcurrentHashMap<>();
 
- // getSubCache(ConnectionId key): Retrieves or creates a sub-cache for a specific connection.
+  /**
+   * Retrieves or creates a sub-cache for a specific connection.
+   *
+   * @param key The connection identifier.
+   * @return The sub-cache for the connection.
+   */
   public Cache<SchemaId, Error> getSubCache(ConnectionId key) {
     return cacheOfCaches.computeIfAbsent(
         key,
         k -> Caffeine.newBuilder().expireAfterAccess(Duration.ofSeconds(schemaFetchErrorTtl)).build());
   }
 
-  // readSchemaIdByConnectionId(ConnectionId connectionId, SchemaId schemaId): Reads a schema error from the cache.
+  /**
+   * Reads a schema error from the cache.
+   *
+   * @param connectionId The connection identifier.
+   * @param schemaId     The schema identifier.
+   * @return The schema error, or null if not found.
+   */
   public Error readSchemaIdByConnectionId(
       ConnectionId connectionId,
       SchemaId schemaId
@@ -66,7 +77,13 @@ public class SchemaErrors {
     return getSubCache(connectionId).getIfPresent(schemaId);
   }
 
-  // writeSchemaIdByConnectionId(ConnectionId connectionId, SchemaId schemaId, Error error)`: Writes a schema error to the cache.
+  /**
+   * Writes a schema error to the cache.
+   *
+   * @param connectionId The connection identifier.
+   * @param schemaId     The schema identifier.
+   * @param error        The schema error.
+   */
   public void writeSchemaIdByConnectionId(
       ConnectionId connectionId,
       SchemaId schemaId,
@@ -75,14 +92,22 @@ public class SchemaErrors {
     getSubCache(connectionId).put(schemaId, error);
   }
 
-  // clearByConnectionId(ConnectionId connectionId)`: Clears the cache for a specific connection.
+  /**
+   * Clears the cache for a specific connection.
+   *
+   * @param connectionId The connection identifier.
+   */
   public void clearByConnectionId(
       ConnectionId connectionId
   ) {
     cacheOfCaches.remove(connectionId);
   }
 
-  // onConnectionChange(ConnectionState connection)`: Removes the cache by connections id in response to lifecycle events.
+  /**
+   * Removes the cache by connections id in response to lifecycle events.
+   *
+   * @param connection The connection state.
+   */
   public void onConnectionChange(@ObservesAsync @Lifecycle.Deleted @Lifecycle.Created @Lifecycle.Updated ConnectionState connection) {
     cacheOfCaches.remove(new ConnectionId(connection.getId()));
   }
