@@ -61,7 +61,7 @@ public class RecordDeserializer {
       .asMap("ide-sidecar.serde-configs");
   private final int schemaFetchMaxRetries;
 
-  SchemaErrors schemaErrors;
+  private final SchemaErrors schemaErrors;
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
   private static final ObjectMapper AVRO_OBJECT_MAPPER = new AvroMapper(new AvroFactory());
   public static final byte MAGIC_BYTE = 0x0;
@@ -225,15 +225,14 @@ public class RecordDeserializer {
       return result.get();
     }
     SchemaErrors.SchemaId schemaId = new SchemaErrors.SchemaId(context.getClusterId(), getSchemaIdFromRawBytes(bytes));
+    SchemaErrors.ConnectionId connectionId = new SchemaErrors.ConnectionId(context.getConnectionId());
     // Check if schema retrieval has failed recently
     if (schemaErrors.readSchemaIdByConnectionId(new SchemaErrors.ConnectionId(context.getConnectionId()), schemaId) != null) {
       return new DecodedResult(
           // If the schema fetch failed, we can't decode the data, so we just return the raw bytes.
           // We apply the encoderOnFailure function to the bytes before returning them.
           onFailure(encoderOnFailure, bytes),
-          String.valueOf(
-              schemaErrors.readSchemaIdByConnectionId(new SchemaErrors.ConnectionId(context.getConnectionId()), schemaId))
-      );
+          schemaErrors.readSchemaIdByConnectionId(connectionId, schemaId).message());
     }
 
     try {
