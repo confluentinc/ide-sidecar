@@ -13,8 +13,10 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.matching.UrlPattern;
 import io.confluent.idesidecar.restapi.application.SidecarInfo;
+import io.confluent.idesidecar.restapi.testutil.FakeSideCarProfile;
 import io.quarkiverse.wiremock.devservice.ConnectWireMock;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.TestProfile;
 import io.quarkus.test.junit.mockito.InjectSpy;
 import io.vertx.core.Vertx;
 import io.vertx.ext.web.client.WebClient;
@@ -27,7 +29,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 @QuarkusTest
-@ConnectWireMock
+@TestProfile(FakeSideCarProfile.class)
 public class WebClientFactoryTest {
   @Inject WebClientFactory webClientFactory;
   @Inject SidecarInfo sidecarInfo;
@@ -42,16 +44,10 @@ public class WebClientFactoryTest {
     WireMock.configureFor("localhost", wireMockServer.port());
   }
 
-  @AfterEach
-  void resetWireMock() {
-    wireMockServer.stop();
-    wireMock.removeMappings();
-  }
-
   @Test
   void getDefaultWebClientOptionsIncludesUserAgent() {
     var userAgent = webClientFactory.getDefaultWebClientOptions().getUserAgent();
-    assertTrue(userAgent.contains("support@confluent.io) sidecar/"));
+    assertEquals( "Confluent-for-VSCode/v0.21.3 (https://confluent.io; support@confluent.io) sidecar/v0.105.0 (linux-override/amd64-override)", userAgent);
   }
 
 
@@ -68,23 +64,14 @@ public class WebClientFactoryTest {
                 )
     );
 
-    String userAgent = sidecarInfo.getUserAgent();
+    String userAgent = webClientFactory.getDefaultWebClientOptions().getUserAgent();
 
     // Create a WebClient instance with the correct port
-    WebClient webClient = WebClient.create(
-        Vertx.vertx(),
-        new WebClientOptions()
-            .setDefaultHost("localhost")
-            .setUserAgent(
-                "Confluent-for-VSCode/v%s (https://confluent.io; support@confluent.io) sidecar/v%s (%s/%s)".formatted(
-                    sidecarInfo.vsCode(),
-                    sidecarInfo.version(),
-                    sidecarInfo.osType(),
-                    sidecarInfo.osArch()
-                )
-            )
-            .setDefaultPort(wireMockServer.port())
-    );
+    WebClient webClient = webClientFactory.getWebClient();
+    webClient
+        .getAbs(wireMockServer.baseUrl() + "/some-endpoint")
+        .send();
+
     // Verify that the request contains the User-Agent header
     wireMockServer.verify(
         WireMock.getRequestedFor(urlPattern)

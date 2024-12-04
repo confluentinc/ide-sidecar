@@ -10,8 +10,11 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import io.confluent.idesidecar.restapi.testutil.FakeSideCarProfile;
 import io.confluent.idesidecar.restapi.util.OperatingSystemType;
 import io.quarkus.logging.Log;
+import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.TestProfile;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
@@ -20,6 +23,7 @@ import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 
+@TestProfile(FakeSideCarProfile.class)
 public class SidecarInfoTest {
 
   record TestInputs(
