@@ -67,6 +67,7 @@ public class SidecarInfo {
 
   static final String OS_ARCH_KEY = "os.arch";
   static final String OS_NAME_KEY = "os.name";
+  static final String OS_TYPE_KEY = "os.type";
   static final String OS_VERSION_KEY = "os.version";
   static final String VSCODE_VERSION_ENV = "VSCODE_VERSION";
   static final String VSCODE_VERSION_KEY = "vscode.version";
@@ -159,7 +160,7 @@ public class SidecarInfo {
    return "Confluent-for-VSCode/v%s (https://confluent.io; support@confluent.io) sidecar/v%s (%s/%s)".formatted(
        vsCode().map(VsCode::extensionVersion).orElse("unknown"),
         version(),
-        osName(),
+        osType(),
         osArch()
    );
   }
