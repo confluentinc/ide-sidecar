@@ -1,10 +1,8 @@
 package io.confluent.idesidecar.restapi.application;
 
-import java.util.Optional;
 import static io.confluent.idesidecar.restapi.application.SidecarInfo.OS_ARCH_KEY;
 import static io.confluent.idesidecar.restapi.application.SidecarInfo.OS_NAME_KEY;
 import static io.confluent.idesidecar.restapi.application.SidecarInfo.OS_VERSION_KEY;
-import static io.confluent.idesidecar.restapi.application.SidecarInfo.VERSION;
 import static io.confluent.idesidecar.restapi.application.SidecarInfo.VERSION_KEY;
 import static io.confluent.idesidecar.restapi.application.SidecarInfo.VSCODE_EXTENSION_VERSION_KEY;
 import static io.confluent.idesidecar.restapi.application.SidecarInfo.VSCODE_VERSION_KEY;
