@@ -619,37 +619,37 @@ public class SidecarClient implements SidecarClientApi {
       String subject, String schemaType, String schema, List<SchemaReference> references
   ) {
     return fromCluster(currentSchemaClusterId, () -> {
-      var versionRequest = new HashMap<String, Object>(Map.of(
-          "schemaType", schemaType,
-          "schema", schema
-      ));
+          var versionRequest = new HashMap<String, Object>(Map.of(
+              "schemaType", schemaType,
+              "schema", schema
+          ));
 
-      if (references != null) {
-        versionRequest.put("references", references);
-      }
+          if (references != null) {
+            versionRequest.put("references", references);
+          }
 
-      var createSchemaVersionResp = givenConnectionId()
-          .headers(
-              "Content-Type", "application/json",
-              "X-cluster-id", currentSchemaClusterId
-          )
-          .body(versionRequest)
-          .post("/subjects/%s/versions".formatted(subject))
-          .then().extract().response();
+          var createSchemaVersionResp = givenConnectionId()
+            .headers(
+                "Content-Type", "application/json",
+                "X-cluster-id", currentSchemaClusterId
+            )
+            .body(versionRequest)
+            .post("/subjects/%s/versions".formatted(subject))
+            .then().extract().response();
 
-      if (createSchemaVersionResp.statusCode() != 200) {
-        fail("Failed to create schema: %s".formatted(createSchemaVersionResp.body().asString()));
-      } else {
-        assertEquals(200, createSchemaVersionResp.statusCode());
-      }
+        if (createSchemaVersionResp.statusCode() != 200) {
+          fail("Failed to create schema: %s".formatted(createSchemaVersionResp.body().asString()));
+        } else {
+          assertEquals(200, createSchemaVersionResp.statusCode());
+        }
 
       await()
-          .pollDelay(Duration.ofMillis(20))
-          .pollInterval(Duration.ofMillis(10))
-          .atMost(Duration.ofMillis(250))
-          .until(()->getLatestSchemaVersion(subject, currentSchemaClusterId) != null);
+           .pollDelay(Duration.ofMillis(20))
+           .pollInterval(Duration.ofMillis(10))
+           .atMost(Duration.ofMillis(250))
+           .until(()->getLatestSchemaVersion(subject, currentSchemaClusterId) != null);
 
-      return getLatestSchemaVersion(subject, currentSchemaClusterId);
+        return getLatestSchemaVersion(subject, currentSchemaClusterId);
     });
   }
 
