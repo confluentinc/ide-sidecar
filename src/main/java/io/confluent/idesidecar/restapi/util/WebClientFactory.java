@@ -1,5 +1,6 @@
 package io.confluent.idesidecar.restapi.util;
 
+import io.confluent.idesidecar.restapi.application.SidecarInfo;
 import io.confluent.idesidecar.restapi.models.Preferences;
 import io.confluent.idesidecar.restapi.models.Preferences.PreferencesSpec;
 import io.quarkus.arc.Arc;
@@ -35,6 +36,9 @@ import org.eclipse.microprofile.config.ConfigProvider;
  */
 @ApplicationScoped
 public class WebClientFactory {
+
+  @Inject
+  SidecarInfo sidecarInfo;
 
   static final String LINE_SEPARATOR = System.lineSeparator();
   static final String CERT_HEADER = "-----BEGIN CERTIFICATE-----" + LINE_SEPARATOR;
@@ -115,6 +119,7 @@ public class WebClientFactory {
   WebClientOptions getDefaultWebClientOptions() {
     var clientOptions = new WebClientOptions();
     clientOptions.setConnectTimeout((int) WEBCLIENT_CONNECT_TIMEOUT_SECONDS.toMillis());
+    clientOptions.setUserAgent(sidecarInfo.getUserAgent());
     if (OperatingSystemType.current() == OperatingSystemType.Windows) {
       var pemTrustOptions = new PemTrustOptions();
       addCertsFromBuiltInTrustStore(pemTrustOptions);
