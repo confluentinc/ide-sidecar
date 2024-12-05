@@ -228,8 +228,9 @@ public class RecordDeserializer {
     SchemaErrors.ConnectionId connectionId = new SchemaErrors.ConnectionId(context.getConnectionId());
     // Check if schema retrieval has failed recently
     var error = schemaErrors.readSchemaIdByConnectionId(
-        connectionId,
-        schemaId
+        connectionId.id(),
+        schemaId.clusterId(),
+        String.valueOf(schemaId.schemaId())
     );
     if (error != null) {
       return new DecodedResult(
@@ -349,7 +350,8 @@ public class RecordDeserializer {
         schemaId.schemaId(),
         e.getMessage()
     ));
-    schemaErrors.writeSchemaIdByConnectionId(new SchemaErrors.ConnectionId(context.getConnectionId()), schemaId, errorMessage);
+    schemaErrors.writeSchemaIdByConnectionId(context.getConnectionId(), String.valueOf(schemaId.schemaId()),
+        schemaId.clusterId(), errorMessage);
   }
 
   /**

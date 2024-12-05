@@ -46,7 +46,7 @@ public class RecordDeserializerTest {
 
   private static final SchemaErrors.SchemaId VALID_SCHEMA_ID = new SchemaErrors.SchemaId("fake_cluster_id", 10008);
 
-  SchemaErrors.ConnectionId CONNECTION_1_ID = new SchemaErrors.ConnectionId("c1");
+  String CONNECTION_1_ID = "c1";
 
   /**
    * Data containing valid schema ID of 10008, and nothing else.
@@ -63,7 +63,7 @@ public class RecordDeserializerTest {
       null,
       null,
       null,
-      CONNECTION_1_ID,
+      new SchemaErrors.ConnectionId(CONNECTION_1_ID),
       "testClusterId",
       SAMPLE_TOPIC_NAME);
 

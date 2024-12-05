@@ -77,11 +77,11 @@ public class SchemaErrors {
    * @param schemaId     The schema identifier.
    * @return The schema error, or null if not found.
    */
-  public Error readSchemaIdByConnectionId(
-      ConnectionId connectionId,
-      SchemaId schemaId
-  ) {
-    return getSubCache(connectionId).getIfPresent(schemaId);
+
+  public Error readSchemaIdByConnectionId(String connectionId, String clusterId, String schemaId) {
+    var cId = new ConnectionId(connectionId);
+    var sId = new SchemaId(clusterId, Integer.parseInt(schemaId));
+    return getSubCache(cId).getIfPresent(sId);
   }
 
   /**
@@ -92,11 +92,14 @@ public class SchemaErrors {
    * @param error        The schema error.
    */
   public void writeSchemaIdByConnectionId(
-      ConnectionId connectionId,
-      SchemaId schemaId,
+      String connectionId,
+      String schemaId,
+      String clusterId,
       Error error
   ) {
-    getSubCache(connectionId).put(schemaId, error);
+    var cId = new ConnectionId(connectionId);
+    var sId = new SchemaId(clusterId, Integer.parseInt(schemaId));
+    getSubCache(cId).put(sId, error);
   }
 
   /**
@@ -105,9 +108,10 @@ public class SchemaErrors {
    * @param connectionId The connection identifier.
    */
   public void clearByConnectionId(
-      ConnectionId connectionId
+      String connectionId
   ) {
-    cacheOfCaches.remove(connectionId);
+    var cId = new ConnectionId(connectionId);
+    cacheOfCaches.remove(cId);
   }
 
   /**
@@ -116,6 +120,7 @@ public class SchemaErrors {
    * @param connection The connection state.
    */
   public void onConnectionChange(@ObservesAsync @Lifecycle.Deleted @Lifecycle.Created @Lifecycle.Updated ConnectionState connection) {
-    cacheOfCaches.remove(new ConnectionId(connection.getId()));
+    var cId = new ConnectionId(connection.getId());
+    cacheOfCaches.remove(cId);
   }
 }
