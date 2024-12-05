@@ -9,6 +9,7 @@ import io.confluent.idesidecar.restapi.processors.Processor;
 import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
 import io.vertx.core.Future;
 import jakarta.enterprise.context.ApplicationScoped;
+import java.util.function.BooleanSupplier;
 
 /**
  * Processor to check if the cluster request is authenticated. Checks for existence of data plane
@@ -34,10 +35,10 @@ public class ClusterAuthenticationProcessor extends
         // Do nothing
       }
       case DirectConnectionState directConnection -> {
-        // TODO: DIRECT check auth status and fail if not connected/authenticated
+        // TODO: Implement direct connection authentication
       }
       case PlatformConnectionState platformConnection -> {
-        // Do nothing
+        return isConnected(platformConnection::isMdsConnected, context);
       }
       default -> {
         // This should never happen
@@ -45,5 +46,24 @@ public class ClusterAuthenticationProcessor extends
     }
 
     return next().process(context);
+  }
+
+  protected Future<ClusterProxyContext> isConnected(
+      BooleanSupplier isConnected,
+      ClusterProxyContext context
+  ) {
+    if (isConnected.getAsBoolean()) {
+      return Future.succeededFuture(context);
+    } else {
+      return Future.failedFuture(
+          new ProcessorFailedException(context.fail(401, "Unauthorized"))
+      );
+    }
+  }
+
+  protected Future<ClusterProxyContext> notFound(ClusterProxyContext context) {
+    return Future.failedFuture(
+        new ProcessorFailedException(context.fail(404, "Not Found"))
+    );
   }
 }

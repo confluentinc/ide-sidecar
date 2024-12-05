@@ -49,6 +49,22 @@ public class WebClientFactory {
               Long.class));
 
   /**
+   * Creates a new instance of {@link WebClientFactory}, reusing a shared instance if one is
+   * available in the CDI container, or otherwise creating a new one without dependency injection.
+   *
+   * @return the factory instance; never {@code null}
+   */
+  public static WebClientFactory getOrCreateFactory() {
+    // If the ArC container is available, select the application-scoped instance of the
+    // `WebClientFactory` so that we can re-use it; otherwise, create a new instance without
+    // dependency injection
+    var container = Arc.container();
+    return (container != null)
+           ? container.select(WebClientFactory.class).get()
+           : new WebClientFactory();
+  }
+
+  /**
    * It's important that we use the Quarkus-managed Vertx instance here
    * and not create a new Vertx instance ourselves, as this would not pick up the
    * Quarkus configuration to disable caching {@code quarkus.vertx.cache = false}.

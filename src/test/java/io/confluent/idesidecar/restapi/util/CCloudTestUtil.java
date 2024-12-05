@@ -263,6 +263,7 @@ public class CCloudTestUtil {
             null,
             null,
             null,
+            null,
             null
         )
     );
