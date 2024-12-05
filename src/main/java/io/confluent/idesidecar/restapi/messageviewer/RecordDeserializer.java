@@ -57,11 +57,11 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 @ApplicationScoped
 public class RecordDeserializer {
 
+  public static final byte MAGIC_BYTE = 0x0;
   private static final Map<String, String> SERDE_CONFIGS = ConfigUtil
       .asMap("ide-sidecar.serde-configs");
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
   private static final ObjectMapper AVRO_OBJECT_MAPPER = new AvroMapper(new AvroFactory());
-  public static final byte MAGIC_BYTE = 0x0;
   private static final Duration CACHE_FAILED_SCHEMA_ID_FETCH_DURATION = Duration.ofSeconds(30);
 
   private final int schemaFetchMaxRetries;
@@ -227,12 +227,15 @@ public class RecordDeserializer {
     SchemaErrors.SchemaId schemaId = new SchemaErrors.SchemaId(context.getClusterId(), getSchemaIdFromRawBytes(bytes));
     SchemaErrors.ConnectionId connectionId = new SchemaErrors.ConnectionId(context.getConnectionId());
     // Check if schema retrieval has failed recently
-    if (schemaErrors.readSchemaIdByConnectionId(new SchemaErrors.ConnectionId(context.getConnectionId()), schemaId) != null) {
+    var error = schemaErrors.readSchemaIdByConnectionId(
+        connectionId,
+        schemaId
+    );
+    if (error != null) {
       return new DecodedResult(
-          // If the schema fetch failed, we can't decode the data, so we just return the raw bytes.
-          // We apply the encoderOnFailure function to the bytes before returning them.
           onFailure(encoderOnFailure, bytes),
-          schemaErrors.readSchemaIdByConnectionId(connectionId, schemaId).message());
+          error.message()
+      );
     }
 
     try {

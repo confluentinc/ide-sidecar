@@ -22,32 +22,34 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
  * <ul>
  *   <li>`ide-sidecar.schema-fetch-error-ttl`: The time-to-live duration for schema fetch errors in the cache.</li>
  * </ul>
- *
- * <p>Records:
- * <ul>
- *   <li>`ConnectionId`: Represents a unique connection identifier.</li>
- *   <li>`SchemaId`: Represents a unique schema identifier within a cluster.</li>
- *   <li>`Error`: Represents an error message associated with a schema.</li>
- * </ul>
  */
 
 @ApplicationScoped
 public class SchemaErrors {
 
+  /**
+   * Represents a unique connection identifier.
+   */
   public record ConnectionId(String id) {
 
   }
 
+  /**
+   * Represents a unique schema identifier within a cluster.
+   */
   public record SchemaId(String clusterId, int schemaId) {
 
   }
 
+  /**
+   * Represents an error message associated with a schema.
+   */
   public record Error(String message) {
 
   }
 
   @ConfigProperty(name = "ide-sidecar.schema-fetch-error-ttl")
-  long schemaFetchErrorTtl;
+  static final Duration schemaFetchErrorTtl;
 
   public static final Map<ConnectionId, Cache<SchemaId, SchemaErrors.Error>> cacheOfCaches = new ConcurrentHashMap<>();
 
