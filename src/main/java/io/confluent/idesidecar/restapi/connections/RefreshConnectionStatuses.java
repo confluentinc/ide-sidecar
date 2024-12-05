@@ -40,6 +40,13 @@ public class RefreshConnectionStatuses {
     refreshConnectionStatuses(DirectConnectionState.class::isInstance);
   }
 
+  @Scheduled(
+      every = "${ide-sidecar.connections.platform.refresh-status-interval-seconds}s"
+  )
+  void refreshPlatformConnectionStatuses() {
+    refreshConnectionStatuses(PlatformConnectionState.class::isInstance);
+  }
+
   /**
    * Refreshes the statuses of all connections that match a given predicate.
    *
