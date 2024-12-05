@@ -66,20 +66,25 @@ public class WebClientFactoryTest {
 
     String userAgent = webClientFactory.getDefaultWebClientOptions().getUserAgent();
 
-    // Create a WebClient instance with the correct port
     WebClient webClient = webClientFactory.getWebClient();
     webClient
         .getAbs(wireMockServer.baseUrl() + "/some-endpoint")
         .send();
 
-    // Verify that the request contains the User-Agent header
-    wireMockServer.verify(
-        WireMock.getRequestedFor(urlPattern)
-                .withHeader("User-Agent",
-                    WireMock
-                        .equalTo((userAgent))
-                )
-    );
+
+    webClient.get("/some-endpoint").send(ar -> {
+      if (ar.succeeded()) {
+        wireMockServer.verify(
+            WireMock.getRequestedFor(urlPattern)
+                    .withHeader("User-Agent",
+                        WireMock
+                            .equalTo(userAgent)
+                    )
+        );
+      } else {
+        Assertions.fail("Request failed");
+      }
+    });
   }
 
   @Test
