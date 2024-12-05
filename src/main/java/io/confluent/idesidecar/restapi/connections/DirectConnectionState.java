@@ -1,5 +1,7 @@
 package io.confluent.idesidecar.restapi.connections;
 
+import static io.confluent.idesidecar.restapi.util.ExceptionUtil.unwrap;
+
 import io.confluent.idesidecar.restapi.auth.AuthErrors;
 import io.confluent.idesidecar.restapi.clients.ClientConfigurator;
 import io.confluent.idesidecar.restapi.credentials.Credentials;
@@ -349,12 +351,5 @@ public class DirectConnectionState extends ConnectionState {
         10,
         srClientConfig
     );
-  }
-
-  public static Throwable unwrap(Throwable t) {
-    if (t.getCause() != null) {
-      return unwrap(t.getCause());
-    }
-    return t;
   }
 }

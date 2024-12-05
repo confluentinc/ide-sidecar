@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Message;
+import com.google.protobuf.util.JsonFormat;
 import io.confluent.idesidecar.restapi.clients.ClientConfigurator;
 import io.confluent.kafka.schemaregistry.ParsedSchema;
 import io.confluent.kafka.schemaregistry.avro.AvroSchema;
@@ -12,7 +13,6 @@ import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.json.JsonSchema;
 import io.confluent.kafka.schemaregistry.json.JsonSchemaUtils;
 import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchema;
-import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchemaUtils;
 import io.confluent.kafka.serializers.KafkaAvroSerializer;
 import io.confluent.kafka.serializers.KafkaJsonSerializer;
 import io.confluent.kafka.serializers.json.KafkaJsonSchemaSerializer;
@@ -21,6 +21,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.util.Map;
 import java.util.Optional;
 
@@ -105,7 +106,20 @@ public class RecordSerializer {
     try (var protobufSerializer = new KafkaProtobufSerializer<>(client)) {
       protobufSerializer.configure(configs, isKey);
       var schema = (ProtobufSchema) parsedSchema;
-      var record = (Message) wrappedToObject(() -> ProtobufSchemaUtils.toObject(data, schema));
+      var typeRegistry = JsonFormat.TypeRegistry
+          .newBuilder()
+          .add(schema.toDescriptor())
+          .build();
+      var record = (Message) wrappedToObject(() -> {
+        var out = new StringWriter();
+        objectMapper.writeValue(out, data);
+        var message = schema.newMessageBuilder();
+        JsonFormat
+            .parser()
+            .usingTypeRegistry(typeRegistry)
+            .merge(out.toString(), message);
+        return message.build();
+      });
       return ByteString.copyFrom(protobufSerializer.serialize(topicName, record));
     }
   }

@@ -1,5 +1,7 @@
 package io.confluent.idesidecar.restapi.messageviewer;
 
+import static io.confluent.idesidecar.restapi.util.ExceptionUtil.unwrap;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -162,8 +164,17 @@ public class RecordDeserializer {
     try (var protobufDeserializer = new KafkaProtobufDeserializer<>(sr)) {
       protobufDeserializer.configure(SERDE_CONFIGS, isKey);
       var protobufMessage = (DynamicMessage) protobufDeserializer.deserialize(topicName, bytes);
+
+      // Add the message and its nested types to the type registry
+      // used by the JsonFormat printer.
+      var typeRegistry = JsonFormat.TypeRegistry
+          .newBuilder()
+          .add(protobufMessage.getDescriptorForType())
+          .add(protobufMessage.getDescriptorForType().getNestedTypes())
+          .build();
       var printer = JsonFormat
           .printer()
+          .usingTypeRegistry(typeRegistry)
           .includingDefaultValueFields()
           .preservingProtoFieldNames();
       var jsonString = printer.print(protobufMessage);
@@ -262,7 +273,7 @@ public class RecordDeserializer {
           .value(deserializedData)
           .build();
     } catch (Exception e) {
-      var exc = e.getCause();
+      var exc = unwrap(e);
       if (exc instanceof RestClientException || isNetworkRelatedException(exc)) {
         // IMPORTANT: We must cache RestClientException, and more importantly,
         //            network-related IOExceptions, to prevent the sidecar from
@@ -276,6 +287,8 @@ public class RecordDeserializer {
       ) {
         // We don't cache SerializationException because it's not a schema fetch error
         // but rather a deserialization error, scoped to the specific message.
+        Log.errorf(e, "Failed to deserialize record. " +
+            "Returning raw encoded base64 data instead.");
         return new DecodedResult(onFailure(encoderOnFailure, bytes), e.getMessage());
       }
       // If we reach this point, we have an unexpected exception, so we rethrow it.
@@ -284,7 +297,7 @@ public class RecordDeserializer {
   }
 
   private boolean isRetryableException(Throwable throwable) {
-    var exc = throwable.getCause();
+    var exc = unwrap(throwable);
     return (
         isNetworkRelatedException(exc) ||
             (exc instanceof RestClientException
