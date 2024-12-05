@@ -56,7 +56,7 @@ public class OAuthCallbackResourceTest {
     String authorizationCode = "bar";
     ccloudTestUtil.registerWireMockRoutesForCCloudOAuth(authorizationCode);
 
-    verifyStateOfConfluentCloudConnectionEqualsInitialState(connectionState.getId());
+    verifyStatusOfConfluentCloudConnectionEqualsInitialStatus(connectionState.getId());
 
     given()
         .queryParam("code", authorizationCode)
@@ -94,7 +94,7 @@ public class OAuthCallbackResourceTest {
             ).atPriority(50)
     );
 
-    verifyStateOfConfluentCloudConnectionEqualsInitialState(connectionState.getId());
+    verifyStatusOfConfluentCloudConnectionEqualsInitialStatus(connectionState.getId());
 
     given()
         .queryParam("state", connectionState.getInternalId())
@@ -135,7 +135,7 @@ public class OAuthCallbackResourceTest {
         new ConnectionSpec("id-1", "conn-1", ConnectionType.CCLOUD)
     );
 
-    verifyStateOfConfluentCloudConnectionEqualsInitialState(connectionState.getId());
+    verifyStatusOfConfluentCloudConnectionEqualsInitialStatus(connectionState.getId());
 
     given()
         .queryParam("state", "INVALID_STATE")
@@ -147,10 +147,10 @@ public class OAuthCallbackResourceTest {
         .body(containsString("Invalid or expired state INVALID_STATE"));
 
     // CCloud connection should remain in initial state and have no errors
-    verifyStateOfConfluentCloudConnectionEqualsInitialState(connectionState.getId());
+    verifyStatusOfConfluentCloudConnectionEqualsInitialStatus(connectionState.getId());
   }
 
-  void verifyStateOfConfluentCloudConnectionEqualsInitialState(String connectionId) {
+  void verifyStatusOfConfluentCloudConnectionEqualsInitialStatus(String connectionId) {
     verifyStateAndErrorsOfConfluentCloudConnection(
         connectionId,
         ConnectedState.NONE,
