@@ -12,6 +12,7 @@ import io.smallrye.common.constraint.NotNull;
 import jakarta.inject.Singleton;
 import java.util.Optional;
 import java.util.regex.Pattern;
+import org.apache.kafka.common.protocol.types.Field;
 import org.eclipse.microprofile.config.ConfigProvider;
 
 /**
@@ -40,6 +41,7 @@ import org.eclipse.microprofile.config.ConfigProvider;
 @Singleton
 public class SidecarInfo {
 
+
   /* UNSET and VERSION patterned after how determined in ...application.Main */
   static final String UNSET_VERSION = "unset";
 
@@ -67,7 +69,6 @@ public class SidecarInfo {
 
   static final String OS_ARCH_KEY = "os.arch";
   static final String OS_NAME_KEY = "os.name";
-  static final String OS_TYPE_KEY = "os.type";
   static final String OS_VERSION_KEY = "os.version";
   static final String VSCODE_VERSION_ENV = "VSCODE_VERSION";
   static final String VSCODE_VERSION_KEY = "vscode.version";
@@ -76,6 +77,8 @@ public class SidecarInfo {
 
   private final OperatingSystemType osType;
   private final String osName;
+
+  private final String version;
   private final String osVersion;
   private final Optional<VsCode> vscode;
 
@@ -89,6 +92,7 @@ public class SidecarInfo {
     );
   }
 
+
   SidecarInfo(@NotNull Properties system, @NotNull Properties env) {
 
     // Get the OS information
@@ -97,6 +101,8 @@ public class SidecarInfo {
 
     // Determine the best-matching OS type
     osType = OperatingSystemType.from(system);
+
+    version =  version();
 
     // Set the VS Code information if available
     var vscodeVersion = semanticVersionWithin(system, VSCODE_VERSION_KEY, null);
@@ -132,6 +138,7 @@ public class SidecarInfo {
     return osVersion;
   }
 
+
   public Optional<VsCode> vsCode() {
     return vscode;
   }
@@ -158,7 +165,7 @@ public class SidecarInfo {
 
   public String getUserAgent() {
    return "Confluent-for-VSCode/v%s (https://confluent.io; support@confluent.io) sidecar/v%s (%s/%s)".formatted(
-       vsCode().map(VsCode::extensionVersion).orElse("unknown"),
+        vsCode().map(VsCode::extensionVersion).orElse("unknown"),
         version(),
         osType(),
         osArch()
