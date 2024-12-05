@@ -47,7 +47,7 @@ public class WebClientFactoryTest {
   @Test
   void getDefaultWebClientOptionsIncludesUserAgent() {
     var userAgent = webClientFactory.getDefaultWebClientOptions().getUserAgent();
-    assertEquals( "Confluent-for-VSCode/v0.21.3 (https://confluent.io; support@confluent.io) sidecar/v0.105.0 (linux-override/amd64-override)", userAgent);
+    assertEquals( "Confluent-for-VSCode/v0.21.3 (https://confluent.io; support@confluent.io) sidecar/v0.105.0 (Linux/amd64-override)", userAgent);
   }
 
 
