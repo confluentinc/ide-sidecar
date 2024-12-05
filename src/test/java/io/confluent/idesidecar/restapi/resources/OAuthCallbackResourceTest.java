@@ -56,7 +56,7 @@ public class OAuthCallbackResourceTest {
     String authorizationCode = "bar";
     ccloudTestUtil.registerWireMockRoutesForCCloudOAuth(authorizationCode);
 
-    confluentCloudConnectionShouldBeInInitialState(connectionState.getId());
+    verifyStateOfConfluentCloudConnectionEqualsInitialState(connectionState.getId());
 
     given()
         .queryParam("code", authorizationCode)
@@ -68,7 +68,7 @@ public class OAuthCallbackResourceTest {
         .body(containsString("Authentication Complete"));
 
     // CCloud connection should hold valid control plane token and have no errors
-    confluentCloudConnectionShouldBeInStateAndMaybeHoldErrors(
+    verifyStateAndErrorsOfConfluentCloudConnection(
         connectionState.getId(),
         ConnectedState.SUCCESS,
         false
@@ -94,7 +94,7 @@ public class OAuthCallbackResourceTest {
             ).atPriority(50)
     );
 
-    confluentCloudConnectionShouldBeInInitialState(connectionState.getId());
+    verifyStateOfConfluentCloudConnectionEqualsInitialState(connectionState.getId());
 
     given()
         .queryParam("state", connectionState.getInternalId())
@@ -105,7 +105,7 @@ public class OAuthCallbackResourceTest {
         .body(containsString("Authentication Failed"));
 
     // CCloud connection should remain in initial state but have errors
-    confluentCloudConnectionShouldBeInStateAndMaybeHoldErrors(
+    verifyStateAndErrorsOfConfluentCloudConnection(
         connectionState.getId(),
         ConnectedState.NONE,
         true
@@ -135,7 +135,7 @@ public class OAuthCallbackResourceTest {
         new ConnectionSpec("id-1", "conn-1", ConnectionType.CCLOUD)
     );
 
-    confluentCloudConnectionShouldBeInInitialState(connectionState.getId());
+    verifyStateOfConfluentCloudConnectionEqualsInitialState(connectionState.getId());
 
     given()
         .queryParam("state", "INVALID_STATE")
@@ -147,11 +147,11 @@ public class OAuthCallbackResourceTest {
         .body(containsString("Invalid or expired state INVALID_STATE"));
 
     // CCloud connection should remain in initial state and have no errors
-    confluentCloudConnectionShouldBeInInitialState(connectionState.getId());
+    verifyStateOfConfluentCloudConnectionEqualsInitialState(connectionState.getId());
   }
 
-  void confluentCloudConnectionShouldBeInInitialState(String connectionId) {
-    confluentCloudConnectionShouldBeInStateAndMaybeHoldErrors(
+  void verifyStateOfConfluentCloudConnectionEqualsInitialState(String connectionId) {
+    verifyStateAndErrorsOfConfluentCloudConnection(
         connectionId,
         ConnectedState.NONE,
         false
@@ -166,7 +166,7 @@ public class OAuthCallbackResourceTest {
    * @param expectedState the expected state of the CCloud connection
    * @param expectErrors  whether we expect the CCloud connection to hold errors
    */
-  void confluentCloudConnectionShouldBeInStateAndMaybeHoldErrors(
+  void verifyStateAndErrorsOfConfluentCloudConnection(
       String connectionId,
       ConnectedState expectedState,
       boolean expectErrors
