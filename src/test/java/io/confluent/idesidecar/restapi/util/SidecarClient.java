@@ -26,6 +26,7 @@ import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.LocalConfig;
 import io.confluent.idesidecar.restapi.models.ConnectionsList;
 import io.confluent.kafka.schemaregistry.client.rest.entities.Schema;
+import io.confluent.kafka.schemaregistry.client.rest.entities.SchemaReference;
 import io.quarkus.logging.Log;
 import io.restassured.RestAssured;
 import io.restassured.config.DecoderConfig;
@@ -33,6 +34,7 @@ import io.restassured.http.ContentType;
 import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -160,14 +162,51 @@ public class SidecarClient implements SidecarClientApi {
     }
   }
 
+  /**
+   * Deletes all referenced subjects recursively before deleting the subject itself.
+   */
   public void deleteSubject(String subject, String srClusterId) {
+    // Get referenced by schema ids
+    var resp = givenConnectionId()
+        .header("X-cluster-id", srClusterId)
+        .get("/subjects/%s/versions/latest/referencedby".formatted(subject))
+        .then()
+        .extract().response();
+
+    // If 404, ignore
+    if (resp.statusCode() == 404) {
+      return;
+    }
+    assertEquals(200, resp.statusCode(), resp.body().asString());
+    List<Integer> schemaIds = resp.jsonPath().getList(".", Integer.class);
+
+    // Delete all versions
+    // Use GET /schemas/ids/{int: id}/versions
+    // Returns subject (string) – Name of the subject
+    //         version (int) – Version of the returned schema
+    for (var schemaId : schemaIds) {
+      var respSchema = givenConnectionId()
+          .header("X-cluster-id", srClusterId)
+          .get("/schemas/ids/%d/versions".formatted(schemaId))
+          .then()
+          .extract().response();
+      assertEquals(200, resp.statusCode(), resp.body().asString());
+      var versions = respSchema.jsonPath().getList(".", SchemaReference.class);
+
+      for (var version : versions) {
+        // Recursively delete the subject
+        deleteSubject(version.getSubject(), srClusterId);
+      }
+    }
 
     // Soft delete
-    givenConnectionId()
+    var deleteResp = givenConnectionId()
         .header("X-cluster-id", srClusterId)
         .delete("/subjects/%s".formatted(subject))
         .then()
-        .statusCode(200);
+        .extract().response();
+
+    assertEquals(200, deleteResp.statusCode(), resp.body().asString());
   }
 
   public void deleteAllContent() {
@@ -455,8 +494,11 @@ public class SidecarClient implements SidecarClientApi {
       Object value,
       Integer valueSchemaVersion
   ) {
-    produceRecordThen(partitionId, topicName, key, keySchemaVersion, value, valueSchemaVersion)
-        .statusCode(200);
+    var resp = produceRecordThen(
+        partitionId, topicName, key, keySchemaVersion, value, valueSchemaVersion
+    ).extract().response();
+    // Log the response body in case of an error to ease debugging
+    assertEquals(200, resp.statusCode(), resp.body().asString());
   }
 
   public void produceRecord(
@@ -573,17 +615,25 @@ public class SidecarClient implements SidecarClientApi {
     }
   }
 
-  public Schema createSchema(String subject, String schemaType, String schema) {
+  public Schema createSchema(
+      String subject, String schemaType, String schema, List<SchemaReference> references
+  ) {
     return fromCluster(currentSchemaClusterId, () -> {
-        var createSchemaVersionResp = givenConnectionId()
+          var versionRequest = new HashMap<String, Object>(Map.of(
+              "schemaType", schemaType,
+              "schema", schema
+          ));
+
+          if (references != null) {
+            versionRequest.put("references", references);
+          }
+
+          var createSchemaVersionResp = givenConnectionId()
             .headers(
                 "Content-Type", "application/json",
                 "X-cluster-id", currentSchemaClusterId
             )
-            .body(Map.of(
-                "schemaType", schemaType,
-                "schema", schema
-            ))
+            .body(versionRequest)
             .post("/subjects/%s/versions".formatted(subject))
             .then().extract().response();
 
@@ -601,6 +651,10 @@ public class SidecarClient implements SidecarClientApi {
 
         return getLatestSchemaVersion(subject, currentSchemaClusterId);
     });
+  }
+
+  public Schema createSchema(String subject, String schemaType, String schema) {
+      return createSchema(subject, schemaType, schema, null);
   }
 
   public Schema getLatestSchemaVersion(String subject, String srClusterId) {
