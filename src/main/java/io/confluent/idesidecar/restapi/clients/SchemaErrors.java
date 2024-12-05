@@ -9,6 +9,7 @@ import jakarta.enterprise.event.ObservesAsync;
 import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import org.eclipse.microprofile.config.ConfigProvider;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
@@ -48,10 +49,14 @@ public class SchemaErrors {
 
   }
 
-  @ConfigProperty(name = "ide-sidecar.schema-fetch-error-ttl")
-  static final Duration schemaFetchErrorTtl;
+  public static final Duration schemaFetchErrorTtl = Duration.ofSeconds(
+      ConfigProvider
+          .getConfig()
+          .getValue(
+              "ide-sidecar.schema-fetch-error-ttl",
+              Long.class));
 
-  public static final Map<ConnectionId, Cache<SchemaId, SchemaErrors.Error>> cacheOfCaches = new ConcurrentHashMap<>();
+  public static final Map<ConnectionId, Cache<SchemaId, Error>> cacheOfCaches = new ConcurrentHashMap<>();
 
   /**
    * Retrieves or creates a sub-cache for a specific connection.
@@ -62,7 +67,7 @@ public class SchemaErrors {
   public Cache<SchemaId, Error> getSubCache(ConnectionId key) {
     return cacheOfCaches.computeIfAbsent(
         key,
-        k -> Caffeine.newBuilder().expireAfterAccess(Duration.ofSeconds(schemaFetchErrorTtl)).build());
+        k -> Caffeine.newBuilder().expireAfterAccess(schemaFetchErrorTtl).build());
   }
 
   /**
