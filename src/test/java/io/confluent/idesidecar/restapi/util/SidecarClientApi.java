@@ -26,6 +26,7 @@ import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.LocalConfig;
 import io.confluent.idesidecar.restapi.models.ConnectionsList;
 import io.confluent.kafka.schemaregistry.client.rest.entities.Schema;
+import io.confluent.kafka.schemaregistry.client.rest.entities.SchemaReference;
 import io.quarkus.logging.Log;
 import io.restassured.RestAssured;
 import io.restassured.config.DecoderConfig;
@@ -195,6 +196,10 @@ public interface SidecarClientApi {
    * Produce plain old String key/value records to a topic
    */
   void produceStringRecords(String topicName, String[][] records);
+
+  Schema createSchema(
+      String subject, String schemaType, String schema, List<SchemaReference> references
+  );
 
   Schema createSchema(String subject, String schemaType, String schema);
 
