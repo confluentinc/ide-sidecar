@@ -71,7 +71,7 @@ public abstract class AbstractIT extends SidecarClient implements ITSuite {
       null,
       null,
       null,
-VALID_CONNECTION_ID,
+      VALID_CONNECTION_ID,
       null,
       null);
 

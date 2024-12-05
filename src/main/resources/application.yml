@@ -2,6 +2,7 @@
 ---
 "%test":
   ide-sidecar:
+    schema-fetch-error-ttl: 30
     connections:
       ccloud:
         id-token:
@@ -67,6 +68,7 @@ vscode:
     version: unknown
   version: unknown
 ide-sidecar:
+  schema-fetch-error-ttl: 30
   api:
     group: gateway
     groupWithVersion: ${ide-sidecar.api.group}/${ide-sidecar.api.version}
