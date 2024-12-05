@@ -1,0 +1,12 @@
+{
+  "id": "c-1",
+  "name": "Connection 1",
+  "type": "PLATFORM",
+  "mds": {
+    "uri": "http://localhost:8081",
+    "credentials": {
+      "username": "my-user",
+      "password": "my-secret"
+    }
+  }
+}

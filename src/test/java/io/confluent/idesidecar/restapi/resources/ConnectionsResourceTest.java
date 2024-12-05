@@ -535,6 +535,7 @@ public class ConnectionsResourceTest {
         new CCloudConfig("org-id"),
         null,
         null,
+        null,
         null
     );
     var response = given()
@@ -1377,6 +1378,71 @@ public class ConnectionsResourceTest {
             createError()
                 .withSource("schema_registry.uri")
                 .withDetail("Schema Registry URI is required and may not be blank")
+        ),
+
+        // Platform/MDS connections
+        new TestInput(
+            "Platform spec is valid with MDS config and no credentials",
+            """
+            {
+              "name": "Some connection name",
+              "type": "PLATFORM",
+              "mds": {
+                "uri": "http://localhost:8090",
+                "credentials": {
+                  "username": "user",
+                  "password": "pass"
+                }
+              }
+            }
+            """
+        ),
+        new TestInput(
+            "Platform spec is valid with MDS config and basic credentials",
+            """
+            {
+              "name": "Some connection name",
+              "type": "PLATFORM",
+              "mds": {
+                "uri": "http://localhost:8090",
+                "credentials": {
+                  "username": "user",
+                  "password": "pass"
+                }
+              }
+            }
+            """
+        ),
+        new TestInput(
+            "Platform spec is not valid with MDS config",
+            """
+            {
+              "name": "Some connection name",
+              "type": "PLATFORM",
+              "mds": null
+            }
+            """,
+            createError()
+                .withSource("mds")
+                .withDetail("Confluent Platform MDS configuration is required")
+        ),
+        new TestInput(
+            "Platform spec is not valid with MDS config and no uri",
+            """
+            {
+              "name": "Some connection name",
+              "type": "PLATFORM",
+              "mds": {
+                "credentials": {
+                  "username": "user",
+                  "password": "pass"
+                }
+              }
+            }
+            """,
+            createError()
+                .withSource("mds.uri")
+                .withDetail("Confluent Platform MDS URI is required and may not be blank")
         )
     );
     return inputs
