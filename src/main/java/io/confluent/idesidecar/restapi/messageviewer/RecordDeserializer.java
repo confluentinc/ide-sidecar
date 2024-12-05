@@ -164,8 +164,17 @@ public class RecordDeserializer {
     try (var protobufDeserializer = new KafkaProtobufDeserializer<>(sr)) {
       protobufDeserializer.configure(SERDE_CONFIGS, isKey);
       var protobufMessage = (DynamicMessage) protobufDeserializer.deserialize(topicName, bytes);
+
+      // Add the message and its nested types to the type registry
+      // used by the JsonFormat printer.
+      var typeRegistry = JsonFormat.TypeRegistry
+          .newBuilder()
+          .add(protobufMessage.getDescriptorForType())
+          .add(protobufMessage.getDescriptorForType().getNestedTypes())
+          .build();
       var printer = JsonFormat
           .printer()
+          .usingTypeRegistry(typeRegistry)
           .includingDefaultValueFields()
           .preservingProtoFieldNames();
       var jsonString = printer.print(protobufMessage);
