@@ -66,7 +66,7 @@ public class OAuthCallbackResourceTest {
         .body(containsString("Authentication Complete"));
 
     // CCloud connection should hold valid control plane token and have no errors
-    confluentCloudConnectionShouldHaveStateAndErrors(
+    confluentCloudConnectionShouldBeInStateAndMaybeHoldErrors(
         connectionState.getId(),
         ConnectedState.SUCCESS,
         false
@@ -101,7 +101,7 @@ public class OAuthCallbackResourceTest {
         .body(containsString("Authentication Failed"));
 
     // CCloud connection should remain in initial state and have errors
-    confluentCloudConnectionShouldHaveStateAndErrors(
+    confluentCloudConnectionShouldBeInStateAndMaybeHoldErrors(
         connectionState.getId(),
         ConnectedState.NONE,
         true
@@ -141,7 +141,7 @@ public class OAuthCallbackResourceTest {
         .body(containsString("Invalid or expired state INVALID_STATE"));
 
     // CCloud connection should remain in initial state and have no errors
-    confluentCloudConnectionShouldHaveStateAndErrors(
+    confluentCloudConnectionShouldBeInStateAndMaybeHoldErrors(
         connectionState.getId(),
         ConnectedState.NONE,
         false
@@ -156,7 +156,7 @@ public class OAuthCallbackResourceTest {
    * @param expectedState the expected state of the CCloud connection
    * @param expectErrors  whether we expect the CCloud connection to hold errors
    */
-  void confluentCloudConnectionShouldHaveStateAndErrors(
+  void confluentCloudConnectionShouldBeInStateAndMaybeHoldErrors(
       String connectionId,
       ConnectedState expectedState,
       boolean expectErrors
