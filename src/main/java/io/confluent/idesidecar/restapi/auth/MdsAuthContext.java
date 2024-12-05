@@ -57,8 +57,16 @@ public class MdsAuthContext implements AuthContext {
     return headers;
   }
 
+  public Future<AuthContext> maybeRefresh() {
+    // Do not refresh if the token is still valid
+    if (isTokenValid(token.get())) {
+      return Future.succeededFuture(this);
+    }
+    return refresh(null);
+  }
+
   @Override
-  public Future<AuthContext> refresh(String organizationId) {
+  public Future<AuthContext> refresh(String unusedOrganizationId) {
     // Get headers for MDS from the credentials
     var headers = getAuthenticationHeaders();
 

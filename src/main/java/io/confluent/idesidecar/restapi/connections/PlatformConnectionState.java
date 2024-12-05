@@ -124,7 +124,7 @@ public class PlatformConnectionState extends ConnectionState {
       return Future.succeededFuture(INITIAL_STATUS_WITHOUT_MDS);
     }
     return authContext
-        .refresh(null)
+        .maybeRefresh()
         .compose(AuthContext::checkAuthenticationStatus)
         .map(success -> success ? ConnectedState.SUCCESS : ConnectedState.FAILED)
         .map(PlatformConnectionState::mdsStatusWith);
