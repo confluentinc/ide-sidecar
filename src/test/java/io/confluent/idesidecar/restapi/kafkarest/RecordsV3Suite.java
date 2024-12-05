@@ -183,9 +183,4 @@ public interface RecordsV3Suite extends RecordsV3BaseSuite {
         topicName
     );
   }
-
-  // TODO: Use a KafkaProducer instance directly to produce records with Any fields
-  //       and verify that the records are correctly consumed using the /consume API.
-  //       Similarly, use a KafkaConsumer instance to consume records with Any fields
-  //       produced by the RecordsV3 API.
 }
