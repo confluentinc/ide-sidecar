@@ -1,5 +1,6 @@
 package io.confluent.idesidecar.restapi.application;
 
+import com.google.protobuf.Any;
 import com.google.protobuf.Message;
 import com.sun.security.auth.module.JndiLoginModule;
 import com.sun.security.auth.module.KeyStoreLoginModule;
@@ -125,7 +126,8 @@ import org.apache.kafka.common.serialization.ByteArrayDeserializer;
         RegisterSchemaResponse.class,
         RuleSet.class,
         Config.class,
-        EntityType.class
+        EntityType.class,
+        Any.class
     }
 )
 public class ReflectionConfiguration {

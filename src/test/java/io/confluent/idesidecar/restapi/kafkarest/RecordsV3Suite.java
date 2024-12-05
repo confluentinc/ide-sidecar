@@ -4,7 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequest;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequestBuilder;
+import io.confluent.kafka.schemaregistry.client.rest.entities.SchemaReference;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.junitpioneer.jupiter.cartesian.ArgumentSets;
@@ -78,5 +80,107 @@ public interface RecordsV3Suite extends RecordsV3BaseSuite {
       // in each partition
       assertTrue(records.size() >= 2);
     }
+  }
+
+  @Test
+  default void shouldDeserializeProtobufSchemaHavingAnyField() {
+    var topicName = randomTopicName();
+    createTopic(topicName);
+
+    var rawSchema = """
+        syntax = "proto3";
+        package com.example;
+
+        import "google/protobuf/any.proto";
+        message Product {
+          int32 id = 1;
+          google.protobuf.Any payload = 2;
+        }
+        message Other {
+          string foo = 1;
+        }
+        """;
+    var valueSchema = createSchema(
+        getSubjectName(topicName, SubjectNameStrategyEnum.TOPIC_NAME, false),
+        SchemaFormat.PROTOBUF.name(),
+        rawSchema
+    );
+
+    var valueData = Map.of(
+        "id", 1,
+        "payload", Map.of(
+            "@type", "type.googleapis.com/com.example.Other",
+            "foo", "hello"
+        ));
+
+    produceRecord(topicName, "foo", null, valueData, valueSchema.getVersion());
+    assertTopicHasRecord(
+        RecordsV3BaseSuite.schemalessData("foo"),
+        new RecordData(
+            SchemaFormat.PROTOBUF, SubjectNameStrategyEnum.TOPIC_NAME, rawSchema, valueData
+        ),
+        topicName
+    );
+  }
+
+  @Test
+  default void shouldDeserializeProtobufSchemasHavingAnyField_WithSchemaReferences() {
+    var topicName = randomTopicName();
+    createTopic(topicName);
+
+    var otherSchema = createSchema(
+        "com.example.Other",
+        SchemaFormat.PROTOBUF.name(),
+        """
+            syntax = "proto3";
+            package com.example;
+            message Other {
+              string foo = 1;
+            }
+            """
+    );
+
+    var rawSchema = """
+        syntax = "proto3";
+        package com.example;
+
+        import "com.example.Other";
+        import "google/protobuf/any.proto";
+        message Product {
+          int32 id = 1;
+          google.protobuf.Any payload = 2;
+        }
+        """;
+
+    var valueSchema = createSchema(
+        getSubjectName(topicName, SubjectNameStrategyEnum.TOPIC_NAME, false),
+        SchemaFormat.PROTOBUF.name(),
+        rawSchema,
+        List.of(
+            new SchemaReference(
+                // Note: The name of the schema reference MUST match the import
+                // statement in the schema
+                "com.example.Other",
+                otherSchema.getSubject(),
+                otherSchema.getVersion()
+            )
+        )
+    );
+
+    var valueData = Map.of(
+        "id", 1,
+        "payload", Map.of(
+            "@type", "type.googleapis.com/com.example.Other",
+            "foo", "hello"
+        ));
+
+    produceRecord(topicName, "foo", null, valueData, valueSchema.getVersion());
+    assertTopicHasRecord(
+        RecordsV3BaseSuite.schemalessData("foo"),
+        new RecordData(
+            SchemaFormat.PROTOBUF, SubjectNameStrategyEnum.TOPIC_NAME, rawSchema, valueData
+        ),
+        topicName
+    );
   }
 }
