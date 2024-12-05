@@ -80,7 +80,10 @@ public class SchemaErrors {
 
   public Error readSchemaIdByConnectionId(String connectionId, String clusterId, String schemaId) {
     var cId = new ConnectionId(connectionId);
-    var sId = new SchemaId(clusterId, Integer.parseInt(schemaId));
+    var sId = new SchemaId(
+        clusterId,
+        Integer.parseInt(schemaId)
+    );
     return getSubCache(cId).getIfPresent(sId);
   }
 
@@ -98,7 +101,10 @@ public class SchemaErrors {
       Error error
   ) {
     var cId = new ConnectionId(connectionId);
-    var sId = new SchemaId(clusterId, Integer.parseInt(schemaId));
+    var sId = new SchemaId(
+        clusterId,
+        Integer.parseInt(schemaId)
+    );
     getSubCache(cId).put(sId, error);
   }
 
