@@ -73,7 +73,11 @@ public class OAuthCallbackResource {
                     .data("vscode_redirect_uri", CCLOUD_OAUTH_VSCODE_EXTENSION_URI)
                     .render()
             )
-            .recover(this::renderFailure);
+            .recover(this::renderFailure)
+            // Upon completion of the auth flow, refresh the status of the CCloud connection
+            .compose(responseBody ->
+                cCloudConnectionState.refreshStatus().map(ignored -> responseBody)
+            );
         return Uni
             .createFrom()
             .completionStage(
