@@ -12,7 +12,6 @@ import io.smallrye.common.constraint.NotNull;
 import jakarta.inject.Singleton;
 import java.util.Optional;
 import java.util.regex.Pattern;
-import org.apache.kafka.common.protocol.types.Field;
 import org.eclipse.microprofile.config.ConfigProvider;
 
 /**
@@ -40,7 +39,6 @@ import org.eclipse.microprofile.config.ConfigProvider;
 @Startup
 @Singleton
 public class SidecarInfo {
-
 
   /* UNSET and VERSION patterned after how determined in ...application.Main */
   static final String UNSET_VERSION = "unset";
@@ -70,6 +68,7 @@ public class SidecarInfo {
   static final String OS_ARCH_KEY = "os.arch";
   static final String OS_NAME_KEY = "os.name";
   static final String OS_VERSION_KEY = "os.version";
+  static final String VERSION_KEY = "quarkus.application.version";
   static final String VSCODE_VERSION_ENV = "VSCODE_VERSION";
   static final String VSCODE_VERSION_KEY = "vscode.version";
   static final String VSCODE_EXTENSION_VERSION_ENV = "VSCODE_EXTENSION_VERSION";
@@ -77,7 +76,6 @@ public class SidecarInfo {
 
   private final OperatingSystemType osType;
   private final String osName;
-
   private final String version;
   private final String osVersion;
   private final Optional<VsCode> vscode;
@@ -92,17 +90,15 @@ public class SidecarInfo {
     );
   }
 
-
   SidecarInfo(@NotNull Properties system, @NotNull Properties env) {
 
     // Get the OS information
     osName = system.getProperty(OS_NAME_KEY, "unknown");
     osVersion = system.getProperty(OS_VERSION_KEY, "unknown");
+    version =  system.getProperty(VERSION_KEY, "unknown");
 
     // Determine the best-matching OS type
     osType = OperatingSystemType.from(system);
-
-    version =  version();
 
     // Set the VS Code information if available
     var vscodeVersion = semanticVersionWithin(system, VSCODE_VERSION_KEY, null);
@@ -137,7 +133,6 @@ public class SidecarInfo {
   public String osVersion() {
     return osVersion;
   }
-
 
   public Optional<VsCode> vsCode() {
     return vscode;
