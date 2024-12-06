@@ -15,7 +15,7 @@ public class FakeSideCarProfile implements QuarkusTestProfile {
         "os.name", "GNU/Linux",
         "os.arch", "amd64-override",
         "os.version", "5.15.0-60-generic",
-        "quarkus.application.", "1.2.3",
+        "quarkus.application.version", "1.2.3",
         "vscode.extension.version", "0.21.0"
     );
   }

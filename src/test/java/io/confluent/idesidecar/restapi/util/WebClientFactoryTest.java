@@ -5,6 +5,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static org.junit.Assert.assertSame;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
@@ -57,6 +58,9 @@ public class WebClientFactoryTest {
     );
 
     String userAgent = webClientFactory.getDefaultWebClientOptions().getUserAgent();
+
+    // Assert that this matches what SidecarInfo tells us the user agent is
+    assertEquals(userAgent, sidecarInfo.getUserAgent());
 
     WebClient webClient = webClientFactory.getWebClient();
     webClient

@@ -134,7 +134,9 @@ public class SidecarInfo {
     return vscode;
   }
 
-  public String osArch() { return osArch; }
+  public String osArch() {
+    return osArch;
+  }
 
   @Override
   public String toString() {
