@@ -235,7 +235,7 @@ public class RecordDeserializer {
     if (error != null) {
       return new DecodedResult(
           // If the schema fetch failed, we can't decode the data, so we just return the raw bytes.
-          // We apply the encoderOnFailure function to the bytes
+          // We apply the encoderOnFailure function to the bytes before returning them.
           onFailure(encoderOnFailure, bytes),
           error.message()
       );
