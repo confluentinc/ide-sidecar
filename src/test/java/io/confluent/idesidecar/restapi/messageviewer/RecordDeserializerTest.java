@@ -46,7 +46,7 @@ public class RecordDeserializerTest {
 
   private static final int VALID_SCHEMA_ID = 10008;
 
-  static final String CONNECTION_1_ID = "c1";
+  private static final String CONNECTION_1_ID = "c1";
 
   /**
    * Data containing valid schema ID of 10008, and nothing else.
