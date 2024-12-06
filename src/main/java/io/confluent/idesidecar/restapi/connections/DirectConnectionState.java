@@ -268,8 +268,9 @@ public class DirectConnectionState extends ConnectionState {
     if (kafkaClusterConfig == null) {
       return Optional.empty();
     }
-    var adminClient = createAdminClient(kafkaClusterConfig);
+    AdminClient adminClient = null;
     try {
+      adminClient = createAdminClient(kafkaClusterConfig);
       return Optional.ofNullable(
           operation.apply(adminClient)
       );
@@ -284,15 +285,17 @@ public class DirectConnectionState extends ConnectionState {
           errorHandler.apply(e)
       );
     } finally {
-      try {
-        adminClient.close(TIMEOUT);
-      } catch (Throwable e) {
-        Log.errorf(
-            "Error closing the client to the Kafka cluster at %s: %s",
-            kafkaClusterConfig.bootstrapServers(),
-            e.getMessage(),
-            e
-        );
+      if (adminClient != null) {
+        try {
+          adminClient.close(TIMEOUT);
+        } catch (Throwable e) {
+          Log.errorf(
+              "Error closing the client to the Kafka cluster at %s: %s",
+              kafkaClusterConfig.bootstrapServers(),
+              e.getMessage(),
+              e
+          );
+        }
       }
     }
   }
@@ -331,8 +334,9 @@ public class DirectConnectionState extends ConnectionState {
     if (srConfig == null) {
       return Optional.empty();
     }
-    var srClient = createSchemaRegistryClient(srConfig);
+    SchemaRegistryClient srClient = null;
     try {
+      srClient = createSchemaRegistryClient(srConfig);
       return Optional.ofNullable(
           operation.apply(srClient)
       );
@@ -347,15 +351,17 @@ public class DirectConnectionState extends ConnectionState {
           errorHandler.apply(e)
       );
     } finally {
-      try {
-        srClient.close();
-      } catch (Throwable e) {
-        Log.errorf(
-            "Error closing the client to the Schema Registry at %s: %s",
-            srConfig.uri(),
-            e.getMessage(),
-            e
-        );
+      if (srClient != null) {
+        try {
+          srClient.close();
+        } catch (Throwable e) {
+          Log.errorf(
+              "Error closing the client to the Schema Registry at %s: %s",
+              srConfig.uri(),
+              e.getMessage(),
+              e
+          );
+        }
       }
     }
   }
