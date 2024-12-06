@@ -95,14 +95,14 @@ public class SchemaErrors {
    */
   public void writeSchemaIdByConnectionId(
       String connectionId,
-      String schemaId,
+      int schemaId,
       String clusterId,
       Error error
   ) {
     var cId = new ConnectionId(connectionId);
     var sId = new SchemaId(
         clusterId,
-        Integer.parseInt(schemaId)
+        schemaId
     );
     getSubCache(cId).put(sId, error);
   }

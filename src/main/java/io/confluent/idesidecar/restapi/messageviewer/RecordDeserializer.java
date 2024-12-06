@@ -352,7 +352,7 @@ public class RecordDeserializer {
     ));
     schemaErrors.writeSchemaIdByConnectionId(
         context.getConnectionId(),
-        String.valueOf(schemaId),
+        schemaId,
         context.getClusterId(),
         errorMessage
     );
