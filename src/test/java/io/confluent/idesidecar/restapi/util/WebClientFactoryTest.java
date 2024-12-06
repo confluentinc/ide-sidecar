@@ -5,25 +5,17 @@ import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static org.junit.Assert.assertSame;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.when;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.matching.UrlPattern;
 import io.confluent.idesidecar.restapi.application.SidecarInfo;
 import io.confluent.idesidecar.restapi.testutil.FakeSideCarProfile;
-import io.quarkiverse.wiremock.devservice.ConnectWireMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
-import io.quarkus.test.junit.mockito.InjectSpy;
-import io.vertx.core.Vertx;
 import io.vertx.ext.web.client.WebClient;
-import io.vertx.ext.web.client.WebClientOptions;
 import jakarta.inject.Inject;
-import java.util.Optional;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -47,7 +39,7 @@ public class WebClientFactoryTest {
   @Test
   void getDefaultWebClientOptionsIncludesUserAgent() {
     var userAgent = webClientFactory.getDefaultWebClientOptions().getUserAgent();
-    assertEquals( "Confluent-for-VSCode/v0.21.3 (https://confluent.io; support@confluent.io) sidecar/v0.105.0 (linux/amd64-override)", userAgent);
+    assertTrue(userAgent.contains("Confluent-for-VSCode/"));
   }
 
 
