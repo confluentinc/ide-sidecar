@@ -26,7 +26,7 @@ public enum OperatingSystemType {
       return OperatingSystemType.MacOS;
     }
     if (lowerName.contains("unix" ) || lowerName.contains("sunos") || lowerName.contains("solaris")
-        || lowerName.contains("hp-ux") || lowerName.contains("aix")) {
+        || lowerName.contains("hp-ux")) {
       return OperatingSystemType.Unix;
     }
     if (lowerName.contains("nix") || lowerName.contains("nux") || lowerName.contains("ubuntu")
