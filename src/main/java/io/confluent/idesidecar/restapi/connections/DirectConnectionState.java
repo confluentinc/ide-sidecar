@@ -268,7 +268,8 @@ public class DirectConnectionState extends ConnectionState {
     if (kafkaClusterConfig == null) {
       return Optional.empty();
     }
-    try (var adminClient = createAdminClient(kafkaClusterConfig)) {
+    var adminClient = createAdminClient(kafkaClusterConfig);
+    try {
       return Optional.ofNullable(
           operation.apply(adminClient)
       );
@@ -282,6 +283,17 @@ public class DirectConnectionState extends ConnectionState {
       return Optional.ofNullable(
           errorHandler.apply(e)
       );
+    } finally {
+      try {
+        adminClient.close(TIMEOUT);
+      } catch (Throwable e) {
+        Log.errorf(
+            "Error closing the client to the Kafka cluster at %s: %s",
+            kafkaClusterConfig.bootstrapServers(),
+            e.getMessage(),
+            e
+        );
+      }
     }
   }
 
@@ -319,7 +331,8 @@ public class DirectConnectionState extends ConnectionState {
     if (srConfig == null) {
       return Optional.empty();
     }
-    try (var srClient = createSchemaRegistryClient(srConfig)) {
+    var srClient = createSchemaRegistryClient(srConfig);
+    try {
       return Optional.ofNullable(
           operation.apply(srClient)
       );
@@ -333,6 +346,17 @@ public class DirectConnectionState extends ConnectionState {
       return Optional.ofNullable(
           errorHandler.apply(e)
       );
+    } finally {
+      try {
+        srClient.close();
+      } catch (Throwable e) {
+        Log.errorf(
+            "Error closing the client to the Schema Registry at %s: %s",
+            srConfig.uri(),
+            e.getMessage(),
+            e
+        );
+      }
     }
   }
 
