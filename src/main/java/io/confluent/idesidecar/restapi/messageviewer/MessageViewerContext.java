@@ -30,7 +30,7 @@ public class MessageViewerContext extends ProxyContext {
       HttpMethod requestMethod,
       SimpleConsumeMultiPartitionRequest requestBody,
       Map<String, String> requestPathParams,
-      SchemaErrors.ConnectionId connectionId,
+      String connectionId,
       String clusterId,
       String topicName
   ) {
@@ -43,7 +43,7 @@ public class MessageViewerContext extends ProxyContext {
             .map(body -> Buffer.buffer(body.toJsonString()))
             .orElse(null),
         requestPathParams,
-        connectionId.id()
+        connectionId
     );
     this.clusterId = clusterId;
     this.topicName = topicName;
