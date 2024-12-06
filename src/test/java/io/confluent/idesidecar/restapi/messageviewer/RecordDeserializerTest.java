@@ -44,9 +44,9 @@ public class RecordDeserializerTest {
   SchemaErrors schemaErrors;
   private final ObjectMapper objectMapper = new ObjectMapper();
 
-  private static final SchemaErrors.SchemaId VALID_SCHEMA_ID = new SchemaErrors.SchemaId("fake_cluster_id", 10008);
+  private static final int VALID_SCHEMA_ID = 10008;
 
-  String CONNECTION_1_ID = "c1";
+  static final String CONNECTION_1_ID = "c1";
 
   /**
    * Data containing valid schema ID of 10008, and nothing else.
@@ -63,7 +63,7 @@ public class RecordDeserializerTest {
       null,
       null,
       null,
-      new SchemaErrors.ConnectionId(CONNECTION_1_ID),
+      CONNECTION_1_ID,
       "testClusterId",
       SAMPLE_TOPIC_NAME);
 
@@ -305,9 +305,9 @@ public class RecordDeserializerTest {
 
   private static Stream<Arguments> testSchemaFetchFailuresAreCached() {
     var clientWithAuthError = new SimpleMockSchemaRegistryClient()
-        .registerWithStatusCode(VALID_SCHEMA_ID.schemaId(), 403);
+        .registerWithStatusCode(VALID_SCHEMA_ID, 403);
     var clientWithNetworkError = new SimpleMockSchemaRegistryClient()
-        .registerAsNetworkErrored(VALID_SCHEMA_ID.schemaId());
+        .registerAsNetworkErrored(VALID_SCHEMA_ID);
 
     return Stream.of(
         Arguments.of(clientWithAuthError, true, 0),
@@ -348,7 +348,7 @@ public class RecordDeserializerTest {
 
     // Assert that the schema was tried to be fetched only once
     var initialHit = 1;
-    verify(smc, times(initialHit + expectedRetries)).getSchemaById(VALID_SCHEMA_ID.schemaId());
+    verify(smc, times(initialHit + expectedRetries)).getSchemaById(VALID_SCHEMA_ID);
   }
 
 
@@ -462,7 +462,7 @@ public class RecordDeserializerTest {
     );
 
     // Assert before trying to deserialize with the same schema ID
-    verify(mockedSRClient, times(expectedTries)).getSchemaById(VALID_SCHEMA_ID.schemaId());
+    verify(mockedSRClient, times(expectedTries)).getSchemaById(VALID_SCHEMA_ID);
 
     // Now simulate being called with the same schema ID again
     for (int i = 0; i < 5; i++) {

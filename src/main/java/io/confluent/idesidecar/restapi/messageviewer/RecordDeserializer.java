@@ -126,7 +126,7 @@ public class RecordDeserializer {
   ) {
     try (
         var outputStream = new ByteArrayOutputStream();
-        var avroDeserializer = new KafkaAvroDeserializer(sr);
+        var avroDeserializer = new KafkaAvroDeserializer(sr)
     ) {
       avroDeserializer.configure(SERDE_CONFIGS, isKey);
       var avroRecord = (GenericData.Record) avroDeserializer.deserialize(topicName, bytes);
@@ -224,13 +224,13 @@ public class RecordDeserializer {
     if (result.isPresent()) {
       return result.get();
     }
-    SchemaErrors.SchemaId schemaId = new SchemaErrors.SchemaId(context.getClusterId(), getSchemaIdFromRawBytes(bytes));
-    SchemaErrors.ConnectionId connectionId = new SchemaErrors.ConnectionId(context.getConnectionId());
+    int schemaId = getSchemaIdFromRawBytes(bytes);
+    String connectionId = context.getConnectionId();
     // Check if schema retrieval has failed recently
     var error = schemaErrors.readSchemaIdByConnectionId(
-        connectionId.id(),
-        schemaId.clusterId(),
-        String.valueOf(schemaId.schemaId())
+        connectionId,
+        context.getClusterId(),
+        schemaId
     );
     if (error != null) {
       return new DecodedResult(
@@ -246,7 +246,7 @@ public class RecordDeserializer {
       // and retry if the operation fails due to a retryable exception.
       var parsedSchema = Uni
           .createFrom()
-          .item(Unchecked.supplier(() -> schemaRegistryClient.getSchemaById(schemaId.schemaId())))
+          .item(Unchecked.supplier(() -> schemaRegistryClient.getSchemaById(schemaId)))
           .onFailure(this::isRetryableException)
           .retry()
           .withBackOff(schemaFetchRetryInitialBackoff, schemaFetchRetryMaxBackoff)
@@ -332,14 +332,14 @@ public class RecordDeserializer {
   }
 
   private void cacheSchemaFetchError(
-      Throwable e, SchemaErrors.SchemaId schemaId, MessageViewerContext context
+      Throwable e, int schemaId, MessageViewerContext context
   ) {
     var retryTime = Instant.now().plus(CACHE_FAILED_SCHEMA_ID_FETCH_DURATION);
     var timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
         .withZone(ZoneId.systemDefault());
     Log.errorf(
         "Failed to retrieve schema with ID %d. Will try again in %d seconds at %s. Error: %s",
-        schemaId.schemaId(),
+        schemaId,
         CACHE_FAILED_SCHEMA_ID_FETCH_DURATION.getSeconds(),
         timeFormatter.format(retryTime),
         e.getMessage(),
@@ -347,13 +347,13 @@ public class RecordDeserializer {
     );
     SchemaErrors.Error errorMessage = new SchemaErrors.Error(String.format(
         "Failed to retrieve schema with ID %d: %s",
-        schemaId.schemaId(),
+        schemaId,
         e.getMessage()
     ));
     schemaErrors.writeSchemaIdByConnectionId(
         context.getConnectionId(),
-        String.valueOf(schemaId.schemaId()),
-        schemaId.clusterId(),
+        String.valueOf(schemaId),
+        context.getClusterId(),
         errorMessage
     );
   }

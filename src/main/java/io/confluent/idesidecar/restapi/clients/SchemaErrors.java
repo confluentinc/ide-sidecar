@@ -10,7 +10,6 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.eclipse.microprofile.config.ConfigProvider;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
  * The SchemaErrors class manages schema error caching for different connections.
@@ -31,14 +30,14 @@ public class SchemaErrors {
   /**
    * Represents a unique connection identifier.
    */
-  public record ConnectionId(String id) {
+  private record ConnectionId(String id) {
 
   }
 
   /**
    * Represents a unique schema identifier within a cluster.
    */
-  public record SchemaId(String clusterId, int schemaId) {
+  private record SchemaId(String clusterId, int schemaId) {
 
   }
 
@@ -49,14 +48,14 @@ public class SchemaErrors {
 
   }
 
-  public static final Duration schemaFetchErrorTtl = Duration.ofSeconds(
+  private static final Duration schemaFetchErrorTtl = Duration.ofSeconds(
       ConfigProvider
           .getConfig()
           .getValue(
               "ide-sidecar.schema-fetch-error-ttl",
               Long.class));
 
-  public static final Map<ConnectionId, Cache<SchemaId, Error>> cacheOfCaches = new ConcurrentHashMap<>();
+  private static final Map<ConnectionId, Cache<SchemaId, Error>> cacheOfCaches = new ConcurrentHashMap<>();
 
   /**
    * Retrieves or creates a sub-cache for a specific connection.
@@ -64,7 +63,7 @@ public class SchemaErrors {
    * @param key The connection identifier.
    * @return The sub-cache for the connection.
    */
-  public Cache<SchemaId, Error> getSubCache(ConnectionId key) {
+  private Cache<SchemaId, Error> getSubCache(ConnectionId key) {
     return cacheOfCaches.computeIfAbsent(
         key,
         k -> Caffeine.newBuilder().expireAfterAccess(schemaFetchErrorTtl).build());
@@ -78,11 +77,11 @@ public class SchemaErrors {
    * @return The schema error, or null if not found.
    */
 
-  public Error readSchemaIdByConnectionId(String connectionId, String clusterId, String schemaId) {
+  public Error readSchemaIdByConnectionId(String connectionId, String clusterId, int schemaId) {
     var cId = new ConnectionId(connectionId);
     var sId = new SchemaId(
         clusterId,
-        Integer.parseInt(schemaId)
+        schemaId
     );
     return getSubCache(cId).getIfPresent(sId);
   }
