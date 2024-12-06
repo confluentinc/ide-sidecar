@@ -15,6 +15,7 @@ public class FakeSideCarProfile implements QuarkusTestProfile {
         "os.name", "linux-override",
         "os.arch", "amd64-override",
         "os.version", "5.11.0-27-azure-override",
+        "version", "0.105.0 override",
         "vscode.extension.version", "0.21.3 override"
     );
   }
