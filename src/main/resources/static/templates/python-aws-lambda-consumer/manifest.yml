@@ -1,15 +1,17 @@
 ---
 template_api_version: 0.0.1
-name: javascript-consumer
-display_name: Simple JavaScript Consumer
-description: A JavaScript project that consumes messages from a topic in Confluent Cloud. Helps JavaScript developers new to Kafka who would like to see how a consumer is written, or JavaScript developers familiar with Kafka who would like to get started developing a consumer app quickly. 
-version: 0.0.1
-language: JavaScript
+name: python-aws-lambda-consumer
+display_name: AWS Lambda Python Consumer Application
+description: >
+  This application demonstrates how to consume messages from a Kafka topic using a Python AWS Lambda function.
+
+version: 1.0.0
+language: Python
 tags:
-  - javascript
-  - starter
   - consumer
-options: 
+  - getting started
+  - python
+options:
   cc_bootstrap_server:
     display_name: Kafka Bootstrap Server
     description: One or more comma-separated host and port pairs that are the addresses where Kafka brokers accept client bootstrap requests.
@@ -18,13 +20,13 @@ options:
       - host1:9092
       - host1:9092,host2:9092
       - external-broker.hosted.com:9092
-  api_key:
+  cc_api_key:
     display_name: Kafka Cluster API Key
     description: The API key for accessing the Kafka cluster in Confluent Cloud.
     pattern: "^[a-zA-Z0-9=\\/\\+]{16}$"
     examples:
       - AAAAABBBBBCCCCC5
-  api_secret:
+  cc_api_secret:
     display_name: Kafka Cluster API Secret
     description: The API secret for accessing the Kafka cluster in Confluent Cloud.
     pattern: "^[a-zA-Z0-9=\\/\\+]{64,72}$"
@@ -42,11 +44,26 @@ options:
   group_id:
     display_name: Consumer Group
     description: A unique string that identifies the consumer group this consumer belongs to. This property is required if the consumer subscribes to a topic or uses the Kafka-based offset management strategy.
-    pattern: "^([a-zA-Z0-9._-]{1,255})$"
-  auto_offset_reset:
-    display_name: Begin Consuming From
-    description: What to do when there is no initial offset in the Kafka topic or if the current offset does not exist any more on the server (e.g. because that data has been deleted).
-    initial_value: earliest
+    pattern: "^[a-zA-Z0-9._-]{1,255}$"
+    examples:
+      - order_fulfillment
+      - billing_consumer
+      - big_whale_customer_identification
+  starting_position:
+    display_name: Starting Position
+    description: Controls the position at which Lambda should start consuming messages from the topic. It supports three possible values, TRIM_HORIZON, LATEST and AT_TIMESTAMP, with TRIM_HORIZON being the default.
+    initial_value: LATEST
     enum:
-      - earliest
-      - latest
+      - TRIM_HORIZON
+      - LATEST
+      - AT_TIMESTAMP
+  max_batch_size:
+    display_name: Batch Size
+    description: The maximum number of messages to be consumed from the topic in a single batch.
+    initial_value: 100
+    pattern: "^[0-9]+$"
+  max_batching_Window:
+    display_name: Maximum Batching Window
+    description: The maximum amount of time in milliseconds to wait for a batch of messages to be filled before sending it to the consumer.
+    initial_value: 30
+    pattern: "^[0-9]+$"
