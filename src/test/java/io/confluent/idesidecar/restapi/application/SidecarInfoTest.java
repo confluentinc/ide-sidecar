@@ -40,6 +40,7 @@ public class SidecarInfoTest {
       Map<String, String> props = new HashMap<>();
       props.put(OS_ARCH_KEY, osArch);
       props.put(OS_NAME_KEY, osName);
+      props.put(OS_VERSION_KEY, osVersion);
       props.put(SIDECAR_VERSION_KEY, sidecarVersion);
       if (vscode != null) {
         var vscodeVersion = vscode.version();
@@ -62,7 +63,6 @@ public class SidecarInfoTest {
 
   @TestFactory
   Stream<DynamicTest> testCombinations() {
-
 
     List<TestInputs> inputs = List.of(
         // Linux
@@ -133,66 +133,66 @@ public class SidecarInfoTest {
             "Windows 10 info with VS Code",
             "Windows 10",
             "10.0.1904562",
-            "22H2",
+            "x86_64",
             "1.150.2",
             OperatingSystemType.Windows,
             new SidecarInfo.VsCode("20.1.2", "1.2.3"),
             "",
-            "Confluent-for-VSCode/v1.2.3 (https://confluent.io; support@confluent.io) sidecar/v1.150.2 (windows/22H2)"),
+            "Confluent-for-VSCode/v1.2.3 (https://confluent.io; support@confluent.io) sidecar/v1.150.2 (windows/x86_64)"),
         new TestInputs(
             "Windows 10 info with VS Code and version prefix",
             "Windows 10",
             "10.0.1904562",
-            "22H2",
+            "x86_64",
             "1.150.2",
             OperatingSystemType.Windows,
             new SidecarInfo.VsCode("20.1.2", "1.2.3"),
             "v",
-            "Confluent-for-VSCode/v1.2.3 (https://confluent.io; support@confluent.io) sidecar/v1.150.2 (windows/22H2)")
+            "Confluent-for-VSCode/v1.2.3 (https://confluent.io; support@confluent.io) sidecar/v1.150.2 (windows/x86_64)")
 ,
         new TestInputs(
             "Windows 10 info without VS Code",
             "Windows 10",
             "10.0.1904562",
-            "22H2",
+            "x86_64",
             "1.150.2",
             OperatingSystemType.Windows,
             null,
             null,
-            "Confluent-for-VSCode/vunknown (https://confluent.io; support@confluent.io) sidecar/v1.150.2 (windows/22H2)"
+            "Confluent-for-VSCode/vunknown (https://confluent.io; support@confluent.io) sidecar/v1.150.2 (windows/x86_64)"
         ),
  // Windows 11
         new TestInputs(
             "Windows 11 info with VS Code",
             "Windows 11",
             "10.0.1904562",
-            "22H2",
+            "x86_64",
             "1.150.2",
             OperatingSystemType.Windows,
             new SidecarInfo.VsCode("20.1.2", "1.2.3"),
             "",
-            "Confluent-for-VSCode/v1.2.3 (https://confluent.io; support@confluent.io) sidecar/v1.150.2 (windows/22H2)"
+            "Confluent-for-VSCode/v1.2.3 (https://confluent.io; support@confluent.io) sidecar/v1.150.2 (windows/x86_64)"
         ),
         new TestInputs(
             "Windows 11 info with VS Code and version prefix",
             "Windows 11",
             "10.0.1904562",
-            "22H2",
+            "x86_64",
             "1.150.2",
             OperatingSystemType.Windows,
             new SidecarInfo.VsCode("20.1.2", "1.2.3"),
             "v",
-            "Confluent-for-VSCode/v1.2.3 (https://confluent.io; support@confluent.io) sidecar/v1.150.2 (windows/22H2)"),
+            "Confluent-for-VSCode/v1.2.3 (https://confluent.io; support@confluent.io) sidecar/v1.150.2 (windows/x86_64)"),
         new TestInputs(
             "Windows 11 info without VS Code",
             "windows",
             "10.1.X.Y",
-            "22H2",
+            "x86_64",
             "1.150.2",
             OperatingSystemType.Windows,
             null,
             null,
-            "Confluent-for-VSCode/vunknown (https://confluent.io; support@confluent.io) sidecar/v1.150.2 (windows/22H2)"
+            "Confluent-for-VSCode/vunknown (https://confluent.io; support@confluent.io) sidecar/v1.150.2 (windows/x86_64)"
         ),
 // Other
         new TestInputs(
@@ -241,6 +241,7 @@ public class SidecarInfoTest {
               assertEquals(input.userAgent, sidecar.getUserAgent());
               assertEquals(input.os, sidecar.osType());
               assertEquals(input.osName, sidecar.osName());
+              assertEquals(input.osVersion, sidecar.osVersion());
               if (input.vscode != null) {
                 assertTrue(sidecar.vsCode().isPresent());
                 assertEquals(input.vscode.version(), sidecar.vsCode().get().version());

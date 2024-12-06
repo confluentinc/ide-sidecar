@@ -67,7 +67,6 @@ public class SidecarInfo {
   static final String VSCODE_VERSION_KEY = "vscode.version";
   static final String VSCODE_EXTENSION_VERSION_ENV = "VSCODE_EXTENSION_VERSION";
   static final String VSCODE_EXTENSION_VERSION_KEY = "vscode.extension.version";
-  static final String OS_ARCH_VERSION_KEY = "os.arch";
 
   private final String osArch;
   private final OperatingSystemType osType;
@@ -92,7 +91,7 @@ public class SidecarInfo {
     osName = system.getProperty(OS_NAME_KEY, "unknown");
     osVersion = system.getProperty(OS_VERSION_KEY, "unknown");
     sidecarVersion =  system.getProperty(SIDECAR_VERSION_KEY, UNSET_VERSION);
-    osArch =  system.getProperty(OS_ARCH_VERSION_KEY, "unknown");
+    osArch =  system.getProperty(OS_ARCH_KEY, "unknown");
 
     // Determine the best-matching OS type
     osType = OperatingSystemType.from(system);
