@@ -304,15 +304,12 @@ public class DirectConnectionState extends ConnectionState {
       ConnectionSpec.KafkaClusterConfig config
   ) {
     // Create the configuration for an AdminClient
-    var adminConfig = ClientConfigurator.getKafkaClientConfig(
+    var adminConfig = ClientConfigurator.getKafkaAdminClientConfig(
         this,
         config.bootstrapServers(),
-        null,
-        false,
-        null,
-        Map.of()
+        TIMEOUT
     );
-    return AdminClient.create(adminConfig);
+    return AdminClient.create(adminConfig.asMap());
   }
 
   /**

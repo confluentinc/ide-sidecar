@@ -22,10 +22,207 @@ import java.util.Map;
 import org.apache.kafka.clients.CommonClientConfigs;
 import java.util.function.Supplier;
 import java.util.Optional;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 @ApplicationScoped
 public class ClientConfigurator {
+
+  public static final Map<String, String> DEFAULT_ADMIN_CLIENT_CONFIGS = ConfigUtil
+      .asMap("ide-sidecar.admin-client-configs");
+
+  public static final Map<String, String> DEFAULT_CONSUMER_CLIENT_CONFIGS = ConfigUtil
+      .asMap("ide-sidecar.consumer-client-configs");
+
+  public static final Map<String, String> DEFAULT_PRODUCER_CLIENT_CONFIGS = ConfigUtil
+      .asMap("ide-sidecar.producer-client-configs");
+
+  private static final Map<String, String> SERDE_CONFIGS = ConfigUtil
+      .asMap("ide-sidecar.serde-configs");
+
+  /**
+   * An object that has a Kafka or SR client configuration, which can be retrieved as a map
+   * or as a redacted map.
+   */
+  public static class Configuration {
+    final Supplier<Map<String, Object>> configSupplier;
+    final Supplier<Map<String, Object>> redactedSupplier;
+    final Map<String, Object> overrides = new LinkedHashMap<>();
+
+    Configuration(
+        Supplier<Map<String, Object>> configSupplier,
+        Supplier<Map<String, Object>> redactedSupplier
+    ) {
+      this.configSupplier = configSupplier;
+      this.redactedSupplier = redactedSupplier;
+    }
+
+    /**
+     * Obtain the raw configuration properties as a map.
+     *
+     * @return the configuration properties
+     */
+    public Map<String, Object> asMap() {
+      var result = configSupplier.get();
+      result.putAll(overrides);
+      return result;
+    }
+
+    /**
+     * Obtain the configuration properties, with all secrets redacted, as a map.
+     *
+     * @return the redacted configuration properties
+     */
+    public Map<String, Object> asRedacted() {
+      var result = redactedSupplier.get();
+      result.putAll(overrides);
+      return result;
+    }
+
+    public Configuration put(String key, Object value) {
+      overrides.put(key, value);
+      return this;
+    }
+
+    /**
+     * Display the redacted, multi-line form of the configuration, suitable for logging or display.
+     *
+     * @return the string representation of the redacted configuration
+     */
+    public String toString() {
+      return toString("  ");
+    }
+
+    /**
+     * Display the redacted, multi-line form of the configuration, suitable for logging or display.
+     *
+     * @param prefix the prefix to use for all but the first line
+     * @return the string representation of the redacted configuration
+     */
+    public String toString(String prefix) {
+      return asRedacted()
+          .toString()
+          .replaceAll(",\\s*", ",\n" + prefix)
+          .replaceAll("[{}\\[\\]]", "");
+    }
+  }
+
+  /**
+   * Generate the Kafka admin client configuration for a given connection and cluster.
+   * This can optionally redact sensitive values in properties, such as if generating a
+   * sample configuration for display or logging.
+   *
+   * @param connection        the connection with the Kafka endpoint information
+   * @param bootstrapServers  the bootstrap servers of the Kafka cluster to use
+   * @param timeout           the timeout for calls to the cluster
+   * @return the Kafka admin client configuration
+   */
+  public static Configuration getKafkaAdminClientConfig(
+      ConnectionState connection,
+      String bootstrapServers,
+      Duration timeout
+  ) {
+    return new Configuration(
+        () -> getKafkaClientConfig(
+            connection,
+            bootstrapServers,
+            null,
+            false,
+            timeout,
+            DEFAULT_ADMIN_CLIENT_CONFIGS
+        ),
+        () -> getKafkaClientConfig(
+            connection,
+            bootstrapServers,
+            null,
+            true,
+            timeout,
+            DEFAULT_ADMIN_CLIENT_CONFIGS
+        )
+    );
+  }
+
+  /**
+   * Generate the Kafka consumer configuration for a given connection and cluster.
+   * This can optionally redact sensitive values in properties, such as if generating a
+   * sample configuration for display or logging.
+   *
+   * <p>If a {@link SchemaRegistry} parameter is provided, then the resulting configuration
+   * will include the necessary properties for connecting to the Schema Registry,
+   * though configuration properties for Avro, Protobuf, or JSON Schema (de)serializers
+   * are not included.
+   *
+   * @param connection        the connection with the Kafka endpoint information
+   * @param bootstrapServers  the bootstrap servers of the Kafka cluster to use
+   * @param srUri             the URI of the Schema Registry to use, or null if not needed
+   * @param timeout           the timeout for calls to the cluster
+   * @return the Kafka consumer configuration
+   */
+  public static Configuration getKafkaConsumerConfig(
+      ConnectionState connection,
+      String bootstrapServers,
+      String srUri,
+      Duration timeout
+  ) {
+    return new Configuration(
+        () -> getKafkaClientConfig(
+            connection,
+            bootstrapServers,
+            srUri,
+            false,
+            timeout,
+            DEFAULT_CONSUMER_CLIENT_CONFIGS
+        ),
+        () -> getKafkaClientConfig(
+            connection,
+            bootstrapServers,
+            srUri,
+            true,
+            timeout,
+            DEFAULT_CONSUMER_CLIENT_CONFIGS
+        )
+    );
+  }
+
+  /**
+   * Generate the Kafka producer configuration for a given connection and cluster.
+   * This can optionally redact sensitive values in properties, such as if generating a
+   * sample configuration for display or logging.
+   *
+   * <p>If a {@link SchemaRegistry} parameter is provided, then the resulting configuration
+   * will include the necessary properties for connecting to the Schema Registry,
+   * though configuration properties for Avro, Protobuf, or JSON Schema (de)serializers
+   * are not included.
+   *
+   * @param connection        the connection with the Kafka endpoint information
+   * @param bootstrapServers  the bootstrap servers of the Kafka cluster to use
+   * @param srUri             the URI of the Schema Registry to use, or null if not needed
+   * @param timeout           the timeout for calls to the cluster
+   * @return the Kafka producer configuration
+   */
+  public static Configuration getKafkaProducerConfig(
+      ConnectionState connection,
+      String bootstrapServers,
+      String srUri,
+      Duration timeout
+  ) {
+    return new Configuration(
+        () -> getKafkaClientConfig(
+            connection,
+            bootstrapServers,
+            srUri,
+            false,
+            timeout,
+            DEFAULT_PRODUCER_CLIENT_CONFIGS
+        ),
+        () -> getKafkaClientConfig(
+            connection,
+            bootstrapServers,
+            srUri,
+            true,
+            timeout,
+            DEFAULT_PRODUCER_CLIENT_CONFIGS
+        )
+    );
+  }
 
   /**
    * Generate the Kafka client configuration for a given connection and cluster.
@@ -37,10 +234,9 @@ public class ClientConfigurator {
    * though configuration properties for Avro, Protobuf, or JSON Schema (de)serializers
    * are not included.
    *
-   * @param connection        the connection
+   * @param connection        the connection with the Kafka endpoint information
    * @param bootstrapServers  the bootstrap servers of the Kafka cluster to use
    * @param srUri             the URI of the Schema Registry to use, or null if not needed
-   * @param redact            whether to redact sensitive properties
    * @param timeout           the timeout for calls to the cluster
    * @param defaultProperties the default properties to use; may be overridden by computed values
    * @return the Kafka client configuration properties
@@ -88,7 +284,7 @@ public class ClientConfigurator {
    * This can optionally redact sensitive values in properties, such as if generating a
    * sample configuration for display or logging.
    *
-   * @param connection     the connection
+   * @param connection     the connection with the Schema Registry endpoint information
    * @param srUri          the URI of the Schema Registry to use
    * @param redact         whether to redact sensitive properties
    * @param defaultTimeout the timeout for calls to the Schema Registry
@@ -132,57 +328,6 @@ public class ClientConfigurator {
   @Inject
   ClusterCache clusterCache;
 
-  @ConfigProperty(name = "ide-sidecar.admin-client-configs")
-  Map<String, String> adminClientSidecarConfigs;
-
-  @ConfigProperty(name = "ide-sidecar.consumer-client-configs")
-  Map<String, String> consumerClientSidecarConfigs;
-
-  @ConfigProperty(name = "ide-sidecar.producer-client-configs")
-  Map<String, String> producerClientSidecarConfigs;
-
-  public static class Configuration {
-    final Supplier<Map<String, Object>> configSupplier;
-    final Supplier<Map<String, Object>> redactedSupplier;
-    final Map<String, Object> overrides = new LinkedHashMap<>();
-
-    Configuration(
-        Supplier<Map<String, Object>> configSupplier,
-        Supplier<Map<String, Object>> redactedSupplier
-    ) {
-      this.configSupplier = configSupplier;
-      this.redactedSupplier = redactedSupplier;
-    }
-
-    public Map<String, Object> asMap() {
-      var result = configSupplier.get();
-      result.putAll(overrides);
-      return result;
-    }
-
-    public Map<String, Object> asRedacted() {
-      var result = redactedSupplier.get();
-      result.putAll(overrides);
-      return result;
-    }
-
-    public Configuration put(String key, Object value) {
-      overrides.put(key, value);
-      return this;
-    }
-
-    public String toString() {
-      return toString("  ");
-    }
-
-    public String toString(String prefix) {
-      return asRedacted()
-          .toString()
-          .replaceAll(",\\s*", ",\n" + prefix)
-          .replaceAll("[{}\\[\\]]", "");
-    }
-  }
-
   /**
    * Get the AdminClient configuration for connection and Kafka cluster with the specified IDs.
    * This method looks up the {@link ConnectionState} and {@link KafkaCluster} objects,
@@ -206,23 +351,10 @@ public class ClientConfigurator {
     var connection = connections.getConnectionState(connectionId);
     var cluster = clusterCache.getKafkaCluster(connectionId, clusterId);
     // Return the AdminClient config
-    return new Configuration(
-        () -> getKafkaClientConfig(
-            connection,
-            cluster.bootstrapServers(),
-            null,
-            false,
-            null,
-            adminClientSidecarConfigs
-        ),
-        () -> getKafkaClientConfig(
-            connection,
-            cluster.bootstrapServers(),
-            null,
-            true,
-            null,
-            adminClientSidecarConfigs
-        )
+    return getKafkaAdminClientConfig(
+        connection,
+        cluster.bootstrapServers(),
+        null
     );
   }
 
@@ -247,21 +379,29 @@ public class ClientConfigurator {
       String clusterId,
       boolean includeSchemaRegistry
   ) throws ConnectionNotFoundException, ClusterNotFoundException {
-    return new Configuration(
-        () -> getKafkaClientConfig(
-            connectionId,
-            clusterId,
-            includeSchemaRegistry,
-            false,
-            consumerClientSidecarConfigs
-        ),
-        () -> getKafkaClientConfig(
-            connectionId,
-            clusterId,
-            includeSchemaRegistry,
-            true,
-            consumerClientSidecarConfigs
-        )
+    // Find the connection and cluster, or fail if either does not exist
+    var connection = connections.getConnectionState(connectionId);
+    var cluster = clusterCache.getKafkaCluster(connectionId, clusterId);
+
+    // Maybe look up the SR for the Kafka cluster
+    SchemaRegistry sr;
+    if (includeSchemaRegistry) {
+      sr = clusterCache.getSchemaRegistryForKafkaCluster(connectionId, cluster);
+      if (sr != null) {
+        Log.debugf("Using Schema Registry %s for Kafka cluster %s", sr.id(), cluster.id());
+      } else {
+        Log.debugf("Found no Schema Registry for Kafka cluster %s", cluster.id());
+      }
+    } else {
+      sr = null;
+      Log.debugf("Not using Schema Registry for Kafka cluster %s", cluster.id());
+    }
+
+    return getKafkaProducerConfig(
+        connection,
+        cluster.bootstrapServers(),
+        sr != null ? sr.uri() : null,
+        null
     );
   }
 
@@ -286,37 +426,12 @@ public class ClientConfigurator {
       String clusterId,
       boolean includeSchemaRegistry
   ) throws ConnectionNotFoundException, ClusterNotFoundException {
-    return new Configuration(
-        () -> getKafkaClientConfig(
-            connectionId,
-            clusterId,
-            includeSchemaRegistry,
-            false,
-            producerClientSidecarConfigs
-        ),
-        () -> getKafkaClientConfig(
-            connectionId,
-            clusterId,
-            includeSchemaRegistry,
-            true,
-            producerClientSidecarConfigs
-        )
-    );
-  }
-
-  protected Map<String, Object> getKafkaClientConfig(
-      String connectionId,
-      String clusterId,
-      boolean includeSchemaRegistry,
-      boolean redact,
-      Map<String, String> defaultProperties
-  ) throws ConnectionNotFoundException, ClusterNotFoundException {
     // Find the connection and cluster, or fail if either does not exist
     var connection = connections.getConnectionState(connectionId);
     var cluster = clusterCache.getKafkaCluster(connectionId, clusterId);
 
     // Maybe look up the SR for the Kafka cluster
-    SchemaRegistry sr = null;
+    SchemaRegistry sr;
     if (includeSchemaRegistry) {
       sr = clusterCache.getSchemaRegistryForKafkaCluster(connectionId, cluster);
       if (sr != null) {
@@ -325,17 +440,15 @@ public class ClientConfigurator {
         Log.debugf("Found no Schema Registry for Kafka cluster %s", cluster.id());
       }
     } else {
+      sr = null;
       Log.debugf("Not using Schema Registry for Kafka cluster %s", cluster.id());
     }
 
-    // Get the Kafka client config
-    return getKafkaClientConfig(
+    return getKafkaConsumerConfig(
         connection,
         cluster.bootstrapServers(),
         sr != null ? sr.uri() : null,
-        redact,
-        null,
-        defaultProperties
+        null
     );
   }
 
@@ -376,9 +489,6 @@ public class ClientConfigurator {
         )
     );
   }
-
-  private static final Map<String, String> SERDE_CONFIGS = ConfigUtil
-      .asMap("ide-sidecar.serde-configs");
 
   /**
    * Get the Kafka Serializer/Deserializer configuration for a given
