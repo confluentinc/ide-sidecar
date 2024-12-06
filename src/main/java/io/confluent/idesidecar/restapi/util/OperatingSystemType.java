@@ -6,7 +6,7 @@ public enum OperatingSystemType {
   Windows,
   MacOS,
   Linux,
-  Solaris,
+  Unix,
   Other;
 
   public interface Properties {
@@ -25,12 +25,12 @@ public enum OperatingSystemType {
     if (lowerName.contains("mac") || lowerName.contains("darwin")) {
       return OperatingSystemType.MacOS;
     }
+    if (lowerName.contains("unix")) {
+      return OperatingSystemType.Unix;
+    }
     if (lowerName.contains("nix") || lowerName.contains("nux") || lowerName.contains("ubuntu")
         || lowerName.contains("centos") || lowerName.contains("aix")) {
       return OperatingSystemType.Linux;
-    }
-    if (lowerName.contains("solaris")) {
-      return OperatingSystemType.Solaris;
     }
     return OperatingSystemType.Other;
   }
