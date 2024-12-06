@@ -3,7 +3,6 @@ package io.confluent.idesidecar.restapi.util.cpdemo;
 import com.github.dockerjava.api.model.HealthCheck;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
-import org.testcontainers.utility.MountableFile;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +39,8 @@ public class CPServerContainer extends GenericContainer<CPServerContainer> {
     this.clearPort = clearPort;
 
     super.withNetwork(network);
+    // TODO: I'm not sure what this does but it looks promising.
+    super.withAccessToHost(true);
     super.withNetworkAliases(containerName);
     super
         .withEnv(kafkaZookeeperEnv())
@@ -51,6 +52,7 @@ public class CPServerContainer extends GenericContainer<CPServerContainer> {
         .withEnv(embeddedKafkaRest())
         .withEnv(otherEnvs())
         .withCreateContainerCmdModifier(cmd -> cmd
+            .withAliases(containerName)
             .withName(containerName)
             .withHostName(containerName)
             .withHealthcheck(new HealthCheck()
@@ -168,11 +170,11 @@ public class CPServerContainer extends GenericContainer<CPServerContainer> {
 
   public Map<String, String> sslEnv() {
     var env = new HashMap<String, String>();
-    env.put("KAFKA_SSL_KEYSTORE_FILENAME", "kafka.kafka2.keystore.jks");
-    env.put("KAFKA_SSL_KEYSTORE_CREDENTIALS", "kafka2_keystore_creds");
-    env.put("KAFKA_SSL_KEY_CREDENTIALS", "kafka2_sslkey_creds");
-    env.put("KAFKA_SSL_TRUSTSTORE_FILENAME", "kafka.kafka2.truststore.jks");
-    env.put("KAFKA_SSL_TRUSTSTORE_CREDENTIALS", "kafka2_truststore_creds");
+    env.put("KAFKA_SSL_KEYSTORE_FILENAME", "kafka.%s.keystore.jks".formatted(containerName));
+    env.put("KAFKA_SSL_KEYSTORE_CREDENTIALS", "%s_keystore_creds".formatted(containerName));
+    env.put("KAFKA_SSL_KEY_CREDENTIALS", "%s_sslkey_creds".formatted(containerName));
+    env.put("KAFKA_SSL_TRUSTSTORE_FILENAME", "kafka.%s.truststore.jks".formatted(containerName));
+    env.put("KAFKA_SSL_TRUSTSTORE_CREDENTIALS", "%s_truststore_creds".formatted(containerName));
     env.put("KAFKA_SSL_CIPHER_SUITES", Constants.SSL_CIPHER_SUITES);
     env.put("KAFKA_SSL_CLIENT_AUTH", "requested");
     return env;
@@ -245,7 +247,7 @@ public class CPServerContainer extends GenericContainer<CPServerContainer> {
     env.put("KAFKA_KAFKA_REST_SSL_TRUSTSTORE_LOCATION", "/etc/kafka/secrets/kafka.%s.truststore.jks".formatted(containerName));
     env.put("KAFKA_KAFKA_REST_SSL_TRUSTSTORE_PASSWORD", "confluent");
     env.put("KAFKA_KAFKA_REST_CONFLUENT_METADATA_HTTP_AUTH_CREDENTIALS_PROVIDER", "BASIC");
-    env.put("KAFKA_KAFKA_REST_CONFLUENT_METADATA_BASIC_AUTH_USER_INFO", "'restAdmin:restAdmin'");
+    env.put("KAFKA_KAFKA_REST_CONFLUENT_METADATA_BASIC_AUTH_USER_INFO", "restAdmin:restAdmin");
     env.put("KAFKA_KAFKA_REST_CONFLUENT_METADATA_SERVER_URLS_MAX_AGE_MS", "60000");
     env.put("KAFKA_KAFKA_REST_CLIENT_CONFLUENT_METADATA_SERVER_URLS_MAX_AGE_MS", "60000");
     return env;
@@ -257,7 +259,19 @@ public class CPServerContainer extends GenericContainer<CPServerContainer> {
     env.put("KAFKA_CONFLUENT_AUTHORIZER_ACCESS_RULE_PROVIDERS", "CONFLUENT,ZK_ACL");
     env.put("KAFKA_SUPER_USERS", "User:admin;User:mds;User:superUser;User:ANONYMOUS");
     env.put("KAFKA_LOG4J_LOGGERS", "kafka.authorizer.logger=INFO");
-    env.put("KAFKA_LOG4J_ROOT_LOGLEVEL", "INFO");
+    env.put("KAFKA_LOG4J_ROOT_LOGLEVEL", "DEBUG");
+
+    env.put("KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR", "2");
+    env.put("KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR", "2");
+    env.put("KAFKA_CONFLUENT_SECURITY_EVENT_LOGGER_EXPORTER_KAFKA_TOPIC_REPLICAS", "2");
+    env.put("KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR", "2");
+    env.put("KAFKA_TRANSACTION_STATE_LOG_MIN_ISR", "1");
+    env.put("KAFKA_CONFLUENT_BALANCER_TOPIC_REPLICATION_FACTOR", "2");
+    env.put("KAFKA_CONFLUENT_BALANCER_HEAL_BROKER_FAILURE_THRESHOLD_MS", "30000");
+    env.put("KAFKA_DELETE_TOPIC_ENABLE", "true");
+    env.put("KAFKA_AUTO_CREATE_TOPICS_ENABLE", "false");
+    env.put("KAFKA_DEFAULT_REPLICATION_FACTOR", "2");
+
     return env;
   }
 

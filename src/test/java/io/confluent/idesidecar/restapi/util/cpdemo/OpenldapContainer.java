@@ -19,7 +19,7 @@ public class OpenldapContainer extends GenericContainer<OpenldapContainer> {
         .withEnv(getOpenldapEnv())
         .withCommand("--copy-service --loglevel debug");
     super.withFileSystemBind(
-        ".cp-demo/scripts/security/ldap_users/",
+        ".cp-demo/scripts/security/ldap_users",
         "/container/service/slapd/assets/config/bootstrap/ldif/custom"
     );
     super.withCreateContainerCmdModifier(cmd -> cmd
