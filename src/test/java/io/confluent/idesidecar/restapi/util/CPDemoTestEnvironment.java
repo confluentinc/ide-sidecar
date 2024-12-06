@@ -8,6 +8,7 @@ import io.confluent.idesidecar.restapi.util.cpdemo.ZookeeperContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
 
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -26,8 +27,21 @@ public class CPDemoTestEnvironment implements TestEnvironment {
 
   @Override
   public void start() {
+    // Run .cp-demo/scripts/start_cp.sh
+    ProcessBuilder pb = new ProcessBuilder(
+        ".cp-demo/scripts/start_cp.sh"
+    );
+    pb.environment().put("CONFLUENT_DOCKER_TAG", "7.5.1");
+    pb.inheritIO();
+    try {
+      Process p = pb.start();
+      p.waitFor();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+
     network = Network.newNetwork();
-    zookeeper = new ZookeeperContainer(network);
+    zookeeper = new ZookeeperContainer("7.5.1", network);
     zookeeper.start();
     zookeeper.waitingFor(Wait.forHealthcheck());
 
@@ -35,6 +49,7 @@ public class CPDemoTestEnvironment implements TestEnvironment {
     ldap.start();
 
     kafka1 = new CPServerContainer(
+        "7.5.1",
         network,
         "kafka1",
         8091,
@@ -43,7 +58,13 @@ public class CPDemoTestEnvironment implements TestEnvironment {
         11091,
         12091
     );
+    kafka1.withEnv(Map.of(
+        "KAFKA_BROKER_ID", "1",
+        "KAFKA_BROKER_RACK", "r1",
+        "KAFKA_JMX_PORT", "9991"
+    ));
     kafka2 = new CPServerContainer(
+        "7.5.1",
         network,
         "kafka2",
         8092,
@@ -52,13 +73,30 @@ public class CPDemoTestEnvironment implements TestEnvironment {
         11092,
         12092
     );
+    kafka2.withEnv(Map.of(
+        "KAFKA_BROKER_ID", "2",
+        "KAFKA_BROKER_RACK", "r2",
+        "KAFKA_JMX_PORT", "9992"
+    ));
 
     kafka1.start();
     kafka2.start();
     kafka1.waitingFor(Wait.forHealthcheck());
     kafka2.waitingFor(Wait.forHealthcheck());
 
-    schemaRegistry = new SchemaRegistryContainer(network);
+    try {
+      kafka1.execInContainer(
+          "kafka-configs",
+          "--bootstrap-server", "kafka1:12091",
+          "--entity-type", "topics",
+          "--entity-name", "_confluent-metadata-auth",
+          "--alter",
+          "--add-config", "min.insync.replicas=1"
+      );
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+    schemaRegistry = new SchemaRegistryContainer("7.5.1", network);
     schemaRegistry.start();
     schemaRegistry.waitingFor(Wait.forHealthcheck());
   }
