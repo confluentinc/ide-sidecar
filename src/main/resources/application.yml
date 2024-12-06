@@ -37,6 +37,7 @@
       enabled: false
       # How often to check?
       interval-seconds: 60
+    schema-fetch-error-ttl: 30
     schema-fetch-retry:
       max-retries: 3
   quarkus:
@@ -191,6 +192,7 @@ ide-sidecar:
       - Accept-Encoding
   webclient:
     connect-timeout-seconds: 10
+  schema-fetch-error-ttl: 30
   schema-fetch-retry:
     initial-backoff-ms: 250
     max-backoff-ms: 5000

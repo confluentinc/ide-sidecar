@@ -4,7 +4,6 @@ import static io.confluent.idesidecar.restapi.util.MutinyUtil.uniStage;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.confluent.idesidecar.restapi.clients.SchemaErrors;
 import io.confluent.idesidecar.restapi.messageviewer.MessageViewerContext;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequest;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
@@ -108,7 +107,7 @@ public class KafkaConsumeResource {
         routingContext.request().method(),
         requestBody,
         routingContext.pathParams(),
-        new SchemaErrors.ConnectionId(routingContext.request().getHeader(RequestHeadersConstants.CONNECTION_ID_HEADER)),
+        routingContext.request().getHeader(RequestHeadersConstants.CONNECTION_ID_HEADER),
         clusterId,
         topicName
     );

@@ -25,7 +25,7 @@ public class ProxyContext {
   final Buffer requestBody;
   final Map<String, String> requestPathParams;
 
-  final @Nullable String connectionId;
+  final String connectionId;
   ConnectionState connectionState;
 
   // Everything needed to construct the proxy request
