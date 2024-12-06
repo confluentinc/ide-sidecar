@@ -3,7 +3,7 @@ package io.confluent.idesidecar.restapi.application;
 import static io.confluent.idesidecar.restapi.application.SidecarInfo.OS_ARCH_KEY;
 import static io.confluent.idesidecar.restapi.application.SidecarInfo.OS_NAME_KEY;
 import static io.confluent.idesidecar.restapi.application.SidecarInfo.OS_VERSION_KEY;
-import static io.confluent.idesidecar.restapi.application.SidecarInfo.VERSION_KEY;
+import static io.confluent.idesidecar.restapi.application.SidecarInfo.SIDECAR_VERSION_KEY;
 import static io.confluent.idesidecar.restapi.application.SidecarInfo.VSCODE_EXTENSION_VERSION_KEY;
 import static io.confluent.idesidecar.restapi.application.SidecarInfo.VSCODE_VERSION_KEY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -27,8 +27,9 @@ public class SidecarInfoTest {
   record TestInputs(
       String displayName,
       String osName,
+      String osVersion,
       String osArch,
-      String version,
+      String sidecarVersion,
       OperatingSystemType os,
       SidecarInfo.VsCode vscode,
       String vscodeVersionPrefix,
@@ -39,7 +40,7 @@ public class SidecarInfoTest {
       Map<String, String> props = new HashMap<>();
       props.put(OS_ARCH_KEY, osArch);
       props.put(OS_NAME_KEY, osName);
-      props.put(VERSION_KEY, version);
+      props.put(SIDECAR_VERSION_KEY, sidecarVersion);
       if (vscode != null) {
         var vscodeVersion = vscode.version();
         var vscodeExtensionVersion = vscode.extensionVersion();
@@ -59,8 +60,6 @@ public class SidecarInfoTest {
     return new SidecarInfo(props::getOrDefault, (key, def) -> null);
   }
 
-  SidecarInfo sidecarInfo = new SidecarInfo();
-
   @TestFactory
   Stream<DynamicTest> testCombinations() {
 
@@ -69,202 +68,165 @@ public class SidecarInfoTest {
         // Linux
         new TestInputs(
             "Linux OS info with VS Code",
-            "linux",
+            "Linux",
+            "22.0413",
             "aarch64",
-            "2.1.2",
+            "1.150.2",
             OperatingSystemType.Linux,
             new SidecarInfo.VsCode("20.1.2", "1.2.3"),
             null,
-            "Confluent-for-VSCode/v1.2.3 (https://confluent.io; support@confluent.io) sidecar/v%s (linux/%s)"
-                .formatted(
-                    sidecarInfo.version(),
-                    sidecarInfo.osArch())
+            "Confluent-for-VSCode/v1.2.3 (https://confluent.io; support@confluent.io) sidecar/v1.150.2 (linux/aarch64)"
         ),
         new TestInputs(
             "Linux OS info with VS Code and version prefix",
-            "linux",
-            "x86_64",
-            "20.1.2",
+            "Linux",
+            "22.0413",
+            "aarch64",
+            "1.150.2",
             OperatingSystemType.Linux,
             new SidecarInfo.VsCode("20.1.2", "1.2.3"),
             "v",
-            "Confluent-for-VSCode/v1.2.3 (https://confluent.io; support@confluent.io) sidecar/v%s (linux/%s)"
-                .formatted(
-                    sidecarInfo.version(),
-                    sidecarInfo.osArch())
-        ),
+            "Confluent-for-VSCode/v1.2.3 (https://confluent.io; support@confluent.io) sidecar/v1.150.2 (linux/aarch64)"),
         new TestInputs(
             "Linux OS info without VS Code",
-            "linux",
-            "x86_64",
-            "20.1.2",
+            "Linux",
+            "22.0413",
+            "aarch64",
+            "1.150.2",
             OperatingSystemType.Linux,
             null,
             null,
-            "Confluent-for-VSCode/vunknown (https://confluent.io; support@confluent.io) sidecar/v%s (linux/%s)"
-                .formatted(
-                    sidecarInfo.version(),
-                    sidecarInfo.osArch())
-        ),
+            "Confluent-for-VSCode/vunknown (https://confluent.io; support@confluent.io) sidecar/v1.150.2 (linux/aarch64)"),
         // Mac OS
         new TestInputs(
             "Mac OS info with VS Code",
-            "mac",
-            "x86_64",
-            "20.1.2",
+            "Mac OS X",
+            "13.1",
+            "amd64",
+            "1.150.2",
             OperatingSystemType.MacOS,
             new SidecarInfo.VsCode("20.1.2", "1.2.3"),
             "",
-            "Confluent-for-VSCode/v1.2.3 (https://confluent.io; support@confluent.io) sidecar/v%s (macos/%s)"
-                .formatted(
-                    sidecarInfo.version(),
-                    sidecarInfo.osArch())
-        ),
+            "Confluent-for-VSCode/v1.2.3 (https://confluent.io; support@confluent.io) sidecar/v1.150.2 (macos/amd64)"),
         new TestInputs(
             "Mac OS info with VS Code and version prefix",
-            "mac",
-            "x86_64",
-            "20.1.2",
+            "Mac OS X",
+            "13.1",
+            "amd64",
+            "1.150.2",
             OperatingSystemType.MacOS,
             new SidecarInfo.VsCode("20.1.2", "1.2.3"),
             "v",
-            "Confluent-for-VSCode/v1.2.3 (https://confluent.io; support@confluent.io) sidecar/v%s (macos/%s)"
-                .formatted(
-                    sidecarInfo.version(),
-                    sidecarInfo.osArch())
-            ),
+            "Confluent-for-VSCode/v1.2.3 (https://confluent.io; support@confluent.io) sidecar/v1.150.2 (macos/amd64)"),
         new TestInputs(
             "Mac OS info without VS Code",
-            "mac",
-            "x86_64",
-            "20.1.2",
+            "Mac OS X",
+            "13.1",
+            "amd64",
+            "1.150.2",
             OperatingSystemType.MacOS,
             null,
             null,
-            "Confluent-for-VSCode/vunknown (https://confluent.io; support@confluent.io) sidecar/v%s (macos/%s)"
-                .formatted(
-                    sidecarInfo.version(),
-                    sidecarInfo.osArch())
-            ),
-        // Windows 10
+            "Confluent-for-VSCode/vunknown (https://confluent.io; support@confluent.io) sidecar/v1.150.2 (macos/amd64)"),
+   // Windows 10
         new TestInputs(
             "Windows 10 info with VS Code",
-            "windows",
-            "10.1.X.Y",
-            "20.1.2",
+            "Windows 10",
+            "10.0.1904562",
+            "22H2",
+            "1.150.2",
             OperatingSystemType.Windows,
             new SidecarInfo.VsCode("20.1.2", "1.2.3"),
             "",
-            "Confluent-for-VSCode/v1.2.3 (https://confluent.io; support@confluent.io) sidecar/v%s (windows/%s)"
-                .formatted(
-                    sidecarInfo.version(),
-                    sidecarInfo.osArch())
-        ),
+            "Confluent-for-VSCode/v1.2.3 (https://confluent.io; support@confluent.io) sidecar/v1.150.2 (windows/22H2)"),
         new TestInputs(
             "Windows 10 info with VS Code and version prefix",
-            "windows",
-            "10.1.X.Y",
-            "20.1.2",
+            "Windows 10",
+            "10.0.1904562",
+            "22H2",
+            "1.150.2",
             OperatingSystemType.Windows,
             new SidecarInfo.VsCode("20.1.2", "1.2.3"),
             "v",
-            "Confluent-for-VSCode/v1.2.3 (https://confluent.io; support@confluent.io) sidecar/v%s (windows/%s)"
-                .formatted(
-                    sidecarInfo.version(),
-                    sidecarInfo.osArch())
-        ),
+            "Confluent-for-VSCode/v1.2.3 (https://confluent.io; support@confluent.io) sidecar/v1.150.2 (windows/22H2)")
+,
         new TestInputs(
             "Windows 10 info without VS Code",
-            "windows",
-            "10.1.X.Y",
-            "20.1.2",
+            "Windows 10",
+            "10.0.1904562",
+            "22H2",
+            "1.150.2",
             OperatingSystemType.Windows,
             null,
             null,
-            "Confluent-for-VSCode/vunknown (https://confluent.io; support@confluent.io) sidecar/v%s (windows/%s)"
-                .formatted(
-                    sidecarInfo.version(),
-                    sidecarInfo.osArch())
+            "Confluent-for-VSCode/vunknown (https://confluent.io; support@confluent.io) sidecar/v1.150.2 (windows/22H2)"
         ),
-        // Windows 11
+ // Windows 11
         new TestInputs(
             "Windows 11 info with VS Code",
-            "windows",
-            "10.1.X.Y",
-            "20.1.2",
+            "Windows 11",
+            "10.0.1904562",
+            "22H2",
+            "1.150.2",
             OperatingSystemType.Windows,
             new SidecarInfo.VsCode("20.1.2", "1.2.3"),
             "",
-            "Confluent-for-VSCode/v1.2.3 (https://confluent.io; support@confluent.io) sidecar/v%s (windows/%s)"
-                .formatted(
-                    sidecarInfo.version(),
-                    sidecarInfo.osArch())
+            "Confluent-for-VSCode/v1.2.3 (https://confluent.io; support@confluent.io) sidecar/v1.150.2 (windows/22H2)"
         ),
         new TestInputs(
             "Windows 11 info with VS Code and version prefix",
-            "windows",
-            "10.1.X.Y",
-            "20.1.2",
+            "Windows 11",
+            "10.0.1904562",
+            "22H2",
+            "1.150.2",
             OperatingSystemType.Windows,
             new SidecarInfo.VsCode("20.1.2", "1.2.3"),
             "v",
-            "Confluent-for-VSCode/v1.2.3 (https://confluent.io; support@confluent.io) sidecar/v%s (windows/%s)"
-                .formatted(
-                    sidecarInfo.version(),
-                    sidecarInfo.osArch())
-        ),
+            "Confluent-for-VSCode/v1.2.3 (https://confluent.io; support@confluent.io) sidecar/v1.150.2 (windows/22H2)"),
         new TestInputs(
             "Windows 11 info without VS Code",
             "windows",
             "10.1.X.Y",
-            "20.1.2",
+            "22H2",
+            "1.150.2",
             OperatingSystemType.Windows,
             null,
             null,
-            "Confluent-for-VSCode/vunknown (https://confluent.io; support@confluent.io) sidecar/v%s (windows/%s)"
-                .formatted(
-                    sidecarInfo.version(),
-                    sidecarInfo.osArch())
+            "Confluent-for-VSCode/vunknown (https://confluent.io; support@confluent.io) sidecar/v1.150.2 (windows/22H2)"
         ),
-        // Other
+// Other
         new TestInputs(
-            "Unix info with VS Code",
-            "unix",
+            "Solaris info with VS Code",
+            "Solaris 4",
             "4.1.X.Y",
-            "20.1.2",
+            "sparc",
+            "1.150.2",
             OperatingSystemType.Unix,
             new SidecarInfo.VsCode("20.1.2", "1.2.3"),
             "",
-            "Confluent-for-VSCode/v1.2.3 (https://confluent.io; support@confluent.io) sidecar/v%s (unix/%s)"
-                .formatted(
-                    sidecarInfo.version(),
-                    sidecarInfo.osArch())
+            "Confluent-for-VSCode/v1.2.3 (https://confluent.io; support@confluent.io) sidecar/v1.150.2 (unix/sparc)"
         ),
         new TestInputs(
-            "Unix info with VS Code and version prefix",
-            "unix",
+            "Solaris info with VS Code and version prefix",
+            "Solaris 4",
             "4.1.X.Y",
-            "20.1.2",
+            "sparc",
+            "1.150.2",
             OperatingSystemType.Unix,
             new SidecarInfo.VsCode("20.1.2", "1.2.3"),
             "v",
-            "Confluent-for-VSCode/v1.2.3 (https://confluent.io; support@confluent.io) sidecar/v%s (unix/%s)"
-                .formatted(
-                    sidecarInfo.version(),
-                    sidecarInfo.osArch())
-        ),
+            "Confluent-for-VSCode/v1.2.3 (https://confluent.io; support@confluent.io) sidecar/v1.150.2 (unix/sparc)")
+,
         new TestInputs(
-            "Unix info without VS Code",
-            "unix",
+            "Solaris info with VS Code and version prefix",
+            "Solaris 4",
             "4.1.X.Y",
-            "20.1.2",
+            "sparc",
+            "1.150.2",
             OperatingSystemType.Unix,
-            null,
-            null,
-            "Confluent-for-VSCode/vunknown (https://confluent.io; support@confluent.io) sidecar/v%s (unix/%s)"
-                .formatted(
-                    sidecarInfo.version(),
-                    sidecarInfo.osArch())
+            new SidecarInfo.VsCode("20.1.2", "1.2.3"),
+            "v",
+            "Confluent-for-VSCode/v1.2.3 (https://confluent.io; support@confluent.io) sidecar/v1.150.2 (unix/sparc)"
         )
     );
     return inputs
@@ -278,6 +240,7 @@ public class SidecarInfoTest {
               // Verify the output matches
               assertEquals(input.userAgent, sidecar.getUserAgent());
               assertEquals(input.os, sidecar.osType());
+              assertEquals(input.osName, sidecar.osName());
               if (input.vscode != null) {
                 assertTrue(sidecar.vsCode().isPresent());
                 assertEquals(input.vscode.version(), sidecar.vsCode().get().version());
