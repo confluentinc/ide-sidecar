@@ -128,7 +128,7 @@ public class SidecarInfoTest {
             null,
             null,
             "Confluent-for-VSCode/vunknown (https://confluent.io; support@confluent.io) sidecar/v1.150.2 (macos/amd64)"),
-   // Windows 10
+        // Windows 10
         new TestInputs(
             "Windows 10 info with VS Code",
             "Windows 10",
@@ -161,7 +161,7 @@ public class SidecarInfoTest {
             null,
             "Confluent-for-VSCode/vunknown (https://confluent.io; support@confluent.io) sidecar/v1.150.2 (windows/x86_64)"
         ),
- // Windows 11
+        // Windows 11
         new TestInputs(
             "Windows 11 info with VS Code",
             "Windows 11",
@@ -194,7 +194,7 @@ public class SidecarInfoTest {
             null,
             "Confluent-for-VSCode/vunknown (https://confluent.io; support@confluent.io) sidecar/v1.150.2 (windows/x86_64)"
         ),
-// Other
+        // Other
         new TestInputs(
             "Solaris info with VS Code",
             "Solaris 4",
