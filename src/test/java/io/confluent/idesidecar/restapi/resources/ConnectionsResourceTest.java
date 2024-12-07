@@ -22,6 +22,8 @@ import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
 import io.confluent.idesidecar.restapi.credentials.ApiKeyAndSecret;
 import io.confluent.idesidecar.restapi.credentials.ApiSecret;
 import io.confluent.idesidecar.restapi.credentials.BasicCredentials;
+import io.confluent.idesidecar.restapi.credentials.MutualTLSCredentials;
+import io.confluent.idesidecar.restapi.credentials.OAuthCredentials;
 import io.confluent.idesidecar.restapi.credentials.Password;
 import io.confluent.idesidecar.restapi.exceptions.Failure;
 import io.confluent.idesidecar.restapi.exceptions.Failure.Error;
@@ -890,6 +892,77 @@ public class ConnectionsResourceTest {
             """
         ),
         new TestInput(
+            "Local spec is valid with new Schema Registry config including minimal OAuth credentials",
+            """
+            {
+              "name": "Connection 1",
+              "type": "LOCAL",
+              "schema_registry": {
+                "uri": "http://localhost:8081",
+                "credentials": {
+                  "tokens_url": "http://localhost/oauth2/token",
+                  "client_id": "my-client-id",
+                  "client_secret": "my-client-secret"
+                }
+              }
+            }
+            """
+        ),
+        new TestInput(
+            "Local spec is valid with new Schema Registry config including complete OAuth credentials",
+            """
+            {
+              "name": "Connection 1",
+              "type": "LOCAL",
+              "schema_registry": {
+                "uri": "http://localhost:8081",
+                "credentials": {
+                  "tokens_url": "http://localhost/oauth2/token",
+                  "client_id": "my-client-id",
+                  "client_secret": "my-client-secret",
+                  "scope": "my-scope",
+                  "connect_timeout_millis": 1000
+                }
+              }
+            }
+            """
+        ),
+        new TestInput(
+            "Local spec is valid with new Schema Registry config including minimal mTLS credentials",
+            """
+            {
+              "name": "Connection 1",
+              "type": "LOCAL",
+              "schema_registry": {
+                "uri": "http://localhost:8081",
+                "credentials": {
+                  "truststore_path": "/path/to/truststore",
+                  "keystore_path": "/path/to/keystore"
+                }
+              }
+            }
+            """
+        ),
+        new TestInput(
+            "Local spec is valid with new Schema Registry config including complete mTLS credentials",
+            """
+            {
+              "name": "Connection 1",
+              "type": "LOCAL",
+              "schema_registry": {
+                "uri": "http://localhost:8081",
+                "credentials": {
+                  "truststore_path": "/path/to/truststore",
+                  "truststore_password": "truststore-password",
+                  "keystore_path": "/path/to/keystore",
+                  "keystore_password": "keystore-password",
+                  "key_password": "key-password"
+                }
+              }
+            }
+            """
+        ),
+        new TestInput(
             "Local spec is invalid without name",
             """
             {
@@ -1259,6 +1332,44 @@ public class ConnectionsResourceTest {
             """
         ),
         new TestInput(
+            "Direct spec is valid with name and Kafka w/ mTLS credentials and no Schema Registry",
+            """
+            {
+              "name": "Some connection name",
+              "type": "DIRECT",
+              "kafka_cluster": {
+                "bootstrap_servers": "localhost:9092",
+                "credentials": {
+                  "truststore_path": "/path/to/truststore",
+                  "truststore_password": "truststore-password",
+                  "keystore_path": "/path/to/keystore",
+                  "keystore_password": "keystore-password",
+                  "key_password": "key-password"
+                }
+              }
+            }
+            """
+        ),
+        new TestInput(
+            "Direct spec is valid with name and Kafka w/ OAuth credentials and no Schema Registry",
+            """
+            {
+              "name": "Some connection name",
+              "type": "DIRECT",
+              "kafka_cluster": {
+                "bootstrap_servers": "localhost:9092",
+                "credentials": {
+                  "tokens_url": "http://localhost/oauth2/token",
+                  "client_id": "my-client-id",
+                  "client_secret": "my-client-secret",
+                  "scope": "my-scope",
+                  "connect_timeout_millis": 1000
+                }
+              }
+            }
+            """
+        ),
+        new TestInput(
             "Direct spec is valid with name and Schema Registry and no Kafka",
             """
             {
@@ -1478,6 +1589,42 @@ public class ConnectionsResourceTest {
                         new ApiKeyAndSecret(
                             "api-key-123",
                             new ApiSecret("api-secret-123456".toCharArray())
+                        )
+                    )
+                )
+        ),
+        new TestInput(
+            "Updated of local config is valid with (new) Schema Registry URI and OAuth credentials",
+            validLocalSpec,
+            validLocalSpec
+                .withoutLocalConfig()
+                .withSchemaRegistry(
+                    new SchemaRegistryConfig(
+                        null,
+                        "http://localhost:8081",
+                        new OAuthCredentials(
+                            "http://localhost/oauth/token",
+                            "client-id",
+                            new Password("client-secret".toCharArray())
+                        )
+                    )
+                )
+        ),
+        new TestInput(
+            "Updated of local config is valid with (new) Schema Registry URI and mTLS credentials",
+            validLocalSpec,
+            validLocalSpec
+                .withoutLocalConfig()
+                .withSchemaRegistry(
+                    new SchemaRegistryConfig(
+                        null,
+                        "http://localhost:8081",
+                        new MutualTLSCredentials(
+                            "/path/to/truststore",
+                            new Password("truststore-secret".toCharArray()),
+                            "/path/to/keystore",
+                            new Password("keystore-secret".toCharArray()),
+                            new Password("key-secret".toCharArray())
                         )
                     )
                 )
