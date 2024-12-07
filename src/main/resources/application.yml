@@ -123,6 +123,8 @@ ide-sidecar:
     direct:
       refresh-status-interval-seconds: 5
       timeout-seconds: 5
+    platform:
+      refresh-status-interval-seconds: 5
   feature-flags:
     refresh-interval-seconds: 60
     ide-project:

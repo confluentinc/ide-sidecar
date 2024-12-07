@@ -78,14 +78,7 @@ public class CCloudOAuthContext implements AuthContext {
     oauthState = createRandomEncodedString(OAUTH_STATE_PARAMETER_LENGTH);
     codeVerifier = createRandomEncodedString(CODE_VERIFIER_LENGTH);
     codeChallenge = createCodeChallenge();
-
-    // If the ArC container is available, select the application-scoped instance of the
-    // `WebClientFactory` so that we can re-use it; otherwise, create a new instance without
-    // dependency injection
-    var container = Arc.container();
-    webClientFactory = (container != null)
-        ? container.select(WebClientFactory.class).get()
-        : new WebClientFactory();
+    webClientFactory = WebClientFactory.getOrCreateFactory();
   }
 
   /**

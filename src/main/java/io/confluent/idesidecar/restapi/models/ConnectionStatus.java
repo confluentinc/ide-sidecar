@@ -26,7 +26,10 @@ public record ConnectionStatus(
     KafkaClusterStatus kafkaCluster,
 
     @JsonProperty("schema_registry")
-    SchemaRegistryStatus schemaRegistry
+    SchemaRegistryStatus schemaRegistry,
+
+    @JsonProperty("mds")
+    MdsStatus mds
 ) implements ConnectionStatusBuilder.With {
 
   // TODO: Remove this once the extension has been updated to use the new status
@@ -54,7 +57,8 @@ public record ConnectionStatus(
   public boolean isConnected() {
     return ccloud != null && ccloud.isConnected()
         || kafkaCluster != null && kafkaCluster.isConnected()
-        || schemaRegistry != null && schemaRegistry.isConnected();
+        || schemaRegistry != null && schemaRegistry.isConnected()
+        || mds != null && mds.isConnected();
   }
 
   public interface StateOwner {
@@ -75,12 +79,14 @@ public record ConnectionStatus(
       new ConnectionStatus(
           null,
           null,
+          null,
           null
       );
 
   public static final ConnectionStatus INITIAL_CCLOUD_STATUS =
       new ConnectionStatus(
           new CCloudStatus(ConnectedState.NONE, null, null, null),
+          null,
           null,
           null
       );
@@ -166,6 +172,28 @@ public record ConnectionStatus(
       @Null
       AuthErrors errors
   ) implements StateOwner, ConnectionStatusSchemaRegistryStatusBuilder.With {
+  }
+
+  @Schema(description = "The status related to the specified Confluent Platform MDS.")
+  @JsonInclude(Include.NON_NULL)
+  @RecordBuilder
+  public record MdsStatus(
+      @Schema(description = "The state of the connection to the specified Confluent Platform MDS.")
+      @JsonProperty(required = true)
+      ConnectedState state,
+
+      @Schema(description = "Information about the authenticated principal, if known.")
+      @JsonProperty
+      @Null
+      UserInfo user,
+
+      @Schema(
+          description = "Errors related to the connection to the specified Confluent Platform MDS."
+      )
+      @JsonProperty
+      @Null
+      AuthErrors errors
+  ) implements StateOwner, ConnectionStatusMdsStatusBuilder.With {
   }
 
   @Schema(description = "The authentication-related status (deprecated).")
