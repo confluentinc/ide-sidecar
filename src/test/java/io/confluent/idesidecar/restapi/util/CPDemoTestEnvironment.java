@@ -1,13 +1,17 @@
 package io.confluent.idesidecar.restapi.util;
 
+import com.github.dockerjava.api.model.HealthCheck;
+import io.confluent.idesidecar.restapi.credentials.Credentials;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
-import io.confluent.idesidecar.restapi.util.cpdemo.CPServerContainer;
-import io.confluent.idesidecar.restapi.util.cpdemo.OpenldapContainer;
+import io.confluent.idesidecar.restapi.util.cpdemo.*;
 import io.confluent.idesidecar.restapi.util.cpdemo.SchemaRegistryContainer;
-import io.confluent.idesidecar.restapi.util.cpdemo.ZookeeperContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.containers.wait.strategy.WaitStrategy;
+import org.testcontainers.lifecycle.Startables;
 
+import java.io.File;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -19,6 +23,7 @@ import java.util.Optional;
 public class CPDemoTestEnvironment implements TestEnvironment {
 
   private Network network;
+  private ToolsContainer tools;
   private ZookeeperContainer zookeeper;
   private OpenldapContainer ldap;
   private CPServerContainer kafka1;
@@ -28,22 +33,27 @@ public class CPDemoTestEnvironment implements TestEnvironment {
   @Override
   public void start() {
     // Run .cp-demo/scripts/start_cp.sh
-    ProcessBuilder pb = new ProcessBuilder(
-        ".cp-demo/scripts/start_cp.sh"
-    );
-    pb.environment().put("CONFLUENT_DOCKER_TAG", "7.5.1");
-    pb.inheritIO();
+    runScript(".cp-demo/scripts/start_cp.sh");
+
+    network = Network.newNetwork();
+
+    tools = new ToolsContainer(network);
+    tools.waitingFor(Wait.forHealthcheck());
+    tools.start();
+    // Add root CA to container (obviates need for supplying it at CLI login '--ca-cert-path')
     try {
-      Process p = pb.start();
-      p.waitFor();
+      tools.execInContainer(
+          "bash",
+          "-c",
+          "cp /etc/kafka/secrets/snakeoil-ca-1.crt /usr/local/share/ca-certificates && /usr/sbin/update-ca-certificates"
+      );
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
 
-    network = Network.newNetwork();
     zookeeper = new ZookeeperContainer("7.5.1", network);
-    zookeeper.start();
     zookeeper.waitingFor(Wait.forHealthcheck());
+    zookeeper.start();
 
     ldap = new OpenldapContainer(network);
     ldap.start();
@@ -79,10 +89,18 @@ public class CPDemoTestEnvironment implements TestEnvironment {
         "KAFKA_JMX_PORT", "9992"
     ));
 
-    kafka1.start();
-    kafka2.start();
-    kafka1.waitingFor(Wait.forHealthcheck());
-    kafka2.waitingFor(Wait.forHealthcheck());
+    // Must be started in parallel
+    Startables.deepStart(List.of(kafka1, kafka2)).join();
+
+    try {
+      tools.execInContainer(
+          "bash",
+          "-c",
+          "/tmp/helper/create-role-bindings.sh"
+      );
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
 
     try {
       kafka1.execInContainer(
@@ -97,8 +115,25 @@ public class CPDemoTestEnvironment implements TestEnvironment {
       throw new RuntimeException(e);
     }
     schemaRegistry = new SchemaRegistryContainer("7.5.1", network);
+
     schemaRegistry.start();
-    schemaRegistry.waitingFor(Wait.forHealthcheck());
+  }
+
+  private static void runScript(String script) {
+    ProcessBuilder pb = new ProcessBuilder(script);
+    // pb.directory(new File(".cp-demo/scripts"));
+    pb.environment().put("CONFLUENT_DOCKER_TAG", "7.5.1");
+    pb.environment().put("REPOSITORY", "confluentinc");
+    pb.inheritIO();
+    try {
+      Process p = pb.start();
+      p.waitFor();
+      if (p.exitValue() != 0) {
+        throw new RuntimeException("Failed to run %s".formatted(script));
+      }
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @Override
@@ -117,6 +152,9 @@ public class CPDemoTestEnvironment implements TestEnvironment {
     }
     if (schemaRegistry != null) {
       schemaRegistry.stop();
+    }
+    if (tools != null) {
+      tools.stop();
     }
     if (network != null) {
       network.close();
@@ -140,11 +178,7 @@ public class CPDemoTestEnvironment implements TestEnvironment {
                 false,
                 false
             ),
-            new ConnectionSpec.SchemaRegistryConfig(
-                null,
-                "http://localhost:%d".formatted(schemaRegistry.getPort()),
-                null
-            )
+            null
         )
     );
   }

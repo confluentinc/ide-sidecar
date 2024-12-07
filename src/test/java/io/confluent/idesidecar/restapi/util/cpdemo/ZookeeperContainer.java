@@ -27,7 +27,7 @@ public class ZookeeperContainer extends GenericContainer<ZookeeperContainer> {
         .withEnv(getZookeeperEnv())
         .withCreateContainerCmdModifier(cmd -> cmd
             .withHealthcheck(new HealthCheck()
-              .withTest(List.of("CMD", "echo", "srvr", "|", "nc", "zookeeper", "2181", "||", "exit", "1"))
+              .withTest(List.of("CMD", "bash", "-c", "echo srvr | nc zookeeper 2181 || exit 1"))
               .withInterval(10_000_000_000L)
               .withRetries(20))
             .withName(CONTAINER_NAME)

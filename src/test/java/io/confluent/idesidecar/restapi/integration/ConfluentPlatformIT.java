@@ -2,6 +2,7 @@ package io.confluent.idesidecar.restapi.integration;
 
 import io.confluent.idesidecar.restapi.kafkarest.RecordsV3DryRunSuite;
 import io.confluent.idesidecar.restapi.kafkarest.RecordsV3Suite;
+import io.confluent.idesidecar.restapi.kafkarest.RecordsV3WithoutSRSuite;
 import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
 import io.confluent.idesidecar.restapi.util.CPDemoTestEnvironment;
 import io.confluent.idesidecar.restapi.util.TestEnvironment;
@@ -41,7 +42,7 @@ public class ConfluentPlatformIT {
   @QuarkusIntegrationTest
   @Tag("io.confluent.common.utils.IntegrationTest")
   @TestProfile(NoAccessFilterProfile.class)
-  static class RecordTests extends AbstractIT implements RecordsV3Suite, RecordsV3DryRunSuite {
+  static class RecordTests extends AbstractIT implements RecordsV3WithoutSRSuite {
     @Override
     public TestEnvironment environment() {
       return TEST_ENVIRONMENT;

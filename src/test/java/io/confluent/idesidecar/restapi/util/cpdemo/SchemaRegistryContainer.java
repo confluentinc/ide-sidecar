@@ -3,6 +3,7 @@ package io.confluent.idesidecar.restapi.util.cpdemo;
 import com.github.dockerjava.api.model.HealthCheck;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
+import org.testcontainers.containers.wait.strategy.Wait;
 
 import java.util.HashMap;
 import java.util.List;
@@ -22,9 +23,14 @@ public class SchemaRegistryContainer extends GenericContainer<SchemaRegistryCont
     super.withEnv(getSchemaRegistryEnv());
 
     super.withCreateContainerCmdModifier(cmd -> cmd.withHealthcheck(new HealthCheck()
-            .withTest(List.of("CMD", "curl", "--user", "superUser:superUser", "--fail",
-              "--silent", "--insecure", "https://schemaregistry:%d/subjects".formatted(PORT),
-              "--output", "/dev/null", "||", "exit", "1"))
+            .withTest(List.of(
+                "CMD",
+                "bash",
+                "-c",
+                ("curl --user superUser:superUser --fail --silent " +
+                    "--insecure https://schemaregistry:%d/subjects --output /dev/null " +
+                    "|| exit 1").formatted(PORT))
+            )
             .withRetries(20)
             // 10s
             .withInterval(10_000_000_000L)
@@ -33,6 +39,7 @@ public class SchemaRegistryContainer extends GenericContainer<SchemaRegistryCont
         .withName(CONTAINER_NAME)
         .withHostName(CONTAINER_NAME)
     );
+    super.waitingFor(Wait.forHealthcheck());
     super.withFileSystemBind(
         ".cp-demo/scripts/security",
         "/etc/kafka/secrets"
