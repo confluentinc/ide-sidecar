@@ -11,6 +11,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.confluent.idesidecar.restapi.credentials.ApiKeyAndSecret;
 import io.confluent.idesidecar.restapi.credentials.BasicCredentials;
 import io.confluent.idesidecar.restapi.credentials.Credentials;
+import io.confluent.idesidecar.restapi.credentials.MutualTLSCredentials;
+import io.confluent.idesidecar.restapi.credentials.OAuthCredentials;
 import io.confluent.idesidecar.restapi.exceptions.Failure;
 import io.confluent.idesidecar.restapi.exceptions.Failure.Error;
 import io.confluent.idesidecar.restapi.util.CCloud.KafkaEndpoint;
@@ -309,6 +311,8 @@ public record ConnectionSpec(
           oneOf = {
               BasicCredentials.class,
               ApiKeyAndSecret.class,
+              MutualTLSCredentials.class,
+              OAuthCredentials.class,
           },
           nullable = true
       )
@@ -412,6 +416,8 @@ public record ConnectionSpec(
           oneOf = {
               BasicCredentials.class,
               ApiKeyAndSecret.class,
+              MutualTLSCredentials.class,
+              OAuthCredentials.class,
           },
           nullable = true
       )
