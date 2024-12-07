@@ -36,6 +36,7 @@ public class ZookeeperContainer extends GenericContainer<ZookeeperContainer> {
         ".cp-demo/scripts/security/",
         "/etc/kafka/secrets"
     );
+    super.withReuse(true);
   }
 
   public ZookeeperContainer(Network network) {

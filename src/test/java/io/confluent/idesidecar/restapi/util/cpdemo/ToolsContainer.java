@@ -29,6 +29,8 @@ public class ToolsContainer extends GenericContainer<ToolsContainer> {
     super.waitingFor(Wait.forHealthcheck());
     super.withCreateContainerCmdModifier(cmd ->
         cmd
+            .withName(CONTAINER_NAME)
+            .withHostName(CONTAINER_NAME)
             .withEntrypoint("/bin/bash")
             .withTty(true)
             .withHealthcheck(
@@ -42,6 +44,7 @@ public class ToolsContainer extends GenericContainer<ToolsContainer> {
                     .withInterval(TimeUnit.SECONDS.toNanos(1))
             )
     );
+    super.withReuse(true);
   }
 
   public ToolsContainer(Network network) {
