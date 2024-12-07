@@ -3,6 +3,8 @@ package io.confluent.idesidecar.restapi.util.cpdemo;
 import com.github.dockerjava.api.model.HealthCheck;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
+import org.testcontainers.containers.wait.strategy.Wait;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -55,17 +57,14 @@ public class CPServerContainer extends GenericContainer<CPServerContainer> {
             .withAliases(containerName)
             .withName(containerName)
             .withHostName(containerName)
-            .withHealthcheck(new HealthCheck()
-                .withTest(List.of("CMD",
-                    "curl", "--user", "superUser:superUser", "-fail", "--silent", "--insecure",
-                    "https://%s:%d/kafka/v3/clusters/".formatted(containerName, mdsPort),
-                    "--output", "/dev/null", "||", "exit", "1"))
-                // 10 seconds
-                .withInterval(10_000_000_000L)
-                .withRetries(25)
-                // 20 seconds
-                .withStartPeriod(20_000_000_000L)
-            )
+                .withHealthcheck(new HealthCheck()
+                    .withTest(List.of(
+                        "CMD", "bash", "-c", "curl --user superUser:superUser -fail --silent --insecure https://%s:%d/kafka/v3/clusters/ --output /dev/null || exit 1"
+                            .formatted(containerName, mdsPort)))
+                    .withInterval(10_000_000_000L)
+                    .withRetries(25)
+                    .withStartPeriod(20_000_000_000L)
+                )
         );
 
     super.addFixedExposedPort(mdsPort, mdsPort);
@@ -73,6 +72,9 @@ public class CPServerContainer extends GenericContainer<CPServerContainer> {
     super.addFixedExposedPort(tokenPort, tokenPort);
     super.addFixedExposedPort(sslPort, sslPort);
     super.addFixedExposedPort(clearPort, clearPort);
+
+    // This just sets the Waiting strategy, doesn't actually wait. I know, it's confusing.
+    super.waitingFor(Wait.forHealthcheck());
 
     super.withFileSystemBind(
         ".cp-demo/scripts/security/keypair",
@@ -259,7 +261,7 @@ public class CPServerContainer extends GenericContainer<CPServerContainer> {
     env.put("KAFKA_CONFLUENT_AUTHORIZER_ACCESS_RULE_PROVIDERS", "CONFLUENT,ZK_ACL");
     env.put("KAFKA_SUPER_USERS", "User:admin;User:mds;User:superUser;User:ANONYMOUS");
     env.put("KAFKA_LOG4J_LOGGERS", "kafka.authorizer.logger=INFO");
-    env.put("KAFKA_LOG4J_ROOT_LOGLEVEL", "DEBUG");
+    env.put("KAFKA_LOG4J_ROOT_LOGLEVEL", "INFO");
 
     env.put("KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR", "2");
     env.put("KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR", "2");
