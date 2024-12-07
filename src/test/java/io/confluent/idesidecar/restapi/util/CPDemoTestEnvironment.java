@@ -3,9 +3,14 @@ package io.confluent.idesidecar.restapi.util;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.util.cpdemo.*;
 import io.confluent.idesidecar.restapi.util.cpdemo.SchemaRegistryContainer;
+import org.junit.runner.Description;
+import org.junit.runners.model.Statement;
+import org.junitpioneer.jupiter.SetEnvironmentVariable;
+import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.lifecycle.Startables;
+import org.testcontainers.utility.TestcontainersConfiguration;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -15,6 +20,7 @@ import java.util.Optional;
  * Zookeeper, OpenLDAP, and Schema Registry.
  * Modeled after https://github.com/confluentinc/cp-demo/blob/7.7.1-post/docker-compose.yml
  */
+@SetEnvironmentVariable(key = "TESTCONTAINERS_REUSE_ENABLE", value = "true")
 public class CPDemoTestEnvironment implements TestEnvironment {
 
   private Network network;
@@ -27,19 +33,35 @@ public class CPDemoTestEnvironment implements TestEnvironment {
 
   @Override
   public void start() {
-    network = Network.newNetwork();
+    network = createReusableNetwork("cp-demo");
+    // Check if zookeeper, kafka1, kafka2, ldap, schemaRegistry are already running
+    var cpDemoRunning = DockerClientFactory
+        .instance()
+        .client()
+        .listContainersCmd()
+        .withShowAll(true)
+        .exec()
+        .stream()
+        .anyMatch(container -> container.getNames()[0].contains("zookeeper")
+            || container.getNames()[0].contains("kafka1")
+            || container.getNames()[0].contains("kafka2")
+            || container.getNames()[0].contains("openldap")
+            || container.getNames()[0].contains("schemaregistry")
+        );
 
     tools = new ToolsContainer(network);
     tools.start();
     // Add root CA to container (obviates need for supplying it at CLI login '--ca-cert-path')
-    try {
-      tools.execInContainer(
-          "bash",
-          "-c",
-          "cp /etc/kafka/secrets/snakeoil-ca-1.crt /usr/local/share/ca-certificates && /usr/sbin/update-ca-certificates"
-      );
-    } catch (Exception e) {
-      throw new RuntimeException(e);
+    if (!cpDemoRunning) {
+      try {
+        tools.execInContainer(
+            "bash",
+            "-c",
+            "cp /etc/kafka/secrets/snakeoil-ca-1.crt /usr/local/share/ca-certificates && /usr/sbin/update-ca-certificates"
+        );
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
     }
 
     zookeeper = new ZookeeperContainer("7.5.1", network);
@@ -82,74 +104,38 @@ public class CPDemoTestEnvironment implements TestEnvironment {
 
     // Must be started in parallel
     Startables.deepStart(List.of(kafka1, kafka2)).join();
-
-    try {
-      tools.execInContainer(
-          "bash",
-          "-c",
-          "/tmp/helper/create-role-bindings.sh"
-      );
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-
-    try {
-      kafka1.execInContainer(
-          "kafka-configs",
-          "--bootstrap-server", "kafka1:12091",
-          "--entity-type", "topics",
-          "--entity-name", "_confluent-metadata-auth",
-          "--alter",
-          "--add-config", "min.insync.replicas=1"
-      );
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-    schemaRegistry = new SchemaRegistryContainer("7.5.1", network);
-
-    schemaRegistry.start();
-  }
-
-  private static void runScript(String script) {
-    ProcessBuilder pb = new ProcessBuilder(script);
-    // pb.directory(new File(".cp-demo/scripts"));
-    pb.environment().put("CONFLUENT_DOCKER_TAG", "7.5.1");
-    pb.environment().put("REPOSITORY", "confluentinc");
-    pb.inheritIO();
-    try {
-      Process p = pb.start();
-      p.waitFor();
-      if (p.exitValue() != 0) {
-        throw new RuntimeException("Failed to run %s".formatted(script));
+    if (!cpDemoRunning) {
+      try {
+        tools.execInContainer(
+            "bash",
+            "-c",
+            "/tmp/helper/create-role-bindings.sh"
+        );
+      } catch (Exception e) {
+        throw new RuntimeException(e);
       }
-    } catch (Exception e) {
-      throw new RuntimeException(e);
+
+      try {
+        kafka1.execInContainer(
+            "kafka-configs",
+            "--bootstrap-server", "kafka1:12091",
+            "--entity-type", "topics",
+            "--entity-name", "_confluent-metadata-auth",
+            "--alter",
+            "--add-config", "min.insync.replicas=1"
+        );
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
     }
+
+    schemaRegistry = new SchemaRegistryContainer("7.5.1", network);
+    schemaRegistry.start();
   }
 
   @Override
   public void shutdown() {
-    if (zookeeper != null) {
-      zookeeper.stop();
-    }
-    if (ldap != null) {
-      ldap.stop();
-    }
-    if (kafka1 != null) {
-      kafka1.stop();
-    }
-    if (kafka2 != null) {
-      kafka2.stop();
-    }
-    if (schemaRegistry != null) {
-      schemaRegistry.stop();
-    }
-    if (tools != null) {
-      tools.stop();
-    }
-    if (network != null) {
-      network.close();
-    }
+
   }
 
   @Override
@@ -172,5 +158,54 @@ public class CPDemoTestEnvironment implements TestEnvironment {
             null
         )
     );
+  }
+
+  /**
+   * Taken from https://github.com/testcontainers/testcontainers-java/issues/3081#issuecomment-1553064952
+   */
+  public static Network createReusableNetwork(String name) {
+    if (!TestcontainersConfiguration.getInstance().environmentSupportsReuse()) {
+      return Network.newNetwork();
+    }
+
+    String id = DockerClientFactory
+        .instance()
+        .client()
+        .listNetworksCmd()
+        .exec()
+        .stream()
+        .filter(network ->
+            network.getName().equals(name)
+                && network.getLabels().equals(DockerClientFactory.DEFAULT_LABELS)
+        )
+        .map(com.github.dockerjava.api.model.Network::getId)
+        .findFirst()
+        .orElseGet(() -> DockerClientFactory
+            .instance()
+            .client()
+            .createNetworkCmd()
+            .withName(name)
+            .withCheckDuplicate(true)
+            .withLabels(DockerClientFactory.DEFAULT_LABELS)
+            .exec()
+            .getId()
+        );
+
+    return new Network() {
+      @Override
+      public Statement apply(Statement base, Description description) {
+        return base;
+      }
+
+      @Override
+      public String getId() {
+        return id;
+      }
+
+      @Override
+      public void close() {
+        // never close
+      }
+    };
   }
 }

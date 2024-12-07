@@ -47,6 +47,7 @@ public class SchemaRegistryContainer extends GenericContainer<SchemaRegistryCont
         ".cp-demo/scripts/security/keypair",
         "/tmp/conf"
     );
+    super.withReuse(true);
   }
 
   public SchemaRegistryContainer(Network network) {

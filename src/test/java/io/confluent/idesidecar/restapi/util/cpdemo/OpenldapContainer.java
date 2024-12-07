@@ -26,6 +26,7 @@ public class OpenldapContainer extends GenericContainer<OpenldapContainer> {
         .withName(CONTAINER_NAME)
         .withHostName(CONTAINER_NAME)
     );
+    super.withReuse(true);
   }
 
   public OpenldapContainer(Network network) {

@@ -42,8 +42,6 @@ public class CPServerContainer extends GenericContainer<CPServerContainer> {
     this.clearPort = clearPort;
 
     super.withNetwork(network);
-    // TODO: I'm not sure what this does but it looks promising.
-    super.withAccessToHost(true);
     super.withNetworkAliases(containerName);
     super
         .withEnv(kafkaZookeeperEnv())
@@ -88,6 +86,7 @@ public class CPServerContainer extends GenericContainer<CPServerContainer> {
         ".cp-demo/scripts/security",
         "/etc/kafka/secrets"
     );
+    super.withReuse(true);
   }
 
   /**
@@ -137,12 +136,19 @@ public class CPServerContainer extends GenericContainer<CPServerContainer> {
     var env = new HashMap<String, String>();
     env.put("KAFKA_LISTENER_SECURITY_PROTOCOL_MAP", "INTERNAL:SASL_PLAINTEXT,TOKEN:SASL_SSL,SSL:SSL,CLEAR:PLAINTEXT");
     env.put("KAFKA_INTER_BROKER_LISTENER_NAME", "INTERNAL");
-    env.put("KAFKA_ADVERTISED_LISTENERS",
+    env.put("KAFKA_LISTENERS",
         "INTERNAL://%s:%d,TOKEN://%s:%d,SSL://%s:%d,CLEAR://%s:%d".formatted(
             containerName, internalPort,
             containerName, tokenPort,
             containerName, sslPort,
             containerName, clearPort
+        ));
+    env.put("KAFKA_ADVERTISED_LISTENERS",
+        "INTERNAL://%s:%d,TOKEN://%s:%d,SSL://%s:%d,CLEAR://%s:%d".formatted(
+            containerName, internalPort,
+            containerName, tokenPort,
+            "localhost", sslPort,
+            "localhost", clearPort
         ));
     env.put("KAFKA_SASL_MECHANISM_INTER_BROKER_PROTOCOL", "PLAIN");
     env.put("KAFKA_SASL_ENABLED_MECHANISMS", "PLAIN, OAUTHBEARER");
