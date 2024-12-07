@@ -3,7 +3,9 @@ package io.confluent.idesidecar.restapi.util.cpdemo;
 import com.github.dockerjava.api.model.HealthCheck;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
+import org.testcontainers.containers.wait.strategy.Wait;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class ToolsContainer extends GenericContainer<ToolsContainer> {
   private static final String DEFAULT_IMAGE = "cnfldemos/tools";
@@ -24,6 +26,7 @@ public class ToolsContainer extends GenericContainer<ToolsContainer> {
         ".cp-demo/scripts/helper",
         "/tmp/helper"
     );
+    super.waitingFor(Wait.forHealthcheck());
     super.withCreateContainerCmdModifier(cmd ->
         cmd
             .withEntrypoint("/bin/bash")
@@ -33,8 +36,11 @@ public class ToolsContainer extends GenericContainer<ToolsContainer> {
                     .withTest(List.of(
                         "CMD",
                         "bash", "-c", "echo 'health check'"
-                    )
-            ))
+                    ))
+                    .withStartPeriod(TimeUnit.SECONDS.toNanos(3))
+                    .withRetries(10)
+                    .withInterval(TimeUnit.SECONDS.toNanos(1))
+            )
     );
   }
 

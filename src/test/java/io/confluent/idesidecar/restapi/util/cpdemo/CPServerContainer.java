@@ -8,6 +8,7 @@ import org.testcontainers.containers.wait.strategy.Wait;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public class CPServerContainer extends GenericContainer<CPServerContainer> {
   private static final String DEFAULT_IMAGE = "confluentinc/cp-server";
@@ -61,9 +62,8 @@ public class CPServerContainer extends GenericContainer<CPServerContainer> {
                     .withTest(List.of(
                         "CMD", "bash", "-c", "curl --user superUser:superUser -fail --silent --insecure https://%s:%d/kafka/v3/clusters/ --output /dev/null || exit 1"
                             .formatted(containerName, mdsPort)))
-                    .withInterval(10_000_000_000L)
+                    .withInterval(TimeUnit.SECONDS.toNanos(2))
                     .withRetries(25)
-                    .withStartPeriod(20_000_000_000L)
                 )
         );
 

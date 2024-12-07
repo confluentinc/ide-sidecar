@@ -1,16 +1,11 @@
 package io.confluent.idesidecar.restapi.util;
 
-import com.github.dockerjava.api.model.HealthCheck;
-import io.confluent.idesidecar.restapi.credentials.Credentials;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.util.cpdemo.*;
 import io.confluent.idesidecar.restapi.util.cpdemo.SchemaRegistryContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
-import org.testcontainers.containers.wait.strategy.WaitStrategy;
 import org.testcontainers.lifecycle.Startables;
-
-import java.io.File;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -32,13 +27,9 @@ public class CPDemoTestEnvironment implements TestEnvironment {
 
   @Override
   public void start() {
-    // Run .cp-demo/scripts/start_cp.sh
-    runScript(".cp-demo/scripts/start_cp.sh");
-
     network = Network.newNetwork();
 
     tools = new ToolsContainer(network);
-    tools.waitingFor(Wait.forHealthcheck());
     tools.start();
     // Add root CA to container (obviates need for supplying it at CLI login '--ca-cert-path')
     try {
