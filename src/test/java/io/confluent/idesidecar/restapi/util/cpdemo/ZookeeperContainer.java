@@ -3,12 +3,10 @@ package io.confluent.idesidecar.restapi.util.cpdemo;
 import com.github.dockerjava.api.model.HealthCheck;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
-import org.testcontainers.images.builder.Transferable;
-import org.testcontainers.utility.MountableFile;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public class ZookeeperContainer extends GenericContainer<ZookeeperContainer> {
   private static final int ZOOKEEPER_PORT = 2181;
@@ -27,9 +25,9 @@ public class ZookeeperContainer extends GenericContainer<ZookeeperContainer> {
         .withEnv(getZookeeperEnv())
         .withCreateContainerCmdModifier(cmd -> cmd
             .withHealthcheck(new HealthCheck()
-              .withTest(List.of("CMD", "bash", "-c", "echo srvr | nc zookeeper 2181 || exit 1"))
-              .withInterval(10_000_000_000L)
-              .withRetries(20))
+                .withTest(List.of("CMD", "bash", "-c", "echo srvr | nc zookeeper 2181 || exit 1"))
+                .withInterval(TimeUnit.SECONDS.toNanos(2))
+                .withRetries(25))
             .withName(CONTAINER_NAME)
             .withHostName(CONTAINER_NAME)
         );

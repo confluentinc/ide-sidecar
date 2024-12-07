@@ -8,6 +8,7 @@ import org.testcontainers.containers.wait.strategy.Wait;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public class SchemaRegistryContainer extends GenericContainer<SchemaRegistryContainer> {
   private static final Integer PORT = 8085;
@@ -31,10 +32,8 @@ public class SchemaRegistryContainer extends GenericContainer<SchemaRegistryCont
                     "--insecure https://schemaregistry:%d/subjects --output /dev/null " +
                     "|| exit 1").formatted(PORT))
             )
-            .withRetries(20)
-            // 10s
-            .withInterval(10_000_000_000L)
-            .withStartPeriod(10_000_000_000L)
+            .withInterval(TimeUnit.SECONDS.toNanos(2))
+            .withRetries(25)
         )
         .withName(CONTAINER_NAME)
         .withHostName(CONTAINER_NAME)
