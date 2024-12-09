@@ -23,7 +23,6 @@ import org.eclipse.microprofile.config.ConfigProvider;
  *   <li>`ide-sidecar.schema-fetch-error-ttl`: The time-to-live duration for schema fetch errors in the cache.</li>
  * </ul>
  */
-
 @ApplicationScoped
 public class SchemaErrors {
 
