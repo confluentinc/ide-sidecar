@@ -48,7 +48,7 @@ public class SchemaErrors {
 
   }
 
-  private static final Duration schemaFetchErrorTtl = Duration.ofSeconds(
+  private static final Duration SCHEMA_FETCH_ERROR_TTL = Duration.ofSeconds(
       ConfigProvider
           .getConfig()
           .getValue(
@@ -66,7 +66,7 @@ public class SchemaErrors {
   private Cache<SchemaId, Error> getSubCache(ConnectionId key) {
     return cacheOfCaches.computeIfAbsent(
         key,
-        k -> Caffeine.newBuilder().expireAfterAccess(schemaFetchErrorTtl).build());
+        k -> Caffeine.newBuilder().expireAfterAccess(SCHEMA_FETCH_ERROR_TTL).build());
   }
 
   /**
