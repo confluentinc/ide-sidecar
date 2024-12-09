@@ -126,7 +126,7 @@ public class RecordDeserializer {
   ) {
     try (
         var outputStream = new ByteArrayOutputStream();
-        var avroDeserializer = new KafkaAvroDeserializer(sr)
+        var avroDeserializer = new KafkaAvroDeserializer(sr);
     ) {
       avroDeserializer.configure(SERDE_CONFIGS, isKey);
       var avroRecord = (GenericData.Record) avroDeserializer.deserialize(topicName, bytes);
