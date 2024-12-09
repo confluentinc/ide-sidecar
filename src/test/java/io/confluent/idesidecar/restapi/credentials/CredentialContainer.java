@@ -4,4 +4,5 @@ public record CredentialContainer(
     String name,
     Credentials credentials
 ) {
+
 }

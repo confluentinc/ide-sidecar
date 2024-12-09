@@ -11,6 +11,7 @@ import jakarta.enterprise.context.ApplicationScoped;
  */
 @ApplicationScoped
 public class ConfluentCloudSchemaRegistryClusterStrategy extends ClusterStrategy {
+
   private static final String TARGET_SR_CLUSTER_HEADER = "target-sr-cluster";
 
   @Override

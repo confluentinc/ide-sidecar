@@ -1,6 +1,6 @@
 package io.confluent.idesidecar.restapi.util;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
@@ -29,10 +29,10 @@ class TimeUtilTest {
   ) {
     var duration = Duration.ofMillis(
         millis
-        + TimeUnit.SECONDS.toMillis(seconds)
-        + TimeUnit.MINUTES.toMillis(minutes)
-        + TimeUnit.HOURS.toMillis(hours)
-        + TimeUnit.DAYS.toMillis(days)
+            + TimeUnit.SECONDS.toMillis(seconds)
+            + TimeUnit.MINUTES.toMillis(minutes)
+            + TimeUnit.HOURS.toMillis(hours)
+            + TimeUnit.DAYS.toMillis(days)
     );
     assertEquals(
         expected,

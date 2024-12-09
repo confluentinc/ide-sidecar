@@ -20,9 +20,10 @@ public final class PortablePathUtil {
   }
 
   /**
-   * Converts the provided paths to a portable path representation.
-   * Why use {@code File.separator}? I'll let user "Pointy" from StackOverflow explain:
+   * Converts the provided paths to a portable path representation. Why use {@code File.separator}?
+   * I'll let user "Pointy" from StackOverflow explain:
    * <a href="https://stackoverflow.com/a/2417515">https://stackoverflow.com/a/2417515</a>
+   *
    * @param paths the paths to convert
    * @return the portable path
    */

@@ -17,8 +17,8 @@ public enum CloudProvider {
    * case-insensitive match ignoring leading and trailing whitespace.
    *
    * @param literal the string literal to parse
-   * @return the corresponding {@link CloudProvider} enum, or {@link #NONE} if the supplied
-   *         literal is null or does not correspond to a particular literal.
+   * @return the corresponding {@link CloudProvider} enum, or {@link #NONE} if the supplied literal
+   * is null or does not correspond to a particular literal.
    */
   public static CloudProvider of(String literal) {
     if (literal == null) {

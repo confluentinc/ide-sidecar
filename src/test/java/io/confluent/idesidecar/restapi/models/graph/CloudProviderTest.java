@@ -42,9 +42,9 @@ class CloudProviderTest {
     );
   }
 
-  protected void assertParseProvider(CloudProvider expected, String...values) {
+  protected void assertParseProvider(CloudProvider expected, String... values) {
     Stream.of(values).forEach(value -> {
-        assertSame(expected, CloudProvider.of(value));
+      assertSame(expected, CloudProvider.of(value));
     });
   }
 

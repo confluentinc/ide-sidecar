@@ -1,6 +1,9 @@
 package io.confluent.idesidecar.restapi.exceptions;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -37,7 +40,7 @@ class FailureTest {
     assertNull(error.title());
     assertNull(error.code());
     var source = error.source();
-    assertTrue(source instanceof ObjectNode);
+    assertInstanceOf(ObjectNode.class, source);
     assertTrue(source.isEmpty());
   }
 

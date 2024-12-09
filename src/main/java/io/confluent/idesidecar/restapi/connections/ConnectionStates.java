@@ -20,15 +20,15 @@ public final class ConnectionStates {
    * @param spec     the connection spec.
    * @param listener the listener; may be null if no listener is required
    * @return A {@link CCloudConnectionState}, {@link LocalConnectionState}, or
-   *         {@link PlatformConnectionState}.
+   * {@link PlatformConnectionState}.
    */
   public static ConnectionState from(
       @NotNull ConnectionSpec spec,
       @Nullable StateChangedListener listener
   ) {
     return switch (spec.type()) {
-      case CCLOUD   -> new CCloudConnectionState(spec, listener);
-      case LOCAL    -> new LocalConnectionState(spec, listener);
+      case CCLOUD -> new CCloudConnectionState(spec, listener);
+      case LOCAL -> new LocalConnectionState(spec, listener);
       case DIRECT -> new DirectConnectionState(spec, listener);
       case PLATFORM -> new PlatformConnectionState(spec, listener);
     };

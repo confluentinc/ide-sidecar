@@ -41,8 +41,8 @@ public interface TemplateRegistryService {
   Map<String, byte[]> getTemplateSrcContents(String templateName);
 
   /**
-   * Get the static contents of the template as a map of file names to file contents. These
-   * static files must not be rendered but should be copied as-is.
+   * Get the static contents of the template as a map of file names to file contents. These static
+   * files must not be rendered but should be copied as-is.
    */
   Map<String, byte[]> getTemplateStaticContents(String templateName);
 }

@@ -27,7 +27,8 @@ class ApiKeyAndSecretTest extends RedactedTestBase<ApiKeyAndSecret> {
   @Test
   void shouldGetHttpClientHeaders() {
     var key = "ABCDEFGH12345678";
-    var keyAndSecret = new ApiKeyAndSecret(key, new ApiSecret("K1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0".toCharArray()));
+    var keyAndSecret = new ApiKeyAndSecret(key, new ApiSecret(
+        "K1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0".toCharArray()));
     var headers = keyAndSecret.httpClientHeaders();
     var authValue = headers.orElseThrow().get(AUTHORIZATION);
     assertEquals(

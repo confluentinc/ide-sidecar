@@ -192,8 +192,8 @@ public class LocalTemplateRegistryService implements TemplateRegistryService {
   /**
    * Stream the contents of a directory, applying a reader function to each file.
    *
-   * @return stream of entries where the key is the relative path of the file and
-   *         the value is the result of applying the reader function to the file.
+   * @return stream of entries where the key is the relative path of the file and the value is the
+   * result of applying the reader function to the file.
    */
   private static <T> Stream<Entry<String, T>> streamContents(
       Path directory, Function<Path, T> reader

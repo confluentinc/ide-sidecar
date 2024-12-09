@@ -91,7 +91,7 @@ public record CCloudSchemaRegistry(
 
   public boolean matches(CCloudSearchCriteria criteria) {
     return criteria.environmentId().test(environment != null ? environment.id() : "")
-           && criteria.provider().test(provider)
-           && criteria.region().test(region);
+        && criteria.provider().test(provider)
+        && criteria.region().test(region);
   }
 }

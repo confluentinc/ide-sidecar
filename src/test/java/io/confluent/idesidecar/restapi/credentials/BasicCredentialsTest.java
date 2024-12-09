@@ -27,7 +27,8 @@ class BasicCredentialsTest extends RedactedTestBase<BasicCredentials> {
   @Test
   void shouldGetHttpClientHeaders() {
     var username = "ABCDEFGH12345678";
-    var basicCreds = new BasicCredentials(username, new Password("K1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0".toCharArray()));
+    var basicCreds = new BasicCredentials(username, new Password(
+        "K1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0".toCharArray()));
     var headers = basicCreds.httpClientHeaders();
     var authValue = headers.orElseThrow().get(AUTHORIZATION);
     assertEquals(

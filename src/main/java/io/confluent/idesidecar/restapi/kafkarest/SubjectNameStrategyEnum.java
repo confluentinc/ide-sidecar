@@ -5,7 +5,6 @@ import io.confluent.kafka.serializers.subject.RecordNameStrategy;
 import io.confluent.kafka.serializers.subject.TopicNameStrategy;
 import io.confluent.kafka.serializers.subject.TopicRecordNameStrategy;
 import io.confluent.kafka.serializers.subject.strategy.SubjectNameStrategy;
-
 import java.util.Optional;
 
 public enum SubjectNameStrategyEnum {

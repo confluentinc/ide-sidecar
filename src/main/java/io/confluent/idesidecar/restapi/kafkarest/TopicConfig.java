@@ -1,12 +1,11 @@
 package io.confluent.idesidecar.restapi.kafkarest;
 
 import io.soabase.recordbuilder.core.RecordBuilder;
+import java.util.List;
 import org.apache.kafka.clients.admin.ConfigEntry;
 
-import java.util.List;
-
 @RecordBuilder
-public record TopicConfig (
+public record TopicConfig(
     String clusterId,
     String topicName,
     String name,

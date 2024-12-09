@@ -36,6 +36,7 @@ import java.util.Optional;
  */
 @ApplicationScoped
 public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
+
   static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
   static final Base64.Decoder BASE64_DECODER = Base64.getDecoder();
   static final Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
@@ -110,14 +111,14 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
       LOGGER.error("Error parsing the messages from ccloud : \n message ='"
           + rawTopicRowsResponse + "' \n Error: '" + e.getMessage() + "'");
       throw new ProcessorFailedException(
-              context.failf(
-                  500,
-                  "We tried to consume records from the topic=\"%s\" (cluster_id=\"%s\") but "
+          context.failf(
+              500,
+              "We tried to consume records from the topic=\"%s\" (cluster_id=\"%s\") but "
                   + "observed the following error: %s.",
-                  context.getTopicName(),
-                  context.getClusterId(),
-                  rawTopicRowsResponse)
-          );
+              context.getTopicName(),
+              context.getClusterId(),
+              rawTopicRowsResponse)
+      );
     }
   }
 

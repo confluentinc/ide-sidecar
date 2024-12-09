@@ -27,7 +27,7 @@ class CredentialContainerTest extends RedactedTestBase<CredentialContainer> {
         JsonParseException.class,
         () -> MAPPER.readValue(
             "credentials/container_with_unknown_credential.json",
-              CredentialContainer.class
+            CredentialContainer.class
         )
     );
   }

@@ -26,7 +26,8 @@ class TemplateManifestTest {
 
   @BeforeAll
   static void setUp() {
-    System.setProperty("ide-sidecar.template-registries.supported-languages", "java,python,go,node");
+    System.setProperty("ide-sidecar.template-registries.supported-languages",
+        "java,python,go,node");
   }
 
   @Test
@@ -42,8 +43,8 @@ class TemplateManifestTest {
     assertEquals("Python Consumer Application", manifest.displayName());
     assertEquals(
         "A simple Python consumer that reads messages from a topic in Confluent Cloud."
-        + " Ideal for developers new to Kafka who want to learn about stream processing with Kafka."
-        + "\n",
+            + " Ideal for developers new to Kafka who want to learn about stream processing with Kafka."
+            + "\n",
         manifest.description());
     assertEquals("Python", manifest.language());
     assertEquals(List.of("consumer", "getting started", "python"), manifest.tags());
@@ -278,7 +279,7 @@ class TemplateManifestTest {
     assertFalse(errors.isEmpty());
     assertEquals(
         "The provided value has 0 characters but the option bootstrap_server requires at "
-        + "least 1 character(s).",
+            + "least 1 character(s).",
         errors.getFirst().detail()
     );
   }

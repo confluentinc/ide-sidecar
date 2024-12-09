@@ -93,6 +93,7 @@ public abstract class Redactable {
 
   /**
    * Determine whether this redacted value is empty.
+   *
    * @return true if the redacted value has a length of 0; false otherwise
    */
   @JsonIgnore
@@ -101,8 +102,9 @@ public abstract class Redactable {
   }
 
   /**
-   * Utility method to obtain the masked value as a string. This is the {@link JsonValue}
-   * for OpenAPI generation.
+   * Utility method to obtain the masked value as a string. This is the {@link JsonValue} for
+   * OpenAPI generation.
+   *
    * @return the masked value
    */
   @JsonValue
@@ -115,11 +117,8 @@ public abstract class Redactable {
     if (this == o) {
       return true;
     }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
+    return o != null && getClass() == o.getClass();
     // We never compare redactable values by their raw contents
-    return true;
   }
 
   @Override

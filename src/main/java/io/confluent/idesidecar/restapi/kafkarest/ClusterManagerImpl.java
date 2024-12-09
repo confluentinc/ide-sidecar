@@ -139,8 +139,8 @@ public class ClusterManagerImpl implements ClusterManager {
   }
 
   /**
-   * Record to hold the KafkaFuture results of the describeCluster operation.
-   * Used to pass the results between the various stages of the Uni chain.
+   * Record to hold the KafkaFuture results of the describeCluster operation. Used to pass the
+   * results between the various stages of the Uni chain.
    */
   private record ClusterDescribe(
       DescribeClusterResult result,
@@ -148,6 +148,7 @@ public class ClusterManagerImpl implements ClusterManager {
       Integer controllerId,
       Collection<Node> nodes
   ) {
+
     ClusterDescribe(DescribeClusterResult result) {
       this(result, null, null, null);
     }

@@ -30,8 +30,8 @@ import org.apache.kafka.clients.admin.AdminClient;
  *
  * <p>This fetcher makes use of
  * <a href="https://quarkus.io/guides/cdi#events-and-observers">CDI events</a>
- * so that other components can observe changes in the loaded {@link Cluster} instances.
- * Each event has the following {@link Lifecycle} qualifier:
+ * so that other components can observe changes in the loaded {@link Cluster} instances. Each event
+ * has the following {@link Lifecycle} qualifier:
  * <ul>
  *   <li>{@link Lifecycle.Updated}</li>
  * </ul>
@@ -59,18 +59,18 @@ public class RealDirectFetcher extends ConfluentRestClient implements DirectFetc
   // That is left to future improvements.
 
   /**
-   * Construct the headers that will be used for REST requests made by this fetcher.
-   * This {@link RealDirectFetcher} will only submit REST requests to the Kafka REST proxy
-   * of a direct connection, in order to discover the Kafka cluster details.
-   * It will never submit REST requests to a direct connection's Schema Registry.
+   * Construct the headers that will be used for REST requests made by this fetcher. This
+   * {@link RealDirectFetcher} will only submit REST requests to the Kafka REST proxy of a direct
+   * connection, in order to discover the Kafka cluster details. It will never submit REST requests
+   * to a direct connection's Schema Registry.
    *
    * <p>Therefore, this method only constructs the headers using the direct connection's
    * Kafka credentials.
    *
    * @param connectionId the connection ID
    * @return the headers
-   * @throws ConnectionNotFoundException if the connection does not exist or is not a
-   *                                     direct connection
+   * @throws ConnectionNotFoundException if the connection does not exist or is not a direct
+   *                                     connection
    */
   @Override
   protected MultiMap headersFor(String connectionId) throws ConnectionNotFoundException {
@@ -171,20 +171,21 @@ public class RealDirectFetcher extends ConfluentRestClient implements DirectFetc
     if (state instanceof DirectConnectionState directState) {
       if (!directState.isSchemaRegistryConnected()) {
         // Either there is no Schema Registry configured or it is not connected, so return no info
-        Log.debugf("Skipping connection '%s' since Schema Registry is not connected.", connectionId);
+        Log.debugf("Skipping connection '%s' since Schema Registry is not connected.",
+            connectionId);
         return Uni.createFrom().nullItem();
       }
       // Use the SR client to obtain the cluster ID
       return directState.withSchemaRegistryClient(
           srClient -> getSchemaRegistry(directState, srClient),
           error -> {
-              Log.infof(
-                  "Unable to connect to the Schema Registry at %s for connection '%s'",
-                  state.getSpec().schemaRegistryConfig().uri(),
-                  connectionId,
-                  error
-              );
-              return Uni.createFrom().<DirectSchemaRegistry>nullItem();
+            Log.infof(
+                "Unable to connect to the Schema Registry at %s for connection '%s'",
+                state.getSpec().schemaRegistryConfig().uri(),
+                connectionId,
+                error
+            );
+            return Uni.createFrom().<DirectSchemaRegistry>nullItem();
           }
       ).orElseGet(
           // There was no Schema Registry configured, so return no info

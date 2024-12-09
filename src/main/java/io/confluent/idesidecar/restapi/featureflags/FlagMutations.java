@@ -13,8 +13,8 @@ import java.util.Optional;
 
 /**
  * Interface for changing {@link FlagEvaluation flag evaluations}.
- * @param <SelfT> the concrete type of this object
  *
+ * @param <SelfT> the concrete type of this object
  * @see FeatureFlags#defaults()
  * @see FeatureFlags#overrides()
  */
@@ -22,8 +22,8 @@ import java.util.Optional;
 public interface FlagMutations<SelfT extends FlagMutations<SelfT>> {
 
   /**
-   * Get the JSON representation of the current value of the flag with the given ID
-   * from any of the projects.
+   * Get the JSON representation of the current value of the flag with the given ID from any of the
+   * projects.
    *
    * @param id the ID of the flag to find
    * @return the current value of the flag, or empty if the flag does not exist
@@ -135,6 +135,7 @@ public interface FlagMutations<SelfT extends FlagMutations<SelfT>> {
 
   /**
    * Clear all flags defined in this collection.
+   *
    * @return this object for method chaining purposes; never null
    */
   SelfT clear();

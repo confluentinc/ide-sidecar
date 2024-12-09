@@ -17,7 +17,8 @@ import org.junit.jupiter.api.Test;
  *
  * <p>This relies upon the {@link MockFeatureFlags} class being defined in {@code /src/test/java}
  * and having the {@link io.quarkus.test.Mock @Mock} annotation that defines it as an
- * <a href="https://quarkus.io/guides/getting-started-testing#cdi-alternative-mechanism">alternative bean</a>
+ * <a href="https://quarkus.io/guides/getting-started-testing#cdi-alternative-mechanism">alternative
+ * bean</a>
  * that will be used in all tests.
  */
 @QuarkusTest

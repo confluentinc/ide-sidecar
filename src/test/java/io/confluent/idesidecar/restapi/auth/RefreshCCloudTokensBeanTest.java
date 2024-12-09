@@ -19,6 +19,7 @@ import org.mockito.Mockito;
 
 @QuarkusTest
 class RefreshCCloudTokensBeanTest {
+
   @Test
   void refreshTokensShouldConsiderOnlyCCloudConnections() {
     var confluentCloudConnection = (CCloudConnectionState) createdSpiedConnectionState(
@@ -53,7 +54,6 @@ class RefreshCCloudTokensBeanTest {
         Optional.of(Instant.now().plusSeconds(15))
     );
     Mockito.when(eligibleConnection.getOauthContext()).thenReturn(eligibleAuthContext);
-
 
     // Connection not eligible for a token refresh attempt
     var ineligibleConnection = (CCloudConnectionState) createdSpiedConnectionState(
@@ -91,9 +91,9 @@ class RefreshCCloudTokensBeanTest {
       ConnectionType connectionType
   ) {
     var clazz = switch (connectionType) {
-      case CCLOUD   -> CCloudConnectionState.class;
-      case LOCAL    -> LocalConnectionState.class;
-      case DIRECT   -> DirectConnectionState.class;
+      case CCLOUD -> CCloudConnectionState.class;
+      case LOCAL -> LocalConnectionState.class;
+      case DIRECT -> DirectConnectionState.class;
       case PLATFORM -> PlatformConnectionState.class;
     };
 

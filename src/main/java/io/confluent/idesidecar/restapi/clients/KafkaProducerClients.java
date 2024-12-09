@@ -2,7 +2,6 @@ package io.confluent.idesidecar.restapi.clients;
 
 import com.github.benmanes.caffeine.cache.CaffeineSpec;
 import io.confluent.idesidecar.restapi.cache.Clients;
-import io.confluent.idesidecar.restapi.clients.ClientConfigurator;
 import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -11,6 +10,7 @@ import org.apache.kafka.common.serialization.ByteArraySerializer;
 
 @ApplicationScoped
 public class KafkaProducerClients extends Clients<KafkaProducer<byte[], byte[]>> {
+
   // Evict cached Producer instances after 5 minutes of inactivity
   private static final String CAFFEINE_SPEC = "expireAfterAccess=5m";
 

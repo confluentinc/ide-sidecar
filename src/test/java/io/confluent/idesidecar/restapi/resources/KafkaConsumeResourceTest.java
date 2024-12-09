@@ -49,6 +49,7 @@ import org.junit.jupiter.api.Test;
 @ConnectWireMock
 @TestProfile(NoAccessFilterProfile.class)
 public class KafkaConsumeResourceTest {
+
   @Inject
   ConnectionStateManager connectionStateManager;
 
@@ -279,7 +280,8 @@ public class KafkaConsumeResourceTest {
 
   @Test
   void testConsumeRecordsAvroSchemaTopic() throws JsonProcessingException {
-    var expectedAvroResponse = loadResource("message-viewer/consume-avro-topic-expected-response.json");
+    var expectedAvroResponse = loadResource(
+        "message-viewer/consume-avro-topic-expected-response.json");
     ObjectMapper objectMapper = new ObjectMapper();
     JsonNode expectedNode = objectMapper.readTree(expectedAvroResponse);
 
@@ -315,7 +317,8 @@ public class KafkaConsumeResourceTest {
 
   @Test
   void testConsumeRecordsProtoSchemaTopic() throws JsonProcessingException {
-    var expectedProtoResponse = loadResource("message-viewer/consume-proto-topic-expected-response.json");
+    var expectedProtoResponse = loadResource(
+        "message-viewer/consume-proto-topic-expected-response.json");
     ObjectMapper objectMapper = new ObjectMapper();
     JsonNode expectedNode = objectMapper.readTree(expectedProtoResponse);
 
@@ -351,8 +354,8 @@ public class KafkaConsumeResourceTest {
 
 
   /**
-   * If we don't get sent a request body, we should still be able to consume records. We check
-   * for this and send "{}" as the request body to CCloud.
+   * If we don't get sent a request body, we should still be able to consume records. We check for
+   * this and send "{}" as the request body to CCloud.
    */
   @Test
   void testConsumeRecordsWithEmptyRequestBody() {

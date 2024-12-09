@@ -23,7 +23,7 @@ public class VersionResourceTest {
   void testVersion() {
     get()
         .then().statusCode(200)
-         // VERSION should be injected by Quarkus with good values in real builds.
+        // VERSION should be injected by Quarkus with good values in real builds.
         .body("version", is(sidecar.version()));
   }
 }

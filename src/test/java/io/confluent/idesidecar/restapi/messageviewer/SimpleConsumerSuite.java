@@ -9,7 +9,6 @@ import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPart
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeData;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeRecord;
 import io.confluent.idesidecar.restapi.proto.Message.MyMessage;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -122,9 +121,11 @@ public interface SimpleConsumerSuite extends ITSuite {
     for (int i = 0; i < 3; i++) {
       PartitionConsumeRecord record = partitionData.records().get(i);
       MyMessage originalMessage = messages.get(i);
-      assertEquals(originalMessage.getName(), record.value().get("name").asText(), "Name should match");
+      assertEquals(originalMessage.getName(), record.value().get("name").asText(),
+          "Name should match");
       assertEquals(originalMessage.getAge(), record.value().get("age").asInt(), "Age should match");
-      assertEquals(originalMessage.getIsActive(), record.value().get("is_active").asBoolean(), "IsActive should match");
+      assertEquals(originalMessage.getIsActive(), record.value().get("is_active").asBoolean(),
+          "IsActive should match");
     }
   }
 
@@ -135,6 +136,7 @@ public interface SimpleConsumerSuite extends ITSuite {
     createTopic(topic);
 
     record Person(int id, String name, String email) {
+
     }
 
     // And write records to Kafka

@@ -168,8 +168,8 @@ public class CCloudConnectionState extends ConnectionState {
 
   /**
    * Return the {@link CCloudOAuthContext}'s OAuth state parameter as internal id so that the
-   * callback endpoint, available at <code>/gateway/v1/callback-vscode-docs</code>, can use
-   * the state parameter to look up the {@link CCloudConnectionState}.
+   * callback endpoint, available at <code>/gateway/v1/callback-vscode-docs</code>, can use the
+   * state parameter to look up the {@link CCloudConnectionState}.
    *
    * @return the oauthContext's state parameter
    */

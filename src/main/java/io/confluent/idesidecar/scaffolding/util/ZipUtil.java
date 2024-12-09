@@ -62,8 +62,9 @@ public final class ZipUtil {
   }
 
   /**
-   * Extract a zip archive from the provided byte array to the provided output directory.
-   * This is the default implementation for all platforms except Windows.
+   * Extract a zip archive from the provided byte array to the provided output directory. This is
+   * the default implementation for all platforms except Windows.
+   *
    * @throws IOException if the extraction fails
    */
   public static void extractZipDefault(byte[] zipBytes, Path outputDir) throws IOException {
@@ -91,9 +92,10 @@ public final class ZipUtil {
 
   /**
    * On Windows, use PowerShell to extract the contents of a ZIP file. This method is used as a
-   * workaround for the limitations of the Java ZIP API on Windows. PowerShell is expected
-   * to be available on Windows 10 and higher.
-   * @param zipFile The path to the ZIP file to extract
+   * workaround for the limitations of the Java ZIP API on Windows. PowerShell is expected to be
+   * available on Windows 10 and higher.
+   *
+   * @param zipFile   The path to the ZIP file to extract
    * @param outputDir The path to the output directory
    */
   public static void extractZipWindows(Path zipFile, Path outputDir) {

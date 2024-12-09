@@ -90,7 +90,7 @@ public class PartitionV3ApiImpl implements PartitionV3Api {
 
   @Override
   public Uni<ReassignmentData>
-        internalKafkaV3ClustersClusterIdTopicsTopicNamePartitionsPartitionIdReassignmentGet(
+  internalKafkaV3ClustersClusterIdTopicsTopicNamePartitionsPartitionIdReassignmentGet(
       String clusterId, String topicName, Integer partitionId
   ) {
     throw new UnsupportedOperationException("Not implemented yet");
@@ -98,7 +98,7 @@ public class PartitionV3ApiImpl implements PartitionV3Api {
 
   @Override
   public Uni<ReassignmentDataList>
-        internalKafkaV3ClustersClusterIdTopicsTopicNamePartitionsReassignmentGet(
+  internalKafkaV3ClustersClusterIdTopicsTopicNamePartitionsReassignmentGet(
       String clusterId, String topicName
   ) {
     throw new UnsupportedOperationException("Not implemented yet");

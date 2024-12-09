@@ -58,8 +58,8 @@ public class ConnectionMetadata extends ObjectMetadata {
     }
     ConnectionMetadata that = (ConnectionMetadata) o;
     return Objects.equals(resourceName, that.resourceName)
-           && Objects.equals(self, that.self)
-           && Objects.equals(signInUri, that.signInUri);
+        && Objects.equals(self, that.self)
+        && Objects.equals(signInUri, that.signInUri);
   }
 
   @Override
@@ -70,6 +70,6 @@ public class ConnectionMetadata extends ObjectMetadata {
   @Override
   public String toString() {
     return "ConnectionMetadata{" + "resourceName='" + resourceName + ", self=" + self
-           + ", signInUri=" + signInUri + '}';
+        + ", signInUri=" + signInUri + '}';
   }
 }

@@ -18,8 +18,8 @@ import java.util.function.Consumer;
 import org.jboss.logging.Logger;
 
 /**
- * A {@link FeatureProject.Provider} that makes a remote HTTP call to LaunchDarkly APIs to
- * evaluate and return the feature flags for the given context.
+ * A {@link FeatureProject.Provider} that makes a remote HTTP call to LaunchDarkly APIs to evaluate
+ * and return the feature flags for the given context.
  */
 @RegisterForReflection
 class HttpFlagEvaluationProvider implements FeatureProject.Provider {
@@ -55,7 +55,7 @@ class HttpFlagEvaluationProvider implements FeatureProject.Provider {
       encodedContext = getBase64EncodedContext(context);
     } catch (JsonProcessingException e) {
       Log.errorf("Failed to evaluate feature flags for project '%s', "
-                 + "due to error encoding context in base64", projectName, e);
+          + "due to error encoding context in base64", projectName, e);
       callback.accept(null);
       return;
     }
@@ -66,52 +66,52 @@ class HttpFlagEvaluationProvider implements FeatureProject.Provider {
 
     // Submit a request to evaluate the flags for the given context
     client.getAbs(url)
-          .send()
-          .map(result ->
-              FlagEvaluations.parseResponse(
-                  result.bodyAsString(),
-                  objectMapper,
-                  eval -> eval.withProject(projectName)
-              )
-          )
-          .onSuccess(flags -> {
-            Log.debugf(
-                "Updated %d feature flags for project '%s'",
-                flags.size(),
-                projectName
+        .send()
+        .map(result ->
+            FlagEvaluations.parseResponse(
+                result.bodyAsString(),
+                objectMapper,
+                eval -> eval.withProject(projectName)
+            )
+        )
+        .onSuccess(flags -> {
+          Log.debugf(
+              "Updated %d feature flags for project '%s'",
+              flags.size(),
+              projectName
+          );
+          // Signal that we do have new evaluations
+          callback.accept(flags);
+        })
+        .onFailure(failure -> {
+          if (failure instanceof FeatureFlagFailureException) {
+            // This occurs when we're unable to parse the evaluation response or error response
+            // from the provider. This indicates a bug that should be fixed and should be logged.
+            // Unfortunately, this also occurs very frequently in test profiles,
+            // and we don't need to log those.
+            var level = TEST_MODE ? Logger.Level.DEBUG : Logger.Level.ERROR;
+            Log.logf(
+                level,
+                "Error evaluating feature flags for project '%s': %s",
+                projectName,
+                failure.getMessage(),
+                failure
             );
-            // Signal that we do have new evaluations
-            callback.accept(flags);
-          })
-          .onFailure(failure -> {
-            if (failure instanceof FeatureFlagFailureException) {
-              // This occurs when we're unable to parse the evaluation response or error response
-              // from the provider. This indicates a bug that should be fixed and should be logged.
-              // Unfortunately, this also occurs very frequently in test profiles,
-              // and we don't need to log those.
-              var level = TEST_MODE ? Logger.Level.DEBUG : Logger.Level.ERROR;
-              Log.logf(
-                  level,
-                  "Error evaluating feature flags for project '%s': %s",
-                  projectName,
-                  failure.getMessage(),
-                  failure
-              );
-            } else {
-              // This occurs when there are any other problems evaluating feature flags, including
-              // network issues due to running without a connection to the internet or LD is down.
-              // These are anticipated conditions that do not signal a problem with this code, so
-              // we DO NOT want the user to see these.
-              Log.debugf(
-                  "Error evaluating feature flags for project '%s': %s",
-                  projectName,
-                  failure.getMessage(),
-                  failure
-              );
-            }
-            // Pass to the callback a null (not empty) list, signifying we have no new evaluations
-            callback.accept(null);
-          });
+          } else {
+            // This occurs when there are any other problems evaluating feature flags, including
+            // network issues due to running without a connection to the internet or LD is down.
+            // These are anticipated conditions that do not signal a problem with this code, so
+            // we DO NOT want the user to see these.
+            Log.debugf(
+                "Error evaluating feature flags for project '%s': %s",
+                projectName,
+                failure.getMessage(),
+                failure
+            );
+          }
+          // Pass to the callback a null (not empty) list, signifying we have no new evaluations
+          callback.accept(null);
+        });
   }
 
   String uri(String evalContext) {
@@ -125,7 +125,7 @@ class HttpFlagEvaluationProvider implements FeatureProject.Provider {
     var jsonStr = JsonSerialization.serialize(evalContext);
     // then encode as base64
     byte[] encodedBytes = Base64.getEncoder()
-                                .encode(jsonStr.getBytes(StandardCharsets.UTF_8));
+        .encode(jsonStr.getBytes(StandardCharsets.UTF_8));
     var base64Str = new String(encodedBytes, StandardCharsets.UTF_8);
     // and URL-encode it
     return URLEncoder.encode(base64Str, StandardCharsets.UTF_8);

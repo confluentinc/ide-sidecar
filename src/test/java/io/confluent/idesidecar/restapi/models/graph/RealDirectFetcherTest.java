@@ -248,7 +248,8 @@ public class RealDirectFetcherTest {
         }
 
         @Override
-        protected SchemaRegistryClient createSchemaRegistryClient(ConnectionSpec.SchemaRegistryConfig config) {
+        protected SchemaRegistryClient createSchemaRegistryClient(
+            ConnectionSpec.SchemaRegistryConfig config) {
           throw new RuntimeException("Failed to create Schema Registry client");
         }
       };
@@ -264,7 +265,8 @@ public class RealDirectFetcherTest {
     }
 
     @Test
-    void shouldFailToFetchSchemaRegistryWhenSrClientFailsToReturnsMode() throws IOException, RestClientException {
+    void shouldFailToFetchSchemaRegistryWhenSrClientFailsToReturnsMode()
+        throws IOException, RestClientException {
       // When we have an SR client that returns the SR cluster's mode
       var mockSrClient = mock(SchemaRegistryClient.class);
       when(mockSrClient.getMode()).thenThrow(
@@ -279,7 +281,8 @@ public class RealDirectFetcherTest {
         }
 
         @Override
-        protected SchemaRegistryClient createSchemaRegistryClient(ConnectionSpec.SchemaRegistryConfig config) {
+        protected SchemaRegistryClient createSchemaRegistryClient(
+            ConnectionSpec.SchemaRegistryConfig config) {
           return mockSrClient;
         }
       };
@@ -295,7 +298,8 @@ public class RealDirectFetcherTest {
     }
 
     @Test
-    void shouldFetchSchemaRegistryWhenConnectedAndSrClientReturnsMode() throws IOException, RestClientException {
+    void shouldFetchSchemaRegistryWhenConnectedAndSrClientReturnsMode()
+        throws IOException, RestClientException {
       // When we have an SR client that returns the SR cluster's mode
       var mockSrClient = new MockSchemaRegistryClient();
       mockSrClient.setMode("READWRITE");
@@ -308,7 +312,8 @@ public class RealDirectFetcherTest {
         }
 
         @Override
-        protected SchemaRegistryClient createSchemaRegistryClient(ConnectionSpec.SchemaRegistryConfig config) {
+        protected SchemaRegistryClient createSchemaRegistryClient(
+            ConnectionSpec.SchemaRegistryConfig config) {
           return mockSrClient;
         }
       };

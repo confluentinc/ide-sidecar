@@ -11,8 +11,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
 /**
- * Qualifiers of different kinds of clusters.
- * Consumer methods can use these annotations to be called only with the annotation.
+ * Qualifiers of different kinds of clusters. Consumer methods can use these annotations to be
+ * called only with the annotation.
  */
 @Qualifier
 @Target({METHOD, FIELD, PARAMETER, TYPE})
@@ -22,10 +22,14 @@ public @interface ClusterKind {
   @Qualifier
   @Target({METHOD, FIELD, PARAMETER, TYPE})
   @Retention(RUNTIME)
-  @interface Kafka {}
+  @interface Kafka {
+
+  }
 
   @Qualifier
   @Target({METHOD, FIELD, PARAMETER, TYPE})
   @Retention(RUNTIME)
-  @interface SchemaRegistry {}
+  @interface SchemaRegistry {
+
+  }
 }

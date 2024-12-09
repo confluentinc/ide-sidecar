@@ -25,7 +25,7 @@ public record ApiKeyAndSecret(
         maxLength = KEY_MAX_LEN,
         minLength = 1
     )
-    @JsonProperty(value="api_key")
+    @JsonProperty(value = "api_key")
     @NotNull
     String key,
 
@@ -34,7 +34,7 @@ public record ApiKeyAndSecret(
         maxLength = ApiSecret.MAX_LENGTH,
         minLength = 1
     )
-    @JsonProperty(value="api_secret")
+    @JsonProperty(value = "api_secret")
     @NotNull
     ApiSecret secret
 ) implements Credentials {
@@ -47,7 +47,7 @@ public record ApiKeyAndSecret(
   @Override
   public Type type() {
     return Type.API_KEY_AND_SECRET;
-}
+  }
 
   @Override
   public Optional<Map<String, String>> kafkaClientProperties(
@@ -93,13 +93,13 @@ public record ApiKeyAndSecret(
    * <pre>
    *   Authorization: Basic &lt;credentials>
    * </pre>
-   * where {@code &lt;credentials>} is the Base64 encoding of ID (or username) and password
-   * joined by a single colon <code>:</code>. See
+   * where {@code &lt;credentials>} is the Base64 encoding of ID (or username) and password joined
+   * by a single colon <code>:</code>. See
    * <a href="https://en.wikipedia.org/wiki/Basic_access_authentication">Basic authentication</a>
    * for details.
    *
-   * @return the authentication-related HTTP client headers, or empty if these credentials
-   *         cannot be used with HTTP client properties
+   * @return the authentication-related HTTP client headers, or empty if these credentials cannot be
+   * used with HTTP client properties
    */
   @Override
   public Optional<MultiMap> httpClientHeaders() {
@@ -122,21 +122,21 @@ public record ApiKeyAndSecret(
     if (key == null || key.isBlank()) {
       errors.add(
           Error.create()
-               .withDetail("%s key is required and may not be blank", what)
-               .withSource("%s.key", path)
+              .withDetail("%s key is required and may not be blank", what)
+              .withSource("%s.key", path)
       );
     } else if (key.length() > KEY_MAX_LEN) {
       errors.add(
           Error.create()
-               .withDetail("%s key may not be longer than %d characters", what, KEY_MAX_LEN)
-               .withSource("%s.key", path)
+              .withDetail("%s key may not be longer than %d characters", what, KEY_MAX_LEN)
+              .withSource("%s.key", path)
       );
     }
     if (secret == null || secret.isEmpty()) {
       errors.add(
           Error.create()
-               .withDetail("%s secret is required", what)
-               .withSource("%s.secret", path)
+              .withDetail("%s secret is required", what)
+              .withSource("%s.secret", path)
       );
     } else {
       secret.validate(errors, path, what);

@@ -47,8 +47,8 @@ public record ConnectionStatus(
    * Return whether the supplied connection has been successfully established with some or all
    * components.
    *
-   * @return true if the connection has been established for at least one component,
-   *         or false otherwise
+   * @return true if the connection has been established for at least one component, or false
+   * otherwise
    */
   @JsonIgnore
   public boolean isConnected() {
@@ -68,8 +68,8 @@ public record ConnectionStatus(
   }
 
   /**
-   * Initial status of any connection. A new connection does not hold any token, does
-   * not know the end of the lifetime of its tokens, and has not faced any errors.
+   * Initial status of any connection. A new connection does not hold any token, does not know the
+   * end of the lifetime of its tokens, and has not faced any errors.
    */
   public static final ConnectionStatus INITIAL_STATUS =
       new ConnectionStatus(
@@ -95,7 +95,7 @@ public record ConnectionStatus(
     @Schema(description = "The connection has expired and must be re-established.")
     EXPIRED,
     @Schema(description = "The connection has failed.")
-    FAILED;
+    FAILED
   }
 
   @Schema(description = "The status related to CCloud.")
@@ -110,8 +110,8 @@ public record ConnectionStatus(
 
       @Schema(description =
           "If the connection's auth context holds a valid token, this attribute holds the time at "
-          + "which the user must re-authenticate because, for instance, the refresh token reached "
-          + "the end of its absolute lifetime."
+              + "which the user must re-authenticate because, for instance, the refresh token reached "
+              + "the end of its absolute lifetime."
       )
       @JsonProperty(value = "requires_authentication_at")
       Instant requiresAuthenticationAt,
@@ -126,6 +126,7 @@ public record ConnectionStatus(
       @Null
       AuthErrors errors
   ) implements StateOwner, ConnectionStatusCCloudStatusBuilder.With {
+
   }
 
   @Schema(description = "The status related to the specified Kafka cluster.")
@@ -146,6 +147,7 @@ public record ConnectionStatus(
       @Null
       AuthErrors errors
   ) implements StateOwner, ConnectionStatusKafkaClusterStatusBuilder.With {
+
   }
 
   @Schema(description = "The status related to the specified Schema Registry.")
@@ -166,6 +168,7 @@ public record ConnectionStatus(
       @Null
       AuthErrors errors
   ) implements StateOwner, ConnectionStatusSchemaRegistryStatusBuilder.With {
+
   }
 
   @Schema(description = "The authentication-related status (deprecated).")
@@ -195,9 +198,9 @@ public record ConnectionStatus(
      * and is in the state NO_TOKEN. If the connection holds tokens, these tokens can be valid or
      * invalid. Depending on the health of the tokens, the connection is in the state VALID_TOKEN or
      * INVALID_TOKEN. The connection will regularly refresh tokens before they expire to keep them
-     * valid. If the connection experienced a non-transient error, it will enter the state
-     * FAILED from which it can't recover automatically. Consumers of the API are advised to trigger
-     * a new authentication flow to recover from the FAILED state.
+     * valid. If the connection experienced a non-transient error, it will enter the state FAILED
+     * from which it can't recover automatically. Consumers of the API are advised to trigger a new
+     * authentication flow to recover from the FAILED state.
      */
     public enum Status {
       NO_TOKEN,

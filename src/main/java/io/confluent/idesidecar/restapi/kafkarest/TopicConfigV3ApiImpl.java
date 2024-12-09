@@ -13,15 +13,14 @@ import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.POST;
 import jakarta.ws.rs.core.MediaType;
+import java.util.List;
 import org.apache.kafka.clients.admin.ConfigEntry;
 import org.apache.kafka.clients.admin.TopicDescription;
-
-import java.util.List;
 
 /**
  * Resource for managing Kafka topic configurations.
@@ -38,7 +37,7 @@ public class TopicConfigV3ApiImpl {
 
   @GET
   @Path("{topic_name}/configs")
-  @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_HTML })
+  @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_HTML})
   public Uni<TopicConfigDataList> listKafkaTopicConfigs(
       @PathParam("cluster_id") String clusterId,
       @PathParam("topic_name") String topicName
@@ -53,8 +52,8 @@ public class TopicConfigV3ApiImpl {
 
   @POST
   @Path("{topic_name}/configs:alter")
-  @Consumes({ MediaType.APPLICATION_JSON })
-  @Produces({ MediaType.APPLICATION_JSON, MediaType.TEXT_HTML })
+  @Consumes({MediaType.APPLICATION_JSON})
+  @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_HTML})
   public Uni<Void> updateKafkaTopicConfigBatch(
       @PathParam("cluster_id") String clusterId,
       @PathParam("topic_name") String topicName,

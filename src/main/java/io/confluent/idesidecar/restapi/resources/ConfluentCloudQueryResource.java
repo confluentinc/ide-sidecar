@@ -109,8 +109,8 @@ public class ConfluentCloudQueryResource {
   }
 
   /**
-   * Get the schema registry for a specified {@link CCloudConnection}.
-   * Not all environments have a schema registry, though most do and newer ones do by default.
+   * Get the schema registry for a specified {@link CCloudConnection}. Not all environments have a
+   * schema registry, though most do and newer ones do by default.
    *
    * @param env the environment
    * @return the schema registry information; may be null
@@ -131,9 +131,9 @@ public class ConfluentCloudQueryResource {
   }
 
   /**
-   * Find the Kafka clusters accessible via the {@link CCloudConnection} with the specified ID
-   * whose environment ID, cloud provider name, cloud region, and cluster name match the given
-   * criteria. All criteria must be satisfied for there to be a match.
+   * Find the Kafka clusters accessible via the {@link CCloudConnection} with the specified ID whose
+   * environment ID, cloud provider name, cloud region, and cluster name match the given criteria.
+   * All criteria must be satisfied for there to be a match.
    *
    * @param connectionId  the ID of the connection to use
    * @param environmentId the substring that must be contained in a Kafka cluster's environment ID,
@@ -142,8 +142,8 @@ public class ConfluentCloudQueryResource {
    *                      defaults to a blank string that matches all providers
    * @param region        the substring that must be contained in a Kafka cluster's cloud region,
    *                      defaults to a blank string that matches all regions
-   * @param name          the substring that must be contained in a Kafka cluster's name,
-   *                      defaults to a blank string that matches all Kafka cluster names
+   * @param name          the substring that must be contained in a Kafka cluster's name, defaults
+   *                      to a blank string that matches all Kafka cluster names
    * @return the Kafka clusters that match any of the criteria; never null but possibly empty
    */
   @Query("findCCloudKafkaClusters")
@@ -164,10 +164,10 @@ public class ConfluentCloudQueryResource {
         ccloud.findKafkaClusters(
             connectionId,
             CCloudSearchCriteria.create()
-                                .withNameContaining(name)
-                                .withEnvironmentIdContaining(environmentId)
-                                .withCloudProviderContaining(provider)
-                                .withRegionContaining(region),
+                .withNameContaining(name)
+                .withEnvironmentIdContaining(environmentId)
+                .withCloudProviderContaining(provider)
+                .withRegionContaining(region),
             DEFAULT_LIMITS,
             DEFAULT_LIMITS
         )

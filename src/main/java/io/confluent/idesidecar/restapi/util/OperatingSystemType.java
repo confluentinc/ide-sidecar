@@ -10,6 +10,7 @@ public enum OperatingSystemType {
   Other;
 
   public interface Properties {
+
     String getProperty(String key, String defaultValue);
   }
 

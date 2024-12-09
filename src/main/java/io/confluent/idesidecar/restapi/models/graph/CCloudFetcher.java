@@ -45,14 +45,14 @@ public interface CCloudFetcher {
   );
 
   /**
-   * Get the CCloud environments for the {@link #getOrganizations current organization}
-   * accessible to the specified CCloud connection's principal.
+   * Get the CCloud environments for the {@link #getOrganizations current organization} accessible
+   * to the specified CCloud connection's principal.
    *
    * <p>Each environment describes the
    * {@link CCloudEnvironment#governancePackage() governance package} that is used; if the
    * {@link CCloudGovernancePackage#ESSENTIALS} or {@link CCloudGovernancePackage#ADVANCED} packages
-   * are used, then the {@link #getSchemaRegistry(String, String)} method can be used to obtain
-   * the information about the environment's {@link CCloudSchemaRegistry} instance.
+   * are used, then the {@link #getSchemaRegistry(String, String)} method can be used to obtain the
+   * information about the environment's {@link CCloudSchemaRegistry} instance.
    *
    * @param connectionId the identifier of the CCloud connection
    * @param limits       the limits on the stream of results; may be null
@@ -64,7 +64,8 @@ public interface CCloudFetcher {
   );
 
   /**
-   * Get the information about the CCloud Schema Registry associated with the specified environment.
+   * Get the information about the CCloud Schema Registry associated with the specified
+   * environment.
    *
    * @param connectionId the identifier of the CCloud connection
    * @param envId        the identifier of the CCloud environment
@@ -110,8 +111,8 @@ public interface CCloudFetcher {
   }
 
   /**
-   * Find all the Kafka clusters accessible to the specified CCloud connection's principal
-   * that satisfy the specified search criteria.
+   * Find all the Kafka clusters accessible to the specified CCloud connection's principal that
+   * satisfy the specified search criteria.
    *
    * <p>By default, this method gets all environments, then gets call clusters for each
    * environment, and applies the criteria to find all matching clusters.
@@ -134,14 +135,14 @@ public interface CCloudFetcher {
   }
 
   /**
-   * Find the Kafka cluster accessible to the specified CCloud connection's principal
-   * that has the given resource ID.
+   * Find the Kafka cluster accessible to the specified CCloud connection's principal that has the
+   * given resource ID.
    *
    * <p>By default, this method gets all environments, then gets call clusters for each
    * environment, and applies the criteria to find the first Kafka cluster with the given ID.
    *
-   * @param connectionId  the identifier of the CCloud connection
-   * @param lkcId         the identifier of the Kafka cluster
+   * @param connectionId the identifier of the CCloud connection
+   * @param lkcId        the identifier of the Kafka cluster
    * @return the Kafka cluster; never null but possibly contains null
    */
   default Uni<CCloudKafkaCluster> findKafkaCluster(
@@ -157,14 +158,14 @@ public interface CCloudFetcher {
   }
 
   /**
-   * Find the Schema Registry cluster accessible to the specified CCloud connection's principal
-   * that has the given resource ID.
+   * Find the Schema Registry cluster accessible to the specified CCloud connection's principal that
+   * has the given resource ID.
    *
    * <p>By default, this method gets all environments, then gets call clusters for each
    * environment, and applies the criteria to find the first Kafka cluster with the given ID.
    *
-   * @param connectionId  the identifier of the CCloud connection
-   * @param lsrcId        the identifier of the Schema Registry cluster
+   * @param connectionId the identifier of the CCloud connection
+   * @param lsrcId       the identifier of the Schema Registry cluster
    * @return the Kafka cluster; never null but possibly contains null
    */
   default Uni<CCloudSchemaRegistry> findSchemaRegistry(

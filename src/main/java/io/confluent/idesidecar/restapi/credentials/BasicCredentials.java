@@ -42,7 +42,7 @@ public record BasicCredentials(
   @Override
   public Type type() {
     return Type.BASIC;
-}
+  }
 
   @Override
   public Optional<Map<String, String>> kafkaClientProperties(
@@ -88,13 +88,13 @@ public record BasicCredentials(
    * <pre>
    *   Authorization: Basic &lt;credentials>
    * </pre>
-   * where {@code &lt;credentials>} is the Base64 encoding of ID (or username) and password
-   * joined by a single colon <code>:</code>. See
+   * where {@code &lt;credentials>} is the Base64 encoding of ID (or username) and password joined
+   * by a single colon <code>:</code>. See
    * <a href="https://en.wikipedia.org/wiki/Basic_access_authentication">Basic authentication</a>
    * for details.
    *
-   * @return the authentication-related HTTP client headers, or empty if these credentials
-   *         cannot be used with HTTP client properties
+   * @return the authentication-related HTTP client headers, or empty if these credentials cannot be
+   * used with HTTP client properties
    */
   @Override
   public Optional<MultiMap> httpClientHeaders() {
@@ -117,21 +117,22 @@ public record BasicCredentials(
     if (username == null || username.isBlank()) {
       errors.add(
           Error.create()
-               .withDetail("%s username is required and may not be blank", what)
-               .withSource("%s.username".formatted(path))
+              .withDetail("%s username is required and may not be blank", what)
+              .withSource("%s.username".formatted(path))
       );
     } else if (username.length() > USERNAME_MAX_LEN) {
       errors.add(
           Error.create()
-               .withDetail("%s username may not be longer than %d characters", what, USERNAME_MAX_LEN)
-               .withSource("%s.username", path)
+              .withDetail("%s username may not be longer than %d characters", what,
+                  USERNAME_MAX_LEN)
+              .withSource("%s.username", path)
       );
     }
     if (password == null || password.isEmpty()) {
       errors.add(
           Error.create()
-               .withDetail("%s password is required", what)
-               .withSource("%s.password", path)
+              .withDetail("%s password is required", what)
+              .withSource("%s.password", path)
       );
     } else {
       password.validate(errors, path, what);

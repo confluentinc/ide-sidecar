@@ -1,8 +1,6 @@
 package io.confluent.idesidecar.restapi;
 
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.CoreMatchers.anyOf;
-import static org.hamcrest.CoreMatchers.everyItem;
 import static org.hamcrest.CoreMatchers.is;
 
 import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;

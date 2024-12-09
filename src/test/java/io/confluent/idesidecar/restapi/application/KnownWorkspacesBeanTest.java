@@ -107,6 +107,7 @@ public class KnownWorkspacesBeanTest {
   }
 
   private static class MockShutdownable {
+
     boolean wasCalled = false;
 
     // Implements functional interface ShutdownSystemFunction
@@ -125,6 +126,7 @@ public class KnownWorkspacesBeanTest {
     public BooleanProvider(boolean value) {
       this.value = value;
     }
+
     @Override
     public Boolean get() {
       return value;

@@ -8,8 +8,8 @@ import static io.restassured.RestAssured.given;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import io.confluent.idesidecar.restapi.util.UuidFactory;
 import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
+import io.confluent.idesidecar.restapi.util.UuidFactory;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.common.http.TestHTTPEndpoint;
 import io.quarkus.test.junit.QuarkusTest;
@@ -30,17 +30,18 @@ import org.mockito.Mockito;
 
 /**
  * Tests for the TemplateResource class.
- *<p>
- * The src/test/resources/static/templates/ directory are zipped to create
- * the templates.zip file in the src/test/resources/static directory. This is done
- * automatically in the generate-test-resources phase of the build. This file
- * is gitignored, so you don't have to worry about it being checked in.
+ * <p>
+ * The src/test/resources/static/templates/ directory are zipped to create the templates.zip file in
+ * the src/test/resources/static directory. This is done automatically in the
+ * generate-test-resources phase of the build. This file is gitignored, so you don't have to worry
+ * about it being checked in.
  * </p>
  */
 @QuarkusTest
 @TestProfile(NoAccessFilterProfile.class)
 @TestHTTPEndpoint(TemplateResource.class)
 public class TemplateResourceTest {
+
   @InjectMock
   UuidFactory uuidFactory;
 
@@ -269,7 +270,8 @@ public class TemplateResourceTest {
       var contentMap = unzipAsBytes(response);
 
       // -- Assert that the list of files in the zip file is as expected
-      assertEquals(Set.of("do_not_parse.md", "README.md", "executable_binary"), contentMap.keySet());
+      assertEquals(Set.of("do_not_parse.md", "README.md", "executable_binary"),
+          contentMap.keySet());
 
       // Assert that the byte contents are identical to the original file
       var expectedExecutableBytes = loadResourceAsBytes(
@@ -318,7 +320,7 @@ public class TemplateResourceTest {
               }
           }
           """, contentMap.get(
-              portablePath("src/main/java/com/foo/bar/baz/MyAwesomeApp.java")));
+          portablePath("src/main/java/com/foo/bar/baz/MyAwesomeApp.java")));
     }
 
     @Test
@@ -419,7 +421,8 @@ public class TemplateResourceTest {
     @Test
     void applyTemplateShouldReturnErrorWhenOptionViolatesMinLengthConstraint() {
       var expectedResponse = asJson(
-          loadResource("templates-api-responses/apply-template/option-violates-min-length-constraint-response.json")
+          loadResource(
+              "templates-api-responses/apply-template/option-violates-min-length-constraint-response.json")
       );
 
       var requestBodyString = """

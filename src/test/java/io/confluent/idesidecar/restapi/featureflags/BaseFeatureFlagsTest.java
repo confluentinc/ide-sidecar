@@ -64,7 +64,8 @@ public abstract class BaseFeatureFlagsTest {
     assertEquals(expected, actual);
   }
 
-  static Set<FlagEvaluation> loadEvaluationsFromResourceFile(String resourcePath, String projectName) {
+  static Set<FlagEvaluation> loadEvaluationsFromResourceFile(String resourcePath,
+      String projectName) {
     return Set.copyOf(
         FlagEvaluations
             .loadFromClasspath(resourcePath, projectName, "test feature flags")

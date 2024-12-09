@@ -4,8 +4,8 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 
 import io.confluent.idesidecar.restapi.integration.ITSuite;
-import org.junit.jupiter.api.Test;
 import java.util.List;
+import org.junit.jupiter.api.Test;
 
 public interface TopicConfigV3Suite extends ITSuite {
 
@@ -155,7 +155,8 @@ public interface TopicConfigV3Suite extends ITSuite {
         .then()
         .statusCode(400)
         .body("error_code", equalTo(400))
-        .body("message", equalTo("Invalid value invalid for configuration cleanup.policy: String must be one of: compact, delete"));
+        .body("message", equalTo(
+            "Invalid value invalid for configuration cleanup.policy: String must be one of: compact, delete"));
 
     // Try again with validate_only set to true, we should still get the same error
     givenDefault()
@@ -176,7 +177,8 @@ public interface TopicConfigV3Suite extends ITSuite {
         .then()
         .statusCode(400)
         .body("error_code", equalTo(400))
-        .body("message", equalTo("Invalid value invalid for configuration cleanup.policy: String must be one of: compact, delete"));
+        .body("message", equalTo(
+            "Invalid value invalid for configuration cleanup.policy: String must be one of: compact, delete"));
 
     // List topic configs should still be unchanged
     assertTopicHasDefaultConfigs("test-topic-4");
@@ -239,7 +241,8 @@ public interface TopicConfigV3Suite extends ITSuite {
         .then()
         .statusCode(400)
         .body("error_code", equalTo(400))
-        .body("message", equalTo("Invalid operation unknown for configuration cleanup.policy: must be one of: [SET, DELETE]"));
+        .body("message", equalTo(
+            "Invalid operation unknown for configuration cleanup.policy: must be one of: [SET, DELETE]"));
   }
 
   @Test
@@ -248,7 +251,7 @@ public interface TopicConfigV3Suite extends ITSuite {
     createTopic("test-topic-5");
 
     // Try configs:alter with an empty request
-    for (var body: List.of("{}", "{\"data\": []}")) {
+    for (var body : List.of("{}", "{\"data\": []}")) {
       givenDefault()
           .urlEncodingEnabled(false)
           .body(body)

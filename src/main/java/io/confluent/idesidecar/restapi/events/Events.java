@@ -6,18 +6,19 @@ import jakarta.enterprise.event.Event;
 import jakarta.enterprise.util.AnnotationLiteral;
 
 /**
- * Definition of <a href="https://quarkus.io/guides/cdi#events-and-observers">CDI event</a>
- * and utilities. Quarkus CDI events is built on top of
+ * Definition of <a href="https://quarkus.io/guides/cdi#events-and-observers">CDI event</a> and
+ * utilities. Quarkus CDI events is built on top of
  * <a href="https://docs.jboss.org/weld/reference/latest/en-US/html/events.html">Weld events</a>
  * (more in depth documentation).
  *
  * <h2>Producers and Consumers</h2>
  *
  * <p>Event <i>producers</i> fire events using the {@link Event} channel mechanism, which are
- * {@link jakarta.inject.Inject @Inject}-ed into the bean that is producing events.
- * The type of {@link Event} channel dictates the kind of events that can be emitted.
+ * {@link jakarta.inject.Inject @Inject}-ed into the bean that is producing events. The type of
+ * {@link Event} channel dictates the kind of events that can be emitted.
  *
- * <p>Event <i>consumers</i> use the {@link jakarta.enterprise.event.Observes} annotation on methods
+ * <p>Event <i>consumers</i> use the {@link jakarta.enterprise.event.Observes} annotation on
+ * methods
  * that are to consume events fired by producers. Each consumer method handles a specific kind of
  * event.
  *
@@ -28,15 +29,15 @@ import jakarta.enterprise.util.AnnotationLiteral;
  * <h2>Qualifiers</h2>
  *
  * <p>Qualifiers are annotations that can be emitted with each event to add information about the
- * event. Qualifiers can represent any information, and are independent of the event type.
- * But typically qualifiers augment the event with additional information useful to consumers.
+ * event. Qualifiers can represent any information, and are independent of the event type. But
+ * typically qualifiers augment the event with additional information useful to consumers.
  *
  * <h3>Reusable Qualifiers</h3>
  * This package defines several qualifiers that can be reused on different event types.
  *
  * <p>The {@link Lifecycle} qualifiers represent different states within an
- * objects lifecycle, though not all these qualifiers may apply to states in the
- * lifecycle of an object:
+ * objects lifecycle, though not all these qualifiers may apply to states in the lifecycle of an
+ * object:
  * <ul>
  *   <li>{@link Lifecycle.Created}</li>
  *   <li>{@link Lifecycle.Updated}</li>
@@ -76,8 +77,8 @@ import jakarta.enterprise.util.AnnotationLiteral;
 public class Events {
 
   /**
-   * Qualifiers that deal with an object's lifecycle.
-   * Objects do not need to have states that correspond to these qualifiers.
+   * Qualifiers that deal with an object's lifecycle. Objects do not need to have states that
+   * correspond to these qualifiers.
    */
   public static class LifecycleQualifier {
 
@@ -85,37 +86,42 @@ public class Events {
      * Return a qualifier to signal the annotated event represents an object that was created.
      */
     public static AnnotationLiteral<Lifecycle.Created> created() {
-      return new AnnotationLiteral<>() {};
+      return new AnnotationLiteral<>() {
+      };
     }
 
     /**
      * Return a qualifier to signal the annotated event represents an object that was updated.
      */
     public static AnnotationLiteral<Lifecycle.Updated> updated() {
-      return new AnnotationLiteral<>() {};
+      return new AnnotationLiteral<>() {
+      };
     }
 
     /**
      * Return a qualifier to signal the annotated event represents an object that was deleted.
      */
     public static AnnotationLiteral<Lifecycle.Deleted> deleted() {
-      return new AnnotationLiteral<>() {};
+      return new AnnotationLiteral<>() {
+      };
     }
 
     /**
-     * Return a qualifier to signal the annotated event represents an object that
-     * became "connected".
+     * Return a qualifier to signal the annotated event represents an object that became
+     * "connected".
      */
     public static AnnotationLiteral<Lifecycle.Connected> connected() {
-      return new AnnotationLiteral<>() {};
+      return new AnnotationLiteral<>() {
+      };
     }
 
     /**
-     * Return a qualifier to signal the annotated event represents an object that
-     * became "disconnected".
+     * Return a qualifier to signal the annotated event represents an object that became
+     * "disconnected".
      */
     public static AnnotationLiteral<Lifecycle.Disconnected> disconnected() {
-      return new AnnotationLiteral<>() {};
+      return new AnnotationLiteral<>() {
+      };
     }
   }
 
@@ -129,7 +135,8 @@ public class Events {
      * {@link ConnectionType#CCLOUD Confluent Cloud}.
      */
     public static AnnotationLiteral<ServiceKind.CCloud> ccloud() {
-      return new AnnotationLiteral<>() {};
+      return new AnnotationLiteral<>() {
+      };
     }
 
     /**
@@ -137,7 +144,8 @@ public class Events {
      * {@link ConnectionType#PLATFORM Confluent Platform}.
      */
     public static AnnotationLiteral<ServiceKind.ConfluentPlatform> confluentPlatform() {
-      return new AnnotationLiteral<>() {};
+      return new AnnotationLiteral<>() {
+      };
     }
 
     /**
@@ -145,7 +153,8 @@ public class Events {
      * {@link ConnectionType#DIRECT Direct} connection object
      */
     public static AnnotationLiteral<ServiceKind.Direct> direct() {
-      return new AnnotationLiteral<>() {};
+      return new AnnotationLiteral<>() {
+      };
     }
 
     /**
@@ -153,7 +162,8 @@ public class Events {
      * {@link ConnectionType#LOCAL lcoal services}.
      */
     public static AnnotationLiteral<ServiceKind.Local> local() {
-      return new AnnotationLiteral<>() {};
+      return new AnnotationLiteral<>() {
+      };
     }
 
     /**
@@ -165,8 +175,8 @@ public class Events {
     }
 
     /**
-     * Utility method to create the correct {@link AnnotationLiteral qualfiier} for the
-     * given {@link ConnectionType}.
+     * Utility method to create the correct {@link AnnotationLiteral qualfiier} for the given
+     * {@link ConnectionType}.
      */
     public static AnnotationLiteral<?> typeQualifier(ConnectionType type) {
       return switch (type) {
@@ -188,7 +198,8 @@ public class Events {
      * {@link ClusterKind.Kafka Kafka cluster}.
      */
     public static AnnotationLiteral<ClusterKind.Kafka> kafkaCluster() {
-      return new AnnotationLiteral<>() {};
+      return new AnnotationLiteral<>() {
+      };
     }
 
     /**
@@ -196,14 +207,14 @@ public class Events {
      * {@link ClusterKind.SchemaRegistry Schema Registry}.
      */
     public static AnnotationLiteral<ClusterKind.SchemaRegistry> schemaRegistry() {
-      return new AnnotationLiteral<>() {};
+      return new AnnotationLiteral<>() {
+      };
     }
   }
 
   /**
-   * Utility method to asynchronously fire the given event with qualifiers
-   * using the specified {@link Event} channel.
-   * This method does not wait for consumers.
+   * Utility method to asynchronously fire the given event with qualifiers using the specified
+   * {@link Event} channel. This method does not wait for consumers.
    *
    * @param channel    the event channel to which the event should be emitted
    * @param event      the event to emit
@@ -213,7 +224,7 @@ public class Events {
   public static <EventT> void fireAsyncEvent(
       Event<EventT> channel,
       EventT event,
-      AnnotationLiteral<?>...qualifiers
+      AnnotationLiteral<?>... qualifiers
   ) {
     if (event == null) {
       // do nothing with a null event

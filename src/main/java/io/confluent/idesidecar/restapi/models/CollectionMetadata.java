@@ -26,8 +26,9 @@ public record CollectionMetadata(
     int totalSize
 ) {
 
-  protected static String selfFromResourcePath(String resourcePath) {
-    return resourcePath == null ? null : String.format("%s%s", ObjectMetadata.API_HOST, resourcePath);
+  private static String selfFromResourcePath(String resourcePath) {
+    return resourcePath == null ? null
+        : String.format("%s%s", ObjectMetadata.API_HOST, resourcePath);
   }
 
   public static CollectionMetadata from(int totalSize, String resourcePath) {

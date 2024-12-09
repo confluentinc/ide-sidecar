@@ -75,11 +75,11 @@ class FlagEvaluations implements Iterable<FlagEvaluation> {
       );
       // Modify the map to add the id and apply modifier
       return byName.entrySet()
-                   .stream()
-                   .map(entry -> entry.getValue().withId(entry.getKey()))
-                   .map(modifier)
-                   .sorted()
-                   .toList();
+          .stream()
+          .map(entry -> entry.getValue().withId(entry.getKey()))
+          .map(modifier)
+          .sorted()
+          .toList();
     } catch (JsonProcessingException e) {
       try {
         // Try to read the error returned from LD
@@ -99,7 +99,8 @@ class FlagEvaluations implements Iterable<FlagEvaluation> {
   record ParsingError(
       String code,
       String message
-  ){
+  ) {
+
   }
 
   final Map<String, FlagEvaluation> byId = new ConcurrentHashMap<>();

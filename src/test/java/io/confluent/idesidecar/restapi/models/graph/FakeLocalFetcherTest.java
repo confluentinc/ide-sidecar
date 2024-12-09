@@ -29,12 +29,12 @@ class FakeLocalFetcherTest {
   @Test
   void getKafkaCluster() {
     var cluster = fetcher.getKafkaCluster("fake-connection")
-            .subscribe()
-            .withSubscriber(UniAssertSubscriber.create())
-            .assertCompleted()
-            .getItem();
+        .subscribe()
+        .withSubscriber(UniAssertSubscriber.create())
+        .assertCompleted()
+        .getItem();
 
-    assertEquals("confluent-local",cluster.id());
+    assertEquals("confluent-local", cluster.id());
     assertEquals("localhost:9092", cluster.bootstrapServers());
     assertEquals("http://localhost:8082", cluster.uri());
   }

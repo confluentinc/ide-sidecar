@@ -7,10 +7,10 @@ import io.vertx.core.http.HttpServerRequest;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
-import org.apache.kafka.clients.admin.ConfigEntry;
-import org.apache.kafka.common.config.ConfigResource;
 import java.util.List;
 import java.util.Optional;
+import org.apache.kafka.clients.admin.ConfigEntry;
+import org.apache.kafka.common.config.ConfigResource;
 
 /**
  * RequestScoped bean for managing Kafka clusters. Creating the bean as {@link RequestScoped} allows

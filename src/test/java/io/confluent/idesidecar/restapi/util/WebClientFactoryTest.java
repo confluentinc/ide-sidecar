@@ -24,8 +24,11 @@ import org.junit.jupiter.api.Test;
 @QuarkusTest
 @TestProfile(FakeSideCarProfile.class)
 public class WebClientFactoryTest {
-  @Inject WebClientFactory webClientFactory;
-  @Inject SidecarInfo sidecarInfo;
+
+  @Inject
+  WebClientFactory webClientFactory;
+  @Inject
+  SidecarInfo sidecarInfo;
 
   WireMock wireMock;
   WireMockServer wireMockServer;
@@ -50,11 +53,11 @@ public class WebClientFactoryTest {
     // Register the WireMock stub
     wireMockServer.stubFor(
         WireMock.get(urlPattern)
-                .willReturn(
-                    aResponse()
-                        .withStatus(200)
-                        .withBody("{\"message\":\"success\"}")
-                )
+            .willReturn(
+                aResponse()
+                    .withStatus(200)
+                    .withBody("{\"message\":\"success\"}")
+            )
     );
 
     String userAgent = webClientFactory.getDefaultWebClientOptions().getUserAgent();
@@ -67,15 +70,14 @@ public class WebClientFactoryTest {
         .getAbs(wireMockServer.baseUrl() + "/some-endpoint")
         .send();
 
-
     webClient.get("/some-endpoint").send(ar -> {
       if (ar.succeeded()) {
         wireMockServer.verify(
             WireMock.getRequestedFor(urlPattern)
-                    .withHeader("User-Agent",
-                        WireMock
-                            .equalTo(userAgent)
-                    )
+                .withHeader("User-Agent",
+                    WireMock
+                        .equalTo(userAgent)
+                )
         );
       } else {
         Assertions.fail("Request failed");

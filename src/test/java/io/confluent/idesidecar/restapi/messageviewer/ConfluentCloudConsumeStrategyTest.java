@@ -13,6 +13,7 @@ import java.util.Objects;
 import org.junit.jupiter.api.Test;
 
 public class ConfluentCloudConsumeStrategyTest {
+
   @Test
   public void testShouldParseJsonToMessageViewerData() throws IOException {
     String resourcePath = "message-viewer/ccloud-message.json";

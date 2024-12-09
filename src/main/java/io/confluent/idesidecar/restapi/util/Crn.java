@@ -103,7 +103,7 @@ public record Crn(
     return elementList;
   }
 
-  protected static Crn nonRecursiveCCloud(String...elements) {
+  private static Crn nonRecursiveCCloud(String... elements) {
     return new Crn("confluent.cloud", newElements(elements), false);
   }
 
@@ -163,8 +163,8 @@ public record Crn(
   }
 
   /**
-   * Create a CRN for a topic, where the topic name can be a specific name such as {@code clicks},
-   * a prefix such as {@code clicks*}, or a wildcard such as {@code *}.
+   * Create a CRN for a topic, where the topic name can be a specific name such as {@code clicks}, a
+   * prefix such as {@code clicks*}, or a wildcard such as {@code *}.
    *
    * @param orgResourceId            the ID of the organization
    * @param envId                    the ID of the environment

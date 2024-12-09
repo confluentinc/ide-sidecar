@@ -33,8 +33,8 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.TimeoutException;
 
 /**
- * A bean that tracks and caches information about clusters available to different connections.
- * The purpose of this cache is to allow processors to quickly find the information about a cluster
+ * A bean that tracks and caches information about clusters available to different connections. The
+ * purpose of this cache is to allow processors to quickly find the information about a cluster
  * given the connection ID and cluster ID.
  *
  * <p>This class uses <a href="https://quarkus.io/guides/cdi#events-and-observers">CDI events</a>
@@ -43,8 +43,8 @@ import java.util.concurrent.TimeoutException;
  * this class drops any cached information for the connection.
  *
  * <p>This class also observes and caches the {@link Cluster} objects loaded for the connections
- * to CCloud, Confluent Platform and Local systems, and provides a quick lookup of those clusters
- * by connection ID and cluster ID.
+ * to CCloud, Confluent Platform and Local systems, and provides a quick lookup of those clusters by
+ * connection ID and cluster ID.
  *
  * <p>Components can then use this cache to quickly obtain information about a {@link Cluster}
  * given the cluster ID and connection ID.
@@ -74,7 +74,7 @@ public class ClusterCache {
    * @param clusterId    the ID of the cluster
    * @return the info for the matching cluster
    * @throws ConnectionNotFoundException if there is no connection with the given ID
-   * @throws ClusterNotFoundException if the cluster was not found
+   * @throws ClusterNotFoundException    if the cluster was not found
    */
   public Cluster getCluster(String connectionId, String clusterId, ClusterType type) {
     return switch (type) {
@@ -90,15 +90,16 @@ public class ClusterCache {
    * @param clusterId    the ID of the cluster
    * @return the info for the matching cluster, or null if none is found
    * @throws ConnectionNotFoundException if there is no connection with the given ID
-   * @throws ClusterNotFoundException if the cluster was not found
+   * @throws ClusterNotFoundException    if the cluster was not found
    */
   public KafkaCluster getKafkaCluster(String connectionId, String clusterId) {
     return forConnection(connectionId).getKafkaCluster(clusterId);
   }
 
   /**
-   * Find the first Kafka cluster accessible over the specified connection. This is useful when
-   * it is known that there is only one Kafka cluster per connection.
+   * Find the first Kafka cluster accessible over the specified connection. This is useful when it
+   * is known that there is only one Kafka cluster per connection.
+   *
    * @param connectionId the ID of the connection
    * @return the info for the first Kafka cluster, or null if none found
    */
@@ -114,19 +115,18 @@ public class ClusterCache {
 
   /**
    * Find the cluster info for the schema registry that is associated with the given Kafka cluster,
-   * accessible over the specified connection.
-   * Typically, the caller will first find the cluster info for a Kafka cluster with a given ID,
-   * and then can find the cluster info for the corresponding schema registry cluster, if
-   * there is such a schema registry.
+   * accessible over the specified connection. Typically, the caller will first find the cluster
+   * info for a Kafka cluster with a given ID, and then can find the cluster info for the
+   * corresponding schema registry cluster, if there is such a schema registry.
    *
    * <p>For CCloud, all Kafka clusters in an environment use the one schema registry in that same
    * environment.
    *
    * @param kafkaCluster the info for the kafka cluster
-   * @return the info for the schema registry that has the same scope as the given Kafka cluster,
-   *         or null if there is none
+   * @return the info for the schema registry that has the same scope as the given Kafka cluster, or
+   * null if there is none
    * @throws ConnectionNotFoundException if there is no connection with the given ID
-   * @throws ClusterNotFoundException if the cluster was not found
+   * @throws ClusterNotFoundException    if the cluster was not found
    */
   public SchemaRegistry getSchemaRegistryForKafkaCluster(
       String connectionId,
@@ -138,6 +138,7 @@ public class ClusterCache {
   /**
    * Find the cluster info for the schema registry that is associated with the given Kafka cluster,
    * if one exists. Else, return an empty Optional.
+   *
    * @param connectionId   the ID of the connection
    * @param kafkaClusterId the ID of the Kafka cluster
    * @return the info for the schema registry that is associated with the given Kafka cluster
@@ -156,7 +157,7 @@ public class ClusterCache {
    * @param clusterId    the ID of the schema registry
    * @return the info for the matching cluster, or null if none is found
    * @throws ConnectionNotFoundException if there is no connection with the given ID
-   * @throws ClusterNotFoundException if the cluster was not found
+   * @throws ClusterNotFoundException    if the cluster was not found
    */
   public SchemaRegistry getSchemaRegistry(String connectionId, String clusterId) {
     return forConnection(connectionId).getSchemaRegistry(clusterId);
@@ -194,8 +195,8 @@ public class ClusterCache {
 
     // Replace the existing cache for this connection with a new one
     clustersByConnectionId.put(
-            connection.getId(),
-            new Clusters(connection.getId(), connection.getType())
+        connection.getId(),
+        new Clusters(connection.getId(), connection.getType())
     );
   }
 
@@ -331,13 +332,13 @@ public class ClusterCache {
     /**
      * Find the info for the {@link SchemaRegistry} that is associated with the given Kafka cluster.
      * Typically, the caller will first
-     * {@link #getKafkaCluster(String) find the Kafka cluster with a given ID},
-     * and then use this method to find the corresponding schema registry cluster, if
-     * there is such a schema registry.
+     * {@link #getKafkaCluster(String) find the Kafka cluster with a given ID}, and then use this
+     * method to find the corresponding schema registry cluster, if there is such a schema
+     * registry.
      *
      * @param kafkaCluster the {@link KafkaCluster}
      * @return the info for the schema registry that has the same scope as the given Kafka cluster,
-     *         or null if there is none
+     * or null if there is none
      * @throws ClusterNotFoundException if the schema registry was not found
      */
     public SchemaRegistry getSchemaRegistryForKafkaCluster(
@@ -349,14 +350,14 @@ public class ClusterCache {
     /**
      * Find the info for the {@link SchemaRegistry} that is associated with the given Kafka cluster.
      * Typically, the caller will first
-     * {@link #getKafkaCluster(String) find the Kafka cluster with a given ID},
-     * and then use this method to find the corresponding schema registry cluster, if
-     * there is such a schema registry.
+     * {@link #getKafkaCluster(String) find the Kafka cluster with a given ID}, and then use this
+     * method to find the corresponding schema registry cluster, if there is such a schema
+     * registry.
      *
      * @param kafkaClusterId the ID of the kafka cluster
      * @param loadIfMissing  true if the cluster information should be loaded if it's not found
      * @return the info for the schema registry that has the same scope as the given Kafka cluster,
-     *         or null if there is none
+     * or null if there is none
      */
     public SchemaRegistry getSchemaRegistryForKafkaCluster(
         String kafkaClusterId,
@@ -491,14 +492,14 @@ public class ClusterCache {
       try {
         return switch (connectionType) {
           case CCLOUD -> ccloudFetcher.findKafkaCluster(connectionId, clusterId)
-                                      .await()
-                                      .atMost(timeout);
+              .await()
+              .atMost(timeout);
           case LOCAL -> localFetcher.getKafkaCluster(connectionId)
-                                    .await()
-                                    .atMost(timeout);
+              .await()
+              .atMost(timeout);
           case DIRECT -> directFetcher.getKafkaCluster(connectionId)
-                                    .await()
-                                    .atMost(timeout);
+              .await()
+              .atMost(timeout);
           case PLATFORM -> null;
         };
       } catch (CompletionException e) {
@@ -519,14 +520,14 @@ public class ClusterCache {
       try {
         return switch (connectionType) {
           case CCLOUD -> ccloudFetcher.findSchemaRegistry(connectionId, id)
-                                      .await()
-                                      .atMost(timeout);
+              .await()
+              .atMost(timeout);
           case LOCAL -> localFetcher.getSchemaRegistry(connectionId)
-                                    .await()
-                                    .atMost(timeout);
+              .await()
+              .atMost(timeout);
           case DIRECT -> directFetcher.getSchemaRegistry(connectionId)
-                                    .await()
-                                    .atMost(timeout);
+              .await()
+              .atMost(timeout);
           case PLATFORM -> null;
         };
       } catch (CompletionException e) {
@@ -547,14 +548,14 @@ public class ClusterCache {
       try {
         return switch (connectionType) {
           case CCLOUD -> ccloudFetcher.getSchemaRegistry(connectionId, path)
-                                      .await()
-                                      .atMost(timeout);
+              .await()
+              .atMost(timeout);
           case LOCAL -> localFetcher.getSchemaRegistry(connectionId)
-                                    .await()
-                                    .atMost(timeout);
+              .await()
+              .atMost(timeout);
           case DIRECT -> directFetcher.getSchemaRegistry(connectionId)
-                                      .await()
-                                      .atMost(timeout);
+              .await()
+              .atMost(timeout);
           case PLATFORM -> null;
         };
       } catch (CompletionException e) {

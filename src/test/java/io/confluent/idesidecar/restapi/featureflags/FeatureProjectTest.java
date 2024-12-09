@@ -71,7 +71,6 @@ class FeatureProjectTest extends BaseFeatureFlagsTest {
     );
     assertEvaluationsMatch(expected, project);
 
-
     // When evaluating the flags again and LD fails
     whenLaunchDarklyReturns(
         wireMock,
@@ -83,7 +82,6 @@ class FeatureProjectTest extends BaseFeatureFlagsTest {
 
     // Then the project's evaluations will unchanged
     assertEvaluationsMatch(expected, project);
-
 
     // When evaluating the flags again and LD returns empty
     whenLaunchDarklyReturns(

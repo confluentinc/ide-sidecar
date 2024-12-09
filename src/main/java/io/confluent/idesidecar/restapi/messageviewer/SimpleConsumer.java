@@ -28,6 +28,7 @@ import org.apache.kafka.common.TopicPartition;
  * Implements consuming records from Kafka topics for the message viewer API.
  */
 public class SimpleConsumer {
+
   private static final Duration POLL_TIMEOUT = Duration.ofSeconds(1);
   private static final int MAX_POLLS = 5;
   private static final int MAX_POLL_RECORDS_LIMIT = 2_000;
@@ -86,8 +87,8 @@ public class SimpleConsumer {
       var polls = 0;
       var responseSize = 0;
       while (partitionRecordsMap.size() < partitions.size()
-             && polls++ < MAX_POLLS
-             && responseSize <= MAX_RESPONSE_BYTES) {
+          && polls++ < MAX_POLLS
+          && responseSize <= MAX_RESPONSE_BYTES) {
         var partitionRecords = consumer.poll(POLL_TIMEOUT);
         for (var partition : partitions) {
           var kafkaRecords = partitionRecords.records(partition);
@@ -205,8 +206,8 @@ public class SimpleConsumer {
           .stream()
           .collect(
               Collectors.toMap(
-                entry -> entry.getKey().partition(),
-                Entry::getValue
+                  entry -> entry.getKey().partition(),
+                  Entry::getValue
               )
           );
     }

@@ -25,6 +25,7 @@ import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
  */
 @RequestScoped
 public class TopicManagerImpl implements TopicManager {
+
   @Inject
   AdminClients adminClients;
 

@@ -166,9 +166,8 @@ public class FeatureFlags {
 
   /**
    * Configuration property that controls the interval between scheduled refreshes, via the
-   * {@code ide-sidecar.feature-flags.refresh-interval-seconds} application property.
-   * Refreshes will only be scheduled when the value is positive,
-   * and the default is 0 (no automatic refreshes).
+   * {@code ide-sidecar.feature-flags.refresh-interval-seconds} application property. Refreshes will
+   * only be scheduled when the value is positive, and the default is 0 (no automatic refreshes).
    */
   static final Duration SCHEDULED_REFRESH_INTERVAL = Duration.ofSeconds(
       ConfigProvider
@@ -208,8 +207,8 @@ public class FeatureFlags {
   static final CountDownLatch ZERO_LATCH = new CountDownLatch(0);
 
   /**
-   * Create a LaunchDarkly "Device" context with a general UUID as the identifier, and use
-   * this for the lifetime of the sidecar process.
+   * Create a LaunchDarkly "Device" context with a general UUID as the identifier, and use this for
+   * the lifetime of the sidecar process.
    */
   private final AtomicReference<LDContext> deviceContext = new AtomicReference<>();
 
@@ -234,8 +233,8 @@ public class FeatureFlags {
   private final MutableFlagEvaluations defaults = new MutableFlagEvaluations("defaults");
 
   /**
-   * The next instant at which the flags can be fetched again, unless forced.
-   * The initial value is 0 epoch millis, so that the flags can be fetched the first time.
+   * The next instant at which the flags can be fetched again, unless forced. The initial value is 0
+   * epoch millis, so that the flags can be fetched the first time.
    */
   private volatile Instant doNotRunUntil = Instant.ofEpochMilli(0);
 
@@ -248,7 +247,8 @@ public class FeatureFlags {
   WebClientFactory webClientFactory;
 
   /**
-   * Create a {@link FeatureFlags} instance that uses the {@link #IDE} and {@link #CCLOUD} projects.
+   * Create a {@link FeatureFlags} instance that uses the {@link #IDE} and {@link #CCLOUD}
+   * projects.
    */
   public FeatureFlags() {
     this(
@@ -348,10 +348,10 @@ public class FeatureFlags {
   }
 
   /**
-   * Get the JSON representation of the current value of the flag with the given ID
-   * from any of the projects. This is called by the {@link FeatureFlagsResource} method(s)
-   * that are used by the extension, and generally should not otherwise be used from within the
-   * sidecar, which should always use the {@code evaluateAs*()} methods that take a {@link FlagId}.
+   * Get the JSON representation of the current value of the flag with the given ID from any of the
+   * projects. This is called by the {@link FeatureFlagsResource} method(s) that are used by the
+   * extension, and generally should not otherwise be used from within the sidecar, which should
+   * always use the {@code evaluateAs*()} methods that take a {@link FlagId}.
    *
    * <p>This method differs from other {@code evaluateAs*()} methods.
    *
@@ -370,8 +370,8 @@ public class FeatureFlags {
    * and Strings 'true' and 'false' map to corresponding values.
    *
    * <p>This method accepts a {@link FlagId}, and there should always be a
-   * {@link #defaults() default value}. Therefore, this method will always return a value
-   * (as verified by unit tests).
+   * {@link #defaults() default value}. Therefore, this method will always return a value (as
+   * verified by unit tests).
    *
    * <p>This method returns the specified {@code defaultValue} if there is no flag with the given
    * ID, or the flag's current value is unable to be converted to a boolean.
@@ -388,20 +388,20 @@ public class FeatureFlags {
   }
 
   /**
-   * Get the current value of the specified flag as an integer value, converting the value
-   * if necessary.
+   * Get the current value of the specified flag as an integer value, converting the value if
+   * necessary.
    *
    * <p>This will try to convert the value to a Java {@link Integer}.
-   * Numbers are coerced using default Java rules; booleans convert to 0 (false) and 1 (true),
-   * and Strings are parsed using default Java language parsing rules for integral numbers.
+   * Numbers are coerced using default Java rules; booleans convert to 0 (false) and 1 (true), and
+   * Strings are parsed using default Java language parsing rules for integral numbers.
    *
    * <p>This method accepts a {@link FlagId}, and there should always be a
-   * {@link #defaults() default value}. Therefore, this method will always return a value
-   * (as verified by unit tests).
+   * {@link #defaults() default value}. Therefore, this method will always return a value (as
+   * verified by unit tests).
    *
    * @param id the ID of the flag to find and evaluate
-   * @return the current flag value as an {@link Integer},
-   *         which may be null if the flag value is null
+   * @return the current flag value as an {@link Integer}, which may be null if the flag value is
+   * null
    */
   public Integer evaluateAsInteger(@NotNull FlagId id) {
     return evaluateFlag(
@@ -412,19 +412,19 @@ public class FeatureFlags {
   }
 
   /**
-   * Get the current value of the specified flag as a long value, converting the value if necessary.
+   * Get the current value of the specified flag as a long value, converting the value if
+   * necessary.
    *
    * <p>This will try to convert the value to a {@link Long}.
-   * Numbers are coerced using default Java rules; booleans convert to 0 (false) and 1 (true),
-   * and Strings are parsed using default Java language parsing rules for integral numbers.
+   * Numbers are coerced using default Java rules; booleans convert to 0 (false) and 1 (true), and
+   * Strings are parsed using default Java language parsing rules for integral numbers.
    *
    * <p>This method accepts a {@link FlagId}, and there should always be a
-   * {@link #defaults() default value}. Therefore, this method will always return a value
-   * (as verified by unit tests).
+   * {@link #defaults() default value}. Therefore, this method will always return a value (as
+   * verified by unit tests).
    *
    * @param id the ID of the flag to find and evaluate
-   * @return the current flag value as a {@link Long},
-   *         which may be null if the flag value is null
+   * @return the current flag value as a {@link Long}, which may be null if the flag value is null
    */
   public Long evaluateAsLong(@NotNull FlagId id) {
     return evaluateFlag(
@@ -435,18 +435,17 @@ public class FeatureFlags {
   }
 
   /**
-   * Get the current string value of the specified flag, converting from the non-text value
-   * if necessary.
+   * Get the current string value of the specified flag, converting from the non-text value if
+   * necessary.
    *
    * <p>This will try to convert the value to a string representation of the value.
    *
    * <p>This method accepts a {@link FlagId}, and there should always be a
-   * {@link #defaults() default value}. Therefore, this method will always return a value
-   * (as verified by unit tests).
+   * {@link #defaults() default value}. Therefore, this method will always return a value (as
+   * verified by unit tests).
    *
    * @param id the ID of the flag to find and evaluate
-   * @return the current flag value as a {@link String},
-   *         which may be null if the flag value is null
+   * @return the current flag value as a {@link String}, which may be null if the flag value is null
    */
   public String evaluateAsString(@NotNull FlagId id) {
     return evaluateFlag(
@@ -463,12 +462,12 @@ public class FeatureFlags {
    * if the node is a value node (method isValueNode returns true).
    *
    * <p>This method accepts a {@link FlagId}, and there should always be a
-   * {@link #defaults() default value}. Therefore, this method will always return a value
-   * (as verified by unit tests).
+   * {@link #defaults() default value}. Therefore, this method will always return a value (as
+   * verified by unit tests).
    *
    * @param id the ID of the flag to find and evaluate
    * @return the current flag value as a {@link String}, or the default value if the value is an
-   *         array,
+   * array,
    */
   public List<String> evaluateAsStringList(@NotNull FlagId id) {
     return evaluateFlagAsList(
@@ -481,15 +480,15 @@ public class FeatureFlags {
    * Get the current value of the specified flag as a list of objects of the given type.
    *
    * <p>The JSON representation of the flag value must be an array of {@link JsonNode}s that
-   * the {@link ObjectMapper} can {@link ObjectMapper#convertValue(Object, Class) convert} to
-   * the specified value type.
+   * the {@link ObjectMapper} can {@link ObjectMapper#convertValue(Object, Class) convert} to the
+   * specified value type.
    *
    * <p>This method returns the specified {@code defaultValue} if there is no flag with the given
    * ID, or the flag's current value is not a JSON array.
    *
    * @param id the ID of the flag to find and evaluate
-   * @return the current flag value as a list of the specified value type,
-   *         or the default value if the value is not an array,
+   * @return the current flag value as a list of the specified value type, or the default value if
+   * the value is not an array,
    */
   public <T> List<T> evaluateAsList(@NotNull FlagId id, Class<T> valueType) {
     return evaluateFlagAsList(
@@ -525,12 +524,12 @@ public class FeatureFlags {
 
   /**
    * Get the current value of the specified flag, by converting the raw JSON value of the feature
-   * flag to a homogeneous list of the desired value type.
-   * This is a utility method used by other public methods.
+   * flag to a homogeneous list of the desired value type. This is a utility method used by other
+   * public methods.
    *
-   * @param id            the ID of the boolean flag to find and evaluate
-   * @param converter     the function to convert each value of the JSON array to the desired type;
-   *                      examples include {@link JsonNode#asLong()} and {@link JsonNode#asText()}
+   * @param id        the ID of the boolean flag to find and evaluate
+   * @param converter the function to convert each value of the JSON array to the desired type;
+   *                  examples include {@link JsonNode#asLong()} and {@link JsonNode#asText()}
    * @return the current value of the flag as a list, or the default value
    */
   protected <T> List<T> evaluateFlagAsList(
@@ -553,8 +552,8 @@ public class FeatureFlags {
   }
 
   /**
-   * Get the local overrides that supersede the actual feature flags. Overrides can be added
-   * and removed at any time.
+   * Get the local overrides that supersede the actual feature flags. Overrides can be added and
+   * removed at any time.
    *
    * @return the interface used to add, remove or clear the local overrides; never null
    */
@@ -563,9 +562,8 @@ public class FeatureFlags {
   }
 
   /**
-   * Get the local defaults that will be used when the corresponding feature flags cannot
-   * be obtained from the configured provider(s), or if the corresponding feature flag does not
-   * exist.
+   * Get the local defaults that will be used when the corresponding feature flags cannot be
+   * obtained from the configured provider(s), or if the corresponding feature flag does not exist.
    *
    * @return the interface used to add, remove or clear the default flags; never null
    */
@@ -574,8 +572,8 @@ public class FeatureFlags {
   }
 
   /**
-   * Refresh the flags if they have not been evaluated for the configured duration.
-   * This blocks until the flags have been refreshed.
+   * Refresh the flags if they have not been evaluated for the configured duration. This blocks
+   * until the flags have been refreshed.
    */
   @Scheduled(
       every = "${ide-sidecar.feature-flags.refresh-interval-seconds}s",
@@ -591,8 +589,8 @@ public class FeatureFlags {
   }
 
   /**
-   * Refresh the evaluation of the LaunchDarkly feature flags using the current LD context,
-   * which can change as connections are established, updated, and disconnected.
+   * Refresh the evaluation of the LaunchDarkly feature flags using the current LD context, which
+   * can change as connections are established, updated, and disconnected.
    *
    * @param forced true if the flags should be refreshed even if they were refreshed recently
    * @return the latch that can be used to wait for all projects' flags to be evaluated; never null
@@ -650,8 +648,8 @@ public class FeatureFlags {
   }
 
   /**
-   * Respond to the connection being disconnected by updating the LD context
-   * and re-evaluating the flags.
+   * Respond to the connection being disconnected by updating the LD context and re-evaluating the
+   * flags.
    *
    * <p>This updates the LaunchDarkly context used to evaluate feature flags to contain:
    * <ol>
@@ -673,8 +671,8 @@ public class FeatureFlags {
   }
 
   /**
-   * Respond to the connection being updated by updating the LD context
-   * and re-evaluating the flags.
+   * Respond to the connection being updated by updating the LD context and re-evaluating the
+   * flags.
    *
    * <p>This updates the LaunchDarkly context used to evaluate feature flags to contain:
    * <ol>
@@ -696,8 +694,8 @@ public class FeatureFlags {
   }
 
   /**
-   * Respond to the connection being disconnected by updating the LD context
-   * and re-evaluating the flags.
+   * Respond to the connection being disconnected by updating the LD context and re-evaluating the
+   * flags.
    *
    * <p>This updates the LaunchDarkly context used to evaluate feature flags to contain only:
    * <ol>

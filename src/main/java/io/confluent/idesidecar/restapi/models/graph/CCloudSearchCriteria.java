@@ -47,8 +47,8 @@ public record CCloudSearchCriteria(
 ) {
 
   /**
-   * Create a criteria where all predicates return true. Typically, a or more of the
-   * {@code with...} methods is called in a chain.
+   * Create a criteria where all predicates return true. Typically, a or more of the {@code with...}
+   * methods is called in a chain.
    *
    * @return a new, always true criteria object; never null
    */
@@ -63,8 +63,8 @@ public record CCloudSearchCriteria(
   }
 
   /**
-   * Return a new criteria that is a clone of this criteria object except with a new predicate
-   * that requires the name contain the given substring, insensitive to case.
+   * Return a new criteria that is a clone of this criteria object except with a new predicate that
+   * requires the name contain the given substring, insensitive to case.
    *
    * @param substring the string that must be contained within the name
    * @return the new criteria with the new predicate; never null
@@ -75,8 +75,8 @@ public record CCloudSearchCriteria(
   }
 
   /**
-   * Return a new criteria that is a clone of this criteria object except with a new predicate
-   * for the resource's name.
+   * Return a new criteria that is a clone of this criteria object except with a new predicate for
+   * the resource's name.
    *
    * @param predicate the new predicate for the name; if null an always-true predicate is used
    * @return the new criteria with the new predicate; never null
@@ -86,8 +86,8 @@ public record CCloudSearchCriteria(
   }
 
   /**
-   * Return a new criteria that is a clone of this criteria object except with a new predicate
-   *that requires the environment ID contain the given substring, insensitive to case.
+   * Return a new criteria that is a clone of this criteria object except with a new predicate that
+   * requires the environment ID contain the given substring, insensitive to case.
    *
    * @param substring the string that must be contained within the name
    * @return the new criteria with the new predicate; never null
@@ -98,8 +98,8 @@ public record CCloudSearchCriteria(
   }
 
   /**
-   * Return a new criteria that is a clone of this criteria object except with a new predicate
-   * for the resource's environment ID.
+   * Return a new criteria that is a clone of this criteria object except with a new predicate for
+   * the resource's environment ID.
    *
    * @param predicate the new predicate for the name; if null an always-true predicate is used
    * @return the new criteria with the new predicate; never null
@@ -109,8 +109,8 @@ public record CCloudSearchCriteria(
   }
 
   /**
-   * Return a new criteria that is a clone of this criteria object except with a new predicate
-   * for the resource's environment ID.
+   * Return a new criteria that is a clone of this criteria object except with a new predicate for
+   * the resource's environment ID.
    *
    * @param resourceId the ID of the resource; if null an always-true predicate is used
    * @return the new criteria with the new predicate; never null
@@ -124,8 +124,8 @@ public record CCloudSearchCriteria(
   }
 
   /**
-   * Return a new criteria that is a clone of this criteria object except with a new predicate
-   * that requires the name of the cloud provider contain the given substring, insensitive to case.
+   * Return a new criteria that is a clone of this criteria object except with a new predicate that
+   * requires the name of the cloud provider contain the given substring, insensitive to case.
    *
    * @param substring the string that must be contained within the name of the cloud provider
    * @return the new criteria with the new predicate; never null
@@ -136,8 +136,8 @@ public record CCloudSearchCriteria(
   }
 
   /**
-   * Return a new criteria that is a clone of this criteria object except with a new predicate
-   * for the resource's cloud provider.
+   * Return a new criteria that is a clone of this criteria object except with a new predicate for
+   * the resource's cloud provider.
    *
    * @param predicate the new predicate for the name; if null an always-true predicate is used
    * @return the new criteria with the new predicate; never null
@@ -147,8 +147,8 @@ public record CCloudSearchCriteria(
   }
 
   /**
-   * Return a new criteria that is a clone of this criteria object except with a new predicate
-   * that requires the region contain the given substring, insensitive to case.
+   * Return a new criteria that is a clone of this criteria object except with a new predicate that
+   * requires the region contain the given substring, insensitive to case.
    *
    * @param substring the string that must be contained within the name of the cloud provider
    * @return the new criteria with the new predicate; never null
@@ -159,8 +159,8 @@ public record CCloudSearchCriteria(
   }
 
   /**
-   * Return a new criteria that is a clone of this criteria object except with a new predicate
-   * for the resource's cloud region.
+   * Return a new criteria that is a clone of this criteria object except with a new predicate for
+   * the resource's cloud region.
    *
    * @param predicate the new predicate for the name; if null an always-true predicate is used
    * @return the new criteria with the new predicate; never null

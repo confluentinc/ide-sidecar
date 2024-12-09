@@ -1,7 +1,7 @@
 package io.confluent.idesidecar.restapi.messageviewer.strategy;
 
-import io.confluent.idesidecar.restapi.messageviewer.KafkaConsumerFactory;
 import io.confluent.idesidecar.restapi.clients.SchemaRegistryClients;
+import io.confluent.idesidecar.restapi.messageviewer.KafkaConsumerFactory;
 import io.confluent.idesidecar.restapi.messageviewer.MessageViewerContext;
 import io.confluent.idesidecar.restapi.messageviewer.RecordDeserializer;
 import io.confluent.idesidecar.restapi.messageviewer.SimpleConsumer;
@@ -13,11 +13,12 @@ import jakarta.inject.Inject;
 import java.util.Optional;
 
 /**
- * Handles consuming from a Kafka topic for the message viewer API, using the
- * Kafka native consumer.
+ * Handles consuming from a Kafka topic for the message viewer API, using the Kafka native
+ * consumer.
  */
 @ApplicationScoped
 public class NativeConsumeStrategy implements ConsumeStrategy {
+
   @Inject
   public Vertx vertx;
 

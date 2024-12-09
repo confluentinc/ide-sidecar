@@ -11,8 +11,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
 /**
- * Qualifiers of different lifecycle states.
- * Consumer methods can use these annotations to be called only with the annotation.
+ * Qualifiers of different lifecycle states. Consumer methods can use these annotations to be called
+ * only with the annotation.
  */
 @Qualifier
 @Target({METHOD, FIELD, PARAMETER, TYPE})
@@ -22,26 +22,36 @@ public @interface Lifecycle {
   @Qualifier
   @Target({METHOD, FIELD, PARAMETER, TYPE})
   @Retention(RUNTIME)
-  @interface Created {}
+  @interface Created {
+
+  }
 
   @Qualifier
   @Target({METHOD, FIELD, PARAMETER, TYPE})
   @Retention(RUNTIME)
-  @interface Updated {}
+  @interface Updated {
+
+  }
 
   @Qualifier
   @Target({METHOD, FIELD, PARAMETER, TYPE})
   @Retention(RUNTIME)
-  @interface Deleted {}
+  @interface Deleted {
+
+  }
 
   @Qualifier
   @Target({METHOD, FIELD, PARAMETER, TYPE})
   @Retention(RUNTIME)
-  @interface Connected {}
+  @interface Connected {
+
+  }
 
   @Qualifier
   @Target({METHOD, FIELD, PARAMETER, TYPE})
   @Retention(RUNTIME)
-  @interface Disconnected {}
+  @interface Disconnected {
+
+  }
 
 }

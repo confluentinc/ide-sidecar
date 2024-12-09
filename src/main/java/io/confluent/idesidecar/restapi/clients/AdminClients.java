@@ -24,8 +24,9 @@ public class AdminClients extends Clients<AdminClient> {
   }
 
   /**
-   * Get an AdminClient for the given connection ID and Kafka cluster ID.
-   * If the client does not already exist, it will be created.
+   * Get an AdminClient for the given connection ID and Kafka cluster ID. If the client does not
+   * already exist, it will be created.
+   *
    * @param connectionId The connection ID
    * @param clusterId    The cluster ID
    * @return The AdminClient

@@ -28,14 +28,14 @@ public class HandshakeResourceTest {
 
 
   /**
-   * Reset the bean which the handshake route consults before each test.
-   * This is necessary because the bean is a singleton and the handshake route is single-use, and
-   * we are otherwise unable to control the lifecycle of the bean. Having each test injection provide
-   * a new instance of the bean would have been preferable, but we could not figure out how.
-   * 
-   * If we do figure out how to control the injection of the bean within the route, then
-   * this can be simplified.
-   * 
+   * Reset the bean which the handshake route consults before each test. This is necessary because
+   * the bean is a singleton and the handshake route is single-use, and we are otherwise unable to
+   * control the lifecycle of the bean. Having each test injection provide a new instance of the
+   * bean would have been preferable, but we could not figure out how.
+   * <p>
+   * If we do figure out how to control the injection of the bean within the route, then this can be
+   * simplified.
+   * <p>
    * This isn't terrible here, because this ugly is encapsulated here in the test.
    */
   @BeforeEach
@@ -56,7 +56,6 @@ public class HandshakeResourceTest {
   @TestHTTPEndpoint(HandshakeResource.class)
   void shouldReturnHandshakeResponse() throws IOException {
 
-    
     var handshakeToken = get()
         .then().statusCode(200)
         .extract().jsonPath().getString("auth_secret");
@@ -69,12 +68,12 @@ public class HandshakeResourceTest {
   @Test
   @TestHTTPEndpoint(HandshakeResource.class)
   void handshakeShouldOnlyWorkOnce() throws IOException {
-    
+
     // At onset, no token should have been generated.
     assertNull(accessTokenBean.getToken());
 
     // First time hit should work. Will have called accessTokenBean.generateToken().
-    get().then().statusCode(200); 
+    get().then().statusCode(200);
 
     assertNotNull(accessTokenBean.getToken());
 

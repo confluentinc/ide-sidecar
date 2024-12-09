@@ -2,9 +2,9 @@ package io.confluent.idesidecar.restapi.integration;
 
 import io.confluent.idesidecar.restapi.integration.connection.DirectConnectionSuite;
 import io.confluent.idesidecar.restapi.integration.connection.LocalConnectionSuite;
+import io.confluent.idesidecar.restapi.kafkarest.RecordsV3DryRunSuite;
 import io.confluent.idesidecar.restapi.kafkarest.RecordsV3ErrorsSuite;
 import io.confluent.idesidecar.restapi.kafkarest.RecordsV3Suite;
-import io.confluent.idesidecar.restapi.kafkarest.RecordsV3DryRunSuite;
 import io.confluent.idesidecar.restapi.kafkarest.RecordsV3WithoutSRSuite;
 import io.confluent.idesidecar.restapi.kafkarest.api.ClusterV3Suite;
 import io.confluent.idesidecar.restapi.kafkarest.api.PartitionV3Suite;
@@ -18,12 +18,12 @@ import io.confluent.idesidecar.restapi.util.LocalTestEnvironment;
 import io.confluent.idesidecar.restapi.util.TestEnvironment;
 import io.quarkus.test.junit.QuarkusIntegrationTest;
 import io.quarkus.test.junit.TestProfile;
+import java.util.Optional;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Tag;
-import java.util.Optional;
 
 public class LocalIT {
 
@@ -67,6 +67,7 @@ public class LocalIT {
     @TestProfile(NoAccessFilterProfile.class)
     @Nested
     class RecordTests extends AbstractIT implements RecordsV3Suite, RecordsV3DryRunSuite {
+
       @Override
       public TestEnvironment environment() {
         return TEST_ENVIRONMENT;
@@ -197,6 +198,7 @@ public class LocalIT {
 
   @Nested
   class DirectConnectionWithoutCredentialsTests {
+
     /**
      * All tests that create connections with this scope will reuse the same connection.
      */

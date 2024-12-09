@@ -53,22 +53,20 @@ public class WebClientFactory {
               Long.class));
 
   /**
-   * It's important that we use the Quarkus-managed Vertx instance here
-   * and not create a new Vertx instance ourselves, as this would not pick up the
-   * Quarkus configuration to disable caching {@code quarkus.vertx.cache = false}.
-   * We need to disable caching since Vertx running in the native executable tries to look up
-   * the cache directory tmp path of the machine it was built on, which breaks when the
-   * executable is run on any other machine.
+   * It's important that we use the Quarkus-managed Vertx instance here and not create a new Vertx
+   * instance ourselves, as this would not pick up the Quarkus configuration to disable caching
+   * {@code quarkus.vertx.cache = false}. We need to disable caching since Vertx running in the
+   * native executable tries to look up the cache directory tmp path of the machine it was built on,
+   * which breaks when the executable is run on any other machine.
    */
   @Inject
   protected Vertx vertx;
 
   /**
-   * We don't declare this as final and initialize this in a constructor because then we'd
-   * have to dependency inject the Vertx instance as a constructor arg,
-   * which is not possible given that we instantiate this class outside DI contexts.
-   * Hence, we lazily initialize this instance in {@link #getWebClient()}
-   * and manage it as a singleton.
+   * We don't declare this as final and initialize this in a constructor because then we'd have to
+   * dependency inject the Vertx instance as a constructor arg, which is not possible given that we
+   * instantiate this class outside DI contexts. Hence, we lazily initialize this instance in
+   * {@link #getWebClient()} and manage it as a singleton.
    */
   private WebClient webClient;
 
@@ -148,6 +146,7 @@ public class WebClientFactory {
 
   /**
    * Add all certificates from built-in trust store to a given {@link PemTrustOptions} object.
+   *
    * @param pemTrustOptions The {@link PemTrustOptions} object to add the certificates to.
    */
   void addCertsFromBuiltInTrustStore(PemTrustOptions pemTrustOptions) {
@@ -180,7 +179,7 @@ public class WebClientFactory {
   /**
    * Add all certificates from a given key store to a given {@link PemTrustOptions} object.
    *
-   * @param keyStoreType The key store type to read the certificates from.
+   * @param keyStoreType    The key store type to read the certificates from.
    * @param pemTrustOptions The {@link PemTrustOptions} object to add the certificates to.
    */
   void addCertsFromSystemKeyStore(String keyStoreType, PemTrustOptions pemTrustOptions) {

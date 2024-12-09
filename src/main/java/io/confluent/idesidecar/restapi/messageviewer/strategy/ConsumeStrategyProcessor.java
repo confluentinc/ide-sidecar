@@ -11,6 +11,7 @@ import io.vertx.core.Future;
  */
 public class ConsumeStrategyProcessor
     extends Processor<MessageViewerContext, Future<MessageViewerContext>> {
+
   private final NativeConsumeStrategy nativeConsumeStrategy;
   private final ConfluentCloudConsumeStrategy confluentCloudConsumeStrategy;
 

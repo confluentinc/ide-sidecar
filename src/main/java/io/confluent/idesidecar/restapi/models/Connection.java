@@ -91,6 +91,6 @@ public class Connection extends BaseModel<ConnectionSpec, ConnectionMetadata> {
   @Override
   public String toString() {
     return "Connection{" + "id='" + id + '\'' + ", metadata=" + metadata
-           + ", spec=" + spec + ", status=" + status + '}';
+        + ", spec=" + spec + ", status=" + status + '}';
   }
 }

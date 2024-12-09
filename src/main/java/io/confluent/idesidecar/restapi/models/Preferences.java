@@ -31,7 +31,7 @@ public record Preferences(
         "Preferences",
         new PreferencesMetadata(
             ConfigProvider.getConfig().getValue("ide-sidecar.api.host", String.class)
-            + PreferencesResource.API_RESOURCE_PATH
+                + PreferencesResource.API_RESOURCE_PATH
         ),
         spec
     );
@@ -45,6 +45,7 @@ public record Preferences(
       @JsonProperty("tls_pem_paths") List<String> tlsPemPaths,
       @JsonProperty("trust_all_certificates") Boolean trustAllCertificates
   ) {
+
     public PreferencesSpec(
         List<String> tlsPemPaths,
         Boolean trustAllCertificates

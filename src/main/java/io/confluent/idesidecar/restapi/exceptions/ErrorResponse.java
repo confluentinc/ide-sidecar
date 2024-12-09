@@ -12,4 +12,5 @@ public record ErrorResponse(
     @JsonProperty("error_code") int errorCode,
     String message
 ) {
+
 }

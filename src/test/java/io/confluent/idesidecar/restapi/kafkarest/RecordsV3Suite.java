@@ -16,6 +16,7 @@ public interface RecordsV3Suite extends RecordsV3BaseSuite {
 
   /**
    * Valid keys and values inputs used for producing and consuming data.
+   *
    * @return the sets of keys and sets of values
    */
   static ArgumentSets validKeysAndValues() {
