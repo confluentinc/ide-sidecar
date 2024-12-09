@@ -94,6 +94,7 @@ public class RecordDeserializer {
   @RecordBuilder
   public record DecodedResult(JsonNode value, String errorMessage)
       implements RecordDeserializerDecodedResultBuilder.With {
+
   }
 
 
@@ -128,7 +129,7 @@ public class RecordDeserializer {
   ) {
     try (
         var outputStream = new ByteArrayOutputStream();
-        var avroDeserializer = new KafkaAvroDeserializer(sr);
+        var avroDeserializer = new KafkaAvroDeserializer(sr)
     ) {
       avroDeserializer.configure(SERDE_CONFIGS, isKey);
       var avroRecord = (GenericData.Record) avroDeserializer.deserialize(topicName, bytes);
@@ -204,25 +205,22 @@ public class RecordDeserializer {
   }
 
   /**
-   * Parses a byte array into a JsonNode, handling various data formats:
-   * 1. Schema Registry encoded data, supported formats: protobuf, avro, & JsonSchema.
-   * 2. Plain string data
-   * If the byte array is Schema Registry encoded (starts with the MAGIC_BYTE),
-   * it is decoded and deserialized using the provided SchemaRegistryClient.
-   * Otherwise, it is treated as a plain string and wrapped in a TextNode.
+   * Parses a byte array into a JsonNode, handling various data formats: 1. Schema Registry encoded
+   * data, supported formats: protobuf, avro, & JsonSchema. 2. Plain string data If the byte array
+   * is Schema Registry encoded (starts with the MAGIC_BYTE), it is decoded and deserialized using
+   * the provided SchemaRegistryClient. Otherwise, it is treated as a plain string and wrapped in a
+   * TextNode.
    *
    * @param bytes                The byte array to parse
-   * @param schemaRegistryClient The SchemaRegistryClient used for deserialization of
-   *                             Schema Registry encoded data
+   * @param schemaRegistryClient The SchemaRegistryClient used for deserialization of Schema
+   *                             Registry encoded data
    * @param context              The message viewer context.
    * @param isKey                Whether the data is a key or value
    * @param encoderOnFailure     A function to apply to the byte array if deserialization fails.
-   * @return A DecodedResult containing either:
-   *         - A JsonNode representing the decoded and deserialized data (for Schema Registry
-   *           encoded data)
-   *         - A TextNode containing the original string representation of the byte array (
-   *           for other cases)
-   *         The DecodedResult also includes any error message encountered during processing
+   * @return A DecodedResult containing either: - A JsonNode representing the decoded and
+   * deserialized data (for Schema Registry encoded data) - A TextNode containing the original
+   * string representation of the byte array ( for other cases) The DecodedResult also includes any
+   * error message encountered during processing
    */
   public DecodedResult deserialize(
       byte[] bytes,
@@ -307,7 +305,7 @@ public class RecordDeserializer {
         isNetworkRelatedException(exc) ||
             (exc instanceof RestClientException
                 && isRestClientExceptionRetryable((RestClientException) exc)
-    ));
+            ));
   }
 
   private boolean isNetworkRelatedException(Throwable throwable) {
@@ -372,11 +370,12 @@ public class RecordDeserializer {
   }
 
   /**
-   * Handles the trivial cases of deserialization: null, empty, or non-Schema Registry encoded data.
+   * Handles the trivial cases of deserialization: null, empty, or non-Schema Registry encoded
+   * data.
    *
    * @param bytes                The byte array to parse
-   * @param schemaRegistryClient The SchemaRegistryClient used for deserialization of
-   *                             Schema Registry encoded data
+   * @param schemaRegistryClient The SchemaRegistryClient used for deserialization of Schema
+   *                             Registry encoded data
    * @return An Optional containing a DecodedResult if the base cases are met, or empty otherwise
    */
   private static Optional<DecodedResult> maybeTrivialCase(
@@ -413,8 +412,9 @@ public class RecordDeserializer {
   /**
    * Try to read the byte array as a valid JSON value (object, array, string, number, boolean),
    * falling back to a string if it fails.
+   *
    * @param bytes The byte array to read
-   * @return      A JsonNode representing the byte array as a JSON object, or a TextNode
+   * @return A JsonNode representing the byte array as a JSON object, or a TextNode
    */
   private static JsonNode safeReadTree(byte[] bytes) {
     try {

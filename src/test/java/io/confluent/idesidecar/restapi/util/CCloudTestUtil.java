@@ -280,7 +280,8 @@ public class CCloudTestUtil {
     if (connectionType == ConnectionType.CCLOUD) {
       createAuthedCCloudConnection(connectionId, connectionName);
     } else if (connectionType == ConnectionType.DIRECT) {
-      fail("Unable to create a direct connection without specifying the cluster and schema registry");
+      fail(
+          "Unable to create a direct connection without specifying the cluster and schema registry");
     } else {
       createConnection(connectionId, connectionName, connectionType);
     }
@@ -360,6 +361,7 @@ public class CCloudTestUtil {
       long expires_in,
       String token_type
   ) {
+
     public static AccessToken newToken() {
       return new AccessToken(
           getRandomString(),

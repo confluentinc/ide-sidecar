@@ -14,8 +14,8 @@ import java.util.Optional;
 import java.util.regex.Pattern;
 
 /**
- * General information about the sidecar, including its version, OS information, and
- * VS Code information (if available).
+ * General information about the sidecar, including its version, OS information, and VS Code
+ * information (if available).
  *
  * <p>The OS information is obtained from the {@link System#getProperty system properties}:
  * <ul>
@@ -46,6 +46,7 @@ public class SidecarInfo {
       String version,
       String extensionVersion
   ) {
+
   }
 
   static final Pattern SEMANTIC_VERSION_FROM = Pattern.compile("(\\d+[.]\\d+([.]\\d+)?)");
@@ -90,8 +91,8 @@ public class SidecarInfo {
     // Get the OS information
     osName = system.getProperty(OS_NAME_KEY, "unknown");
     osVersion = system.getProperty(OS_VERSION_KEY, "unknown");
-    sidecarVersion =  system.getProperty(SIDECAR_VERSION_KEY, UNSET_VERSION);
-    osArch =  system.getProperty(OS_ARCH_KEY, "unknown");
+    sidecarVersion = system.getProperty(SIDECAR_VERSION_KEY, UNSET_VERSION);
+    osArch = system.getProperty(OS_ARCH_KEY, "unknown");
 
     // Determine the best-matching OS type
     osType = OperatingSystemType.from(system);
@@ -155,11 +156,11 @@ public class SidecarInfo {
   }
 
   public String getUserAgent() {
-   return "Confluent-for-VSCode/v%s (https://confluent.io; support@confluent.io) sidecar/v%s (%s/%s)".formatted(
+    return "Confluent-for-VSCode/v%s (https://confluent.io; support@confluent.io) sidecar/v%s (%s/%s)".formatted(
         vsCode().map(VsCode::extensionVersion).orElse("unknown"),
         version(),
         osType().name().toLowerCase(),
         osArch()
-   );
+    );
   }
 }

@@ -8,8 +8,8 @@ import jakarta.inject.Inject;
 
 /**
  * All sidecar requests should include the workspace process id in the x-workspace-process-id
- * header.  Take note of them so that we can eventually shut down the sidecar if there are no
- * more workspaces left.
+ * header.  Take note of them so that we can eventually shut down the sidecar if there are no more
+ * workspaces left.
  */
 public class WorkspaceProcessIdFilter {
 

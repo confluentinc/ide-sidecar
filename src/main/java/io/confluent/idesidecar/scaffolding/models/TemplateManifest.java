@@ -82,6 +82,7 @@ public record TemplateManifest(
       @JsonProperty(value = "min_length")
       Integer minLength
   ) {
+
   }
 
   /**
@@ -89,7 +90,7 @@ public record TemplateManifest(
    *
    * @param values The provided values
    * @return the list of errors that occurred when validating the values; empty list if all values
-   *         are valid
+   * are valid
    */
   public List<Error> validateValues(Map<String, Object> values) {
     var errors = valuesReferenceAllOptions(values);
@@ -104,7 +105,7 @@ public record TemplateManifest(
    *
    * @param values The provided values
    * @return the list of errors containing one error for each option that is not referenced by a
-   *         value; empty list if all options are referenced
+   * value; empty list if all options are referenced
    */
   private Stream<Error> valuesReferenceAllOptions(Map<String, Object> values) {
     return options
@@ -130,7 +131,7 @@ public record TemplateManifest(
    *
    * @param values The provided values
    * @return the list of errors containing one error for each value that references an option not
-   *         supported by this template; empty list if values reference only known options
+   * supported by this template; empty list if values reference only known options
    */
   private Stream<Error> valuesReferenceOnlySupportedOptions(Map<String, Object> values) {
     return values
@@ -157,7 +158,7 @@ public record TemplateManifest(
    *
    * @param values The provided values
    * @return the list of errors containing one error for each value that violates the
-   *         <code>min_length</code> constraint of the referenced option
+   * <code>min_length</code> constraint of the referenced option
    */
   private Stream<Error> valuesComplyWithMinLengthConstraint(Map<String, Object> values) {
     return values
@@ -168,8 +169,8 @@ public record TemplateManifest(
           var valueLength = entry.getValue().toString().length();
           if (
               option != null
-              && option.minLength != null
-              && valueLength < option.minLength
+                  && option.minLength != null
+                  && valueLength < option.minLength
           ) {
             return Stream.of(
                 new Error(
@@ -177,7 +178,7 @@ public record TemplateManifest(
                     "Template option violates min_length constraint",
                     String.format(
                         "The provided value has %d characters but the option %s requires at least"
-                        + " %d character(s).",
+                            + " %d character(s).",
                         valueLength,
                         optionName,
                         option.minLength

@@ -1,10 +1,11 @@
 package io.confluent.idesidecar.restapi.kafkarest;
 
+import static org.hamcrest.Matchers.containsString;
+
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.junitpioneer.jupiter.cartesian.ArgumentSets;
 import org.junitpioneer.jupiter.cartesian.CartesianTest;
-import java.util.Map;
-import static org.hamcrest.Matchers.containsString;
 
 public interface RecordsV3WithoutSRSuite extends RecordsV3BaseSuite {
 
@@ -24,7 +25,8 @@ public interface RecordsV3WithoutSRSuite extends RecordsV3BaseSuite {
         null
     )
         .statusCode(400)
-        .body("message", containsString("This connection does not have an associated Schema Registry."));
+        .body("message",
+            containsString("This connection does not have an associated Schema Registry."));
   }
 
   static ArgumentSets validSchemalessKeysAndValues() {

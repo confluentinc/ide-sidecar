@@ -98,13 +98,14 @@ public class ConnectionStateManager {
   }
 
   /**
-   * Retrieve the {@link ConnectionState} having a specific {@link ConnectionState#getInternalId()}.
+   * Retrieve the {@link ConnectionState} having a specific
+   * {@link ConnectionState#getInternalId()}.
    *
    * @param internalId of the {@link ConnectionState}, cannot be null.
    * @return the {@link ConnectionState} having the provided internalId.
-   * @throws NullPointerException if the provided internalId is null.
+   * @throws NullPointerException        if the provided internalId is null.
    * @throws ConnectionNotFoundException if no {@link ConnectionState} having the provided
-   *         internalId exists.
+   *                                     internalId exists.
    */
   public ConnectionState getConnectionStateByInternalId(String internalId)
       throws ConnectionNotFoundException {
@@ -138,7 +139,7 @@ public class ConnectionStateManager {
    * @param spec the specification for the connection
    * @return the connection state that would have been created
    * @throws CreateConnectionException if the spec includes an ID that already exists
-   * @throws InvalidInputException if the spec is not valid
+   * @throws InvalidInputException     if the spec is not valid
    */
   public ConnectionState testConnectionState(
       ConnectionSpec spec
@@ -152,7 +153,7 @@ public class ConnectionStateManager {
    * @param spec the specification for the connection
    * @return the new connection state
    * @throws CreateConnectionException if the spec includes an ID that already exists
-   * @throws InvalidInputException if the spec is not valid
+   * @throws InvalidInputException     if the spec is not valid
    */
   public ConnectionState createConnectionState(
       ConnectionSpec spec
@@ -242,10 +243,11 @@ public class ConnectionStateManager {
   }
 
   /**
-   * Validate the provided Confluent Cloud configuration for a connection. We do this by
-   * refreshing the OAuth tokens using the provided organization ID. If the organization ID is
-   * invalid, we return a 400 error.
-   * @param id the ID of the connection
+   * Validate the provided Confluent Cloud configuration for a connection. We do this by refreshing
+   * the OAuth tokens using the provided organization ID. If the organization ID is invalid, we
+   * return a 400 error.
+   *
+   * @param id             the ID of the connection
    * @param organizationId the Confluent Cloud organization ID
    */
   private Uni<Void> validateCCloudOrganizationId(String id, String organizationId) {
@@ -260,10 +262,10 @@ public class ConnectionStateManager {
               // If Confluent Cloud tells us that the organization ID is invalid, return a 400
               if (error.getMessage().contains("invalid resource id")) {
                 return Uni.createFrom().failure(new InvalidInputException(List.of(Error.create()
-                  .withSource("ccloud_config.organization_id")
-                  .withTitle("Invalid organization ID")
-                  .withDetail("Could not authenticate with the provided organization ID: %s"
-                      .formatted(organizationId))
+                    .withSource("ccloud_config.organization_id")
+                    .withTitle("Invalid organization ID")
+                    .withDetail("Could not authenticate with the provided organization ID: %s"
+                        .formatted(organizationId))
                 )));
               } else {
                 return Uni.createFrom().failure(error);

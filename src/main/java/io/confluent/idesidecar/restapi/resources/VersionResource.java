@@ -9,8 +9,8 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 
 /**
- * Route which describes this build of the sidecar.
- * Needed so that extension can determine if it is out of sync with its expected sidecar build.
+ * Route which describes this build of the sidecar. Needed so that extension can determine if it is
+ * out of sync with its expected sidecar build.
  */
 @Path(VersionResource.API_RESOURCE_PATH)
 @Produces(MediaType.APPLICATION_JSON)

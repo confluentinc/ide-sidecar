@@ -10,6 +10,7 @@ import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 
 @ApplicationScoped
 public class KafkaConsumerFactory {
+
   private static final ByteArrayDeserializer BYTE_ARRAY_DESERIALIZER = new ByteArrayDeserializer();
 
   @Inject
@@ -18,6 +19,7 @@ public class KafkaConsumerFactory {
   /**
    * Create a new Kafka consumer client for the given connection and cluster, with the given
    * configuration overrides. The caller is responsible for closing the client when done.
+   *
    * @param connectionId    the ID of the connection to use
    * @param clusterId       the ID of the Kafka cluster to connect to
    * @param configOverrides additional configuration properties to apply

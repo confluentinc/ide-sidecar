@@ -42,7 +42,7 @@ public class FakeCCloudFetcher implements CCloudFetcher {
     final Map<String, CCloudSchemaRegistry> srByEnv = new HashMap<>();
     final Map<String, List<CCloudKafkaCluster>> clustersByEnv = new HashMap<>();
 
-    Connection(String id, String name, CCloudOrganization...orgs) {
+    Connection(String id, String name, CCloudOrganization... orgs) {
       this.delegate = new CCloudConnection(id, name);
       this.orgs = Arrays.asList(orgs);
     }
@@ -58,7 +58,7 @@ public class FakeCCloudFetcher implements CCloudFetcher {
     public Connection addEnvironment(
         CCloudEnvironment env,
         CCloudSchemaRegistry registry,
-        CCloudKafkaCluster...kafkaClusters
+        CCloudKafkaCluster... kafkaClusters
     ) {
       // Add the reference to the current organization
       var defOrg = orgs.stream().filter(
@@ -157,10 +157,10 @@ public class FakeCCloudFetcher implements CCloudFetcher {
   public CCloudConnection getConnection(int index) {
     try {
       return CONNECTIONS.values()
-                        .stream()
-                        .toList()
-                        .get(index)
-                        .delegate();
+          .stream()
+          .toList()
+          .get(index)
+          .delegate();
     } catch (IndexOutOfBoundsException e) {
       return null;
     }

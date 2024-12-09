@@ -25,7 +25,8 @@ public interface LocalConnectionSuite extends ITSuite {
   default void shouldTestLocalConnection() {
     // Not all environments support local connections
     var spec = environment().localConnectionSpec().orElse(null);
-    assertNotNull(spec, "Expected environment %s has local connection spec".formatted(environment().name()));
+    assertNotNull(spec,
+        "Expected environment %s has local connection spec".formatted(environment().name()));
 
     // Test the connection and mark it as the one we'll use
     testConnectionWithResponse(spec)
@@ -53,7 +54,8 @@ public interface LocalConnectionSuite extends ITSuite {
   default void shouldTestLocalConnectionWithoutId() {
     // Not all environments support local connections
     var spec = environment().localConnectionSpec().orElse(null);
-    assertNotNull(spec, "Expected environment %s has local connection spec".formatted(environment().name()));
+    assertNotNull(spec,
+        "Expected environment %s has local connection spec".formatted(environment().name()));
 
     // Test the connection with a spec that has no ID
     testConnectionWithResponse(spec.withId(null))
@@ -80,7 +82,8 @@ public interface LocalConnectionSuite extends ITSuite {
   default void shouldCreateAndListAndGetAndDeleteLocalConnection() {
     // Not all environments support local connections
     var spec = environment().localConnectionSpec().orElse(null);
-    assertNotNull(spec, "Expected environment %s has local connection spec".formatted(environment().name()));
+    assertNotNull(spec,
+        "Expected environment %s has local connection spec".formatted(environment().name()));
 
     // Create the connection and mark it as the one we'll use
     var connection = createConnection(spec);
@@ -91,7 +94,8 @@ public interface LocalConnectionSuite extends ITSuite {
     assertNotNull(connection.spec());
     assertEquals(spec.name(), connection.spec().name());
     assertNotNull(connection.spec().localConfig());
-    assertEquals(spec.localConfig().schemaRegistryUri(), connection.spec().localConfig().schemaRegistryUri());
+    assertEquals(spec.localConfig().schemaRegistryUri(),
+        connection.spec().localConfig().schemaRegistryUri());
     assertNotNull(connection.status());
     assertNotNull(connection.status().authentication());
     assertEquals(Status.NO_TOKEN, connection.status().authentication().status());
@@ -111,7 +115,8 @@ public interface LocalConnectionSuite extends ITSuite {
         .body("spec.name", equalTo(spec.name()))
         .body("spec.type", equalTo(ConnectionType.LOCAL.name()))
         .body("spec.local_config", notNullValue())
-        .body("spec.local_config.schema-registry-uri", equalTo(spec.localConfig().schemaRegistryUri()))
+        .body("spec.local_config.schema-registry-uri",
+            equalTo(spec.localConfig().schemaRegistryUri()))
         .body("spec.ccloud_config", nullValue())
         .body("spec.kafka_cluster", nullValue())
         .body("spec.schema_registry", nullValue())

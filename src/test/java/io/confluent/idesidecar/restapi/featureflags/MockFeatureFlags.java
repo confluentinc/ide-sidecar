@@ -11,9 +11,9 @@ import java.time.Duration;
 import java.util.List;
 
 /**
- * An alternative "testable" implementation of {@link FeatureFlags} that can be used in tests
- * and that does not submit calls to LaunchDarkly. This must be defined in {@code src/test/java}
- * and be annotated with {@link Mock @Mock}.
+ * An alternative "testable" implementation of {@link FeatureFlags} that can be used in tests and
+ * that does not submit calls to LaunchDarkly. This must be defined in {@code src/test/java} and be
+ * annotated with {@link Mock @Mock}.
  *
  * <p>This will be used for all {@link jakarta.inject.Inject @Inject}-ed {@link FeatureFlags}
  * fields in JUnit tests.

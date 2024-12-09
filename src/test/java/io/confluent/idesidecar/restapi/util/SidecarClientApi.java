@@ -4,55 +4,32 @@
 
 package io.confluent.idesidecar.restapi.util;
 
-import static io.confluent.idesidecar.restapi.testutil.QueryResourceUtil.queryGraphQLRaw;
-import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.asJson;
-import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
-import static io.restassured.RestAssured.given;
-import static java.util.function.Predicate.not;
-import static org.awaitility.Awaitility.await;
-import static org.hamcrest.Matchers.equalTo;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.fail;
-
-import io.confluent.idesidecar.restapi.kafkarest.model.CreateTopicRequestData;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequest;
-import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequestData;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequest;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
 import io.confluent.idesidecar.restapi.models.Connection;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
-import io.confluent.idesidecar.restapi.models.ConnectionSpec.LocalConfig;
-import io.confluent.idesidecar.restapi.models.ConnectionsList;
 import io.confluent.kafka.schemaregistry.client.rest.entities.Schema;
 import io.confluent.kafka.schemaregistry.client.rest.entities.SchemaReference;
-import io.quarkus.logging.Log;
-import io.restassured.RestAssured;
-import io.restassured.config.DecoderConfig;
-import io.restassured.http.ContentType;
 import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
-import java.time.Duration;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
-import org.eclipse.microprofile.config.ConfigProvider;
 
 public interface SidecarClientApi {
 
   record SchemaRegistry(String connectionId, String id, String uri) {
+
   }
 
   record KafkaCluster(String connectionId, String id, String bootstrapServers) {
+
   }
 
   String sidecarHost();
@@ -225,7 +202,7 @@ public interface SidecarClientApi {
 
   ValidatableResponse submitLocalConnectionsGraphQL();
 
-  ValidatableResponse submitDirectConnectionsGraphQL() ;
+  ValidatableResponse submitDirectConnectionsGraphQL();
 
   ValidatableResponse submitCCloudConnectionsGraphQL();
 

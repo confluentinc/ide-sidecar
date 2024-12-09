@@ -11,8 +11,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
 /**
- * Qualifiers of different kinds of services.
- * Consumer methods can use these annotations to be called only with the annotation.
+ * Qualifiers of different kinds of services. Consumer methods can use these annotations to be
+ * called only with the annotation.
  */
 @Qualifier
 @Target({METHOD, FIELD, PARAMETER, TYPE})
@@ -22,21 +22,29 @@ public @interface ServiceKind {
   @Qualifier
   @Target({METHOD, FIELD, PARAMETER, TYPE})
   @Retention(RUNTIME)
-  @interface CCloud {}
+  @interface CCloud {
+
+  }
 
   @Qualifier
   @Target({METHOD, FIELD, PARAMETER, TYPE})
   @Retention(RUNTIME)
-  @interface ConfluentPlatform {}
+  @interface ConfluentPlatform {
+
+  }
 
   @Qualifier
   @Target({METHOD, FIELD, PARAMETER, TYPE})
   @Retention(RUNTIME)
-  @interface Direct {}
+  @interface Direct {
+
+  }
 
   @Qualifier
   @Target({METHOD, FIELD, PARAMETER, TYPE})
   @Retention(RUNTIME)
-  @interface Local {}
+  @interface Local {
+
+  }
 
 }

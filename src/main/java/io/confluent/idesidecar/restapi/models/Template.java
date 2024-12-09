@@ -49,7 +49,7 @@ public class Template extends BaseModel<TemplateManifest, ObjectMetadata> {
     }
     Template that = (Template) o;
     return Objects.equals(metadata, that.metadata)
-           && Objects.equals(spec, that.spec);
+        && Objects.equals(spec, that.spec);
   }
 
   @Override
@@ -60,6 +60,6 @@ public class Template extends BaseModel<TemplateManifest, ObjectMetadata> {
   @Override
   public String toString() {
     return "Template{" + "id='" + id + '\'' + ", metadata=" + metadata
-           + ", spec=" + spec + '}';
+        + ", spec=" + spec + '}';
   }
 }
