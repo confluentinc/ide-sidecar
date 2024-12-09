@@ -17,24 +17,24 @@ public interface TestEnvironment {
   void shutdown();
 
   /**
-   * Obtain a {@link ConnectionSpec} for a local connection to the Kafka cluster and
-   * the Schema Registry cluster in this environment.
+   * Obtain a {@link ConnectionSpec} for a local connection to the Kafka cluster and the Schema
+   * Registry cluster in this environment.
    *
    * @return the connection spec, or empty if this environment does not support local connections
    */
   Optional<ConnectionSpec> localConnectionSpec();
 
   /**
-   * Obtain a {@link ConnectionSpec} for a direct connection to the Kafka cluster and
-   * the Schema Registry cluster in this environment.
+   * Obtain a {@link ConnectionSpec} for a direct connection to the Kafka cluster and the Schema
+   * Registry cluster in this environment.
    *
    * @return the connection spec, or empty if this environment does not support local connections
    */
   Optional<ConnectionSpec> directConnectionSpec();
 
   /**
-   * Obtain a {@link ConnectionSpec} for a direct connection to the Kafka cluster and
-   * optionally the Schema Registry cluster in this environment.
+   * Obtain a {@link ConnectionSpec} for a direct connection to the Kafka cluster and optionally the
+   * Schema Registry cluster in this environment.
    *
    * @return the connection spec, or empty if this environment does not support local connections
    */

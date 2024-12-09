@@ -32,6 +32,7 @@ public record SimpleConsumeMultiPartitionRequest(
       @JsonProperty("partition_id") int partitionId,
       @JsonProperty("offset") long offset
   ) {
+
   }
 
   /**

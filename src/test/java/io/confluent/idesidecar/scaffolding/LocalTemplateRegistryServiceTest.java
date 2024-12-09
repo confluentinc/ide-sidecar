@@ -3,7 +3,6 @@ package io.confluent.idesidecar.scaffolding;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import io.confluent.idesidecar.scaffolding.LocalTemplateRegistryService;
 import io.confluent.idesidecar.scaffolding.exceptions.TemplateRegistryException;
 import org.junit.jupiter.api.Test;
 

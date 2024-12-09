@@ -98,8 +98,8 @@ public class ClusterRestProxyResource {
   }
 
   /**
-   * Create a ClusterProxyContext for Schema Registry Proxy. Note that we are using the
-   * cluster id from the {@code x-cluster-id} header.
+   * Create a ClusterProxyContext for Schema Registry Proxy. Note that we are using the cluster id
+   * from the {@code x-cluster-id} header.
    */
   private ClusterProxyContext createSRClusterContext(RoutingContext routingContext) {
     return new ClusterProxyContext(

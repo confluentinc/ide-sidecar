@@ -72,7 +72,7 @@ public record Failure(
   }
 
   public Failure(List<Error> errors) {
-    this((String) null,null, null, null, errors);
+    this((String) null, null, null, null, errors);
   }
 
   /**
@@ -84,9 +84,9 @@ public record Failure(
    * @param title  A short, human-readable summary of the problem. It **SHOULD NOT** change from
    *               occurrence to occurrence of the problem, except for purposes of localization.
    * @param detail A human-readable explanation specific to this occurrence of the problem.
-   * @param source If this error was caused by a particular part of the API request, this is
-   *               either a string or an object points to the query
-   *               string parameter or request body property that caused it.
+   * @param source If this error was caused by a particular part of the API request, this is either
+   *               a string or an object points to the query string parameter or request body
+   *               property that caused it.
    */
   @JsonInclude(JsonInclude.Include.NON_NULL)
   @JsonPropertyOrder({
@@ -149,11 +149,11 @@ public record Failure(
       return new Error(id, status, code, title, detail, source);
     }
 
-    public Error withDetail(String detail, Object...args) {
+    public Error withDetail(String detail, Object... args) {
       return new Error(id, status, code, title, detail.formatted(args), source);
     }
 
-    public Error withSource(String source, Object...args) {
+    public Error withSource(String source, Object... args) {
       return new Error(
           id,
           status,

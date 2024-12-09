@@ -30,7 +30,7 @@ public record CCloudEnvironment(
   ) {
     this(id, name, governancePackage, organization, null);
   }
-  
+
   public CCloudEnvironment withOrganization(CCloudOrganization org) {
     if (org == null) {
       return this;

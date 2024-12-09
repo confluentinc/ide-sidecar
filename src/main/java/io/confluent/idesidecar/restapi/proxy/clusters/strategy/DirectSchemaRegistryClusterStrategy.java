@@ -11,11 +11,13 @@ import jakarta.enterprise.context.ApplicationScoped;
  */
 @ApplicationScoped
 public class DirectSchemaRegistryClusterStrategy extends ClusterStrategy {
+
   private static final String TARGET_SR_CLUSTER_HEADER = "target-sr-cluster";
 
   /**
    * Constructs the headers for the proxied request, and add the authentication headers from the
    * credentials, and the `target-sr-cluster` header set to the connection's SR cluster ID.
+   *
    * @param context the context of the proxy request
    * @return the headers to be used in the proxy request to the Schema Registry
    */

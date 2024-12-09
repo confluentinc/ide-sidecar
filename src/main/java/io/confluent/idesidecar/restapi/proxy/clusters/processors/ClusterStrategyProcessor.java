@@ -23,6 +23,7 @@ import jakarta.inject.Inject;
 @ApplicationScoped
 public class ClusterStrategyProcessor extends
     Processor<ClusterProxyContext, Future<ClusterProxyContext>> {
+
   @Inject
   ConfluentCloudKafkaClusterStrategy confluentCloudKafkaClusterStrategy;
 
@@ -59,7 +60,7 @@ public class ClusterStrategyProcessor extends
 
   public ClusterStrategy chooseStrategy(
       ClusterType clusterType, ConnectionType connectionType) {
-    return switch(clusterType) {
+    return switch (clusterType) {
       case KAFKA -> switch (connectionType) {
         case CCLOUD -> confluentCloudKafkaClusterStrategy;
         case LOCAL -> confluentLocalKafkaClusterStrategy;

@@ -53,7 +53,7 @@ public class TemplateList extends BaseList<Template> {
     }
     TemplateList that = (TemplateList) o;
     return Objects.equals(metadata, that.metadata)
-           && Objects.equals(data, that.data);
+        && Objects.equals(data, that.data);
   }
 
   @Override

@@ -1,9 +1,6 @@
 package io.confluent.idesidecar.restapi.messageviewer;
 
 import io.confluent.idesidecar.restapi.cache.ClusterCache;
-import io.confluent.idesidecar.restapi.clients.SchemaErrors;
-import io.confluent.idesidecar.restapi.connections.ConnectionState;
-import io.confluent.idesidecar.restapi.events.Lifecycle;
 import io.confluent.idesidecar.restapi.exceptions.ClusterNotFoundException;
 import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
 import io.confluent.idesidecar.restapi.exceptions.ProcessorFailedException;
@@ -12,12 +9,10 @@ import io.confluent.idesidecar.restapi.util.RequestHeadersConstants;
 import io.quarkus.logging.Log;
 import io.vertx.core.Future;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.event.ObservesAsync;
-import jakarta.inject.Inject;
 
 /**
- * Retrieves information about the Kafka and Schema Registry clusters when processing a request
- * for the message viewer API.
+ * Retrieves information about the Kafka and Schema Registry clusters when processing a request for
+ * the message viewer API.
  */
 @ApplicationScoped
 public class MessageViewerClusterInfoProcessor extends

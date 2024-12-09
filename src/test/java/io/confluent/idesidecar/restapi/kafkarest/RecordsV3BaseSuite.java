@@ -19,8 +19,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Base suite interface containing common methods for testing the
- * Records V3 API.
+ * Base suite interface containing common methods for testing the Records V3 API.
  */
 public interface RecordsV3BaseSuite extends ITSuite {
 
@@ -92,6 +91,7 @@ public interface RecordsV3BaseSuite extends ITSuite {
 
   /**
    * Generate cartesian product of all schema formats and subject name strategies.
+   *
    * @param isKey whether the schema is for a key or value. This changes the schema name.
    * @return the list of all possible schema data
    */
@@ -175,22 +175,26 @@ public interface RecordsV3BaseSuite extends ITSuite {
             .key(
                 ProduceRequestData
                     .builder()
-                    .schemaVersion(Optional.ofNullable(keySchema).map(Schema::getVersion).orElse(null))
+                    .schemaVersion(
+                        Optional.ofNullable(keySchema).map(Schema::getVersion).orElse(null))
                     .data(key.data())
                     .subject(keySubject)
                     .subjectNameStrategy(
-                        Optional.ofNullable(key.subjectNameStrategy).map(Enum::toString).orElse(null)
+                        Optional.ofNullable(key.subjectNameStrategy).map(Enum::toString)
+                            .orElse(null)
                     )
                     .build()
             )
             .value(
                 ProduceRequestData
                     .builder()
-                    .schemaVersion(Optional.ofNullable(valueSchema).map(Schema::getVersion).orElse(null))
+                    .schemaVersion(
+                        Optional.ofNullable(valueSchema).map(Schema::getVersion).orElse(null))
                     .data(value.data())
                     .subject(valueSubject)
                     .subjectNameStrategy(
-                        Optional.ofNullable(value.subjectNameStrategy).map(Enum::toString).orElse(null)
+                        Optional.ofNullable(value.subjectNameStrategy).map(Enum::toString)
+                            .orElse(null)
                     )
                     .build()
             )

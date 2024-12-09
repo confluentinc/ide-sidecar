@@ -40,6 +40,7 @@ import org.apache.kafka.clients.producer.RecordMetadata;
 @RequestScoped
 @Path("/internal/kafka/v3/clusters/{cluster_id}/topics/{topic_name}/records")
 public class RecordsV3ApiImpl {
+
   @Inject
   SchemaRegistryClients schemaRegistryClients;
 
@@ -59,8 +60,8 @@ public class RecordsV3ApiImpl {
   TopicManager topicManager;
 
   @POST
-  @Consumes({ "application/json" })
-  @Produces({ "application/json", "text/html" })
+  @Consumes({"application/json"})
+  @Produces({"application/json", "text/html"})
   public Uni<ProduceResponse> produceRecord(
       @HeaderParam(CONNECTION_ID_HEADER) String connectionId,
       @PathParam("cluster_id") String clusterId,
@@ -68,7 +69,8 @@ public class RecordsV3ApiImpl {
       @QueryParam("dry_run") @DefaultValue("false") boolean dryRun,
       @Valid ProduceRequest produceRequest
   ) {
-    var uptoDryRun = uniItem(ProduceContext.fromRequest(connectionId, clusterId, topicName, produceRequest))
+    var uptoDryRun = uniItem(
+        ProduceContext.fromRequest(connectionId, clusterId, topicName, produceRequest))
         .chain(this::ensureTopicPartitionExists)
         .chain(this::ensureKeyOrValueDataExists)
         .chain(this::fetchClients)
@@ -105,11 +107,12 @@ public class RecordsV3ApiImpl {
   }
 
   /**
-   * Check that the topic-partition exists. If partition id was not provided,
-   * we simply pass through.
+   * Check that the topic-partition exists. If partition id was not provided, we simply pass
+   * through.
+   *
    * @param c The context object.
-   * @return  A Uni that emits the context object after checking the partition. The context object
-   *          is left unchanged in all cases.
+   * @return A Uni that emits the context object after checking the partition. The context object is
+   * left unchanged in all cases.
    */
   private Uni<ProduceContext> ensureTopicPartitionExists(ProduceContext c) {
     return topicManager
@@ -126,10 +129,11 @@ public class RecordsV3ApiImpl {
   }
 
   /**
-   * Ensure that either key or value data is provided in the request. If neither is provided,
-   * throw a 400.
+   * Ensure that either key or value data is provided in the request. If neither is provided, throw
+   * a 400.
+   *
    * @param c The context object.
-   * @return  A Uni that emits the context object if key or value data is provided.
+   * @return A Uni that emits the context object if key or value data is provided.
    */
   private Uni<ProduceContext> ensureKeyOrValueDataExists(ProduceContext c) {
     if (c.produceRequest.getKey().getData() == null
@@ -143,8 +147,9 @@ public class RecordsV3ApiImpl {
 
   /**
    * Fetch the Schema Registry and Kafka Producer clients for the given cluster.
+   *
    * @param c The context object.
-   * @return  A Uni that emits the context object with the clients set.
+   * @return A Uni that emits the context object with the clients set.
    */
   private Uni<ProduceContext> fetchClients(ProduceContext c) {
     return combineUnis(
@@ -164,10 +169,11 @@ public class RecordsV3ApiImpl {
   }
 
   /**
-   * Use {@link SchemaManager#getSchema} to fetch schema information that may be provided
-   * for the key and/or value data.
+   * Use {@link SchemaManager#getSchema} to fetch schema information that may be provided for the
+   * key and/or value data.
+   *
    * @param c The context object.
-   * @return  A Uni that emits the context object with key/value schema set (can be empty).
+   * @return A Uni that emits the context object with key/value schema set (can be empty).
    */
   private Uni<ProduceContext> getSchemas(ProduceContext c) {
     return combineUnis(
@@ -197,11 +203,12 @@ public class RecordsV3ApiImpl {
   }
 
   /**
-   * Use the {@link RecordSerializer#serialize} to serialize the key and value data
-   * based on optionally provided schema information. If the computed schema is null,
-   * we use the {@link io.confluent.kafka.serializers.KafkaJsonSerializer} to serialize the data.
+   * Use the {@link RecordSerializer#serialize} to serialize the key and value data based on
+   * optionally provided schema information. If the computed schema is null, we use the
+   * {@link io.confluent.kafka.serializers.KafkaJsonSerializer} to serialize the data.
+   *
    * @param c The context object.
-   * @return  A Uni that emits the context object with the serialized key and value set.
+   * @return A Uni that emits the context object with the serialized key and value set.
    */
   private Uni<ProduceContext> serialize(ProduceContext c) {
     return combineUnis(
@@ -229,13 +236,13 @@ public class RecordsV3ApiImpl {
 
   private Uni<ProduceContext> sendSerializedRecord(ProduceContext c) {
     return uniStage(sendSerializedRecord(
-            c.producer,
-            c.topicName,
-            c.produceRequest.getPartitionId(),
-            c.produceRequest.getTimestamp(),
-            Optional.ofNullable(c.serializedKey()).map(ByteString::toByteArray).orElse(null),
-            Optional.ofNullable(c.serializedValue()).map(ByteString::toByteArray).orElse(null)
-        ))
+        c.producer,
+        c.topicName,
+        c.produceRequest.getPartitionId(),
+        c.produceRequest.getTimestamp(),
+        Optional.ofNullable(c.serializedKey()).map(ByteString::toByteArray).orElse(null),
+        Optional.ofNullable(c.serializedValue()).map(ByteString::toByteArray).orElse(null)
+    ))
         .map(recordMetadata -> c
             .with()
             .recordMetadata(recordMetadata)
@@ -299,8 +306,8 @@ public class RecordsV3ApiImpl {
   }
 
   /**
-   * Context object for the produce record operation. This object is used to pass around
-   * the various request parameters, clients, and computed fields from intermediate steps.
+   * Context object for the produce record operation. This object is used to pass around the various
+   * request parameters, clients, and computed fields from intermediate steps.
    */
   @RecordBuilder
   record ProduceContext(
@@ -319,6 +326,7 @@ public class RecordsV3ApiImpl {
       ByteString serializedValue,
       RecordMetadata recordMetadata
   ) implements RecordsV3ApiImplProduceContextBuilder.With {
+
     static ProduceContext fromRequest(
         String connectionId,
         String clusterId,
