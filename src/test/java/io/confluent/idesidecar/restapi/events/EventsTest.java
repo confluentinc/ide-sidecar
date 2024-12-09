@@ -27,6 +27,7 @@ import org.junit.jupiter.api.Test;
 
 @QuarkusTest
 class EventsTest {
+
   static final Record RECORD_1 = new Record("record 1");
   static final Record RECORD_2 = new Record("record 2");
   static final Record RECORD_3 = new Record("record 3");
@@ -87,7 +88,8 @@ class EventsTest {
   @Test
   void shouldHandleOneRecordThatIsObservedByMultipleConsumers() {
     // When a record is fired with qualifiers that go to all consumers
-    fireAsyncRecord(RECORD_1, ClusterTypeQualifier.kafkaCluster(), ConnectionTypeQualifier.ccloud());
+    fireAsyncRecord(RECORD_1, ClusterTypeQualifier.kafkaCluster(),
+        ConnectionTypeQualifier.ccloud());
 
     // Then each consumer will see the record
     consumer.assertAllRecords(RECORD_1);
@@ -106,7 +108,8 @@ class EventsTest {
     // When records are fired without and with various qualifiers
     fireAsyncRecord(RECORD_1);
     fireAsyncRecord(RECORD_2, ConnectionTypeQualifier.ccloud());
-    fireAsyncRecord(RECORD_3, ClusterTypeQualifier.kafkaCluster(), ConnectionTypeQualifier.ccloud());
+    fireAsyncRecord(RECORD_3, ClusterTypeQualifier.kafkaCluster(),
+        ConnectionTypeQualifier.ccloud());
     fireAsyncRecord(RECORD_4, ClusterTypeQualifier.kafkaCluster(), ConnectionTypeQualifier.local());
     fireAsyncRecord(RECORD_5, ClusterTypeQualifier.kafkaCluster());
 
@@ -154,7 +157,7 @@ class EventsTest {
     consumer.assertNoMoreAsyncRecords();
   }
 
-  protected void fireAsyncRecord(Record record, AnnotationLiteral<?>...qualifiers) {
+  protected void fireAsyncRecord(Record record, AnnotationLiteral<?>... qualifiers) {
     Events.fireAsyncEvent(recordChannel, record, qualifiers);
   }
 
@@ -164,7 +167,9 @@ class EventsTest {
 
   record Record(
       String msg
-  ) {}
+  ) {
+
+  }
 
   @ApplicationScoped
   static class Consumer {
@@ -218,7 +223,7 @@ class EventsTest {
       }
     }
 
-    void assertRecordsInAnyOrder(BlockingQueue<Record> queue, String name, Record ... expecteds) {
+    void assertRecordsInAnyOrder(BlockingQueue<Record> queue, String name, Record... expecteds) {
       var expectedSet = new HashSet<>(Set.of(expecteds));
       while (!expectedSet.isEmpty()) {
         try {
@@ -230,19 +235,19 @@ class EventsTest {
       }
     }
 
-    void assertKafkaRecords(Record ... records) {
+    void assertKafkaRecords(Record... records) {
       assertRecordsInAnyOrder(kafkaRecords, "kafka-consumer", records);
     }
 
-    void assertAllRecords(Record ... records) {
+    void assertAllRecords(Record... records) {
       assertRecordsInAnyOrder(allRecords, "all-consumer", records);
     }
 
-    void assertKafkaAndCCloudRecords(Record ... records) {
+    void assertKafkaAndCCloudRecords(Record... records) {
       assertRecordsInAnyOrder(kafkaAndCCloud, "kafka-ccloud-consumer", records);
     }
 
-    void assertSyncRecords(Record ... records) {
+    void assertSyncRecords(Record... records) {
       assertEquals(List.of(records), syncRecords);
     }
 

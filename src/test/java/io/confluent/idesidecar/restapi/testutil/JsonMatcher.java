@@ -1,9 +1,9 @@
 package io.confluent.idesidecar.restapi.testutil;
 
-import org.hamcrest.Description;
-import org.hamcrest.TypeSafeMatcher;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.hamcrest.Description;
+import org.hamcrest.TypeSafeMatcher;
 
 public class JsonMatcher extends TypeSafeMatcher<String> {
 

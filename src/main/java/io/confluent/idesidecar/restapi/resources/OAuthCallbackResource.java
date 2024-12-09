@@ -40,8 +40,8 @@ public class OAuthCallbackResource {
 
   static final String TLS_HANDSHAKE_ERROR_MESSAGE =
       "Failed to perform the SSL/TLS handshake. Consider configuring custom certificates in the "
-      + "extension settings of Confluent for VS Code if you are behind a firewall that performs "
-      + "SSL inspection.";
+          + "extension settings of Confluent for VS Code if you are behind a firewall that performs "
+          + "SSL inspection.";
 
   @Inject
   ConnectionStateManager mgr;
@@ -56,7 +56,7 @@ public class OAuthCallbackResource {
   @GET
   @Produces(MediaType.TEXT_HTML)
   public Uni<String> callback(@QueryParam("code") String authorizationCode,
-                              @QueryParam("state") String oauthState) {
+      @QueryParam("state") String oauthState) {
     try {
       var connectionState = mgr.getConnectionStateByInternalId(oauthState);
       if (connectionState instanceof CCloudConnectionState cCloudConnectionState) {

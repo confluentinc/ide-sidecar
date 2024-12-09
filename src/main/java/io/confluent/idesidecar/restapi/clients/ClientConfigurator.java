@@ -10,18 +10,18 @@ import io.confluent.idesidecar.restapi.kafkarest.SchemaManager;
 import io.confluent.idesidecar.restapi.models.graph.KafkaCluster;
 import io.confluent.idesidecar.restapi.models.graph.SchemaRegistry;
 import io.confluent.idesidecar.restapi.util.CCloud;
+import io.confluent.idesidecar.restapi.util.ConfigUtil;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClientConfig;
 import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig;
 import io.quarkus.logging.Log;
-import io.confluent.idesidecar.restapi.util.ConfigUtil;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import org.apache.kafka.clients.CommonClientConfigs;
-import java.util.function.Supplier;
 import java.util.Optional;
+import java.util.function.Supplier;
+import org.apache.kafka.clients.CommonClientConfigs;
 
 @ApplicationScoped
 public class ClientConfigurator {
@@ -39,10 +39,11 @@ public class ClientConfigurator {
       .asMap("ide-sidecar.serde-configs");
 
   /**
-   * An object that has a Kafka or SR client configuration, which can be retrieved as a map
-   * or as a redacted map.
+   * An object that has a Kafka or SR client configuration, which can be retrieved as a map or as a
+   * redacted map.
    */
   public static class Configuration {
+
     final Supplier<Map<String, Object>> configSupplier;
     final Supplier<Map<String, Object>> redactedSupplier;
     final Map<String, Object> overrides = new LinkedHashMap<>();
@@ -106,13 +107,13 @@ public class ClientConfigurator {
   }
 
   /**
-   * Generate the Kafka admin client configuration for a given connection and cluster.
-   * This can optionally redact sensitive values in properties, such as if generating a
-   * sample configuration for display or logging.
+   * Generate the Kafka admin client configuration for a given connection and cluster. This can
+   * optionally redact sensitive values in properties, such as if generating a sample configuration
+   * for display or logging.
    *
-   * @param connection        the connection with the Kafka endpoint information
-   * @param bootstrapServers  the bootstrap servers of the Kafka cluster to use
-   * @param timeout           the timeout for calls to the cluster
+   * @param connection       the connection with the Kafka endpoint information
+   * @param bootstrapServers the bootstrap servers of the Kafka cluster to use
+   * @param timeout          the timeout for calls to the cluster
    * @return the Kafka admin client configuration
    */
   public static Configuration getKafkaAdminClientConfig(
@@ -141,19 +142,18 @@ public class ClientConfigurator {
   }
 
   /**
-   * Generate the Kafka consumer configuration for a given connection and cluster.
-   * This can optionally redact sensitive values in properties, such as if generating a
-   * sample configuration for display or logging.
+   * Generate the Kafka consumer configuration for a given connection and cluster. This can
+   * optionally redact sensitive values in properties, such as if generating a sample configuration
+   * for display or logging.
    *
    * <p>If a {@link SchemaRegistry} parameter is provided, then the resulting configuration
-   * will include the necessary properties for connecting to the Schema Registry,
-   * though configuration properties for Avro, Protobuf, or JSON Schema (de)serializers
-   * are not included.
+   * will include the necessary properties for connecting to the Schema Registry, though
+   * configuration properties for Avro, Protobuf, or JSON Schema (de)serializers are not included.
    *
-   * @param connection        the connection with the Kafka endpoint information
-   * @param bootstrapServers  the bootstrap servers of the Kafka cluster to use
-   * @param srUri             the URI of the Schema Registry to use, or null if not needed
-   * @param timeout           the timeout for calls to the cluster
+   * @param connection       the connection with the Kafka endpoint information
+   * @param bootstrapServers the bootstrap servers of the Kafka cluster to use
+   * @param srUri            the URI of the Schema Registry to use, or null if not needed
+   * @param timeout          the timeout for calls to the cluster
    * @return the Kafka consumer configuration
    */
   public static Configuration getKafkaConsumerConfig(
@@ -183,19 +183,18 @@ public class ClientConfigurator {
   }
 
   /**
-   * Generate the Kafka producer configuration for a given connection and cluster.
-   * This can optionally redact sensitive values in properties, such as if generating a
-   * sample configuration for display or logging.
+   * Generate the Kafka producer configuration for a given connection and cluster. This can
+   * optionally redact sensitive values in properties, such as if generating a sample configuration
+   * for display or logging.
    *
    * <p>If a {@link SchemaRegistry} parameter is provided, then the resulting configuration
-   * will include the necessary properties for connecting to the Schema Registry,
-   * though configuration properties for Avro, Protobuf, or JSON Schema (de)serializers
-   * are not included.
+   * will include the necessary properties for connecting to the Schema Registry, though
+   * configuration properties for Avro, Protobuf, or JSON Schema (de)serializers are not included.
    *
-   * @param connection        the connection with the Kafka endpoint information
-   * @param bootstrapServers  the bootstrap servers of the Kafka cluster to use
-   * @param srUri             the URI of the Schema Registry to use, or null if not needed
-   * @param timeout           the timeout for calls to the cluster
+   * @param connection       the connection with the Kafka endpoint information
+   * @param bootstrapServers the bootstrap servers of the Kafka cluster to use
+   * @param srUri            the URI of the Schema Registry to use, or null if not needed
+   * @param timeout          the timeout for calls to the cluster
    * @return the Kafka producer configuration
    */
   public static Configuration getKafkaProducerConfig(
@@ -225,14 +224,13 @@ public class ClientConfigurator {
   }
 
   /**
-   * Generate the Kafka client configuration for a given connection and cluster.
-   * This can optionally redact sensitive values in properties, such as if generating a
-   * sample configuration for display or logging.
+   * Generate the Kafka client configuration for a given connection and cluster. This can optionally
+   * redact sensitive values in properties, such as if generating a sample configuration for display
+   * or logging.
    *
    * <p>If a {@link SchemaRegistry} parameter is provided, then the resulting configuration
-   * will include the necessary properties for connecting to the Schema Registry,
-   * though configuration properties for Avro, Protobuf, or JSON Schema (de)serializers
-   * are not included.
+   * will include the necessary properties for connecting to the Schema Registry, though
+   * configuration properties for Avro, Protobuf, or JSON Schema (de)serializers are not included.
    *
    * @param connection        the connection with the Kafka endpoint information
    * @param bootstrapServers  the bootstrap servers of the Kafka cluster to use
@@ -281,8 +279,8 @@ public class ClientConfigurator {
 
   /**
    * Generate the Schema Registry client configuration for a given connection and Schema Registry.
-   * This can optionally redact sensitive values in properties, such as if generating a
-   * sample configuration for display or logging.
+   * This can optionally redact sensitive values in properties, such as if generating a sample
+   * configuration for display or logging.
    *
    * @param connection     the connection with the Schema Registry endpoint information
    * @param srUri          the URI of the Schema Registry to use
@@ -329,9 +327,9 @@ public class ClientConfigurator {
   ClusterCache clusterCache;
 
   /**
-   * Get the AdminClient configuration for connection and Kafka cluster with the specified IDs.
-   * This method looks up the {@link ConnectionState} and {@link KafkaCluster} objects,
-   * and will throw exceptions if the connection or cluster does not exist.
+   * Get the AdminClient configuration for connection and Kafka cluster with the specified IDs. This
+   * method looks up the {@link ConnectionState} and {@link KafkaCluster} objects, and will throw
+   * exceptions if the connection or cluster does not exist.
    *
    * <p> This can optionally redact sensitive values in properties, such as if generating a
    * sample configuration for display or logging.
@@ -360,8 +358,8 @@ public class ClientConfigurator {
 
   /**
    * Get the KafkaConsumer configuration for connection and Kafka cluster with the specified IDs.
-   * This method looks up the {@link ConnectionState} and {@link KafkaCluster} objects,
-   * and will throw exceptions if the connection or cluster does not exist.
+   * This method looks up the {@link ConnectionState} and {@link KafkaCluster} objects, and will
+   * throw exceptions if the connection or cluster does not exist.
    *
    * <p> This can optionally redact sensitive values in properties, such as if generating a
    * sample configuration for display or logging.
@@ -407,8 +405,8 @@ public class ClientConfigurator {
 
   /**
    * Get the KafkaProducer configuration for connection and Kafka cluster with the specified IDs.
-   * This method looks up the {@link ConnectionState} and {@link KafkaCluster} objects,
-   * and will throw exceptions if the connection or cluster does not exist.
+   * This method looks up the {@link ConnectionState} and {@link KafkaCluster} objects, and will
+   * throw exceptions if the connection or cluster does not exist.
    *
    * <p> This can optionally redact sensitive values in properties, such as if generating a
    * sample configuration for display or logging.
@@ -453,9 +451,9 @@ public class ClientConfigurator {
   }
 
   /**
-   * Get the client configuration for connection and Schema Registry with the specified IDs.
-   * This method looks up the {@link ConnectionState} and {@link KafkaCluster} objects,
-   * and will throw exceptions if the connection or cluster does not exist.
+   * Get the client configuration for connection and Schema Registry with the specified IDs. This
+   * method looks up the {@link ConnectionState} and {@link KafkaCluster} objects, and will throw
+   * exceptions if the connection or cluster does not exist.
    *
    * <p> This can optionally redact sensitive values in properties, such as if generating a
    * sample configuration for display or logging.
@@ -493,6 +491,7 @@ public class ClientConfigurator {
   /**
    * Get the Kafka Serializer/Deserializer configuration for a given
    * {@link SchemaManager.RegisteredSchema}, or the default configuration if no schema is provided.
+   *
    * @param schema the schema to use, if present
    * @param isKey  whether the schema is for a key or value
    * @return the Serde configuration properties as a map
@@ -507,8 +506,8 @@ public class ClientConfigurator {
 
     var configs = new LinkedHashMap<>(SERDE_CONFIGS);
     configs.put(
-      (isKey ? "key.subject.name.strategy" : "value.subject.name.strategy"),
-      schema.get().subjectNameStrategy().className()
+        (isKey ? "key.subject.name.strategy" : "value.subject.name.strategy"),
+        schema.get().subjectNameStrategy().className()
     );
 
     // No need to pass SR auth properties since it will hit

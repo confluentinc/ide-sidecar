@@ -8,6 +8,7 @@ import org.eclipse.microprofile.config.ConfigProvider;
  * Utility class for extracting configuration properties.
  */
 public final class ConfigUtil {
+
   private ConfigUtil() {
   }
 
@@ -20,10 +21,11 @@ public final class ConfigUtil {
    *     key2: value2
    *     "key.with.dots": value3
    *  </pre>
-   *  Then you'd call {@code ConfigUtil.asMap("ide-sidecar.serde-configs")} to get a map of
-   *  the properties under the prefix {@code ide-sidecar.serde-configs}.
+   * Then you'd call {@code ConfigUtil.asMap("ide-sidecar.serde-configs")} to get a map of the
+   * properties under the prefix {@code ide-sidecar.serde-configs}.
+   *
    * @param prefixWithoutDot The prefix to search for in the configuration.
-   * @return                 A map of properties that start with the given prefix.
+   * @return A map of properties that start with the given prefix.
    */
   public static Map<String, String> asMap(String prefixWithoutDot) {
     if (prefixWithoutDot.endsWith(".")) {

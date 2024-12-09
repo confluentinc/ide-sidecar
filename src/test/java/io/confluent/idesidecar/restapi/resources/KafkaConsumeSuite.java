@@ -37,7 +37,8 @@ public interface KafkaConsumeSuite extends ITSuite {
     }
   }
 
-  default void assertConsumerRecords(SimpleConsumeMultiPartitionResponse response, String[][] expectedRecords) {
+  default void assertConsumerRecords(SimpleConsumeMultiPartitionResponse response,
+      String[][] expectedRecords) {
     var partitionDataList = response.partitionDataList();
     assertNotNull(partitionDataList);
     assertFalse(partitionDataList.isEmpty(), "partition_data_list should not be empty");
@@ -46,7 +47,8 @@ public interface KafkaConsumeSuite extends ITSuite {
     assertNotNull(records);
 
     var expectedRecordCount = expectedRecords.length;
-    assertEquals(expectedRecordCount, records.size(), "Expected number of records is " + expectedRecordCount);
+    assertEquals(expectedRecordCount, records.size(),
+        "Expected number of records is " + expectedRecordCount);
 
     for (var i = 0; i < expectedRecordCount; i++) {
       assertEquals(expectedRecords[i][0], records.get(i).key().asText());
@@ -81,8 +83,8 @@ public interface KafkaConsumeSuite extends ITSuite {
                 .fromBeginning(true)
                 .fetchMaxBytes(1024)
                 .build()
-            )
-        );
+        )
+    );
   }
 
   @ParameterizedTest
@@ -277,17 +279,14 @@ public interface KafkaConsumeSuite extends ITSuite {
 
   /**
    * This test validates the consumption of protobuf messages from kafka topic and decoded by
-   * schema-registry.
-   * The test performs the following steps:
-   * 1. Produces three Protobuf messages to the specified Kafka topic with unique keys. These
-   *    messages are encoded into base64 strings with a MAGIC byte prefix containing schema-id.
-   * 2. Consumes all messages from the Kafka topic starting from the beginning using message-viewer
-   *    API.
-   * 3. Verifies that the expected number of messages (3) is consumed.
-   * 4. The messages should be decoded by the message-viewer and return as JSON records.
-   * 4. Converts the consumed messages from JSON back into Protobuf format.
-   * 5. Compares the consumed Protobuf messages with the original messages to ensure correctness.
-   * 6. Checks that no "exceeded fields" flag is set during consumption.
+   * schema-registry. The test performs the following steps: 1. Produces three Protobuf messages to
+   * the specified Kafka topic with unique keys. These messages are encoded into base64 strings with
+   * a MAGIC byte prefix containing schema-id. 2. Consumes all messages from the Kafka topic
+   * starting from the beginning using message-viewer API. 3. Verifies that the expected number of
+   * messages (3) is consumed. 4. The messages should be decoded by the message-viewer and return as
+   * JSON records. 4. Converts the consumed messages from JSON back into Protobuf format. 5.
+   * Compares the consumed Protobuf messages with the original messages to ensure correctness. 6.
+   * Checks that no "exceeded fields" flag is set during consumption.
    */
   @Test
   default void testShouldDecodeProfobufMessagesUsingSRInMessageViewer() throws Exception {
@@ -327,7 +326,7 @@ public interface KafkaConsumeSuite extends ITSuite {
           "name", messages.get(i).getName(),
           "age", messages.get(i).getAge(),
           "is_active", messages.get(i).getIsActive()
-      ),1);
+      ), 1);
     }
 
     var rows = consume(topic, SimpleConsumeMultiPartitionRequestBuilder

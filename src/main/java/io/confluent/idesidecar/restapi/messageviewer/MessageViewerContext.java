@@ -1,6 +1,5 @@
 package io.confluent.idesidecar.restapi.messageviewer;
 
-import io.confluent.idesidecar.restapi.clients.SchemaErrors;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequest;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
 import io.confluent.idesidecar.restapi.models.graph.KafkaCluster;
@@ -16,6 +15,7 @@ import java.util.Optional;
  * Stores the context of a request of the message viewer API.
  */
 public class MessageViewerContext extends ProxyContext {
+
   private final String clusterId;
   private final String topicName;
   private KafkaCluster kafkaClusterInfo;

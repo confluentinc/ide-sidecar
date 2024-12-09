@@ -10,6 +10,7 @@ import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
 
 @RequestScoped
 public class PartitionManagerImpl implements PartitionManager {
+
   @Inject
   TopicManager topicManager;
 

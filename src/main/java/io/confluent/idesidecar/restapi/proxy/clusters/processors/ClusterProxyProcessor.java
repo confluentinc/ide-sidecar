@@ -11,9 +11,8 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
  * Processor that handles the cluster proxying logic. This is the last Kafka processor before
- * handing off to the {@link ProxyRequestProcessor} to
- * make the actual request to the Kafka cluster (Kafka REST), and the first processor to handle the
- * response from the Kafka cluster.
+ * handing off to the {@link ProxyRequestProcessor} to make the actual request to the Kafka cluster
+ * (Kafka REST), and the first processor to handle the response from the Kafka cluster.
  * <p>
  * This processor is responsible for the following:
  * <ul>

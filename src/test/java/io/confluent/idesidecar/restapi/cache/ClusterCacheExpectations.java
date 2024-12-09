@@ -3,7 +3,6 @@ package io.confluent.idesidecar.restapi.cache;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import io.confluent.idesidecar.restapi.cache.ClusterCache;
 import io.confluent.idesidecar.restapi.exceptions.ClusterNotFoundException;
 import io.confluent.idesidecar.restapi.models.ClusterType;
 import io.confluent.idesidecar.restapi.models.graph.Cluster;
@@ -17,8 +16,8 @@ import java.util.Optional;
 public class ClusterCacheExpectations {
 
   /**
-   * Expect the {@link ClusterCache#getCluster(String, String, ClusterType)} method is called
-   * and returns the cluster information with the given details.
+   * Expect the {@link ClusterCache#getCluster(String, String, ClusterType)} method is called and
+   * returns the cluster information with the given details.
    *
    * @param cache        the mock {@link ClusterCache}
    * @param connectionId the ID of the connection that should be in the cache
@@ -55,8 +54,8 @@ public class ClusterCacheExpectations {
   }
 
   /**
-   * Expect the {@link ClusterCache#getCluster(String, String, ClusterType)} method is called
-   * and fails to find the cluster information with the given details.
+   * Expect the {@link ClusterCache#getCluster(String, String, ClusterType)} method is called and
+   * fails to find the cluster information with the given details.
    *
    * @param cache        the mock {@link ClusterCache}
    * @param connectionId the ID of the connection that should be in the cache
@@ -79,10 +78,10 @@ public class ClusterCacheExpectations {
   }
 
   /**
-   * Expect the {@link ClusterCache#getKafkaCluster(String, String)} method is called
-   * and returns the cluster information with the given details.
-   * This method returns the mock {@link KafkaCluster}, in case the caller needs to pass it
-   * to the {@link #expectSchemaRegistryForKafkaClusterInCache} method.
+   * Expect the {@link ClusterCache#getKafkaCluster(String, String)} method is called and returns
+   * the cluster information with the given details. This method returns the mock
+   * {@link KafkaCluster}, in case the caller needs to pass it to the
+   * {@link #expectSchemaRegistryForKafkaClusterInCache} method.
    *
    * @param cache        the mock {@link ClusterCache}
    * @param connectionId the ID of the connection that should be in the cache
@@ -107,8 +106,8 @@ public class ClusterCacheExpectations {
   }
 
   /**
-   * Expect the {@link ClusterCache#getKafkaCluster(String, String)} method is called
-   * and fails to find the cluster information with the given details.
+   * Expect the {@link ClusterCache#getKafkaCluster(String, String)} method is called and fails to
+   * find the cluster information with the given details.
    *
    * @param cache        the mock {@link ClusterCache}
    * @param connectionId the ID of the connection that should be in the cache
@@ -129,8 +128,8 @@ public class ClusterCacheExpectations {
   }
 
   /**
-   * Expect the {@link ClusterCache#getKafkaCluster(String, String)} method is called
-   * and fails to find the connection with the specified ID.
+   * Expect the {@link ClusterCache#getKafkaCluster(String, String)} method is called and fails to
+   * find the connection with the specified ID.
    *
    * @param cache        the mock {@link ClusterCache}
    * @param connectionId the ID of the connection that should NOT be found in the cache
@@ -149,8 +148,8 @@ public class ClusterCacheExpectations {
   }
 
   /**
-   * Expect the {@link ClusterCache#getSchemaRegistry(String, String)} method is called
-   * and returns the cluster information with the given details.
+   * Expect the {@link ClusterCache#getSchemaRegistry(String, String)} method is called and returns
+   * the cluster information with the given details.
    *
    * @param cache        the mock {@link ClusterCache}
    * @param connectionId the ID of the connection that should be in the cache
@@ -172,13 +171,13 @@ public class ClusterCacheExpectations {
   }
 
   /**
-   * Expect the {@link ClusterCache#getSchemaRegistryForKafkaCluster} method is called
-   * and returns the cluster information with the given details.
+   * Expect the {@link ClusterCache#getSchemaRegistryForKafkaCluster} method is called and returns
+   * the cluster information with the given details.
    *
    * @param cache        the mock {@link ClusterCache}
    * @param connectionId the ID of the connection that should be in the cache
-   * @param kafkaCluster the {@link KafkaCluster} instance that is expected to be passed to
-   *                     the {@link ClusterCache#getSchemaRegistryForKafkaCluster} method
+   * @param kafkaCluster the {@link KafkaCluster} instance that is expected to be passed to the
+   *                     {@link ClusterCache#getSchemaRegistryForKafkaCluster} method
    * @param clusterId    the ID of the schema registry to be found in the cache
    * @param clusterUrl   the URL of the schema registry to be found in the cache
    */
@@ -203,13 +202,13 @@ public class ClusterCacheExpectations {
   }
 
   /**
-   * Expect the {@link ClusterCache#getKafkaCluster(String, String)} method is called
-   * and fails to find the cluster information with the given details.
+   * Expect the {@link ClusterCache#getKafkaCluster(String, String)} method is called and fails to
+   * find the cluster information with the given details.
    *
    * @param cache        the mock {@link ClusterCache}
    * @param connectionId the ID of the connection that should be in the cache
-   * @param kafkaCluster the {@link KafkaCluster} instance that is expected to be passed to
-   *                     the {@link ClusterCache#getSchemaRegistryForKafkaCluster} method
+   * @param kafkaCluster the {@link KafkaCluster} instance that is expected to be passed to the
+   *                     {@link ClusterCache#getSchemaRegistryForKafkaCluster} method
    */
   public static void expectSchemaRegistryForKafkaClusterNotInCache(
       ClusterCache cache,
