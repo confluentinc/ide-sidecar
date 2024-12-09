@@ -63,7 +63,7 @@ import org.junit.jupiter.api.AfterEach;
  */
 public abstract class AbstractIT extends SidecarClient implements ITSuite {
 
-  static String VALID_CONNECTION_ID = "c1";
+  private static String VALID_CONNECTION_ID = "c1";
 
   private static MessageViewerContext messageViewerContext = new MessageViewerContext(
       null,
