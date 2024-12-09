@@ -61,13 +61,13 @@ public class RecordDeserializer {
 
   private static final Map<String, String> SERDE_CONFIGS = ConfigUtil
       .asMap("ide-sidecar.serde-configs");
-  private final int schemaFetchMaxRetries;
-
-  SchemaErrors schemaErrors;
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
   private static final ObjectMapper AVRO_OBJECT_MAPPER = new AvroMapper(new AvroFactory());
   public static final byte MAGIC_BYTE = 0x0;
   private static final Duration CACHE_FAILED_SCHEMA_ID_FETCH_DURATION = Duration.ofSeconds(30);
+
+  private final int schemaFetchMaxRetries;
+  private final SchemaErrors schemaErrors;
   private final Duration schemaFetchRetryInitialBackoff;
   private final Duration schemaFetchRetryMaxBackoff;
   private final Duration schemaFetchTimeout;
@@ -235,15 +235,20 @@ public class RecordDeserializer {
     if (result.isPresent()) {
       return result.get();
     }
-    SchemaErrors.SchemaId schemaId = new SchemaErrors.SchemaId(context.getClusterId(), getSchemaIdFromRawBytes(bytes));
+    int schemaId = getSchemaIdFromRawBytes(bytes);
+    String connectionId = context.getConnectionId();
     // Check if schema retrieval has failed recently
-    if (schemaErrors.readSchemaIdByConnectionId(new SchemaErrors.ConnectionId(context.getConnectionId()), schemaId) != null) {
+    var error = schemaErrors.readSchemaIdByConnectionId(
+        connectionId,
+        context.getClusterId(),
+        schemaId
+    );
+    if (error != null) {
       return new DecodedResult(
           // If the schema fetch failed, we can't decode the data, so we just return the raw bytes.
           // We apply the encoderOnFailure function to the bytes before returning them.
           onFailure(encoderOnFailure, bytes),
-          String.valueOf(
-              schemaErrors.readSchemaIdByConnectionId(new SchemaErrors.ConnectionId(context.getConnectionId()), schemaId))
+          error.message()
       );
     }
 
@@ -252,7 +257,7 @@ public class RecordDeserializer {
       // and retry if the operation fails due to a retryable exception.
       var parsedSchema = Uni
           .createFrom()
-          .item(Unchecked.supplier(() -> schemaRegistryClient.getSchemaById(schemaId.schemaId())))
+          .item(Unchecked.supplier(() -> schemaRegistryClient.getSchemaById(schemaId)))
           .onFailure(this::isRetryableException)
           .retry()
           .withBackOff(schemaFetchRetryInitialBackoff, schemaFetchRetryMaxBackoff)
@@ -340,14 +345,14 @@ public class RecordDeserializer {
   }
 
   private void cacheSchemaFetchError(
-      Throwable e, SchemaErrors.SchemaId schemaId, MessageViewerContext context
+      Throwable e, int schemaId, MessageViewerContext context
   ) {
     var retryTime = Instant.now().plus(CACHE_FAILED_SCHEMA_ID_FETCH_DURATION);
     var timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
         .withZone(ZoneId.systemDefault());
     Log.errorf(
         "Failed to retrieve schema with ID %d. Will try again in %d seconds at %s. Error: %s",
-        schemaId.schemaId(),
+        schemaId,
         CACHE_FAILED_SCHEMA_ID_FETCH_DURATION.getSeconds(),
         timeFormatter.format(retryTime),
         e.getMessage(),
@@ -355,10 +360,15 @@ public class RecordDeserializer {
     );
     SchemaErrors.Error errorMessage = new SchemaErrors.Error(String.format(
         "Failed to retrieve schema with ID %d: %s",
-        schemaId.schemaId(),
+        schemaId,
         e.getMessage()
     ));
-    schemaErrors.writeSchemaIdByConnectionId(new SchemaErrors.ConnectionId(context.getConnectionId()), schemaId, errorMessage);
+    schemaErrors.writeSchemaIdByConnectionId(
+        context.getConnectionId(),
+        schemaId,
+        context.getClusterId(),
+        errorMessage
+    );
   }
 
   /**
