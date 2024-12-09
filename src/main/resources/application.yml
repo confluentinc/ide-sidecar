@@ -210,7 +210,7 @@ quarkus:
       # We do not use the Quarkus Kafka devservices container to start the Kafka cluster
       enabled: false
   log:
-    min-level: INFO
+    min-level: DEBUG
     category:
       "org.apache.kafka.clients":
         level: ERROR
@@ -218,6 +218,7 @@ quarkus:
         level: ERROR
       "io.confluent.kafka.serializers":
         level: ERROR
+    level: DEBUG
   http:
     host: 127.0.0.1
     port: 26636

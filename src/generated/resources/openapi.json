@@ -1488,6 +1488,12 @@
               "$ref" : "#/components/schemas/OAuthCredentials"
             } ],
             "nullable" : true
+          },
+          "verify_ssl_certificates" : {
+            "description" : "Whether to verify the Schema Registry cluster certificates. Defaults to 'true', but set to 'false' when the Schema Registry cluster has self-signed certificates.",
+            "default" : true,
+            "type" : "boolean",
+            "nullable" : true
           }
         }
       },
@@ -1713,15 +1719,15 @@
       "HealthCheck" : {
         "type" : "object",
         "properties" : {
-          "status" : {
-            "enum" : [ "UP", "DOWN" ],
+          "name" : {
             "type" : "string"
           },
           "data" : {
             "type" : "object",
             "nullable" : true
           },
-          "name" : {
+          "status" : {
+            "enum" : [ "UP", "DOWN" ],
             "type" : "string"
           }
         }

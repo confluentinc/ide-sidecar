@@ -1557,7 +1557,8 @@ public class ConnectionsResourceTest {
                     new SchemaRegistryConfig(
                         null,
                         "http://localhost:8081",
-                        null
+                        null,
+                        false
                     )
                 )
         ),
@@ -1573,7 +1574,8 @@ public class ConnectionsResourceTest {
                         new BasicCredentials(
                             "user",
                             new Password("pass".toCharArray())
-                        )
+                        ),
+                        false
                     )
                 )
         ),
@@ -1589,7 +1591,8 @@ public class ConnectionsResourceTest {
                         new ApiKeyAndSecret(
                             "api-key-123",
                             new ApiSecret("api-secret-123456".toCharArray())
-                        )
+                        ),
+                        false
                     )
                 )
         ),
@@ -1606,7 +1609,8 @@ public class ConnectionsResourceTest {
                             "http://localhost/oauth/token",
                             "client-id",
                             new Password("client-secret".toCharArray())
-                        )
+                        ),
+                        false
                     )
                 )
         ),
@@ -1625,7 +1629,8 @@ public class ConnectionsResourceTest {
                             "/path/to/keystore",
                             new Password("keystore-secret".toCharArray()),
                             new Password("key-secret".toCharArray())
-                        )
+                        ),
+                        false
                     )
                 )
         ),

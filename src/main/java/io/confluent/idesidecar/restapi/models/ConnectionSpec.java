@@ -422,15 +422,35 @@ public record ConnectionSpec(
           nullable = true
       )
       @Null
-      Credentials credentials
+      Credentials credentials,
+
+      @Schema(
+          description =
+              "Whether to verify the Schema Registry cluster certificates. Defaults to 'true', but set "
+                  + "to 'false' when the Schema Registry cluster has self-signed certificates.",
+          defaultValue = KafkaClusterConfig.DEFAULT_VERIFY_SSL_CERTIFICATES_VALUE,
+          nullable = true
+      )
+      @JsonProperty(value = "verify_ssl_certificates")
+      @Null
+      Boolean verifySslCertificates
   ) implements ConnectionSpecSchemaRegistryConfigBuilder.With {
 
     private static final int ID_MAX_LEN = 64;
     private static final int URI_MAX_LEN = 256;
+    private static final String DEFAULT_VERIFY_SSL_CERTIFICATES_VALUE = "true";
+    public static final boolean DEFAULT_VERIFY_SSL_CERTIFICATES = Boolean.valueOf(
+        DEFAULT_VERIFY_SSL_CERTIFICATES_VALUE
+    );
 
     @JsonIgnore
     public Optional<SchemaRegistryEndpoint> asCCloudEndpoint() {
       return SchemaRegistryEndpoint.fromUri(uri());
+    }
+
+    @JsonIgnore
+    public boolean verifySslCertificatesOrDefault() {
+      return verifySslCertificates != null ? verifySslCertificates : DEFAULT_VERIFY_SSL_CERTIFICATES;
     }
 
     public void validate(

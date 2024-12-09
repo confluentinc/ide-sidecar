@@ -1,5 +1,8 @@
 package io.confluent.idesidecar.restapi.util;
 
+import io.confluent.idesidecar.restapi.credentials.BasicCredentials;
+import io.confluent.idesidecar.restapi.credentials.MutualTLSCredentials;
+import io.confluent.idesidecar.restapi.credentials.Password;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.util.cpdemo.*;
 import io.confluent.idesidecar.restapi.util.cpdemo.SchemaRegistryContainer;
@@ -11,6 +14,8 @@ import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.lifecycle.Startables;
 import org.testcontainers.utility.TestcontainersConfiguration;
+
+import java.io.File;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -155,7 +160,15 @@ public class CPDemoTestEnvironment implements TestEnvironment {
                 false,
                 false
             ),
-            null
+            new ConnectionSpec.SchemaRegistryConfig(
+                null,
+                "https://localhost:8085",
+                new BasicCredentials(
+                    "schemaregistryUser",
+                    new Password("schemaregistryUser".toCharArray())
+                ),
+                false
+            )
         )
     );
   }

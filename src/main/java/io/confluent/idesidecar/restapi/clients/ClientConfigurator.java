@@ -302,6 +302,9 @@ public class ClientConfigurator {
     // First set the schema registry URL
     props.put(AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, srUri);
 
+    // TODO: Remove this debug line
+    props.put("javax.net.debug", "all");
+
     if (defaultTimeout != null) {
       props.put("schema.registry.request.timeout.ms", defaultTimeout.toMillis());
     }
@@ -314,7 +317,10 @@ public class ClientConfigurator {
         .orElse(null);
 
     // Add any properties for SR credentials (if defined)
-    var options = new Credentials.SchemaRegistryConnectionOptions(redact, logicalId);
+    var options = connection
+        .getSchemaRegistryOptions()
+        .withRedact(redact)
+        .withLogicalClusterId(logicalId);
     connection
         .getSchemaRegistryCredentials()
         .flatMap(creds -> creds.schemaRegistryClientProperties(options))

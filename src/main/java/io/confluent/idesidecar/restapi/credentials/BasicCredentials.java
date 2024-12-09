@@ -74,6 +74,9 @@ public record BasicCredentials(
       SchemaRegistryConnectionOptions options
   ) {
     var config = new LinkedHashMap<String, String>();
+    if (!options.verifyCertificates()) {
+      config.put("ssl.endpoint.identification.algorithm", "");
+    }
     config.put("basic.auth.credentials.source", "USER_INFO");
     config.put(
         "basic.auth.user.info",

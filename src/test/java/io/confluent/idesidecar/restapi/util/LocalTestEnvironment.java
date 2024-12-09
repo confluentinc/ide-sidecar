@@ -98,7 +98,8 @@ public class LocalTestEnvironment implements TestEnvironment {
             new ConnectionSpec.SchemaRegistryConfig(
                 schemaRegistry.getClusterId(),
                 schemaRegistry.endpoint(),
-                null
+                null,
+                false
             )
         )
     );

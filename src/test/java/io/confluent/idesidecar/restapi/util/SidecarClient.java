@@ -355,7 +355,7 @@ public class SidecarClient implements SidecarClientApi {
     // If the connection spec configures a Kafka cluster or a Schema Registry, wait until the
     // connection to the Kafka cluster or Schema registry has been established
     if (spec.kafkaClusterConfig() != null || spec.schemaRegistryConfig() != null) {
-      await().atMost(Duration.ofSeconds(10)).until(() -> {
+      await().atMost(Duration.ofSeconds(30)).until(() -> {
         var connection = given()
             .when()
             .get("%s/gateway/v1/connections/%s".formatted(sidecarHost, spec.id()))

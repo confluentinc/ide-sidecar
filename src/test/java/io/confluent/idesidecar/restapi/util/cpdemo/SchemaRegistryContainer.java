@@ -82,11 +82,11 @@ public class SchemaRegistryContainer extends GenericContainer<SchemaRegistryCont
     envs.put("SCHEMA_REGISTRY_SSL_KEY_PASSWORD", "confluent");
     envs.put("SCHEMA_REGISTRY_SSL_CLIENT_AUTHENTICATION", "NONE");
     envs.put("SCHEMA_REGISTRY_SCHEMA_REGISTRY_INTER_INSTANCE_PROTOCOL", "https");
-    envs.put("SCHEMA_REGISTRY_LOG4J_ROOT_LOGLEVEL", "DEBUG");
+    envs.put("SCHEMA_REGISTRY_LOG4J_ROOT_LOGLEVEL", "INFO");
     envs.put("SCHEMA_REGISTRY_KAFKASTORE_TOPIC", "_schemas");
     envs.put("SCHEMA_REGISTRY_KAFKASTORE_TOPIC_REPLICATION_FACTOR", "2");
     envs.put("SCHEMA_REGISTRY_SSL_CIPHER_SUITES", Constants.SSL_CIPHER_SUITES);
-    envs.put("SCHEMA_REGISTRY_DEBUG", "true");
+    envs.put("SCHEMA_REGISTRY_DEBUG", "false");
     envs.put("SCHEMA_REGISTRY_SCHEMA_REGISTRY_RESOURCE_EXTENSION_CLASS", "io.confluent.kafka.schemaregistry.security.SchemaRegistrySecurityResourceExtension,io.confluent.schema.exporter.SchemaExporterResourceExtension");
     envs.put("SCHEMA_REGISTRY_CONFLUENT_SCHEMA_REGISTRY_AUTHORIZER_CLASS", "io.confluent.kafka.schemaregistry.security.authorizer.rbac.RbacAuthorizer");
     envs.put("SCHEMA_REGISTRY_REST_SERVLET_INITIALIZOR_CLASSES", "io.confluent.common.security.jetty.initializer.InstallBearerOrBasicSecurityHandler");

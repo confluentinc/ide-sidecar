@@ -48,7 +48,8 @@ public class RealDirectFetcherTest {
       new ConnectionSpec.SchemaRegistryConfig(
           SR_CLUSTER_ID,
           SR_URL,
-          null
+          null,
+          false
       )
   );
 
@@ -62,7 +63,8 @@ public class RealDirectFetcherTest {
       new ConnectionSpec.SchemaRegistryConfig(
           SR_CLUSTER_ID,
           SR_URL,
-          null
+          null,
+          false
       )
   );
 
