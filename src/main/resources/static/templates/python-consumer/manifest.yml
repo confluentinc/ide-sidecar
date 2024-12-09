@@ -23,13 +23,13 @@ options:
   api_key:
     display_name: Kafka Cluster API Key
     description: The API key for accessing the Kafka cluster in Confluent Cloud.
-    pattern: "^[A-Z0-7=]{16}$"
+    pattern: "^[a-zA-Z0-9=\\/\\+]{16}$"
     examples:
       - AAAAABBBBBCCCCC5
   api_secret:
     display_name: Kafka Cluster API Secret
     description: The API secret for accessing the Kafka cluster in Confluent Cloud.
-    pattern: "^[A-Z0-7=]{64,72}$"
+    pattern: "^[a-zA-Z0-9=\\/\\+]{64,72}$"
     format: password
     examples:
       - AAAAABBBBBCCCCC5DDDDDEEEEEFFFFFGGGGGHHHHHIIIIJJJJJKKKKKLLLLLMMMMM
