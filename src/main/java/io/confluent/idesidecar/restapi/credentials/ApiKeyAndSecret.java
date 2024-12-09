@@ -16,7 +16,7 @@ import java.util.Map;
 import java.util.Optional;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
-@Schema(description = "Basic authentication credentials")
+@Schema(description = "API key and secret authentication credentials")
 @RegisterForReflection
 public record ApiKeyAndSecret(
 

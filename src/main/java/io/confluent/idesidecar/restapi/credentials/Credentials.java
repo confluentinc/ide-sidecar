@@ -20,6 +20,8 @@ import java.util.Optional;
 @JsonSubTypes({
     @Type(value = BasicCredentials.class),
     @Type(value = ApiKeyAndSecret.class),
+    @Type(value = MutualTLSCredentials.class),
+    @Type(value = OAuthCredentials.class)
 })
 @RegisterForReflection
 public interface Credentials {
@@ -41,6 +43,8 @@ public interface Credentials {
 
   enum Type {
     BASIC,
+    MUTUAL_TLS,
+    OAUTH2,
     API_KEY_AND_SECRET,
   }
 
@@ -61,6 +65,26 @@ public interface Credentials {
   @JsonIgnore
   default boolean isBasic() {
     return type() == Type.BASIC;
+  }
+
+  /**
+   * Return true if this is a mutual TLS credentials object.
+   *
+   * @return true if {@link #type()} equals {@link Type#MUTUAL_TLS}
+   */
+  @JsonIgnore
+  default boolean isMutualTls() {
+    return type() == Type.MUTUAL_TLS;
+  }
+
+  /**
+   * Return true if this is an OAuth 2.0 credentials object.
+   *
+   * @return true if {@link #type()} equals {@link Type#OAUTH2}
+   */
+  @JsonIgnore
+  default boolean isOauth2() {
+    return type() == Type.OAUTH2;
   }
 
   /**
