@@ -33,7 +33,7 @@ public class ConfluentLocalKafkaClusterStrategy extends ClusterStrategy {
   public MultiMap constructProxyHeaders(ClusterProxyContext context) {
     var headers = super.constructProxyHeaders(context);
     return headers
-        .add(CONNECTION_ID_HEADER, String.valueOf(context.getConnectionId()))
+        .add(CONNECTION_ID_HEADER, context.getConnectionId())
         .add(HttpHeaders.AUTHORIZATION, "Bearer %s".formatted(accessToken.getToken()));
   }
 
