@@ -370,6 +370,10 @@ public record ConnectionSpec(
       if (credentials != null) {
         credentials.validate(errors, "%s.credentials".formatted(path), what);
       }
+
+      if (ssl != null) {
+        ssl.validate(errors, "%s.ssl".formatted(path), what);
+      }
     }
   }
 
@@ -473,6 +477,10 @@ public record ConnectionSpec(
       if (credentials != null) {
         credentials.validate(errors, "%s.credentials".formatted(path), what);
       }
+
+      if (ssl != null) {
+        ssl.validate(errors, "%s.ssl".formatted(path), what);
+      }
     }
   }
 
@@ -517,6 +525,7 @@ public record ConnectionSpec(
         case LOCAL -> {
           checkCCloudConfigNotAllowed(errors, newSpec);
           checkKafkaClusterNotAllowed(errors, newSpec);
+          // TODO: checkSSLNotAllowed(errors, newSpec);
           // Allow use of the older local config with Schema Registry.
           var local = newSpec.localConfig;
           if (local != null) {
@@ -540,9 +549,11 @@ public record ConnectionSpec(
           checkLocalConfigNotAllowed(errors, newSpec);
           checkKafkaClusterNotAllowed(errors, newSpec);
           checkSchemaRegistryNotAllowed(errors, newSpec);
+          // TODO: checkSSLNotAllowed(errors, newSpec);
         }
         case DIRECT -> {
           var kafka = newSpec.kafkaClusterConfig();
+          // TODO: Validate SSL config here for kafka and SR if present
           if (kafka != null) {
             kafka.validate(errors, "kafka_cluster", "Kafka cluster");
           }

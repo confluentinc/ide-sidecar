@@ -33,8 +33,6 @@ public interface Credentials {
 
   @RecordBuilder
   record SchemaRegistryConnectionOptions(
-      // Does not define a boolean ssl field because that's
-      // determined by the Schema Registry URL
       boolean redact,
       String logicalClusterId
   ) implements CredentialsSchemaRegistryConnectionOptionsBuilder.With {
