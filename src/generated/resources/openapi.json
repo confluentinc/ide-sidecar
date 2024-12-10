@@ -659,7 +659,7 @@
   "components" : {
     "schemas" : {
       "ApiKeyAndSecret" : {
-        "description" : "Basic authentication credentials",
+        "description" : "API key and secret authentication credentials",
         "required" : [ "api_key", "api_secret" ],
         "type" : "object",
         "properties" : {
@@ -1128,6 +1128,10 @@
               "$ref" : "#/components/schemas/BasicCredentials"
             }, {
               "$ref" : "#/components/schemas/ApiKeyAndSecret"
+            }, {
+              "$ref" : "#/components/schemas/MutualTLSCredentials"
+            }, {
+              "$ref" : "#/components/schemas/OAuthCredentials"
             } ],
             "nullable" : true
           },
@@ -1180,6 +1184,98 @@
           "schema-registry-uri" : {
             "description" : "The URL of the Schema Registry running locally.",
             "maxLength" : 512,
+            "type" : "string"
+          }
+        }
+      },
+      "MutualTLSCredentials" : {
+        "description" : "Mutual TLS authentication credentials",
+        "required" : [ "truststore_path", "keystore_path" ],
+        "type" : "object",
+        "properties" : {
+          "truststore_path" : {
+            "description" : "The path to the local trust store file.",
+            "maxLength" : 256,
+            "type" : "string"
+          },
+          "truststore_password" : {
+            "description" : "The password for the local trust store file. If a password is not set, trust store file configured will still be used, but integrity checking is disabled. A trust store password is not supported for PEM format.",
+            "type" : "string",
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/Password"
+            } ]
+          },
+          "truststore_type" : {
+            "description" : "The file format of the local trust store file",
+            "type" : "string",
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/StoreType"
+            } ]
+          },
+          "keystore_path" : {
+            "description" : "The path to the local key store file.",
+            "maxLength" : 256,
+            "type" : "string"
+          },
+          "keystore_password" : {
+            "description" : "The password for the local key store file. If a password is not set, trust  store file configured will still be used, but integrity checking is disabled. A key store password is not supported for PEM format.",
+            "type" : "string",
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/Password"
+            } ]
+          },
+          "keystore_type" : {
+            "description" : "The file format of the local key store file.",
+            "type" : "string",
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/StoreType"
+            } ]
+          },
+          "key_password" : {
+            "description" : "The password of the private key in the local key store file.",
+            "type" : "string",
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/Password"
+            } ]
+          }
+        }
+      },
+      "OAuthCredentials" : {
+        "description" : "OAuth 2.0 authentication credentials",
+        "required" : [ "tokens_url", "client_id" ],
+        "type" : "object",
+        "properties" : {
+          "tokens_url" : {
+            "description" : "The URL of the OAuth 2.0 identity provider's token endpoint.",
+            "maxLength" : 256,
+            "type" : "string"
+          },
+          "client_id" : {
+            "description" : "The public identifier for the application as registered with the OAuth 2.0 identity provider.",
+            "maxLength" : 128,
+            "minLength" : 1,
+            "type" : "string"
+          },
+          "client_secret" : {
+            "description" : "The client secret known only to the application and the OAuth 2.0 identity provider.",
+            "type" : "string",
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/Password"
+            } ]
+          },
+          "scope" : {
+            "description" : "The scope to use. The scope is optional and required only when your identity provider doesn't have a default scope or your groups claim is linked to a scope path to use when connecting to the external service.",
+            "maxLength" : 256,
+            "type" : "string"
+          },
+          "connect_timeout_millis" : {
+            "format" : "int32",
+            "description" : "The timeout in milliseconds when connecting to your identity provider.",
+            "minimum" : 0,
+            "type" : "integer"
+          },
+          "identityPool" : {
+            "description" : "Additional property that can be added in the request header to identify the principal ID for authorization. For example, this may bea Confluent Cloud identity pool.",
             "type" : "string"
           }
         }
@@ -1386,6 +1482,10 @@
               "$ref" : "#/components/schemas/BasicCredentials"
             }, {
               "$ref" : "#/components/schemas/ApiKeyAndSecret"
+            }, {
+              "$ref" : "#/components/schemas/MutualTLSCredentials"
+            }, {
+              "$ref" : "#/components/schemas/OAuthCredentials"
             } ],
             "nullable" : true
           }
@@ -1484,6 +1584,10 @@
       },
       "Status" : {
         "enum" : [ "NO_TOKEN", "VALID_TOKEN", "INVALID_TOKEN", "FAILED" ],
+        "type" : "string"
+      },
+      "StoreType" : {
+        "enum" : [ "JKS", "PKCS12", "PEM", "UNKNOWN" ],
         "type" : "string"
       },
       "Template" : {
