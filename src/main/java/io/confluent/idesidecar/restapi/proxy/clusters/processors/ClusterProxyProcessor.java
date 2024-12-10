@@ -6,8 +6,6 @@ import io.confluent.idesidecar.restapi.proxy.ProxyRequestProcessor;
 import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
 import io.vertx.core.Future;
 import io.vertx.core.buffer.Buffer;
-import jakarta.enterprise.context.ApplicationScoped;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
  * Processor that handles the cluster proxying logic. This is the last Kafka processor before
@@ -27,15 +25,17 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
  * ProxyProcessorBeanProducers#clusterProxyProcessor} for
  * the processor chain that includes this processor.</p>
  */
-@ApplicationScoped
-public class ClusterProxyProcessor extends
-    Processor<ClusterProxyContext, Future<ClusterProxyContext>> {
+public class ClusterProxyProcessor<T extends ClusterProxyContext> extends
+    Processor<T, Future<T>> {
 
-  @ConfigProperty(name = "ide-sidecar.api.host")
-  String sidecarHost;
+  private final String sidecarHost;
+
+  public ClusterProxyProcessor(String sidecarHost) {
+    this.sidecarHost = sidecarHost;
+  }
 
   @Override
-  public Future<ClusterProxyContext> process(ClusterProxyContext context) {
+  public Future<T> process(T context) {
     // Set everything needed to do the proxy request
     var requestStrategy = context.getClusterStrategy();
     context.setProxyRequestAbsoluteUrl(

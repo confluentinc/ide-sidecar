@@ -2,6 +2,8 @@ package io.confluent.idesidecar.restapi.proxy;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
+import io.confluent.idesidecar.restapi.proxy.clusters.KafkaClusterProxyContext;
 import io.confluent.idesidecar.restapi.util.UuidFactory;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
@@ -10,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 @QuarkusTest
-class ProxyContextTest {
+class ClusterProxyContextTest {
 
   @InjectMock
   UuidFactory uuidFactory;
@@ -20,13 +22,22 @@ class ProxyContextTest {
     Mockito.when(uuidFactory.getRandomUuid()).thenReturn("99a2b4ce-7a87-4dd2-b967-fe9f34fcbea4");
   }
 
-  final ProxyContext createDummyContext() {
-    return new ProxyContext("http://localhost:8080", null, null, null, null, null);
+  final ClusterProxyContext createDummyContext() {
+    return new KafkaClusterProxyContext(
+        "http://localhost:8080",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+    );
   }
 
   @Test
   void testCreatingFailureWithErrors() {
-    ProxyContext context = createDummyContext();
+    ClusterProxyContext context = createDummyContext();
     context.error("code 1", "title 1")
         // Such fluent, much wow
         .error("code 2", "title 2")
@@ -42,7 +53,7 @@ class ProxyContextTest {
 
   @Test
   void testCreatingFailureWithoutErrors() {
-    ProxyContext context = createDummyContext();
+    ClusterProxyContext context = createDummyContext();
 
     var failure = context.fail(429, "Too many requests");
 
@@ -54,7 +65,7 @@ class ProxyContextTest {
 
   @Test
   void testFormattedFailureMessage() {
-    ProxyContext context = createDummyContext();
+    ClusterProxyContext context = createDummyContext();
     var failure = context.failf(429, "Too many requests: %s %d", "This is a test", 42);
 
     // Such formatting, much %s

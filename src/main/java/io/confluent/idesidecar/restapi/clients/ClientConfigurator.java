@@ -3,25 +3,24 @@ package io.confluent.idesidecar.restapi.clients;
 import io.confluent.idesidecar.restapi.cache.ClusterCache;
 import io.confluent.idesidecar.restapi.connections.ConnectionState;
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
-import io.confluent.idesidecar.restapi.credentials.Credentials;
 import io.confluent.idesidecar.restapi.exceptions.ClusterNotFoundException;
 import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
 import io.confluent.idesidecar.restapi.kafkarest.SchemaManager;
 import io.confluent.idesidecar.restapi.models.graph.KafkaCluster;
 import io.confluent.idesidecar.restapi.models.graph.SchemaRegistry;
 import io.confluent.idesidecar.restapi.util.CCloud;
+import io.confluent.idesidecar.restapi.util.ConfigUtil;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClientConfig;
 import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig;
 import io.quarkus.logging.Log;
-import io.confluent.idesidecar.restapi.util.ConfigUtil;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import org.apache.kafka.clients.CommonClientConfigs;
-import java.util.function.Supplier;
 import java.util.Optional;
+import java.util.function.Supplier;
+import org.apache.kafka.clients.CommonClientConfigs;
 
 @ApplicationScoped
 public class ClientConfigurator {
@@ -301,9 +300,6 @@ public class ClientConfigurator {
 
     // First set the schema registry URL
     props.put(AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, srUri);
-
-    // TODO: Remove this debug line
-    props.put("javax.net.debug", "all");
 
     if (defaultTimeout != null) {
       props.put("schema.registry.request.timeout.ms", defaultTimeout.toMillis());

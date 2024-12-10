@@ -201,7 +201,9 @@ public class RealDirectFetcher extends ConfluentRestClient implements DirectFetc
       SchemaRegistryClient srClient
   ) throws RestClientException, IOException {
     // Use the client to get *some* information, to verify that we can connect
-    var mode = srClient.getMode(); // unused
+    // getMode() could fail with 403, perhaps we should cycle
+    // through some API calls to see if we can get a 200
+    srClient.getAllSubjects();
 
     // Construct the cluster object
     var srConfig = state.getSpec().schemaRegistryConfig();

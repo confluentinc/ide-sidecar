@@ -3,9 +3,11 @@ package io.confluent.idesidecar.restapi.credentials;
 import static io.vertx.core.http.HttpHeaders.AUTHORIZATION;
 
 import io.confluent.idesidecar.restapi.exceptions.Failure.Error;
+import io.quarkus.logging.Log;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import io.vertx.core.MultiMap;
 import jakarta.validation.constraints.NotNull;
+import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.LinkedHashMap;
@@ -77,11 +79,20 @@ public record BasicCredentials(
     if (!options.verifyCertificates()) {
       config.put("ssl.endpoint.identification.algorithm", "");
     }
+
+    // Set truststore
+    var cwd = System.getProperty("user.dir");
+    var trustStoreLocation = new File(cwd,
+        ".cp-demo/scripts/security/kafka.schemaregistry.truststore.jks").getAbsolutePath();
+    config.put("ssl.truststore.location", trustStoreLocation);
+    config.put("ssl.truststore.password", "confluent");
+
     config.put("basic.auth.credentials.source", "USER_INFO");
-    config.put(
-        "basic.auth.user.info",
-        "%s:%s".formatted(username, password.asString(options.redact()))
-    );
+    var basicInfo = username
+        + ":"
+        + new String(password.asCharArray());
+    config.put("basic.auth.user.info", basicInfo);
+    Log.infof("Schema Registry client properties: %s", config);
     return Optional.of(config);
   }
 

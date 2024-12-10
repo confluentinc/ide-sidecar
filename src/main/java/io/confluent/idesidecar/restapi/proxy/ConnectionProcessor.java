@@ -5,6 +5,7 @@ import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
 import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
 import io.confluent.idesidecar.restapi.exceptions.ProcessorFailedException;
 import io.confluent.idesidecar.restapi.processors.Processor;
+import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
 import io.confluent.idesidecar.restapi.util.RequestHeadersConstants;
 import io.vertx.core.Future;
 
@@ -12,9 +13,9 @@ import io.vertx.core.Future;
  * Processor that checks for the `x-connection-id` header and retrieves the connection state from
  * the connection state manager.
  *
- * @param <T> The proxy context type, which must extend {@link ProxyContext}
+ * @param <T> The proxy context type, which must extend {@link ClusterProxyContext}
  */
-public class ConnectionProcessor<T extends ProxyContext> extends
+public class ConnectionProcessor<T extends ClusterProxyContext> extends
     Processor<T, Future<T>> {
 
   ConnectionStateManager connectionStateManager;

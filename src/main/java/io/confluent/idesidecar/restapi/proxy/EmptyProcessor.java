@@ -1,12 +1,13 @@
 package io.confluent.idesidecar.restapi.proxy;
 
 import io.confluent.idesidecar.restapi.processors.Processor;
+import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
 import io.vertx.core.Future;
 
 /**
  * No-op processor that is typically called at the end of a processing chain.
  */
-public class EmptyProcessor<T> extends Processor<T, Future<T>> {
+public class EmptyProcessor<T extends ClusterProxyContext> extends Processor<T, Future<T>> {
 
   @Override
   public Future<T> process(T context) {

@@ -3,9 +3,10 @@ package io.confluent.idesidecar.restapi.messageviewer;
 import io.confluent.idesidecar.restapi.clients.SchemaErrors;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequest;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
+import io.confluent.idesidecar.restapi.models.ClusterType;
 import io.confluent.idesidecar.restapi.models.graph.KafkaCluster;
 import io.confluent.idesidecar.restapi.models.graph.SchemaRegistry;
-import io.confluent.idesidecar.restapi.proxy.ProxyContext;
+import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
 import io.vertx.core.MultiMap;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
@@ -15,7 +16,7 @@ import java.util.Optional;
 /**
  * Stores the context of a request of the message viewer API.
  */
-public class MessageViewerContext extends ProxyContext {
+public class MessageViewerContext extends ClusterProxyContext {
   private final String clusterId;
   private final String topicName;
   private KafkaCluster kafkaClusterInfo;
@@ -43,8 +44,11 @@ public class MessageViewerContext extends ProxyContext {
             .map(body -> Buffer.buffer(body.toJsonString()))
             .orElse(null),
         requestPathParams,
-        connectionId.id()
+        connectionId.id(),
+        clusterId,
+        ClusterType.KAFKA
     );
+    // TODO: Read from context instead of storing
     this.clusterId = clusterId;
     this.topicName = topicName;
     this.consumeRequest = requestBody;

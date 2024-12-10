@@ -9,23 +9,23 @@ import io.confluent.idesidecar.restapi.processors.Processor;
 import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
 import io.confluent.idesidecar.restapi.util.RequestHeadersConstants;
 import io.vertx.core.Future;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
 
 /**
  * Processor that fetches the cluster info from the cache and updates the context with it. This is a
  * pre-processor for the {@link ClusterProxyProcessor}, which uses the cluster info to build the
  * absolute URL for the request.
  */
-@ApplicationScoped
-public class ClusterInfoProcessor extends
-    Processor<ClusterProxyContext, Future<ClusterProxyContext>> {
+public class ClusterInfoProcessor<T extends ClusterProxyContext> extends
+    Processor<T, Future<T>> {
 
-  @Inject
-  ClusterCache clusterCache;
+  private final ClusterCache clusterCache;
+
+  public ClusterInfoProcessor(ClusterCache clusterCache) {
+    this.clusterCache = clusterCache;
+  }
 
   @Override
-  public Future<ClusterProxyContext> process(ClusterProxyContext context) {
+  public Future<T> process(T context) {
     var clusterId = context.getClusterId();
     if (clusterId == null) {
       if (context.getClusterType().equals(ClusterType.SCHEMA_REGISTRY)) {

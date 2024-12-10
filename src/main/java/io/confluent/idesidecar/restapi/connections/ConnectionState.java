@@ -10,6 +10,7 @@ import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
 import io.confluent.idesidecar.restapi.models.ConnectionStatus;
 import io.confluent.idesidecar.restapi.resources.ConnectionsResource;
 import io.vertx.core.Future;
+import io.vertx.core.net.JksOptions;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -190,6 +191,10 @@ public abstract class ConnectionState {
    *         the cluster requires no credentials
    */
   public Optional<Credentials> getSchemaRegistryCredentials() {
+    return Optional.empty();
+  }
+
+  public Optional<JksOptions> getTruststoreOptions() {
     return Optional.empty();
   }
 }

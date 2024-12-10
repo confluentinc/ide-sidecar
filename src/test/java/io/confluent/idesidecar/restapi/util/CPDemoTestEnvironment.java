@@ -1,11 +1,26 @@
 package io.confluent.idesidecar.restapi.util;
 
 import io.confluent.idesidecar.restapi.credentials.BasicCredentials;
-import io.confluent.idesidecar.restapi.credentials.MutualTLSCredentials;
 import io.confluent.idesidecar.restapi.credentials.Password;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
-import io.confluent.idesidecar.restapi.util.cpdemo.*;
+import io.confluent.idesidecar.restapi.util.cpdemo.CPServerContainer;
+import io.confluent.idesidecar.restapi.util.cpdemo.OpenldapContainer;
 import io.confluent.idesidecar.restapi.util.cpdemo.SchemaRegistryContainer;
+import io.confluent.idesidecar.restapi.util.cpdemo.ToolsContainer;
+import io.confluent.idesidecar.restapi.util.cpdemo.ZookeeperContainer;
+import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
+import io.confluent.kafka.schemaregistry.client.rest.RestService;
+import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
+import io.confluent.kafka.schemaregistry.client.security.SslFactory;
+import java.io.File;
+import java.io.IOException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import org.junit.Test;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 import org.junitpioneer.jupiter.SetEnvironmentVariable;
@@ -14,11 +29,6 @@ import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.lifecycle.Startables;
 import org.testcontainers.utility.TestcontainersConfiguration;
-
-import java.io.File;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 /**
  * A {@link TestEnvironment} that starts a CP Demo environment with a two-node Kafka cluster,
@@ -161,11 +171,11 @@ public class CPDemoTestEnvironment implements TestEnvironment {
                 false
             ),
             new ConnectionSpec.SchemaRegistryConfig(
-                null,
+                "something",
                 "https://localhost:8085",
                 new BasicCredentials(
-                    "schemaregistryUser",
-                    new Password("schemaregistryUser".toCharArray())
+                    "superUser",
+                    new Password("superUser".toCharArray())
                 ),
                 false
             )
@@ -220,5 +230,32 @@ public class CPDemoTestEnvironment implements TestEnvironment {
         // never close
       }
     };
+  }
+
+  @Test
+  public void testSRDirectly()
+      throws RestClientException, IOException, KeyStoreException, CertificateException, NoSuchAlgorithmException {
+    var cwd = System.getProperty("user.dir");
+    var trustStorePath = new File(cwd,
+        ".cp-demo/scripts/security/kafka.schemaregistry.truststore.jks").getAbsolutePath();
+    var restService = new RestService("https://localhost:8085");
+    var configs = Map.of(
+        "schema.registry.url", "https://localhost:8085",
+        "ssl.endpoint.identification.algorithm", "",
+        "ssl.truststore.location", trustStorePath,
+        "ssl.truststore.password", "confluent",
+        "basic.auth.credentials.source", "USER_INFO",
+        "basic.auth.user.info", "superUser:superUser"
+    );
+
+    restService.configure(configs);
+    SslFactory sslFactory = new SslFactory(configs);
+    if (sslFactory.sslContext() != null) {
+      restService.setSslSocketFactory(sslFactory.sslContext().getSocketFactory());
+    }
+
+    var client = new CachedSchemaRegistryClient(restService, 1000);
+    var subjects = client.getAllSubjects();
+    System.out.println(subjects);
   }
 }

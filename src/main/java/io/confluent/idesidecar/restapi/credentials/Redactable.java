@@ -2,9 +2,12 @@ package io.confluent.idesidecar.restapi.credentials;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonValue;
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import java.io.IOException;
 import java.util.Arrays;
@@ -40,6 +43,19 @@ public abstract class Redactable {
     }
 
     protected abstract T create(char[] value);
+  }
+
+  protected abstract static class BaseSerializer<T extends Redactable> extends JsonSerializer<T> {
+
+    @Override
+    public void serialize(T value, JsonGenerator gen, SerializerProvider serializers) {
+      try {
+        var chars = value.asCharArray();
+        gen.writeString(chars, 0, chars.length);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
   }
 
   private final char[] raw;

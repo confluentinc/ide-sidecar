@@ -1,14 +1,13 @@
 package io.confluent.idesidecar.restapi.util.cpdemo;
 
 import com.github.dockerjava.api.model.HealthCheck;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.Network;
-import org.testcontainers.containers.wait.strategy.Wait;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.Network;
+import org.testcontainers.containers.wait.strategy.Wait;
 
 public class SchemaRegistryContainer extends GenericContainer<SchemaRegistryContainer> {
   private static final Integer PORT = 8085;

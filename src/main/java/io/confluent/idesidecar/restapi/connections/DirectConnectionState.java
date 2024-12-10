@@ -17,18 +17,19 @@ import io.confluent.idesidecar.restapi.models.ConnectionStatusKafkaClusterStatus
 import io.confluent.idesidecar.restapi.models.ConnectionStatusSchemaRegistryStatusBuilder;
 import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
+import io.confluent.kafka.schemaregistry.client.rest.RestService;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
+import io.confluent.kafka.schemaregistry.client.security.SslFactory;
 import io.quarkus.logging.Log;
 import io.smallrye.common.constraint.NotNull;
 import io.smallrye.common.constraint.Nullable;
 import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpHeaders;
+import io.vertx.core.net.JksOptions;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.time.Duration;
-import java.util.Collections;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -209,9 +210,9 @@ public class DirectConnectionState extends ConnectionState {
 
   protected Future<SchemaRegistryStatus> getSchemaRegistryConnectionStatus() {
     return withSchemaRegistryClient(srClient -> {
-      // There is a configuration, so validate the connection by creating a SchemaRegistryClient
-      // and getting the global mode.
-      srClient.getMode();
+      // getMode() could fail with 403, perhaps we should cycle
+      // through some API calls to see if we can get a 200
+      srClient.getAllSubjects();
       return Future.succeededFuture(
           ConnectionStatusSchemaRegistryStatusBuilder
               .builder()
@@ -222,14 +223,15 @@ public class DirectConnectionState extends ConnectionState {
       var cause = unwrap(error);
       var message = "Failed to connect to Schema Registry: %s".formatted(cause.getMessage());
       if (cause instanceof UnknownHostException) {
-        message = "Unable to resolve the Schema Registry URL %s".formatted(
-            spec.schemaRegistryConfig().uri()
+        message = "Unable to resolve the Schema Registry URL %s: %s".formatted(
+            spec.schemaRegistryConfig().uri(), cause.getMessage()
         );
       } else if (cause instanceof IOException || cause instanceof RestClientException) {
-        message = "Unable to reach the Schema Registry URL %s".formatted(
-            spec.schemaRegistryConfig().uri()
+        message = "Unable to reach the Schema Registry URL %s: %s".formatted(
+            spec.schemaRegistryConfig().uri(), cause.getMessage()
         );
       }
+      Log.debugf(cause, message);
       // The connection failed, so successfully return the failed state
       return Future.succeededFuture(
           ConnectionStatusSchemaRegistryStatusBuilder
@@ -372,10 +374,13 @@ public class DirectConnectionState extends ConnectionState {
         false,
         TIMEOUT
     );
-    return new CachedSchemaRegistryClient(
-        Collections.singletonList(config.uri()),
-        10,
-        srClientConfig
-    );
+    var restService = new RestService(config.uri());
+    restService.configure(srClientConfig);
+    var sslFactory = new SslFactory(srClientConfig);
+    if (sslFactory.sslContext() != null) {
+      restService.setSslSocketFactory(sslFactory.sslContext().getSocketFactory());
+    }
+    Log.infof("Creating Schema Registry client with configuration: %s", srClientConfig);
+    return new CachedSchemaRegistryClient(restService, 10);
   }
 }

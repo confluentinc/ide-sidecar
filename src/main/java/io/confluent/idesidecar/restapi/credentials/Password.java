@@ -1,6 +1,7 @@
 package io.confluent.idesidecar.restapi.credentials;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.confluent.idesidecar.restapi.exceptions.Failure;
 import io.confluent.idesidecar.restapi.exceptions.Failure.Error;
 import io.quarkus.runtime.annotations.RegisterForReflection;
@@ -13,6 +14,7 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
  * returned in an API response.
  */
 @JsonDeserialize(using = Password.Deserializer.class)
+@JsonSerialize(using = Password.Serializer.class)
 @Schema(
     description = "A user-provided password that is always masked in responses",
     type = SchemaType.STRING,
@@ -40,6 +42,10 @@ public class Password extends Redactable {
     }
   }
 
+  public static class Serializer extends BaseSerializer<Password> {
+
+  }
+
   public void validate(
       List<Failure.Error> errors,
       String path,
@@ -53,4 +59,5 @@ public class Password extends Redactable {
       );
     }
   }
+
 }

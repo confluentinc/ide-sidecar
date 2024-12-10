@@ -42,6 +42,7 @@ public interface Credentials {
       boolean redact,
       String logicalClusterId
   ) implements CredentialsSchemaRegistryConnectionOptionsBuilder.With {
+
   }
 
   enum Type {
