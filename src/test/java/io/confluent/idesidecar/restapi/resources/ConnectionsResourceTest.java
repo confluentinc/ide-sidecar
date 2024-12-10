@@ -1635,6 +1635,42 @@ public class ConnectionsResourceTest {
                 )
         ),
         new TestInput(
+            "Updated of local config is valid with (new) Schema Registry URI and OAuth credentials",
+            validLocalSpec,
+            validLocalSpec
+                .withoutLocalConfig()
+                .withSchemaRegistry(
+                    new SchemaRegistryConfig(
+                        null,
+                        "http://localhost:8081",
+                        new OAuthCredentials(
+                            "http://localhost/oauth/token",
+                            "client-id",
+                            new Password("client-secret".toCharArray())
+                        )
+                    )
+                )
+        ),
+        new TestInput(
+            "Updated of local config is valid with (new) Schema Registry URI and mTLS credentials",
+            validLocalSpec,
+            validLocalSpec
+                .withoutLocalConfig()
+                .withSchemaRegistry(
+                    new SchemaRegistryConfig(
+                        null,
+                        "http://localhost:8081",
+                        new MutualTLSCredentials(
+                            "/path/to/truststore",
+                            new Password("truststore-secret".toCharArray()),
+                            "/path/to/keystore",
+                            new Password("keystore-secret".toCharArray()),
+                            new Password("key-secret".toCharArray())
+                        )
+                    )
+                )
+        ),
+        new TestInput(
             "Updated of local config is invalid without name",
             validLocalSpec,
             validLocalSpec.withName(null),

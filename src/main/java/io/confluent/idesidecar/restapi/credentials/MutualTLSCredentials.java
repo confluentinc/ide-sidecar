@@ -180,10 +180,6 @@ public record MutualTLSCredentials(
   ) {
     var config = new LinkedHashMap<String, String>();
     config.put("ssl.truststore.location", truststorePath);
-
-    // TODO: Guard this behind options.verifyCertificates()
-    config.put("ssl.endpoint.identification.algorithm", "");
-
     if (truststoreType != null && truststoreType != StoreType.UNKNOWN) {
       config.put("ssl.truststore.type", truststoreType.name());
     }
