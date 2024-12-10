@@ -13,7 +13,11 @@ import io.confluent.idesidecar.restapi.credentials.ApiSecret;
 import io.confluent.idesidecar.restapi.credentials.BasicCredentials;
 import io.confluent.idesidecar.restapi.credentials.Credentials;
 import io.confluent.idesidecar.restapi.credentials.Credentials.KafkaConnectionOptions;
+import io.confluent.idesidecar.restapi.credentials.OAuthCredentials;
 import io.confluent.idesidecar.restapi.credentials.Password;
+import io.confluent.idesidecar.restapi.credentials.TLSConfig;
+import io.confluent.idesidecar.restapi.credentials.TLSConfig.KeyStore;
+import io.confluent.idesidecar.restapi.credentials.TLSConfig.TrustStore;
 import io.confluent.idesidecar.restapi.models.graph.KafkaCluster;
 import io.confluent.idesidecar.restapi.models.graph.SchemaRegistry;
 import io.confluent.idesidecar.restapi.util.CCloud;
@@ -44,14 +48,55 @@ class ClientConfiguratorStaticTest {
   static final String PASSWORD = "my-secret";
   static final String API_KEY = "api-key-123";
   static final String API_SECRET = "api-secret-123";
+  static final String OAUTH_TOKEN_URL = "http://localhost:8081/oauth/token";
+  static final String OAUTH_CLIENT_ID = "client-123";
+  static final String OAUTH_SCOPE = "oauth-scope";
+  static final String OAUTH_SECRET = "oauth-secret";
+  static final String MTLS_TRUSTSTORE_PATH = "/path/to/truststore";
+  static final String MTLS_KEYSTORE_PATH = "/path/to/keystore";
+  static final String MTLS_TRUSTSTORE_PASSWORD = "my-ts-secret";
+  static final String MTLS_KEYSTORE_PASSWORD = "my-ks-secret";
+  static final String MTLS_KEY_PASSWORD = "my-key-secret";
 
   static final BasicCredentials BASIC_CREDENTIALS = new BasicCredentials(
       USERNAME,
       new Password(PASSWORD.toCharArray())
   );
+  static final OAuthCredentials OAUTH_CREDENTIALS = new OAuthCredentials(
+      OAUTH_TOKEN_URL,
+      OAUTH_CLIENT_ID,
+      new Password(OAUTH_SECRET.toCharArray())
+  );
+  static final OAuthCredentials OAUTH_CREDENTIALS_WITH_SCOPE = new OAuthCredentials(
+      OAUTH_TOKEN_URL,
+      OAUTH_CLIENT_ID,
+      new Password(OAUTH_SECRET.toCharArray()),
+      OAUTH_SCOPE
+  );
   static final ApiKeyAndSecret API_KEY_AND_SECRET = new ApiKeyAndSecret(
       API_KEY,
       new ApiSecret(API_SECRET.toCharArray())
+  );
+  static final TLSConfig MUTUAL_TLS_CREDENTIALS = new TLSConfig(
+      MTLS_TRUSTSTORE_PATH,
+      new Password(MTLS_TRUSTSTORE_PASSWORD.toCharArray()),
+      MTLS_KEYSTORE_PATH,
+      new Password(MTLS_KEYSTORE_PASSWORD.toCharArray()),
+      new Password(MTLS_KEY_PASSWORD.toCharArray())
+  );
+  static final TLSConfig MUTUAL_TLS_CREDENTIALS_WITH_TYPES = new TLSConfig(
+      null,
+      new TrustStore(
+          MTLS_TRUSTSTORE_PATH,
+          new Password(MTLS_TRUSTSTORE_PASSWORD.toCharArray()),
+          TLSConfig.StoreType.JKS
+      ),
+      new KeyStore(
+          MTLS_KEYSTORE_PATH,
+          new Password(MTLS_KEYSTORE_PASSWORD.toCharArray()),
+          TLSConfig.StoreType.JKS,
+          new Password(MTLS_KEY_PASSWORD.toCharArray())
+      )
   );
 
   @Mock ConnectionState connection;
@@ -262,6 +307,114 @@ class ClientConfiguratorStaticTest {
                 basic.auth.credentials.source=USER_INFO
                 basic.auth.user.info=%s:%s
                 """.formatted(API_KEY, API_SECRET)
+        ),
+//        new TestInput(
+//            "With mTLS for Kafka and SR",
+//            kafka,
+//            MUTAL_TLS_CREDENTIALS,
+//            schemaRegistry,
+//            MUTAL_TLS_CREDENTIALS,
+//            true,
+//            true,
+//            false,
+//            null,
+//            """
+//                bootstrap.servers=localhost:9092
+//                security.protocol=SSL
+//                ssl.truststore.location=/path/to/truststore
+//                ssl.truststore.password=%s
+//                ssl.keystore.location=/path/to/keystore
+//                ssl.keystore.password=%s
+//                ssl.key.password=%s
+//                """.formatted(MTLS_TRUSTSTORE_PASSWORD, MTLS_KEYSTORE_PASSWORD, MTLS_KEY_PASSWORD),
+//            """
+//                schema.registry.url=http://localhost:8081
+//                ssl.truststore.location=/path/to/truststore
+//                ssl.truststore.password=%s
+//                ssl.keystore.location=/path/to/keystore
+//                ssl.keystore.password=%s
+//                ssl.key.password=%s
+//                """.formatted(MTLS_TRUSTSTORE_PASSWORD, MTLS_KEYSTORE_PASSWORD, MTLS_KEY_PASSWORD)
+//        ),
+        new TestInput(
+            "With OAuth for Kafka and SR",
+            kafka,
+            OAUTH_CREDENTIALS,
+            schemaRegistry,
+            OAUTH_CREDENTIALS,
+            true,
+            true,
+            false,
+            null,
+            """
+                bootstrap.servers=localhost:9092
+                security.protocol=SASL_SSL
+                sasl.mechanism=OAUTHBEARER
+                sasl.oauthbearer.token.endpoint.url=http://localhost:8081/oauth/token
+                sasl.login.callback.handler.class=org.apache.kafka.common.security.oauthbearer.secured.OAuthBearerLoginCallbackHandler
+                sasl.jaas.config=org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required clientId="%s" clientSecret="%s"
+                """.formatted(OAUTH_CLIENT_ID, OAUTH_SECRET),
+            """
+                schema.registry.url=http://localhost:8081
+                bearer.auth.credentials.source=OAUTHBEARER
+                bearer.auth.issuer.endpoint.url=http://localhost:8081/oauth/token
+                bearer.auth.client.id=%s
+                bearer.auth.client.secret=%s
+                """.formatted(OAUTH_CLIENT_ID, OAUTH_SECRET)
+        ),
+        new TestInput(
+            "With OAuth with scopes for Kafka and SR",
+            kafka,
+            OAUTH_CREDENTIALS_WITH_SCOPE,
+            schemaRegistry,
+            OAUTH_CREDENTIALS_WITH_SCOPE,
+            true,
+            true,
+            false,
+            null,
+            """
+                bootstrap.servers=localhost:9092
+                security.protocol=SASL_SSL
+                sasl.mechanism=OAUTHBEARER
+                sasl.oauthbearer.token.endpoint.url=http://localhost:8081/oauth/token
+                sasl.login.callback.handler.class=org.apache.kafka.common.security.oauthbearer.secured.OAuthBearerLoginCallbackHandler
+                sasl.jaas.config=org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required clientId="%s" clientSecret="%s" scope="%s"
+                """.formatted(OAUTH_CLIENT_ID, OAUTH_SECRET, OAUTH_SCOPE),
+            """
+                schema.registry.url=http://localhost:8081
+                bearer.auth.credentials.source=OAUTHBEARER
+                bearer.auth.issuer.endpoint.url=http://localhost:8081/oauth/token
+                bearer.auth.client.id=%s
+                bearer.auth.client.secret=%s
+                bearer.auth.scope=%s
+                """.formatted(OAUTH_CLIENT_ID, OAUTH_SECRET, OAUTH_SCOPE)
+        ),
+        new TestInput(
+            "With OAuth for Kafka and SR and unsigned certificates",
+            kafka,
+            OAUTH_CREDENTIALS,
+            schemaRegistry,
+            OAUTH_CREDENTIALS,
+            true,
+            false,
+            false,
+            null,
+            """
+                bootstrap.servers=localhost:9092
+                security.protocol=SASL_SSL
+                ssl.endpoint.identification.algorithm=
+                sasl.mechanism=OAUTHBEARER
+                sasl.oauthbearer.token.endpoint.url=http://localhost:8081/oauth/token
+                sasl.login.callback.handler.class=org.apache.kafka.common.security.oauthbearer.secured.OAuthBearerLoginCallbackHandler
+                sasl.jaas.config=org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required clientId="%s" clientSecret="%s"
+                """.formatted(OAUTH_CLIENT_ID, OAUTH_SECRET),
+            """
+                schema.registry.url=http://localhost:8081
+                bearer.auth.credentials.source=OAUTHBEARER
+                bearer.auth.issuer.endpoint.url=http://localhost:8081/oauth/token
+                bearer.auth.client.id=%s
+                bearer.auth.client.secret=%s
+                """.formatted(OAUTH_CLIENT_ID, OAUTH_SECRET)
         )
     );
     return inputs
@@ -274,8 +427,6 @@ class ClientConfiguratorStaticTest {
               expectGetKafkaCredentialsFromConnection(input.kafkaCredentials);
               expectGetSchemaRegistryCredentialsFromConnection(input.srCredentials);
               var options = new KafkaConnectionOptions(
-                  input.ssl,
-                  input.verifyUnsignedCertificates,
                   input.redact
               );
               expectGetKafkaConnectionOptions(options);

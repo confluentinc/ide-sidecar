@@ -2,6 +2,7 @@ package io.confluent.idesidecar.restapi.connections;
 
 import io.confluent.idesidecar.restapi.credentials.Credentials;
 import io.confluent.idesidecar.restapi.credentials.Credentials.KafkaConnectionOptions;
+import io.confluent.idesidecar.restapi.credentials.Credentials.SchemaRegistryConnectionOptions;
 import io.confluent.idesidecar.restapi.models.ConnectionMetadata;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
@@ -152,15 +153,18 @@ public abstract class ConnectionState {
   public KafkaConnectionOptions getKafkaConnectionOptions() {
     if (spec.kafkaClusterConfig() != null) {
       return new KafkaConnectionOptions(
-          spec.kafkaClusterConfig().sslOrDefault(),
-          spec.kafkaClusterConfig().verifySslCertificatesOrDefault(),
           false
       );
     }
     return new KafkaConnectionOptions(
-        ConnectionSpec.KafkaClusterConfig.DEFAULT_SSL,
-        ConnectionSpec.KafkaClusterConfig.DEFAULT_VERIFY_SSL_CERTIFICATES,
         false
+    );
+  }
+
+  public Credentials.SchemaRegistryConnectionOptions getSchemaRegistryOptions() {
+    return new SchemaRegistryConnectionOptions(
+        false,
+        null
     );
   }
 

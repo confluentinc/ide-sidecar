@@ -1,6 +1,7 @@
 package io.confluent.idesidecar.restapi.proxy;
 
 import io.confluent.idesidecar.restapi.connections.ConnectionState;
+import io.confluent.idesidecar.restapi.credentials.TLSConfig;
 import io.confluent.idesidecar.restapi.exceptions.Failure;
 import io.confluent.idesidecar.restapi.exceptions.Failure.Error;
 import io.confluent.idesidecar.restapi.util.UuidFactory;
@@ -8,6 +9,7 @@ import io.vertx.codegen.annotations.Nullable;
 import io.vertx.core.MultiMap;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.net.JksOptions;
 import jakarta.ws.rs.core.Response.Status;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,6 +35,7 @@ public class ProxyContext {
   MultiMap proxyRequestHeaders;
   HttpMethod proxyRequestMethod;
   Buffer proxyRequestBody;
+  JksOptions truststoreOptions;
 
   // Store the proxy response
   Buffer proxyResponseBody;
@@ -82,6 +85,23 @@ public class ProxyContext {
 
   // Getters and setters
   // Add additional getters and setters as needed
+
+  public String getProxyRequestAbsoluteUrl() {
+    return proxyRequestAbsoluteUrl;
+  }
+
+  public MultiMap getProxyRequestHeaders() {
+    return proxyRequestHeaders;
+  }
+
+  public HttpMethod getProxyRequestMethod() {
+    return proxyRequestMethod;
+  }
+
+  public Buffer getProxyRequestBody() {
+    return proxyRequestBody;
+  }
+
   public String getRequestUri() {
     return requestUri;
   }
@@ -149,5 +169,15 @@ public class ProxyContext {
 
   public @Nullable String getConnectionId() {
     return connectionId;
+  }
+
+  public JksOptions getTruststoreOptions() {
+    return truststoreOptions;
+  }
+
+  public void setTruststoreOptions(TLSConfig.TrustStore trustStore) {
+    this.truststoreOptions = new JksOptions()
+        .setPath(trustStore.path())
+        .setPassword(trustStore.password().asString(false));
   }
 }

@@ -3,11 +3,10 @@ package io.confluent.idesidecar.restapi.util;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
 import io.quarkus.test.junit.TestProfile;
+import java.time.Duration;
 import java.util.Optional;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
-
-import java.time.Duration;
 
 /**
  * A {@link TestEnvironment} that starts a local Confluent Local container with Kafka broker and
@@ -91,8 +90,6 @@ public class LocalTestEnvironment implements TestEnvironment {
             "Direct to Local",
             new ConnectionSpec.KafkaClusterConfig(
                 kafkaWithRestProxy.getKafkaBootstrapServers(),
-                null,
-                null,
                 null
             ),
             new ConnectionSpec.SchemaRegistryConfig(

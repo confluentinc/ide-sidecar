@@ -20,14 +20,13 @@ import java.util.Optional;
 @JsonSubTypes({
     @Type(value = BasicCredentials.class),
     @Type(value = ApiKeyAndSecret.class),
+    @Type(value = OAuthCredentials.class)
 })
 @RegisterForReflection
 public interface Credentials {
 
   @RecordBuilder
   record KafkaConnectionOptions(
-      boolean ssl,
-      boolean verifyCertificates,
       boolean redact
   ) implements CredentialsKafkaConnectionOptionsBuilder.With {
   }
@@ -37,10 +36,12 @@ public interface Credentials {
       boolean redact,
       String logicalClusterId
   ) implements CredentialsSchemaRegistryConnectionOptionsBuilder.With {
+
   }
 
   enum Type {
     BASIC,
+    OAUTH2,
     API_KEY_AND_SECRET,
   }
 
@@ -61,6 +62,16 @@ public interface Credentials {
   @JsonIgnore
   default boolean isBasic() {
     return type() == Type.BASIC;
+  }
+
+  /**
+   * Return true if this is an OAuth 2.0 credentials object.
+   *
+   * @return true if {@link #type()} equals {@link Type#OAUTH2}
+   */
+  @JsonIgnore
+  default boolean isOauth2() {
+    return type() == Type.OAUTH2;
   }
 
   /**

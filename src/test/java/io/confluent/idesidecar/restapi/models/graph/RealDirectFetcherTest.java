@@ -41,15 +41,14 @@ public class RealDirectFetcherTest {
       null,
       new ConnectionSpec.KafkaClusterConfig(
           KAFKA_BOOTSTRAP_SERVERS,
-          null,
-          false,
-          false
+          null
       ),
       new ConnectionSpec.SchemaRegistryConfig(
           SR_CLUSTER_ID,
           SR_URL,
           null
-      )
+      ),
+      null
   );
 
   private static final ConnectionSpec NO_KAFKA_SPEC = new ConnectionSpec(
@@ -63,7 +62,8 @@ public class RealDirectFetcherTest {
           SR_CLUSTER_ID,
           SR_URL,
           null
-      )
+      ),
+      null
   );
 
   private static final ConnectionSpec NO_SR_SPEC = new ConnectionSpec(
@@ -74,10 +74,9 @@ public class RealDirectFetcherTest {
       null,
       new ConnectionSpec.KafkaClusterConfig(
           KAFKA_BOOTSTRAP_SERVERS,
-          null,
-          false,
-          false
+          null
       ),
+      null,
       null
   );
 

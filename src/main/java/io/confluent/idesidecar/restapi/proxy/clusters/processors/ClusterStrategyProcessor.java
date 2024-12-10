@@ -23,6 +23,7 @@ import jakarta.inject.Inject;
 @ApplicationScoped
 public class ClusterStrategyProcessor extends
     Processor<ClusterProxyContext, Future<ClusterProxyContext>> {
+
   @Inject
   ConfluentCloudKafkaClusterStrategy confluentCloudKafkaClusterStrategy;
 

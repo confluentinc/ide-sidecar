@@ -37,11 +37,11 @@ import io.confluent.idesidecar.restapi.models.ConnectionStatus.Authentication.St
 import io.confluent.idesidecar.restapi.models.ConnectionStatus.ConnectedState;
 import io.confluent.idesidecar.restapi.models.ConnectionsList;
 import io.confluent.idesidecar.restapi.models.ObjectMetadata;
-import io.confluent.idesidecar.restapi.util.CCloudTestUtil.AccessToken;
-import io.confluent.idesidecar.restapi.util.UuidFactory;
 import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
 import io.confluent.idesidecar.restapi.testutil.QueryResourceUtil;
 import io.confluent.idesidecar.restapi.util.CCloudTestUtil;
+import io.confluent.idesidecar.restapi.util.CCloudTestUtil.AccessToken;
+import io.confluent.idesidecar.restapi.util.UuidFactory;
 import io.quarkiverse.wiremock.devservice.ConnectWireMock;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.common.http.TestHTTPEndpoint;
@@ -533,6 +533,7 @@ public class ConnectionsResourceTest {
     var badSpec = new ConnectionSpec(
         "c3", "Connection name changed!", ConnectionType.PLATFORM,
         new CCloudConfig("org-id"),
+        null,
         null,
         null,
         null
