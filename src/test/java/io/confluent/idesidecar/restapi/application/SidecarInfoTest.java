@@ -226,7 +226,7 @@ public class SidecarInfoTest {
               SidecarInfo sidecar = createSidecarInfo(input);
 
               // Verify the output matches
-              assertEquals(input.userAgent.formatted(SIDECAR_VERSION), sidecar.getUserAgent());
+              assertEquals(input.userAgent.formatted(sidecarVersion), sidecar.getUserAgent());
               assertEquals(input.os, sidecar.osType());
               assertEquals(input.osName, sidecar.osName());
               assertEquals(input.osVersion, sidecar.osVersion());
