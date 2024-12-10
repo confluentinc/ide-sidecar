@@ -75,7 +75,9 @@ public class OAuthCallbackResource {
             )
             .recover(this::renderFailure)
             // Upon completion of the auth flow, refresh the status of the CCloud connection
-            .andThen(ignored -> cCloudConnectionState.refreshStatus());
+            .compose(renderedTemplate ->
+                cCloudConnectionState.refreshStatus().map(ignored -> renderedTemplate)
+            );
         return Uni
             .createFrom()
             .completionStage(
