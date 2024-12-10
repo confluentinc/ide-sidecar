@@ -3,25 +3,24 @@ package io.confluent.idesidecar.restapi.clients;
 import io.confluent.idesidecar.restapi.cache.ClusterCache;
 import io.confluent.idesidecar.restapi.connections.ConnectionState;
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
-import io.confluent.idesidecar.restapi.credentials.Credentials;
 import io.confluent.idesidecar.restapi.exceptions.ClusterNotFoundException;
 import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
 import io.confluent.idesidecar.restapi.kafkarest.SchemaManager;
 import io.confluent.idesidecar.restapi.models.graph.KafkaCluster;
 import io.confluent.idesidecar.restapi.models.graph.SchemaRegistry;
 import io.confluent.idesidecar.restapi.util.CCloud;
+import io.confluent.idesidecar.restapi.util.ConfigUtil;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClientConfig;
 import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig;
 import io.quarkus.logging.Log;
-import io.confluent.idesidecar.restapi.util.ConfigUtil;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import org.apache.kafka.clients.CommonClientConfigs;
-import java.util.function.Supplier;
 import java.util.Optional;
+import java.util.function.Supplier;
+import org.apache.kafka.clients.CommonClientConfigs;
 
 @ApplicationScoped
 public class ClientConfigurator {
@@ -258,10 +257,18 @@ public class ClientConfigurator {
 
     // Second, add any connection properties for Kafka cluster credentials (if defined)
     var options = connection.getKafkaConnectionOptions().withRedact(redact);
-    connection
-        .getKafkaCredentials()
-        .flatMap(creds -> creds.kafkaClientProperties(options))
-        .ifPresent(props::putAll);
+    var ssl = connection.getSpec().tlsConfig();
+    var creds = connection.getKafkaCredentials();
+    if (creds.isPresent()) {
+      creds.get().kafkaClientProperties(options).ifPresent(props::putAll);
+      props.put("security.protocol", ssl != null ? "SASL_SSL" : "SASL_PLAINTEXT");
+    } else {
+      props.put("security.protocol", ssl != null ? "SSL" : "PLAINTEXT");
+    }
+
+    if (ssl != null) {
+      ssl.getProperties(options.redact()).ifPresent(props::putAll);
+    }
 
     // Add any auth properties for Schema Registry to the Kafka client config,
     // with the "schema.registry." prefix (unless the property already starts with that)
@@ -314,11 +321,24 @@ public class ClientConfigurator {
         .orElse(null);
 
     // Add any properties for SR credentials (if defined)
-    var options = new Credentials.SchemaRegistryConnectionOptions(redact, logicalId);
-    connection
-        .getSchemaRegistryCredentials()
-        .flatMap(creds -> creds.schemaRegistryClientProperties(options))
-        .ifPresent(props::putAll);
+    var options = connection
+        .getSchemaRegistryOptions()
+        .withRedact(redact)
+        .withLogicalClusterId(logicalId);
+    var ssl = connection.getSpec().tlsConfig();
+    var creds = connection.getSchemaRegistryCredentials();
+    if (creds.isPresent()) {
+      creds.get().schemaRegistryClientProperties(options).ifPresent(props::putAll);
+      props.put("security.protocol", ssl != null ? "SASL_SSL" : "SASL_PLAINTEXT");
+    } else {
+      props.put("security.protocol", ssl != null ? "SSL" : "PLAINTEXT");
+    }
+
+    if (ssl != null) {
+      ssl.getProperties(options.redact()).ifPresent(props::putAll);
+    }
+
+    Log.debugf("Schema Registry client properties: %s", props);
     return props;
   }
 
