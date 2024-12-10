@@ -12,6 +12,7 @@ import io.smallrye.common.constraint.NotNull;
 import jakarta.inject.Singleton;
 import java.util.Optional;
 import java.util.regex.Pattern;
+import org.eclipse.microprofile.config.ConfigProvider;
 
 /**
  * General information about the sidecar, including its version, OS information, and
@@ -62,7 +63,10 @@ public class SidecarInfo {
   static final String OS_ARCH_KEY = "os.arch";
   static final String OS_NAME_KEY = "os.name";
   static final String OS_VERSION_KEY = "os.version";
-  static final String SIDECAR_VERSION_KEY = "quarkus.application.version";
+  static final String SIDECAR_VERSION_KEY = ConfigProvider
+      .getConfig()
+      .getOptionalValue("quarkus.application.version", String.class)
+      .orElse(UNSET_VERSION);
   static final String VSCODE_VERSION_ENV = "VSCODE_VERSION";
   static final String VSCODE_VERSION_KEY = "vscode.version";
   static final String VSCODE_EXTENSION_VERSION_ENV = "VSCODE_EXTENSION_VERSION";
