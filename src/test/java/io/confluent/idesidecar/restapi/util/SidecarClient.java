@@ -9,11 +9,11 @@ import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.asJson;
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
 import static io.restassured.RestAssured.given;
 import static java.util.function.Predicate.not;
+import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.awaitility.Awaitility.await;
 
 import io.confluent.idesidecar.restapi.kafkarest.model.CreateTopicRequestData;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequest;
@@ -121,7 +121,11 @@ public class SidecarClient implements SidecarClientApi {
       setCurrentCluster(clusterId);
       var topics = listTopics();
       for (var topic : topics) {
-        deleteTopic(topic);
+        if (!topic.startsWith("_")) {
+          deleteTopic(topic);
+        } else {
+          Log.debugf("Skipping deletion of internal topic %s", topic);
+        }
       }
     }
   }

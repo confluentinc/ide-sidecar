@@ -3,11 +3,9 @@ package io.confluent.idesidecar.restapi.credentials;
 import static io.vertx.core.http.HttpHeaders.AUTHORIZATION;
 
 import io.confluent.idesidecar.restapi.exceptions.Failure.Error;
-import io.quarkus.logging.Log;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import io.vertx.core.MultiMap;
 import jakarta.validation.constraints.NotNull;
-import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.LinkedHashMap;
@@ -51,15 +49,7 @@ public record BasicCredentials(
       KafkaConnectionOptions options
   ) {
     var config = new LinkedHashMap<String, String>();
-    if (options.ssl()) {
-      config.put("security.protocol", "SASL_SSL");
-    } else {
-      config.put("security.protocol", "SASL_PLAINTEXT");
-    }
     config.put("sasl.mechanism", "PLAIN");
-    if (!options.verifyCertificates()) {
-      config.put("ssl.endpoint.identification.algorithm", "");
-    }
     config.put(
         "sasl.jaas.config",
         "%s required username=\"%s\" password=\"%s\";".formatted(
@@ -76,23 +66,11 @@ public record BasicCredentials(
       SchemaRegistryConnectionOptions options
   ) {
     var config = new LinkedHashMap<String, String>();
-    if (!options.verifyCertificates()) {
-      config.put("ssl.endpoint.identification.algorithm", "");
-    }
-
-    // Set truststore
-    var cwd = System.getProperty("user.dir");
-    var trustStoreLocation = new File(cwd,
-        ".cp-demo/scripts/security/kafka.schemaregistry.truststore.jks").getAbsolutePath();
-    config.put("ssl.truststore.location", trustStoreLocation);
-    config.put("ssl.truststore.password", "confluent");
-
     config.put("basic.auth.credentials.source", "USER_INFO");
     var basicInfo = username
         + ":"
         + new String(password.asCharArray());
     config.put("basic.auth.user.info", basicInfo);
-    Log.infof("Schema Registry client properties: %s", config);
     return Optional.of(config);
   }
 

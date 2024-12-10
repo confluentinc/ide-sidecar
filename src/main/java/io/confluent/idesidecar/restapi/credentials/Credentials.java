@@ -20,7 +20,6 @@ import java.util.Optional;
 @JsonSubTypes({
     @Type(value = BasicCredentials.class),
     @Type(value = ApiKeyAndSecret.class),
-    @Type(value = MutualTLSCredentials.class),
     @Type(value = OAuthCredentials.class)
 })
 @RegisterForReflection
@@ -28,8 +27,6 @@ public interface Credentials {
 
   @RecordBuilder
   record KafkaConnectionOptions(
-      boolean ssl,
-      boolean verifyCertificates,
       boolean redact
   ) implements CredentialsKafkaConnectionOptionsBuilder.With {
   }
@@ -38,7 +35,6 @@ public interface Credentials {
   record SchemaRegistryConnectionOptions(
       // Does not define a boolean ssl field because that's
       // determined by the Schema Registry URL
-      boolean verifyCertificates,
       boolean redact,
       String logicalClusterId
   ) implements CredentialsSchemaRegistryConnectionOptionsBuilder.With {
@@ -69,16 +65,6 @@ public interface Credentials {
   @JsonIgnore
   default boolean isBasic() {
     return type() == Type.BASIC;
-  }
-
-  /**
-   * Return true if this is a mutual TLS credentials object.
-   *
-   * @return true if {@link #type()} equals {@link Type#MUTUAL_TLS}
-   */
-  @JsonIgnore
-  default boolean isMutualTls() {
-    return type() == Type.MUTUAL_TLS;
   }
 
   /**

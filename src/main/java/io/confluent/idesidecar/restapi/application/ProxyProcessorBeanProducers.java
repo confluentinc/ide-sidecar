@@ -6,7 +6,6 @@ import io.confluent.idesidecar.restapi.processors.Processor;
 import io.confluent.idesidecar.restapi.proxy.ConnectionProcessor;
 import io.confluent.idesidecar.restapi.proxy.EmptyProcessor;
 import io.confluent.idesidecar.restapi.proxy.ProxyRequestProcessor;
-import io.confluent.idesidecar.restapi.proxy.SchemaRegistryRequestProcessor;
 import io.confluent.idesidecar.restapi.proxy.clusters.KafkaClusterProxyContext;
 import io.confluent.idesidecar.restapi.proxy.clusters.SchemaRegistryClusterProxyContext;
 import io.confluent.idesidecar.restapi.proxy.clusters.processors.ClusterAuthenticationProcessor;
@@ -21,6 +20,7 @@ import io.confluent.idesidecar.restapi.proxy.clusters.strategy.DirectKafkaCluste
 import io.confluent.idesidecar.restapi.proxy.clusters.strategy.DirectSchemaRegistryClusterStrategy;
 import io.confluent.idesidecar.restapi.util.WebClientFactory;
 import io.vertx.core.Future;
+import io.vertx.core.Vertx;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Inject;
@@ -42,6 +42,9 @@ public class ProxyProcessorBeanProducers {
 
   @Inject
   WebClientFactory webClientFactory;
+
+  @Inject
+  Vertx vertx;
 
   @Inject
   ConfluentCloudKafkaClusterStrategy confluentCloudKafkaClusterStrategy;
@@ -83,7 +86,7 @@ public class ProxyProcessorBeanProducers {
             directSchemaRegistryClusterStrategy
         ),
         new ClusterProxyProcessor<>(sidecarHost),
-        new ProxyRequestProcessor<>(webClientFactory),
+        new ProxyRequestProcessor<>(webClientFactory, vertx),
         new EmptyProcessor<>()
     );
   }
@@ -106,7 +109,7 @@ public class ProxyProcessorBeanProducers {
             directSchemaRegistryClusterStrategy
         ),
         new ClusterProxyProcessor<>(sidecarHost),
-        new SchemaRegistryRequestProcessor<>(),
+        new ProxyRequestProcessor<>(webClientFactory, vertx),
         new EmptyProcessor<>()
     );
   }

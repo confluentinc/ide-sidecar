@@ -22,9 +22,9 @@ import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
 import io.confluent.idesidecar.restapi.credentials.ApiKeyAndSecret;
 import io.confluent.idesidecar.restapi.credentials.ApiSecret;
 import io.confluent.idesidecar.restapi.credentials.BasicCredentials;
-import io.confluent.idesidecar.restapi.credentials.MutualTLSCredentials;
 import io.confluent.idesidecar.restapi.credentials.OAuthCredentials;
 import io.confluent.idesidecar.restapi.credentials.Password;
+import io.confluent.idesidecar.restapi.credentials.SSL;
 import io.confluent.idesidecar.restapi.exceptions.Failure;
 import io.confluent.idesidecar.restapi.exceptions.Failure.Error;
 import io.confluent.idesidecar.restapi.models.CollectionMetadata;
@@ -39,11 +39,11 @@ import io.confluent.idesidecar.restapi.models.ConnectionStatus.Authentication.St
 import io.confluent.idesidecar.restapi.models.ConnectionStatus.ConnectedState;
 import io.confluent.idesidecar.restapi.models.ConnectionsList;
 import io.confluent.idesidecar.restapi.models.ObjectMetadata;
-import io.confluent.idesidecar.restapi.util.CCloudTestUtil.AccessToken;
-import io.confluent.idesidecar.restapi.util.UuidFactory;
 import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
 import io.confluent.idesidecar.restapi.testutil.QueryResourceUtil;
 import io.confluent.idesidecar.restapi.util.CCloudTestUtil;
+import io.confluent.idesidecar.restapi.util.CCloudTestUtil.AccessToken;
+import io.confluent.idesidecar.restapi.util.UuidFactory;
 import io.quarkiverse.wiremock.devservice.ConnectWireMock;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.common.http.TestHTTPEndpoint;
@@ -1558,7 +1558,7 @@ public class ConnectionsResourceTest {
                         null,
                         "http://localhost:8081",
                         null,
-                        false
+                        null
                     )
                 )
         ),
@@ -1575,7 +1575,7 @@ public class ConnectionsResourceTest {
                             "user",
                             new Password("pass".toCharArray())
                         ),
-                        false
+                        null
                     )
                 )
         ),
@@ -1592,7 +1592,7 @@ public class ConnectionsResourceTest {
                             "api-key-123",
                             new ApiSecret("api-secret-123456".toCharArray())
                         ),
-                        false
+                        null
                     )
                 )
         ),
@@ -1610,7 +1610,7 @@ public class ConnectionsResourceTest {
                             "client-id",
                             new Password("client-secret".toCharArray())
                         ),
-                        false
+                        null
                     )
                 )
         ),
@@ -1623,14 +1623,14 @@ public class ConnectionsResourceTest {
                     new SchemaRegistryConfig(
                         null,
                         "http://localhost:8081",
-                        new MutualTLSCredentials(
+                        null,
+                        new SSL(
                             "/path/to/truststore",
                             new Password("truststore-secret".toCharArray()),
                             "/path/to/keystore",
                             new Password("keystore-secret".toCharArray()),
                             new Password("key-secret".toCharArray())
-                        ),
-                        false
+                        )
                     )
                 )
         ),
@@ -1647,7 +1647,8 @@ public class ConnectionsResourceTest {
                             "http://localhost/oauth/token",
                             "client-id",
                             new Password("client-secret".toCharArray())
-                        )
+                        ),
+                        null
                     )
                 )
         ),
@@ -1660,7 +1661,8 @@ public class ConnectionsResourceTest {
                     new SchemaRegistryConfig(
                         null,
                         "http://localhost:8081",
-                        new MutualTLSCredentials(
+                        null,
+                        new SSL(
                             "/path/to/truststore",
                             new Password("truststore-secret".toCharArray()),
                             "/path/to/keystore",

@@ -5,7 +5,6 @@ import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
 import io.confluent.idesidecar.restapi.util.WebClientFactory;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
-import io.vertx.core.net.JksOptions;
 import io.vertx.ext.web.client.WebClient;
 
 /**
@@ -22,12 +21,8 @@ public class ProxyHttpClient<T extends ClusterProxyContext> {
 
   public Future<T> send(T context) {
     var options = webClientFactory.getDefaultWebClientOptions();
-    var credentials = context.getConnectionState().
-        options.setTrustStoreOptions(
-            new JksOptions()
-                .setPath(context.getTruststorePath())
-                .setPassword("truststore-password")
-        );
+    options.setTrustStoreOptions(context.getTruststoreOptions());
+
     return WebClient.create(vertx, options)
         .requestAbs(context.getProxyRequestMethod(), context.getProxyRequestAbsoluteUrl())
         .putHeaders(context.getProxyRequestHeaders())

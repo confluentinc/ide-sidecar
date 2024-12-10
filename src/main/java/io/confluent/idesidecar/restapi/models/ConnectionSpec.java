@@ -11,8 +11,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.confluent.idesidecar.restapi.credentials.ApiKeyAndSecret;
 import io.confluent.idesidecar.restapi.credentials.BasicCredentials;
 import io.confluent.idesidecar.restapi.credentials.Credentials;
-import io.confluent.idesidecar.restapi.credentials.MutualTLSCredentials;
 import io.confluent.idesidecar.restapi.credentials.OAuthCredentials;
+import io.confluent.idesidecar.restapi.credentials.SSL;
 import io.confluent.idesidecar.restapi.exceptions.Failure;
 import io.confluent.idesidecar.restapi.exceptions.Failure.Error;
 import io.confluent.idesidecar.restapi.util.CCloud.KafkaEndpoint;
@@ -311,7 +311,6 @@ public record ConnectionSpec(
           oneOf = {
               BasicCredentials.class,
               ApiKeyAndSecret.class,
-              MutualTLSCredentials.class,
               OAuthCredentials.class,
           },
           nullable = true
@@ -328,18 +327,7 @@ public record ConnectionSpec(
       )
       @JsonProperty(value = "ssl")
       @Null
-      Boolean ssl,
-
-      @Schema(
-          description =
-              "Whether to verify the Kafka cluster certificates. Defaults to 'true', but set "
-              + "to 'false' when the Kafka cluster has self-signed certificates.",
-          defaultValue = KafkaClusterConfig.DEFAULT_VERIFY_SSL_CERTIFICATES_VALUE,
-          nullable = true
-      )
-      @JsonProperty(value = "verify_ssl_certificates")
-      @Null
-      Boolean verifySslCertificates
+      SSL ssl
   ) implements ConnectionSpecKafkaClusterConfigBuilder.With {
 
     // Constants used in annotations above
@@ -352,16 +340,6 @@ public record ConnectionSpec(
     public static final boolean DEFAULT_VERIFY_SSL_CERTIFICATES = Boolean.valueOf(
         DEFAULT_VERIFY_SSL_CERTIFICATES_VALUE
     );
-
-    @JsonIgnore
-    public boolean sslOrDefault() {
-      return ssl != null ? ssl : DEFAULT_SSL;
-    }
-
-    @JsonIgnore
-    public boolean verifySslCertificatesOrDefault() {
-      return verifySslCertificates != null ? verifySslCertificates : DEFAULT_VERIFY_SSL_CERTIFICATES;
-    }
 
     @JsonIgnore
     public Optional<KafkaEndpoint> asCCloudEndpoint() {
@@ -416,7 +394,6 @@ public record ConnectionSpec(
           oneOf = {
               BasicCredentials.class,
               ApiKeyAndSecret.class,
-              MutualTLSCredentials.class,
               OAuthCredentials.class,
           },
           nullable = true
@@ -426,14 +403,14 @@ public record ConnectionSpec(
 
       @Schema(
           description =
-              "Whether to verify the Schema Registry cluster certificates. Defaults to 'true', but set "
-                  + "to 'false' when the Schema Registry cluster has self-signed certificates.",
-          defaultValue = KafkaClusterConfig.DEFAULT_VERIFY_SSL_CERTIFICATES_VALUE,
+              "Whether to communicate with the Kafka cluster over TLS/SSL. Defaults to 'true', "
+                  + "but set to 'false' when the Kafka cluster does not support TLS/SSL.",
+          defaultValue = KafkaClusterConfig.DEFAULT_SSL_VALUE,
           nullable = true
       )
-      @JsonProperty(value = "verify_ssl_certificates")
+      @JsonProperty(value = "ssl")
       @Null
-      Boolean verifySslCertificates
+      SSL ssl
   ) implements ConnectionSpecSchemaRegistryConfigBuilder.With {
 
     private static final int ID_MAX_LEN = 64;
@@ -443,14 +420,10 @@ public record ConnectionSpec(
         DEFAULT_VERIFY_SSL_CERTIFICATES_VALUE
     );
 
+
     @JsonIgnore
     public Optional<SchemaRegistryEndpoint> asCCloudEndpoint() {
       return SchemaRegistryEndpoint.fromUri(uri());
-    }
-
-    @JsonIgnore
-    public boolean verifySslCertificatesOrDefault() {
-      return verifySslCertificates != null ? verifySslCertificates : DEFAULT_VERIFY_SSL_CERTIFICATES;
     }
 
     public void validate(

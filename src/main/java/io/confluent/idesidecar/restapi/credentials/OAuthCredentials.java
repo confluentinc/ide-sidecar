@@ -107,10 +107,6 @@ public record OAuthCredentials(
     }
 
     var config = new LinkedHashMap<String, String>();
-    config.put("security.protocol", "SASL_SSL");
-    if (!options.verifyCertificates()) {
-      config.put("ssl.endpoint.identification.algorithm", "");
-    }
     config.put("sasl.mechanism", "OAUTHBEARER");
     config.put("sasl.oauthbearer.token.endpoint.url", tokensUrl);
     config.put("sasl.login.callback.handler.class", OAUTHBEARER_CALLBACK_CLASS);

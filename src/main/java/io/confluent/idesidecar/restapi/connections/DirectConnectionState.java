@@ -26,7 +26,6 @@ import io.smallrye.common.constraint.Nullable;
 import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpHeaders;
-import io.vertx.core.net.JksOptions;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.time.Duration;
@@ -380,7 +379,6 @@ public class DirectConnectionState extends ConnectionState {
     if (sslFactory.sslContext() != null) {
       restService.setSslSocketFactory(sslFactory.sslContext().getSocketFactory());
     }
-    Log.infof("Creating Schema Registry client with configuration: %s", srClientConfig);
     return new CachedSchemaRegistryClient(restService, 10);
   }
 }

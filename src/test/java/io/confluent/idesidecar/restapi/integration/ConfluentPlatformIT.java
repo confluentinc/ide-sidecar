@@ -43,7 +43,7 @@ public class ConfluentPlatformIT {
   @Tag("io.confluent.common.utils.IntegrationTest")
   @TestProfile(NoAccessFilterProfile.class)
   static class RecordTests extends AbstractIT implements
-      RecordsV3Suite, RecordsV3ErrorsSuite, RecordsV3WithoutSRSuite {
+      RecordsV3Suite, RecordsV3ErrorsSuite {
     @Override
     public TestEnvironment environment() {
       return TEST_ENVIRONMENT;
@@ -56,4 +56,21 @@ public class ConfluentPlatformIT {
     }
   }
 
+  @QuarkusIntegrationTest
+  @Tag("io.confluent.common.utils.IntegrationTest")
+  @TestProfile(NoAccessFilterProfile.class)
+  static class WithoutSRRecordTests extends AbstractIT implements
+      RecordsV3WithoutSRSuite {
+
+    @Override
+    public CPDemoTestEnvironment environment() {
+      return TEST_ENVIRONMENT;
+    }
+
+    @BeforeEach
+    @Override
+    public void setupConnection() {
+      setupConnection(this, environment().directConnectionSpecWithoutSR());
+    }
+  }
 }

@@ -2,6 +2,7 @@ package io.confluent.idesidecar.restapi.util;
 
 import io.confluent.idesidecar.restapi.credentials.BasicCredentials;
 import io.confluent.idesidecar.restapi.credentials.Password;
+import io.confluent.idesidecar.restapi.credentials.SSL;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.util.cpdemo.CPServerContainer;
 import io.confluent.idesidecar.restapi.util.cpdemo.OpenldapContainer;
@@ -160,6 +161,11 @@ public class CPDemoTestEnvironment implements TestEnvironment {
 
   @Override
   public Optional<ConnectionSpec> directConnectionSpec() {
+    var cwd = System.getProperty("user.dir");
+    var trustStoreLocation = new File(cwd,
+        ".cp-demo/scripts/security/kafka.schemaregistry.truststore.jks"
+    ).getAbsolutePath();
+    var trustStorePassword = new Password("confluent".toCharArray());
     return Optional.of(
         ConnectionSpec.createDirect(
             "direct-to-local-connection",
@@ -167,8 +173,7 @@ public class CPDemoTestEnvironment implements TestEnvironment {
             new ConnectionSpec.KafkaClusterConfig(
                 "localhost:12091,localhost:12092",
                 null,
-                false,
-                false
+                null
             ),
             new ConnectionSpec.SchemaRegistryConfig(
                 "something",
@@ -177,8 +182,28 @@ public class CPDemoTestEnvironment implements TestEnvironment {
                     "superUser",
                     new Password("superUser".toCharArray())
                 ),
-                false
+                new SSL(trustStoreLocation, trustStorePassword)
             )
+        )
+    );
+  }
+
+  public Optional<ConnectionSpec> directConnectionSpecWithoutSR() {
+    var cwd = System.getProperty("user.dir");
+    var trustStoreLocation = new File(cwd,
+        ".cp-demo/scripts/security/kafka.schemaregistry.truststore.jks"
+    ).getAbsolutePath();
+    var trustStorePassword = new Password("confluent".toCharArray());
+    return Optional.of(
+        ConnectionSpec.createDirect(
+            "direct-to-local-connection",
+            "Direct to Local",
+            new ConnectionSpec.KafkaClusterConfig(
+                "localhost:12091,localhost:12092",
+                null,
+                null
+            ),
+            null
         )
     );
   }

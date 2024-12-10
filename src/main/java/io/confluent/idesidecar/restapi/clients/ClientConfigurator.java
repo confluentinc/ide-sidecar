@@ -257,10 +257,18 @@ public class ClientConfigurator {
 
     // Second, add any connection properties for Kafka cluster credentials (if defined)
     var options = connection.getKafkaConnectionOptions().withRedact(redact);
-    connection
-        .getKafkaCredentials()
-        .flatMap(creds -> creds.kafkaClientProperties(options))
-        .ifPresent(props::putAll);
+    var ssl = connection.getSpec().kafkaClusterConfig().ssl();
+    var creds = connection.getKafkaCredentials();
+    if (creds.isPresent()) {
+      creds.get().kafkaClientProperties(options).ifPresent(props::putAll);
+      props.put("security.protocol", ssl != null ? "SASL_SSL" : "SASL_PLAINTEXT");
+    } else {
+      props.put("security.protocol", ssl != null ? "SSL" : "PLAINTEXT");
+    }
+
+    if (ssl != null) {
+      ssl.getProperties(options.redact()).ifPresent(props::putAll);
+    }
 
     // Add any auth properties for Schema Registry to the Kafka client config,
     // with the "schema.registry." prefix (unless the property already starts with that)
@@ -317,10 +325,20 @@ public class ClientConfigurator {
         .getSchemaRegistryOptions()
         .withRedact(redact)
         .withLogicalClusterId(logicalId);
-    connection
-        .getSchemaRegistryCredentials()
-        .flatMap(creds -> creds.schemaRegistryClientProperties(options))
-        .ifPresent(props::putAll);
+    var ssl = connection.getSpec().schemaRegistryConfig().ssl();
+    var creds = connection.getSchemaRegistryCredentials();
+    if (creds.isPresent()) {
+      creds.get().schemaRegistryClientProperties(options).ifPresent(props::putAll);
+      props.put("security.protocol", ssl != null ? "SASL_SSL" : "SASL_PLAINTEXT");
+    } else {
+      props.put("security.protocol", ssl != null ? "SSL" : "PLAINTEXT");
+    }
+
+    if (ssl != null) {
+      ssl.getProperties(options.redact()).ifPresent(props::putAll);
+    }
+
+    Log.debugf("Schema Registry client properties: %s", props);
     return props;
   }
 

@@ -1,6 +1,7 @@
 package io.confluent.idesidecar.restapi.proxy.clusters;
 
 import io.confluent.idesidecar.restapi.connections.ConnectionState;
+import io.confluent.idesidecar.restapi.credentials.SSL;
 import io.confluent.idesidecar.restapi.exceptions.Failure;
 import io.confluent.idesidecar.restapi.exceptions.Failure.Error;
 import io.confluent.idesidecar.restapi.models.ClusterType;
@@ -11,6 +12,7 @@ import io.vertx.codegen.annotations.Nullable;
 import io.vertx.core.MultiMap;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.net.JksOptions;
 import jakarta.ws.rs.core.Response.Status;
 import java.util.ArrayList;
 import java.util.List;
@@ -48,6 +50,7 @@ public abstract class ClusterProxyContext {
   }
 
   // Everything needed to construct the proxy request
+  JksOptions truststoreOptions;
   String proxyRequestAbsoluteUrl;
   MultiMap proxyRequestHeaders;
   HttpMethod proxyRequestMethod;
@@ -206,5 +209,15 @@ public abstract class ClusterProxyContext {
 
   public ClusterType getClusterType() {
     return clusterType;
+  }
+
+  public JksOptions getTruststoreOptions() {
+    return truststoreOptions;
+  }
+
+  public void setTruststoreOptions(SSL ssl) {
+    this.truststoreOptions = new JksOptions()
+        .setPath(ssl.truststorePath())
+        .setPassword(ssl.truststorePassword().asString(false));
   }
 }
