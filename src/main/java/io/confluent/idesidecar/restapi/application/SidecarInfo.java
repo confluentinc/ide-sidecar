@@ -63,10 +63,10 @@ public class SidecarInfo {
   static final String OS_ARCH_KEY = "os.arch";
   static final String OS_NAME_KEY = "os.name";
   static final String OS_VERSION_KEY = "os.version";
-  static final String VERSION = ConfigProvider
+  static final String SIDECAR_VERSION_KEY = ConfigProvider
       .getConfig()
       .getOptionalValue("quarkus.application.version", String.class)
-      .orElse(UNSET_VERSION);;
+      .orElse(UNSET_VERSION);
   static final String VSCODE_VERSION_ENV = "VSCODE_VERSION";
   static final String VSCODE_VERSION_KEY = "vscode.version";
   static final String VSCODE_EXTENSION_VERSION_ENV = "VSCODE_EXTENSION_VERSION";
@@ -94,7 +94,7 @@ public class SidecarInfo {
     // Get the OS information
     osName = system.getProperty(OS_NAME_KEY, "unknown");
     osVersion = system.getProperty(OS_VERSION_KEY, "unknown");
-    sidecarVersion =  system.getProperty(VERSION, UNSET_VERSION);
+    sidecarVersion =  system.getProperty(SIDECAR_VERSION_KEY, UNSET_VERSION);
     osArch =  system.getProperty(OS_ARCH_KEY, "unknown");
 
     // Determine the best-matching OS type

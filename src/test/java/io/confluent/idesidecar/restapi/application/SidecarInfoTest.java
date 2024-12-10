@@ -3,7 +3,7 @@ package io.confluent.idesidecar.restapi.application;
 import static io.confluent.idesidecar.restapi.application.SidecarInfo.OS_ARCH_KEY;
 import static io.confluent.idesidecar.restapi.application.SidecarInfo.OS_NAME_KEY;
 import static io.confluent.idesidecar.restapi.application.SidecarInfo.OS_VERSION_KEY;
-import static io.confluent.idesidecar.restapi.application.SidecarInfo.VERSION;
+import static io.confluent.idesidecar.restapi.application.SidecarInfo.SIDECAR_VERSION_KEY;
 import static io.confluent.idesidecar.restapi.application.SidecarInfo.VSCODE_EXTENSION_VERSION_KEY;
 import static io.confluent.idesidecar.restapi.application.SidecarInfo.VSCODE_VERSION_KEY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -41,7 +41,7 @@ public class SidecarInfoTest {
       props.put(OS_ARCH_KEY, osArch);
       props.put(OS_NAME_KEY, osName);
       props.put(OS_VERSION_KEY, osVersion);
-      props.put(VERSION, sidecarVersion);
+      props.put(SIDECAR_VERSION_KEY, sidecarVersion);
       if (vscode != null) {
         var vscodeVersion = vscode.version();
         var vscodeExtensionVersion = vscode.extensionVersion();
