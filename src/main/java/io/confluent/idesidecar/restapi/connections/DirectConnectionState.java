@@ -185,7 +185,7 @@ public class DirectConnectionState extends ConnectionState {
             );
           } else if (cause instanceof TimeoutException) {
             message = ("Unable to connect to the Kafka cluster at %s."
-                       + "Check the credentials or the network."
+                + " Check the credentials or the network."
             ).formatted(
                 spec.kafkaClusterConfig().bootstrapServers()
             );

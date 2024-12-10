@@ -42,6 +42,7 @@ import org.testcontainers.utility.TestcontainersConfiguration;
 @SetEnvironmentVariable(key = "TESTCONTAINERS_REUSE_ENABLE", value = "true")
 public class CPDemoTestEnvironment implements TestEnvironment {
 
+  private static final String CONFLUENT_TAG = "7.7.1";
   private Network network;
   private ToolsContainer tools;
   private ZookeeperContainer zookeeper;
@@ -83,7 +84,7 @@ public class CPDemoTestEnvironment implements TestEnvironment {
       }
     }
 
-    zookeeper = new ZookeeperContainer("7.5.1", network);
+    zookeeper = new ZookeeperContainer(CONFLUENT_TAG, network);
     zookeeper.waitingFor(Wait.forHealthcheck());
     zookeeper.start();
 
@@ -101,7 +102,7 @@ public class CPDemoTestEnvironment implements TestEnvironment {
     }
 
     kafka1 = new CPServerContainer(
-        "7.5.1",
+        CONFLUENT_TAG,
         network,
         "kafka1",
         8091,
@@ -118,7 +119,7 @@ public class CPDemoTestEnvironment implements TestEnvironment {
         "KAFKA_JMX_PORT", "9991"
     ));
     kafka2 = new CPServerContainer(
-        "7.5.1",
+        CONFLUENT_TAG,
         network,
         "kafka2",
         8092,
@@ -162,7 +163,7 @@ public class CPDemoTestEnvironment implements TestEnvironment {
       }
     }
 
-    schemaRegistry = new SchemaRegistryContainer("7.5.1", network);
+    schemaRegistry = new SchemaRegistryContainer(CONFLUENT_TAG, network);
     schemaRegistry.start();
   }
 
@@ -188,8 +189,7 @@ public class CPDemoTestEnvironment implements TestEnvironment {
             "direct-to-local-connection",
             "Direct to Local",
             new ConnectionSpec.KafkaClusterConfig(
-                // Use CLEAR listener
-                "localhost:12091,localhost:12092",
+                "localhost:11091,localhost:11092",
                 null
             ),
             new ConnectionSpec.SchemaRegistryConfig(

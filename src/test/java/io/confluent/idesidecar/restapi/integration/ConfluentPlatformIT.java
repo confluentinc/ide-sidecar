@@ -33,6 +33,23 @@ public class ConfluentPlatformIT {
   @Nested
   class DirectWithMutualTLSConnectionTests {
 
+    @QuarkusIntegrationTest
+    @Tag("io.confluent.common.utils.IntegrationTest")
+    @TestProfile(NoAccessFilterProfile.class)
+    static class RecordTests extends AbstractIT implements
+        RecordsV3Suite, RecordsV3ErrorsSuite {
+
+      @Override
+      public CPDemoTestEnvironment environment() {
+        return TEST_ENVIRONMENT;
+      }
+
+      @BeforeEach
+      @Override
+      public void setupConnection() {
+        setupConnection(this, TestEnvironment::directConnectionSpec);
+      }
+    }
   }
 
   @Nested
@@ -62,22 +79,6 @@ public class ConfluentPlatformIT {
     }
   }
 
-  @QuarkusIntegrationTest
-  @Tag("io.confluent.common.utils.IntegrationTest")
-  @TestProfile(NoAccessFilterProfile.class)
-  static class RecordTests extends AbstractIT implements
-      RecordsV3Suite, RecordsV3ErrorsSuite {
-    @Override
-    public TestEnvironment environment() {
-      return TEST_ENVIRONMENT;
-    }
-
-    @BeforeEach
-    @Override
-    public void setupConnection() {
-      setupConnection(this, TestEnvironment::directConnectionSpec);
-    }
-  }
 
   @QuarkusIntegrationTest
   @Tag("io.confluent.common.utils.IntegrationTest")
