@@ -4,7 +4,6 @@ import static io.confluent.idesidecar.restapi.cache.ClusterCacheExpectations.exp
 import static io.confluent.idesidecar.restapi.cache.ClusterCacheExpectations.expectClusterNotInCache;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.emptyString;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -55,7 +54,6 @@ class ClusterRestProxyResourceTest {
 
   private static final String CLUSTER_ID = "fake-cluster-id";
   private static final String CONNECTION_ID = "fake-connection-id";
-  private static final String ENV_ID = "env-1234";
   private static final Map<String, String> CLUSTER_REQUEST_HEADERS = Map.of(
       "x-connection-id", CONNECTION_ID,
       "x-cluster-id", CLUSTER_ID
@@ -360,47 +358,5 @@ class ClusterRestProxyResourceTest {
         .body("title", containsString("Unauthorized"));
   }
 
-  private static Stream<Arguments> invalidClusterRequests() {
-    return Stream.of(
-        // Platform anything is not supported
-        Arguments.of(ConnectionType.PLATFORM, ClusterType.KAFKA,
-            "/kafka/v3/clusters/%s/topics".formatted(CLUSTER_ID)),
-        Arguments.of(ConnectionType.PLATFORM, ClusterType.SCHEMA_REGISTRY,
-            "/subjects/fake-subject/versions/fake-version/schema"),
-        Arguments.of(ConnectionType.PLATFORM, ClusterType.SCHEMA_REGISTRY,
-            "/schemas/id/fake-schema-id/subjects")
-    );
-  }
-
-  @ParameterizedTest
-  @MethodSource("invalidClusterRequests")
-  void testInvalidClusterRequests(
-      ConnectionType connectionType,
-      ClusterType clusterType,
-      String path
-  ) {
-    // Given a connection
-    ccloudTestUtil.createAuthedConnection(CONNECTION_ID, connectionType);
-
-    // And given a kafka cluster in the cache
-    expectClusterInCache(
-        clusterCache,
-        CONNECTION_ID,
-        CLUSTER_ID,
-        "http://localhost:%d".formatted(wireMockPort),
-        clusterType
-    );
-
-    // Tests that Schema Registry endpoints do not work for
-    // Confluent Local connections
-    given()
-        .when()
-        .headers(CLUSTER_REQUEST_HEADERS)
-        .get(path)
-        .then()
-        .statusCode(501)
-        .contentType(MediaType.APPLICATION_JSON)
-        .body("title",
-            containsString("Cannot handle request"));
-  }
+  // TODO: Add more tests for Platform/MDS connections to Kafka REST and SR clusters
 }

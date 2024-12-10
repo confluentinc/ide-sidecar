@@ -919,6 +919,13 @@
             "allOf" : [ {
               "$ref" : "#/components/schemas/SchemaRegistryConfig"
             } ]
+          },
+          "mds" : {
+            "description" : "The details for connecting to a Confluent Platform MDS.",
+            "type" : "object",
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/MdsConfig"
+            } ]
           }
         }
       },
@@ -934,6 +941,9 @@
           },
           "schema_registry" : {
             "$ref" : "#/components/schemas/SchemaRegistryStatus"
+          },
+          "mds" : {
+            "$ref" : "#/components/schemas/MdsStatus"
           },
           "authentication" : {
             "$ref" : "#/components/schemas/Authentication"
@@ -1180,7 +1190,60 @@
           "schema-registry-uri" : {
             "description" : "The URL of the Schema Registry running locally.",
             "maxLength" : 512,
+            "minLength" : 8,
             "type" : "string"
+          }
+        }
+      },
+      "MdsConfig" : {
+        "description" : "Confluent Platform MDS configuration.",
+        "required" : [ "uri" ],
+        "type" : "object",
+        "properties" : {
+          "uri" : {
+            "description" : "The URL of the Confluent Platform MDS.",
+            "maxLength" : 512,
+            "minLength" : 8,
+            "type" : "string"
+          },
+          "credentials" : {
+            "description" : "The credentials for MDS, or null if no authentication is required",
+            "type" : "object",
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/Credentials"
+            } ],
+            "oneOf" : [ {
+              "$ref" : "#/components/schemas/BasicCredentials"
+            } ],
+            "nullable" : true
+          }
+        }
+      },
+      "MdsStatus" : {
+        "description" : "The status related to the specified Confluent Platform MDS.",
+        "required" : [ "state" ],
+        "type" : "object",
+        "properties" : {
+          "state" : {
+            "description" : "The state of the connection to the specified Confluent Platform MDS.",
+            "type" : "string",
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/ConnectedState"
+            } ]
+          },
+          "user" : {
+            "description" : "Information about the authenticated principal, if known.",
+            "type" : "object",
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/UserInfo"
+            } ]
+          },
+          "errors" : {
+            "description" : "Errors related to the connection to the specified Confluent Platform MDS.",
+            "type" : "object",
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/AuthErrors"
+            } ]
           }
         }
       },
@@ -1372,8 +1435,8 @@
           },
           "uri" : {
             "description" : "The URL of the Schema Registry.",
-            "maxLength" : 256,
-            "minLength" : 1,
+            "maxLength" : 512,
+            "minLength" : 8,
             "type" : "string"
           },
           "credentials" : {
