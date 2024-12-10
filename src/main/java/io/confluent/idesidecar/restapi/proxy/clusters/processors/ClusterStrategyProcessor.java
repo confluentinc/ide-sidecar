@@ -13,39 +13,38 @@ import io.confluent.idesidecar.restapi.proxy.clusters.strategy.ConfluentLocalSch
 import io.confluent.idesidecar.restapi.proxy.clusters.strategy.DirectKafkaClusterStrategy;
 import io.confluent.idesidecar.restapi.proxy.clusters.strategy.DirectSchemaRegistryClusterStrategy;
 import io.vertx.core.Future;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 
 /**
  * This processor is responsible for choosing the correct strategy for the given cluster type and
  * connection type.
  */
-public class ClusterStrategyProcessor<T extends ClusterProxyContext> extends
-    Processor<T, Future<T>> {
+@ApplicationScoped
+public class ClusterStrategyProcessor extends
+    Processor<ClusterProxyContext, Future<ClusterProxyContext>> {
 
-  private final ConfluentCloudKafkaClusterStrategy confluentCloudKafkaClusterStrategy;
-  private final ConfluentLocalKafkaClusterStrategy confluentLocalKafkaClusterStrategy;
-  private final DirectKafkaClusterStrategy directKafkaClusterStrategy;
-  private final ConfluentCloudSchemaRegistryClusterStrategy confluentCloudSchemaRegistryClusterStrategy;
-  private final ConfluentLocalSchemaRegistryClusterStrategy confluentLocalSchemaRegistryClusterStrategy;
-  private final DirectSchemaRegistryClusterStrategy directSchemaRegistryClusterStrategy;
+  @Inject
+  ConfluentCloudKafkaClusterStrategy confluentCloudKafkaClusterStrategy;
 
-  public ClusterStrategyProcessor(
-      ConfluentCloudKafkaClusterStrategy confluentCloudKafkaClusterStrategy,
-      ConfluentLocalKafkaClusterStrategy confluentLocalKafkaClusterStrategy,
-      DirectKafkaClusterStrategy directKafkaClusterStrategy,
-      ConfluentCloudSchemaRegistryClusterStrategy confluentCloudSchemaRegistryClusterStrategy,
-      ConfluentLocalSchemaRegistryClusterStrategy confluentLocalSchemaRegistryClusterStrategy,
-      DirectSchemaRegistryClusterStrategy directSchemaRegistryClusterStrategy) {
-    this.confluentCloudKafkaClusterStrategy = confluentCloudKafkaClusterStrategy;
-    this.confluentLocalKafkaClusterStrategy = confluentLocalKafkaClusterStrategy;
-    this.directKafkaClusterStrategy = directKafkaClusterStrategy;
-    this.confluentCloudSchemaRegistryClusterStrategy = confluentCloudSchemaRegistryClusterStrategy;
-    this.confluentLocalSchemaRegistryClusterStrategy = confluentLocalSchemaRegistryClusterStrategy;
-    this.directSchemaRegistryClusterStrategy = directSchemaRegistryClusterStrategy;
-  }
+  @Inject
+  ConfluentLocalKafkaClusterStrategy confluentLocalKafkaClusterStrategy;
+
+  @Inject
+  DirectKafkaClusterStrategy directKafkaClusterStrategy;
+
+  @Inject
+  ConfluentCloudSchemaRegistryClusterStrategy confluentCloudSchemaRegistryClusterStrategy;
+
+  @Inject
+  ConfluentLocalSchemaRegistryClusterStrategy confluentLocalSchemaRegistryClusterStrategy;
+
+  @Inject
+  DirectSchemaRegistryClusterStrategy directSchemaRegistryClusterStrategy;
 
 
   @Override
-  public Future<T> process(T context) {
+  public Future<ClusterProxyContext> process(ClusterProxyContext context) {
     var connectionType = context.getConnectionState().getType();
     var clusterType = context.getClusterType();
 

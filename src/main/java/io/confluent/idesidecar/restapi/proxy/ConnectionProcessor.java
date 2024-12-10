@@ -4,9 +4,7 @@ import io.confluent.idesidecar.restapi.connections.ConnectionState;
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
 import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
 import io.confluent.idesidecar.restapi.exceptions.ProcessorFailedException;
-import io.confluent.idesidecar.restapi.models.ClusterType;
 import io.confluent.idesidecar.restapi.processors.Processor;
-import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
 import io.confluent.idesidecar.restapi.util.RequestHeadersConstants;
 import io.vertx.core.Future;
 
@@ -14,9 +12,9 @@ import io.vertx.core.Future;
  * Processor that checks for the `x-connection-id` header and retrieves the connection state from
  * the connection state manager.
  *
- * @param <T> The proxy context type, which must extend {@link ClusterProxyContext}
+ * @param <T> The proxy context type, which must extend {@link ProxyContext}
  */
-public class ConnectionProcessor<T extends ClusterProxyContext> extends
+public class ConnectionProcessor<T extends ProxyContext> extends
     Processor<T, Future<T>> {
 
   ConnectionStateManager connectionStateManager;
@@ -53,15 +51,8 @@ public class ConnectionProcessor<T extends ClusterProxyContext> extends
     // Store the connection details in the context
     context.setConnectionState(connectionState);
 
-    // Set the truststore options based on the cluster type
-    if (context.getClusterType() == ClusterType.KAFKA
-        && connectionState.getSpec().kafkaClusterConfig().ssl() != null) {
-      var kafkaConfig = connectionState.getSpec().kafkaClusterConfig();
-      context.setTruststoreOptions(kafkaConfig.ssl());
-    } else if (context.getClusterType() == ClusterType.SCHEMA_REGISTRY
-        && connectionState.getSpec().schemaRegistryConfig().ssl() != null) {
-      var srConfig = connectionState.getSpec().schemaRegistryConfig();
-      context.setTruststoreOptions(srConfig.ssl());
+    if (connectionState.getSpec().tlsConfig() != null) {
+      context.setTruststoreOptions(connectionState.getSpec().tlsConfig().truststore());
     }
 
     // All right, we may now proceed

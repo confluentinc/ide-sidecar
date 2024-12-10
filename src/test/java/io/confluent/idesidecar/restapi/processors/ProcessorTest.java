@@ -2,7 +2,6 @@ package io.confluent.idesidecar.restapi.processors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
 import java.util.concurrent.Callable;
 import org.junit.jupiter.api.Test;
 
@@ -10,34 +9,19 @@ class ProcessorTest {
 
   @Test
   void testProcessorChain() throws Exception {
-    class CustomContext extends ClusterProxyContext {
-
-      private Integer value;
-
-      public CustomContext(Integer value) {
-        super(null, null, null, null, null, null, null, null);
-        this.value = value;
-      }
-
-      public Integer getValue() {
-        return value;
-      }
-
-      public void setValue(Integer value) {
-        this.value = value;
-      }
-    }
-    Callable<Processor<CustomContext, CustomContext>> createProcessor = () -> new Processor<>() {
+    Callable<Processor<Integer, Integer>> createProcessor = () -> new Processor<>() {
       @Override
-      public CustomContext process(CustomContext context) {
-        context.setValue(context.getValue() + 1);
+      public Integer process(Integer context) {
+        context = context + 1;
+        context = next().process(context);
+        context = context + 1;
         return context;
       }
     };
 
-    var emptyProcessor = new Processor<CustomContext, CustomContext>() {
+    var emptyProcessor = new Processor<Integer, Integer>() {
       @Override
-      public CustomContext process(CustomContext context) {
+      public Integer process(Integer context) {
         return context;
       }
     };
@@ -56,7 +40,7 @@ class ProcessorTest {
         emptyProcessor
     );
 
-    var result = processor.process(new CustomContext(0)).getValue();
+    var result = processor.process(0);
     // 10 on the way in, 10 on the way out
     assertEquals(20, result);
   }

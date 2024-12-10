@@ -12,7 +12,7 @@ import io.confluent.idesidecar.restapi.credentials.ApiKeyAndSecret;
 import io.confluent.idesidecar.restapi.credentials.BasicCredentials;
 import io.confluent.idesidecar.restapi.credentials.Credentials;
 import io.confluent.idesidecar.restapi.credentials.OAuthCredentials;
-import io.confluent.idesidecar.restapi.credentials.SSL;
+import io.confluent.idesidecar.restapi.credentials.TLSConfig;
 import io.confluent.idesidecar.restapi.exceptions.Failure;
 import io.confluent.idesidecar.restapi.exceptions.Failure.Error;
 import io.confluent.idesidecar.restapi.util.CCloud.KafkaEndpoint;
@@ -51,7 +51,17 @@ public record ConnectionSpec(
                           + "Apache Kafka cluster.")
     @JsonProperty(KAFKA_CLUSTER_CONFIG_FIELD_NAME) KafkaClusterConfig kafkaClusterConfig,
     @Schema(description = "The details for connecting to a Schema Registry.")
-    @JsonProperty(SCHEMA_REGISTRY_CONFIG_FIELD_NAME) SchemaRegistryConfig schemaRegistryConfig
+    @JsonProperty(SCHEMA_REGISTRY_CONFIG_FIELD_NAME) SchemaRegistryConfig schemaRegistryConfig,
+    @Schema(
+        description =
+            "Whether to communicate with the cluster over TLS/SSL. Defaults to 'true', "
+                + "but set to 'false' when the cluster does not support TLS/SSL.",
+        defaultValue = KafkaClusterConfig.DEFAULT_SSL_VALUE,
+        nullable = true
+    )
+    @JsonProperty(value = "ssl")
+    @Null
+    TLSConfig tlsConfig
 ) implements ConnectionSpecBuilder.With {
 
   public static final String CCLOUD_CONFIG_FIELD_NAME = "ccloud_config";
@@ -79,6 +89,7 @@ public record ConnectionSpec(
         ccloudConfig,
         null,
         null,
+        null,
         null
     );
   }
@@ -91,12 +102,33 @@ public record ConnectionSpec(
         null,
         localConfig != null ? localConfig : new LocalConfig(null),
         null,
+        null,
         null
     );
   }
 
   public static ConnectionSpec createDirect(
-      String id, String name,
+      String id,
+      String name,
+      KafkaClusterConfig kafkaConfig,
+      SchemaRegistryConfig srConfig,
+      TLSConfig tlsConfig
+  ) {
+    return new ConnectionSpec(
+        id,
+        name,
+        DIRECT,
+        null,
+        null,
+        kafkaConfig,
+        srConfig,
+        tlsConfig
+    );
+  }
+
+  public static ConnectionSpec createDirect(
+      String id,
+      String name,
       KafkaClusterConfig kafkaConfig,
       SchemaRegistryConfig srConfig
   ) {
@@ -107,12 +139,13 @@ public record ConnectionSpec(
         null,
         null,
         kafkaConfig,
-        srConfig
+        srConfig,
+        null
     );
   }
 
   public ConnectionSpec(String id, String name, ConnectionType type) {
-    this(id, name, type, null, null, null, null);
+    this(id, name, type, null, null, null, null, null);
   }
 
   public ConnectionSpec withId(String id) {
@@ -123,7 +156,8 @@ public record ConnectionSpec(
         ccloudConfig,
         localConfig,
         kafkaClusterConfig,
-        schemaRegistryConfig
+        schemaRegistryConfig,
+        tlsConfig
     );
   }
 
@@ -135,7 +169,8 @@ public record ConnectionSpec(
         ccloudConfig,
         localConfig,
         kafkaClusterConfig,
-        schemaRegistryConfig
+        schemaRegistryConfig,
+        tlsConfig
     );
   }
 
@@ -153,7 +188,8 @@ public record ConnectionSpec(
         ccloudConfig,
         new LocalConfig(srUri),
         kafkaClusterConfig,
-        schemaRegistryConfig
+        schemaRegistryConfig,
+        tlsConfig
     );
   }
 
@@ -168,7 +204,8 @@ public record ConnectionSpec(
         ccloudConfig,
         null,
         kafkaClusterConfig,
-        schemaRegistryConfig
+        schemaRegistryConfig,
+        tlsConfig
     );
   }
 
@@ -186,7 +223,8 @@ public record ConnectionSpec(
         new CCloudConfig(ccloudOrganizationId),
         localConfig,
         kafkaClusterConfig,
-        schemaRegistryConfig
+        schemaRegistryConfig,
+        tlsConfig
     );
   }
 
@@ -204,7 +242,8 @@ public record ConnectionSpec(
         ccloudConfig,
         localConfig,
         kafkaClusterConfig,
-        schemaRegistryConfig
+        schemaRegistryConfig,
+        tlsConfig
     );
   }
 
@@ -222,7 +261,8 @@ public record ConnectionSpec(
         ccloudConfig,
         localConfig,
         kafkaClusterConfig,
-        schemaRegistryConfig
+        schemaRegistryConfig,
+        tlsConfig
     );
   }
 
@@ -316,18 +356,7 @@ public record ConnectionSpec(
           nullable = true
       )
       @Null
-      Credentials credentials,
-
-      @Schema(
-          description =
-              "Whether to communicate with the Kafka cluster over TLS/SSL. Defaults to 'true', "
-              + "but set to 'false' when the Kafka cluster does not support TLS/SSL.",
-          defaultValue = KafkaClusterConfig.DEFAULT_SSL_VALUE,
-          nullable = true
-      )
-      @JsonProperty(value = "ssl")
-      @Null
-      SSL ssl
+      Credentials credentials
   ) implements ConnectionSpecKafkaClusterConfigBuilder.With {
 
     // Constants used in annotations above
@@ -371,9 +400,6 @@ public record ConnectionSpec(
         credentials.validate(errors, "%s.credentials".formatted(path), what);
       }
 
-      if (ssl != null) {
-        ssl.validate(errors, "%s.ssl".formatted(path), what);
-      }
     }
   }
 
@@ -403,18 +429,7 @@ public record ConnectionSpec(
           nullable = true
       )
       @Null
-      Credentials credentials,
-
-      @Schema(
-          description =
-              "Whether to communicate with the Kafka cluster over TLS/SSL. Defaults to 'true', "
-                  + "but set to 'false' when the Kafka cluster does not support TLS/SSL.",
-          defaultValue = KafkaClusterConfig.DEFAULT_SSL_VALUE,
-          nullable = true
-      )
-      @JsonProperty(value = "ssl")
-      @Null
-      SSL ssl
+      Credentials credentials
   ) implements ConnectionSpecSchemaRegistryConfigBuilder.With {
 
     private static final int ID_MAX_LEN = 64;
@@ -476,10 +491,6 @@ public record ConnectionSpec(
       }
       if (credentials != null) {
         credentials.validate(errors, "%s.credentials".formatted(path), what);
-      }
-
-      if (ssl != null) {
-        ssl.validate(errors, "%s.ssl".formatted(path), what);
       }
     }
   }
@@ -560,6 +571,9 @@ public record ConnectionSpec(
           var sr = newSpec.schemaRegistryConfig();
           if (sr != null) {
             sr.validate(errors, "schema_registry", "Schema Registry");
+          }
+          if (tlsConfig != null) {
+            tlsConfig.validate(errors, "ssl", "SSL configuration");
           }
           checkLocalConfigNotAllowed(errors, newSpec);
           checkCCloudConfigNotAllowed(errors, newSpec);

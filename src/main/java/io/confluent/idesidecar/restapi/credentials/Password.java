@@ -59,5 +59,4 @@ public class Password extends Redactable {
       );
     }
   }
-
 }

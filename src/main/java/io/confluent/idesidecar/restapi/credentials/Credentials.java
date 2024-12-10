@@ -41,7 +41,6 @@ public interface Credentials {
 
   enum Type {
     BASIC,
-    MUTUAL_TLS,
     OAUTH2,
     API_KEY_AND_SECRET,
   }

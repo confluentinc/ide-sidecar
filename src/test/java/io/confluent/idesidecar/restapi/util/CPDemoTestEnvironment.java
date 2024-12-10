@@ -1,8 +1,10 @@
 package io.confluent.idesidecar.restapi.util;
 
+import static io.confluent.idesidecar.restapi.util.cpdemo.Constants.BROKER_JAAS_CONTENTS;
+
 import io.confluent.idesidecar.restapi.credentials.BasicCredentials;
 import io.confluent.idesidecar.restapi.credentials.Password;
-import io.confluent.idesidecar.restapi.credentials.SSL;
+import io.confluent.idesidecar.restapi.credentials.TLSConfig;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.util.cpdemo.CPServerContainer;
 import io.confluent.idesidecar.restapi.util.cpdemo.OpenldapContainer;
@@ -15,6 +17,7 @@ import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientExcept
 import io.confluent.kafka.schemaregistry.client.security.SslFactory;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
@@ -87,6 +90,16 @@ public class CPDemoTestEnvironment implements TestEnvironment {
     ldap = new OpenldapContainer(network);
     ldap.start();
 
+    // Write BROKER_JAAS_CONTENTS to .cp-demo/scripts/security/broker_jaas.conf
+    try {
+      Files.write(
+          new File(".cp-demo/scripts/security/broker_jaas.conf").toPath(),
+          BROKER_JAAS_CONTENTS.getBytes()
+      );
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
     kafka1 = new CPServerContainer(
         "7.5.1",
         network,
@@ -95,7 +108,9 @@ public class CPDemoTestEnvironment implements TestEnvironment {
         9091,
         10091,
         11091,
-        12091
+        12091,
+        13091,
+        14091
     );
     kafka1.withEnv(Map.of(
         "KAFKA_BROKER_ID", "1",
@@ -110,7 +125,9 @@ public class CPDemoTestEnvironment implements TestEnvironment {
         9092,
         10092,
         11092,
-        12092
+        12092,
+        13092,
+        14092
     );
     kafka2.withEnv(Map.of(
         "KAFKA_BROKER_ID", "2",
@@ -171,8 +188,8 @@ public class CPDemoTestEnvironment implements TestEnvironment {
             "direct-to-local-connection",
             "Direct to Local",
             new ConnectionSpec.KafkaClusterConfig(
+                // Use CLEAR listener
                 "localhost:12091,localhost:12092",
-                null,
                 null
             ),
             new ConnectionSpec.SchemaRegistryConfig(
@@ -181,29 +198,69 @@ public class CPDemoTestEnvironment implements TestEnvironment {
                 new BasicCredentials(
                     "superUser",
                     new Password("superUser".toCharArray())
-                ),
-                new SSL(trustStoreLocation, trustStorePassword)
-            )
+                )
+            ),
+            new TLSConfig(trustStoreLocation, trustStorePassword)
         )
     );
   }
 
   public Optional<ConnectionSpec> directConnectionSpecWithoutSR() {
+    return Optional.of(
+        ConnectionSpec.createDirect(
+            "direct-to-local-connection-no-sr",
+            "Direct to Local (No SR)",
+            new ConnectionSpec.KafkaClusterConfig(
+                "localhost:12091,localhost:12092",
+                null
+            ),
+            null
+        )
+    );
+  }
+
+  public Optional<ConnectionSpec> directConnectionBasicAuth() {
+    return Optional.of(
+        ConnectionSpec.createDirect(
+            "direct-to-local-connection-basic-auth",
+            "Direct to Local (Basic Auth)",
+            new ConnectionSpec.KafkaClusterConfig(
+                "localhost:13091,localhost:13092",
+                new BasicCredentials(
+                    "admin",
+                    new Password("admin-secret".toCharArray())
+                )
+            ),
+            null
+        )
+    );
+  }
+
+  public Optional<ConnectionSpec> directConnectionOverMutualTLS() {
     var cwd = System.getProperty("user.dir");
     var trustStoreLocation = new File(cwd,
         ".cp-demo/scripts/security/kafka.schemaregistry.truststore.jks"
     ).getAbsolutePath();
     var trustStorePassword = new Password("confluent".toCharArray());
+
     return Optional.of(
         ConnectionSpec.createDirect(
-            "direct-to-local-connection",
-            "Direct to Local",
+            "direct-to-local-connection-mtls",
+            "Direct to Local (Mutual TLS)",
             new ConnectionSpec.KafkaClusterConfig(
-                "localhost:12091,localhost:12092",
-                null,
+                // Use SSL listener
+                "localhost:11091,localhost:11092",
                 null
             ),
-            null
+            new ConnectionSpec.SchemaRegistryConfig(
+                "something",
+                "https://localhost:8085",
+                new BasicCredentials(
+                    "superUser",
+                    new Password("superUser".toCharArray())
+                )
+            ),
+            new TLSConfig(trustStoreLocation, trustStorePassword)
         )
     );
   }

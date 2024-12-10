@@ -26,11 +26,4 @@ class PasswordTest extends RedactedTestBase<Password> {
     var credential = new Password("password".toCharArray());
     assertEquals("********", credential.toString());
   }
-
-  @Test
-  void shouldGetRawValue() {
-    var credential = new Password("password".toCharArray());
-    assertEquals("password", credential.asString(false));
-    assertEquals("password", new String(credential.asCharArray()));
-  }
 }

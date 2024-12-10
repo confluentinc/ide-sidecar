@@ -3,6 +3,7 @@ package io.confluent.idesidecar.restapi.integration;
 import io.confluent.idesidecar.restapi.kafkarest.RecordsV3ErrorsSuite;
 import io.confluent.idesidecar.restapi.kafkarest.RecordsV3Suite;
 import io.confluent.idesidecar.restapi.kafkarest.RecordsV3WithoutSRSuite;
+import io.confluent.idesidecar.restapi.kafkarest.api.TopicV3Suite;
 import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
 import io.confluent.idesidecar.restapi.util.CPDemoTestEnvironment;
 import io.confluent.idesidecar.restapi.util.TestEnvironment;
@@ -37,6 +38,28 @@ public class ConfluentPlatformIT {
   @Nested
   class DirectWithOauthConnectionTests {
 
+  }
+
+  @Nested
+  class DirectWithBasicAuthConnectionTests {
+
+    @QuarkusIntegrationTest
+    @Tag("io.confluent.common.utils.IntegrationTest")
+    @TestProfile(NoAccessFilterProfile.class)
+    static class TopicTests extends AbstractIT implements
+        TopicV3Suite {
+
+      @Override
+      public CPDemoTestEnvironment environment() {
+        return TEST_ENVIRONMENT;
+      }
+
+      @BeforeEach
+      @Override
+      public void setupConnection() {
+        setupConnection(this, environment().directConnectionBasicAuth());
+      }
+    }
   }
 
   @QuarkusIntegrationTest

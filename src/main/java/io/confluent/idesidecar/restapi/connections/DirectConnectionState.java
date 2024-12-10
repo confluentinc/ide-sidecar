@@ -209,9 +209,9 @@ public class DirectConnectionState extends ConnectionState {
 
   protected Future<SchemaRegistryStatus> getSchemaRegistryConnectionStatus() {
     return withSchemaRegistryClient(srClient -> {
-      // getMode() could fail with 403, perhaps we should cycle
-      // through some API calls to see if we can get a 200
-      srClient.getAllSubjects();
+      // There is a configuration, so validate the connection by creating a SchemaRegistryClient
+      // and getting the global mode.
+      srClient.getMode();
       return Future.succeededFuture(
           ConnectionStatusSchemaRegistryStatusBuilder
               .builder()
@@ -222,15 +222,14 @@ public class DirectConnectionState extends ConnectionState {
       var cause = unwrap(error);
       var message = "Failed to connect to Schema Registry: %s".formatted(cause.getMessage());
       if (cause instanceof UnknownHostException) {
-        message = "Unable to resolve the Schema Registry URL %s: %s".formatted(
-            spec.schemaRegistryConfig().uri(), cause.getMessage()
+        message = "Unable to resolve the Schema Registry URL %s".formatted(
+            spec.schemaRegistryConfig().uri()
         );
       } else if (cause instanceof IOException || cause instanceof RestClientException) {
-        message = "Unable to reach the Schema Registry URL %s: %s".formatted(
-            spec.schemaRegistryConfig().uri(), cause.getMessage()
+        message = "Unable to reach the Schema Registry URL %s".formatted(
+            spec.schemaRegistryConfig().uri()
         );
       }
-      Log.debugf(cause, message);
       // The connection failed, so successfully return the failed state
       return Future.succeededFuture(
           ConnectionStatusSchemaRegistryStatusBuilder

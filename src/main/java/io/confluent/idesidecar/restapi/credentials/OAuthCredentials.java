@@ -88,7 +88,7 @@ public record OAuthCredentials(
 
   @Override
   public Type type() {
-    return Type.MUTUAL_TLS;
+    return Type.OAUTH2;
   }
 
   @Override

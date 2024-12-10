@@ -15,7 +15,9 @@ import io.confluent.idesidecar.restapi.credentials.Credentials;
 import io.confluent.idesidecar.restapi.credentials.Credentials.KafkaConnectionOptions;
 import io.confluent.idesidecar.restapi.credentials.OAuthCredentials;
 import io.confluent.idesidecar.restapi.credentials.Password;
-import io.confluent.idesidecar.restapi.credentials.SSL;
+import io.confluent.idesidecar.restapi.credentials.TLSConfig;
+import io.confluent.idesidecar.restapi.credentials.TLSConfig.KeyStore;
+import io.confluent.idesidecar.restapi.credentials.TLSConfig.TrustStore;
 import io.confluent.idesidecar.restapi.models.graph.KafkaCluster;
 import io.confluent.idesidecar.restapi.models.graph.SchemaRegistry;
 import io.confluent.idesidecar.restapi.util.CCloud;
@@ -75,22 +77,26 @@ class ClientConfiguratorStaticTest {
       API_KEY,
       new ApiSecret(API_SECRET.toCharArray())
   );
-  static final SSL MUTAL_TLS_CREDENTIALS = new SSL(
+  static final TLSConfig MUTUAL_TLS_CREDENTIALS = new TLSConfig(
       MTLS_TRUSTSTORE_PATH,
       new Password(MTLS_TRUSTSTORE_PASSWORD.toCharArray()),
       MTLS_KEYSTORE_PATH,
       new Password(MTLS_KEYSTORE_PASSWORD.toCharArray()),
       new Password(MTLS_KEY_PASSWORD.toCharArray())
   );
-  static final SSL MUTAL_TLS_CREDENTIALS_WITH_TYPES = new SSL(
+  static final TLSConfig MUTUAL_TLS_CREDENTIALS_WITH_TYPES = new TLSConfig(
       null,
-      MTLS_TRUSTSTORE_PATH,
-      new Password(MTLS_TRUSTSTORE_PASSWORD.toCharArray()),
-      SSL.StoreType.JKS,
-      MTLS_KEYSTORE_PATH,
-      new Password(MTLS_KEYSTORE_PASSWORD.toCharArray()),
-      SSL.StoreType.PEM,
-      new Password(MTLS_KEY_PASSWORD.toCharArray())
+      new TrustStore(
+          MTLS_TRUSTSTORE_PATH,
+          new Password(MTLS_TRUSTSTORE_PASSWORD.toCharArray()),
+          TLSConfig.StoreType.JKS
+      ),
+      new KeyStore(
+          MTLS_KEYSTORE_PATH,
+          new Password(MTLS_KEYSTORE_PASSWORD.toCharArray()),
+          TLSConfig.StoreType.JKS,
+          new Password(MTLS_KEY_PASSWORD.toCharArray())
+      )
   );
 
   @Mock ConnectionState connection;

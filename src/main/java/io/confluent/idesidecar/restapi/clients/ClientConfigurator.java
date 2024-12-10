@@ -257,7 +257,7 @@ public class ClientConfigurator {
 
     // Second, add any connection properties for Kafka cluster credentials (if defined)
     var options = connection.getKafkaConnectionOptions().withRedact(redact);
-    var ssl = connection.getSpec().kafkaClusterConfig().ssl();
+    var ssl = connection.getSpec().tlsConfig();
     var creds = connection.getKafkaCredentials();
     if (creds.isPresent()) {
       creds.get().kafkaClientProperties(options).ifPresent(props::putAll);
@@ -325,7 +325,7 @@ public class ClientConfigurator {
         .getSchemaRegistryOptions()
         .withRedact(redact)
         .withLogicalClusterId(logicalId);
-    var ssl = connection.getSpec().schemaRegistryConfig().ssl();
+    var ssl = connection.getSpec().tlsConfig();
     var creds = connection.getSchemaRegistryCredentials();
     if (creds.isPresent()) {
       creds.get().schemaRegistryClientProperties(options).ifPresent(props::putAll);

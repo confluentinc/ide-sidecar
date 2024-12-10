@@ -1,7 +1,5 @@
 package io.confluent.idesidecar.restapi.processors;
 
-import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
-
 /**
  * A generic processor that can be used to chain multiple processors together. Each processor can
  * modify the context and pass it to the next processor.
@@ -9,7 +7,7 @@ import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
  * @param <T> The input context type for the processor
  * @param <U> The output context type for the processor
  */
-public abstract class Processor<T extends ClusterProxyContext, U> {
+public abstract class Processor<T, U> {
 
   private Processor<T, U> next;
 
@@ -24,8 +22,7 @@ public abstract class Processor<T extends ClusterProxyContext, U> {
   }
 
   @SafeVarargs
-  public static <T extends ClusterProxyContext, U> Processor<T, U> chain(
-      Processor<T, U>... processors) {
+  public static <T, U> Processor<T, U> chain(Processor<T, U>... processors) {
     var start = processors[0];
 
     var current = start;

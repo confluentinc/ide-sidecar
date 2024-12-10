@@ -4,8 +4,6 @@ import io.confluent.idesidecar.restapi.exceptions.ProcessorFailedException;
 import io.confluent.idesidecar.restapi.models.ClusterType;
 import io.confluent.idesidecar.restapi.processors.Processor;
 import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
-import io.confluent.idesidecar.restapi.proxy.clusters.KafkaClusterProxyContext;
-import io.confluent.idesidecar.restapi.proxy.clusters.SchemaRegistryClusterProxyContext;
 import io.confluent.idesidecar.restapi.util.RequestHeadersConstants;
 import io.quarkus.vertx.web.Route;
 import io.smallrye.common.annotation.Blocking;
@@ -29,33 +27,23 @@ public class ClusterRestProxyResource {
   public static final String SCHEMA_REGISTRY_PROXY_REGEX = "(/schemas.*)|(/subjects.*)";
 
   @Inject
-  @Named("kafkaClusterProxyProcessor")
-  Processor<KafkaClusterProxyContext, Future<KafkaClusterProxyContext>> kafkaClusterProxyProcessor;
-
-  @Inject
-  @Named("srClusterProxyProcessor")
-  Processor<SchemaRegistryClusterProxyContext, Future<SchemaRegistryClusterProxyContext>> srClusterProxyProcessor;
+  @Named("clusterProxyProcessor")
+  Processor<ClusterProxyContext, Future<ClusterProxyContext>> clusterProxyProcessor;
 
   @Route(regex = KAFKA_PROXY_REGEX)
   @Blocking
   public void kafkaClusterProxy(RoutingContext routingContext) {
-    handleClusterProxy(kafkaClusterProxyProcessor, routingContext,
-        createKafkaClusterContext(routingContext));
+    handleClusterProxy(routingContext, createKafkaClusterContext(routingContext));
   }
 
   @Route(regex = SCHEMA_REGISTRY_PROXY_REGEX)
   @Blocking
   public void schemaRegistryClusterProxy(RoutingContext routingContext) {
-    handleClusterProxy(srClusterProxyProcessor, routingContext,
-        createSRClusterContext(routingContext));
+    handleClusterProxy(routingContext, createSRClusterContext(routingContext));
   }
 
-  private <T extends ClusterProxyContext> void handleClusterProxy(
-      Processor<T, Future<T>> processor,
-      RoutingContext routingContext,
-      T proxyContext
-  ) {
-    processor.process(proxyContext)
+  private void handleClusterProxy(RoutingContext routingContext, ClusterProxyContext proxyContext) {
+    clusterProxyProcessor.process(proxyContext)
         .onSuccess(context -> {
           routingContext.response().setStatusCode(context.getProxyResponseStatusCode());
           routingContext.response().headers().addAll(context.getProxyResponseHeaders());
@@ -96,8 +84,8 @@ public class ClusterRestProxyResource {
    * Create a ClusterProxyContext for Kafka Proxy. Note that we are using the cluster id from the
    * path params, e.g, /kafka/v3/clusters/{clusterId}/topics/{topicName}
    */
-  private KafkaClusterProxyContext createKafkaClusterContext(RoutingContext routingContext) {
-    return new KafkaClusterProxyContext(
+  private ClusterProxyContext createKafkaClusterContext(RoutingContext routingContext) {
+    return new ClusterProxyContext(
         routingContext.request().uri(),
         routingContext.request().headers(),
         routingContext.request().method(),
@@ -113,8 +101,8 @@ public class ClusterRestProxyResource {
    * Create a ClusterProxyContext for Schema Registry Proxy. Note that we are using the
    * cluster id from the {@code x-cluster-id} header.
    */
-  private SchemaRegistryClusterProxyContext createSRClusterContext(RoutingContext routingContext) {
-    return new SchemaRegistryClusterProxyContext(
+  private ClusterProxyContext createSRClusterContext(RoutingContext routingContext) {
+    return new ClusterProxyContext(
         routingContext.request().uri(),
         routingContext.request().headers(),
         routingContext.request().method(),
