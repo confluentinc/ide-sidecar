@@ -41,8 +41,6 @@
     schema-fetch-retry:
       max-retries: 3
   quarkus:
-    application:
-      version: "1.105.0"
     wiremock:
       devservices:
         enabled: true
