@@ -67,10 +67,10 @@ public record BasicCredentials(
   ) {
     var config = new LinkedHashMap<String, String>();
     config.put("basic.auth.credentials.source", "USER_INFO");
-    var basicInfo = username
-        + ":"
-        + new String(password.asCharArray());
-    config.put("basic.auth.user.info", basicInfo);
+    config.put(
+        "basic.auth.user.info",
+        "%s:%s".formatted(username, password.asString(options.redact()))
+    );
     return Optional.of(config);
   }
 

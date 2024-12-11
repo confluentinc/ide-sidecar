@@ -62,5 +62,4 @@ public class ClusterProxyContext extends ProxyContext {
   public ClusterType getClusterType() {
     return clusterType;
   }
-
 }

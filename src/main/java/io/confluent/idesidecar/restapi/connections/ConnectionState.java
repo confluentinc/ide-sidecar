@@ -3,6 +3,7 @@ package io.confluent.idesidecar.restapi.connections;
 import io.confluent.idesidecar.restapi.credentials.Credentials;
 import io.confluent.idesidecar.restapi.credentials.Credentials.KafkaConnectionOptions;
 import io.confluent.idesidecar.restapi.credentials.Credentials.SchemaRegistryConnectionOptions;
+import io.confluent.idesidecar.restapi.credentials.TLSConfig;
 import io.confluent.idesidecar.restapi.models.ConnectionMetadata;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
@@ -185,6 +186,21 @@ public abstract class ConnectionState {
    *         the cluster requires no credentials
    */
   public Optional<Credentials> getSchemaRegistryCredentials() {
+    return Optional.empty();
+  }
+
+  /**
+   * Get the TLS configuration to use when connecting to the cluster (Kafka or Schema Registry). We
+   * assume that the TLS configuration is the same for both Kafka and Schema Registry. In the
+   * future, we may support overriding the TLS configuration for each cluster type.
+   *
+   * @return the TLS configuration or empty if the cluster does not require TLS
+   */
+  public Optional<TLSConfig> getTLSConfig() {
+    return Optional.empty();
+  }
+
+  public Optional<Boolean> getVerifyServerCertificateHostname() {
     return Optional.empty();
   }
 }

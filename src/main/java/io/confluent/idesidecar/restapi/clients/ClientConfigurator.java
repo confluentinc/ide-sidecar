@@ -257,17 +257,29 @@ public class ClientConfigurator {
 
     // Second, add any connection properties for Kafka cluster credentials (if defined)
     var options = connection.getKafkaConnectionOptions().withRedact(redact);
-    var ssl = connection.getSpec().tlsConfig();
     var creds = connection.getKafkaCredentials();
     if (creds.isPresent()) {
       creds.get().kafkaClientProperties(options).ifPresent(props::putAll);
-      props.put("security.protocol", ssl != null ? "SASL_SSL" : "SASL_PLAINTEXT");
+      connection.getTLSConfig().ifPresentOrElse(
+          ignored -> props.put("security.protocol", "SASL_SSL"),
+          () -> props.put("security.protocol", "SASL_PLAINTEXT")
+      );
     } else {
-      props.put("security.protocol", ssl != null ? "SSL" : "PLAINTEXT");
+      connection.getTLSConfig().ifPresent(
+          ignored -> props.put("security.protocol", "SSL")
+      );
     }
 
-    if (ssl != null) {
-      ssl.getProperties(options.redact()).ifPresent(props::putAll);
+    connection
+        .getTLSConfig()
+        .flatMap(tls -> tls.getProperties(options.redact()))
+        .ifPresent(props::putAll);
+
+    if (
+        connection.getVerifyServerCertificateHostname().isPresent()
+            && !connection.getVerifyServerCertificateHostname().get()
+    ) {
+      props.put("ssl.endpoint.identification.algorithm", "");
     }
 
     // Add any auth properties for Schema Registry to the Kafka client config,
@@ -325,20 +337,30 @@ public class ClientConfigurator {
         .getSchemaRegistryOptions()
         .withRedact(redact)
         .withLogicalClusterId(logicalId);
-    var ssl = connection.getSpec().tlsConfig();
     var creds = connection.getSchemaRegistryCredentials();
     if (creds.isPresent()) {
       creds.get().schemaRegistryClientProperties(options).ifPresent(props::putAll);
-      props.put("security.protocol", ssl != null ? "SASL_SSL" : "SASL_PLAINTEXT");
+      connection.getTLSConfig().ifPresentOrElse(
+          ignored -> props.put("security.protocol", "SASL_SSL"),
+          () -> props.put("security.protocol", "SASL_PLAINTEXT")
+      );
     } else {
-      props.put("security.protocol", ssl != null ? "SSL" : "PLAINTEXT");
+      connection.getTLSConfig().ifPresent(
+          ignored -> props.put("security.protocol", "SSL")
+      );
     }
 
-    if (ssl != null) {
-      ssl.getProperties(options.redact()).ifPresent(props::putAll);
-    }
+    connection
+        .getTLSConfig()
+        .flatMap(tls -> tls.getProperties(options.redact()))
+        .ifPresent(props::putAll);
 
-    Log.debugf("Schema Registry client properties: %s", props);
+    if (
+        connection.getVerifyServerCertificateHostname().isPresent()
+            && !connection.getVerifyServerCertificateHostname().get()
+    ) {
+      props.put("ssl.endpoint.identification.algorithm", "");
+    }
     return props;
   }
 

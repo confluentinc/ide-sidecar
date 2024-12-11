@@ -20,7 +20,9 @@ public class ProxyHttpClient<T extends ProxyContext> {
 
   public Future<T> send(T context) {
     var options = webClientFactory.getDefaultWebClientOptions();
-    options.setTrustStoreOptions(context.getTruststoreOptions());
+    if (context.getTruststoreOptions() != null) {
+      options.setTrustStoreOptions(context.getTruststoreOptions());
+    }
 
     return WebClient.create(vertx, options)
         .requestAbs(context.getProxyRequestMethod(), context.getProxyRequestAbsoluteUrl())

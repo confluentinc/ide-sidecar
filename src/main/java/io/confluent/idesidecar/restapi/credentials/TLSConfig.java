@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.confluent.idesidecar.restapi.exceptions.Failure;
 import io.confluent.idesidecar.restapi.exceptions.Failure.Error;
+import io.soabase.recordbuilder.core.RecordBuilder;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Null;
 import jakarta.validation.constraints.Size;
@@ -21,25 +22,22 @@ import java.util.stream.Collectors;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 @Schema(description = "SSL configuration")
+@RecordBuilder
 public record TLSConfig(
-    @Schema(description = "Whether to verify the server's SSL certificate. If set to false, "
-        + "the server's SSL certificate will not be verified. Defaults to true.")
-    @JsonProperty(value = "verify_ssl_certificates")
-    @Null
-    Boolean verifySslCertificates,
     @Schema(description =
         "The trust store configuration for authenticating the server's certificate.")
     @JsonProperty(value = "truststore")
     @NotNull
     TrustStore truststore,
-    @Schema(description = "The key store configuration for "
-        + "authenticating the client to the server.",
+    @Schema(description = "The key store configuration that will identify and authenticate "
+        + "the client to the server, required for mutual TLS (mTLS)",
         nullable = true)
     @JsonProperty(value = "keystore")
     @Null
     KeyStore keystore
 ) {
 
+  @RecordBuilder
   public record TrustStore(
       @Schema(description = "The path to the local trust store file. Required for authenticating "
           + "the server's certificate.")
@@ -59,7 +57,9 @@ public record TLSConfig(
       @Null
       Password password,
 
-      @Schema(description = "The file format of the local trust store file", nullable = true)
+      @Schema(description = "The file format of the local trust store file",
+          defaultValue = "JKS",
+          nullable = true)
       @JsonProperty(value = "type")
       @Null
       StoreType type
@@ -101,6 +101,7 @@ public record TLSConfig(
     }
   }
 
+  @RecordBuilder
   public record KeyStore(
       @Schema(description = "The path to the local key store file. Only specified if client "
           + "needs to be authenticated by the server (mutual TLS).",
@@ -122,7 +123,9 @@ public record TLSConfig(
       @Null
       Password password,
 
-      @Schema(description = "The file format of the local key store file.", nullable = true)
+      @Schema(description = "The file format of the local key store file.",
+          defaultValue = "JKS",
+          nullable = true)
       @JsonProperty(value = "type")
       @Null
       StoreType type,
@@ -185,19 +188,6 @@ public record TLSConfig(
   private static final int KEYSTORE_PASSWORD_MAX_LEN = 256;
   private static final int KEY_PASSWORD_MAX_LEN = 256;
 
-  private static final String DEFAULT_VERIFY_SSL_CERTIFICATES_VALUE = "true";
-  private static final Boolean DEFAULT_VERIFY_SSL_CERTIFICATES = Boolean.valueOf(
-      DEFAULT_VERIFY_SSL_CERTIFICATES_VALUE
-  );
-
-  public TLSConfig() {
-    this(
-        DEFAULT_VERIFY_SSL_CERTIFICATES,
-        null,
-        null
-    );
-  }
-
   @JsonDeserialize(using = StoreType.Deserializer.class)
   public enum StoreType {
     JKS,
@@ -234,15 +224,8 @@ public record TLSConfig(
     }
   }
 
-  public TLSConfig(
-      String truststorePath,
-      Password truststorePassword
-  ) {
-    this(
-        DEFAULT_VERIFY_SSL_CERTIFICATES,
-        new TrustStore(truststorePath, truststorePassword, null),
-        null
-    );
+  public TLSConfig(String truststorePath, Password truststorePassword) {
+    this(new TrustStore(truststorePath, truststorePassword, null), null);
   }
 
   public TLSConfig(
@@ -253,7 +236,6 @@ public record TLSConfig(
       Password keyPassword
   ) {
     this(
-        DEFAULT_VERIFY_SSL_CERTIFICATES,
         new TrustStore(truststorePath, truststorePassword, null),
         new KeyStore(keystorePath, keystorePassword, null, keyPassword)
     );
@@ -261,9 +243,6 @@ public record TLSConfig(
 
   public Optional<Map<String, String>> getProperties(boolean options) {
     var config = new LinkedHashMap<String, String>();
-    if (!verifySslCertificates) {
-      config.put("ssl.endpoint.identification.algorithm", "");
-    }
 
     // Trust store
     config.put("ssl.truststore.location", truststore.path);
@@ -296,7 +275,16 @@ public record TLSConfig(
       String path,
       String what
   ) {
-    truststore.validate(errors, path, what);
+    if (truststore == null) {
+      errors.add(
+          Error.create()
+              .withDetail("%s truststore is required", what)
+              .withSource("%s.truststore", path)
+      );
+    } else {
+      truststore.validate(errors, path, what);
+    }
+
     if (keystore != null) {
       keystore.validate(errors, path, what);
     }

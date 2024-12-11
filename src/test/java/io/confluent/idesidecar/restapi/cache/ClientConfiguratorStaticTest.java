@@ -13,6 +13,7 @@ import io.confluent.idesidecar.restapi.credentials.ApiSecret;
 import io.confluent.idesidecar.restapi.credentials.BasicCredentials;
 import io.confluent.idesidecar.restapi.credentials.Credentials;
 import io.confluent.idesidecar.restapi.credentials.Credentials.KafkaConnectionOptions;
+import io.confluent.idesidecar.restapi.credentials.Credentials.SchemaRegistryConnectionOptions;
 import io.confluent.idesidecar.restapi.credentials.OAuthCredentials;
 import io.confluent.idesidecar.restapi.credentials.Password;
 import io.confluent.idesidecar.restapi.credentials.TLSConfig;
@@ -77,15 +78,18 @@ class ClientConfiguratorStaticTest {
       API_KEY,
       new ApiSecret(API_SECRET.toCharArray())
   );
-  static final TLSConfig MUTUAL_TLS_CREDENTIALS = new TLSConfig(
+  static final TLSConfig TLS_CONFIG = new TLSConfig(
+      MTLS_TRUSTSTORE_PATH,
+      new Password(MTLS_TRUSTSTORE_PASSWORD.toCharArray())
+  );
+  static final TLSConfig MUTUAL_TLS_CONFIG = new TLSConfig(
       MTLS_TRUSTSTORE_PATH,
       new Password(MTLS_TRUSTSTORE_PASSWORD.toCharArray()),
       MTLS_KEYSTORE_PATH,
       new Password(MTLS_KEYSTORE_PASSWORD.toCharArray()),
       new Password(MTLS_KEY_PASSWORD.toCharArray())
   );
-  static final TLSConfig MUTUAL_TLS_CREDENTIALS_WITH_TYPES = new TLSConfig(
-      null,
+  static final TLSConfig MUTUAL_TLS_CONFIG_WITH_TYPES = new TLSConfig(
       new TrustStore(
           MTLS_TRUSTSTORE_PATH,
           new Password(MTLS_TRUSTSTORE_PASSWORD.toCharArray()),
@@ -132,8 +136,8 @@ class ClientConfiguratorStaticTest {
         Credentials kafkaCredentials,
         SchemaRegistry schemaRegistry,
         Credentials srCredentials,
-        boolean ssl,
-        boolean verifyUnsignedCertificates,
+        TLSConfig ssl,
+        boolean verifyServerCertificateHostname,
         boolean redact,
         Duration timeout,
         String expectedKafkaConfig,
@@ -146,7 +150,7 @@ class ClientConfiguratorStaticTest {
             null,
             schemaRegistry,
             null,
-            true,
+            null,
             true,
             false,
             null,
@@ -163,7 +167,7 @@ class ClientConfiguratorStaticTest {
             null,
             null,
             null,
-            true,
+            null,
             true,
             false,
             null,
@@ -178,7 +182,8 @@ class ClientConfiguratorStaticTest {
             BASIC_CREDENTIALS,
             schemaRegistry,
             BASIC_CREDENTIALS,
-            false,
+            null,
+            // Disable server hostname verification
             false,
             false,
             Duration.ofSeconds(10),
@@ -191,9 +196,11 @@ class ClientConfiguratorStaticTest {
                 """.formatted(USERNAME, PASSWORD),
             """
                 schema.registry.url=http://localhost:8081
+                security.protocol=SASL_PLAINTEXT
                 basic.auth.credentials.source=USER_INFO
                 basic.auth.user.info=%s:%s
                 schema.registry.request.timeout.ms=10000
+                ssl.endpoint.identification.algorithm=
                 """.formatted(USERNAME, PASSWORD)
         ),
         new TestInput(
@@ -202,7 +209,8 @@ class ClientConfiguratorStaticTest {
             BASIC_CREDENTIALS,
             schemaRegistry,
             BASIC_CREDENTIALS,
-            false,
+            null,
+            // Disable server hostname verification
             false,
             true,
             null,
@@ -216,8 +224,10 @@ class ClientConfiguratorStaticTest {
                 """.formatted(USERNAME),
             """
                 schema.registry.url=http://localhost:8081
+                security.protocol=SASL_PLAINTEXT
                 basic.auth.credentials.source=USER_INFO
                 basic.auth.user.info=%s:********
+                ssl.endpoint.identification.algorithm=
                 """.formatted(USERNAME)
         ),
         new TestInput(
@@ -226,7 +236,7 @@ class ClientConfiguratorStaticTest {
             BASIC_CREDENTIALS,
             schemaRegistry,
             BASIC_CREDENTIALS,
-            true,
+            TLS_CONFIG,
             true,
             false,
             null,
@@ -235,12 +245,123 @@ class ClientConfiguratorStaticTest {
                 security.protocol=SASL_SSL
                 sasl.mechanism=PLAIN
                 sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username="%s" password="%s";
-                """.formatted(USERNAME, PASSWORD),
+                ssl.truststore.location=%s
+                ssl.truststore.password=%s
+                """.formatted(USERNAME, PASSWORD, MTLS_TRUSTSTORE_PATH, MTLS_TRUSTSTORE_PASSWORD),
             """
                 schema.registry.url=http://localhost:8081
+                security.protocol=SASL_SSL
                 basic.auth.credentials.source=USER_INFO
                 basic.auth.user.info=%s:%s
-                """.formatted(USERNAME, PASSWORD)
+                ssl.truststore.location=%s
+                ssl.truststore.password=%s
+                """.formatted(USERNAME, PASSWORD, MTLS_TRUSTSTORE_PATH, MTLS_TRUSTSTORE_PASSWORD)
+        ),
+        new TestInput(
+            "With basic credentials and Mutual TLS",
+            kafka,
+            BASIC_CREDENTIALS,
+            schemaRegistry,
+            BASIC_CREDENTIALS,
+            MUTUAL_TLS_CONFIG,
+            true,
+            false,
+            null,
+            """
+                bootstrap.servers=localhost:9092
+                security.protocol=SASL_SSL
+                sasl.mechanism=PLAIN
+                sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username="%s" password="%s";
+                ssl.truststore.location=%s
+                ssl.truststore.password=%s
+                ssl.keystore.location=%s
+                ssl.keystore.password=%s
+                ssl.key.password=%s
+                """
+                .formatted(
+                    USERNAME,
+                    PASSWORD,
+                    MTLS_TRUSTSTORE_PATH,
+                    MTLS_TRUSTSTORE_PASSWORD,
+                    MTLS_KEYSTORE_PATH,
+                    MTLS_KEYSTORE_PASSWORD,
+                    MTLS_KEY_PASSWORD
+                ),
+            """
+                schema.registry.url=http://localhost:8081
+                security.protocol=SASL_SSL
+                basic.auth.credentials.source=USER_INFO
+                basic.auth.user.info=%s:%s
+                ssl.truststore.location=%s
+                ssl.truststore.password=%s
+                ssl.keystore.location=%s
+                ssl.keystore.password=%s
+                ssl.key.password=%s
+                """
+                .formatted(
+                    USERNAME,
+                    PASSWORD,
+                    MTLS_TRUSTSTORE_PATH,
+                    MTLS_TRUSTSTORE_PASSWORD,
+                    MTLS_KEYSTORE_PATH,
+                    MTLS_KEYSTORE_PASSWORD,
+                    MTLS_KEY_PASSWORD
+                )
+        ),
+        new TestInput(
+            "With basic credentials and Mutual TLS with explicit types",
+            kafka,
+            BASIC_CREDENTIALS,
+            schemaRegistry,
+            BASIC_CREDENTIALS,
+            MUTUAL_TLS_CONFIG_WITH_TYPES,
+            true,
+            false,
+            null,
+            """
+                bootstrap.servers=localhost:9092
+                security.protocol=SASL_SSL
+                sasl.mechanism=PLAIN
+                sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username="%s" password="%s";
+                ssl.truststore.location=%s
+                ssl.truststore.password=%s
+                ssl.truststore.type=JKS
+                ssl.keystore.location=%s
+                ssl.keystore.password=%s
+                ssl.keystore.type=JKS
+                ssl.key.password=%s
+                """
+                .formatted(
+                    USERNAME,
+                    PASSWORD,
+                    MTLS_TRUSTSTORE_PATH,
+                    MTLS_TRUSTSTORE_PASSWORD,
+                    MTLS_KEYSTORE_PATH,
+                    MTLS_KEYSTORE_PASSWORD,
+                    MTLS_KEY_PASSWORD
+                ),
+            """
+                schema.registry.url=http://localhost:8081
+                security.protocol=SASL_SSL
+                basic.auth.credentials.source=USER_INFO
+                basic.auth.user.info=%s:%s
+                ssl.truststore.location=%s
+                ssl.truststore.password=%s
+                ssl.truststore.type=JKS
+                ssl.keystore.location=%s
+                ssl.keystore.password=%s
+                ssl.keystore.type=JKS
+                ssl.key.password=%s
+                """
+                .formatted(
+                    USERNAME,
+                    PASSWORD,
+                    MTLS_TRUSTSTORE_PATH,
+                    MTLS_TRUSTSTORE_PASSWORD,
+                    MTLS_KEYSTORE_PATH,
+                    MTLS_KEYSTORE_PASSWORD,
+                    MTLS_KEY_PASSWORD
+                )
         ),
         new TestInput(
             "With basic credentials and TLS but redacted",
@@ -248,7 +369,7 @@ class ClientConfiguratorStaticTest {
             BASIC_CREDENTIALS,
             schemaRegistry,
             BASIC_CREDENTIALS,
-            true,
+            TLS_CONFIG,
             true,
             true,
             null,
@@ -257,21 +378,26 @@ class ClientConfiguratorStaticTest {
                 security.protocol=SASL_SSL
                 sasl.mechanism=PLAIN
                 sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username="%s" password="********";
-                """.formatted(USERNAME),
+                ssl.truststore.location=%s
+                ssl.truststore.password=********
+                """.formatted(USERNAME, MTLS_TRUSTSTORE_PATH),
             """
                 schema.registry.url=http://localhost:8081
+                security.protocol=SASL_SSL
                 basic.auth.credentials.source=USER_INFO
                 basic.auth.user.info=%s:********
-                """.formatted(USERNAME)
+                ssl.truststore.location=%s
+                ssl.truststore.password=********
+                """.formatted(USERNAME, MTLS_TRUSTSTORE_PATH)
         ),
         new TestInput(
-            "With basic credentials and TLS and verify hostnames",
+            "With basic credentials and TLS and disable server hostname verification",
             kafka,
             BASIC_CREDENTIALS,
             schemaRegistry,
             BASIC_CREDENTIALS,
-            true,
-            true,
+            TLS_CONFIG,
+            false,
             false,
             null,
             """
@@ -279,12 +405,19 @@ class ClientConfiguratorStaticTest {
                 security.protocol=SASL_SSL
                 sasl.mechanism=PLAIN
                 sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username="%s" password="%s";
-                """.formatted(USERNAME, PASSWORD),
+                ssl.truststore.location=%s
+                ssl.truststore.password=%s
+                ssl.endpoint.identification.algorithm=
+                """.formatted(USERNAME, PASSWORD, MTLS_TRUSTSTORE_PATH, MTLS_TRUSTSTORE_PASSWORD),
             """
                 schema.registry.url=http://localhost:8081
+                security.protocol=SASL_SSL
                 basic.auth.credentials.source=USER_INFO
                 basic.auth.user.info=%s:%s
-                """.formatted(USERNAME, PASSWORD)
+                ssl.truststore.location=%s
+                ssl.truststore.password=%s
+                ssl.endpoint.identification.algorithm=
+                """.formatted(USERNAME, PASSWORD, MTLS_TRUSTSTORE_PATH, MTLS_TRUSTSTORE_PASSWORD)
         ),
         new TestInput(
             "With mixed credentials and TLS",
@@ -292,7 +425,7 @@ class ClientConfiguratorStaticTest {
             BASIC_CREDENTIALS,
             schemaRegistry,
             API_KEY_AND_SECRET,
-            true,
+            TLS_CONFIG,
             true,
             false,
             null,
@@ -301,48 +434,52 @@ class ClientConfiguratorStaticTest {
                 security.protocol=SASL_SSL
                 sasl.mechanism=PLAIN
                 sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username="%s" password="%s";
-                """.formatted(USERNAME, PASSWORD),
+                ssl.truststore.location=%s
+                ssl.truststore.password=%s
+                """.formatted(USERNAME, PASSWORD, MTLS_TRUSTSTORE_PATH, MTLS_TRUSTSTORE_PASSWORD),
             """
                 schema.registry.url=http://localhost:8081
+                security.protocol=SASL_SSL
                 basic.auth.credentials.source=USER_INFO
                 basic.auth.user.info=%s:%s
-                """.formatted(API_KEY, API_SECRET)
+                ssl.truststore.location=%s
+                ssl.truststore.password=%s
+                """.formatted(API_KEY, API_SECRET, MTLS_TRUSTSTORE_PATH, MTLS_TRUSTSTORE_PASSWORD)
         ),
-//        new TestInput(
-//            "With mTLS for Kafka and SR",
-//            kafka,
-//            MUTAL_TLS_CREDENTIALS,
-//            schemaRegistry,
-//            MUTAL_TLS_CREDENTIALS,
-//            true,
-//            true,
-//            false,
-//            null,
-//            """
-//                bootstrap.servers=localhost:9092
-//                security.protocol=SSL
-//                ssl.truststore.location=/path/to/truststore
-//                ssl.truststore.password=%s
-//                ssl.keystore.location=/path/to/keystore
-//                ssl.keystore.password=%s
-//                ssl.key.password=%s
-//                """.formatted(MTLS_TRUSTSTORE_PASSWORD, MTLS_KEYSTORE_PASSWORD, MTLS_KEY_PASSWORD),
-//            """
-//                schema.registry.url=http://localhost:8081
-//                ssl.truststore.location=/path/to/truststore
-//                ssl.truststore.password=%s
-//                ssl.keystore.location=/path/to/keystore
-//                ssl.keystore.password=%s
-//                ssl.key.password=%s
-//                """.formatted(MTLS_TRUSTSTORE_PASSWORD, MTLS_KEYSTORE_PASSWORD, MTLS_KEY_PASSWORD)
-//        ),
         new TestInput(
             "With OAuth for Kafka and SR",
             kafka,
             OAUTH_CREDENTIALS,
             schemaRegistry,
             OAUTH_CREDENTIALS,
+            null,
             true,
+            false,
+            null,
+            """
+                bootstrap.servers=localhost:9092
+                security.protocol=SASL_PLAINTEXT
+                sasl.mechanism=OAUTHBEARER
+                sasl.oauthbearer.token.endpoint.url=http://localhost:8081/oauth/token
+                sasl.login.callback.handler.class=org.apache.kafka.common.security.oauthbearer.secured.OAuthBearerLoginCallbackHandler
+                sasl.jaas.config=org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required clientId="%s" clientSecret="%s"
+                """.formatted(OAUTH_CLIENT_ID, OAUTH_SECRET),
+            """
+                schema.registry.url=http://localhost:8081
+                security.protocol=SASL_PLAINTEXT
+                bearer.auth.credentials.source=OAUTHBEARER
+                bearer.auth.issuer.endpoint.url=http://localhost:8081/oauth/token
+                bearer.auth.client.id=%s
+                bearer.auth.client.secret=%s
+                """.formatted(OAUTH_CLIENT_ID, OAUTH_SECRET)
+        ),
+        new TestInput(
+            "With OAuth for Kafka and SR over TLS",
+            kafka,
+            OAUTH_CREDENTIALS,
+            schemaRegistry,
+            OAUTH_CREDENTIALS,
+            TLS_CONFIG,
             true,
             false,
             null,
@@ -353,14 +490,21 @@ class ClientConfiguratorStaticTest {
                 sasl.oauthbearer.token.endpoint.url=http://localhost:8081/oauth/token
                 sasl.login.callback.handler.class=org.apache.kafka.common.security.oauthbearer.secured.OAuthBearerLoginCallbackHandler
                 sasl.jaas.config=org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required clientId="%s" clientSecret="%s"
-                """.formatted(OAUTH_CLIENT_ID, OAUTH_SECRET),
+                ssl.truststore.location=%s
+                ssl.truststore.password=%s
+                """.formatted(OAUTH_CLIENT_ID, OAUTH_SECRET, MTLS_TRUSTSTORE_PATH,
+                MTLS_TRUSTSTORE_PASSWORD),
             """
                 schema.registry.url=http://localhost:8081
+                security.protocol=SASL_SSL
                 bearer.auth.credentials.source=OAUTHBEARER
                 bearer.auth.issuer.endpoint.url=http://localhost:8081/oauth/token
                 bearer.auth.client.id=%s
                 bearer.auth.client.secret=%s
-                """.formatted(OAUTH_CLIENT_ID, OAUTH_SECRET)
+                ssl.truststore.location=%s
+                ssl.truststore.password=%s
+                """.formatted(OAUTH_CLIENT_ID, OAUTH_SECRET, MTLS_TRUSTSTORE_PATH,
+                MTLS_TRUSTSTORE_PASSWORD)
         ),
         new TestInput(
             "With OAuth with scopes for Kafka and SR",
@@ -368,13 +512,13 @@ class ClientConfiguratorStaticTest {
             OAUTH_CREDENTIALS_WITH_SCOPE,
             schemaRegistry,
             OAUTH_CREDENTIALS_WITH_SCOPE,
-            true,
+            null,
             true,
             false,
             null,
             """
                 bootstrap.servers=localhost:9092
-                security.protocol=SASL_SSL
+                security.protocol=SASL_PLAINTEXT
                 sasl.mechanism=OAUTHBEARER
                 sasl.oauthbearer.token.endpoint.url=http://localhost:8081/oauth/token
                 sasl.login.callback.handler.class=org.apache.kafka.common.security.oauthbearer.secured.OAuthBearerLoginCallbackHandler
@@ -382,6 +526,7 @@ class ClientConfiguratorStaticTest {
                 """.formatted(OAUTH_CLIENT_ID, OAUTH_SECRET, OAUTH_SCOPE),
             """
                 schema.registry.url=http://localhost:8081
+                security.protocol=SASL_PLAINTEXT
                 bearer.auth.credentials.source=OAUTHBEARER
                 bearer.auth.issuer.endpoint.url=http://localhost:8081/oauth/token
                 bearer.auth.client.id=%s
@@ -390,18 +535,18 @@ class ClientConfiguratorStaticTest {
                 """.formatted(OAUTH_CLIENT_ID, OAUTH_SECRET, OAUTH_SCOPE)
         ),
         new TestInput(
-            "With OAuth for Kafka and SR and unsigned certificates",
+            "With OAuth for Kafka and SR and disable server hostname verification",
             kafka,
             OAUTH_CREDENTIALS,
             schemaRegistry,
             OAUTH_CREDENTIALS,
-            true,
+            null,
             false,
             false,
             null,
             """
                 bootstrap.servers=localhost:9092
-                security.protocol=SASL_SSL
+                security.protocol=SASL_PLAINTEXT
                 ssl.endpoint.identification.algorithm=
                 sasl.mechanism=OAUTHBEARER
                 sasl.oauthbearer.token.endpoint.url=http://localhost:8081/oauth/token
@@ -410,10 +555,12 @@ class ClientConfiguratorStaticTest {
                 """.formatted(OAUTH_CLIENT_ID, OAUTH_SECRET),
             """
                 schema.registry.url=http://localhost:8081
+                security.protocol=SASL_PLAINTEXT
                 bearer.auth.credentials.source=OAUTHBEARER
                 bearer.auth.issuer.endpoint.url=http://localhost:8081/oauth/token
                 bearer.auth.client.id=%s
                 bearer.auth.client.secret=%s
+                ssl.endpoint.identification.algorithm=
                 """.formatted(OAUTH_CLIENT_ID, OAUTH_SECRET)
         )
     );
@@ -426,10 +573,12 @@ class ClientConfiguratorStaticTest {
 
               expectGetKafkaCredentialsFromConnection(input.kafkaCredentials);
               expectGetSchemaRegistryCredentialsFromConnection(input.srCredentials);
-              var options = new KafkaConnectionOptions(
-                  input.redact
-              );
+              expectGetTLSConfigFromConnection(input.ssl);
+              expectGetVerifyServerCertificateHostname(input.verifyServerCertificateHostname);
+              var options = new KafkaConnectionOptions(input.redact);
               expectGetKafkaConnectionOptions(options);
+              var srOptions = new SchemaRegistryConnectionOptions(input.redact, null);
+              expectGetSchemaRegistryConnectionOptions(srOptions);
 
               // The Kafka config without SR should match
               var kafkaConfig = ClientConfigurator.getKafkaClientConfig(
@@ -502,6 +651,11 @@ class ClientConfiguratorStaticTest {
         .thenReturn(options);
   }
 
+  void expectGetSchemaRegistryConnectionOptions(SchemaRegistryConnectionOptions options) {
+    when(connection.getSchemaRegistryOptions())
+        .thenReturn(options);
+  }
+
   void expectGetKafkaCredentialsFromConnection(Credentials credentials) {
     when(connection.getKafkaCredentials())
         .thenReturn(Optional.ofNullable(credentials));
@@ -510,6 +664,16 @@ class ClientConfiguratorStaticTest {
   void expectGetSchemaRegistryCredentialsFromConnection(Credentials credentials) {
     when(connection.getSchemaRegistryCredentials())
         .thenReturn(Optional.ofNullable(credentials));
+  }
+
+  void expectGetTLSConfigFromConnection(TLSConfig tlsConfig) {
+    when(connection.getTLSConfig())
+        .thenReturn(Optional.ofNullable(tlsConfig));
+  }
+
+  void expectGetVerifyServerCertificateHostname(boolean verifyServerCertificateHostname) {
+    when(connection.getVerifyServerCertificateHostname())
+        .thenReturn(Optional.of(verifyServerCertificateHostname));
   }
 
   void assertMapsEquals(Map<String, ?> expected, Map<String, ?> actual, String message) {

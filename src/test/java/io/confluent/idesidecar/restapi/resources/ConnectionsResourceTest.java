@@ -32,6 +32,7 @@ import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.CCloudConfig;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.SchemaRegistryConfig;
+import io.confluent.idesidecar.restapi.models.ConnectionSpecBuilder;
 import io.confluent.idesidecar.restapi.models.ConnectionStatus;
 import io.confluent.idesidecar.restapi.models.ConnectionStatus.Authentication.Status;
 import io.confluent.idesidecar.restapi.models.ConnectionStatus.ConnectedState;
@@ -530,14 +531,14 @@ public class ConnectionsResourceTest {
     ccloudTestUtil.createConnection("c1", "Connection 1", ConnectionType.LOCAL);
 
     // This connection spec is not valid
-    var badSpec = new ConnectionSpec(
-        "c3", "Connection name changed!", ConnectionType.PLATFORM,
-        new CCloudConfig("org-id"),
-        null,
-        null,
-        null,
-        null
-    );
+    var badSpec = ConnectionSpecBuilder
+        .builder()
+        .id("c3")
+        .name("Connection name changed!")
+        .type(ConnectionType.PLATFORM)
+        .ccloudConfig(new CCloudConfig("org-id"))
+        .build();
+
     var response = given()
         .contentType(ContentType.JSON)
         .body(badSpec)

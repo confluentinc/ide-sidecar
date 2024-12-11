@@ -921,8 +921,7 @@
             } ]
           },
           "ssl": {
-            "description": "Whether to communicate with the cluster over TLS/SSL. Defaults to 'true', but set to 'false' when the cluster does not support TLS/SSL.",
-            "default": true,
+            "description": "The SSL configuration for connecting to the Kafka cluster and Schema Registry.",
             "type": "object",
             "allOf": [
               {
@@ -930,6 +929,11 @@
               }
             ],
             "nullable": true
+          },
+          "verify_server_certificate_hostname": {
+            "description": "Whether to verify the server certificate hostname by setting Defaults to true if not set.",
+            "default": true,
+            "type": "boolean"
           }
         }
       },
@@ -1194,6 +1198,7 @@
           },
           "type": {
             "description" : "The file format of the local key store file.",
+            "default": "JKS",
             "type" : "string",
             "allOf" : [ {
               "$ref" : "#/components/schemas/StoreType"
@@ -1578,10 +1583,6 @@
         ],
         "type": "object",
         "properties": {
-          "verify_ssl_certificates": {
-            "description": "Whether to verify the server's SSL certificate. If set to false, the server's SSL certificate will not be verified. Defaults to true.",
-            "type": "boolean"
-          },
           "truststore": {
             "description": "The trust store configuration for authenticating the server's certificate.",
             "type": "object",
@@ -1592,7 +1593,7 @@
             ]
           },
           "keystore": {
-            "description": "The key store configuration for authenticating the client to the server.",
+            "description": "The key store configuration that will identify and authenticate the client to the server, required for mutual TLS (mTLS)",
             "type": "object",
             "allOf": [
               {
@@ -1708,6 +1709,7 @@
           },
           "type": {
             "description": "The file format of the local trust store file",
+            "default": "JKS",
             "type": "string",
             "allOf": [
               {

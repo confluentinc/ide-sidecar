@@ -5,6 +5,7 @@ import static io.confluent.idesidecar.restapi.util.ExceptionUtil.unwrap;
 import io.confluent.idesidecar.restapi.auth.AuthErrors;
 import io.confluent.idesidecar.restapi.clients.ClientConfigurator;
 import io.confluent.idesidecar.restapi.credentials.Credentials;
+import io.confluent.idesidecar.restapi.credentials.TLSConfig;
 import io.confluent.idesidecar.restapi.models.ClusterType;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
@@ -135,6 +136,16 @@ public class DirectConnectionState extends ConnectionState {
                               ? spec.schemaRegistryConfig().credentials()
                               : null;
     return Optional.ofNullable(credentials);
+  }
+
+  @Override
+  public Optional<TLSConfig> getTLSConfig() {
+    return Optional.ofNullable(spec.tlsConfig());
+  }
+
+  @Override
+  public Optional<Boolean> getVerifyServerCertificateHostname() {
+    return Optional.ofNullable(spec.verifyServerCertificateHostname());
   }
 
   @Override
