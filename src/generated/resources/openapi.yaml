@@ -660,11 +660,11 @@ components:
             Schema Registry.
           type: object
           allOf:
-            - $ref: "#/components/schemas/TLSConfig"
+          - $ref: "#/components/schemas/TLSConfig"
           nullable: true
         verify_server_certificate_hostname:
-          description: Whether to verify the server certificate hostname by setting
-            Defaults to true if not set.
+          description: Whether to verify the server certificate hostname. Defaults
+            to true if not set.
           default: true
           type: boolean
     ConnectionStatus:
@@ -855,6 +855,8 @@ components:
           allOf:
           - $ref: "#/components/schemas/AuthErrors"
     KeyStore:
+      required:
+      - path
       type: object
       properties:
         path:
@@ -862,7 +864,6 @@ components:
             needs to be authenticated by the server (mutual TLS).
           maxLength: 256
           type: string
-          nullable: true
         password:
           description: "The password for the local key store file. If a password is\
             \ not set, trust  store file configured will still be used, but integrity\
@@ -1165,7 +1166,7 @@ components:
     TLSConfig:
       description: SSL configuration
       required:
-        - truststore
+      - truststore
       type: object
       properties:
         truststore:
@@ -1173,13 +1174,13 @@ components:
             certificate.
           type: object
           allOf:
-            - $ref: "#/components/schemas/TrustStore"
+          - $ref: "#/components/schemas/TrustStore"
         keystore:
           description: "The key store configuration that will identify and authenticate\
             \ the client to the server, required for mutual TLS (mTLS)"
           type: object
           allOf:
-            - $ref: "#/components/schemas/KeyStore"
+          - $ref: "#/components/schemas/KeyStore"
           nullable: true
     Template:
       required:
@@ -1257,7 +1258,7 @@ components:
       type: string
     TrustStore:
       required:
-        - path
+      - path
       type: object
       properties:
         path:
@@ -1272,14 +1273,14 @@ components:
             \ format."
           type: string
           allOf:
-            - $ref: "#/components/schemas/Password"
+          - $ref: "#/components/schemas/Password"
           nullable: true
         type:
           description: The file format of the local trust store file
           default: JKS
           type: string
           allOf:
-            - $ref: "#/components/schemas/StoreType"
+          - $ref: "#/components/schemas/StoreType"
           nullable: true
     UserInfo:
       type: object
@@ -1311,6 +1312,9 @@ components:
     HealthCheck:
       type: object
       properties:
+        data:
+          type: object
+          nullable: true
         status:
           enum:
           - UP
@@ -1318,6 +1322,3 @@ components:
           type: string
         name:
           type: string
-        data:
-          type: object
-          nullable: true

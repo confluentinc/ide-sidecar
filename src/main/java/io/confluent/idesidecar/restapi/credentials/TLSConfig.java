@@ -58,7 +58,7 @@ public record TLSConfig(
       Password password,
 
       @Schema(description = "The file format of the local trust store file",
-          defaultValue = "JKS",
+          defaultValue = DEFAULT_STORE_TYPE,
           nullable = true)
       @JsonProperty(value = "type")
       @Null
@@ -70,13 +70,13 @@ public record TLSConfig(
         String path,
         String what
     ) {
-      if (path == null || path.isBlank()) {
+      if (this.path == null || this.path.isBlank()) {
         errors.add(
             Error.create()
                 .withDetail("%s truststore path is required and may not be blank", what)
-                .withSource("%s.truststore_path", path)
+                .withSource("%s.path", path)
         );
-      } else if (path.length() > TRUSTSTORE_PATH_MAX_LEN) {
+      } else if (this.path.length() > TRUSTSTORE_PATH_MAX_LEN) {
         errors.add(
             Error.create()
                 .withDetail(
@@ -84,7 +84,7 @@ public record TLSConfig(
                     what,
                     TRUSTSTORE_PATH_MAX_LEN
                 )
-                .withSource("%s.truststore_path", path)
+                .withSource("%s.path", path)
         );
       }
       if (password != null && password.longerThan(TRUSTSTORE_PASSWORD_MAX_LEN)) {
@@ -95,7 +95,7 @@ public record TLSConfig(
                     what,
                     TRUSTSTORE_PASSWORD_MAX_LEN
                 )
-                .withSource("%s.truststore_password", path)
+                .withSource("%s.password", path)
         );
       }
     }
@@ -104,11 +104,10 @@ public record TLSConfig(
   @RecordBuilder
   public record KeyStore(
       @Schema(description = "The path to the local key store file. Only specified if client "
-          + "needs to be authenticated by the server (mutual TLS).",
-          nullable = true)
+          + "needs to be authenticated by the server (mutual TLS).")
       @JsonProperty(value = "path")
       @Size(max = KEYSTORE_PATH_MAX_LEN)
-      @Null
+      @NotNull
       String path,
 
       @Schema(
@@ -124,7 +123,7 @@ public record TLSConfig(
       Password password,
 
       @Schema(description = "The file format of the local key store file.",
-          defaultValue = "JKS",
+          defaultValue = DEFAULT_STORE_TYPE,
           nullable = true)
       @JsonProperty(value = "type")
       @Null
@@ -148,16 +147,16 @@ public record TLSConfig(
         errors.add(
             Error.create()
                 .withDetail("%s keystore type if provided must be one of: %s", what, values)
-                .withSource("%s.keystore_type", path)
+                .withSource("%s.type", path)
         );
       }
-      if (path == null || path.isBlank()) {
+      if (this.path == null || this.path.isBlank()) {
         errors.add(
             Error.create()
                 .withDetail("%s keystore path is required and may not be blank", what)
-                .withSource("%s.keystore_path", path)
+                .withSource("%s.path", path)
         );
-      } else if (path.length() > KEYSTORE_PATH_MAX_LEN) {
+      } else if (this.path.length() > KEYSTORE_PATH_MAX_LEN) {
         errors.add(
             Error.create()
                 .withDetail(
@@ -165,7 +164,7 @@ public record TLSConfig(
                     what,
                     KEYSTORE_PATH_MAX_LEN
                 )
-                .withSource("%s.keystore_path", path)
+                .withSource("%s.path", path)
         );
       }
       if (keyPassword != null && keyPassword.longerThan(KEY_PASSWORD_MAX_LEN)) {
@@ -176,7 +175,7 @@ public record TLSConfig(
                     what,
                     KEY_PASSWORD_MAX_LEN
                 )
-                .withSource("%s.key_password", path)
+                .withSource("%s.password", path)
         );
       }
     }
@@ -187,6 +186,7 @@ public record TLSConfig(
   private static final int KEYSTORE_PATH_MAX_LEN = 256;
   private static final int KEYSTORE_PASSWORD_MAX_LEN = 256;
   private static final int KEY_PASSWORD_MAX_LEN = 256;
+  private static final String DEFAULT_STORE_TYPE = "JKS";
 
   @JsonDeserialize(using = StoreType.Deserializer.class)
   public enum StoreType {
@@ -282,11 +282,11 @@ public record TLSConfig(
               .withSource("%s.truststore", path)
       );
     } else {
-      truststore.validate(errors, path, what);
+      truststore.validate(errors, "%s.truststore".formatted(path), what);
     }
 
     if (keystore != null) {
-      keystore.validate(errors, path, what);
+      keystore.validate(errors, "%s.keystore".formatted(path), what);
     }
   }
 }
