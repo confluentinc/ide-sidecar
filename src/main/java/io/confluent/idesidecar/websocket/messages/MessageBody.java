@@ -6,7 +6,6 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
 
 /** Base class for all websocket message bodies. */
 @RegisterForReflection
-@JsonSerialize
-public class MessageBody {
+public abstract class MessageBody {
 
 }

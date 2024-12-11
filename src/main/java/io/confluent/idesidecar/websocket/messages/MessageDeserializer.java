@@ -8,7 +8,7 @@ import java.io.IOException;
 
 
 /**
- * Custom deserializer for Message objects recieved from websocket messages from IDE workspaces.
+ * Custom deserializer for Message objects received from websocket messages from IDE workspaces.
  *
  * Must be a custom deserializer because the body of the message is polymorphic based on both the
  * message type and the audience.

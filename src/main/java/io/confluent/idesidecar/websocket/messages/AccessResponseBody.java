@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 
 @RegisterForReflection
-@JsonSerialize
 public class AccessResponseBody extends MessageBody {
 
   @JsonProperty("authorized")

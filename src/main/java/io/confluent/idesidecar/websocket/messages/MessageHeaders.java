@@ -16,7 +16,6 @@ import javax.validation.constraints.NotNull;
  *                              is responding to a specific message.
  */
 @RegisterForReflection
-@JsonSerialize
 public class MessageHeaders {
 
     /**
