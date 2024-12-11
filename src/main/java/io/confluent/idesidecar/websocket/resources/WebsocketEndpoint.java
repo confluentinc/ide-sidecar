@@ -122,8 +122,28 @@ public class WebsocketEndpoint {
 
     MessageHeaders headers = m.getHeaders();
 
+    // Validate message.header.originator corresponds to the authorized workspace process id.
+    // (messages sent from workspaces to sidecar should have the workspace's process id as the originator)
+    int claimedWorkspaceId = 0;
+    try {
+      claimedWorkspaceId = Integer.parseInt(headers.originator);
+    } catch (NumberFormatException e) {
+      log.error("Invalid websocket message header originator value -- not an integer: " + headers.originator + ". Removing and closing session.");
+      sessions.remove(senderSession);
+      senderSession.close();
+      return;
+    }
+
+    if (claimedWorkspaceId != workspaceSession.processId()) {
+      log.error("Workspace " + workspaceSession.processId() + " sent message with incorrect originator value: " + claimedWorkspaceId + ".Removing and closing session.");
+      sessions.remove(senderSession);
+      senderSession.close();
+      return;
+    }
+
     log.debug("Received " + headers.type + " message from workspace: " + workspaceSession.processId());
 
+    // Handle the message based on its audience.
     if (headers.audience == Audience.workspaces)
     {
       // Message is intended for all (other) workspaces, using sidecar as a broadcast bus
@@ -139,11 +159,9 @@ public class WebsocketEndpoint {
 
     } else if (headers.audience == Audience.sidecar) {
       // Message must be intended for sidecar
-      // todo handle additional extension -> sidecar messages when we design some other
-      // than ACCESS_REQUEST, handled above already..
 
       // todo defer to an internal message router here.
-      
+
       log.error("Unexpected message audience: " + m.getHeaders().audience);
     } else {
       // We don't (yet) support or design for directed workspace -> workspace messages.
@@ -256,7 +274,7 @@ public class WebsocketEndpoint {
     );
 
     if (!authorization_required.get()) {
-      log.info("Websocket access token comparison is not required");
+      log.info("Websocket access token comparison is not required for access request from workspace pid: " + actualWorkspaceId + ".");
     } else if (!body.accessToken.equals(accessTokenBean.getToken())) {
       log.error("Invalid websocket access token provided by workspace pid: " + actualWorkspaceId +", rejecting and closing session.");
 
@@ -268,7 +286,15 @@ public class WebsocketEndpoint {
       return;
     }
 
-    // Authorized.
+    // Ensure that the workspace id is not already claimed to be authorized.
+    final int finalActualWorkspaceId = actualWorkspaceId;
+    if (sessions.values().stream().anyMatch(ws -> ws.processId() == finalActualWorkspaceId)) {
+      log.error("Workspace pid " + actualWorkspaceId + " is already authorized. Closing new session.");
+      senderSession.close();
+      return;
+    }
+
+    // Good and authorized.
 
     // Store new authorized workspace session with the workspace process id in sessions map.
     WorkspaceSession newWorkspaceSession = new WorkspaceSession(actualWorkspaceId);

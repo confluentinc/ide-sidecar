@@ -27,15 +27,22 @@ public class MessageHeaders {
     @JsonProperty("message_type")
     public final String type;
 
-    @NotNull
-    public final Audience audience;
-
     /**
-     * The originator of the message. For messages originating from the sidecar, this will always be
-     * "sidecar". Otherwise will be the originating IDE workspace's process id.
+     * The originator of the message. Will either be "sidecar" or the originating IDE workspace's
+     * process id, and should correspond with connection-level metadata already stored.
      */
     @NotNull
+    @JsonProperty("originator")
     public final String originator;
+
+    /**
+     * Intended audience for the message. This is used to determine how to route the message.
+     * One of "workspaces" (all workspaces), "workspace" (a single workspace), or "sidecar".
+     */
+    @NotNull
+    @JsonProperty("audience")
+    public final Audience audience;
+
 
     @NotNull
     @JsonProperty("message_id")
