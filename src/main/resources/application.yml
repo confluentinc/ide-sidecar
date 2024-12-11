@@ -226,8 +226,6 @@ quarkus:
     cors:
       ~: true
       origins: https://login.confluent-dev.io,https://login-stag.confluent-dev.io,https://login.confluent.io
-  websocket:
-    max-frame-size: 5000000
   jackson:
     fail-on-unknown-properties: true
   native:
