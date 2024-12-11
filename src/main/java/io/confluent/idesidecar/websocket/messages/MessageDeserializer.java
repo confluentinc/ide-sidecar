@@ -51,12 +51,11 @@ public class MessageDeserializer extends JsonDeserializer<Message> {
       return DynamicMessageBody.class;
     }
 
-    // Otherwise map the type to the appropriate MessageBody subclass
-    switch (headers.type) {
-      case MessageType.ACCESS_REQUEST -> {
-        return AccessRequestBody.class;
-      }
-      default -> throw new IOException("Unknown message type: " + headers.type);
+    // Otherwise map the type to the appropriate MessageBody subclass. As we get more
+    // of these, probably defer to a Map.
+    if (headers.type.equals(MessageType.ACCESS_REQUEST)) {
+      return AccessRequestBody.class;
     }
+    throw new IOException("Unknown message type: " + headers.type);
   }
 }
