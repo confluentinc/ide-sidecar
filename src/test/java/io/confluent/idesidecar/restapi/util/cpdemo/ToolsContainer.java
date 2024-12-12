@@ -1,11 +1,11 @@
 package io.confluent.idesidecar.restapi.util.cpdemo;
 
 import com.github.dockerjava.api.model.HealthCheck;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 public class ToolsContainer extends GenericContainer<ToolsContainer> {
   private static final String DEFAULT_IMAGE = "cnfldemos/tools";

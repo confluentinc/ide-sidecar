@@ -1,7 +1,8 @@
 package io.confluent.idesidecar.restapi.util;
 
-import static io.confluent.idesidecar.restapi.util.cpdemo.Constants.BROKER_JAAS_CONTENTS;
+import static org.junit.jupiter.api.Assertions.fail;
 
+import com.github.dockerjava.api.model.Container;
 import io.confluent.idesidecar.restapi.credentials.BasicCredentials;
 import io.confluent.idesidecar.restapi.credentials.Password;
 import io.confluent.idesidecar.restapi.credentials.TLSConfig;
@@ -11,20 +12,13 @@ import io.confluent.idesidecar.restapi.util.cpdemo.OpenldapContainer;
 import io.confluent.idesidecar.restapi.util.cpdemo.SchemaRegistryContainer;
 import io.confluent.idesidecar.restapi.util.cpdemo.ToolsContainer;
 import io.confluent.idesidecar.restapi.util.cpdemo.ZookeeperContainer;
-import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
-import io.confluent.kafka.schemaregistry.client.rest.RestService;
-import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
-import io.confluent.kafka.schemaregistry.client.security.SslFactory;
+import io.quarkus.logging.Log;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import org.junit.Test;
+import java.util.stream.Stream;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 import org.junitpioneer.jupiter.SetEnvironmentVariable;
@@ -40,9 +34,9 @@ import org.testcontainers.utility.TestcontainersConfiguration;
  * Modeled after https://github.com/confluentinc/cp-demo/blob/7.7.1-post/docker-compose.yml
  */
 @SetEnvironmentVariable(key = "TESTCONTAINERS_REUSE_ENABLE", value = "true")
+// We want to manage cleanup ourselves.
+@SetEnvironmentVariable(key = "TESTCONTAINERS_RYUK_DISABLED", value = "true")
 public class CPDemoTestEnvironment implements TestEnvironment {
-
-  private static final String CONFLUENT_TAG = "7.7.1";
   private Network network;
   private ToolsContainer tools;
   private ZookeeperContainer zookeeper;
@@ -51,58 +45,43 @@ public class CPDemoTestEnvironment implements TestEnvironment {
   private CPServerContainer kafka2;
   private SchemaRegistryContainer schemaRegistry;
 
+  private static final List<String> CP_DEMO_CONTAINERS = List.of(
+      "tools", "zookeeper", "kafka1", "kafka2", "openldap", "schemaregistry"
+  );
+
   @Override
   public void start() {
-    network = createReusableNetwork("cp-demo");
-    // Check if zookeeper, kafka1, kafka2, ldap, schemaRegistry are already running
-    var cpDemoRunning = DockerClientFactory
-        .instance()
-        .client()
-        .listContainersCmd()
-        .withShowAll(true)
-        .exec()
-        .stream()
-        .anyMatch(container -> container.getNames()[0].contains("zookeeper")
-            || container.getNames()[0].contains("kafka1")
-            || container.getNames()[0].contains("kafka2")
-            || container.getNames()[0].contains("openldap")
-            || container.getNames()[0].contains("schemaregistry")
-        );
-
-    tools = new ToolsContainer(network);
-    tools.start();
-    // Add root CA to container (obviates need for supplying it at CLI login '--ca-cert-path')
-    if (!cpDemoRunning) {
-      try {
-        tools.execInContainer(
-            "bash",
-            "-c",
-            "cp /etc/kafka/secrets/snakeoil-ca-1.crt /usr/local/share/ca-certificates && /usr/sbin/update-ca-certificates"
-        );
-      } catch (Exception e) {
-        throw new RuntimeException(e);
-      }
+    // If we see that some but not all cp-demo containers are in running state,
+    // complain and exit.
+    var cpDemoRunning = isCpDemoRunningAllContainers();
+    if (isCpDemoRunningAnyContainer() && !cpDemoRunning) {
+      fail("Detected some but not all cp-demo containers running. "
+          + "Please stop all cp-demo containers using make cp-demo-stop and try running the tests again.");
     }
 
-    zookeeper = new ZookeeperContainer(CONFLUENT_TAG, network);
+    // If we see that all cp-demo containers are exited, remove them.
+    removeCPDemoContainersIfStopped();
+
+    // Run the setup script
+    runScript("src/test/resources/cp-demo-scripts/setup.sh");
+
+    network = createReusableNetwork("cp-demo");
+    // Check if zookeeper, kafka1, kafka2, ldap, schemaRegistry are already running
+    tools = new ToolsContainer(network);
+    tools.start();
+
+    if (!cpDemoRunning) {
+      registerRootCA();
+    }
+
+    zookeeper = new ZookeeperContainer(network);
     zookeeper.waitingFor(Wait.forHealthcheck());
     zookeeper.start();
 
     ldap = new OpenldapContainer(network);
     ldap.start();
 
-    // Write BROKER_JAAS_CONTENTS to .cp-demo/scripts/security/broker_jaas.conf
-    try {
-      Files.write(
-          new File(".cp-demo/scripts/security/broker_jaas.conf").toPath(),
-          BROKER_JAAS_CONTENTS.getBytes()
-      );
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-
     kafka1 = new CPServerContainer(
-        CONFLUENT_TAG,
         network,
         "kafka1",
         8091,
@@ -119,7 +98,6 @@ public class CPDemoTestEnvironment implements TestEnvironment {
         "KAFKA_JMX_PORT", "9991"
     ));
     kafka2 = new CPServerContainer(
-        CONFLUENT_TAG,
         network,
         "kafka2",
         8092,
@@ -138,38 +116,136 @@ public class CPDemoTestEnvironment implements TestEnvironment {
 
     // Must be started in parallel
     Startables.deepStart(List.of(kafka1, kafka2)).join();
-    if (!cpDemoRunning) {
-      try {
-        tools.execInContainer(
-            "bash",
-            "-c",
-            "/tmp/helper/create-role-bindings.sh"
-        );
-      } catch (Exception e) {
-        throw new RuntimeException(e);
-      }
 
-      try {
-        kafka1.execInContainer(
-            "kafka-configs",
-            "--bootstrap-server", "kafka1:12091",
-            "--entity-type", "topics",
-            "--entity-name", "_confluent-metadata-auth",
-            "--alter",
-            "--add-config", "min.insync.replicas=1"
-        );
-      } catch (Exception e) {
-        throw new RuntimeException(e);
-      }
+    if (!cpDemoRunning) {
+      runToolScript("/tmp/helper/create-role-bindings.sh");
+      setMinISR();
     }
 
-    schemaRegistry = new SchemaRegistryContainer(CONFLUENT_TAG, network);
+    schemaRegistry = new SchemaRegistryContainer(network);
     schemaRegistry.start();
   }
 
+  /**
+   * Workaround for setting min ISR on topic _confluent-metadata-auth
+   */
+  private void setMinISR() {
+    try {
+      kafka1.execInContainer(
+          "kafka-configs",
+          "--bootstrap-server", "kafka1:12091",
+          "--entity-type", "topics",
+          "--entity-name", "_confluent-metadata-auth",
+          "--alter",
+          "--add-config", "min.insync.replicas=1"
+      );
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private void registerRootCA() {
+    // Add root CA to container (obviates need for supplying it at CLI login '--ca-cert-path')
+    runToolScript(
+        "cp /etc/kafka/secrets/snakeoil-ca-1.crt /usr/local/share/ca-certificates && /usr/sbin/update-ca-certificates"
+    );
+  }
+
+  private void runToolScript(String script) {
+    try {
+      tools.execInContainer("bash", "-c", script);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  /**
+   * Do we have any of the CP Demo containers in running state?
+   */
+  private boolean isCpDemoRunningAnyContainer() {
+    return getContainerStream().anyMatch(container -> container.getState().equals("running"));
+  }
+
+  /**
+   * Do we have a CP Demo environment running with all containers?
+   */
+  private boolean isCpDemoRunningAllContainers() {
+    return getContainerStream().allMatch(container -> container.getState().equals("running"));
+  }
+
+  private static Stream<Container> getContainerStream() {
+    return DockerClientFactory
+        .instance()
+        .client()
+        .listContainersCmd()
+        .withShowAll(true)
+        .exec()
+        .stream()
+        .filter(
+            container -> CP_DEMO_CONTAINERS
+                .stream()
+                .anyMatch(c -> container.getNames()[0].contains(c))
+        );
+  }
+
+  private void removeCPDemoContainersIfStopped() {
+    CP_DEMO_CONTAINERS.forEach(container -> {
+      try {
+        DockerClientFactory
+            .instance()
+            .client()
+            .listContainersCmd()
+            .withShowAll(true)
+            .exec()
+            .stream()
+            .filter(c -> c.getNames()[0].contains(container))
+            .forEach(c -> {
+              if (c.getState().equals("exited")) {
+                DockerClientFactory
+                    .instance()
+                    .client()
+                    .removeContainerCmd(c.getId())
+                    .exec();
+              }
+            });
+      } catch (Exception e) {
+        Log.error("Error deleting stopped containers", e);
+      }
+    });
+  }
+
+  /**
+   * We don't stop the containers after tests are run. This is used to stop the containers manually
+   * from the {@link #main(String[])} method. Refer to the Make target
+   * {@code make cp-demo-stop} for stopping the cp-demo containers.
+   */
   @Override
   public void shutdown() {
+    shutdownContainers();
+  }
 
+  private static void shutdownContainers() {
+    CP_DEMO_CONTAINERS.forEach(container -> {
+      try {
+        DockerClientFactory
+            .instance()
+            .client()
+            .listContainersCmd()
+            .withShowAll(true)
+            .exec()
+            .stream()
+            .filter(c -> c.getNames()[0].contains(container))
+            .forEach(c -> {
+              DockerClientFactory
+                  .instance()
+                  .client()
+                  .stopContainerCmd(c.getId())
+                  .exec();
+            });
+      } catch (Exception e) {
+        Log.error("Error deleting stopped containers", e);
+      }
+    });
   }
 
   @Override
@@ -314,30 +390,33 @@ public class CPDemoTestEnvironment implements TestEnvironment {
     };
   }
 
-  @Test
-  public void testSRDirectly()
-      throws RestClientException, IOException, KeyStoreException, CertificateException, NoSuchAlgorithmException {
-    var cwd = System.getProperty("user.dir");
-    var trustStorePath = new File(cwd,
-        ".cp-demo/scripts/security/kafka.schemaregistry.truststore.jks").getAbsolutePath();
-    var restService = new RestService("https://localhost:8085");
-    var configs = Map.of(
-        "schema.registry.url", "https://localhost:8085",
-        "ssl.endpoint.identification.algorithm", "",
-        "ssl.truststore.location", trustStorePath,
-        "ssl.truststore.password", "confluent",
-        "basic.auth.credentials.source", "USER_INFO",
-        "basic.auth.user.info", "superUser:superUser"
-    );
-
-    restService.configure(configs);
-    SslFactory sslFactory = new SslFactory(configs);
-    if (sslFactory.sslContext() != null) {
-      restService.setSslSocketFactory(sslFactory.sslContext().getSocketFactory());
+  private void runScript(String path) {
+    var pb = new ProcessBuilder(path);
+    pb.inheritIO();
+    try {
+      var process = pb.start();
+      process.waitFor();
+      if (process.exitValue() != 0) {
+        throw new RuntimeException("Script failed with exit code " + process.exitValue());
+      }
+    } catch (IOException | InterruptedException e) {
+      throw new RuntimeException(e);
     }
+  }
 
-    var client = new CachedSchemaRegistryClient(restService, 1000);
-    var subjects = client.getAllSubjects();
-    System.out.println(subjects);
+  /**
+   * Main method to start the test environment if used as a standalone application.
+   */
+  public static void main(String[] args) {
+    var env = new CPDemoTestEnvironment();
+    if (args.length == 1 && args[0].equals("stop")) {
+      Log.info("Stopping CP Demo environment...");
+      env.shutdown();
+      Log.info("CP Demo environment stopped.");
+    } else {
+      Log.info("Starting CP Demo environment...");
+      env.start();
+      Log.info("CP Demo environment started. Use make cp-demo-stop to stop it.");
+    }
   }
 }

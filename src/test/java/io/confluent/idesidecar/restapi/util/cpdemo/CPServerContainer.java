@@ -1,5 +1,7 @@
 package io.confluent.idesidecar.restapi.util.cpdemo;
 
+import static io.confluent.idesidecar.restapi.util.cpdemo.Constants.DEFAULT_CONFLUENT_DOCKER_TAG;
+
 import com.github.dockerjava.api.model.HealthCheck;
 import java.util.HashMap;
 import java.util.List;
@@ -12,7 +14,6 @@ import org.testcontainers.containers.wait.strategy.Wait;
 public class CPServerContainer extends GenericContainer<CPServerContainer> {
 
   private static final String DEFAULT_IMAGE = "confluentinc/cp-server";
-  private static final String DEFAULT_TAG = "7.7.1";
 
   private final String tag;
   private final String containerName;
@@ -124,7 +125,7 @@ public class CPServerContainer extends GenericContainer<CPServerContainer> {
       Integer internalHostPort,
       Integer tokenHostPort
   ) {
-    this(DEFAULT_TAG, network, containerName, mdsPort, internalPort, tokenPort, sslPort, clearPort,
+    this(DEFAULT_CONFLUENT_DOCKER_TAG, network, containerName, mdsPort, internalPort, tokenPort, sslPort, clearPort,
         internalHostPort, tokenHostPort);
   }
 

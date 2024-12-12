@@ -1,10 +1,9 @@
 package io.confluent.idesidecar.restapi.util.cpdemo;
 
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.Network;
-
 import java.util.HashMap;
 import java.util.Map;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.Network;
 
 public class OpenldapContainer extends GenericContainer<OpenldapContainer> {
   private static final String DEFAULT_IMAGE = "osixia/openldap";

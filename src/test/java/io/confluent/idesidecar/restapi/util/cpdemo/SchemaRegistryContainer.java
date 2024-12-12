@@ -1,5 +1,7 @@
 package io.confluent.idesidecar.restapi.util.cpdemo;
 
+import static io.confluent.idesidecar.restapi.util.cpdemo.Constants.DEFAULT_CONFLUENT_DOCKER_TAG;
+
 import com.github.dockerjava.api.model.HealthCheck;
 import java.util.HashMap;
 import java.util.List;
@@ -12,7 +14,6 @@ import org.testcontainers.containers.wait.strategy.Wait;
 public class SchemaRegistryContainer extends GenericContainer<SchemaRegistryContainer> {
   private static final Integer PORT = 8085;
   private static final String DEFAULT_IMAGE = "confluentinc/cp-schema-registry";
-  private static final String DEFAULT_TAG = "7.7.1";
   private static final String CONTAINER_NAME = "schemaregistry";
 
   public SchemaRegistryContainer(String tag, Network network) {
@@ -50,7 +51,7 @@ public class SchemaRegistryContainer extends GenericContainer<SchemaRegistryCont
   }
 
   public SchemaRegistryContainer(Network network) {
-    this(DEFAULT_TAG, network);
+    this(DEFAULT_CONFLUENT_DOCKER_TAG, network);
   }
 
   public Map<String, String> getSchemaRegistryEnv() {

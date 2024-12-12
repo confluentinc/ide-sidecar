@@ -1,18 +1,19 @@
 package io.confluent.idesidecar.restapi.util.cpdemo;
 
+import static io.confluent.idesidecar.restapi.util.cpdemo.Constants.DEFAULT_CONFLUENT_DOCKER_TAG;
+
 import com.github.dockerjava.api.model.HealthCheck;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.Network;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.Network;
 
 public class ZookeeperContainer extends GenericContainer<ZookeeperContainer> {
   private static final int ZOOKEEPER_PORT = 2181;
   private static final int ZOOKEEPER_SECURE_PORT = 2182;
   private static final String DEFAULT_IMAGE = "confluentinc/cp-zookeeper";
-  private static final String DEFAULT_TAG = "7.7.1";
   private static final String CONTAINER_NAME = "zookeeper";
 
   public ZookeeperContainer(String tag, Network network) {
@@ -40,7 +41,7 @@ public class ZookeeperContainer extends GenericContainer<ZookeeperContainer> {
   }
 
   public ZookeeperContainer(Network network) {
-    this(DEFAULT_TAG, network);
+    this(DEFAULT_CONFLUENT_DOCKER_TAG, network);
   }
 
   public Map<String, String> getZookeeperEnv() {

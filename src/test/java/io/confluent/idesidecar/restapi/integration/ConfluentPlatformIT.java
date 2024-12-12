@@ -12,7 +12,10 @@ import io.quarkus.test.junit.TestProfile;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.TestInstance;
 
+@QuarkusIntegrationTest
+@Tag("io.confluent.common.utils.IntegrationTest")
 public class ConfluentPlatformIT {
 
   /**
@@ -36,7 +39,9 @@ public class ConfluentPlatformIT {
     @QuarkusIntegrationTest
     @Tag("io.confluent.common.utils.IntegrationTest")
     @TestProfile(NoAccessFilterProfile.class)
-    static class RecordTests extends AbstractIT implements
+    @Nested
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    class RecordTests extends AbstractIT implements
         RecordsV3Suite, RecordsV3ErrorsSuite {
 
       @Override
@@ -59,12 +64,12 @@ public class ConfluentPlatformIT {
 
   @Nested
   class DirectWithBasicAuthConnectionTests {
-
     @QuarkusIntegrationTest
     @Tag("io.confluent.common.utils.IntegrationTest")
     @TestProfile(NoAccessFilterProfile.class)
-    static class TopicTests extends AbstractIT implements
-        TopicV3Suite {
+    @Nested
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    class TopicTests extends AbstractIT implements TopicV3Suite {
 
       @Override
       public CPDemoTestEnvironment environment() {
@@ -83,7 +88,8 @@ public class ConfluentPlatformIT {
   @QuarkusIntegrationTest
   @Tag("io.confluent.common.utils.IntegrationTest")
   @TestProfile(NoAccessFilterProfile.class)
-  static class WithoutSRRecordTests extends AbstractIT implements
+  @Nested
+  class WithoutSRRecordTests extends AbstractIT implements
       RecordsV3WithoutSRSuite {
 
     @Override
