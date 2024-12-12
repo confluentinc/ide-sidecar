@@ -161,15 +161,11 @@ cache-docker-images:
 
 .PHONY: load-cached-docker-images
 load-cached-docker-images:
-	cache restore $(SEMAPHORE_CP_ZOOKEEPER_DOCKER)
-	docker load -i cp_zookeeper.tgz && rm -rf cp_zookeeper.tgz
-
-	cache restore $(SEMAPHORE_CP_SERVER_DOCKER)
-	docker load -i cp_server.tgz && rm -rf cp_server.tgz
-
-	cache restore $(SEMAPHORE_OPENLDAP_DOCKER)
-	docker load -i openldap.tgz && rm -rf openldap.tgz
-
-	cache restore $(SEMAPHORE_CNFLDEMOS_TOOLS_DOCKER)
-	docker load -i cnfdemos-tools.tgz && rm -rf cnfdemos-tools.tgz
-
+	cache restore $(SEMAPHORE_CP_ZOOKEEPER_DOCKER) \
+    [ -f cp-zookeeper.tgz ] && docker load -i cp-zookeeper.tgz && rm -rf cp-zookeeper.tgz || true \
+	cache restore $(SEMAPHORE_CP_SERVER_DOCKER) \
+	[ -f cp-server.tgz ] && docker load -i cp_server.tgz && rm -rf cp_server.tgz || true \
+	cache restore $(SEMAPHORE_OPENLDAP_DOCKER) \
+	[ -f openldap.tgz ] && docker load -i openldap.tgz && rm -rf openldap.tgz || true \
+	cache restore $(SEMAPHORE_CNFLDEMOS_TOOLS_DOCKER) \
+	[ -f cnfdemos-tools.tgz ] && docker load -i cnfdemos-tools.tgz && rm -rf cnfdemos-tools.tgz || true
