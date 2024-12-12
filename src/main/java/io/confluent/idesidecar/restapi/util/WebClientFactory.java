@@ -116,7 +116,7 @@ public class WebClientFactory {
     Log.debugf("Updated the Vert.x web client config to: %s", clientOptions);
   }
 
-  WebClientOptions getDefaultWebClientOptions() {
+  public WebClientOptions getDefaultWebClientOptions() {
     var clientOptions = new WebClientOptions();
     clientOptions.setConnectTimeout((int) WEBCLIENT_CONNECT_TIMEOUT_SECONDS.toMillis());
     clientOptions.setUserAgent(sidecarInfo.getUserAgent());

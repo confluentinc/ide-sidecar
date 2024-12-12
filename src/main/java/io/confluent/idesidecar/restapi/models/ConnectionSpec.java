@@ -11,6 +11,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.confluent.idesidecar.restapi.credentials.ApiKeyAndSecret;
 import io.confluent.idesidecar.restapi.credentials.BasicCredentials;
 import io.confluent.idesidecar.restapi.credentials.Credentials;
+import io.confluent.idesidecar.restapi.credentials.OAuthCredentials;
+import io.confluent.idesidecar.restapi.credentials.TLSConfig;
 import io.confluent.idesidecar.restapi.exceptions.Failure;
 import io.confluent.idesidecar.restapi.exceptions.Failure.Error;
 import io.confluent.idesidecar.restapi.util.CCloud.KafkaEndpoint;
@@ -36,26 +38,58 @@ public record ConnectionSpec(
     @Schema(description = "The unique identifier of the connection resource.")
     @Size(min = 1, max = 64)
     String id,
+
     @Schema(description = "The user-supplied name of the connection resource.")
     @Size(max = 64)
     String name,
+
     @Schema(description = "The type of connection resource.")
     ConnectionType type,
+
     @Schema(description = "The details for connecting to CCloud.")
-    @JsonProperty(CCLOUD_CONFIG_FIELD_NAME) CCloudConfig ccloudConfig,
+    @JsonProperty(CCLOUD_CONFIG_FIELD_NAME)
+    CCloudConfig ccloudConfig,
+
     @Schema(description = "The details for connecting to Confluent Local.")
-    @JsonProperty(LOCAL_CONFIG_FIELD_NAME) LocalConfig localConfig,
+    @JsonProperty(LOCAL_CONFIG_FIELD_NAME)
+    LocalConfig localConfig,
+
     @Schema(description = "The details for connecting to a CCloud, Confluent Platform, or "
                           + "Apache Kafka cluster.")
-    @JsonProperty(KAFKA_CLUSTER_CONFIG_FIELD_NAME) KafkaClusterConfig kafkaClusterConfig,
+    @JsonProperty(KAFKA_CLUSTER_CONFIG_FIELD_NAME)
+    KafkaClusterConfig kafkaClusterConfig,
+
     @Schema(description = "The details for connecting to a Schema Registry.")
-    @JsonProperty(SCHEMA_REGISTRY_CONFIG_FIELD_NAME) SchemaRegistryConfig schemaRegistryConfig
+    @JsonProperty(SCHEMA_REGISTRY_CONFIG_FIELD_NAME)
+    SchemaRegistryConfig schemaRegistryConfig,
+
+    @Schema(
+        description = "The SSL configuration for connecting to "
+            + "the Kafka cluster and Schema Registry.",
+        nullable = true
+    )
+    @JsonProperty(value = "ssl")
+    @Null
+    TLSConfig tlsConfig,
+
+    @Schema(description = "Whether to verify the server certificate hostname."
+        + " Defaults to true if not set.",
+        defaultValue = DEFAULT_VERIFY_SERVER_CERTIFICATE_HOSTNAME_VALUE
+    )
+    @JsonProperty(value = "verify_server_certificate_hostname")
+    @Null
+    Boolean verifyServerCertificateHostname
 ) implements ConnectionSpecBuilder.With {
 
   public static final String CCLOUD_CONFIG_FIELD_NAME = "ccloud_config";
   public static final String LOCAL_CONFIG_FIELD_NAME = "local_config";
   public static final String KAFKA_CLUSTER_CONFIG_FIELD_NAME = "kafka_cluster";
   public static final String SCHEMA_REGISTRY_CONFIG_FIELD_NAME = "schema_registry";
+
+  private static final String DEFAULT_VERIFY_SERVER_CERTIFICATE_HOSTNAME_VALUE = "true";
+  private static final Boolean DEFAULT_VERIFY_SSL_CERTIFICATES = Boolean.valueOf(
+      DEFAULT_VERIFY_SERVER_CERTIFICATE_HOSTNAME_VALUE
+  );
 
   public enum ConnectionType {
     @Schema(description = "Connection type when using Confluent Local.")
@@ -70,47 +104,59 @@ public record ConnectionSpec(
   }
 
   public static ConnectionSpec createCCloud(String id, String name, CCloudConfig ccloudConfig) {
-    return new ConnectionSpec(
-        id,
-        name,
-        CCLOUD,
-        ccloudConfig,
-        null,
-        null,
-        null
-    );
+    return ConnectionSpecBuilder.builder()
+        .id(id)
+        .name(name)
+        .type(CCLOUD)
+        .ccloudConfig(ccloudConfig)
+        .build();
   }
 
   public static ConnectionSpec createLocal(String id, String name, LocalConfig localConfig) {
-    return new ConnectionSpec(
-        id,
-        name,
-        LOCAL,
-        null,
-        localConfig != null ? localConfig : new LocalConfig(null),
-        null,
-        null
-    );
+    return ConnectionSpecBuilder.builder()
+        .id(id)
+        .name(name)
+        .type(LOCAL)
+        .localConfig(localConfig != null ? localConfig : new LocalConfig(null))
+        .build();
   }
 
   public static ConnectionSpec createDirect(
-      String id, String name,
+      String id,
+      String name,
+      KafkaClusterConfig kafkaConfig,
+      SchemaRegistryConfig srConfig,
+      TLSConfig tlsConfig
+  ) {
+    return ConnectionSpecBuilder
+        .builder()
+        .id(id)
+        .name(name)
+        .type(DIRECT)
+        .kafkaClusterConfig(kafkaConfig)
+        .schemaRegistryConfig(srConfig)
+        .tlsConfig(tlsConfig)
+        .build();
+  }
+
+  public static ConnectionSpec createDirect(
+      String id,
+      String name,
       KafkaClusterConfig kafkaConfig,
       SchemaRegistryConfig srConfig
   ) {
-    return new ConnectionSpec(
-        id,
-        name,
-        DIRECT,
-        null,
-        null,
-        kafkaConfig,
-        srConfig
-    );
+    return ConnectionSpecBuilder
+        .builder()
+        .id(id)
+        .name(name)
+        .type(DIRECT)
+        .kafkaClusterConfig(kafkaConfig)
+        .schemaRegistryConfig(srConfig)
+        .build();
   }
 
   public ConnectionSpec(String id, String name, ConnectionType type) {
-    this(id, name, type, null, null, null, null);
+    this(id, name, type, null, null, null, null, null, null);
   }
 
   public ConnectionSpec withId(String id) {
@@ -121,7 +167,9 @@ public record ConnectionSpec(
         ccloudConfig,
         localConfig,
         kafkaClusterConfig,
-        schemaRegistryConfig
+        schemaRegistryConfig,
+        tlsConfig,
+        verifyServerCertificateHostname
     );
   }
 
@@ -133,7 +181,9 @@ public record ConnectionSpec(
         ccloudConfig,
         localConfig,
         kafkaClusterConfig,
-        schemaRegistryConfig
+        schemaRegistryConfig,
+        tlsConfig,
+        verifyServerCertificateHostname
     );
   }
 
@@ -151,7 +201,9 @@ public record ConnectionSpec(
         ccloudConfig,
         new LocalConfig(srUri),
         kafkaClusterConfig,
-        schemaRegistryConfig
+        schemaRegistryConfig,
+        tlsConfig,
+        verifyServerCertificateHostname
     );
   }
 
@@ -166,7 +218,9 @@ public record ConnectionSpec(
         ccloudConfig,
         null,
         kafkaClusterConfig,
-        schemaRegistryConfig
+        schemaRegistryConfig,
+        tlsConfig,
+        verifyServerCertificateHostname
     );
   }
 
@@ -184,7 +238,9 @@ public record ConnectionSpec(
         new CCloudConfig(ccloudOrganizationId),
         localConfig,
         kafkaClusterConfig,
-        schemaRegistryConfig
+        schemaRegistryConfig,
+        tlsConfig,
+        verifyServerCertificateHostname
     );
   }
 
@@ -202,7 +258,9 @@ public record ConnectionSpec(
         ccloudConfig,
         localConfig,
         kafkaClusterConfig,
-        schemaRegistryConfig
+        schemaRegistryConfig,
+        tlsConfig,
+        verifyServerCertificateHostname
     );
   }
 
@@ -220,7 +278,9 @@ public record ConnectionSpec(
         ccloudConfig,
         localConfig,
         kafkaClusterConfig,
-        schemaRegistryConfig
+        schemaRegistryConfig,
+        tlsConfig,
+        verifyServerCertificateHostname
     );
   }
 
@@ -309,55 +369,17 @@ public record ConnectionSpec(
           oneOf = {
               BasicCredentials.class,
               ApiKeyAndSecret.class,
+              OAuthCredentials.class,
           },
           nullable = true
       )
       @Null
-      Credentials credentials,
-
-      @Schema(
-          description =
-              "Whether to communicate with the Kafka cluster over TLS/SSL. Defaults to 'true', "
-              + "but set to 'false' when the Kafka cluster does not support TLS/SSL.",
-          defaultValue = KafkaClusterConfig.DEFAULT_SSL_VALUE,
-          nullable = true
-      )
-      @JsonProperty(value = "ssl")
-      @Null
-      Boolean ssl,
-
-      @Schema(
-          description =
-              "Whether to verify the Kafka cluster certificates. Defaults to 'true', but set "
-              + "to 'false' when the Kafka cluster has self-signed certificates.",
-          defaultValue = KafkaClusterConfig.DEFAULT_VERIFY_SSL_CERTIFICATES_VALUE,
-          nullable = true
-      )
-      @JsonProperty(value = "verify_ssl_certificates")
-      @Null
-      Boolean verifySslCertificates
+      Credentials credentials
   ) implements ConnectionSpecKafkaClusterConfigBuilder.With {
 
     // Constants used in annotations above
     private static final int ID_MAX_LEN = 64;
     private static final int BOOTSTRAP_SERVERS_MAX_LEN = 256;
-    private static final String DEFAULT_SSL_VALUE = "true";
-    private static final String DEFAULT_VERIFY_SSL_CERTIFICATES_VALUE = "true";
-
-    public static final boolean DEFAULT_SSL = Boolean.valueOf(DEFAULT_SSL_VALUE);
-    public static final boolean DEFAULT_VERIFY_SSL_CERTIFICATES = Boolean.valueOf(
-        DEFAULT_VERIFY_SSL_CERTIFICATES_VALUE
-    );
-
-    @JsonIgnore
-    public boolean sslOrDefault() {
-      return ssl != null ? ssl : DEFAULT_SSL;
-    }
-
-    @JsonIgnore
-    public boolean verifySslCertificatesOrDefault() {
-      return verifySslCertificates != null ? verifySslCertificates : DEFAULT_VERIFY_SSL_CERTIFICATES;
-    }
 
     @JsonIgnore
     public Optional<KafkaEndpoint> asCCloudEndpoint() {
@@ -388,6 +410,7 @@ public record ConnectionSpec(
       if (credentials != null) {
         credentials.validate(errors, "%s.credentials".formatted(path), what);
       }
+
     }
   }
 
@@ -412,6 +435,7 @@ public record ConnectionSpec(
           oneOf = {
               BasicCredentials.class,
               ApiKeyAndSecret.class,
+              OAuthCredentials.class,
           },
           nullable = true
       )
@@ -518,6 +542,8 @@ public record ConnectionSpec(
         case LOCAL -> {
           checkCCloudConfigNotAllowed(errors, newSpec);
           checkKafkaClusterNotAllowed(errors, newSpec);
+          checkTLSConfigNotAllowed(errors, newSpec);
+          checkVerifyServerCertificateHostnameNotAllowed(errors, newSpec);
           // Allow use of the older local config with Schema Registry.
           var local = newSpec.localConfig;
           if (local != null) {
@@ -541,6 +567,8 @@ public record ConnectionSpec(
           checkLocalConfigNotAllowed(errors, newSpec);
           checkKafkaClusterNotAllowed(errors, newSpec);
           checkSchemaRegistryNotAllowed(errors, newSpec);
+          checkTLSConfigNotAllowed(errors, newSpec);
+          checkVerifyServerCertificateHostnameNotAllowed(errors, newSpec);
         }
         case DIRECT -> {
           var kafka = newSpec.kafkaClusterConfig();
@@ -550,6 +578,10 @@ public record ConnectionSpec(
           var sr = newSpec.schemaRegistryConfig();
           if (sr != null) {
             sr.validate(errors, "schema_registry", "Schema Registry");
+          }
+          var tlsConfig = newSpec.tlsConfig();
+          if (tlsConfig != null) {
+            tlsConfig.validate(errors, "ssl", "SSL configuration");
           }
           checkLocalConfigNotAllowed(errors, newSpec);
           checkCCloudConfigNotAllowed(errors, newSpec);
@@ -607,6 +639,28 @@ public record ConnectionSpec(
           errors,
           SCHEMA_REGISTRY_CONFIG_FIELD_NAME,
           "Schema Registry configuration",
+          "type is %s".formatted(newSpec.type)
+      );
+    }
+  }
+
+  void checkTLSConfigNotAllowed(List<Error> errors, ConnectionSpec newSpec) {
+    if (newSpec.tlsConfig != null) {
+      checkAllowedWhen(
+          errors,
+          "ssl",
+          "SSL configuration",
+          "type is %s".formatted(newSpec.type)
+      );
+    }
+  }
+
+  void checkVerifyServerCertificateHostnameNotAllowed(List<Error> errors, ConnectionSpec newSpec) {
+    if (newSpec.verifyServerCertificateHostname != null) {
+      checkAllowedWhen(
+          errors,
+          "verify_server_certificate_hostname",
+          "Verify server certificate hostname",
           "type is %s".formatted(newSpec.type)
       );
     }
