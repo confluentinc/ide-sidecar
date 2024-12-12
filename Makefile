@@ -121,8 +121,12 @@ cp-demo-stop:
 		exec:java
 
 
-CONFLUENT_DOCKER_TAG = $(shell yq e '.ide-sidecar.integration-tests.cp-demo.tag' src/main/resources/application.yml)
+CONFLUENT_DOCKER_TAG = $(shell yq e '.ide-sidecar.integration-tests.cp-demo.tag' src/main/resources/application.yml | sed 's/^v//')
+# See io.confluent.idesidecar.restapi.util.ConfluentLocalKafkaWithRestProxyContainer
+CONFLUENT_LOCAL_DOCKER_TAG = "7.6.0"
+# See io.confluent.idesidecar.restapi.util.cpdemo.OpenldapContainer
 OSIXIA_OPENLDAP_DOCKER_TAG = "1.3.0"
+# See io.confluent.idesidecar.restapi.util.cpdemo.ToolsContainer
 CNFLDEMOS_TOOLS_DOCKER_TAG = "0.3"
 
 # Key for storing docker images in Semaphore CI cache
@@ -130,6 +134,7 @@ SEMAPHORE_CP_ZOOKEEPER_DOCKER := ide-sidecar-docker-cp-zookeeper-$(CONFLUENT_DOC
 SEMAPHORE_CP_SERVER_DOCKER := ide-sidecar-docker-cp-server-$(CONFLUENT_DOCKER_TAG)
 SEMAPHORE_OPENLDAP_DOCKER := ide-sidecar-docker-openldap-$(OSIXIA_OPENLDAP_DOCKER_TAG)
 SEMAPHORE_CNFLDEMOS_TOOLS_DOCKER := ide-sidecar-docker-cnfldemos-tools-$(CNFLDEMOS_TOOLS_DOCKER_TAG)
+SEMAPHORE_CONFLUENT_LOCAL_DOCKER := ide-sidecar-docker-confluent-local-$(CONFLUENT_LOCAL_DOCKER_TAG)
 
 ## Cache docker images in Semaphore cache.
 .PHONY: cache-docker-images
@@ -153,19 +158,30 @@ cache-docker-images:
 		rm -rf openldap.tgz)
 
 	cache has_key $(SEMAPHORE_CNFLDEMOS_TOOLS_DOCKER) || (\
-		docker pull confluentinc/cnfdemos-tools:$(CNFLDEMOS_TOOLS_DOCKER_TAG) && \
-		docker save confluentinc/cnfdemos-tools:$(CNFLDEMOS_TOOLS_DOCKER_TAG) | gzip > cnfdemos-tools.tgz && \
+		docker pull cnfldemos/tools:$(CNFLDEMOS_TOOLS_DOCKER_TAG) && \
+		docker save cnfldemos/tools:$(CNFLDEMOS_TOOLS_DOCKER_TAG) | gzip > cnfdemos-tools.tgz && \
 		cache store $(SEMAPHORE_CNFLDEMOS_TOOLS_DOCKER) cnfdemos-tools.tgz && \
 		rm -rf cnfdemos-tools.tgz)
 
+	cache has_key $(SEMAPHORE_CONFLUENT_LOCAL_DOCKER) || (\
+		docker pull confluentinc/cp-local:$(CONFLUENT_LOCAL_DOCKER_TAG) && \
+		docker save confluentinc/cp-local:$(CONFLUENT_LOCAL_DOCKER_TAG) | gzip > cp-local.tgz && \
+		cache store $(SEMAPHORE_CONFLUENT_LOCAL_DOCKER) cp-local.tgz && \
+		rm -rf cp-local.tgz)
 
 .PHONY: load-cached-docker-images
 load-cached-docker-images:
 	cache restore $(SEMAPHORE_CP_ZOOKEEPER_DOCKER) \
-    [ -f cp-zookeeper.tgz ] && docker load -i cp-zookeeper.tgz && rm -rf cp-zookeeper.tgz || true \
+    [ -f cp-zookeeper.tgz ] && docker load -i cp-zookeeper.tgz && rm -rf cp-zookeeper.tgz || true
+
 	cache restore $(SEMAPHORE_CP_SERVER_DOCKER) \
-	[ -f cp-server.tgz ] && docker load -i cp_server.tgz && rm -rf cp_server.tgz || true \
+	[ -f cp-server.tgz ] && docker load -i cp-server.tgz && rm -rf cp-server.tgz || true
+
 	cache restore $(SEMAPHORE_OPENLDAP_DOCKER) \
-	[ -f openldap.tgz ] && docker load -i openldap.tgz && rm -rf openldap.tgz || true \
+	[ -f openldap.tgz ] && docker load -i openldap.tgz && rm -rf openldap.tgz || true
+
 	cache restore $(SEMAPHORE_CNFLDEMOS_TOOLS_DOCKER) \
 	[ -f cnfdemos-tools.tgz ] && docker load -i cnfdemos-tools.tgz && rm -rf cnfdemos-tools.tgz || true
+
+	cache restore $(SEMAPHORE_CONFLUENT_LOCAL_DOCKER) \
+	[ -f cp-local.tgz ] && docker load -i cp-local.tgz && rm -rf cp-local.tgz || true

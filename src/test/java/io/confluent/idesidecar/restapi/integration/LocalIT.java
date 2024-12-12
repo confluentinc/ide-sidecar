@@ -24,11 +24,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.TestInstance;
 
-@QuarkusIntegrationTest
-@Tag("io.confluent.common.utils.IntegrationTest")
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class LocalIT {
 
   private static final LocalTestEnvironment TEST_ENVIRONMENT = new LocalTestEnvironment();
@@ -49,7 +45,6 @@ public class LocalIT {
   @Tag("io.confluent.common.utils.IntegrationTest")
   @TestProfile(NoAccessFilterProfile.class)
   @Nested
-  @TestInstance(TestInstance.Lifecycle.PER_CLASS)
   class ConnectionTests extends AbstractIT implements DirectConnectionSuite, LocalConnectionSuite {
 
     @Override
@@ -65,14 +60,12 @@ public class LocalIT {
   }
 
   @Nested
-  @TestInstance(TestInstance.Lifecycle.PER_CLASS)
   class LocalConnectionTests {
 
     @QuarkusIntegrationTest
     @Tag("io.confluent.common.utils.IntegrationTest")
     @TestProfile(NoAccessFilterProfile.class)
     @Nested
-    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
     class RecordTests extends AbstractIT implements RecordsV3Suite, RecordsV3DryRunSuite {
       @Override
       public TestEnvironment environment() {
@@ -90,7 +83,6 @@ public class LocalIT {
     @Tag("io.confluent.common.utils.IntegrationTest")
     @TestProfile(NoAccessFilterProfile.class)
     @Nested
-    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
     class RecordTestsWithoutSR extends AbstractIT implements RecordsV3WithoutSRSuite {
 
       @Override
@@ -116,7 +108,6 @@ public class LocalIT {
     @Tag("io.confluent.common.utils.IntegrationTest")
     @TestProfile(NoAccessFilterProfile.class)
     @Nested
-    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
     class RecordFailureTests extends AbstractIT implements RecordsV3ErrorsSuite {
 
       @Override
@@ -135,7 +126,6 @@ public class LocalIT {
     @Tag("io.confluent.common.utils.IntegrationTest")
     @TestProfile(NoAccessFilterProfile.class)
     @Nested
-    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
     class TopicTests extends AbstractIT implements TopicV3Suite, PartitionV3Suite {
 
       @Override
@@ -154,7 +144,6 @@ public class LocalIT {
     @Tag("io.confluent.common.utils.IntegrationTest")
     @TestProfile(NoAccessFilterProfile.class)
     @Nested
-    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
     class TopicConfigTests extends AbstractIT implements TopicConfigV3Suite {
 
       @Override
@@ -173,7 +162,6 @@ public class LocalIT {
     @Tag("io.confluent.common.utils.IntegrationTest")
     @TestProfile(NoAccessFilterProfile.class)
     @Nested
-    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
     class ClustersTests extends AbstractIT implements ClusterV3Suite {
 
       @Override
@@ -192,7 +180,6 @@ public class LocalIT {
     @Tag("io.confluent.common.utils.IntegrationTest")
     @TestProfile(NoAccessFilterProfile.class)
     @Nested
-    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
     class ConsumptionTests extends AbstractIT implements SimpleConsumerSuite, KafkaConsumeSuite {
 
       @Override
@@ -209,7 +196,6 @@ public class LocalIT {
   }
 
   @Nested
-  @TestInstance(TestInstance.Lifecycle.PER_CLASS)
   class DirectConnectionWithoutCredentialsTests {
     /**
      * All tests that create connections with this scope will reuse the same connection.
@@ -220,7 +206,6 @@ public class LocalIT {
     @Tag("io.confluent.common.utils.IntegrationTest")
     @TestProfile(NoAccessFilterProfile.class)
     @Nested
-    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
     class RecordTests extends AbstractIT implements RecordsV3Suite, RecordsV3DryRunSuite {
 
       @Override
@@ -239,7 +224,6 @@ public class LocalIT {
     @Tag("io.confluent.common.utils.IntegrationTest")
     @TestProfile(NoAccessFilterProfile.class)
     @Nested
-    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
     class RecordFailureTests extends AbstractIT implements RecordsV3ErrorsSuite {
 
       @Override
@@ -258,7 +242,6 @@ public class LocalIT {
     @Tag("io.confluent.common.utils.IntegrationTest")
     @TestProfile(NoAccessFilterProfile.class)
     @Nested
-    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
     class TopicTests extends AbstractIT implements TopicV3Suite, PartitionV3Suite {
 
       @Override
@@ -277,7 +260,6 @@ public class LocalIT {
     @Tag("io.confluent.common.utils.IntegrationTest")
     @TestProfile(NoAccessFilterProfile.class)
     @Nested
-    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
     class TopicConfigTests extends AbstractIT implements TopicConfigV3Suite {
 
       @Override
@@ -296,7 +278,6 @@ public class LocalIT {
     @Tag("io.confluent.common.utils.IntegrationTest")
     @TestProfile(NoAccessFilterProfile.class)
     @Nested
-    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
     class ClustersTests extends AbstractIT implements ClusterV3Suite {
 
       @Override
@@ -315,7 +296,6 @@ public class LocalIT {
     @Tag("io.confluent.common.utils.IntegrationTest")
     @TestProfile(NoAccessFilterProfile.class)
     @Nested
-    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
     class ConsumptionTests extends AbstractIT implements SimpleConsumerSuite, KafkaConsumeSuite {
 
       @Override
