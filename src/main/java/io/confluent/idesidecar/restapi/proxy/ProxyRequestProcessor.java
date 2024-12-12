@@ -3,6 +3,7 @@ package io.confluent.idesidecar.restapi.proxy;
 import io.confluent.idesidecar.restapi.processors.Processor;
 import io.confluent.idesidecar.restapi.util.WebClientFactory;
 import io.vertx.core.Future;
+import io.vertx.core.Vertx;
 
 /**
  * Generic processor that ships the request to the target server and updates the context with the
@@ -15,8 +16,8 @@ public class ProxyRequestProcessor<T extends ProxyContext> extends
 
   ProxyHttpClient<T> proxyHttpClient;
 
-  public ProxyRequestProcessor(WebClientFactory webClientFactory) {
-    proxyHttpClient = new ProxyHttpClient<>(webClientFactory);
+  public ProxyRequestProcessor(WebClientFactory webClientFactory, Vertx vertx) {
+    proxyHttpClient = new ProxyHttpClient<>(webClientFactory, vertx);
   }
 
   @Override
