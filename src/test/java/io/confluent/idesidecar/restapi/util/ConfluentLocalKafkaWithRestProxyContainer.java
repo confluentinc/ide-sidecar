@@ -1,11 +1,9 @@
 package io.confluent.idesidecar.restapi.util;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.utility.DockerImageName;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * A Testcontainers-based implementation of a local Confluent environment,
@@ -66,7 +64,8 @@ import java.util.Map;
 public class ConfluentLocalKafkaWithRestProxyContainer
     extends GenericContainer<ConfluentLocalKafkaWithRestProxyContainer>
     implements AutoCloseable {
-  private static final int KAFKA_PORT = 9092;
+  private static final int KAFKA_PORT_HOST = 30092;
+  private static final int KAFKA_PORT_CONTAINER = 9092;
   private static final String DEFAULT_IMAGE = "confluentinc/confluent-local:7.6.0";
   private static final String CONTAINER_NAME = "confluent-local-broker-1";
   private static final String REST_PROXY_HOST_NAME = "rest-proxy";
@@ -80,14 +79,11 @@ public class ConfluentLocalKafkaWithRestProxyContainer
   public ConfluentLocalKafkaWithRestProxyContainer(String dockerImageName) {
     super(DockerImageName.parse(dockerImageName));
     super.withEnv(getEnvironmentVariables())
-        .withExposedPorts(KAFKA_PORT, REST_PROXY_PORT)
         .withCreateContainerCmdModifier(cmd -> cmd
             .withName(CONTAINER_NAME)
             .withHostName(CONTAINER_NAME));
-    setPortBindings(List.of(
-        String.format("%d:%d", REST_PROXY_PORT, REST_PROXY_PORT),
-        String.format("%d:%d", KAFKA_PORT, KAFKA_PORT)
-    ));
+    addFixedExposedPort(KAFKA_PORT_HOST, KAFKA_PORT_CONTAINER);
+    addFixedExposedPort(REST_PROXY_PORT, REST_PROXY_PORT);
   }
 
   public String getClusterId() {
@@ -95,11 +91,11 @@ public class ConfluentLocalKafkaWithRestProxyContainer
   }
 
   public String getKafkaBootstrapServers() {
-    return String.format("%s:%d", getHost(), getMappedPort(KAFKA_PORT));
+    return String.format("%s:%d", getHost(), KAFKA_PORT_HOST);
   }
 
   public String getRestProxyEndpoint() {
-    return String.format("http://%s:%d", getHost(), getMappedPort(REST_PROXY_PORT));
+    return String.format("http://%s:%d", getHost(), REST_PROXY_PORT);
   }
 
   private Map<String, String> getEnvironmentVariables() {
@@ -114,13 +110,13 @@ public class ConfluentLocalKafkaWithRestProxyContainer
         String.format("PLAINTEXT://%s:29092,CONTROLLER://%s:29093,PLAINTEXT_HOST://0.0.0.0:%d",
             CONTAINER_NAME,
             CONTAINER_NAME,
-            KAFKA_PORT)
+            KAFKA_PORT_CONTAINER)
     );
     env.put(
         "KAFKA_ADVERTISED_LISTENERS",
         String.format("PLAINTEXT://%s:29092,PLAINTEXT_HOST://localhost:%d",
             CONTAINER_NAME,
-            KAFKA_PORT)
+            KAFKA_PORT_HOST)
     );
     env.put("KAFKA_REST_HOST_NAME", REST_PROXY_HOST_NAME);
     env.put("KAFKA_REST_LISTENERS",

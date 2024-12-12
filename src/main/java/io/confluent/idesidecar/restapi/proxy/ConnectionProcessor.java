@@ -51,6 +51,10 @@ public class ConnectionProcessor<T extends ProxyContext> extends
     // Store the connection details in the context
     context.setConnectionState(connectionState);
 
+    connectionState.getTLSConfig().ifPresent(tlsConfig -> {
+      context.setTruststoreOptions(tlsConfig.truststore());
+    });
+
     // All right, we may now proceed
     return next().process(context);
   }
