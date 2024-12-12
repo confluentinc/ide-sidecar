@@ -35,27 +35,10 @@ public class WebsocketEndpoint {
 
 
   /**
-   * Map of active, authorized workspace sessions, keyed by the websocket session. Sessions
-   * are added when passed the ACCESS_REQUEST challenge and removed upon disconnect or error.
-   * @see {@link #handleAccessRequestMessage}
+   * Map of active, authorized workspace sessions, keyed by the websocket session object.
    */
   private final Map<Session, WorkspaceSession> sessions = new ConcurrentHashMap<Session, WorkspaceSession>();
 
-  /**
-   * Do we need to validate the access token presented in a ACCESS_REQUEST message at startup
-   * of websocket connection?
-   *
-   * Same knob that controls whether the sidecar will validate an access token for REST API requests,
-   * see {@link io.confluent.idesidecar.restapi.filters.AccessTokenFilter}.
-   * */
-  @ConfigProperty(name = "ide-sidecar.access_token_filter.enabled", defaultValue = "true")
-  Provider<Boolean> authorization_required;
-
-  /**
-   * If authorization is required, where to get the access token to compare against.
-   */
-  @Inject
-  SidecarAccessTokenBean accessTokenBean;
 
   // Miscellany
   /** Jackson object mapper for serializing/deserializing messages. */
@@ -103,13 +86,9 @@ public class WebsocketEndpoint {
     if (workspaceSession == null) {
       log.error("Odd! Received message from unregistered session. Closing session.");
       senderSession.close();
-      // The only message we expect from an unauthorized (not present in our map yet)
-      // session is an access request message.
-      // handleAccessRequestMessage(senderSession, messageString);
       return;
     }
 
-    // Handle all other message types ...
     Message m;
 
     try {
