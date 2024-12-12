@@ -9,8 +9,5 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
  **/
 @RegisterForReflection
 public class MessageType {
-  public static final String ACCESS_REQUEST = "ACCESS_REQUEST";
-  public static final String ACCESS_RESPONSE = "ACCESS_RESPONSE";
-
   public static final String WORKSPACE_COUNT_CHANGED = "WORKSPACE_COUNT_CHANGED";
 }

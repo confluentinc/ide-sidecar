@@ -2,8 +2,6 @@ package io.confluent.idesidecar.websocket.resources;
 
 import io.confluent.idesidecar.restapi.application.SidecarAccessTokenBean;
 import io.confluent.idesidecar.websocket.messages.Audience;
-import io.confluent.idesidecar.websocket.messages.AccessRequestBody;
-import io.confluent.idesidecar.websocket.messages.AccessResponseBody;
 import io.confluent.idesidecar.websocket.messages.Message;
 import io.confluent.idesidecar.websocket.messages.MessageHeaders;
 import io.confluent.idesidecar.websocket.messages.MessageType;
@@ -103,9 +101,11 @@ public class WebsocketEndpoint {
   public void onMessage(String messageString, Session senderSession) throws java.io.IOException {
     WorkspaceSession workspaceSession = sessions.get(senderSession);
     if (workspaceSession == null) {
+      log.error("Odd! Received message from unregistered session. Closing session.");
+      senderSession.close();
       // The only message we expect from an unauthorized (not present in our map yet)
       // session is an access request message.
-      handleAccessRequestMessage(senderSession, messageString);
+      // handleAccessRequestMessage(senderSession, messageString);
       return;
     }
 
@@ -171,10 +171,37 @@ public class WebsocketEndpoint {
   }
 
   @OnOpen
-  public void onOpen(Session session) {
+  public void onOpen(Session session) throws IOException {
     // Don't store into sessions map until successful handling of ACCESS_REQUEST message,
     // so do nothing of importance here.
     log.info("New websocket session opened: " + session.getId());
+    // Request must have had a valid access token to pass through AccessTokenFilter, so we can assume that the session is authorized.
+    // The workspace process id should have been passed as a request parameter, though.
+    String workspaceIdString = session.getRequestParameterMap().get("workspace_id").get(0);
+
+    if (workspaceIdString == null) {
+      log.error("No workspace_id parameter provided. Closing session.");
+      session.close();
+      return;
+    }
+
+    int workspaceId;
+    try {
+      workspaceId = Integer.parseInt(workspaceIdString);
+    } catch (NumberFormatException e) {
+      log.error("Invalid workspace_id parameter value: " + workspaceIdString + ". Closing session.");
+      session.close();
+      return;
+    }
+
+    log.info("New websocket session opened for workspace pid: " + workspaceId);
+    // create new WorkspaceSession object and store in sessions map.
+    WorkspaceSession newWorkspaceSession = new WorkspaceSession(workspaceId);
+    sessions.put(session, newWorkspaceSession);
+
+    // Broadcast a message to all workspaces (inclusive) that the authorized workspaces count has changed.
+    broadcastWorkspacesChanged();
+
   }
 
   @OnError
@@ -202,7 +229,7 @@ public class WebsocketEndpoint {
       // was a registered workspace session. Announce to all other workspaces that the list has changed.
       log.info("Closed session was workspace " + existing.processId() + ", broadcasting workspace count change.");
       try {
-        broadcastWorkspacesChanged(existing);
+        broadcastWorkspacesChanged();
       } catch (java.io.IOException e) {
         log.error("Failed to broadcast workspace removed message: " + e.getMessage());
       }
@@ -232,106 +259,18 @@ public class WebsocketEndpoint {
   }
 
   /**
-   * Parse and validate an access request message from a newly connected workspace. If the
-   * message type is not ACCESS_REQUEST, or the access token is invalid, the session is closed.
-   * Otherwise, the session is stored in the sessions map and considered valid hereon out.
-   *
-   * @throws java.io.IOException
+   * Send a message to all workspaces that the count of authorized workspaces has changed.
+   * Used whenever a workspace is added or removed.
    */
-  private void handleAccessRequestMessage(Session senderSession, String stringMessage) throws java.io.IOException {
-    Message message;
-
-    try {
-      message = parseAndValidateMessage(stringMessage);
-    } catch (java.io.IOException e) {
-      log.error("Invalid message, expected an ACCESS_REQUEST message, but was not parseable. Closing session.", e.getMessage());
-      senderSession.close();
-      return;
-    }
-
-    MessageHeaders headers = message.getHeaders();
-
-    if (!headers.type.equals(MessageType.ACCESS_REQUEST)) {
-      log.error("Expected ACCESS_REQUEST message, got " + headers.type + " instead. Closing session.");
-      senderSession.close();
-      return;
-    }
-
-    // custom serializer would have ensured that the body is an AccessRequestBody, but let's be thorough,
-    if (!(message.getBody() instanceof AccessRequestBody body)) {
-      log.error("Expected AccessRequestBody as the payload, got " + message.getBody().getClass().getName() + " instead. Closing session.");
-      senderSession.close();
-      return;
-    }
-
-    // The originator field for a workspace->sidecar message should be the workspace's (process) id.
-    int actualWorkspaceId = 0;
-    try {
-      actualWorkspaceId = Integer.parseInt(headers.originator);
-    } catch (NumberFormatException e) {
-      log.error("Invalid websocket message header originator value -- not an integer: " + headers.originator + ". Closing session.");
-      senderSession.close();
-      return;
-    }
-
-    log.debug("Received authorization request from workspace pid: " + actualWorkspaceId);;
-
-    // Same header will be used for the response message, be it success or failure.
-    ResponseMessageHeaders responseHeaders =  new ResponseMessageHeaders (
-        MessageType.ACCESS_RESPONSE,
-        headers.id
-    );
-
-    if (!authorization_required.get()) {
-      log.info("Websocket access token comparison is not required for access request from workspace pid: " + actualWorkspaceId + ".");
-    } else if (!body.accessToken.equals(accessTokenBean.getToken())) {
-      log.error("Invalid websocket access token provided by workspace pid: " + actualWorkspaceId +", rejecting and closing session.");
-
-      // send rejection message then close the session.
-      Message response = new Message(responseHeaders, new AccessResponseBody(false, 0));
-      sendMessage(senderSession, response);
-
-      senderSession.close();
-      return;
-    }
-
-    // Ensure that the workspace id is not already claimed to be authorized.
-    final int finalActualWorkspaceId = actualWorkspaceId;
-    if (sessions.values().stream().anyMatch(ws -> ws.processId() == finalActualWorkspaceId)) {
-      log.error("Workspace pid " + actualWorkspaceId + " is already authorized. Closing new session.");
-      senderSession.close();
-      return;
-    }
-
-    // Good and authorized.
-
-    // Store new authorized workspace session with the workspace process id in sessions map.
-    WorkspaceSession newWorkspaceSession = new WorkspaceSession(actualWorkspaceId);
-    sessions.put(senderSession, newWorkspaceSession);
-
-    // Reply to the requesting workspace with a successful access response.
-    Message response = new Message(responseHeaders, new AccessResponseBody(true, this.sessions.size()));
-    sendMessage(senderSession, response);
-
-    log.debug("Sent successful access response.");
-
-    // Broadcast a message to all other workspaces that the authorized workspaces count has changed.
-    broadcastWorkspacesChanged(newWorkspaceSession);
-  }
-
-  /**
-   * Send a message to all workspaces other than the one that caused the change that the count of authorized workspaces has changed.
-   * Used whenever an authorized workspace is added or removed.
-   */
-  private void broadcastWorkspacesChanged(WorkspaceSession changedWorkspace) throws java.io.IOException {
-    // changedWorkspace was either just added or removed. Inform the other workspaces about the new connected/authorized workspace count.
+  private void broadcastWorkspacesChanged() throws java.io.IOException {
+    // changedWorkspace was either just added or removed. Informall  workspaces about the new connected/authorized workspace count.
 
     Message message = new Message(
         new MessageHeaders(MessageType.WORKSPACE_COUNT_CHANGED, Audience.workspaces, "sidecar"),
         new WorkspacesChangedBody(this.sessions.size())
     );
 
-    broadcast(message, changedWorkspace);
+    broadcast(message);
   }
 
   /**
@@ -360,7 +299,7 @@ public class WebsocketEndpoint {
         });
   }
 
-  /** Send a directed message from sidecar to a specific (possibly unauthorized) websocket session. */
+  /** Send a directed message from sidecar to a specific websocket session. */
   private void sendMessage(Session recipient, Message message) throws java.io.IOException {
     String jsonMessage = mapper.writeValueAsString(message);
     log.info("Sending " + jsonMessage.length() + " char message, id " + message.getId() + " to workspace: " + recipient.getId());
