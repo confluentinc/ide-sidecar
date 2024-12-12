@@ -17,9 +17,9 @@ global_job_config:
   epilogue:
     always:
       commands:
+        - make store-test-results-to-semaphore
         - make ci-bin-sem-cache-store
         - make cache-docker-images
-        - make store-test-results-to-semaphore
 
 blocks:
   - name: "Build Native Executable (MacOS AMD64)"
