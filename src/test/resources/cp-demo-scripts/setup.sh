@@ -13,7 +13,7 @@ if ! command -v yq &> /dev/null; then
 fi
 
 # Read test.cp-demo.tag from application.yml using yq
-CP_DEMO_TAG=$(yq e '.ide-sidecar.integration-test-configs.cp-demo.tag' src/main/resources/application.yml)
+CP_DEMO_TAG=$(yq e '.ide-sidecar.integration-tests.cp-demo.tag' src/main/resources/application.yml)
 
 CP_DEMO_DIR="$(pwd)/.cp-demo"
 CP_DEMO_SCRIPTS_DIR="${CP_DEMO_DIR}/scripts"

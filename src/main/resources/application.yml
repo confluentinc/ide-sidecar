@@ -198,7 +198,7 @@ ide-sidecar:
     max-backoff-ms: 5000
     timeout-ms: 10000
     max-retries: 5
-  integration-test-configs:
+  integration-tests:
     # cp-demo configs used by Confluent Platform integration tests
     cp-demo:
       tag: v7.7.1

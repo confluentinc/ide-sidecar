@@ -10,7 +10,7 @@ public class Constants {
 
   static final String DEFAULT_CONFLUENT_DOCKER_TAG = ConfigProvider
       .getConfig()
-      .getValue("ide-sidecar.integration-test-configs.cp-demo.tag", String.class)
+      .getValue("ide-sidecar.integration-tests.cp-demo.tag", String.class)
       // Remove the leading 'v' from the tag, if present
       .replaceFirst("v", "");
 }

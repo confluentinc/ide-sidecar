@@ -35,7 +35,6 @@ import org.testcontainers.utility.TestcontainersConfiguration;
  */
 @SetEnvironmentVariable(key = "TESTCONTAINERS_REUSE_ENABLE", value = "true")
 // We want to manage cleanup ourselves.
-@SetEnvironmentVariable(key = "TESTCONTAINERS_RYUK_DISABLED", value = "true")
 public class CPDemoTestEnvironment implements TestEnvironment {
   private Network network;
   private ToolsContainer tools;
@@ -127,6 +126,16 @@ public class CPDemoTestEnvironment implements TestEnvironment {
   }
 
   /**
+   * We don't stop the containers after tests are run. This is used to stop the containers manually
+   * from the {@link #main(String[])} method. Refer to the Make target
+   * {@code make cp-demo-stop} for stopping the cp-demo containers.
+   */
+  @Override
+  public void shutdown() {
+    shutdownContainers();
+  }
+
+  /**
    * Workaround for setting min ISR on topic _confluent-metadata-auth
    */
   private void setMinISR() {
@@ -214,15 +223,7 @@ public class CPDemoTestEnvironment implements TestEnvironment {
     });
   }
 
-  /**
-   * We don't stop the containers after tests are run. This is used to stop the containers manually
-   * from the {@link #main(String[])} method. Refer to the Make target
-   * {@code make cp-demo-stop} for stopping the cp-demo containers.
-   */
-  @Override
-  public void shutdown() {
-    shutdownContainers();
-  }
+
 
   private static void shutdownContainers() {
     CP_DEMO_CONTAINERS.forEach(container -> {
@@ -246,6 +247,22 @@ public class CPDemoTestEnvironment implements TestEnvironment {
         Log.error("Error deleting stopped containers", e);
       }
     });
+
+    // Remove the network
+    DockerClientFactory
+        .instance()
+        .client()
+        .listNetworksCmd()
+        .exec()
+        .stream()
+        .filter(network -> network.getName().equals("cp-demo"))
+        .forEach(network -> {
+          DockerClientFactory
+              .instance()
+              .client()
+              .removeNetworkCmd(network.getId())
+              .exec();
+        });
   }
 
   @Override
@@ -407,6 +424,7 @@ public class CPDemoTestEnvironment implements TestEnvironment {
   /**
    * Main method to start the test environment if used as a standalone application.
    */
+  @SetEnvironmentVariable(key = "TESTCONTAINERS_RYUK_DISABLED", value = "true")
   public static void main(String[] args) {
     var env = new CPDemoTestEnvironment();
     if (args.length == 1 && args[0].equals("stop")) {

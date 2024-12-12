@@ -9,13 +9,19 @@ import io.confluent.idesidecar.restapi.util.CPDemoTestEnvironment;
 import io.confluent.idesidecar.restapi.util.TestEnvironment;
 import io.quarkus.test.junit.QuarkusIntegrationTest;
 import io.quarkus.test.junit.TestProfile;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.TestInstance;
+import org.junitpioneer.jupiter.SetSystemProperty;
 
 @QuarkusIntegrationTest
 @Tag("io.confluent.common.utils.IntegrationTest")
+// This could be used by tests to determine if they are running in the CP test environment
+// and adjust their behavior.
+@SetSystemProperty(key = "running-in-cp-test-environment", value = "true")
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class ConfluentPlatformIT {
 
   /**
@@ -32,6 +38,14 @@ public class ConfluentPlatformIT {
     TEST_ENVIRONMENT.start();
   }
 
+  @AfterAll
+  static void afterAll() {
+    // Shutdown the test environment after all tests have run
+    // This behavior is only enabled on CI
+    if (System.getenv("CI") != null && System.getenv("CI").equals("true")) {
+      TEST_ENVIRONMENT.shutdown();
+    }
+  }
 
   @Nested
   class DirectWithMutualTLSConnectionTests {
