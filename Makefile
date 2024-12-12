@@ -95,3 +95,77 @@ upload-artifacts-to-github-release:
 .PHONY: collect-notices-binary
 collect-notices-binary: clean mvn-package-native-sources-only
 	$(IDE_SIDECAR_SCRIPTS)/collect-notices-binary.sh target/native-sources/lib
+
+# Targets for managing cp-demo testcontainers used by the integration tests
+
+# Start the cp-demo testcontainers
+# Note: You do not need to run this in order to run the integration tests, however, if you want
+# to manually bring up the cp-demo environment, you may run this target. You will be
+# able to run the integration tests against the same environment, please keep that in mind!
+.PHONY: cp-demo-start
+cp-demo-start:
+	export TESTCONTAINERS_RYUK_DISABLED=true; \
+	./mvnw -s .mvn/settings.xml \
+		-Dexec.mainClass=io.confluent.idesidecar.restapi.util.CPDemoTestEnvironment \
+		-Dexec.classpathScope=test \
+		test-compile exec:java
+
+# Stop the cp-demo testcontainers
+.PHONY: cp-demo-stop
+cp-demo-stop:
+	./mvnw -s .mvn/settings.xml test-compile && \
+	./mvnw -s .mvn/settings.xml \
+		-Dexec.mainClass=io.confluent.idesidecar.restapi.util.CPDemoTestEnvironment \
+		-Dexec.classpathScope=test \
+		-Dexec.args=stop \
+		exec:java
+
+
+CONFLUENT_DOCKER_TAG = $(shell yq e '.ide-sidecar.integration-tests.cp-demo.tag' src/main/resources/application.yml)
+OSIXIA_OPENLDAP_DOCKER_TAG = "1.3.0"
+CNFLDEMOS_TOOLS_DOCKER_TAG = "0.3"
+
+# Key for storing docker images in Semaphore CI cache
+SEMAPHORE_CP_ZOOKEEPER_DOCKER := ide-sidecar-docker-cp-zookeeper-$(CONFLUENT_DOCKER_TAG)
+SEMAPHORE_CP_SERVER_DOCKER := ide-sidecar-docker-cp-server-$(CONFLUENT_DOCKER_TAG)
+SEMAPHORE_OPENLDAP_DOCKER := ide-sidecar-docker-openldap-$(OSIXIA_OPENLDAP_DOCKER_TAG)
+SEMAPHORE_CNFLDEMOS_TOOLS_DOCKER := ide-sidecar-docker-cnfldemos-tools-$(CNFLDEMOS_TOOLS_DOCKER_TAG)
+
+## Cache docker images in Semaphore cache.
+.PHONY: cache-docker-images
+cache-docker-images:
+	cache has_key $(SEMAPHORE_CP_ZOOKEEPER_DOCKER) || (\
+		docker pull confluentinc/cp-zookeeper:$(CONFLUENT_DOCKER_TAG) && \
+		docker save confluentinc/cp-zookeeper:$(CONFLUENT_DOCKER_TAG) | gzip > cp-zookeeper.tgz && \
+		cache store $(SEMAPHORE_CP_ZOOKEEPER_DOCKER) cp-zookeeper.tgz && \
+		rm -rf cp-zookeeper.tgz)
+
+	cache has_key $(SEMAPHORE_CP_SERVER_DOCKER) || (\
+		docker pull confluentinc/cp-server:$(CONFLUENT_DOCKER_TAG) && \
+		docker save confluentinc/cp-server:$(CONFLUENT_DOCKER_TAG) | gzip > cp-server.tgz && \
+		cache store $(SEMAPHORE_CP_SERVER_DOCKER) cp-server.tgz && \
+		rm -rf cp-server.tgz)
+
+	cache has_key $(SEMAPHORE_OPENLDAP_DOCKER) || (\
+		docker pull osixia/openldap:$(OSIXIA_OPENLDAP_DOCKER_TAG) && \
+		docker save osixia/openldap:$(OSIXIA_OPENLDAP_DOCKER_TAG) | gzip > openldap.tgz && \
+		cache store $(SEMAPHORE_OPENLDAP_DOCKER) openldap.tgz && \
+		rm -rf openldap.tgz)
+
+	cache has_key $(SEMAPHORE_CNFLDEMOS_TOOLS_DOCKER) || (\
+		docker pull confluentinc/cnfdemos-tools:$(CNFLDEMOS_TOOLS_DOCKER_TAG) && \
+		docker save confluentinc/cnfdemos-tools:$(CNFLDEMOS_TOOLS_DOCKER_TAG) | gzip > cnfdemos-tools.tgz && \
+		cache store $(SEMAPHORE_CNFLDEMOS_TOOLS_DOCKER) cnfdemos-tools.tgz && \
+		rm -rf cnfdemos-tools.tgz)
+
+
+.PHONY: load-cached-docker-images
+load-cached-docker-images:
+	cache restore $(SEMAPHORE_CP_ZOOKEEPER_DOCKER) \
+    [ -f cp-zookeeper.tgz ] && docker load -i cp-zookeeper.tgz && rm -rf cp-zookeeper.tgz || true \
+	cache restore $(SEMAPHORE_CP_SERVER_DOCKER) \
+	[ -f cp-server.tgz ] && docker load -i cp_server.tgz && rm -rf cp_server.tgz || true \
+	cache restore $(SEMAPHORE_OPENLDAP_DOCKER) \
+	[ -f openldap.tgz ] && docker load -i openldap.tgz && rm -rf openldap.tgz || true \
+	cache restore $(SEMAPHORE_CNFLDEMOS_TOOLS_DOCKER) \
+	[ -f cnfdemos-tools.tgz ] && docker load -i cnfdemos-tools.tgz && rm -rf cnfdemos-tools.tgz || true
