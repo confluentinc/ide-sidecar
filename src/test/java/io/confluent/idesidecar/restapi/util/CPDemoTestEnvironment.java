@@ -15,9 +15,11 @@ import io.confluent.idesidecar.restapi.util.cpdemo.ZookeeperContainer;
 import io.quarkus.logging.Log;
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -179,7 +181,15 @@ public class CPDemoTestEnvironment implements TestEnvironment {
    * Do we have a CP Demo environment running with all containers?
    */
   private boolean isCpDemoRunningAllContainers() {
-    return getContainerStream().allMatch(container -> container.getState().equals("running"));
+    // If empty, return false
+    var containers = getContainerStream().collect(Collectors.toUnmodifiableSet());
+    if (containers.isEmpty()) {
+      return false;
+    }
+
+    return containers
+        .stream()
+        .allMatch(container -> container.getState().equals("running"));
   }
 
   private static Stream<Container> getContainerStream() {
@@ -193,7 +203,7 @@ public class CPDemoTestEnvironment implements TestEnvironment {
         .filter(
             container -> CP_DEMO_CONTAINERS
                 .stream()
-                .anyMatch(c -> container.getNames()[0].contains(c))
+                .anyMatch(c -> Arrays.asList(container.getNames()).contains(c))
         );
   }
 
@@ -222,8 +232,6 @@ public class CPDemoTestEnvironment implements TestEnvironment {
       }
     });
   }
-
-
 
   private static void shutdownContainers() {
     CP_DEMO_CONTAINERS.forEach(container -> {
