@@ -95,3 +95,27 @@ upload-artifacts-to-github-release:
 .PHONY: collect-notices-binary
 collect-notices-binary: clean mvn-package-native-sources-only
 	$(IDE_SIDECAR_SCRIPTS)/collect-notices-binary.sh target/native-sources/lib
+
+# Targets for managing cp-demo testcontainers used by the integration tests
+
+# Start the cp-demo testcontainers
+# Note: You do not need to run this in order to run the integration tests, however, if you want
+# to manually bring up the cp-demo environment, you may run this target. You will be
+# able to run the integration tests against the same environment, please keep that in mind!
+.PHONY: cp-demo-start
+cp-demo-start:
+	export TESTCONTAINERS_RYUK_DISABLED=true; \
+	./mvnw -s .mvn/settings.xml \
+		-Dexec.mainClass=io.confluent.idesidecar.restapi.util.CPDemoTestEnvironment \
+		-Dexec.classpathScope=test \
+		test-compile exec:java
+
+# Stop the cp-demo testcontainers
+.PHONY: cp-demo-stop
+cp-demo-stop:
+	./mvnw -s .mvn/settings.xml test-compile && \
+	./mvnw -s .mvn/settings.xml \
+		-Dexec.mainClass=io.confluent.idesidecar.restapi.util.CPDemoTestEnvironment \
+		-Dexec.classpathScope=test \
+		-Dexec.args=stop \
+		exec:java

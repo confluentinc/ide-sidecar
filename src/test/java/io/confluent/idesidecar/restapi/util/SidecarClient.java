@@ -9,12 +9,20 @@ import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.asJson;
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
 import static io.restassured.RestAssured.given;
 import static java.util.function.Predicate.not;
+import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.awaitility.Awaitility.await;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import io.confluent.idesidecar.restapi.credentials.Password;
+import io.confluent.idesidecar.restapi.credentials.Redactable;
 import io.confluent.idesidecar.restapi.kafkarest.model.CreateTopicRequestData;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequest;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequestData;
@@ -33,6 +41,7 @@ import io.restassured.config.DecoderConfig;
 import io.restassured.http.ContentType;
 import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
+import java.io.IOException;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -58,6 +67,7 @@ public class SidecarClient implements SidecarClientApi {
       .getValue("quarkus.http.test-port", Integer.class);
 
   private static final String SIDECAR_HOST = "http://localhost:%s".formatted(TEST_PORT);
+  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   private final String sidecarHost;
 
@@ -67,6 +77,15 @@ public class SidecarClient implements SidecarClientApi {
   private String currentSchemaClusterId;
   private Set<KafkaCluster> usedKafkaClusters = new HashSet<>();
   private Set<SchemaRegistry> usedSchemaRegistries = new HashSet<>();
+
+  static {
+    // Used to serialize Password objects into their raw value
+    // when sending them in the request body
+    OBJECT_MAPPER.registerModule(
+        new SimpleModule().addSerializer(Password.class, new PasswordSerializer()
+        )
+    );
+  }
 
   public SidecarClient() {
     this.sidecarHost = SIDECAR_HOST;
@@ -121,7 +140,11 @@ public class SidecarClient implements SidecarClientApi {
       setCurrentCluster(clusterId);
       var topics = listTopics();
       for (var topic : topics) {
-        deleteTopic(topic);
+        if (!topic.startsWith("_")) {
+          deleteTopic(topic);
+        } else {
+          Log.debugf("Skipping deletion of internal topic %s", topic);
+        }
       }
     }
   }
@@ -344,13 +367,17 @@ public class SidecarClient implements SidecarClientApi {
   @Override
   public Connection createConnection(ConnectionSpec spec) {
     // Create connection
-    given()
-        .contentType(ContentType.JSON)
-        .body(spec)
-        .post("%s/gateway/v1/connections".formatted(sidecarHost))
-        .then()
-        .statusCode(200)
-        .body("spec.id", equalTo(spec.id()));
+    try {
+      given()
+          .contentType(ContentType.JSON)
+          .body(OBJECT_MAPPER.writeValueAsString(spec))
+          .post("%s/gateway/v1/connections".formatted(sidecarHost))
+          .then()
+          .statusCode(200)
+          .body("spec.id", equalTo(spec.id()));
+    } catch (JsonProcessingException e) {
+      throw new RuntimeException(e);
+    }
 
     // If the connection spec configures a Kafka cluster or a Schema Registry, wait until the
     // connection to the Kafka cluster or Schema registry has been established
@@ -833,4 +860,25 @@ public class SidecarClient implements SidecarClientApi {
         .anyMatch(m -> m.get("id").equals(connectionId));
   }
 
+
+  public static class PasswordSerializer extends RawSerializer<Password> {
+
+  }
+
+  /**
+   * This serializer is unsafe to use in production code, as it will serialize the raw value of the
+   * {@link Redactable} object. It is intended for use in tests only.
+   */
+  protected abstract static class RawSerializer<T extends Redactable> extends JsonSerializer<T> {
+
+    @Override
+    public void serialize(T value, JsonGenerator gen, SerializerProvider serializers) {
+      try {
+        var chars = value.asCharArray();
+        gen.writeString(chars, 0, chars.length);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
 }
