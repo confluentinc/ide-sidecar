@@ -49,15 +49,7 @@ public record BasicCredentials(
       KafkaConnectionOptions options
   ) {
     var config = new LinkedHashMap<String, String>();
-    if (options.ssl()) {
-      config.put("security.protocol", "SASL_SSL");
-    } else {
-      config.put("security.protocol", "SASL_PLAINTEXT");
-    }
     config.put("sasl.mechanism", "PLAIN");
-    if (!options.verifyCertificates()) {
-      config.put("ssl.endpoint.identification.algorithm", "");
-    }
     config.put(
         "sasl.jaas.config",
         "%s required username=\"%s\" password=\"%s\";".formatted(
