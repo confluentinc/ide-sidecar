@@ -1,6 +1,5 @@
 package io.confluent.idesidecar.websocket.resources;
 
-import io.confluent.idesidecar.websocket.messages.Audience;
 import io.confluent.idesidecar.websocket.messages.Message;
 import io.confluent.idesidecar.websocket.messages.MessageHeaders;
 import io.confluent.idesidecar.websocket.messages.MessageType;
@@ -118,30 +117,17 @@ public class WebsocketEndpoint {
 
     log.debug("Received " + headers.type + " message from workspace: " + workspaceSession.processId());
 
-    // Handle the message based on its audience.
-    if (headers.audience == Audience.WORKSPACES)
-    {
-      // Message is intended for all (other) workspaces, using sidecar as a broadcast bus
-      // for workspace-to-all-other-workspace messages.
-      int otherCount = sessions.size() - 1;
-      if (otherCount == 0) {
-        log.debug("No other workspaces to broadcast message to.");
-        return;
-      } else {
-        log.debug("Broadcasting message to " + otherCount + " other workspaces");
-        broadcast(m, workspaceSession);
-      }
-
-    } else if (headers.audience == Audience.SIDECAR) {
-      // Message must be intended for sidecar
-
-      // todo defer to an internal message router here.
-
-      log.error("Unexpected message audience: " + m.getHeaders().audience);
+    // At this time, all messages recieved from workspaces are intended to be broadcasted to
+    // all other workspaces.
+    int otherCount = sessions.size() - 1;
+    if (otherCount == 0) {
+      log.debug("No other workspaces to broadcast message to.");
+      return;
     } else {
-      // We don't (yet) support or design for directed workspace -> workspace messages.
-      log.error("Unhandled message audience: " + m.getHeaders().audience);
+      log.debug("Broadcasting message to " + otherCount + " other workspaces");
+      broadcast(m, workspaceSession);
     }
+
   }
 
   @OnOpen
@@ -240,7 +226,7 @@ public class WebsocketEndpoint {
     // changedWorkspace was either just added or removed. Informall  workspaces about the new connected/authorized workspace count.
 
     Message message = new Message(
-        new MessageHeaders(MessageType.WORKSPACE_COUNT_CHANGED, Audience.WORKSPACES, "sidecar"),
+        new MessageHeaders(MessageType.WORKSPACE_COUNT_CHANGED, "sidecar"),
         new WorkspacesChangedBody(this.sessions.size())
     );
 
@@ -288,11 +274,6 @@ public class WebsocketEndpoint {
    */
   private MessageHeaders validateHeadersForSidecarBroadcast(Message outboundMessage) {
     MessageHeaders headers = outboundMessage.getHeaders();
-
-    if (headers.audience != Audience.WORKSPACES) {
-      log.error("Message id " + headers.id + " is not audience=workspaces message, cannot broadcast.");
-      throw new IllegalArgumentException("Attempted to broadcast a non-workspaces message to workspaces.");
-    }
 
     if (! headers.originator.equals("sidecar")) {
       log.error("Message id " + headers.id + " is not originator=sidecar message, cannot broadcast.");

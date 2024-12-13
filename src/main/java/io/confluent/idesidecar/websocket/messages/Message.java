@@ -10,9 +10,7 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
 
 /**
  * A message either sent or received through websockets to/from IDE workspaces.
- * Two primary parts, headers and body. The body's structure will vary according to the message type
- * and / or the message's audience. Audience.workspaces messages will have bodies that are
- * treated opaquely by sidecar, while others will have definite known structures.
+ * Two primary parts, headers and body. The body's structure will vary according to the message type.
  *
  * @see MessageHeaders
  * @see MessageBody

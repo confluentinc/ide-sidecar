@@ -8,7 +8,7 @@ import java.util.Map;
 
 /**
  * Arbitrary message body, used when deserializing messages with unknown structure, namely for
- * `Audience.workspaces` messages not intended to be interpreted by sidecar.
+ * messages not intended to be interpreted by sidecar.
  * */
 @RegisterForReflection
 public class DynamicMessageBody extends MessageBody{

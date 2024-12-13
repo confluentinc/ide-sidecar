@@ -33,39 +33,26 @@ public class MessageHeaders {
     public final String originator;
 
     /**
-     * Intended audience for the message. This is used to determine how to route the message.
-     * One of "workspaces" (all workspaces), "workspace" (a single workspace), or "sidecar".
+     * A unique identifier for a message.
      */
-    @NotNull
-    @JsonProperty("audience")
-    public final Audience audience;
-
-
     @NotNull
     @JsonProperty("message_id")
     public final String id;
 
     /** Constructor for outbound messages. */
-    public MessageHeaders(String type, Audience audience, String originator) {
+    public MessageHeaders(String type, String originator) {
         this.type = type;
-        this.audience = audience;
         this.originator = originator;
-
         this.id = UUID.randomUUID().toString();
     }
 
     /** Constructor for deserialized messages */
     @JsonCreator
     public MessageHeaders(@JsonProperty("message_type") String type,
-                          @JsonProperty("audience") Audience audience,
                           @JsonProperty("originator") String originator,
                           @JsonProperty("message_id") String id) {
         this.type = type;
-        this.audience = audience;
         this.originator = originator;
         this.id = id;
     }
-
-
-
 }

@@ -45,11 +45,10 @@ public class MessageDeserializer extends JsonDeserializer<Message> {
   private Class<? extends MessageBody> getBodyClassForHeader(MessageHeaders headers)
       throws IOException {
 
-    // If the message is intended for workspaces, use the DynamicMessageBody class which
-    // allows arbitrary message bodies.
-    if (headers.audience == Audience.WORKSPACES) {
-      return DynamicMessageBody.class;
-    }
+    // Only messages expected to be received at this time from workspaces should have dynamic message bodies.
+    // We may in future grow an 'audience' field in the headers to allow for more flexible routing, which
+    // then may affect how we determine the body class.
+    return DynamicMessageBody.class;
 
     // Otherwise map the type to the appropriate MessageBody subclass. As we get more
     // of these, probably defer to a Map.
@@ -60,6 +59,6 @@ public class MessageDeserializer extends JsonDeserializer<Message> {
     //  return AccessRequestBody.class;
     //}
 
-    throw new IOException("Unknown message type: " + headers.type);
+    // throw new IOException("Unknown message type: " + headers.type);
   }
 }
