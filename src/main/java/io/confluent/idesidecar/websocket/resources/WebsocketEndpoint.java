@@ -56,8 +56,6 @@ public class WebsocketEndpoint {
    * @throws IllegalArgumentException if the headers of the message are not valid for broadcasting.
    * */
   public void broadcast(Message message) throws java.io.IOException {
-    // Expected to be usable from other parts of the sidecar codebase.
-
     final MessageHeaders headers = validateHeadersForSidecarBroadcast(message);
 
     if (sessions.isEmpty()) {
@@ -74,6 +72,56 @@ public class WebsocketEndpoint {
           Log.debug("Sending broadcasted message " + headers.id() + " to workspace: " + pair.getValue().processId());
           pair.getKey().getAsyncRemote().sendText(jsonMessage);
         });
+  }
+
+  /**
+   * Handler for new websocket sessions.
+   * <p>When a new websocket session is opened, the workspace process id should be passed as a
+   * request parameter. If it is not, the session is closed. If the workspace id is not known to
+   * the sidecar {@link KnownWorkspacesBean}, the session is closed. Otherwise, a new
+   * {@link WorkspaceSession} object is created and stored in the sessions map, and the updated current
+   * connection count is broadcast to all workspace connections (inclusive).</p>
+   * @param session
+   * @throws IOException
+   */
+  @OnOpen
+  public void onOpen(Session session) throws IOException {
+    Log.info("New websocket session opened: " + session.getId());
+
+    // Request must have had a valid access token to pass through AccessTokenFilter, so we can assume that the session is authorized.
+    // The workspace process id should have been passed as a request parameter, though.
+    String workspaceIdString = session.getRequestParameterMap().get("workspace_id").get(0);
+
+    if (workspaceIdString == null) {
+      Log.error("No workspace_id parameter provided. Closing session.");
+      session.close();
+      return;
+    }
+
+    long workspaceId;
+    try {
+      workspaceId = Long.parseLong(workspaceIdString);
+    } catch (NumberFormatException e) {
+      Log.error("Invalid workspace_id parameter value: " + workspaceIdString + ". Closing session.");
+      session.close();
+      return;
+    }
+
+    // As of time of writing, the workspace should have REST handshook or hit the health check
+    // route with the workspace id header, so we should know about it already.
+    if (!knownWorkspacesBean.isKnownWorkspacePID(workspaceId)) {
+      Log.error("Unauthorized workspace id: " + workspaceId + ". Closing session.");
+      session.close();
+      return;
+    }
+
+    Log.info("New websocket session opened for workspace pid: " + workspaceId);
+    // create new WorkspaceSession object and store in sessions map.
+    WorkspaceSession newWorkspaceSession = new WorkspaceSession(workspaceId);
+    sessions.put(session, newWorkspaceSession);
+
+    // Broadcast a message to all workspaces (inclusive) that the authorized workspaces count has changed.
+    broadcastWorkspacesChanged();
   }
 
   /**
@@ -144,46 +192,7 @@ public class WebsocketEndpoint {
     }
   }
 
-  @OnOpen
-  public void onOpen(Session session) throws IOException {
-    Log.info("New websocket session opened: " + session.getId());
 
-    // Request must have had a valid access token to pass through AccessTokenFilter, so we can assume that the session is authorized.
-    // The workspace process id should have been passed as a request parameter, though.
-    String workspaceIdString = session.getRequestParameterMap().get("workspace_id").get(0);
-
-    if (workspaceIdString == null) {
-      Log.error("No workspace_id parameter provided. Closing session.");
-      session.close();
-      return;
-    }
-
-    long workspaceId;
-    try {
-      workspaceId = Long.parseLong(workspaceIdString);
-    } catch (NumberFormatException e) {
-      Log.error("Invalid workspace_id parameter value: " + workspaceIdString + ". Closing session.");
-      session.close();
-      return;
-    }
-
-    // As of time of writing, the workspace should have REST handshook or hit the health check
-    // route with the workspace id header, so we should know about it already.
-    if (!knownWorkspacesBean.isKnownWorkspacePID(workspaceId)) {
-      Log.error("Unauthorized workspace id: " + workspaceId + ". Closing session.");
-      session.close();
-      return;
-    }
-
-    Log.info("New websocket session opened for workspace pid: " + workspaceId);
-    // create new WorkspaceSession object and store in sessions map.
-    WorkspaceSession newWorkspaceSession = new WorkspaceSession(workspaceId);
-    sessions.put(session, newWorkspaceSession);
-
-    // Broadcast a message to all workspaces (inclusive) that the authorized workspaces count has changed.
-    broadcastWorkspacesChanged();
-
-  }
 
   @OnError
   public void onError(Session session, Throwable throwable) {
