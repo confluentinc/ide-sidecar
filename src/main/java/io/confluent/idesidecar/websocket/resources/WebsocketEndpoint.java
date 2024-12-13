@@ -58,12 +58,12 @@ public class WebsocketEndpoint {
     }
 
     String jsonMessage = mapper.writeValueAsString(message);
-    log.debug("Broadcasting " + jsonMessage.length() + " char message, id " + headers.id + " to all workspaces");
+    log.debug("Broadcasting " + jsonMessage.length() + " char message, id " + headers.id() + " to all workspaces");
 
     sessions.entrySet().stream()
         .filter(pair -> pair.getKey().isOpen())
         .forEach(pair -> {
-          log.debug("Sending broadcasted message " + headers.id + " to workspace: " + pair.getValue().processId());
+          log.debug("Sending broadcasted message " + headers.id() + " to workspace: " + pair.getValue().processId());
           pair.getKey().getAsyncRemote().sendText(jsonMessage);
         });
   }
@@ -100,9 +100,9 @@ public class WebsocketEndpoint {
     // (messages sent from workspaces to sidecar should have the workspace's process id as the originator)
     int claimedWorkspaceId = 0;
     try {
-      claimedWorkspaceId = Integer.parseInt(headers.originator);
+      claimedWorkspaceId = Integer.parseInt(headers.originator());
     } catch (NumberFormatException e) {
-      log.error("Invalid websocket message header originator value -- not an integer: " + headers.originator + ". Removing and closing session.");
+      log.error("Invalid websocket message header originator value -- not an integer: " + headers.originator() + ". Removing and closing session.");
       sessions.remove(senderSession);
       senderSession.close();
       return;
@@ -115,7 +115,7 @@ public class WebsocketEndpoint {
       return;
     }
 
-    log.debug("Received " + headers.type + " message from workspace: " + workspaceSession.processId());
+    log.debug("Received " + headers.type() + " message from workspace: " + workspaceSession.processId());
 
     // At this time, all messages recieved from workspaces are intended to be broadcasted to
     // all other workspaces.
@@ -211,8 +211,8 @@ public class WebsocketEndpoint {
 
     // header.originator for messages recv'd by sidecar must always be a string'd integer
     // representing the workspace id (process id).
-    if (!headers.originator.matches("\\d+")) {
-      throw new IOException("Invalid websocket message header originator value: " + headers.originator);
+    if (!headers.originator().matches("\\d+")) {
+      throw new IOException("Invalid websocket message header originator value: " + headers.originator());
     }
 
     return m;
@@ -249,12 +249,12 @@ public class WebsocketEndpoint {
     }
 
     String jsonMessage = mapper.writeValueAsString(message);
-    log.debug("Broadcasting " + jsonMessage.length() + " char message, id " + headers.id + " from workspace: " + sender.processId());
+    log.debug("Broadcasting " + jsonMessage.length() + " char message, id " + headers.id() + " from workspace: " + sender.processId());
 
     sessions.entrySet().stream()
         .filter(pair -> pair.getValue().processId() != sender.processId() && pair.getKey().isOpen())
         .forEach(pair -> {
-          log.debug("Sending broadcasted message " + headers.id + " to workspace: " + pair.getValue().processId());
+          log.debug("Sending broadcasted message " + headers.id() + " to workspace: " + pair.getValue().processId());
           pair.getKey().getAsyncRemote().sendText(jsonMessage);
         });
   }
@@ -275,8 +275,8 @@ public class WebsocketEndpoint {
   private MessageHeaders validateHeadersForSidecarBroadcast(Message outboundMessage) {
     MessageHeaders headers = outboundMessage.getHeaders();
 
-    if (! headers.originator.equals("sidecar")) {
-      log.error("Message id " + headers.id + " is not originator=sidecar message, cannot broadcast.");
+    if (! headers.originator().equals("sidecar")) {
+      log.error("Message id " + headers.id() + " is not originator=sidecar message, cannot broadcast.");
       throw new IllegalArgumentException("Attempted to broadcast a non-sidecar message to workspaces.");
     }
 

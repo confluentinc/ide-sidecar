@@ -47,11 +47,11 @@ public class Message {
   // Convenience getters for interesting bits from the headers.
   @JsonIgnore
   public String getId() {
-    return headers.id;
+    return headers.id();
   }
 
   @JsonIgnore
   public String getType() {
-    return headers.type;
+    return headers.type();
   }
 }
