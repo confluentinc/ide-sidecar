@@ -19,8 +19,7 @@ import jakarta.websocket.server.ServerEndpoint;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import javax.validation.constraints.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.quarkus.logging.Log;
 
 
 @ServerEndpoint("/ws")
@@ -37,9 +36,6 @@ public class WebsocketEndpoint {
   // Miscellany
   /** Jackson object mapper for serializing/deserializing messages. */
   private final ObjectMapper mapper = new ObjectMapper();
-  /** Logger for this class. */
-  private static final Logger log = LoggerFactory.getLogger(WebsocketEndpoint.class);
-
 
   /**
    * Broadcast a message originating from sidecar to all authorized connected workspaces.
@@ -53,17 +49,17 @@ public class WebsocketEndpoint {
     final MessageHeaders headers = validateHeadersForSidecarBroadcast(message);
 
     if (sessions.isEmpty()) {
-      log.debug("No workspaces to broadcast message to.");
+      Log.debug("No workspaces to broadcast message to.");
       return;
     }
 
     String jsonMessage = mapper.writeValueAsString(message);
-    log.debug("Broadcasting " + jsonMessage.length() + " char message, id " + headers.id() + " to all workspaces");
+    Log.debug("Broadcasting " + jsonMessage.length() + " char message, id " + headers.id() + " to all workspaces");
 
     sessions.entrySet().stream()
         .filter(pair -> pair.getKey().isOpen())
         .forEach(pair -> {
-          log.debug("Sending broadcasted message " + headers.id() + " to workspace: " + pair.getValue().processId());
+          Log.debug("Sending broadcasted message " + headers.id() + " to workspace: " + pair.getValue().processId());
           pair.getKey().getAsyncRemote().sendText(jsonMessage);
         });
   }
@@ -78,7 +74,7 @@ public class WebsocketEndpoint {
   public void onMessage(String messageString, Session senderSession) throws java.io.IOException {
     WorkspaceSession workspaceSession = sessions.get(senderSession);
     if (workspaceSession == null) {
-      log.error("Odd! Received message from unregistered session. Closing session.");
+      Log.error("Odd! Received message from unregistered session. Closing session.");
       senderSession.close();
       return;
     }
@@ -88,7 +84,7 @@ public class WebsocketEndpoint {
     try {
       m =  parseAndValidateMessage(messageString);
     } catch (java.io.IOException e) {
-      log.error("Invalid message from workspace: " + workspaceSession.processId() + ", closing session and discarding.");
+      Log.error("Invalid message from workspace: " + workspaceSession.processId() + ", closing session and discarding.");
       sessions.remove(senderSession);
       senderSession.close();
       return;
@@ -102,29 +98,29 @@ public class WebsocketEndpoint {
     try {
       claimedWorkspaceId = Integer.parseInt(headers.originator());
     } catch (NumberFormatException e) {
-      log.error("Invalid websocket message header originator value -- not an integer: " + headers.originator() + ". Removing and closing session.");
+      Log.error("Invalid websocket message header originator value -- not an integer: " + headers.originator() + ". Removing and closing session.");
       sessions.remove(senderSession);
       senderSession.close();
       return;
     }
 
     if (claimedWorkspaceId != workspaceSession.processId()) {
-      log.error("Workspace " + workspaceSession.processId() + " sent message with incorrect originator value: " + claimedWorkspaceId + ".Removing and closing session.");
+      Log.error("Workspace " + workspaceSession.processId() + " sent message with incorrect originator value: " + claimedWorkspaceId + ".Removing and closing session.");
       sessions.remove(senderSession);
       senderSession.close();
       return;
     }
 
-    log.debug("Received " + headers.type() + " message from workspace: " + workspaceSession.processId());
+    Log.debug("Received " + headers.type() + " message from workspace: " + workspaceSession.processId());
 
     // At this time, all messages recieved from workspaces are intended to be broadcasted to
     // all other workspaces.
     int otherCount = sessions.size() - 1;
     if (otherCount == 0) {
-      log.debug("No other workspaces to broadcast message to.");
+      Log.debug("No other workspaces to broadcast message to.");
       return;
     } else {
-      log.debug("Broadcasting message to " + otherCount + " other workspaces");
+      Log.debug("Broadcasting message to " + otherCount + " other workspaces");
       broadcast(m, workspaceSession);
     }
 
@@ -134,13 +130,13 @@ public class WebsocketEndpoint {
   public void onOpen(Session session) throws IOException {
     // Don't store into sessions map until successful handling of ACCESS_REQUEST message,
     // so do nothing of importance here.
-    log.info("New websocket session opened: " + session.getId());
+    Log.info("New websocket session opened: " + session.getId());
     // Request must have had a valid access token to pass through AccessTokenFilter, so we can assume that the session is authorized.
     // The workspace process id should have been passed as a request parameter, though.
     String workspaceIdString = session.getRequestParameterMap().get("workspace_id").get(0);
 
     if (workspaceIdString == null) {
-      log.error("No workspace_id parameter provided. Closing session.");
+      Log.error("No workspace_id parameter provided. Closing session.");
       session.close();
       return;
     }
@@ -149,12 +145,12 @@ public class WebsocketEndpoint {
     try {
       workspaceId = Integer.parseInt(workspaceIdString);
     } catch (NumberFormatException e) {
-      log.error("Invalid workspace_id parameter value: " + workspaceIdString + ". Closing session.");
+      Log.error("Invalid workspace_id parameter value: " + workspaceIdString + ". Closing session.");
       session.close();
       return;
     }
 
-    log.info("New websocket session opened for workspace pid: " + workspaceId);
+    Log.info("New websocket session opened for workspace pid: " + workspaceId);
     // create new WorkspaceSession object and store in sessions map.
     WorkspaceSession newWorkspaceSession = new WorkspaceSession(workspaceId);
     sessions.put(session, newWorkspaceSession);
@@ -176,22 +172,22 @@ public class WebsocketEndpoint {
     } else {
       logPrefix = "Websocket error for unauthorized session: " + session.getId() + " - ";
     }
-    log.error(logPrefix + throwable.getMessage());
-    log.error(logPrefix + "Session removed.");
+    Log.error(logPrefix + throwable.getMessage());
+    Log.error(logPrefix + "Session removed.");
   }
 
   @OnClose
   public void onClose(Session session) {
     WorkspaceSession existing = sessions.remove(session);
-    log.info("Websocket session closed: " + session.getId());
+    Log.info("Websocket session closed: " + session.getId());
 
     if (existing != null) {
       // was a registered workspace session. Announce to all other workspaces that the list has changed.
-      log.info("Closed session was workspace " + existing.processId() + ", broadcasting workspace count change.");
+      Log.info("Closed session was workspace " + existing.processId() + ", broadcasting workspace count change.");
       try {
         broadcastWorkspacesChanged();
       } catch (java.io.IOException e) {
-        log.error("Failed to broadcast workspace removed message: " + e.getMessage());
+        Log.error("Failed to broadcast workspace removed message: " + e.getMessage());
       }
     }
   }
@@ -244,17 +240,17 @@ public class WebsocketEndpoint {
     final MessageHeaders headers = validateHeadersForSidecarBroadcast(message);
 
     if (sessions.isEmpty()) {
-      log.debug("No other workspaces to broadcast message to.");
+      Log.debug("No other workspaces to broadcast message to.");
       return;
     }
 
     String jsonMessage = mapper.writeValueAsString(message);
-    log.debug("Broadcasting " + jsonMessage.length() + " char message, id " + headers.id() + " from workspace: " + sender.processId());
+    Log.debug("Broadcasting " + jsonMessage.length() + " char message, id " + headers.id() + " from workspace: " + sender.processId());
 
     sessions.entrySet().stream()
         .filter(pair -> pair.getValue().processId() != sender.processId() && pair.getKey().isOpen())
         .forEach(pair -> {
-          log.debug("Sending broadcasted message " + headers.id() + " to workspace: " + pair.getValue().processId());
+          Log.debug("Sending broadcasted message " + headers.id() + " to workspace: " + pair.getValue().processId());
           pair.getKey().getAsyncRemote().sendText(jsonMessage);
         });
   }
@@ -262,7 +258,7 @@ public class WebsocketEndpoint {
   /** Send a directed message from sidecar to a specific websocket session. */
   private void sendMessage(Session recipient, Message message) throws java.io.IOException {
     String jsonMessage = mapper.writeValueAsString(message);
-    log.info("Sending " + jsonMessage.length() + " char message, id " + message.getId() + " to workspace: " + recipient.getId());
+    Log.info("Sending " + jsonMessage.length() + " char message, id " + message.getId() + " to workspace: " + recipient.getId());
     recipient.getAsyncRemote().sendText(jsonMessage);
   }
 
@@ -276,7 +272,7 @@ public class WebsocketEndpoint {
     MessageHeaders headers = outboundMessage.getHeaders();
 
     if (! headers.originator().equals("sidecar")) {
-      log.error("Message id " + headers.id() + " is not originator=sidecar message, cannot broadcast.");
+      Log.errorf("Message id %s is not originator=sidecar message, cannot broadcast.", headers.id());
       throw new IllegalArgumentException("Attempted to broadcast a non-sidecar message to workspaces.");
     }
 
