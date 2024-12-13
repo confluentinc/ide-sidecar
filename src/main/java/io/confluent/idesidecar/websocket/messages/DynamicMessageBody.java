@@ -11,7 +11,7 @@ import java.util.Map;
  * messages not intended to be interpreted by sidecar.
  * */
 @RegisterForReflection
-public class DynamicMessageBody extends MessageBody{
+public class DynamicMessageBody implements MessageBody {
   private final Map<String, Object> properties = new HashMap<String, Object>();
 
   @JsonAnyGetter

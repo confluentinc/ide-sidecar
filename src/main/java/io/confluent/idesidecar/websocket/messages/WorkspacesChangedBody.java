@@ -7,7 +7,7 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
  * Sent by the sidecar to the workspace when the list of workspaces has changed.
  */
 @RegisterForReflection
-public final class WorkspacesChangedBody extends MessageBody {
+public final class WorkspacesChangedBody implements MessageBody {
 
   @JsonProperty("current_workspace_count")
   public final int workspaceCount;
