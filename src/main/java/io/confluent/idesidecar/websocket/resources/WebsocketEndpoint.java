@@ -1,18 +1,15 @@
 package io.confluent.idesidecar.websocket.resources;
 
-import io.confluent.idesidecar.restapi.application.SidecarAccessTokenBean;
 import io.confluent.idesidecar.websocket.messages.Audience;
 import io.confluent.idesidecar.websocket.messages.Message;
 import io.confluent.idesidecar.websocket.messages.MessageHeaders;
 import io.confluent.idesidecar.websocket.messages.MessageType;
-import io.confluent.idesidecar.websocket.messages.ResponseMessageHeaders;
 import io.confluent.idesidecar.websocket.messages.WorkspacesChangedBody;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Provider;
 import jakarta.websocket.OnClose;
 import jakarta.websocket.OnError;
 import jakarta.websocket.OnMessage;
@@ -122,7 +119,7 @@ public class WebsocketEndpoint {
     log.debug("Received " + headers.type + " message from workspace: " + workspaceSession.processId());
 
     // Handle the message based on its audience.
-    if (headers.audience == Audience.workspaces)
+    if (headers.audience == Audience.WORKSPACES)
     {
       // Message is intended for all (other) workspaces, using sidecar as a broadcast bus
       // for workspace-to-all-other-workspace messages.
@@ -135,7 +132,7 @@ public class WebsocketEndpoint {
         broadcast(m, workspaceSession);
       }
 
-    } else if (headers.audience == Audience.sidecar) {
+    } else if (headers.audience == Audience.SIDECAR) {
       // Message must be intended for sidecar
 
       // todo defer to an internal message router here.
@@ -243,7 +240,7 @@ public class WebsocketEndpoint {
     // changedWorkspace was either just added or removed. Informall  workspaces about the new connected/authorized workspace count.
 
     Message message = new Message(
-        new MessageHeaders(MessageType.WORKSPACE_COUNT_CHANGED, Audience.workspaces, "sidecar"),
+        new MessageHeaders(MessageType.WORKSPACE_COUNT_CHANGED, Audience.WORKSPACES, "sidecar"),
         new WorkspacesChangedBody(this.sessions.size())
     );
 
@@ -292,12 +289,7 @@ public class WebsocketEndpoint {
   private MessageHeaders validateHeadersForSidecarBroadcast(Message outboundMessage) {
     MessageHeaders headers = outboundMessage.getHeaders();
 
-    if (headers instanceof ResponseMessageHeaders) {
-      log.error("Message id " + headers.id + " has a reponse id, cannot broadcast.");
-      throw new IllegalArgumentException("Attempted to broadcast a response message to workspaces.");
-    }
-
-    if (headers.audience != Audience.workspaces) {
+    if (headers.audience != Audience.WORKSPACES) {
       log.error("Message id " + headers.id + " is not audience=workspaces message, cannot broadcast.");
       throw new IllegalArgumentException("Attempted to broadcast a non-workspaces message to workspaces.");
     }

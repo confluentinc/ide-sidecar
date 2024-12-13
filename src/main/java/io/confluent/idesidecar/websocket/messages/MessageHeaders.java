@@ -12,8 +12,6 @@ import javax.validation.constraints.NotNull;
  * Structure describing the headers for all websocket messages.
  *
  * @see Message
- * @see ResponseMessageHeaders for a subclass adding an in-response-to-ish field, used when sidecar
- *                              is responding to a specific message.
  */
 @RegisterForReflection
 public class MessageHeaders {

@@ -47,7 +47,7 @@ public class MessageDeserializer extends JsonDeserializer<Message> {
 
     // If the message is intended for workspaces, use the DynamicMessageBody class which
     // allows arbitrary message bodies.
-    if (headers.audience == Audience.workspaces) {
+    if (headers.audience == Audience.WORKSPACES) {
       return DynamicMessageBody.class;
     }
 

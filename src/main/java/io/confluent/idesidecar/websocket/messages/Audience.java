@@ -8,17 +8,17 @@ public enum Audience {
    * Message intended for a single workspace, usually originating from the sidecar as a response
    * to a message from the workspace.
    */
-  workspace("workspace"),
+  WORKSPACE("workspace"),
 
   /**
    * Message intended for all workspaces, originating either from the sidecar or a workspace.
    */
-  workspaces("workspaces"),
+  WORKSPACES("workspaces"),
 
   /**
    * Message intended for the sidecar, originating from a workspace.
    */
-  sidecar("sidecar");
+  SIDECAR("sidecar");
 
   private final String text;
 
