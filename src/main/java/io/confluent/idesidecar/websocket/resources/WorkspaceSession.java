@@ -1,5 +1,5 @@
 package io.confluent.idesidecar.websocket.resources;
 
-/** Record describing authorized workspace sessions: processId int, ... **/
-public record WorkspaceSession(int processId) {
+/** Record describing authorized workspace sessions: processId long, ... **/
+public record WorkspaceSession(long processId) {
 }

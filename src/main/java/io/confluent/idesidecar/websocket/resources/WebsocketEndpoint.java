@@ -1,5 +1,7 @@
 package io.confluent.idesidecar.websocket.resources;
 
+import io.confluent.idesidecar.restapi.application.KnownWorkspacesBean;
+
 import io.confluent.idesidecar.websocket.messages.Message;
 import io.confluent.idesidecar.websocket.messages.MessageHeaders;
 import io.confluent.idesidecar.websocket.messages.MessageType;
@@ -9,6 +11,9 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import jakarta.enterprise.context.ApplicationScoped;
+
+import jakarta.inject.Inject;
+
 import jakarta.websocket.OnClose;
 import jakarta.websocket.OnError;
 import jakarta.websocket.OnMessage;
@@ -31,6 +36,12 @@ public class WebsocketEndpoint {
    * Map of active, authorized workspace sessions, keyed by the websocket session object.
    */
   private final Map<Session, WorkspaceSession> sessions = new ConcurrentHashMap<Session, WorkspaceSession>();
+
+  /**
+   * Authority on the known workspaces in the system. Used to validate workspace ids.
+   */
+  @Inject
+  KnownWorkspacesBean knownWorkspacesBean;
 
 
   // Miscellany
@@ -128,9 +139,8 @@ public class WebsocketEndpoint {
 
   @OnOpen
   public void onOpen(Session session) throws IOException {
-    // Don't store into sessions map until successful handling of ACCESS_REQUEST message,
-    // so do nothing of importance here.
     Log.info("New websocket session opened: " + session.getId());
+
     // Request must have had a valid access token to pass through AccessTokenFilter, so we can assume that the session is authorized.
     // The workspace process id should have been passed as a request parameter, though.
     String workspaceIdString = session.getRequestParameterMap().get("workspace_id").get(0);
@@ -141,11 +151,19 @@ public class WebsocketEndpoint {
       return;
     }
 
-    int workspaceId;
+    long workspaceId;
     try {
-      workspaceId = Integer.parseInt(workspaceIdString);
+      workspaceId = Long.parseLong(workspaceIdString);
     } catch (NumberFormatException e) {
       Log.error("Invalid workspace_id parameter value: " + workspaceIdString + ". Closing session.");
+      session.close();
+      return;
+    }
+
+    // As of time of writing, the workspace should have REST handshook or hit the health check
+    // route with the workspace id header, so we should know about it already.
+    if (!knownWorkspacesBean.isKnownWorkspacePID(workspaceId)) {
+      Log.error("Unauthorized workspace id: " + workspaceId + ". Closing session.");
       session.close();
       return;
     }
