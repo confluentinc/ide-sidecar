@@ -17,20 +17,8 @@ public record MessageHeaders(
     @NotNull @JsonProperty("originator") String originator,
     @NotNull @JsonProperty("message_id") String id
 ) {
-
     /** Constructor for outbound messages. */
     public MessageHeaders(String type, String originator) {
         this(type, originator, UUID.randomUUID().toString());
-    }
-
-    /** Constructor for deserialized messages. */
-    @JsonCreator
-    public MessageHeaders(
-        @JsonProperty("message_type") String type,
-        @JsonProperty("originator") String originator,
-        @JsonProperty("message_id") String id) {
-        this.type = type;
-        this.originator = originator;
-        this.id = id;
     }
 }

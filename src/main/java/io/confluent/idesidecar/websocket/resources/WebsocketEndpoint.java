@@ -26,12 +26,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import javax.validation.constraints.NotNull;
 import io.quarkus.logging.Log;
 
-
+/**
+ * Websocket endpoint for "control plane" variety async messaging between sidecar and workspaces,
+ * and/or workspace -> workspaces.
+ */
 @ServerEndpoint("/ws")
 @ApplicationScoped
 public class WebsocketEndpoint {
-
-
   /**
    * Map of active, authorized workspace sessions, keyed by the websocket session object.
    */
@@ -122,19 +123,25 @@ public class WebsocketEndpoint {
       return;
     }
 
-    Log.debug("Received " + headers.type() + " message from workspace: " + workspaceSession.processId());
+    Log.debugf("Received message %s of type %s from workspace %d", headers.id(), headers.type(), workspaceSession.processId());
 
-    // At this time, all messages recieved from workspaces are intended to be broadcasted to
-    // all other workspaces.
+    /*
+      At this time, all websocket messages recieved from workspaces are intended to
+      be proxied to all of the other workspaces. Do so here.
+     */
+
     int otherCount = sessions.size() - 1;
-    if (otherCount == 0) {
+    if (otherCount <= 0) {
       Log.debug("No other workspaces to broadcast message to.");
       return;
     } else {
-      Log.debug("Broadcasting message to " + otherCount + " other workspaces");
-      broadcast(m, workspaceSession);
+      Log.debugf("Proxying message %s from workspace %d to %d other workspace(s)", headers.id(), workspaceSession.processId(), otherCount);
+      sessions.entrySet().stream()
+          .filter(pair -> pair.getValue().processId() != workspaceSession.processId() && pair.getKey().isOpen())
+          .forEach(pair -> {
+            pair.getKey().getAsyncRemote().sendText(messageString);
+          });
     }
-
   }
 
   @OnOpen
@@ -245,39 +252,6 @@ public class WebsocketEndpoint {
     );
 
     broadcast(message);
-  }
-
-  /**
-   * Broadcast this message originating from sidecar to all other authorized workspaces. Is what we do with all audience=="workspaces" messages,
-   * either originating from other workspaces or perhaps from sidecar itself.
-   *
-   * Skips sending the message to the distinguished "sender" workspace.
-   *
-   * */
-  private void broadcast(Message message, WorkspaceSession sender) throws java.io.IOException {
-    final MessageHeaders headers = validateHeadersForSidecarBroadcast(message);
-
-    if (sessions.isEmpty()) {
-      Log.debug("No other workspaces to broadcast message to.");
-      return;
-    }
-
-    String jsonMessage = mapper.writeValueAsString(message);
-    Log.debug("Broadcasting " + jsonMessage.length() + " char message, id " + headers.id() + " from workspace: " + sender.processId());
-
-    sessions.entrySet().stream()
-        .filter(pair -> pair.getValue().processId() != sender.processId() && pair.getKey().isOpen())
-        .forEach(pair -> {
-          Log.debug("Sending broadcasted message " + headers.id() + " to workspace: " + pair.getValue().processId());
-          pair.getKey().getAsyncRemote().sendText(jsonMessage);
-        });
-  }
-
-  /** Send a directed message from sidecar to a specific websocket session. */
-  private void sendMessage(Session recipient, Message message) throws java.io.IOException {
-    String jsonMessage = mapper.writeValueAsString(message);
-    Log.info("Sending " + jsonMessage.length() + " char message, id " + message.getId() + " to workspace: " + recipient.getId());
-    recipient.getAsyncRemote().sendText(jsonMessage);
   }
 
   /**
