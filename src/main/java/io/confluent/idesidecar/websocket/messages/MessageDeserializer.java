@@ -8,15 +8,16 @@ import java.io.IOException;
 
 
 /**
- * Custom deserializer for Message objects received from websocket messages from IDE workspaces.
+ * Custom deserializer for {@link Message} objects received from websocket messages from IDE workspaces.
  *
- * Must be a custom deserializer because the body of the message is polymorphic based on both the
- * message type and the audience.
+ * Must be a custom deserializer because the body of the message will be polymorphic based on both the
+ * message type and future audience.
  *
  * If the message is intended for workspaces, the body is deserialized as a DynamicMessageBody which
- * allows arbitrary message bodies.
+ * allows arbitrary message bodies (the only expected use currently).
  *
- * Otherwise, the body is deserialized as a subclass of MessageBody based on the message type.
+ * Otherwise, future work if needed, the body is deserialized as an varying implementation of
+ * MessageBody based on the message type.
  */
 public class MessageDeserializer extends JsonDeserializer<Message> {
 
