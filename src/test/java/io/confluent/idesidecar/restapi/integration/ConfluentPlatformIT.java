@@ -40,11 +40,7 @@ public class ConfluentPlatformIT {
 
   @AfterAll
   static void afterAll() {
-    // Shutdown the test environment after all tests have run
-    // This behavior is only enabled on CI
-    if (System.getenv("CI") != null && System.getenv("CI").equals("true")) {
-      TEST_ENVIRONMENT.shutdown();
-    }
+    TEST_ENVIRONMENT.shutdown();
   }
 
   @Nested

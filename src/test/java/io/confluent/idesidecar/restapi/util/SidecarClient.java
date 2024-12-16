@@ -82,8 +82,7 @@ public class SidecarClient implements SidecarClientApi {
     // Used to serialize Password objects into their raw value
     // when sending them in the request body
     OBJECT_MAPPER.registerModule(
-        new SimpleModule().addSerializer(Password.class, new PasswordSerializer()
-        )
+        new SimpleModule().addSerializer(Password.class, new PasswordSerializer())
     );
   }
 

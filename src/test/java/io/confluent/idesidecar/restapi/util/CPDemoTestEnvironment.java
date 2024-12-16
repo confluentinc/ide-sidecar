@@ -35,8 +35,6 @@ import org.testcontainers.utility.TestcontainersConfiguration;
  * Zookeeper, OpenLDAP, and Schema Registry.
  * Modeled after https://github.com/confluentinc/cp-demo/blob/7.7.1-post/docker-compose.yml
  */
-@SetEnvironmentVariable(key = "TESTCONTAINERS_REUSE_ENABLE", value = "true")
-// We want to manage cleanup ourselves.
 public class CPDemoTestEnvironment implements TestEnvironment {
   private Network network;
   private ToolsContainer tools;
