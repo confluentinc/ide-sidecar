@@ -10,6 +10,7 @@ import io.confluent.idesidecar.restapi.testutil.MockWorkspaceProcess;
 import io.confluent.idesidecar.websocket.messages.DynamicMessageBody;
 import io.confluent.idesidecar.websocket.messages.Message;
 import io.confluent.idesidecar.websocket.messages.MessageHeaders;
+import io.confluent.idesidecar.websocket.messages.MessageType;
 import io.confluent.idesidecar.websocket.messages.WorkspacesChangedBody;
 import io.quarkus.test.common.http.TestHTTPResource;
 import io.quarkus.test.junit.QuarkusTest;
@@ -61,23 +62,35 @@ public class WebsocketEndpointTest {
    * */
   public static class TestWebsocketClientMessageHandler implements MessageHandler.Whole<String>
   {
-    // Where this client will store messages received.
+    // Where this client will store deserialized messages received.
     public final LinkedBlockingDeque<Message> messages = new LinkedBlockingDeque<>();
+
+    // likewise, but for the raw message json strings. Needed for tests which send explictly
+    // unknown message types whose serialization will coerce to DynamicMessageBody + MessageTypes.UNKNOWN,
+    // but when delivered through to other workspaces, the original message type should be preserved.
+    public final LinkedBlockingDeque<String> rawMessageStrings = new LinkedBlockingDeque<>();
 
     // For deserializing messages.
     private static final ObjectMapper mapper = new ObjectMapper();
 
     @Override
-    public void onMessage(String message)
+    public void onMessage(String messageString)
     {
+      rawMessageStrings.add(messageString);
       try {
         // Deserialize json -> Message, add to our list of messages so that the main
         // test can check them.
-        Message m = mapper.readValue(message, Message.class);
-        this.messages.add(m);
+        Message message = mapper.readValue(messageString, Message.class);
+        messages.add(message);
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
+    }
+
+    /** Empty out any recieved messages */
+    public void clear() {
+      messages.clear();
+      rawMessageStrings.clear();
     }
   }
 
@@ -260,8 +273,8 @@ public class WebsocketEndpointTest {
 
       // The message should be a WORKSPACE_COUNT_CHANGED message describing the expected
       // number of workspaces connected.
-      assertTrue(message.getType().equals("WORKSPACE_COUNT_CHANGED"));
-      assertTrue(((WorkspacesChangedBody) message.getBody()).workspaceCount() == expectedWorkspaceCount);
+      assertTrue(message.messageType().equals(MessageType.WORKSPACE_COUNT_CHANGED));
+      assertTrue(((WorkspacesChangedBody) message.body()).workspaceCount() == expectedWorkspaceCount);
     }
 
     // let things settle ...
@@ -272,27 +285,50 @@ public class WebsocketEndpointTest {
     if (secondAnnouncement == null) {
       throw new RuntimeException("Timed out waiting for client to receive message");
     }
-    assertTrue(secondAnnouncement.getType().equals("WORKSPACE_COUNT_CHANGED"));
-    assertTrue(((WorkspacesChangedBody) secondAnnouncement.getBody()).workspaceCount() == 2);
+    assertTrue(secondAnnouncement.messageType().equals(MessageType.WORKSPACE_COUNT_CHANGED));
+    assertTrue(((WorkspacesChangedBody) secondAnnouncement.body()).workspaceCount() == 2);
 
     // 5. Now let's have one workspace send an arbitrary, unknown message type to sidecar.
-    // It should be proxied through to the other workspace.
-    ObjectMapper mapper = new ObjectMapper();
-    Message m = new Message(
-        new MessageHeaders("random_sidecar_message", mockWorkspaceProcesses[0].pid_string , "message-id-here"),
-        new DynamicMessageBody(Map.of("foonly", 3))
-    );
-    websocketSessions.getFirst().getBasicRemote().sendText(mapper.writeValueAsString(m));
+    // It should be proxied through *unchanged*, including the random message type, to the other workspace.
 
-    // The second workspace should receive the message.
+    // Need to build by string because we explicitly want to use a message type that isn't
+    // known to the sidecar.
+    String bogusMessageTypeMessage = """
+        {
+          "headers": {
+            "message_type": "random_sidecar_message",
+            "originator": "%s",
+            "message_id": "message-id-here"
+          },
+          "body": {
+            "foonly": 3
+          }
+        }
+        """.formatted(mockWorkspaceProcesses[0].pid_string);
+
+    var secondWorkspaceMessageHandler = messageHandlers.get(1);
+    secondWorkspaceMessageHandler.clear(); // clear out any messages received so far
+
+    // send the message from first workspace.
+    websocketSessions.getFirst().getBasicRemote().sendText(bogusMessageTypeMessage);
+
+    // The second workspace should receive the message, and it should be unchanged, esp.
+    // the message tyoe.
     var randomMessage = messageHandlers.get(1).messages.poll(1, TimeUnit.SECONDS);
     if (randomMessage == null) {
       throw new RuntimeException("Timed out waiting for client to receive message");
     }
-    assertTrue(randomMessage.getType().equals("random_sidecar_message"));
-    assertTrue(randomMessage.getHeaders().id().equals("message-id-here"));
-    assertTrue(randomMessage.getHeaders().originator().equals(mockWorkspaceProcesses[0].pid_string));
-    assertTrue(((DynamicMessageBody) randomMessage.getBody()).getProperties().get("foonly").equals(3));
+
+    Assertions.assertEquals("message-id-here", randomMessage.headers().id());
+    Assertions.assertEquals(randomMessage.headers().originator(),
+        mockWorkspaceProcesses[0].pid_string);
+    Assertions.assertEquals(3,
+        ((DynamicMessageBody) randomMessage.body()).getProperties().get("foonly"));
+
+    // to test the original message type, though, must look at the raw message string.
+    var rawMessageString = secondWorkspaceMessageHandler.rawMessageStrings.getFirst();
+    Assertions.assertTrue(
+        rawMessageString.contains("\"message_type\": \"random_sidecar_message\""));
 
 
     // 6. Close the second workspace session. The first should receive a message about it having disconnected.
@@ -303,8 +339,8 @@ public class WebsocketEndpointTest {
       throw new RuntimeException("Timed out waiting for client to receive message");
     }
     // Should describe just one workspace connected.
-    assertTrue(message.getType().equals("WORKSPACE_COUNT_CHANGED"));
-    assertTrue(((WorkspacesChangedBody) message.getBody()).workspaceCount() == 1);
+    Assertions.assertEquals(MessageType.WORKSPACE_COUNT_CHANGED, message.messageType());
+    Assertions.assertEquals(1, ((WorkspacesChangedBody) message.body()).workspaceCount());
   }
 
   @Test
@@ -421,7 +457,7 @@ public class WebsocketEndpointTest {
     // When the workspace sends a message with an invalid originator value not corresponding with
     // their process id ...
     Message message = new Message(
-        new MessageHeaders("random_sidecar_message", invalidOriginator, "message-id-here"),
+        new MessageHeaders(MessageType.UNKNOWN, invalidOriginator, "message-id-here"),
         new DynamicMessageBody(Map.of("foonly", 3))
     );
     connectedWorkspace.send(message);

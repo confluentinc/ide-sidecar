@@ -29,11 +29,11 @@ public class MessageSerializationTest {
 
     Message m = mapper.readValue(simpleMessage, Message.class);
 
-    MessageHeaders headers = m.getHeaders();
-    assertEquals("random_sidecar_message", headers.type());
+    MessageHeaders headers = m.headers();
+    assertEquals(MessageType.UNKNOWN, headers.messageType());
     assertEquals("1122", headers.originator());
 
-    MessageBody body = m.getBody();
+    MessageBody body = m.body();
     assertTrue(body instanceof DynamicMessageBody);
 
     DynamicMessageBody dmb = (DynamicMessageBody) body;
