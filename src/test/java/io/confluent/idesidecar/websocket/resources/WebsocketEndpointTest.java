@@ -25,7 +25,6 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -257,8 +256,8 @@ public class WebsocketEndpointTest {
 
       // The message should be a WORKSPACE_COUNT_CHANGED message describing the expected
       // number of workspaces connected.
-      assert message.getType().equals("WORKSPACE_COUNT_CHANGED");
-      assert ((WorkspacesChangedBody) message.getBody()).workspaceCount() == expectedWorkspaceCount;
+      assertTrue(message.getType().equals("WORKSPACE_COUNT_CHANGED"));
+      assertTrue(((WorkspacesChangedBody) message.getBody()).workspaceCount() == expectedWorkspaceCount);
     }
 
     // let things settle ...
@@ -269,8 +268,8 @@ public class WebsocketEndpointTest {
     if (secondAnnouncement == null) {
       throw new RuntimeException("Timed out waiting for client to receive message");
     }
-    assert secondAnnouncement.getType().equals("WORKSPACE_COUNT_CHANGED");
-    assert ((WorkspacesChangedBody) secondAnnouncement.getBody()).workspaceCount() == 2;
+    assertTrue(secondAnnouncement.getType().equals("WORKSPACE_COUNT_CHANGED"));
+    assertTrue(((WorkspacesChangedBody) secondAnnouncement.getBody()).workspaceCount() == 2);
 
     // 5. Now let's have one workspace send an arbitrary, unknown message type to sidecar.
     // It should be proxied through to the other workspace.
@@ -286,10 +285,10 @@ public class WebsocketEndpointTest {
     if (randomMessage == null) {
       throw new RuntimeException("Timed out waiting for client to receive message");
     }
-    assert randomMessage.getType().equals("random_sidecar_message");
-    assert randomMessage.getHeaders().id().equals("message-id-here");
-    assert randomMessage.getHeaders().originator().equals(mockWorkspaceProcesses[0].pid_string);
-    assert ((DynamicMessageBody) randomMessage.getBody()).getProperties().get("foonly").equals(3);
+    assertTrue(randomMessage.getType().equals("random_sidecar_message"));
+    assertTrue(randomMessage.getHeaders().id().equals("message-id-here"));
+    assertTrue(randomMessage.getHeaders().originator().equals(mockWorkspaceProcesses[0].pid_string));
+    assertTrue(((DynamicMessageBody) randomMessage.getBody()).getProperties().get("foonly").equals(3));
 
 
     // 6. Close the second workspace session. The first should receive a message about it having disconnected.
@@ -300,8 +299,8 @@ public class WebsocketEndpointTest {
       throw new RuntimeException("Timed out waiting for client to receive message");
     }
     // Should describe just one workspace connected.
-    assert message.getType().equals("WORKSPACE_COUNT_CHANGED");
-    assert ((WorkspacesChangedBody) message.getBody()).workspaceCount() == 1;
+    assertTrue(message.getType().equals("WORKSPACE_COUNT_CHANGED"));
+    assertTrue(((WorkspacesChangedBody) message.getBody()).workspaceCount() == 1);
   }
 
   @Test
@@ -384,7 +383,7 @@ public class WebsocketEndpointTest {
       thrown = true;
     }
 
-    assert thrown;
+    assertTrue(thrown);
   }
 
   /** Test bad deserialize handling within WebsocketEndpoint::onMessage(), when parseAndValidateMessage() raises. */
