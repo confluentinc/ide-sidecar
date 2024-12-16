@@ -49,6 +49,9 @@ public class WebsocketEndpointTest {
   @Inject
   KnownWorkspacesBean knownWorkspacesBean;
 
+  @Inject
+  WebsocketEndpoint websocketEndpoint;
+
 
   @TestHTTPResource("/ws")
   URI uri;
@@ -643,6 +646,13 @@ public class WebsocketEndpointTest {
   @BeforeEach
   public void resetAccessTokenBean() {
     setAuthToken(null);
+  }
+
+  @BeforeEach
+  public void resetCurrentWebsocketCount() {
+    // empty out websocketEndpoint's sessions, in case any from prior test
+    // linger, which may throw off behavior of the next test.
+    websocketEndpoint.sessions.clear();
   }
 
   /**

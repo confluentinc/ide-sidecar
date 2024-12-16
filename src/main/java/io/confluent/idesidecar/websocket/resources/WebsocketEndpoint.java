@@ -34,7 +34,8 @@ public class WebsocketEndpoint {
   /**
    * Map of active, authorized workspace sessions, keyed by the websocket session object.
    */
-  private final Map<Session, WorkspaceSession> sessions = new ConcurrentHashMap<>();
+  @VisibleForTesting
+  final Map<Session, WorkspaceSession> sessions = new ConcurrentHashMap<>();
 
   /**
    * Authority on the known workspaces in the system. Used to validate workspace ids.
