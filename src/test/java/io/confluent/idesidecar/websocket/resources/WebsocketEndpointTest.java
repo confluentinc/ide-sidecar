@@ -35,6 +35,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import io.quarkus.logging.Log;
 
 /**
  * Tests over workspaces connecting to /ws as websocket clients, access filtering, and message handling.
@@ -162,6 +163,65 @@ public class WebsocketEndpointTest {
     public void send(String message) throws IOException {
       session.getBasicRemote().sendText(message);
     }
+
+    /**
+     * Block until a message of the given type is received. Return it.
+     *
+     * @throws RuntimeException if the message is not received within the given time.
+     */
+    public Message waitForMessageOfType(MessageType messageType, long waitAtMostMillis) {
+      long start = System.currentTimeMillis();
+
+      while (true) {
+        Message message = null;
+
+        try {
+          message = messageHandler.messages.poll(250, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+          // do nothing, fallthrough
+        }
+
+        if (message == null || message.messageType() != messageType) {
+          // waited too long?
+          if (System.currentTimeMillis() - start > waitAtMostMillis) {
+            throw new RuntimeException("Timed out waiting for message of type " + messageType);
+          }
+
+          // otherwise loop back try again
+          continue;
+        }
+
+        // Must be the message type we're looking for.
+        Assertions.assertEquals(messageType, message.messageType());
+        return message;
+      }
+    }
+
+    /**
+     * Close the websocket
+     */
+    public void closeWebsocket() {
+      try {
+        session.close();
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    /**
+     * Clear any previously received messages.
+     */
+    public void clearReceivedMessages() {
+      messageHandler.clear();
+    }
+
+    public int receivedMessageCount() {
+      return messageHandler.messages.size();
+    }
+
+    public String processIdString() {
+      return mockWorkspaceProcess.pid_string;
+    }
   }
 
 
@@ -251,6 +311,7 @@ public class WebsocketEndpointTest {
       URI uri = URI.create(
           this.uri.toString() + "?workspace_id=" + mockWorkspaceProcess.pid_string);
 
+      Log.info("Test: Workspace " + mockWorkspaceProcess.pid_string + " connecting to websocket.");
       Session session = ContainerProvider.getWebSocketContainer()
           .connectToServer(TestWebsocketClient.class, uri);
 
@@ -273,12 +334,11 @@ public class WebsocketEndpointTest {
       // The message should be a WORKSPACE_COUNT_CHANGED message describing the expected
       // number of workspaces connected.
       Assertions.assertEquals(MessageType.WORKSPACE_COUNT_CHANGED, message.messageType());
-      Assertions.assertEquals(((WorkspacesChangedBody) message.body()).workspaceCount(),
-          expectedWorkspaceCount);
+      Assertions.assertEquals(expectedWorkspaceCount, ((WorkspacesChangedBody) message.body()).workspaceCount());
     }
 
     // let things settle ...
-    Thread.sleep(100);
+    Thread.sleep(1000);
 
     // 4. The first workspace should have received one additional messages, when the second workspace connected.
     var secondAnnouncement = messageHandlers.getFirst().messages.poll(1, TimeUnit.SECONDS);
@@ -342,6 +402,9 @@ public class WebsocketEndpointTest {
     // Should describe just one workspace connected.
     Assertions.assertEquals(MessageType.WORKSPACE_COUNT_CHANGED, message.messageType());
     Assertions.assertEquals(1, ((WorkspacesChangedBody) message.body()).workspaceCount());
+
+    // Finally, close the first workspace session to clean up.
+    websocketSessions.getFirst().close();
   }
 
   @Test
@@ -386,7 +449,8 @@ public class WebsocketEndpointTest {
 
   @ParameterizedTest
   @ValueSource(strings = {
-      "/ws", // No workspace_id parameter at all
+      "/ws", // No parameters at all
+      "/ws?foo=bar", // Parameters, but no workspace id
       "/ws?workspace_id=sdfsdfsdfsd", // not a number
       "/ws?workspace_id=1234" // an unknown workspace id
   })
@@ -468,6 +532,68 @@ public class WebsocketEndpointTest {
 
     // Should be closed now.
     Assertions.assertFalse(connectedWorkspace.session.isOpen());
+  }
+
+  @Test
+  public void testWorkspaceBroadcastingWhenNoOtherWorkspaces() throws IOException, InterruptedException {
+    // Given a workspace connected happy websocket ...
+    ConnectedWorkspace connectedWorkspace = connectWorkspace();
+
+    // Block until we get the initial WORKSPACE_COUNT_CHANGED message.
+    connectedWorkspace.waitForMessageOfType(MessageType.WORKSPACE_COUNT_CHANGED, 1000);
+
+    // clear any messages received so far.
+    connectedWorkspace.clearReceivedMessages();
+
+    // When the workspace sends a message that should be broadcast to all other workspaces ...
+    Message message = new Message(
+        new MessageHeaders(MessageType.UNKNOWN, connectedWorkspace.processIdString(), "message-id-here"),
+        new DynamicMessageBody(Map.of("foonly", 3))
+    );
+    connectedWorkspace.send(message);
+
+    // then all is well. The session should still be open and the message we sent
+    // should not have been received by the workspace itself.
+    Thread.sleep(1000);
+
+    Assertions.assertTrue(connectedWorkspace.session.isOpen());
+    Assertions.assertEquals(0, connectedWorkspace.receivedMessageCount());
+
+    // close the session so we don't leave it hanging around polliting other tests.
+    connectedWorkspace.closeWebsocket();
+  }
+
+  @Test
+  public void testValidateHeadersForSidecarBroadcast() {
+    // originator "sidecar" is allowed and expected.
+    Message message = new Message(
+        new MessageHeaders(MessageType.UNKNOWN, "sidecar", "message-id-here"),
+        new DynamicMessageBody(Map.of("foonly", 3))
+    );
+
+    boolean thrown = false;
+    try {
+      WebsocketEndpoint.validateHeadersForSidecarBroadcast(message);
+    } catch (IllegalArgumentException e) {
+      thrown = true;
+    }
+
+    Assertions.assertFalse(thrown);
+
+    // originator "1234" indicating is frmo a workspace is not allowed, however.
+    message = new Message(
+        new MessageHeaders(MessageType.UNKNOWN, "1234", "message-id-here"),
+        new DynamicMessageBody(Map.of("foonly", 3))
+    );
+
+    try {
+      WebsocketEndpoint.validateHeadersForSidecarBroadcast(message);
+    } catch (IllegalArgumentException e) {
+      thrown = true;
+    }
+
+    Assertions.assertTrue(thrown);
+
   }
 
   /** Connect a mock workspace process to the websocket endpoint successfully. */

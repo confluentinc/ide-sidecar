@@ -3,6 +3,7 @@ package io.confluent.idesidecar.websocket.resources;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import graphql.VisibleForTesting;
 import io.confluent.idesidecar.restapi.application.KnownWorkspacesBean;
 import io.confluent.idesidecar.websocket.messages.Message;
 import io.confluent.idesidecar.websocket.messages.MessageHeaders;
@@ -106,7 +107,7 @@ public class WebsocketEndpoint {
     }
 
     List<String> workspaceIdList = requestParams.get("workspace_id");
-    if (workspaceIdList == null || workspaceIdList.size() == 0) {
+    if (workspaceIdList == null || workspaceIdList.isEmpty()) {
       Log.error("No workspace_id parameter provided. Closing session.");
       session.close();
       return;
@@ -309,7 +310,8 @@ public class WebsocketEndpoint {
    * @return the validated headers of the message.
    * @throws IllegalArgumentException if the headers are not suitable for broadcasting.
    */
-  private MessageHeaders validateHeadersForSidecarBroadcast(Message outboundMessage) {
+  @VisibleForTesting
+  static MessageHeaders validateHeadersForSidecarBroadcast(Message outboundMessage) {
     MessageHeaders headers = outboundMessage.headers();
 
     if (! headers.originator().equals("sidecar")) {
