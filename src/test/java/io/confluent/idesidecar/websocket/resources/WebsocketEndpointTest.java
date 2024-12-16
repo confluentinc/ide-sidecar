@@ -580,7 +580,7 @@ public class WebsocketEndpointTest {
 
     Assertions.assertFalse(thrown);
 
-    // originator "1234" indicating is frmo a workspace is not allowed, however.
+    // originator "1234" indicating is from a workspace is not allowed, however.
     message = new Message(
         new MessageHeaders(MessageType.UNKNOWN, "1234", "message-id-here"),
         new DynamicMessageBody(Map.of("foonly", 3))
@@ -593,7 +593,6 @@ public class WebsocketEndpointTest {
     }
 
     Assertions.assertTrue(thrown);
-
   }
 
   /** Connect a mock workspace process to the websocket endpoint successfully. */
