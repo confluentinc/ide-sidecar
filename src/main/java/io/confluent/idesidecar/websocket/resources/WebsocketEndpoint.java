@@ -7,6 +7,7 @@ import io.confluent.idesidecar.websocket.messages.MessageHeaders;
 import io.confluent.idesidecar.websocket.messages.MessageType;
 import io.confluent.idesidecar.websocket.messages.WorkspacesChangedBody;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -90,14 +91,21 @@ public class WebsocketEndpoint {
 
     // Request must have had a valid access token to pass through AccessTokenFilter, so we can assume that the session is authorized.
     // The workspace process id should have been passed as a request parameter, though.
-    String workspaceIdString = session.getRequestParameterMap().get("workspace_id").get(0);
+    Map <String, java.util.List<String>> requestParams = session.getRequestParameterMap();
+    if (requestParams.size() == 0) {
+      Log.error("No request parameters provided. Closing session.");
+      session.close();
+      return;
+    }
 
-    if (workspaceIdString == null) {
+    List<String> workspaceIdList = requestParams.get("workspace_id");
+    if (workspaceIdList == null || workspaceIdList.size() == 0) {
       Log.error("No workspace_id parameter provided. Closing session.");
       session.close();
       return;
     }
 
+    String workspaceIdString = workspaceIdList.get(0);
     long workspaceId;
     try {
       workspaceId = Long.parseLong(workspaceIdString);
@@ -165,7 +173,7 @@ public class WebsocketEndpoint {
     }
 
     if (claimedWorkspaceId != workspaceSession.processId()) {
-      Log.error("Workspace " + workspaceSession.processId() + " sent message with incorrect originator value: " + claimedWorkspaceId + ".Removing and closing session.");
+      Log.error("Workspace " + workspaceSession.processId() + " sent message with incorrect originator value: " + claimedWorkspaceId + ". Removing and closing session.");
       sessions.remove(senderSession);
       senderSession.close();
       return;
@@ -259,6 +267,8 @@ public class WebsocketEndpoint {
         new MessageHeaders(MessageType.WORKSPACE_COUNT_CHANGED, "sidecar"),
         new WorkspacesChangedBody(this.sessions.size())
     );
+
+    Log.info("Broadcasting workspace count change message to all workspaces...");
 
     broadcast(message);
   }

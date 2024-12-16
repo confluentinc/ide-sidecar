@@ -44,22 +44,13 @@ public class MessageDeserializer extends JsonDeserializer<Message> {
    * Determine the proper MessageBody subclass to use based on the audience and type.
    */
   private Class<? extends MessageBody> getBodyClassForHeader(MessageHeaders headers)
-      throws IOException {
-
-    // Only messages expected to be received at this time from workspaces should have dynamic message bodies.
-    // We may in future grow an 'audience' field in the headers to allow for more flexible routing, which
-    // then may affect how we determine the body class.
-    return DynamicMessageBody.class;
-
-    // Otherwise map the type to the appropriate MessageBody subclass. As we get more
-    // of these, probably defer to a Map.
-
-    // Right now .... we don't have any!
-
-    //if (headers.type.equals(MessageType.ACCESS_REQUEST)) {
-    //  return AccessRequestBody.class;
-    //}
-
-    // throw new IOException("Unknown message type: " + headers.type);
+  {
+    switch (headers.type()) {
+      // Workspaces never send this, but is both a good example as well as helps out the test suite.
+      case MessageType.WORKSPACE_COUNT_CHANGED:
+        return WorkspacesChangedBody.class;
+      default:
+        return DynamicMessageBody.class;
+    }
   }
 }

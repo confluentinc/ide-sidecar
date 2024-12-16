@@ -14,6 +14,13 @@ import java.util.Map;
 public class DynamicMessageBody implements MessageBody {
   private final Map<String, Object> properties = new HashMap<String, Object>();
 
+  public DynamicMessageBody() {
+  }
+
+  public DynamicMessageBody(Map<String, Object> properties) {
+    this.properties.putAll(properties);
+  }
+
   @JsonAnyGetter
   public Map<String, Object> getProperties() {
     return properties;
