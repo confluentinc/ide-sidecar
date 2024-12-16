@@ -238,7 +238,8 @@ public class WebsocketEndpointTest {
     // Both workspace pids should now be in the known set of workspaces.
     var knownWorkspacePids = getKnownWorkspacePidsFromBean();
     for (MockWorkspaceProcess mockWorkspaceProcess : mockWorkspaceProcesses) {
-      assertTrue(knownWorkspacePids.contains(Long.valueOf(mockWorkspaceProcess.pid_string)));
+      Assertions.assertTrue(
+          knownWorkspacePids.contains(Long.valueOf(mockWorkspaceProcess.pid_string)));
     }
 
     // Now, let's masquerade each workspace connecting websocket clients to the endpoint.
@@ -273,20 +274,22 @@ public class WebsocketEndpointTest {
 
       // The message should be a WORKSPACE_COUNT_CHANGED message describing the expected
       // number of workspaces connected.
-      assertTrue(message.messageType().equals(MessageType.WORKSPACE_COUNT_CHANGED));
-      assertTrue(((WorkspacesChangedBody) message.body()).workspaceCount() == expectedWorkspaceCount);
+      Assertions.assertEquals(MessageType.WORKSPACE_COUNT_CHANGED, message.messageType());
+      Assertions.assertEquals(((WorkspacesChangedBody) message.body()).workspaceCount(),
+          expectedWorkspaceCount);
     }
 
     // let things settle ...
     Thread.sleep(100);
 
     // 4. The first workspace should have received one additional messages, when the second workspace connected.
-    var secondAnnouncement = messageHandlers.get(0).messages.poll(1, TimeUnit.SECONDS);
+    var secondAnnouncement = messageHandlers.getFirst().messages.poll(1, TimeUnit.SECONDS);
     if (secondAnnouncement == null) {
       throw new RuntimeException("Timed out waiting for client to receive message");
     }
-    assertTrue(secondAnnouncement.messageType().equals(MessageType.WORKSPACE_COUNT_CHANGED));
-    assertTrue(((WorkspacesChangedBody) secondAnnouncement.body()).workspaceCount() == 2);
+    Assertions.assertEquals(MessageType.WORKSPACE_COUNT_CHANGED, secondAnnouncement.messageType());
+    Assertions.assertEquals(2,
+        ((WorkspacesChangedBody) secondAnnouncement.body()).workspaceCount());
 
     // 5. Now let's have one workspace send an arbitrary, unknown message type to sidecar.
     // It should be proxied through *unchanged*, including the random message type, to the other workspace.
@@ -296,7 +299,7 @@ public class WebsocketEndpointTest {
     String bogusMessageTypeMessage = """
         {
           "headers": {
-            "message_type": "random_sidecar_message",
+            "message_type": "random_workspace_message",
             "originator": "%s",
             "message_id": "message-id-here"
           },
@@ -325,16 +328,16 @@ public class WebsocketEndpointTest {
     Assertions.assertEquals(3,
         ((DynamicMessageBody) randomMessage.body()).getProperties().get("foonly"));
 
-    // to test the original message type, though, must look at the raw message string.
+    // to test the original message type, though, must look at the received raw message string,
+    // as the deserialized message type will have been coerced to MessageType.UNKNOWN.
     var rawMessageString = secondWorkspaceMessageHandler.rawMessageStrings.getFirst();
     Assertions.assertTrue(
-        rawMessageString.contains("\"message_type\": \"random_sidecar_message\""));
-
+        rawMessageString.contains("\"message_type\": \"random_workspace_message\""));
 
     // 6. Close the second workspace session. The first should receive a message about it having disconnected.
     websocketSessions.get(1).close();
 
-    var message = messageHandlers.get(0).messages.poll(1, TimeUnit.SECONDS);
+    var message = messageHandlers.getFirst().messages.poll(1, TimeUnit.SECONDS);
     if (message == null) {
       throw new RuntimeException("Timed out waiting for client to receive message");
     }
@@ -423,7 +426,7 @@ public class WebsocketEndpointTest {
       thrown = true;
     }
 
-    assertTrue(thrown);
+    Assertions.assertTrue(thrown);
   }
 
   /** Test bad deserialize handling within WebsocketEndpoint::onMessage(), when parseAndValidateMessage() raises. */
