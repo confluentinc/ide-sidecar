@@ -337,18 +337,10 @@ public class ClientConfigurator {
         .getSchemaRegistryOptions()
         .withRedact(redact)
         .withLogicalClusterId(logicalId);
-    var creds = connection.getSchemaRegistryCredentials();
-    if (creds.isPresent()) {
-      creds.get().schemaRegistryClientProperties(options).ifPresent(props::putAll);
-      connection.getTLSConfig().ifPresentOrElse(
-          ignored -> props.put("security.protocol", "SASL_SSL"),
-          () -> props.put("security.protocol", "SASL_PLAINTEXT")
-      );
-    } else {
-      connection.getTLSConfig().ifPresent(
-          ignored -> props.put("security.protocol", "SSL")
-      );
-    }
+    connection
+        .getSchemaRegistryCredentials()
+        .flatMap(credentials -> credentials.schemaRegistryClientProperties(options))
+        .ifPresent(props::putAll);
 
     connection
         .getTLSConfig()
