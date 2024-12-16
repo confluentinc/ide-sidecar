@@ -7,7 +7,6 @@ import io.confluent.idesidecar.restapi.credentials.ApiKeyAndSecret;
 import io.confluent.idesidecar.restapi.credentials.BasicCredentials;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 
-
 /**
  * Base class for all websocket message bodies. As long as the message body types have distinct
  * fields, the {@link JsonTypeInfo.Id#DEDUCTION} strategy should be sufficient to deserialize them.
@@ -19,6 +18,7 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
 @JsonSubTypes({
     @JsonSubTypes.Type(value = WorkspacesChangedBody.class),
     @JsonSubTypes.Type(value = ProtocolErrorBody.class),
+    @JsonSubTypes.Type(value = ConnectionEventBody.class),
     @JsonSubTypes.Type(value = DynamicMessageBody.class),
 })
 @RegisterForReflection
