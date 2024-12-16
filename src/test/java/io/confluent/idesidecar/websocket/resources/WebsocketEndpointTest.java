@@ -171,10 +171,14 @@ public class WebsocketEndpointTest {
    * Providing the query string at connection time along with the access token in the headers was
    * awkward to figure out here in java-land. I had to split the implementation of the websocket client
    * into three different classes -- one that injects the headers at connect time, one that receives
-   * messages in such a way that the test can get at each individual client's recieved messages, and
+   * messages in such a way that the test can get at each individual client's received messages, and
    * then finally the actual client class that connects to the websocket endpoint. That middle
    * class was necessary because I couldn't find a way to control the construction of the client
    * class. Your mileage may vary.
+   *
+   * This test drives the MockWorkspaceProcess, TestWebsocketClientMessageHandler, etc. explicitly
+   * for all the gory details. Other tests that need start with a happy connected workspace
+   * websocket will use {@link #connectWorkspace} to handle all the setup.
    */
   @Test
   public void testWebsocketLifecycle() throws DeploymentException, IOException, InterruptedException {
