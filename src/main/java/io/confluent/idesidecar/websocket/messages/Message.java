@@ -1,57 +1,32 @@
 package io.confluent.idesidecar.websocket.messages;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.quarkus.runtime.annotations.RegisterForReflection;
-
+import javax.validation.constraints.NotNull;
 
 /**
  * A message either sent or received through websockets to/from IDE workspaces.
- * Two primary parts, headers and body. The body's structure will vary according to the message type.
+ * Two primary parts, headers and body. The body's structure will vary according to the message messageType.
  *
  * @see MessageHeaders
  * @see MessageBody
- * @see MessageDeserializer
  */
 @RegisterForReflection
-@JsonDeserialize(using = MessageDeserializer.class)
-public class Message {
-  @JsonProperty("headers")
-  private final MessageHeaders headers;
-
-  @JsonProperty("body")
-  private final MessageBody body;
-
-  @JsonCreator
-  public Message (
-      @JsonProperty("headers") MessageHeaders headers,
-      @JsonProperty("body") MessageBody body)
-  {
-    this.headers = headers;
-    this.body = body;
-  }
-
-  @JsonGetter("headers")
-  public MessageHeaders getHeaders() {
-    return headers;
-  }
-
-  @JsonGetter("body")
-  public MessageBody getBody() {
-    return body;
-  }
+public record Message(
+    @JsonProperty("headers") MessageHeaders headers,
+    @NotNull @JsonProperty("body") MessageBody body
+) {
 
   // Convenience getters for interesting bits from the headers.
   @JsonIgnore
-  public String getId() {
+  public String id() {
     return headers.id();
   }
 
   @JsonIgnore
-  public String getType() {
-    return headers.type();
+  public MessageType messageType() {
+    return headers.messageType();
   }
 }
