@@ -16,6 +16,7 @@ import java.io.IOException;
 @JsonDeserialize(using = MessageType.MessageTypeDeserializer.class)
 public enum MessageType {
   WORKSPACE_COUNT_CHANGED,
+  CONNECTION_EVENT,
   UNKNOWN;
 
   /**
