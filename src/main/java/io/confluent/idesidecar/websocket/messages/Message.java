@@ -12,10 +12,8 @@ import javax.validation.constraints.NotNull;
  *
  * @see MessageHeaders
  * @see MessageBody
- * @see MessageDeserializer
  */
 @RegisterForReflection
-@JsonDeserialize(using = MessageDeserializer.class)
 public record Message(
     @JsonProperty("headers") MessageHeaders headers,
     @NotNull @JsonProperty("body") MessageBody body
