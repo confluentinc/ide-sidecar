@@ -3,7 +3,7 @@ package io.confluent.idesidecar.websocket.messages;
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import io.quarkus.runtime.annotations.RegisterForReflection;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -12,7 +12,7 @@ import java.util.Map;
  * */
 @RegisterForReflection
 public class DynamicMessageBody implements MessageBody {
-  private final Map<String, Object> properties = new HashMap<String, Object>();
+  private final Map<String, Object> properties = new LinkedHashMap<>(); // retain order
 
   public DynamicMessageBody() {
   }
