@@ -1,7 +1,5 @@
 package io.confluent.idesidecar.websocket.resources;
 
-import static org.junit.Assert.assertTrue;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.idesidecar.restapi.application.KnownWorkspacesBean;
 import io.confluent.idesidecar.restapi.application.SidecarAccessTokenBean;
