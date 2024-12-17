@@ -1,0 +1,11 @@
+{
+  "headers": {
+    "message_type": "protocol_error",
+    "originator": "sidecar",
+    "message_id": "message-id-2"
+  },
+  "body": {
+    "error": "Error message here",
+    "original_message_id": "message-id-1"
+  }
+}

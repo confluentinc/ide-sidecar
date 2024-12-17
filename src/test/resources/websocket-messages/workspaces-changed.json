@@ -1,0 +1,10 @@
+{
+  "headers": {
+    "message_type": "workspace_count_changed",
+    "originator": "sidecar",
+    "message_id": "message-id-1"
+  },
+  "body": {
+    "current_workspace_count": 2
+  }
+}
