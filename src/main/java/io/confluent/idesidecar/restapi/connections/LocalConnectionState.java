@@ -19,7 +19,5 @@ public class LocalConnectionState extends ConnectionState {
       @Nullable StateChangedListener listener
   ) {
     super(spec, listener);
-    // Notify the never-null listener of successful connection, even though no auth is used
-    this.listener.connected(this);
   }
 }
