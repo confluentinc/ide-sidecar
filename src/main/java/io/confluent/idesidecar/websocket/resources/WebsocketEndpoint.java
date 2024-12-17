@@ -8,6 +8,7 @@ import io.confluent.idesidecar.restapi.application.KnownWorkspacesBean;
 import io.confluent.idesidecar.websocket.messages.Message;
 import io.confluent.idesidecar.websocket.messages.MessageHeaders;
 import io.confluent.idesidecar.websocket.messages.MessageType;
+import io.confluent.idesidecar.websocket.messages.ProtocolErrorBody;
 import io.confluent.idesidecar.websocket.messages.WorkspacesChangedBody;
 import io.quarkus.logging.Log;
 import java.io.IOException;
@@ -102,15 +103,21 @@ public class WebsocketEndpoint {
     // The workspace process id should have been passed as a request parameter, though.
     Map <String, java.util.List<String>> requestParams = session.getRequestParameterMap();
     if (requestParams.size() == 0) {
-      Log.errorf("No request parameters provided. Closing new session %s.", session.getId());
-      session.close();
+      String error = "No request parameters provided. Closing new session %s.".format(session.getId());
+      Log.error(error);
+
+      sendErrorAndCloseSession(session, error, null);
+
       return;
     }
 
     List<String> workspaceIdList = requestParams.get("workspace_id");
     if (workspaceIdList == null || workspaceIdList.isEmpty()) {
-      Log.errorf("No workspace_id parameter provided. Closing new session %s.", session.getId());
-      session.close();
+      String error = "No workspace_id parameter provided. Closing new session %s.".format(session.getId());
+      Log.error(error);
+
+      sendErrorAndCloseSession(session, error, null);
+
       return;
     }
 
@@ -119,16 +126,20 @@ public class WebsocketEndpoint {
     try {
       workspaceId = Long.parseLong(workspaceIdString);
     } catch (NumberFormatException e) {
-      Log.errorf("Invalid workspace_id parameter value: %s. Closing new session %s.", workspaceIdString, session.getId());
-      session.close();
+      String error = "Invalid workspace_id parameter value: %s. Closing new session %s.".format(workspaceIdString, session.getId());
+      Log.error(error);
+      sendErrorAndCloseSession(session, error, null);
       return;
     }
 
     // As of time of writing, the workspace should have REST handshook or hit the health check
     // route with the workspace id header, so we should know about it already.
     if (!knownWorkspacesBean.isKnownWorkspacePID(workspaceId)) {
-      Log.errorf("Unknown workspace id: %d. Closing new session %s.", workspaceId, session.getId());
-      session.close();
+      String error = "Unknown workspace id: %d. Closing new session %s.".format(
+          String.valueOf(workspaceId), session.getId());
+
+      Log.error(error);
+      sendErrorAndCloseSession(session, error, null);
       return;
     }
 
@@ -153,23 +164,25 @@ public class WebsocketEndpoint {
   public void onMessage(String messageString, Session senderSession) throws IOException {
     WorkspaceSession workspaceSession = sessions.get(senderSession);
     if (workspaceSession == null) {
-      Log.errorf("Odd! Received message from unregistered session %s. Closing session.", senderSession.getId());
-      senderSession.close();
+      String error = "Odd! Received message from unregistered session %s. Closing session.".format(senderSession.getId());
+      Log.error(error);
+      sendErrorAndCloseSession(senderSession, error, null);
       return;
     }
 
     Message m;
 
     try {
-      m =  parseAndValidateMessage(messageString);
+      m = mapper.readValue(messageString, Message.class);
     } catch (java.io.IOException e) {
-      Log.errorf(
-          "Invalid message from workspace: %d, closing session %s and discarding.",
-          workspaceSession.processId(),
-          senderSession.getId()
-      );
+      String error =
+          "Invalid message from session %s, workspace %d. Discarding and closing.".format(
+              senderSession.getId(), workspaceSession.processId());
+
+      Log.error(error);
+
+      sendErrorAndCloseSession(senderSession, error, null);
       sessions.remove(senderSession);
-      senderSession.close();
       return;
     }
 
@@ -181,27 +194,36 @@ public class WebsocketEndpoint {
     try {
       claimedWorkspaceId = Integer.parseInt(headers.originator());
     } catch (NumberFormatException e) {
-      Log.errorf(
+      String error = (
           "Invalid websocket message header originator value -- not an integer: %s. "
-          + "Removing and closing session %s.",
+          + "Removing and closing session %s.".format(
           headers.originator(),
           senderSession.getId()
-      );
+      ));
+
+      Log.error(error);
+
+      sendErrorAndCloseSession(senderSession, error, m.headers().id());
       sessions.remove(senderSession);
-      senderSession.close();
+
       return;
     }
 
     if (claimedWorkspaceId != workspaceSession.processId()) {
-      Log.errorf(
+      String error = (
           "Workspace %s sent message with incorrect originator value: %d."
-          + " Removing and closing session %s.",
-          workspaceSession.processId(),
-          claimedWorkspaceId,
-          senderSession.getId()
+          + " Removing and closing session %s.".format(
+              String.valueOf(workspaceSession.processId()),
+              claimedWorkspaceId,
+              senderSession.getId()
+          )
       );
+
+      Log.error(error);
+
+      sendErrorAndCloseSession(senderSession, error, m.headers().id());
       sessions.remove(senderSession);
-      senderSession.close();
+
       return;
     }
 
@@ -267,30 +289,6 @@ public class WebsocketEndpoint {
   }
 
   /**
-   * Parse and validate a message from a websocket session. If the message is not parseable or
-   * fails coarse validation,IOException is raised
-   * @param message JSON spelling of a {@link io.confluent.idesidecar.websocket.messages.Message} object
-   * @return The parsed message
-   * @throws java.io.IOException on any error.
-   */
-  @NotNull
-  private Message parseAndValidateMessage(String message) throws java.io.IOException {
-    Message m = mapper.readValue(message, Message.class);
-
-    MessageHeaders headers = m.headers();
-
-    // header.originator for messages recv'd by sidecar must always be a string'd integer
-    // representing the workspace id (process id).
-    if (!headers.originator().matches("\\d+")) {
-      throw new IOException(
-          "Invalid websocket message header originator value: " + headers.originator()
-      );
-    }
-
-    return m;
-  }
-
-  /**
    * Send a message to all workspaces that the count of authorized workspaces has changed.
    * Used whenever a workspace is added or removed.
    */
@@ -305,6 +303,22 @@ public class WebsocketEndpoint {
     Log.info("Broadcasting workspace count change message to all workspaces...");
 
     broadcast(message);
+  }
+
+  /**
+   * Send an PROTOCOL_ERROR message to a websocket session, then close the session.
+   * @param session the session to send the error message to.
+   * @param message the error message to send.
+   * @throws IOException if there is an error sending the message.
+   */
+  private void sendErrorAndCloseSession(Session session, String message, String originalMessageId) throws IOException {
+    Message errorMessage = new Message(
+        new MessageHeaders(MessageType.PROTOCOL_ERROR, "sidecar"),
+        new ProtocolErrorBody(message, originalMessageId)
+    );
+    session.getAsyncRemote().sendText(mapper.writeValueAsString(errorMessage));
+
+    session.close();
   }
 
   /**

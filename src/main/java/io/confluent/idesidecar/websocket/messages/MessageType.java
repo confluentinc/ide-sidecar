@@ -15,7 +15,14 @@ import java.io.IOException;
 @RegisterForReflection
 @JsonDeserialize(using = MessageType.MessageTypeDeserializer.class)
 public enum MessageType {
+  /** Message sent by the sidecar to the workspace when the list of workspaces has changed. */
   WORKSPACE_COUNT_CHANGED,
+  /** Message sent by sidecar to a workspace when sidecar has noticed an error and
+   * is going to disconnect its end of the websocket. */
+  PROTOCOL_ERROR,
+
+  /** Placeholder for unknown-to-sidecar message types for messages intended to be
+   * for extension -> extension messaging via sidecar. */
   UNKNOWN;
 
   /**

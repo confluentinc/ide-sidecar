@@ -9,6 +9,7 @@ import io.confluent.idesidecar.websocket.messages.DynamicMessageBody;
 import io.confluent.idesidecar.websocket.messages.Message;
 import io.confluent.idesidecar.websocket.messages.MessageHeaders;
 import io.confluent.idesidecar.websocket.messages.MessageType;
+import io.confluent.idesidecar.websocket.messages.ProtocolErrorBody;
 import io.confluent.idesidecar.websocket.messages.WorkspacesChangedBody;
 import io.quarkus.test.common.http.TestHTTPResource;
 import io.quarkus.test.junit.QuarkusTest;
@@ -197,6 +198,26 @@ public class WebsocketEndpointTest {
         // Must be the message type we're looking for.
         Assertions.assertEquals(messageType, message.messageType());
         return message;
+      }
+    }
+
+    /**
+     * Bounded wait for the websocket to become closed.
+     * @throws RuntimeException if the websocket does not close within the given time.
+     */
+    public void waitForClose(long waitAtMostMillis) {
+      long start = System.currentTimeMillis();
+
+      while (session.isOpen()) {
+        try {
+          Thread.sleep(100);
+        } catch (InterruptedException e) {
+          // do nothing, fallthrough
+        }
+
+        if (System.currentTimeMillis() - start > waitAtMostMillis) {
+          throw new RuntimeException("Timed out waiting for websocket to close");
+        }
       }
     }
 
@@ -504,10 +525,7 @@ public class WebsocketEndpointTest {
     connectedWorkspace.send("not a json object");
 
     // Then the session should be closed very soon after.
-    Thread.sleep(1000);
-
-    // Should be closed now.
-    Assertions.assertFalse(connectedWorkspace.session.isOpen());
+    connectedWorkspace.waitForClose(1000);
   }
 
   /** Test some error cases within WebsocketEndpoint::onMessage() when the originator header value
@@ -530,11 +548,14 @@ public class WebsocketEndpointTest {
     );
     connectedWorkspace.send(message);
 
-    // Then the session should be closed very soon after.
-    Thread.sleep(1000);
+    // Should get a PROTOCOL_ERROR message back from the sidecar complaining about 'originator' and the session should be closed.
+    Message errorMessage = connectedWorkspace.waitForMessageOfType(MessageType.PROTOCOL_ERROR, 1000);
+    ProtocolErrorBody errorBody = (ProtocolErrorBody) errorMessage.body();
+    assert errorBody.error().contains("originator");
+    assert errorBody.originalMessageId().equals("message-id-here");
 
-    // Should be closed now.
-    Assertions.assertFalse(connectedWorkspace.session.isOpen());
+    // Should then be closed server-side.
+    connectedWorkspace.waitForClose(1000);
   }
 
   @Test
