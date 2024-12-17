@@ -1,5 +1,8 @@
 package io.confluent.idesidecar.websocket.resources;
 
+import static io.confluent.idesidecar.websocket.messages.MessageHeaders.SIDECAR_ORIGINATOR;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.idesidecar.restapi.application.KnownWorkspacesBean;
 import io.confluent.idesidecar.restapi.application.SidecarAccessTokenBean;
@@ -24,6 +27,7 @@ import jakarta.websocket.Session;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.URI;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -95,7 +99,23 @@ public class WebsocketEndpointTest {
       messages.clear();
       rawMessageStrings.clear();
     }
+
+    public Message poll() {
+      // Most of the time, we expect to get a message right away.
+      return poll(Duration.ofSeconds(10));
+    }
+
+    public Message poll(Duration timeout) {
+      try {
+        return messages.poll(timeout.toMillis(), TimeUnit.MILLISECONDS);
+      } catch (Throwable e) {
+        fail("Timed out waiting for message", e);
+        return null;
+      }
+    }
   }
+
+  public static final Duration QUARTER_SECOND = Duration.ofMillis(250);
 
   /**
    * A websocket client configurator that sets the access token in the headers. This is a
@@ -177,13 +197,7 @@ public class WebsocketEndpointTest {
       long start = System.currentTimeMillis();
 
       while (true) {
-        Message message = null;
-
-        try {
-          message = messageHandler.messages.poll(250, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
-          // do nothing, fallthrough
-        }
+        Message message = messageHandler.poll(QUARTER_SECOND);
 
         if (message == null || message.messageType() != messageType) {
           // waited too long?
@@ -351,7 +365,7 @@ public class WebsocketEndpointTest {
       // sent by sidecar to the client upon connection, telling if of the number of
       // workspaces currently connected (inclusive).
       // (should come fast, but cicd runners are slow here)
-      var message = clientHandler.messages.poll(2, TimeUnit.SECONDS);
+      var message = clientHandler.poll();
       if (message == null) {
         throw new RuntimeException("Timed out waiting for client to receive message");
       }
@@ -366,7 +380,7 @@ public class WebsocketEndpointTest {
     Thread.sleep(1000);
 
     // 4. The first workspace should have received one additional messages, when the second workspace connected.
-    var secondAnnouncement = messageHandlers.getFirst().messages.poll(2, TimeUnit.SECONDS);
+    var secondAnnouncement = messageHandlers.getFirst().poll();
     if (secondAnnouncement == null) {
       throw new RuntimeException("Timed out waiting for client to receive message");
     }
@@ -400,7 +414,7 @@ public class WebsocketEndpointTest {
 
     // The second workspace should receive the message, and it should be unchanged, esp.
     // the message tyoe.
-    var randomMessage = messageHandlers.get(1).messages.poll(2, TimeUnit.SECONDS);
+    var randomMessage = messageHandlers.get(1).poll();
     if (randomMessage == null) {
       throw new RuntimeException("Timed out waiting for client to receive message");
     }
@@ -420,7 +434,7 @@ public class WebsocketEndpointTest {
     // 6. Close the second workspace session. The first should receive a message about it having disconnected.
     websocketSessions.get(1).close();
 
-    var message = messageHandlers.getFirst().messages.poll(2, TimeUnit.SECONDS);
+    var message = messageHandlers.getFirst().poll();
     if (message == null) {
       throw new RuntimeException("Timed out waiting for client to receive message");
     }
@@ -533,7 +547,7 @@ public class WebsocketEndpointTest {
    * is wrong given the sending workspace session. */
   @ValueSource(strings = {
       "not-a-valid-pid",
-      "sidecar",
+      SIDECAR_ORIGINATOR,
       "1234" // an unknown workspace id
   })
   @ParameterizedTest
@@ -592,7 +606,7 @@ public class WebsocketEndpointTest {
   public void testValidateHeadersForSidecarBroadcast() {
     // originator "sidecar" is allowed and expected.
     Message message = new Message(
-        new MessageHeaders(MessageType.UNKNOWN, "sidecar", "message-id-here"),
+        new MessageHeaders(MessageType.UNKNOWN, SIDECAR_ORIGINATOR, "message-id-here"),
         new DynamicMessageBody(Map.of("foonly", 3))
     );
 

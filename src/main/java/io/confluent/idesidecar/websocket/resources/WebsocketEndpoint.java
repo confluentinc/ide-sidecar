@@ -309,7 +309,7 @@ public class WebsocketEndpoint {
     // new connected/authorized workspace count.
 
     var message = new Message(
-        new MessageHeaders(MessageType.WORKSPACE_COUNT_CHANGED, "sidecar"),
+        new MessageHeaders(MessageType.WORKSPACE_COUNT_CHANGED),
         new WorkspacesChangedBody(this.sessions.size())
     );
 
@@ -337,7 +337,7 @@ public class WebsocketEndpoint {
     Log.info(msg);
     try {
       var errorMessage = new Message(
-          new MessageHeaders(MessageType.PROTOCOL_ERROR, "sidecar"),
+          new MessageHeaders(MessageType.PROTOCOL_ERROR),
           new ProtocolErrorBody(msg, originalMessageId)
       );
       session.getAsyncRemote()
@@ -374,7 +374,7 @@ public class WebsocketEndpoint {
   static MessageHeaders validateHeadersForSidecarBroadcast(Message outboundMessage) {
     MessageHeaders headers = outboundMessage.headers();
 
-    if (!headers.originator().equals("sidecar")) {
+    if (!headers.originatedBySidecar()) {
       Log.errorf(
           "Message id %s is not originator=sidecar message, cannot broadcast.",
           headers.id()
