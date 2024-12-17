@@ -1,7 +1,3 @@
-/*
- * Copyright [2024 - 2024] Confluent Inc.
- */
-
 package io.confluent.idesidecar.websocket.resources;
 
 import io.confluent.idesidecar.restapi.connections.ConnectionState;

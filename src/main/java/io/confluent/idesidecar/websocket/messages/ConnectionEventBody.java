@@ -2,18 +2,17 @@ package io.confluent.idesidecar.websocket.messages;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.confluent.idesidecar.restapi.connections.ConnectionState;
-import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
-import io.confluent.idesidecar.restapi.models.ConnectionStatus;
+import io.confluent.idesidecar.restapi.models.Connection;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 
 /**
  * Sent by the sidecar to the workspace when a connection is created, when existing connections
  * are updated or their status changed, or when a connection is deleted.
  */
+@RegisterForReflection
 public record ConnectionEventBody(
-    @JsonProperty("connection_id") String connectionId,
-    @JsonProperty("connection_type") ConnectionType connectionType,
     @JsonProperty("event_kind") EventKind eventKind,
-    @JsonProperty("connection_status")ConnectionStatus connectionStatus
+    @JsonProperty("connection") Connection connection
 ) implements MessageBody {
 
   public enum EventKind {
@@ -25,7 +24,6 @@ public record ConnectionEventBody(
   }
 
   public ConnectionEventBody(ConnectionState state, EventKind eventKind) {
-    this(state.getSpec().id(), state.getSpec().type(), eventKind, state.getStatus());
+    this(eventKind, Connection.from(state));
   }
-
 }
