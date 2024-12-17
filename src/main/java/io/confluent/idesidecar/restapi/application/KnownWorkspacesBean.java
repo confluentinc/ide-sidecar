@@ -74,6 +74,13 @@ public class KnownWorkspacesBean {
   }
 
   /**
+   * Is this a known workspace id?
+   */
+  public synchronized boolean isKnownWorkspacePID(Long workspaceId) {
+    return knownWorkspacePIDs.contains(workspaceId);
+  }
+
+  /**
    * Check if the sidecar should still remain alive:
    *  - If no workspace has contacted us yet, (allowNoWorkspaces is true), return true.
    *  - Loops through all known workspace operating system-level process ids and removes any that
