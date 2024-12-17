@@ -52,6 +52,15 @@ public class ResourceIOUtil {
     );
   }
 
+  public static <T> T loadResourceAsObject(String resourcePath, Class<T> type) {
+    try {
+      return MAPPER.readValue(loadResource(resourcePath), type);
+    } catch (IOException e) {
+      fail("Error loading resource file " + resourcePath, e);
+      return null;
+    }
+  }
+
   public static String loadFile(String relativePath) {
     var path = Path.of(relativePath).toAbsolutePath();
     try {
@@ -185,6 +194,8 @@ public class ResourceIOUtil {
       // Serialize
       var serialized = MAPPER.writeValueAsString(expected);
       var deserialized = MAPPER.readValue(serialized, expected.getClass());
+
+      boolean equals = expected.equals(deserialized);
 
       assertEquals(expected, deserialized);
 
