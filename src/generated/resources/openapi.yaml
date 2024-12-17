@@ -694,7 +694,13 @@ components:
           items:
             $ref: "#/components/schemas/Connection"
     Credentials:
+      description: "The credentials for a ConnectionSpec config, or null if no authentication\
+        \ is required"
       type: object
+      oneOf:
+      - $ref: "#/components/schemas/BasicCredentials"
+      - $ref: "#/components/schemas/ApiKeyAndSecret"
+      nullable: true
     Error:
       description: Describes a particular error encountered while performing an operation.
       type: object
@@ -811,15 +817,7 @@ components:
           minLength: 1
           type: string
         credentials:
-          description: "The credentials for the Kafka cluster, or null if no authentication\
-            \ is required"
-          type: object
-          allOf:
-          - $ref: "#/components/schemas/Credentials"
-          oneOf:
-          - $ref: "#/components/schemas/BasicCredentials"
-          - $ref: "#/components/schemas/ApiKeyAndSecret"
-          nullable: true
+          $ref: "#/components/schemas/Credentials"
         ssl:
           description: "Whether to communicate with the Kafka cluster over TLS/SSL.\
             \ Defaults to 'true', but set to 'false' when the Kafka cluster does not\
@@ -1005,15 +1003,7 @@ components:
           minLength: 1
           type: string
         credentials:
-          description: "The credentials for the Schema Registry, or null if no authentication\
-            \ is required"
-          type: object
-          allOf:
-          - $ref: "#/components/schemas/Credentials"
-          oneOf:
-          - $ref: "#/components/schemas/BasicCredentials"
-          - $ref: "#/components/schemas/ApiKeyAndSecret"
-          nullable: true
+          $ref: "#/components/schemas/Credentials"
     SchemaRegistryStatus:
       description: The status related to the specified Schema Registry.
       required:
@@ -1193,8 +1183,8 @@ components:
           - UP
           - DOWN
           type: string
+        name:
+          type: string
         data:
           type: object
           nullable: true
-        name:
-          type: string

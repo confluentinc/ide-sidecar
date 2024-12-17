@@ -306,10 +306,6 @@ public record ConnectionSpec(
       @Schema(
           description =
               "The credentials for the Kafka cluster, or null if no authentication is required",
-          oneOf = {
-              BasicCredentials.class,
-              ApiKeyAndSecret.class,
-          },
           nullable = true
       )
       @Null
@@ -409,10 +405,6 @@ public record ConnectionSpec(
       @Schema(
           description = "The credentials for the Schema Registry, or null if "
                         + "no authentication is required",
-          oneOf = {
-              BasicCredentials.class,
-              ApiKeyAndSecret.class,
-          },
           nullable = true
       )
       @Null
