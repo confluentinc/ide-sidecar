@@ -364,7 +364,6 @@ public record ConnectionSpec(
       if (credentials != null) {
         credentials.validate(errors, "%s.credentials".formatted(path), what);
       }
-
     }
   }
 

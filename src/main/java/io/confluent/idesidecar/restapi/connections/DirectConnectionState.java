@@ -5,7 +5,6 @@ import static io.confluent.idesidecar.restapi.util.ExceptionUtil.unwrap;
 import io.confluent.idesidecar.restapi.auth.AuthErrors;
 import io.confluent.idesidecar.restapi.clients.ClientConfigurator;
 import io.confluent.idesidecar.restapi.credentials.Credentials;
-import io.confluent.idesidecar.restapi.credentials.CredentialsKafkaConnectionOptionsBuilder;
 import io.confluent.idesidecar.restapi.credentials.TLSConfig;
 import io.confluent.idesidecar.restapi.credentials.TLSConfigBuilder;
 import io.confluent.idesidecar.restapi.models.ClusterType;
