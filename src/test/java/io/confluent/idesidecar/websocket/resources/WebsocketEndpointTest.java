@@ -1,5 +1,7 @@
 package io.confluent.idesidecar.websocket.resources;
 
+import static io.confluent.idesidecar.websocket.messages.MessageHeaders.SIDECAR_ORIGINATOR;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.idesidecar.restapi.application.KnownWorkspacesBean;
 import io.confluent.idesidecar.restapi.application.SidecarAccessTokenBean;
@@ -533,7 +535,7 @@ public class WebsocketEndpointTest {
    * is wrong given the sending workspace session. */
   @ValueSource(strings = {
       "not-a-valid-pid",
-      "sidecar",
+      SIDECAR_ORIGINATOR,
       "1234" // an unknown workspace id
   })
   @ParameterizedTest
@@ -592,7 +594,7 @@ public class WebsocketEndpointTest {
   public void testValidateHeadersForSidecarBroadcast() {
     // originator "sidecar" is allowed and expected.
     Message message = new Message(
-        new MessageHeaders(MessageType.UNKNOWN, "sidecar", "message-id-here"),
+        new MessageHeaders(MessageType.UNKNOWN, SIDECAR_ORIGINATOR, "message-id-here"),
         new DynamicMessageBody(Map.of("foonly", 3))
     );
 
