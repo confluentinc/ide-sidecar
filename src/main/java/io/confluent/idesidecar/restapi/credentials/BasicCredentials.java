@@ -49,15 +49,14 @@ public record BasicCredentials(
       KafkaConnectionOptions options
   ) {
     var config = new LinkedHashMap<String, String>();
-    if (options.ssl()) {
+    var tlsConfig = options.tlsConfig();
+    if (tlsConfig.enabled()) {
+      tlsConfig.getProperties(options.redact()).ifPresent(config::putAll);
       config.put("security.protocol", "SASL_SSL");
     } else {
       config.put("security.protocol", "SASL_PLAINTEXT");
     }
     config.put("sasl.mechanism", "PLAIN");
-    if (!options.verifyCertificates()) {
-      config.put("ssl.endpoint.identification.algorithm", "");
-    }
     config.put(
         "sasl.jaas.config",
         "%s required username=\"%s\" password=\"%s\";".formatted(
@@ -75,6 +74,10 @@ public record BasicCredentials(
   ) {
     var config = new LinkedHashMap<String, String>();
     config.put("basic.auth.credentials.source", "USER_INFO");
+    options
+        .tlsConfig()
+        .getProperties(options.redact())
+        .ifPresent(config::putAll);
     config.put(
         "basic.auth.user.info",
         "%s:%s".formatted(username, password.asString(options.redact()))

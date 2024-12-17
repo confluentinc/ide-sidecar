@@ -1,22 +1,32 @@
 package io.confluent.idesidecar.restapi.proxy;
 
 import io.confluent.idesidecar.restapi.connections.ConnectionState;
+import io.confluent.idesidecar.restapi.credentials.TLSConfig;
 import io.confluent.idesidecar.restapi.exceptions.Failure;
 import io.confluent.idesidecar.restapi.exceptions.Failure.Error;
+import io.confluent.idesidecar.restapi.models.ClusterType;
+import io.confluent.idesidecar.restapi.models.graph.Cluster;
+import io.confluent.idesidecar.restapi.proxy.clusters.strategy.ClusterStrategy;
 import io.confluent.idesidecar.restapi.util.UuidFactory;
 import io.vertx.codegen.annotations.Nullable;
 import io.vertx.core.MultiMap;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.net.JksOptions;
 import jakarta.ws.rs.core.Response.Status;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Stores the context of a proxy request.
+ * Stores the context of a proxy request to a cluster.
  */
-public class ProxyContext {
+public class ClusterProxyContext {
+
+  final String clusterId;
+  final ClusterType clusterType;
+  Cluster clusterInfo;
+  ClusterStrategy clusterStrategy;
 
   // Current request
   final String requestUri;
@@ -33,6 +43,7 @@ public class ProxyContext {
   MultiMap proxyRequestHeaders;
   HttpMethod proxyRequestMethod;
   Buffer proxyRequestBody;
+  JksOptions truststoreOptions;
 
   // Store the proxy response
   Buffer proxyResponseBody;
@@ -43,17 +54,27 @@ public class ProxyContext {
 
   private static final UuidFactory uuidFactory = new UuidFactory();
 
-  public ProxyContext(String requestUri, MultiMap requestHeaders, HttpMethod requestMethod,
-      Buffer requestBody, Map<String, String> requestPathParams, @Nullable String connectionId) {
+  public ClusterProxyContext(
+      String requestUri,
+      MultiMap requestHeaders,
+      HttpMethod requestMethod,
+      Buffer requestBody,
+      Map<String, String> requestPathParams,
+      @Nullable String connectionId,
+      String clusterId,
+      ClusterType clusterType
+  ) {
     this.requestUri = requestUri;
     this.requestHeaders = requestHeaders;
     this.requestMethod = requestMethod;
     this.requestBody = requestBody;
     this.requestPathParams = requestPathParams;
     this.connectionId = connectionId;
+    this.clusterId = clusterId;
+    this.clusterType = clusterType;
   }
 
-  public ProxyContext error(String code, String title) {
+  public ClusterProxyContext error(String code, String title) {
     errors.add(new Error(code, title, title, null));
     return this;
   }
@@ -82,6 +103,23 @@ public class ProxyContext {
 
   // Getters and setters
   // Add additional getters and setters as needed
+
+  public String getProxyRequestAbsoluteUrl() {
+    return proxyRequestAbsoluteUrl;
+  }
+
+  public MultiMap getProxyRequestHeaders() {
+    return proxyRequestHeaders;
+  }
+
+  public HttpMethod getProxyRequestMethod() {
+    return proxyRequestMethod;
+  }
+
+  public Buffer getProxyRequestBody() {
+    return proxyRequestBody;
+  }
+
   public String getRequestUri() {
     return requestUri;
   }
@@ -149,5 +187,39 @@ public class ProxyContext {
 
   public @Nullable String getConnectionId() {
     return connectionId;
+  }
+
+  public JksOptions getTruststoreOptions() {
+    return truststoreOptions;
+  }
+
+  public void setTruststoreOptions(TLSConfig.TrustStore trustStore) {
+    this.truststoreOptions = new JksOptions()
+        .setPath(trustStore.path())
+        .setPassword(trustStore.password().asString(false));
+  }
+
+  public Cluster getClusterInfo() {
+    return clusterInfo;
+  }
+
+  public void setClusterInfo(Cluster clusterInfo) {
+    this.clusterInfo = clusterInfo;
+  }
+
+  public ClusterStrategy getClusterStrategy() {
+    return clusterStrategy;
+  }
+
+  public void setClusterStrategy(ClusterStrategy clusterStrategy) {
+    this.clusterStrategy = clusterStrategy;
+  }
+
+  public String getClusterId() {
+    return clusterId;
+  }
+
+  public ClusterType getClusterType() {
+    return clusterType;
   }
 }

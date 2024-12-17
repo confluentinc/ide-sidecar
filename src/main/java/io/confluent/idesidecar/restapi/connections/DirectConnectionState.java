@@ -5,6 +5,8 @@ import static io.confluent.idesidecar.restapi.util.ExceptionUtil.unwrap;
 import io.confluent.idesidecar.restapi.auth.AuthErrors;
 import io.confluent.idesidecar.restapi.clients.ClientConfigurator;
 import io.confluent.idesidecar.restapi.credentials.Credentials;
+import io.confluent.idesidecar.restapi.credentials.TLSConfig;
+import io.confluent.idesidecar.restapi.credentials.TLSConfigBuilder;
 import io.confluent.idesidecar.restapi.models.ClusterType;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
@@ -17,7 +19,9 @@ import io.confluent.idesidecar.restapi.models.ConnectionStatusKafkaClusterStatus
 import io.confluent.idesidecar.restapi.models.ConnectionStatusSchemaRegistryStatusBuilder;
 import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
+import io.confluent.kafka.schemaregistry.client.rest.RestService;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
+import io.confluent.kafka.schemaregistry.client.security.SslFactory;
 import io.quarkus.logging.Log;
 import io.smallrye.common.constraint.NotNull;
 import io.smallrye.common.constraint.Nullable;
@@ -27,8 +31,6 @@ import io.vertx.core.http.HttpHeaders;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.time.Duration;
-import java.util.Collections;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -61,6 +63,11 @@ public class DirectConnectionState extends ConnectionState {
       null,
       null
   );
+
+  static final TLSConfig DEFAULT_SSL_ENABLED_CONFIG = TLSConfigBuilder
+      .builder()
+      .enabled(true)
+      .build();
 
   public DirectConnectionState() {
     super(null, null);
@@ -138,6 +145,30 @@ public class DirectConnectionState extends ConnectionState {
   }
 
   @Override
+  public Optional<TLSConfig> getKafkaTLSConfig() {
+    if (spec.kafkaClusterConfig() != null) {
+      return Optional.of(spec.kafkaClusterConfig().tlsConfig() != null
+          ? spec.kafkaClusterConfig().tlsConfig()
+          : DEFAULT_SSL_ENABLED_CONFIG
+      );
+    }
+
+    return Optional.empty();
+  }
+
+  @Override
+  public Optional<TLSConfig> getSchemaRegistryTLSConfig() {
+    if (spec.schemaRegistryConfig() != null) {
+      return Optional.of(spec.schemaRegistryConfig().tlsConfig() != null
+          ? spec.schemaRegistryConfig().tlsConfig()
+          : DEFAULT_SSL_ENABLED_CONFIG
+      );
+    }
+
+    return Optional.empty();
+  }
+
+  @Override
   protected Future<ConnectionStatus> doRefreshStatus() {
     return Future.join(
         getKafkaConnectionStatus(),
@@ -185,7 +216,7 @@ public class DirectConnectionState extends ConnectionState {
             );
           } else if (cause instanceof TimeoutException) {
             message = ("Unable to connect to the Kafka cluster at %s."
-                       + "Check the credentials or the network."
+                + " Check the credentials or the network."
             ).formatted(
                 spec.kafkaClusterConfig().bootstrapServers()
             );
@@ -372,10 +403,12 @@ public class DirectConnectionState extends ConnectionState {
         false,
         TIMEOUT
     );
-    return new CachedSchemaRegistryClient(
-        Collections.singletonList(config.uri()),
-        10,
-        srClientConfig
-    );
+    var restService = new RestService(config.uri());
+    restService.configure(srClientConfig);
+    var sslFactory = new SslFactory(srClientConfig);
+    if (sslFactory.sslContext() != null) {
+      restService.setSslSocketFactory(sslFactory.sslContext().getSocketFactory());
+    }
+    return new CachedSchemaRegistryClient(restService, 10);
   }
 }
