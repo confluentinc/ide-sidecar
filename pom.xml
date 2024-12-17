@@ -237,11 +237,6 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-jacoco</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-junit5</artifactId>
       <version>${vertx.version}</version>
@@ -345,44 +340,6 @@
                 </configuration>
               </execution>
             </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-    <profile>
-      <id>jenkins</id>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <configuration combine.children="append">
-              <redirectTestOutputToFile>true</redirectTestOutputToFile>
-              <systemPropertyVariables>
-                <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
-                <log4j.configuration>file:${build-tools.dir}/logging/log4j-surefire.properties</log4j.configuration>
-                <!-- see https://quarkus.io/guides/tests-with-coverage#working-with-multi-module-projects -->
-                <quarkus.jacoco.data-file>${project.build.directory}/target/jacoco.exec</quarkus.jacoco.data-file>
-                <quarkus.jacoco.reuse-data-file>true</quarkus.jacoco.reuse-data-file>
-                <quarkus.jacoco.report-location>${project.build.directory}/target/coverage</quarkus.jacoco.report-location>
-                <maven.home>${maven.home}</maven.home>
-              </systemPropertyVariables>
-            </configuration>
-          </plugin>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-failsafe-plugin</artifactId>
-            <configuration combine.children="append">
-              <redirectTestOutputToFile>true</redirectTestOutputToFile>
-              <systemPropertyVariables>
-                <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
-                <log4j.configuration>file:${build-tools.dir}/logging/log4j-failsafe.properties</log4j.configuration>
-                <!-- see https://quarkus.io/guides/tests-with-coverage#working-with-multi-module-projects -->
-                <quarkus.jacoco.data-file>${project.build.directory}/target/jacoco.exec</quarkus.jacoco.data-file>
-                <quarkus.jacoco.reuse-data-file>true</quarkus.jacoco.reuse-data-file>
-                <quarkus.jacoco.report-location>${project.build.directory}/target/coverage</quarkus.jacoco.report-location>
-              </systemPropertyVariables>
-            </configuration>
           </plugin>
         </plugins>
       </build>
@@ -621,26 +578,41 @@
         <version>${jacoco-maven-plugin.version}</version>
         <executions>
           <execution>
+            <id>default-prepare-agent</id>
             <goals>
               <goal>prepare-agent</goal>
             </goals>
             <configuration>
-              <exclClassLoaders>*QuarkusClassLoader</exclClassLoaders>
               <destFile>${project.build.directory}/jacoco-quarkus.exec</destFile>
               <append>true</append>
             </configuration>
           </execution>
           <execution>
-            <id>generate-code-coverage-report</id>
-            <phase>test</phase>
+            <id>default-prepare-agent-integration</id>
             <goals>
-              <goal>report</goal>
-              <goal>report-aggregate</goal>
+              <goal>prepare-agent-integration</goal>
             </goals>
             <configuration>
+              <destFile>${project.build.directory}/jacoco-quarkus.exec</destFile>
+              <append>true</append>
+            </configuration>
+          </execution>
+          <execution>
+            <id>report-it</id>
+            <phase>post-integration-test</phase>
+            <goals>
+              <goal>report</goal>
+            </goals>
+            <configuration>
+              <dataFile>${project.build.directory}/jacoco-quarkus.exec</dataFile>
+              <outputDirectory>${project.build.directory}/jacoco-report</outputDirectory>
               <includes>
                 <include>io/confluent/**</include>
               </includes>
+              <excludes>
+                <exclude>io/confluent/idesidecar/restapi/kafkarest/model/**</exclude>
+                <exclude>io/confluent/idesidecar/restapi/proto/**/*</exclude>
+              </excludes>
             </configuration>
           </execution>
         </executions>
@@ -745,10 +717,6 @@
           <threadCount>10</threadCount>
           <systemPropertyVariables>
             <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
-            <!-- see https://quarkus.io/guides/tests-with-coverage#working-with-multi-module-projects -->
-            <quarkus.jacoco.data-file>${project.build.directory}/target/jacoco.exec</quarkus.jacoco.data-file>
-            <quarkus.jacoco.reuse-data-file>true</quarkus.jacoco.reuse-data-file>
-            <quarkus.jacoco.report-location>${project.build.directory}/target/coverage</quarkus.jacoco.report-location>
           </systemPropertyVariables>
           <environmentVariables>
             <QUARKUS_CONFIG_LOCATIONS>src/test/resources/application-nativeit.yaml</QUARKUS_CONFIG_LOCATIONS>
@@ -761,10 +729,6 @@
         <configuration combine.children="append">
           <systemPropertyVariables>
             <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
-            <!-- see https://quarkus.io/guides/tests-with-coverage#working-with-multi-module-projects -->
-            <quarkus.jacoco.data-file>${project.build.directory}/target/jacoco.exec</quarkus.jacoco.data-file>
-            <quarkus.jacoco.reuse-data-file>true</quarkus.jacoco.reuse-data-file>
-            <quarkus.jacoco.report-location>${project.build.directory}/target/coverage</quarkus.jacoco.report-location>
           </systemPropertyVariables>
         </configuration>
       </plugin>
@@ -804,6 +768,8 @@
           </annotationProcessorPaths>
           <compilerArgs>
             <arg>-Aproject=${project.groupId}/${project.artifactId}</arg>
+            <!-- https://github.com/Randgalt/record-builder/blob/8f8f92d8d369f74c6ab63e9a60ac6153f0c0afc0/record-builder-core/src/main/java/io/soabase/recordbuilder/core/RecordBuilder.java#L264-L268 -->
+            <arg>-AaddClassRetainedGenerated=true</arg>
           </compilerArgs>
         </configuration>
       </plugin>
