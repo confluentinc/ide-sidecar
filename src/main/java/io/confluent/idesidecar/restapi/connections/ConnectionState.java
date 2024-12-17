@@ -49,7 +49,7 @@ public abstract class ConnectionState {
 
   private final AtomicReference<ConnectionStatus> cachedStatus = new AtomicReference<>();
 
-  protected final StateChangedListener listener;
+  private final StateChangedListener listener;
 
   protected ConnectionState(ConnectionSpec spec, StateChangedListener listener) {
     this.spec = spec;
@@ -112,23 +112,11 @@ public abstract class ConnectionState {
     // update the cached status
     this.cachedStatus.set(updated);
 
-    // Figure out which event to send
-    if (updated.isConnected()) {
-      // Now connected
-      if (!original.isConnected()) {
-        // but was not connected before so we connected
+    // If the status has changed, notify the listener
+    if (!updated.equals(original)) {
+      if (updated.isConnected()) {
         listener.connected(this);
-      } else if (!original.equals(updated)) {
-        // and was connected before, but the status changed
-        listener.connected(this);
-      }
-    } else {
-      // Now not connected
-      if (original.isConnected()) {
-        // but was connected before so we disconnected
-        listener.disconnected(this);
-      } else if (!original.equals(updated)) {
-        // and was not connected before, but the status changed
+      } else {
         listener.disconnected(this);
       }
     }

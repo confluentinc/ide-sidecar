@@ -206,6 +206,11 @@ public class ConnectionStateManager {
         ConnectionTypeQualifier.typeQualifier(connection)
     );
 
+    // If the connection is initially connected, fire a connected event
+    if (connection.getStatus().isConnected()) {
+      stateChangeListener.connected(connection);
+    }
+
     return connection;
   }
 
