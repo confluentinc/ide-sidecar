@@ -102,14 +102,14 @@ public class WebsocketEndpoint {
     // The workspace process id should have been passed as a request parameter, though.
     Map <String, java.util.List<String>> requestParams = session.getRequestParameterMap();
     if (requestParams.size() == 0) {
-      Log.error("No request parameters provided. Closing session.");
+      Log.errorf("No request parameters provided. Closing new session %s.", session.getId());
       session.close();
       return;
     }
 
     List<String> workspaceIdList = requestParams.get("workspace_id");
     if (workspaceIdList == null || workspaceIdList.isEmpty()) {
-      Log.error("No workspace_id parameter provided. Closing session.");
+      Log.errorf("No workspace_id parameter provided. Closing new session %s.", session.getId());
       session.close();
       return;
     }
@@ -119,7 +119,7 @@ public class WebsocketEndpoint {
     try {
       workspaceId = Long.parseLong(workspaceIdString);
     } catch (NumberFormatException e) {
-      Log.errorf("Invalid workspace_id parameter value: %s. Closing session.", workspaceIdString);
+      Log.errorf("Invalid workspace_id parameter value: %s. Closing new session %s.", workspaceIdString, session.getId());
       session.close();
       return;
     }
@@ -127,12 +127,12 @@ public class WebsocketEndpoint {
     // As of time of writing, the workspace should have REST handshook or hit the health check
     // route with the workspace id header, so we should know about it already.
     if (!knownWorkspacesBean.isKnownWorkspacePID(workspaceId)) {
-      Log.errorf("Unauthorized workspace id: %d. Closing session.", workspaceId);
+      Log.errorf("Unknown workspace id: %d. Closing new session %s.", workspaceId, session.getId());
       session.close();
       return;
     }
 
-    Log.infof("New websocket session opened for workspace pid: %d", workspaceId);
+    Log.infof("New websocket session %s opened for workspace pid: %d", session.getId(), workspaceId);
     // create new WorkspaceSession object and store in sessions map.
     WorkspaceSession newWorkspaceSession = new WorkspaceSession(workspaceId);
     sessions.put(session, newWorkspaceSession);
@@ -153,7 +153,7 @@ public class WebsocketEndpoint {
   public void onMessage(String messageString, Session senderSession) throws IOException {
     WorkspaceSession workspaceSession = sessions.get(senderSession);
     if (workspaceSession == null) {
-      Log.error("Odd! Received message from unregistered session. Closing session.");
+      Log.errorf("Odd! Received message from unregistered session %s. Closing session.", senderSession.getId());
       senderSession.close();
       return;
     }
@@ -164,8 +164,9 @@ public class WebsocketEndpoint {
       m =  parseAndValidateMessage(messageString);
     } catch (java.io.IOException e) {
       Log.errorf(
-          "Invalid message from workspace: %d, closing session and discarding.",
-          workspaceSession.processId()
+          "Invalid message from workspace: %d, closing session %s and discarding.",
+          workspaceSession.processId(),
+          senderSession.getId()
       );
       sessions.remove(senderSession);
       senderSession.close();
@@ -182,8 +183,9 @@ public class WebsocketEndpoint {
     } catch (NumberFormatException e) {
       Log.errorf(
           "Invalid websocket message header originator value -- not an integer: %s. "
-          + "Removing and closing session.",
-          headers.originator()
+          + "Removing and closing session %s.",
+          headers.originator(),
+          senderSession.getId()
       );
       sessions.remove(senderSession);
       senderSession.close();
@@ -193,9 +195,10 @@ public class WebsocketEndpoint {
     if (claimedWorkspaceId != workspaceSession.processId()) {
       Log.errorf(
           "Workspace %s sent message with incorrect originator value: %d."
-          + " Removing and closing session.",
+          + " Removing and closing session %s.",
           workspaceSession.processId(),
-          claimedWorkspaceId
+          claimedWorkspaceId,
+          senderSession.getId()
       );
       sessions.remove(senderSession);
       senderSession.close();
@@ -234,15 +237,14 @@ public class WebsocketEndpoint {
   }
 
   @OnError
-  public void onError(Session session, Throwable throwable) {
+  public void onError(Session session, Throwable throwable) throws IOException {
     // May or may not actually remove -- if had not yet been authorized, it won't be in the map.
     // (but will definitely not be in the map after this statement.)
     WorkspaceSession existingSession = sessions.remove(session);
+    session.close();
 
-    var id = existingSession != null ? existingSession : session.getId();
-    String logMsg = "Websocket error for authorized workspace: %s - %s";
-    Log.errorf(logMsg, id, throwable.getMessage());
-    Log.errorf(logMsg, id, "Session removed.");
+    var id = existingSession != null ? existingSession.processId() : "unknown";
+    Log.errorf("Websocket error for workspace pid %s, session id %s. Closed and removed session.", id, session.getId(), throwable.getMessage());
   }
 
   @OnClose
