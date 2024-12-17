@@ -101,12 +101,12 @@ public class WebsocketEndpointTest {
     }
 
     public Message poll() {
-      return poll(FIVE_SECONDS);
+      // Most of the time, we expect to get a message right away.
+      return poll(Duration.ofSeconds(10));
     }
 
     public Message poll(Duration timeout) {
       try {
-        // Most of the time, we expect to get a message right away.
         return messages.poll(timeout.toMillis(), TimeUnit.MILLISECONDS);
       } catch (Throwable e) {
         fail("Timed out waiting for message", e);
@@ -115,7 +115,6 @@ public class WebsocketEndpointTest {
     }
   }
 
-  public static final Duration FIVE_SECONDS = Duration.ofSeconds(5);
   public static final Duration QUARTER_SECOND = Duration.ofMillis(250);
 
   /**
@@ -366,7 +365,7 @@ public class WebsocketEndpointTest {
       // sent by sidecar to the client upon connection, telling if of the number of
       // workspaces currently connected (inclusive).
       // (should come fast, but cicd runners are slow here)
-      var message = clientHandler.poll(FIVE_SECONDS);
+      var message = clientHandler.poll();
       if (message == null) {
         throw new RuntimeException("Timed out waiting for client to receive message");
       }
@@ -381,7 +380,7 @@ public class WebsocketEndpointTest {
     Thread.sleep(1000);
 
     // 4. The first workspace should have received one additional messages, when the second workspace connected.
-    var secondAnnouncement = messageHandlers.getFirst().poll(FIVE_SECONDS);
+    var secondAnnouncement = messageHandlers.getFirst().poll();
     if (secondAnnouncement == null) {
       throw new RuntimeException("Timed out waiting for client to receive message");
     }
@@ -415,7 +414,7 @@ public class WebsocketEndpointTest {
 
     // The second workspace should receive the message, and it should be unchanged, esp.
     // the message tyoe.
-    var randomMessage = messageHandlers.get(1).poll(FIVE_SECONDS);
+    var randomMessage = messageHandlers.get(1).poll();
     if (randomMessage == null) {
       throw new RuntimeException("Timed out waiting for client to receive message");
     }
@@ -435,7 +434,7 @@ public class WebsocketEndpointTest {
     // 6. Close the second workspace session. The first should receive a message about it having disconnected.
     websocketSessions.get(1).close();
 
-    var message = messageHandlers.getFirst().poll(FIVE_SECONDS);
+    var message = messageHandlers.getFirst().poll();
     if (message == null) {
       throw new RuntimeException("Timed out waiting for client to receive message");
     }
