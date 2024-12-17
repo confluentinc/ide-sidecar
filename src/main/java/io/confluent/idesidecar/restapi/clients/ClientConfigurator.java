@@ -257,15 +257,20 @@ public class ClientConfigurator {
 
     // Second, add any connection properties for Kafka cluster credentials (if defined)
     var options = connection.getKafkaConnectionOptions().withRedact(redact);
-    connection
-        .getKafkaCredentials()
-        .flatMap(creds -> creds.kafkaClientProperties(options))
-        .ifPresent(props::putAll);
 
-    connection
-        .getKafkaTLSConfig()
-        .flatMap(tlsConfig -> tlsConfig.getProperties(redact))
-        .ifPresent(props::putAll);
+    if (connection.getKafkaCredentials().isPresent()) {
+      connection
+          .getKafkaCredentials()
+          .flatMap(creds -> creds.kafkaClientProperties(options))
+          .ifPresent(props::putAll);
+    } else if (connection.getKafkaTLSConfig().isPresent()) {
+      // No credentials, but maybe TLS config is present
+      var tlsConfig = connection.getKafkaTLSConfig().get();
+      if (tlsConfig.enabled()) {
+        props.put("security.protocol", "SSL");
+        tlsConfig.getProperties(redact).ifPresent(props::putAll);
+      }
+    }
 
     // Add any auth properties for Schema Registry to the Kafka client config,
     // with the "schema.registry." prefix (unless the property already starts with that)
@@ -322,13 +327,17 @@ public class ClientConfigurator {
         .getSchemaRegistryOptions()
         .withRedact(redact)
         .withLogicalClusterId(logicalId);
-    connection
-        .getSchemaRegistryCredentials()
-        .flatMap(creds -> creds.schemaRegistryClientProperties(options))
-        .ifPresent(props::putAll);
-
-    if (connection.getSchemaRegistryTLSConfig().isPresent()) {
-
+    if (connection.getSchemaRegistryCredentials().isPresent()) {
+      connection
+          .getSchemaRegistryCredentials()
+          .flatMap(creds -> creds.schemaRegistryClientProperties(options))
+          .ifPresent(props::putAll);
+    } else if (connection.getSchemaRegistryTLSConfig().isPresent()) {
+      // No credentials, but maybe TLS config is present
+      var tlsConfig = connection.getSchemaRegistryTLSConfig().get();
+      if (tlsConfig.enabled()) {
+        tlsConfig.getProperties(redact).ifPresent(props::putAll);
+      }
     }
 
     return props;

@@ -116,8 +116,8 @@ public record OAuthCredentials(
     }
 
     var tlsConfig = options.tlsConfig();
-    tlsConfig.getProperties(options.redact()).ifPresent(config::putAll);
     if (tlsConfig.enabled()) {
+      tlsConfig.getProperties(options.redact()).ifPresent(config::putAll);
       config.put("security.protocol", "SASL_SSL");
     } else {
       config.put("security.protocol", "SASL_PLAINTEXT");

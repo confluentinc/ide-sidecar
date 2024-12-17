@@ -76,6 +76,10 @@ class ClientConfiguratorStaticTest {
       MTLS_TRUSTSTORE_PATH,
       new Password(MTLS_TRUSTSTORE_PASSWORD.toCharArray())
   );
+  static final TLSConfig DEFAULT_TLS_CONFIG = TLSConfigBuilder
+      .builder()
+      .enabled(true)
+      .build();
   static final TLSConfig ONE_WAY_TLS_CONFIG_WITHOUT_HOSTNAME_VERIFICATION = ONE_WAY_TLS_CONFIG
       .with()
       .verifyHostname(false)
@@ -188,6 +192,44 @@ class ClientConfiguratorStaticTest {
                 bootstrap.servers=localhost:9092
                 """,
             null
+        ),
+        new TestInput(
+            "No credentials, just Kafka and default TLS",
+            kafka,
+            null,
+            null,
+            null,
+            DEFAULT_TLS_CONFIG,
+            null,
+            false,
+            null,
+            """
+                bootstrap.servers=localhost:9092
+                security.protocol=SSL
+                """,
+            null
+        ),
+        new TestInput(
+            "No credentials and TLS",
+            kafka,
+            null,
+            schemaRegistry,
+            null,
+            ONE_WAY_TLS_CONFIG,
+            ONE_WAY_TLS_CONFIG,
+            false,
+            null,
+            """
+                bootstrap.servers=localhost:9092
+                security.protocol=SSL
+                ssl.truststore.location=%s
+                ssl.truststore.password=%s
+                """.formatted(MTLS_TRUSTSTORE_PATH, MTLS_TRUSTSTORE_PASSWORD),
+            """
+                schema.registry.url=http://localhost:8081
+                ssl.truststore.location=%s
+                ssl.truststore.password=%s
+                """.formatted(MTLS_TRUSTSTORE_PATH, MTLS_TRUSTSTORE_PASSWORD)
         ),
         new TestInput(
             "With basic credentials and plaintext",

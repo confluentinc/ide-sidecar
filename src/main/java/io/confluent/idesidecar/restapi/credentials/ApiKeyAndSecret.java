@@ -55,9 +55,9 @@ public record ApiKeyAndSecret(
   ) {
     var config = new LinkedHashMap<String, String>();
     var tlsConfig = options.tlsConfig();
-    tlsConfig.getProperties(options.redact()).ifPresent(config::putAll);
     if (tlsConfig.enabled()) {
       config.put("security.protocol", "SASL_SSL");
+      tlsConfig.getProperties(options.redact()).ifPresent(config::putAll);
     } else {
       config.put("security.protocol", "SASL_PLAINTEXT");
     }
