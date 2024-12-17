@@ -1,0 +1,11 @@
+{
+  "headers": {
+    "message_type": "random-extension-message-type",
+    "originator": "2343",
+    "message_id": "message-id-1"
+  },
+  "body": {
+    "random-extension-payload-int:": 123,
+    "random-extension-payload-string": "random-extension-payload-string"
+  }
+}
