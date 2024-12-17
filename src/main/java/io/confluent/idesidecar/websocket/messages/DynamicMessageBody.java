@@ -31,16 +31,6 @@ public class DynamicMessageBody implements MessageBody {
     properties.put(key, value);
   }
 
-  public String toString() {
-    return properties.toString();
-  }
-
-  /** For the message serde tests, must override .equals() because the default implementation
-   *  compares the object references, not the contents of the maps.
-   *
-   *  This is somewhat safe because once deserialized, we can assume that the properties are
-   *  immutable, and this map is never modified after deserialization.
-   *  */
   @Override
   public boolean equals(Object obj) {
     if (this == obj) {
@@ -50,8 +40,7 @@ public class DynamicMessageBody implements MessageBody {
       return false;
     }
     DynamicMessageBody that = (DynamicMessageBody) obj;
-    boolean rc =  properties.equals(that.properties);
-    return rc;
+    return properties.equals(that.properties);
   }
 
   @Override
