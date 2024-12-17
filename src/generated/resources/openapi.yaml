@@ -817,7 +817,12 @@ components:
           minLength: 1
           type: string
         credentials:
-          $ref: "#/components/schemas/Credentials"
+          description: "The credentials for the Kafka cluster, or null if no authentication\
+            \ is required"
+          type: object
+          allOf:
+          - $ref: "#/components/schemas/Credentials"
+          nullable: true
         ssl:
           description: "Whether to communicate with the Kafka cluster over TLS/SSL.\
             \ Defaults to 'true', but set to 'false' when the Kafka cluster does not\
@@ -1003,7 +1008,12 @@ components:
           minLength: 1
           type: string
         credentials:
-          $ref: "#/components/schemas/Credentials"
+          description: "The credentials for the Schema Registry, or null if no authentication\
+            \ is required"
+          type: object
+          allOf:
+          - $ref: "#/components/schemas/Credentials"
+          nullable: true
     SchemaRegistryStatus:
       description: The status related to the specified Schema Registry.
       required:
@@ -1178,13 +1188,13 @@ components:
     HealthCheck:
       type: object
       properties:
-        status:
-          enum:
-          - UP
-          - DOWN
-          type: string
         name:
           type: string
         data:
           type: object
           nullable: true
+        status:
+          enum:
+          - UP
+          - DOWN
+          type: string
