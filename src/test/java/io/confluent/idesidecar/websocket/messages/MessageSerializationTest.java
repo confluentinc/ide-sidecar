@@ -1,43 +1,63 @@
 package io.confluent.idesidecar.websocket.messages;
 
+import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.deserializeAndSerialize;
+import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResourceAsObject;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
+import java.util.stream.Stream;
 import org.junit.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 public class MessageSerializationTest {
 
-  /** Test deserializing a simple message of an unknown message type, as if came from sidecar. */
+
+
+  static Stream<Object []> pathAndBodyTypePairs() {
+    return Stream.of(
+        new Object [] {"websocket-messages/random-extension-message.json", MessageType.UNKNOWN, DynamicMessageBody.class},
+        new Object [] {"websocket-messages/workspaces-changed.json", MessageType.WORKSPACE_COUNT_CHANGED, WorkspacesChangedBody.class},
+        new Object [] {"websocket-messages/protocol-error.json", MessageType.PROTOCOL_ERROR, ProtocolErrorBody.class}
+    );
+  }
+  /** Test deserializing sample messages from resource files. Prove that the messages deserialize properly into the expected types and body classes. */
+  @ParameterizedTest
+  @MethodSource("pathAndBodyTypePairs")
+  public void testSerdeResourceMessageFiles(String resourceFilePath, MessageType expectedMessageType, Class<MessageBody> expectedBodyType) throws IOException {
+    deserializeAndSerialize(resourceFilePath, Message.class);
+    Message message = loadResourceAsObject(resourceFilePath, Message.class);
+    assertEquals(expectedMessageType, message.messageType());
+    assertEquals(expectedBodyType, message.body().getClass());
+  }
+
+
   @Test
-  public void testDeserializeRandomSidecarMessage() throws JsonProcessingException {
+  public void MessageEqualityTests() throws IOException  {
+    MessageHeaders headers = new MessageHeaders(MessageType.WORKSPACE_COUNT_CHANGED, "sidecar", "message-id-here");
 
-    ObjectMapper mapper = new ObjectMapper();
+    String serialized = new ObjectMapper().writeValueAsString(headers);
+    MessageHeaders headersDeserialized = new ObjectMapper().readValue(serialized, MessageHeaders.class);
 
-    String simpleMessage = """
-        {
-          "headers": {
-            "message_type": "random_sidecar_message",
-            "originator": "1122"
-          },
-          "body": {
-            "foonly": 3
-          }
-        }
-        """;
+    assertEquals(headers, headersDeserialized);
 
-    Message m = mapper.readValue(simpleMessage, Message.class);
 
-    MessageHeaders headers = m.headers();
-    assertEquals(MessageType.UNKNOWN, headers.messageType());
-    assertEquals("1122", headers.originator());
 
-    MessageBody body = m.body();
-    assertTrue(body instanceof DynamicMessageBody);
+    WorkspacesChangedBody body = new WorkspacesChangedBody(3);
+    serialized = new ObjectMapper().writeValueAsString(body);
+    WorkspacesChangedBody bodyDeserialized = new ObjectMapper().readValue(serialized, WorkspacesChangedBody.class);
 
-    DynamicMessageBody dmb = (DynamicMessageBody) body;
-    assertEquals(3, dmb.getProperties().get("foonly"));
+    assertEquals(body, bodyDeserialized);
+
+    Message m = new Message(headers, body);
+    serialized = new ObjectMapper().writeValueAsString(m);
+    Message mDeserialized = new ObjectMapper().readValue(serialized, Message.class);
+
+    assertEquals(m, mDeserialized);
+
   }
 
   /** Test serializing a known sidecar -> workspaces message. */

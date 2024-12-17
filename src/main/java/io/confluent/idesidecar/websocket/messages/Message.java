@@ -14,16 +14,18 @@ import javax.validation.constraints.NotNull;
  */
 @RegisterForReflection
 public record Message(
-    @JsonProperty("headers") MessageHeaders headers,
+    @NotNull @JsonProperty("headers") MessageHeaders headers,
     @NotNull @JsonProperty("body") MessageBody body
 ) {
 
   // Convenience getters for interesting bits from the headers.
+  @NotNull
   @JsonIgnore
   public String id() {
     return headers.id();
   }
 
+  @NotNull
   @JsonIgnore
   public MessageType messageType() {
     return headers.messageType();

@@ -20,4 +20,5 @@ public record MessageHeaders(
     public MessageHeaders(MessageType messageType, String originator) {
         this(messageType, originator, UUID.randomUUID().toString());
     }
+
 }

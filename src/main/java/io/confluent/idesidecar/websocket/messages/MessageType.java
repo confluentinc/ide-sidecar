@@ -9,7 +9,7 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
 import java.io.IOException;
 
 /**
-  * Pseudo enum holding websocket message types of concern to sidecar.
+  * Enum holding websocket message types of concern to sidecar.
   * Other message types may exist for use for IDE workspace <--> workspace communication.
  **/
 @RegisterForReflection
