@@ -965,9 +965,6 @@
           }
         }
       },
-      "Credentials" : {
-        "type" : "object"
-      },
       "Error" : {
         "description" : "Describes a particular error encountered while performing an operation.",
         "type" : "object",
@@ -1120,10 +1117,6 @@
           },
           "credentials" : {
             "description" : "The credentials for the Kafka cluster, or null if no authentication is required",
-            "type" : "object",
-            "allOf" : [ {
-              "$ref" : "#/components/schemas/Credentials"
-            } ],
             "oneOf" : [ {
               "$ref" : "#/components/schemas/BasicCredentials"
             }, {
@@ -1378,10 +1371,6 @@
           },
           "credentials" : {
             "description" : "The credentials for the Schema Registry, or null if no authentication is required",
-            "type" : "object",
-            "allOf" : [ {
-              "$ref" : "#/components/schemas/Credentials"
-            } ],
             "oneOf" : [ {
               "$ref" : "#/components/schemas/BasicCredentials"
             }, {
@@ -1613,12 +1602,12 @@
             "enum" : [ "UP", "DOWN" ],
             "type" : "string"
           },
+          "name" : {
+            "type" : "string"
+          },
           "data" : {
             "type" : "object",
             "nullable" : true
-          },
-          "name" : {
-            "type" : "string"
           }
         }
       }
