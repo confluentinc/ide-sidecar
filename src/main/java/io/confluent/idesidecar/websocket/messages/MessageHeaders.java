@@ -1,5 +1,6 @@
 package io.confluent.idesidecar.websocket.messages;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import java.util.UUID;
@@ -16,7 +17,6 @@ public record MessageHeaders(
     @NotNull @JsonProperty("originator") String originator,
     @NotNull @JsonProperty("message_id") String id
 ) {
-
     public static final String SIDECAR_ORIGINATOR = "sidecar";
 
     /** Constructor for outbound messages. */
@@ -27,4 +27,8 @@ public record MessageHeaders(
         this(messageType, originator, UUID.randomUUID().toString());
     }
 
+    @JsonIgnore
+    public boolean originatedBySidecar() {
+        return SIDECAR_ORIGINATOR.equals(originator);
+    }
 }

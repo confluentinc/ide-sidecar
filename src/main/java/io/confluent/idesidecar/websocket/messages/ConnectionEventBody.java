@@ -6,7 +6,7 @@ import io.confluent.idesidecar.restapi.models.Connection;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 
 /**
- * Sent by the sidecar to the workspace when a connection is created, when existing connections
+ * Sent by the sidecar to workspaces when a connection is created, when existing connections
  * are updated or their status changed, or when a connection is deleted.
  */
 @RegisterForReflection
