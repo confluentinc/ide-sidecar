@@ -3,7 +3,7 @@ package io.confluent.idesidecar.restapi.resources;
 import io.confluent.idesidecar.restapi.exceptions.ProcessorFailedException;
 import io.confluent.idesidecar.restapi.models.ClusterType;
 import io.confluent.idesidecar.restapi.processors.Processor;
-import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
+import io.confluent.idesidecar.restapi.proxy.ClusterProxyContext;
 import io.confluent.idesidecar.restapi.util.RequestHeadersConstants;
 import io.quarkus.vertx.web.Route;
 import io.smallrye.common.annotation.Blocking;
