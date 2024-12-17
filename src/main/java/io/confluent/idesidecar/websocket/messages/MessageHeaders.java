@@ -23,6 +23,7 @@ public record MessageHeaders(
     public MessageHeaders(MessageType messageType) {
         this(messageType, SIDECAR_ORIGINATOR);
     }
+
     public MessageHeaders(MessageType messageType, String originator) {
         this(messageType, originator, UUID.randomUUID().toString());
     }
