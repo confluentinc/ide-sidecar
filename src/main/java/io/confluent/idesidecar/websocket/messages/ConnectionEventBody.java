@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.confluent.idesidecar.restapi.connections.ConnectionState;
 import io.confluent.idesidecar.restapi.models.Connection;
 import io.quarkus.runtime.annotations.RegisterForReflection;
+import javax.validation.constraints.NotNull;
 
 /**
  * Sent by the sidecar to workspaces when a connection is created, when existing connections
@@ -11,11 +12,11 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
  */
 @RegisterForReflection
 public record ConnectionEventBody(
-    @JsonProperty("event_kind") EventKind eventKind,
-    @JsonProperty("connection") Connection connection
+    @NotNull @JsonProperty("action") Action action,
+    @NotNull @JsonProperty("connection") Connection connection
 ) implements MessageBody {
 
-  public enum EventKind {
+  public enum Action {
     CREATED,
     UPDATED,
     DELETED,
@@ -23,7 +24,7 @@ public record ConnectionEventBody(
     DISCONNECTED
   }
 
-  public ConnectionEventBody(ConnectionState state, EventKind eventKind) {
-    this(eventKind, Connection.from(state));
+  public ConnectionEventBody(ConnectionState state, Action action) {
+    this(action, Connection.from(state));
   }
 }
