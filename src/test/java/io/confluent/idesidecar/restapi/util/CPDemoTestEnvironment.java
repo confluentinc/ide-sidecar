@@ -3,10 +3,10 @@ package io.confluent.idesidecar.restapi.util;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import com.github.dockerjava.api.model.Container;
-import io.confluent.idesidecar.restapi.credentials.BasicCredentials;
-import io.confluent.idesidecar.restapi.credentials.Password;
-import io.confluent.idesidecar.restapi.credentials.TLSConfig;
+import io.confluent.idesidecar.restapi.credentials.*;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
+import io.confluent.idesidecar.restapi.models.ConnectionSpecKafkaClusterConfigBuilder;
+import io.confluent.idesidecar.restapi.models.ConnectionSpecSchemaRegistryConfigBuilder;
 import io.confluent.idesidecar.restapi.util.cpdemo.CPServerContainer;
 import io.confluent.idesidecar.restapi.util.cpdemo.OpenldapContainer;
 import io.confluent.idesidecar.restapi.util.cpdemo.SchemaRegistryContainer;
@@ -287,19 +287,22 @@ public class CPDemoTestEnvironment implements TestEnvironment {
         ConnectionSpec.createDirect(
             "direct-to-local-connection",
             "Direct to Local",
-            new ConnectionSpec.KafkaClusterConfig(
-                "localhost:11091,localhost:11092",
-                null
-            ),
-            new ConnectionSpec.SchemaRegistryConfig(
-                "something",
-                "https://localhost:8085",
-                new BasicCredentials(
-                    "superUser",
-                    new Password("superUser".toCharArray())
-                )
-            ),
-            new TLSConfig(trustStoreLocation, trustStorePassword)
+            ConnectionSpecKafkaClusterConfigBuilder
+                .builder()
+                .bootstrapServers("localhost:11091,localhost:11092")
+                .build(),
+            ConnectionSpecSchemaRegistryConfigBuilder
+              .builder()
+              .id("local-sr-cp-demo")
+              .uri("https://localhost:8085")
+              .credentials(
+                  new BasicCredentials(
+                      "superUser",
+                      new Password("superUser".toCharArray())
+                  )
+              )
+              .tlsConfig(new TLSConfig(trustStoreLocation, trustStorePassword))
+              .build()
         )
     );
   }
@@ -309,10 +312,10 @@ public class CPDemoTestEnvironment implements TestEnvironment {
         ConnectionSpec.createDirect(
             "direct-to-local-connection-no-sr",
             "Direct to Local (No SR)",
-            new ConnectionSpec.KafkaClusterConfig(
-                "localhost:12091,localhost:12092",
-                null
-            ),
+            ConnectionSpecKafkaClusterConfigBuilder
+                .builder()
+                .bootstrapServers("localhost:12091,localhost:12092")
+                .build(),
             null
         )
     );
@@ -323,16 +326,16 @@ public class CPDemoTestEnvironment implements TestEnvironment {
         ConnectionSpec.createDirect(
             "direct-to-local-connection-basic-auth",
             "Direct to Local (Basic Auth)",
-            new ConnectionSpec.KafkaClusterConfig(
-                "localhost:13091,localhost:13092",
-                new BasicCredentials(
+            ConnectionSpecKafkaClusterConfigBuilder
+                .builder()
+                .bootstrapServers("localhost:13091,localhost:13092")
+                .credentials(new BasicCredentials(
                     "admin",
                     new Password("admin-secret".toCharArray())
-                )
-            ),
+                ))
+                .build(),
             null
-        )
-    );
+        ));
   }
 
   public Optional<ConnectionSpec> directConnectionOverMutualTLS() {
@@ -341,27 +344,50 @@ public class CPDemoTestEnvironment implements TestEnvironment {
         ".cp-demo/scripts/security/kafka.schemaregistry.truststore.jks"
     ).getAbsolutePath();
     var trustStorePassword = new Password("confluent".toCharArray());
+    var keyStoreLocation = new File(cwd,
+        ".cp-demo/scripts/security/kafka.schemaregistry.keystore.jks"
+    ).getAbsolutePath();
+    var keyStorePassword = new Password("confluent".toCharArray());
+    var keyStoreKeyPassword = new Password("confluent".toCharArray());
+
+    var tlsConfig = TLSConfigBuilder
+        .builder()
+        .enabled(true)
+        .truststore(TLSConfigTrustStoreBuilder
+            .builder()
+            .path(trustStoreLocation)
+            .password(trustStorePassword)
+            .build()
+        )
+        .keystore(TLSConfigKeyStoreBuilder
+            .builder()
+            .path(keyStoreLocation)
+            .password(keyStorePassword)
+            .keyPassword(keyStoreKeyPassword)
+            .build()
+        )
+        .build();
 
     return Optional.of(
         ConnectionSpec.createDirect(
             "direct-to-local-connection-mtls",
             "Direct to Local (Mutual TLS)",
-            new ConnectionSpec.KafkaClusterConfig(
-                // Use SSL listener
-                "localhost:11091,localhost:11092",
-                null
-            ),
-            new ConnectionSpec.SchemaRegistryConfig(
-                "something",
-                "https://localhost:8085",
-                new BasicCredentials(
+            ConnectionSpecKafkaClusterConfigBuilder
+                .builder()
+                .bootstrapServers("localhost:11091,localhost:11092")
+                .tlsConfig(tlsConfig)
+                .build(),
+            ConnectionSpecSchemaRegistryConfigBuilder
+                .builder()
+                .id("local-sr-cp-demo-mtls")
+                .uri("https://localhost:8085")
+                .credentials(new BasicCredentials(
                     "superUser",
                     new Password("superUser".toCharArray())
-                )
-            ),
-            new TLSConfig(trustStoreLocation, trustStorePassword)
-        )
-    );
+                ))
+                .tlsConfig(tlsConfig)
+                .build()
+        ));
   }
 
   /**

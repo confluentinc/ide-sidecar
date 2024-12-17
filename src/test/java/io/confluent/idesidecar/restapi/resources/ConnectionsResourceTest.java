@@ -25,19 +25,12 @@ import io.confluent.idesidecar.restapi.credentials.BasicCredentials;
 import io.confluent.idesidecar.restapi.credentials.Password;
 import io.confluent.idesidecar.restapi.exceptions.Failure;
 import io.confluent.idesidecar.restapi.exceptions.Failure.Error;
-import io.confluent.idesidecar.restapi.models.CollectionMetadata;
-import io.confluent.idesidecar.restapi.models.Connection;
-import io.confluent.idesidecar.restapi.models.ConnectionMetadata;
-import io.confluent.idesidecar.restapi.models.ConnectionSpec;
+import io.confluent.idesidecar.restapi.models.*;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.CCloudConfig;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.SchemaRegistryConfig;
-import io.confluent.idesidecar.restapi.models.ConnectionSpecBuilder;
-import io.confluent.idesidecar.restapi.models.ConnectionStatus;
 import io.confluent.idesidecar.restapi.models.ConnectionStatus.Authentication.Status;
 import io.confluent.idesidecar.restapi.models.ConnectionStatus.ConnectedState;
-import io.confluent.idesidecar.restapi.models.ConnectionsList;
-import io.confluent.idesidecar.restapi.models.ObjectMetadata;
 import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
 import io.confluent.idesidecar.restapi.testutil.QueryResourceUtil;
 import io.confluent.idesidecar.restapi.util.CCloudTestUtil;
@@ -1644,11 +1637,10 @@ public class ConnectionsResourceTest {
             validLocalSpec
                 .withoutLocalConfig()
                 .withSchemaRegistry(
-                    new SchemaRegistryConfig(
-                        null,
-                        "http://localhost:8081",
-                        null
-                    )
+                    ConnectionSpecSchemaRegistryConfigBuilder
+                        .builder()
+                        .uri("http://localhost:8081")
+                        .build()
                 )
         ),
         new TestInput(
@@ -1657,14 +1649,14 @@ public class ConnectionsResourceTest {
             validLocalSpec
                 .withoutLocalConfig()
                 .withSchemaRegistry(
-                    new SchemaRegistryConfig(
-                        null,
-                        "http://localhost:8081",
-                        new BasicCredentials(
+                    ConnectionSpecSchemaRegistryConfigBuilder
+                        .builder()
+                        .uri("http://localhost:8081")
+                        .credentials(new BasicCredentials(
                             "user",
                             new Password("pass".toCharArray())
-                        )
-                    )
+                        ))
+                        .build()
                 )
         ),
         new TestInput(
@@ -1673,14 +1665,14 @@ public class ConnectionsResourceTest {
             validLocalSpec
                 .withoutLocalConfig()
                 .withSchemaRegistry(
-                    new SchemaRegistryConfig(
-                        null,
-                        "http://localhost:8081",
-                        new ApiKeyAndSecret(
+                    ConnectionSpecSchemaRegistryConfigBuilder
+                        .builder()
+                        .uri("http://localhost:8081")
+                        .credentials(new ApiKeyAndSecret(
                             "api-key-123",
                             new ApiSecret("api-secret-123456".toCharArray())
-                        )
-                    )
+                        ))
+                        .build()
                 )
         ),
         new TestInput(

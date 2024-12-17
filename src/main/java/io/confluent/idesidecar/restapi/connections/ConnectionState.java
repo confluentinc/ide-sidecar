@@ -3,6 +3,8 @@ package io.confluent.idesidecar.restapi.connections;
 import io.confluent.idesidecar.restapi.credentials.Credentials;
 import io.confluent.idesidecar.restapi.credentials.Credentials.KafkaConnectionOptions;
 import io.confluent.idesidecar.restapi.credentials.Credentials.SchemaRegistryConnectionOptions;
+import io.confluent.idesidecar.restapi.credentials.CredentialsKafkaConnectionOptionsBuilder;
+import io.confluent.idesidecar.restapi.credentials.CredentialsSchemaRegistryConnectionOptionsBuilder;
 import io.confluent.idesidecar.restapi.credentials.TLSConfig;
 import io.confluent.idesidecar.restapi.models.ConnectionMetadata;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
@@ -153,20 +155,32 @@ public abstract class ConnectionState {
    */
   public KafkaConnectionOptions getKafkaConnectionOptions() {
     if (spec.kafkaClusterConfig() != null) {
-      return new KafkaConnectionOptions(
-          false
-      );
+      return CredentialsKafkaConnectionOptionsBuilder
+          .builder()
+          .redact(false)
+          .tlsConfig(spec.kafkaClusterConfig().tlsConfig())
+          .build();
     }
-    return new KafkaConnectionOptions(
-        false
-    );
+
+    return CredentialsKafkaConnectionOptionsBuilder
+        .builder()
+        .redact(false)
+        .build();
   }
 
   public Credentials.SchemaRegistryConnectionOptions getSchemaRegistryOptions() {
-    return new SchemaRegistryConnectionOptions(
-        false,
-        null
-    );
+    if (spec.schemaRegistryConfig() != null) {
+      return CredentialsSchemaRegistryConnectionOptionsBuilder
+          .builder()
+          .redact(false)
+          .tlsConfig(spec.schemaRegistryConfig().tlsConfig())
+          .build();
+    }
+
+    return CredentialsSchemaRegistryConnectionOptionsBuilder
+        .builder()
+        .redact(false)
+        .build();
   }
 
   /**
@@ -189,18 +203,11 @@ public abstract class ConnectionState {
     return Optional.empty();
   }
 
-  /**
-   * Get the TLS configuration to use when connecting to the cluster (Kafka or Schema Registry). We
-   * assume that the TLS configuration is the same for both Kafka and Schema Registry. In the
-   * future, we may support overriding the TLS configuration for each cluster type.
-   *
-   * @return the TLS configuration or empty if the cluster does not require TLS
-   */
-  public Optional<TLSConfig> getTLSConfig() {
+  public Optional<TLSConfig> getKafkaTLSConfig() {
     return Optional.empty();
   }
 
-  public Optional<Boolean> getVerifyServerCertificateHostname() {
+  public Optional<TLSConfig> getSchemaRegistryTLSConfig() {
     return Optional.empty();
   }
 }

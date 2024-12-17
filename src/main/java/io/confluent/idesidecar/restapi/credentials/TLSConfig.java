@@ -21,21 +21,60 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
+/**
+ * The SSL/TLS configuration object.
+ * Usage modes:
+ * <ul>
+ *   <li>Default SSL settings without truststore or keystore: set {@link #enabled} to {@code true}
+ *   and leave other fields unset</li>
+ *   <li>Truststore only: provide a truststore path and password</li>
+ *   <li>Truststore and keystore: provide a truststore path and password, and a keystore path and
+ *   password. This is equivalent to mutual TLS or mTLS</li>
+ *   <li>Keystore only: provide a keystore path and password. This is not recommended, as it is
+ *   insecure to use a keystore without a truststore</li>
+ *   <li>Disable hostname verification: set {@link #verifyHostname} to {@code false} to disable
+ *   server certificate hostname verification</li>
+ *   <li>SSL Disabled: set {@link #enabled} to {@code false} to disable SSL</li>
+ *</ul>
+ */
 @Schema(description = "SSL configuration")
 @RecordBuilder
 public record TLSConfig(
-    @Schema(description =
-        "The trust store configuration for authenticating the server's certificate.")
-    @JsonProperty(value = "truststore")
+    @Schema(
+        description = "Whether to verify the server certificate hostname."
+        + " Defaults to true if not set.",
+        defaultValue = DEFAULT_VERIFY_HOSTNAME_VALUE
+    )
+    @JsonProperty(value = "verify_hostname")
+    @Null
+    Boolean verifyHostname,
+
+    @Schema(
+        description = "Whether SSL is enabled. If not set, defaults to true.",
+        defaultValue = DEFAULT_ENABLED_VALUE,
+        required = true
+    )
+    @JsonProperty(value = "enabled")
     @NotNull
+    Boolean enabled,
+
+    @Schema(
+        description = "The trust store configuration for authenticating the server's certificate.",
+        nullable = true
+    )
+    @JsonProperty(value = "truststore")
+    @Null
     TrustStore truststore,
-    @Schema(description = "The key store configuration that will identify and authenticate "
+
+    @Schema(
+        description = "The key store configuration that will identify and authenticate "
         + "the client to the server, required for mutual TLS (mTLS)",
-        nullable = true)
+        nullable = true
+    )
     @JsonProperty(value = "keystore")
     @Null
     KeyStore keystore
-) {
+) implements TLSConfigBuilder.With {
 
   @RecordBuilder
   public record TrustStore(
@@ -188,6 +227,16 @@ public record TLSConfig(
   private static final int KEY_PASSWORD_MAX_LEN = 256;
   private static final String DEFAULT_STORE_TYPE = "JKS";
 
+  private static final String DEFAULT_VERIFY_HOSTNAME_VALUE = "true";
+  private static final Boolean DEFAULT_VERIFY_HOSTNAME = Boolean.valueOf(
+      DEFAULT_VERIFY_HOSTNAME_VALUE
+  );
+
+  private static final String DEFAULT_ENABLED_VALUE = "true";
+  private static final Boolean DEFAULT_ENABLED = Boolean.valueOf(
+      DEFAULT_ENABLED_VALUE
+  );
+
   @JsonDeserialize(using = StoreType.Deserializer.class)
   public enum StoreType {
     JKS,
@@ -225,7 +274,12 @@ public record TLSConfig(
   }
 
   public TLSConfig(String truststorePath, Password truststorePassword) {
-    this(new TrustStore(truststorePath, truststorePassword, null), null);
+    this(
+        DEFAULT_VERIFY_HOSTNAME,
+        DEFAULT_ENABLED,
+        new TrustStore(truststorePath, truststorePassword, null),
+        null
+    );
   }
 
   public TLSConfig(
@@ -236,34 +290,39 @@ public record TLSConfig(
       Password keyPassword
   ) {
     this(
+        DEFAULT_VERIFY_HOSTNAME,
+        DEFAULT_ENABLED,
         new TrustStore(truststorePath, truststorePassword, null),
         new KeyStore(keystorePath, keystorePassword, null, keyPassword)
     );
   }
 
-  public Optional<Map<String, String>> getProperties(boolean options) {
+  public Optional<Map<String, String>> getProperties(boolean redact) {
     var config = new LinkedHashMap<String, String>();
-
-    // Trust store
-    config.put("ssl.truststore.location", truststore.path);
-    if (truststore.type != null && truststore.type != StoreType.UNKNOWN) {
-      config.put("ssl.truststore.type", truststore.type.name());
-    }
-    if (truststore.password != null) {
-      config.put("ssl.truststore.password", truststore.password.asString(options));
+    if (verifyHostname != null && !verifyHostname) {
+      config.put("ssl.endpoint.identification.algorithm", "");
     }
 
-    // Key store
+    if (truststore != null) {
+      config.put("ssl.truststore.location", truststore.path);
+      if (truststore.type != null && truststore.type != StoreType.UNKNOWN) {
+        config.put("ssl.truststore.type", truststore.type.name());
+      }
+      if (truststore.password != null) {
+        config.put("ssl.truststore.password", truststore.password.asString(redact));
+      }
+    }
+
     if (keystore != null) {
       config.put("ssl.keystore.location", keystore.path);
       if (keystore.type != null && keystore.type != StoreType.UNKNOWN) {
         config.put("ssl.keystore.type", keystore.type.name());
       }
       if (keystore.password != null) {
-        config.put("ssl.keystore.password", keystore.password.asString(options));
+        config.put("ssl.keystore.password", keystore.password.asString(redact));
       }
       if (keystore.keyPassword != null) {
-        config.put("ssl.key.password", keystore.keyPassword.asString(options));
+        config.put("ssl.key.password", keystore.keyPassword.asString(redact));
       }
     }
 
@@ -275,18 +334,33 @@ public record TLSConfig(
       String path,
       String what
   ) {
-    if (truststore == null) {
-      errors.add(
-          Error.create()
-              .withDetail("%s truststore is required", what)
-              .withSource("%s.truststore", path)
-      );
+    if (enabled != null && !enabled) {
+      if (truststore != null) {
+        errors.add(
+            Error.create()
+                .withDetail("%s truststore is not allowed when SSL is disabled", what)
+                .withSource("%s.truststore", path)
+        );
+      }
+      if (keystore != null) {
+        errors.add(
+            Error.create()
+                .withDetail("%s keystore is not allowed when SSL is disabled", what)
+                .withSource("%s.keystore", path)
+        );
+      }
     } else {
-      truststore.validate(errors, "%s.truststore".formatted(path), what);
+      // SSL enabled
+      if (truststore != null) {
+        truststore.validate(errors, "%s.truststore".formatted(path), what);
+      }
+
+      if (keystore != null) {
+        keystore.validate(errors, "%s.keystore".formatted(path), what);
+      }
     }
 
-    if (keystore != null) {
-      keystore.validate(errors, "%s.keystore".formatted(path), what);
-    }
+    // No validation required for verifyHostname -- it's a standalone config
+    // that is not dependent on other fields
   }
 }

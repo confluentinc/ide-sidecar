@@ -919,19 +919,6 @@
             "allOf" : [ {
               "$ref" : "#/components/schemas/SchemaRegistryConfig"
             } ]
-          },
-          "ssl" : {
-            "description" : "The SSL configuration for connecting to the Kafka cluster and Schema Registry.",
-            "type" : "object",
-            "allOf" : [ {
-              "$ref" : "#/components/schemas/TLSConfig"
-            } ],
-            "nullable" : true
-          },
-          "verify_server_certificate_hostname" : {
-            "description" : "Whether to verify the server certificate hostname. Defaults to true if not set.",
-            "default" : true,
-            "type" : "boolean"
           }
         }
       },
@@ -1122,7 +1109,7 @@
       },
       "KafkaClusterConfig" : {
         "description" : "Kafka cluster configuration.",
-        "required" : [ "bootstrap_servers" ],
+        "required" : [ "bootstrap_servers", "ssl" ],
         "type" : "object",
         "properties" : {
           "bootstrap_servers" : {
@@ -1143,8 +1130,17 @@
               "$ref" : "#/components/schemas/ApiKeyAndSecret"
             }, {
               "$ref" : "#/components/schemas/OAuthCredentials"
+            }, {
+              "$ref" : "#/components/schemas/MutualTLSCredentials"
             } ],
             "nullable" : true
+          },
+          "ssl" : {
+            "description" : "The SSL configuration for connecting to the Kafka cluster. To disable, set `enabled` to false. To use the default SSL settings, set `enabled` to true and leave the `truststore` and `keystore` fields unset.",
+            "type" : "object",
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/TLSConfig"
+            } ]
           }
         }
       },
@@ -1220,6 +1216,18 @@
             "description" : "The URL of the Schema Registry running locally.",
             "maxLength" : 512,
             "type" : "string"
+          }
+        }
+      },
+      "MutualTLSCredentials" : {
+        "description" : "Basic authentication credentials",
+        "required" : [ "derived" ],
+        "type" : "object",
+        "properties" : {
+          "derived" : {
+            "description" : "Whether the credentials are derived from a parent object.",
+            "default" : true,
+            "type" : "boolean"
           }
         }
       },
@@ -1467,6 +1475,16 @@
               "$ref" : "#/components/schemas/ApiKeyAndSecret"
             }, {
               "$ref" : "#/components/schemas/OAuthCredentials"
+            }, {
+              "$ref" : "#/components/schemas/MutualTLSCredentials"
+            } ],
+            "nullable" : true
+          },
+          "ssl" : {
+            "description" : "The SSL configuration for connecting to Schema Registry. If null, the connection will use SSL with the default settings. To disable, set `enabled` to false.",
+            "type" : "object",
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/TLSConfig"
             } ],
             "nullable" : true
           }
@@ -1573,15 +1591,26 @@
       },
       "TLSConfig" : {
         "description" : "SSL configuration",
-        "required" : [ "truststore" ],
+        "required" : [ "enabled" ],
         "type" : "object",
         "properties" : {
+          "verify_hostname" : {
+            "description" : "Whether to verify the server certificate hostname. Defaults to true if not set.",
+            "default" : true,
+            "type" : "boolean"
+          },
+          "enabled" : {
+            "description" : "Whether SSL is enabled. If not set, defaults to true.",
+            "default" : true,
+            "type" : "boolean"
+          },
           "truststore" : {
             "description" : "The trust store configuration for authenticating the server's certificate.",
             "type" : "object",
             "allOf" : [ {
               "$ref" : "#/components/schemas/TrustStore"
-            } ]
+            } ],
+            "nullable" : true
           },
           "keystore" : {
             "description" : "The key store configuration that will identify and authenticate the client to the server, required for mutual TLS (mTLS)",

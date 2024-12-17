@@ -257,30 +257,15 @@ public class ClientConfigurator {
 
     // Second, add any connection properties for Kafka cluster credentials (if defined)
     var options = connection.getKafkaConnectionOptions().withRedact(redact);
-    var creds = connection.getKafkaCredentials();
-    if (creds.isPresent()) {
-      creds.get().kafkaClientProperties(options).ifPresent(props::putAll);
-      connection.getTLSConfig().ifPresentOrElse(
-          ignored -> props.put("security.protocol", "SASL_SSL"),
-          () -> props.put("security.protocol", "SASL_PLAINTEXT")
-      );
-    } else {
-      connection.getTLSConfig().ifPresent(
-          ignored -> props.put("security.protocol", "SSL")
-      );
-    }
-
     connection
-        .getTLSConfig()
-        .flatMap(tls -> tls.getProperties(options.redact()))
+        .getKafkaCredentials()
+        .flatMap(creds -> creds.kafkaClientProperties(options))
         .ifPresent(props::putAll);
 
-    if (
-        connection.getVerifyServerCertificateHostname().isPresent()
-            && !connection.getVerifyServerCertificateHostname().get()
-    ) {
-      props.put("ssl.endpoint.identification.algorithm", "");
-    }
+    connection
+        .getKafkaTLSConfig()
+        .flatMap(tlsConfig -> tlsConfig.getProperties(redact))
+        .ifPresent(props::putAll);
 
     // Add any auth properties for Schema Registry to the Kafka client config,
     // with the "schema.registry." prefix (unless the property already starts with that)
@@ -339,20 +324,13 @@ public class ClientConfigurator {
         .withLogicalClusterId(logicalId);
     connection
         .getSchemaRegistryCredentials()
-        .flatMap(credentials -> credentials.schemaRegistryClientProperties(options))
+        .flatMap(creds -> creds.schemaRegistryClientProperties(options))
         .ifPresent(props::putAll);
 
-    connection
-        .getTLSConfig()
-        .flatMap(tls -> tls.getProperties(options.redact()))
-        .ifPresent(props::putAll);
+    if (connection.getSchemaRegistryTLSConfig().isPresent()) {
 
-    if (
-        connection.getVerifyServerCertificateHostname().isPresent()
-            && !connection.getVerifyServerCertificateHostname().get()
-    ) {
-      props.put("ssl.endpoint.identification.algorithm", "");
     }
+
     return props;
   }
 

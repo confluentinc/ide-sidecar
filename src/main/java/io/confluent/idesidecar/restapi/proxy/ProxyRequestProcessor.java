@@ -9,9 +9,9 @@ import io.vertx.core.Vertx;
  * Generic processor that ships the request to the target server and updates the context with the
  * response.
  *
- * @param <T> The type of the context that must extend {@link ProxyContext}
+ * @param <T> The type of the context that must extend {@link ClusterProxyContext}
  */
-public class ProxyRequestProcessor<T extends ProxyContext> extends
+public class ProxyRequestProcessor<T extends ClusterProxyContext> extends
     Processor<T, Future<T>> {
 
   ProxyHttpClient<T> proxyHttpClient;

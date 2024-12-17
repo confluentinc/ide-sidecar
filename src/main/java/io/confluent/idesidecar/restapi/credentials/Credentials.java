@@ -20,6 +20,7 @@ import java.util.Optional;
 @JsonSubTypes({
     @Type(value = BasicCredentials.class),
     @Type(value = ApiKeyAndSecret.class),
+    @Type(value = MutualTLSCredentials.class),
     @Type(value = OAuthCredentials.class)
 })
 @RegisterForReflection
@@ -27,19 +28,22 @@ public interface Credentials {
 
   @RecordBuilder
   record KafkaConnectionOptions(
-      boolean redact
+      boolean redact,
+      TLSConfig tlsConfig
   ) implements CredentialsKafkaConnectionOptionsBuilder.With {
   }
 
   @RecordBuilder
   record SchemaRegistryConnectionOptions(
       boolean redact,
+      TLSConfig tlsConfig,
       String logicalClusterId
   ) implements CredentialsSchemaRegistryConnectionOptionsBuilder.With {
   }
 
   enum Type {
     BASIC,
+    MUTUAL_TLS,
     OAUTH2,
     API_KEY_AND_SECRET,
   }

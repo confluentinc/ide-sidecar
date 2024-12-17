@@ -5,7 +5,9 @@ import static io.confluent.idesidecar.restapi.util.ExceptionUtil.unwrap;
 import io.confluent.idesidecar.restapi.auth.AuthErrors;
 import io.confluent.idesidecar.restapi.clients.ClientConfigurator;
 import io.confluent.idesidecar.restapi.credentials.Credentials;
+import io.confluent.idesidecar.restapi.credentials.CredentialsKafkaConnectionOptionsBuilder;
 import io.confluent.idesidecar.restapi.credentials.TLSConfig;
+import io.confluent.idesidecar.restapi.credentials.TLSConfigBuilder;
 import io.confluent.idesidecar.restapi.models.ClusterType;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
@@ -62,6 +64,11 @@ public class DirectConnectionState extends ConnectionState {
       null,
       null
   );
+
+  static final TLSConfig DEFAULT_SSL_ENABLED_CONFIG = TLSConfigBuilder
+      .builder()
+      .enabled(true)
+      .build();
 
   public DirectConnectionState() {
     super(null, null);
@@ -139,13 +146,27 @@ public class DirectConnectionState extends ConnectionState {
   }
 
   @Override
-  public Optional<TLSConfig> getTLSConfig() {
-    return Optional.ofNullable(spec.tlsConfig());
+  public Optional<TLSConfig> getKafkaTLSConfig() {
+    if (spec.kafkaClusterConfig() != null) {
+      return Optional.of(spec.kafkaClusterConfig().tlsConfig() != null
+          ? spec.kafkaClusterConfig().tlsConfig()
+          : DEFAULT_SSL_ENABLED_CONFIG
+      );
+    }
+
+    return Optional.empty();
   }
 
   @Override
-  public Optional<Boolean> getVerifyServerCertificateHostname() {
-    return Optional.ofNullable(spec.verifyServerCertificateHostname());
+  public Optional<TLSConfig> getSchemaRegistryTLSConfig() {
+    if (spec.schemaRegistryConfig() != null) {
+      return Optional.of(spec.schemaRegistryConfig().tlsConfig() != null
+          ? spec.schemaRegistryConfig().tlsConfig()
+          : DEFAULT_SSL_ENABLED_CONFIG
+      );
+    }
+
+    return Optional.empty();
   }
 
   @Override

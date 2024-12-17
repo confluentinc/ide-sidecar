@@ -9,7 +9,7 @@ import io.vertx.ext.web.client.WebClient;
 /**
  * HTTP client used when proxying requests to the Kafka REST and Schema Registry APIs.
  */
-public class ProxyHttpClient<T extends ProxyContext> {
+public class ProxyHttpClient<T extends ClusterProxyContext> {
   WebClientFactory webClientFactory;
   Vertx vertx;
 
