@@ -306,6 +306,7 @@ public record ConnectionSpec(
       @Schema(
           description =
               "The credentials for the Kafka cluster, or null if no authentication is required",
+          // prevent Credentials from showing up in the generated OpenAPI spec here
           implementation = Object.class,
           oneOf = {
               BasicCredentials.class,
@@ -410,6 +411,7 @@ public record ConnectionSpec(
       @Schema(
           description = "The credentials for the Schema Registry, or null if "
                         + "no authentication is required",
+          // prevent Credentials from showing up in the generated OpenAPI spec here
           implementation = Object.class,
           oneOf = {
               BasicCredentials.class,
