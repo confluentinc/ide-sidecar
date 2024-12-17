@@ -611,7 +611,6 @@
               </includes>
               <excludes>
                 <exclude>io/confluent/idesidecar/restapi/kafkarest/model/**</exclude>
-                <exclude>**/*Builder.*</exclude>
                 <exclude>io/confluent/idesidecar/restapi/proto/**/*</exclude>
               </excludes>
             </configuration>
@@ -769,6 +768,8 @@
           </annotationProcessorPaths>
           <compilerArgs>
             <arg>-Aproject=${project.groupId}/${project.artifactId}</arg>
+            <!-- https://github.com/Randgalt/record-builder/blob/8f8f92d8d369f74c6ab63e9a60ac6153f0c0afc0/record-builder-core/src/main/java/io/soabase/recordbuilder/core/RecordBuilder.java#L264-L268 -->
+            <arg>-AaddClassRetainedGenerated=true</arg>
           </compilerArgs>
         </configuration>
       </plugin>
