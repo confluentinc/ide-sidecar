@@ -694,7 +694,13 @@ components:
           items:
             $ref: "#/components/schemas/Connection"
     Credentials:
+      description: "The credentials for a ConnectionSpec config, or null if no authentication\
+        \ is required"
       type: object
+      oneOf:
+      - $ref: "#/components/schemas/BasicCredentials"
+      - $ref: "#/components/schemas/ApiKeyAndSecret"
+      nullable: true
     Error:
       description: Describes a particular error encountered while performing an operation.
       type: object
@@ -816,9 +822,6 @@ components:
           type: object
           allOf:
           - $ref: "#/components/schemas/Credentials"
-          oneOf:
-          - $ref: "#/components/schemas/BasicCredentials"
-          - $ref: "#/components/schemas/ApiKeyAndSecret"
           nullable: true
         ssl:
           description: "Whether to communicate with the Kafka cluster over TLS/SSL.\
@@ -1010,9 +1013,6 @@ components:
           type: object
           allOf:
           - $ref: "#/components/schemas/Credentials"
-          oneOf:
-          - $ref: "#/components/schemas/BasicCredentials"
-          - $ref: "#/components/schemas/ApiKeyAndSecret"
           nullable: true
     SchemaRegistryStatus:
       description: The status related to the specified Schema Registry.
@@ -1188,13 +1188,13 @@ components:
     HealthCheck:
       type: object
       properties:
-        status:
-          enum:
-          - UP
-          - DOWN
+        name:
           type: string
         data:
           type: object
           nullable: true
-        name:
+        status:
+          enum:
+          - UP
+          - DOWN
           type: string

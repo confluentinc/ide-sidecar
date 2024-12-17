@@ -12,6 +12,7 @@ import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 /**
  * Base interface for credentials objects used with Kafka and Schema Registry clients.
@@ -22,6 +23,15 @@ import java.util.Optional;
     @Type(value = ApiKeyAndSecret.class),
 })
 @RegisterForReflection
+@Schema(
+    description =
+        "The credentials for a ConnectionSpec config, or null if no authentication is required",
+    oneOf = {
+        BasicCredentials.class,
+        ApiKeyAndSecret.class,
+    },
+    nullable = true
+)
 public interface Credentials {
 
   @RecordBuilder
