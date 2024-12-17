@@ -16,7 +16,13 @@ public record MessageHeaders(
     @NotNull @JsonProperty("originator") String originator,
     @NotNull @JsonProperty("message_id") String id
 ) {
+
+    public static final String SIDECAR_ORIGINATOR = "sidecar";
+
     /** Constructor for outbound messages. */
+    public MessageHeaders(MessageType messageType) {
+        this(messageType, SIDECAR_ORIGINATOR);
+    }
     public MessageHeaders(MessageType messageType, String originator) {
         this(messageType, originator, UUID.randomUUID().toString());
     }
