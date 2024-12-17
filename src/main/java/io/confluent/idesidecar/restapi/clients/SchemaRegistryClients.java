@@ -9,10 +9,11 @@ import io.confluent.idesidecar.restapi.cache.ClusterCache;
 import io.confluent.idesidecar.restapi.util.RequestHeadersConstants;
 import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
+import io.confluent.kafka.schemaregistry.client.rest.RestService;
+import io.confluent.kafka.schemaregistry.client.security.SslFactory;
 import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import java.util.Collections;
 import java.util.Map;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
@@ -85,12 +86,21 @@ public class SchemaRegistryClients extends Clients<SchemaRegistryClient> {
       Map<String, Object> configurationProperties,
       Map<String, String> headers
   ) {
+    var restService = new RestService(srClusterUri);
+    restService.configure(configurationProperties);
+    restService.setHttpHeaders(headers);
+
+    var sslFactory = new SslFactory(configurationProperties);
+    if (sslFactory.sslContext() != null) {
+      restService.setSslSocketFactory(sslFactory.sslContext().getSocketFactory());
+    }
+
     return new CachedSchemaRegistryClient(
-        Collections.singletonList(srClusterUri),
+        restService,
         SR_CACHE_SIZE,
         SCHEMA_PROVIDERS,
-        configurationProperties,
-        headers
+        null,
+        null
     );
   }
 }

@@ -16,7 +16,7 @@ import java.util.Map;
 import java.util.Optional;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
-@Schema(description = "Basic authentication credentials")
+@Schema(description = "API key and secret authentication credentials")
 @RegisterForReflection
 public record ApiKeyAndSecret(
 
@@ -54,15 +54,14 @@ public record ApiKeyAndSecret(
       KafkaConnectionOptions options
   ) {
     var config = new LinkedHashMap<String, String>();
-    if (options.ssl()) {
+    var tlsConfig = options.tlsConfig();
+    tlsConfig.getProperties(options.redact()).ifPresent(config::putAll);
+    if (tlsConfig.enabled()) {
       config.put("security.protocol", "SASL_SSL");
     } else {
       config.put("security.protocol", "SASL_PLAINTEXT");
     }
     config.put("sasl.mechanism", "PLAIN");
-    if (!options.verifyCertificates()) {
-      config.put("ssl.endpoint.identification.algorithm", "");
-    }
     config.put(
         "sasl.jaas.config",
         "%s required username=\"%s\" password=\"%s\";".formatted(
@@ -80,6 +79,10 @@ public record ApiKeyAndSecret(
   ) {
     var config = new LinkedHashMap<String, String>();
     config.put("basic.auth.credentials.source", "USER_INFO");
+    options
+        .tlsConfig()
+        .getProperties(options.redact())
+        .ifPresent(config::putAll);
     config.put(
         "basic.auth.user.info",
         "%s:%s".formatted(key, secret.asString(options.redact()))
