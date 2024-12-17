@@ -13,6 +13,7 @@ import io.confluent.idesidecar.restapi.exceptions.CreateConnectionException;
 import io.confluent.idesidecar.restapi.exceptions.Failure.Error;
 import io.confluent.idesidecar.restapi.exceptions.InvalidInputException;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
+import io.confluent.idesidecar.restapi.models.ConnectionStatus;
 import io.confluent.idesidecar.restapi.util.UuidFactory;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -68,27 +69,35 @@ public class ConnectionStateManager {
   private final StateChangedListener stateChangeListener = new StateChangedListener() {
 
     @Override
-    public void connected(
-        ConnectionState connection) {
-      Events.fireAsyncEvent(
-          connectionStateEvents,
-          connection,
-          LifecycleQualifier.connected(),
-          ConnectionTypeQualifier.typeQualifier(connection)
-      );
+    public void connected(ConnectionState connection) {
+      if (isConnection(connection)) {
+        Events.fireAsyncEvent(
+            connectionStateEvents,
+            connection,
+            LifecycleQualifier.connected(),
+            ConnectionTypeQualifier.typeQualifier(connection)
+        );
+      }
     }
 
     @Override
-    public void disconnected(
-        ConnectionState connection) {
-      Events.fireAsyncEvent(
-          connectionStateEvents,
-          connection,
-          LifecycleQualifier.disconnected(),
-          ConnectionTypeQualifier.typeQualifier(connection)
-      );
+    public void disconnected(ConnectionState connection) {
+      if (isConnection(connection)) {
+        Events.fireAsyncEvent(
+            connectionStateEvents,
+            connection,
+            LifecycleQualifier.disconnected(),
+            ConnectionTypeQualifier.typeQualifier(connection)
+        );
+      }
     }
   };
+
+  boolean isConnection(ConnectionState connection) {
+    return connection != null
+           && connection.getSpec() != null
+           && connectionStates.containsKey(connection.getSpec().id());
+  }
 
   public ConnectionState getConnectionState(String id) throws ConnectionNotFoundException {
     if (connectionStates.containsKey(id)) {

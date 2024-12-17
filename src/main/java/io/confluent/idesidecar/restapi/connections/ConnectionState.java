@@ -100,8 +100,38 @@ public abstract class ConnectionState {
    * @see #doRefreshConnectionStatus()
    */
   public final Future<ConnectionStatus> refreshStatus() {
+    var originalState = this.cachedStatus.get();
+
     // Always set the cached status when the future completes successfully
-    return doRefreshStatus().onSuccess(this.cachedStatus::set);
+    return doRefreshStatus().onSuccess(updated ->
+        updateStatus(originalState, updated)
+    );
+  }
+
+  private void updateStatus(ConnectionStatus original, ConnectionStatus updated) {
+    // update the cached status
+    this.cachedStatus.set(updated);
+
+    // Figure out which event to send
+    if (updated.isConnected()) {
+      // Now connected
+      if (!original.isConnected()) {
+        // but was not connected before so we connected
+        listener.connected(this);
+      } else if (!original.equals(updated)) {
+        // and was connected before, but the status changed
+        listener.connected(this);
+      }
+    } else {
+      // Now not connected
+      if (original.isConnected()) {
+        // but was connected before so we disconnected
+        listener.disconnected(this);
+      } else if (!original.equals(updated)) {
+        // and was not connected before, but the status changed
+        listener.disconnected(this);
+      }
+    }
   }
 
   /**
