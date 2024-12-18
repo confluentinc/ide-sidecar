@@ -3,7 +3,7 @@ package io.confluent.idesidecar.restapi.proxy.clusters.processors;
 import io.confluent.idesidecar.restapi.application.ProxyProcessorBeanProducers;
 import io.confluent.idesidecar.restapi.processors.Processor;
 import io.confluent.idesidecar.restapi.proxy.ProxyRequestProcessor;
-import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
+import io.confluent.idesidecar.restapi.proxy.ClusterProxyContext;
 import io.vertx.core.Future;
 import io.vertx.core.buffer.Buffer;
 import jakarta.enterprise.context.ApplicationScoped;

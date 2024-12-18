@@ -6,7 +6,7 @@ import io.confluent.idesidecar.restapi.connections.LocalConnectionState;
 import io.confluent.idesidecar.restapi.connections.PlatformConnectionState;
 import io.confluent.idesidecar.restapi.exceptions.ProcessorFailedException;
 import io.confluent.idesidecar.restapi.processors.Processor;
-import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
+import io.confluent.idesidecar.restapi.proxy.ClusterProxyContext;
 import io.vertx.core.Future;
 import jakarta.enterprise.context.ApplicationScoped;
 
