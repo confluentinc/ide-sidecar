@@ -13,6 +13,7 @@ public class MessageSerializationTest {
 
   static Stream<Object []> pathAndBodyTypePairs() {
     return Stream.of(
+        new Object [] {"websocket-messages/workspace-hello.json", MessageType.WORKSPACE_HELLO, HelloBody.class},
         new Object [] {"websocket-messages/random-extension-message.json", MessageType.UNKNOWN, DynamicMessageBody.class},
         new Object [] {"websocket-messages/workspaces-changed.json", MessageType.WORKSPACE_COUNT_CHANGED, WorkspacesChangedBody.class},
         new Object [] {"websocket-messages/protocol-error.json", MessageType.PROTOCOL_ERROR, ProtocolErrorBody.class}
