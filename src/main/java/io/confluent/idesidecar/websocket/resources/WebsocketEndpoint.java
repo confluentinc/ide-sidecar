@@ -120,6 +120,7 @@ public class WebsocketEndpoint {
     // The workspace process id will come to us in a subsequent HELLO_WORKSPACE
     // message. For now, we stash the session into our purgatory set.
     var whenConnected = System.currentTimeMillis();
+    // todo have a task that periodically checks purgatory sessions and closes them if they linger too long
     session.getUserProperties().put("connectedAt", whenConnected);
     purgatorySessions.add(session);
   }

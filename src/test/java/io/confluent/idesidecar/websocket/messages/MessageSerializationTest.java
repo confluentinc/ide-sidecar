@@ -27,6 +27,8 @@ public class MessageSerializationTest {
     Message message = loadResourceAsObject(resourceFilePath, Message.class);
     Assertions.assertEquals(expectedMessageType, message.messageType());
     Assertions.assertEquals(expectedBodyType, message.body().getClass());
+    // while here, prove that the MessageType -> bodyClass mapping is correct.
+    Assertions.assertEquals(expectedMessageType.bodyClass(), message.body().getClass());
   }
 
 }
