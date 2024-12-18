@@ -290,6 +290,8 @@ public class CPDemoTestEnvironment implements TestEnvironment {
             ConnectionSpecKafkaClusterConfigBuilder
                 .builder()
                 .bootstrapServers("localhost:11091,localhost:11092")
+                // Disable TLS
+                .tlsConfig(TLSConfigBuilder.builder().enabled(false).build())
                 .build(),
             ConnectionSpecSchemaRegistryConfigBuilder
               .builder()
@@ -339,58 +341,6 @@ public class CPDemoTestEnvironment implements TestEnvironment {
                 .tlsConfig(TLSConfigBuilder.builder().enabled(false).build())
                 .build(),
             null
-        ));
-  }
-
-  public Optional<ConnectionSpec> directConnectionOverMutualTLS() {
-    var cwd = System.getProperty("user.dir");
-    var trustStoreLocation = new File(cwd,
-        ".cp-demo/scripts/security/kafka.schemaregistry.truststore.jks"
-    ).getAbsolutePath();
-    var trustStorePassword = new Password("confluent".toCharArray());
-    var keyStoreLocation = new File(cwd,
-        ".cp-demo/scripts/security/kafka.schemaregistry.keystore.jks"
-    ).getAbsolutePath();
-    var keyStorePassword = new Password("confluent".toCharArray());
-    var keyStoreKeyPassword = new Password("confluent".toCharArray());
-
-    var tlsConfig = TLSConfigBuilder
-        .builder()
-        .enabled(true)
-        .truststore(TLSConfigTrustStoreBuilder
-            .builder()
-            .path(trustStoreLocation)
-            .password(trustStorePassword)
-            .build()
-        )
-        .keystore(TLSConfigKeyStoreBuilder
-            .builder()
-            .path(keyStoreLocation)
-            .password(keyStorePassword)
-            .keyPassword(keyStoreKeyPassword)
-            .build()
-        )
-        .build();
-
-    return Optional.of(
-        ConnectionSpec.createDirect(
-            "direct-to-local-connection-mtls",
-            "Direct to Local (Mutual TLS)",
-            ConnectionSpecKafkaClusterConfigBuilder
-                .builder()
-                .bootstrapServers("localhost:11091,localhost:11092")
-                .tlsConfig(tlsConfig)
-                .build(),
-            ConnectionSpecSchemaRegistryConfigBuilder
-                .builder()
-                .id("local-sr-cp-demo-mtls")
-                .uri("https://localhost:8085")
-                .credentials(new BasicCredentials(
-                    "superUser",
-                    new Password("superUser".toCharArray())
-                ))
-                .tlsConfig(tlsConfig)
-                .build()
         ));
   }
 
