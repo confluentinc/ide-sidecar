@@ -312,7 +312,6 @@ public record ConnectionSpec(
               BasicCredentials.class,
               ApiKeyAndSecret.class,
               OAuthCredentials.class,
-              MutualTLSCredentials.class,
           },
           nullable = true
       )
@@ -389,7 +388,6 @@ public record ConnectionSpec(
               BasicCredentials.class,
               ApiKeyAndSecret.class,
               OAuthCredentials.class,
-              MutualTLSCredentials.class
           },
           nullable = true
       )

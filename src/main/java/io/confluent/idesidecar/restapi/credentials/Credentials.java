@@ -20,7 +20,6 @@ import java.util.Optional;
 @JsonSubTypes({
     @Type(value = BasicCredentials.class),
     @Type(value = ApiKeyAndSecret.class),
-    @Type(value = MutualTLSCredentials.class),
     @Type(value = OAuthCredentials.class)
 })
 @RegisterForReflection
