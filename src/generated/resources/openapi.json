@@ -1130,8 +1130,6 @@
               "$ref" : "#/components/schemas/ApiKeyAndSecret"
             }, {
               "$ref" : "#/components/schemas/OAuthCredentials"
-            }, {
-              "$ref" : "#/components/schemas/MutualTLSCredentials"
             } ],
             "nullable" : true
           },
@@ -1216,18 +1214,6 @@
             "description" : "The URL of the Schema Registry running locally.",
             "maxLength" : 512,
             "type" : "string"
-          }
-        }
-      },
-      "MutualTLSCredentials" : {
-        "description" : "Basic authentication credentials",
-        "required" : [ "derived" ],
-        "type" : "object",
-        "properties" : {
-          "derived" : {
-            "description" : "Whether the credentials are derived from a parent object.",
-            "default" : true,
-            "type" : "boolean"
           }
         }
       },
@@ -1475,8 +1461,6 @@
               "$ref" : "#/components/schemas/ApiKeyAndSecret"
             }, {
               "$ref" : "#/components/schemas/OAuthCredentials"
-            }, {
-              "$ref" : "#/components/schemas/MutualTLSCredentials"
             } ],
             "nullable" : true
           },
