@@ -315,6 +315,8 @@ public class CPDemoTestEnvironment implements TestEnvironment {
             ConnectionSpecKafkaClusterConfigBuilder
                 .builder()
                 .bootstrapServers("localhost:12091,localhost:12092")
+                // Disable TLS
+                .tlsConfig(TLSConfigBuilder.builder().enabled(false).build())
                 .build(),
             null
         )
@@ -333,6 +335,8 @@ public class CPDemoTestEnvironment implements TestEnvironment {
                     "admin",
                     new Password("admin-secret".toCharArray())
                 ))
+                // Disable TLS
+                .tlsConfig(TLSConfigBuilder.builder().enabled(false).build())
                 .build(),
             null
         ));
