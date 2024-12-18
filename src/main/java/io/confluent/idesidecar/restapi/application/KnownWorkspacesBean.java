@@ -76,7 +76,7 @@ public class KnownWorkspacesBean {
   /**
    * Is this a known workspace id?
    */
-  public synchronized boolean isKnownWorkspacePID(Long workspaceId) {
+  public synchronized boolean isKnownWorkspace(Long workspaceId) {
     return knownWorkspacePIDs.contains(workspaceId);
   }
 

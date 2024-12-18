@@ -5,14 +5,20 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import graphql.VisibleForTesting;
 import io.confluent.idesidecar.restapi.application.KnownWorkspacesBean;
+import io.confluent.idesidecar.websocket.messages.HelloBody;
 import io.confluent.idesidecar.websocket.messages.Message;
+import io.confluent.idesidecar.websocket.messages.MessageBody;
 import io.confluent.idesidecar.websocket.messages.MessageHeaders;
 import io.confluent.idesidecar.websocket.messages.MessageType;
 import io.confluent.idesidecar.websocket.messages.ProtocolErrorBody;
 import io.confluent.idesidecar.websocket.messages.WorkspacesChangedBody;
 import io.quarkus.logging.Log;
+import jakarta.validation.constraints.NotNull;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -22,6 +28,7 @@ import jakarta.websocket.OnMessage;
 import jakarta.websocket.OnOpen;
 import jakarta.websocket.Session;
 import jakarta.websocket.server.ServerEndpoint;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 /**
  * Websocket endpoint for "control plane" variety async messaging between sidecar and workspaces,
@@ -35,6 +42,14 @@ public class WebsocketEndpoint {
    */
   @VisibleForTesting
   final Map<Session, WorkspaceSession> sessions = new ConcurrentHashMap<>();
+
+  /**
+   * Set of sessions which have connected, but not yet sent a valid hello message.
+   * The time that they connected is stashed as session.getUserProperties().get("connectedAt")
+   * so that they can be purged after a certain amount of time if they linger in this state.
+   */
+  @VisibleForTesting
+  final Set<Session> purgatorySessions = Collections.synchronizedSet(new HashSet<>());
 
   /**
    * Authority on the known workspaces in the system. Used to validate workspace ids.
@@ -98,72 +113,16 @@ public class WebsocketEndpoint {
    */
   @OnOpen
   public void onOpen(Session session) throws IOException {
-    Log.info("New websocket session opened: " + session.getId());
+    Log.infof("New websocket session opened, placed into purgatory: %s", session.getId());
 
     // Request must have had a valid access token to pass through AccessTokenFilter,
     // so we can assume that the session is authorized.
-    // The workspace process id should have been passed as a request parameter, though.
-    var requestParams = session.getRequestParameterMap();
-    if (requestParams.size() == 0) {
-      sendErrorAndCloseSession(
-          session,
-          null,
-          "No request parameters provided. Closing new session %s.",
-          session.getId()
-      );
-      return;
-    }
-
-    var workspaceIdList = requestParams.get("workspace_id");
-    if (workspaceIdList == null || workspaceIdList.isEmpty()) {
-      sendErrorAndCloseSession(
-          session,
-          null,
-          "No workspace_id parameter provided. Closing new session %s.",
-          session.getId()
-      );
-      return;
-    }
-
-    var workspaceIdString = workspaceIdList.get(0);
-    long workspaceId;
-    try {
-      workspaceId = Long.parseLong(workspaceIdString);
-    } catch (NumberFormatException e) {
-      sendErrorAndCloseSession(
-          session,
-          null,
-          "Invalid workspace_id parameter value: %s. Closing new session %s.",
-          workspaceIdString,
-          session.getId()
-      );
-      return;
-    }
-
-    // As of time of writing, the workspace should have REST handshook or hit the health check
-    // route with the workspace id header, so we should know about it already.
-    if (!knownWorkspacesBean.isKnownWorkspacePID(workspaceId)) {
-      sendErrorAndCloseSession(
-          session,
-          null,
-          "Unknown workspace id: %d. Closing new session %s.",
-          workspaceId,
-          session.getId()
-      );
-      return;
-    }
-
-    Log.infof(
-        "New websocket session %s opened for workspace pid: %d",
-        session.getId(),
-        workspaceId
-    );
-    // create new WorkspaceSession object and store in sessions map.
-    var newWorkspaceSession = new WorkspaceSession(workspaceId);
-    sessions.put(session, newWorkspaceSession);
-
-    // Broadcast message to all workspaces (inclusive) a change in the authorized workspaces count.
-    broadcastWorkspacesChanged();
+    // The workspace process id will come to us in a subsequent HELLO_WORKSPACE
+    // message. For now, we stash the session into our purgatory set.
+    var whenConnected = System.currentTimeMillis();
+    // todo have a task that periodically checks purgatory sessions and closes them if they linger too long
+    session.getUserProperties().put("connectedAt", whenConnected);
+    purgatorySessions.add(session);
   }
 
   /**
@@ -177,66 +136,39 @@ public class WebsocketEndpoint {
   public void onMessage(String messageString, Session senderSession) {
     var workspaceSession = sessions.get(senderSession);
     if (workspaceSession == null) {
-      sendErrorAndCloseSession(
-          senderSession,
-          null,
-          "Odd! Received message from unregistered session %s. Closing session.",
-          senderSession.getId()
-      );
+      // Expect to find them in purgatory, and that this is a HELLO_WORKSPACE message
+      if (!purgatorySessions.remove(senderSession)) {
+        sendErrorAndCloseSession(
+            senderSession,
+            null,
+            "Odd! Received message from unregistered session %s. Closing session.",
+            senderSession.getId()
+        );
+        return;
+      }
+
+      // OK, was found in purgatory. Only expect a hello message when in this state.
+      // Defer to internal handler for that sort of message.
+      handleHelloMessage(senderSession, messageString);
+
       return;
     }
 
-    Message m;
-    try {
-      m = mapper.readValue(messageString, Message.class);
-    } catch (IOException e) {
-      sendErrorAndCloseSession(
-          senderSession,
-          null,
-          "Invalid message from session %s, workspace %d. Discarding and closing.",
-          senderSession.getId(),
-          workspaceSession.processId()
-      );
-      return;
-    }
-
-    var headers = m.headers();
+    // Message is from a known workspace session.
+    Message m = deserializeMessage(senderSession, messageString, null);
 
     // Validate message.header.originator corresponds to the authorized workspace process id.
     // (messages sent from workspaces to sidecar should have the workspace's process id as
     // the originator)
-    var claimedWorkspaceId = 0;
-    try {
-      claimedWorkspaceId = Integer.parseInt(headers.originator());
-    } catch (NumberFormatException e) {
-      sendErrorAndCloseSession(
-          senderSession,
-          m.headers().id(),
-          "Invalid websocket message header originator value -- not an integer: %s. "
-          + "Removing and closing session %s.",
-          headers.messageType(),
-          senderSession.getId()
-      );
-      return;
-    }
 
-    if (claimedWorkspaceId != workspaceSession.processId()) {
-      sendErrorAndCloseSession(
-          senderSession,
-          m.headers().id(),
-          "Workspace %s sent message with incorrect originator value: %d."
-          + " Removing and closing session %s.",
-          workspaceSession.processId(),
-          claimedWorkspaceId,
-          senderSession.getId()
-      );
+    if (!validateOriginator(senderSession, m, workspaceSession.processId())) {
       return;
     }
 
     Log.debugf(
         "Received message %s of messageType %s from workspace %d",
-        headers.id(),
-        headers.messageType(),
+        m.id(),
+        m.messageType(),
         workspaceSession.processId()
     );
 
@@ -249,7 +181,7 @@ public class WebsocketEndpoint {
     } else {
       Log.debugf(
           "Proxying message %s from workspace %d to %d other workspace(s)",
-          headers.id(),
+          m.id(),
           workspaceSession.processId(),
           otherCount
       );
@@ -265,16 +197,101 @@ public class WebsocketEndpoint {
     }
   }
 
+  /**
+   * Handle the first message from a workspace session, currently in purgatory,
+   * which should be a HELLO_WORKSPACE message.
+   *
+   * If it is a valid HELLO_WORKSPACE message, the workspace is authorized and added to the
+   * sessions map, and the new workspace count is broadcast to all workspaces (inclusive).
+   * Otherwise an error message is sent to the session and it is closed.
+   *
+   * The session is always removed from the purgatory set.
+   *
+   * @param session the session that sent the message.
+   * @param messageString the JSON string message.
+   */
+  private void handleHelloMessage(Session session, String messageString) {
+    // Regardless of if the message was good or bad, we remove the session from purgatory
+    // upon receipt of the first message.
+    purgatorySessions.remove(session);
+
+    // deserializeMessage() will close the connection if the message is invalid and
+    // not a HELLO_WORKSPACE message
+    var message = deserializeMessage(session, messageString, MessageType.WORKSPACE_HELLO);
+    if (message == null) {
+      Log.errorf(
+          "handleHelloMessage: Invalid message from purgatory session %s. Closed session.",
+          session.getId()
+      );
+    }
+
+    // Message is valid and is a HELLO_WORKSPACE message with a HelloBody.
+    var workspaceId = ((HelloBody) message.body()).workspaceId();
+
+    // Ensure that the header origin value corresponds to the
+    // workspace id in the body.
+    if (!validateOriginator(session, message, workspaceId)) {
+      sendErrorAndCloseSession(
+          session,
+          message.headers().id(),
+          "handleHelloMessage: Workspace id %s does not match originator value. Closing session.",
+          workspaceId
+      );
+      return;
+    }
+
+    // Cross-reference the workspace id against the known workspaces.
+
+    if (!knownWorkspacesBean.isKnownWorkspace(Long.valueOf(workspaceId))) {
+      sendErrorAndCloseSession(
+          session,
+          message.headers().id(),
+          "handleHelloMessage: Unknown workspace id %d. Closing session.",
+          workspaceId
+      );
+      return;
+    }
+
+    // Should be unique across all workspaces in session map.
+    for(var ws : sessions.values()) {
+      if (ws.processId() == workspaceId) {
+        sendErrorAndCloseSession(
+            session,
+            message.headers().id(),
+            "Workspace id %s already connected. Closing session.",
+            workspaceId
+        );
+        return;
+      }
+    }
+
+    // All good! Add the workspace to the sessions map and announce the count change.
+    sessions.put(session, new WorkspaceSession(workspaceId));
+    Log.infof("Workspace %d authorized and added to sessions.", workspaceId);
+
+    // Announce to all other workspaces the list has changed
+    try {
+      broadcastWorkspacesChanged();
+    } catch (IOException e) {
+      Log.errorf("Failed to broadcast workspace added message: %s", e.getMessage());
+    }
+  }
+
   @OnError
   public void onError(Session session, Throwable throwable) throws IOException {
     // May or may not actually remove -- if had not yet been authorized, it won't be in the map.
     // (but will definitely not be in the map after this statement.)
     var existingSession = sessions.remove(session);
+    if (existingSession == null) {
+      // Must have been in purgatory and had an error before saying hello.
+      purgatorySessions.remove(session);
+    }
+
     session.close();
 
     var id = existingSession != null ? existingSession.processId() : "unknown";
     Log.errorf(
-        "Websocket error for workspace pid %s, session id %s. Closed and removed session.",
+        "Websocket error for workspace pid %s, session id %s. Reason: %s. Closed and removed session.",
         id,
         session.getId(),
         throwable.getMessage()
@@ -297,6 +314,9 @@ public class WebsocketEndpoint {
       } catch (IOException e) {
         Log.errorf("Failed to broadcast workspace removed message: %s", e.getMessage());
       }
+    } else {
+      // Must have been in purgatory and hung up before saying hello.
+      purgatorySessions.remove(session);
     }
   }
 
@@ -384,5 +404,108 @@ public class WebsocketEndpoint {
       );
     }
     return headers;
+  }
+
+  /**
+   * Deserialize a message from a JSON string, and optionally validate that
+   * it is of the expected type and body payload.
+   * If the message is invalid, an error message is sent to the session, the session is closed, and
+   * null is returned.
+   * @param session the session that sent the message.
+   * @param messageString the JSON string message.
+   * @param expectedType the expected message type.
+   * @return the deserialized message, or null if the message is invalid.
+   */
+  @VisibleForTesting
+  Message deserializeMessage(
+      @NotNull Session session,
+      @NotNull String messageString,
+      MessageType expectedType
+  ) {
+    Message m;
+    try {
+      m = mapper.readValue(messageString, Message.class);
+    } catch (IOException e) {
+      sendErrorAndCloseSession(
+          session,
+          null,
+          "Unparseable message from session %s. Discarding and closing.",
+          session.getId()
+      );
+      return null;
+    }
+
+    // Optional check against message type and deserialized payload body
+    if (expectedType != null) {
+      var headers = m.headers();
+      if (headers.messageType() != expectedType) {
+        sendErrorAndCloseSession(
+            session,
+            headers.id(),
+            "Expected %s message, got %s. Closing session.",
+            expectedType,
+            headers.messageType()
+        );
+        return null;
+      }
+
+      var expectedBodyType = expectedType.bodyClass();
+      if (expectedBodyType != null) {
+        var body = m.body();
+        if (!expectedBodyType.isInstance(body)) {
+          sendErrorAndCloseSession(
+              session,
+              headers.id(),
+              "Expected %s message body, got %s. Closing session.",
+              expectedBodyType.getSimpleName(),
+              body.getClass().getSimpleName()
+          );
+          return null;
+        }
+      }
+    }
+
+    // Message is valid.
+    return m;
+  }
+
+  /**
+   * Validate originator message header vs expected value.
+   * If invalid, will send an error message to the session, remove it from sessions map,
+   * and close the session, then return false.
+   * If valid, will return true
+   *
+   * @param message the message to validate.
+   */
+  private boolean validateOriginator(Session session, Message message, long expectedWorkspaceId) {
+    var claimedWorkspaceId = 0;
+    try {
+      claimedWorkspaceId = Integer.parseInt(message.headers().originator());
+    } catch (NumberFormatException e) {
+      sendErrorAndCloseSession(
+          session,
+          message.headers().id(),
+          "Invalid websocket message header originator value -- not an integer: %s. "
+              + "Removing and closing session %s.",
+          message.messageType(),
+          session.getId()
+      );
+      return false;
+    }
+
+    if (claimedWorkspaceId != expectedWorkspaceId) {
+      sendErrorAndCloseSession(
+          session,
+          message.headers().id(),
+          "Workspace %s sent message with incorrect originator value: %d."
+              + " Removing and closing session %s.",
+          expectedWorkspaceId,
+          claimedWorkspaceId,
+          session.getId()
+      );
+      return false;
+    }
+
+    return true;
   }
 }
