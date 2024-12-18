@@ -1,5 +1,6 @@
 package io.confluent.idesidecar.restapi.util;
 
+import io.confluent.idesidecar.restapi.credentials.TLSConfigBuilder;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionSpecKafkaClusterConfigBuilder;
 import io.confluent.idesidecar.restapi.models.ConnectionSpecSchemaRegistryConfigBuilder;
@@ -93,11 +94,15 @@ public class LocalTestEnvironment implements TestEnvironment {
             ConnectionSpecKafkaClusterConfigBuilder
                 .builder()
                 .bootstrapServers(kafkaWithRestProxy.getKafkaBootstrapServers())
+                // Disable TLS
+                .tlsConfig(TLSConfigBuilder.builder().enabled(false).build())
                 .build(),
             ConnectionSpecSchemaRegistryConfigBuilder
                 .builder()
                 .id(schemaRegistry.getClusterId())
                 .uri(schemaRegistry.endpoint())
+                // Disable TLS
+                .tlsConfig(TLSConfigBuilder.builder().enabled(false).build())
                 .build()
         )
     );
