@@ -2,6 +2,10 @@ package io.confluent.idesidecar.restapi.connections;
 
 import io.confluent.idesidecar.restapi.credentials.Credentials;
 import io.confluent.idesidecar.restapi.credentials.Credentials.KafkaConnectionOptions;
+import io.confluent.idesidecar.restapi.credentials.Credentials.SchemaRegistryConnectionOptions;
+import io.confluent.idesidecar.restapi.credentials.CredentialsKafkaConnectionOptionsBuilder;
+import io.confluent.idesidecar.restapi.credentials.CredentialsSchemaRegistryConnectionOptionsBuilder;
+import io.confluent.idesidecar.restapi.credentials.TLSConfig;
 import io.confluent.idesidecar.restapi.models.ConnectionMetadata;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
@@ -169,17 +173,32 @@ public abstract class ConnectionState {
    */
   public KafkaConnectionOptions getKafkaConnectionOptions() {
     if (spec.kafkaClusterConfig() != null) {
-      return new KafkaConnectionOptions(
-          spec.kafkaClusterConfig().sslOrDefault(),
-          spec.kafkaClusterConfig().verifySslCertificatesOrDefault(),
-          false
-      );
+      return CredentialsKafkaConnectionOptionsBuilder
+          .builder()
+          .redact(false)
+          .tlsConfig(spec.kafkaClusterConfig().tlsConfig())
+          .build();
     }
-    return new KafkaConnectionOptions(
-        ConnectionSpec.KafkaClusterConfig.DEFAULT_SSL,
-        ConnectionSpec.KafkaClusterConfig.DEFAULT_VERIFY_SSL_CERTIFICATES,
-        false
-    );
+
+    return CredentialsKafkaConnectionOptionsBuilder
+        .builder()
+        .redact(false)
+        .build();
+  }
+
+  public Credentials.SchemaRegistryConnectionOptions getSchemaRegistryOptions() {
+    if (spec.schemaRegistryConfig() != null) {
+      return CredentialsSchemaRegistryConnectionOptionsBuilder
+          .builder()
+          .redact(false)
+          .tlsConfig(spec.schemaRegistryConfig().tlsConfig())
+          .build();
+    }
+
+    return CredentialsSchemaRegistryConnectionOptionsBuilder
+        .builder()
+        .redact(false)
+        .build();
   }
 
   /**
@@ -199,6 +218,14 @@ public abstract class ConnectionState {
    *         the cluster requires no credentials
    */
   public Optional<Credentials> getSchemaRegistryCredentials() {
+    return Optional.empty();
+  }
+
+  public Optional<TLSConfig> getKafkaTLSConfig() {
+    return Optional.empty();
+  }
+
+  public Optional<TLSConfig> getSchemaRegistryTLSConfig() {
     return Optional.empty();
   }
 }
