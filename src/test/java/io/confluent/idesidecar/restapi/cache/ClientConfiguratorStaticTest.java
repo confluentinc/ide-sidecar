@@ -76,10 +76,7 @@ class ClientConfiguratorStaticTest {
       MTLS_TRUSTSTORE_PATH,
       new Password(MTLS_TRUSTSTORE_PASSWORD.toCharArray())
   );
-  static final TLSConfig DEFAULT_TLS_CONFIG = TLSConfigBuilder
-      .builder()
-      .enabled(true)
-      .build();
+  static final TLSConfig DEFAULT_TLS_CONFIG = new TLSConfig();
   static final TLSConfig ONE_WAY_TLS_CONFIG_WITHOUT_HOSTNAME_VERIFICATION = ONE_WAY_TLS_CONFIG
       .with()
       .verifyHostname(false)

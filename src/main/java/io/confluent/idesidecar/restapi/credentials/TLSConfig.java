@@ -30,8 +30,6 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
  *   <li>Truststore only: provide a truststore path and password</li>
  *   <li>Truststore and keystore: provide a truststore path and password, and a keystore path and
  *   password. This is equivalent to mutual TLS or mTLS</li>
- *   <li>Keystore only: provide a keystore path and password. This is not recommended, as it is
- *   insecure to use a keystore without a truststore</li>
  *   <li>Disable hostname verification: set {@link #verifyHostname} to {@code false} to disable
  *   server certificate hostname verification</li>
  *   <li>SSL Disabled: set {@link #enabled} to {@code false} to disable SSL</li>
@@ -273,6 +271,13 @@ public record TLSConfig(
     }
   }
 
+  /**
+   * Default SSL configuration.
+   */
+  public TLSConfig() {
+    this(DEFAULT_VERIFY_HOSTNAME, DEFAULT_ENABLED, null, null);
+  }
+
   public TLSConfig(String truststorePath, Password truststorePassword) {
     this(
         DEFAULT_VERIFY_HOSTNAME,
@@ -350,7 +355,6 @@ public record TLSConfig(
         );
       }
     } else {
-      // SSL enabled
       if (truststore != null) {
         truststore.validate(errors, "%s.truststore".formatted(path), what);
       }
@@ -358,9 +362,14 @@ public record TLSConfig(
       if (keystore != null) {
         keystore.validate(errors, "%s.keystore".formatted(path), what);
       }
-    }
 
-    // No validation required for verifyHostname -- it's a standalone config
-    // that is not dependent on other fields
+      if (truststore == null && keystore != null) {
+        errors.add(
+            Error.create()
+                .withDetail("%s keystore cannot be set without a truststore", what)
+                .withSource("%s.keystore", path)
+        );
+      }
+    }
   }
 }

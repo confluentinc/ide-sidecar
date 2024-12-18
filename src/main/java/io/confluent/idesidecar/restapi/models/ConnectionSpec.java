@@ -519,7 +519,8 @@ public record ConnectionSpec(
           if (sr != null && local != null && local.schemaRegistryUri != null) {
             errors.add(
                 Error.create()
-                     .withDetail("Local config cannot be used with schema_registry configuration")
+                     .withDetail(
+                         "Local config cannot be used with schema_registry configuration")
                      .withSource("local_config.schema-registry-uri")
             );
           }
@@ -533,10 +534,17 @@ public record ConnectionSpec(
           var kafka = newSpec.kafkaClusterConfig();
           if (kafka != null) {
             kafka.validate(errors, "kafka_cluster", "Kafka cluster");
+            if (kafka.tlsConfig != null) {
+              kafka.tlsConfig.validate(errors, "kafka_cluster.ssl", "Kafka cluster");
+            }
           }
+
           var sr = newSpec.schemaRegistryConfig();
           if (sr != null) {
             sr.validate(errors, "schema_registry", "Schema Registry");
+            if (sr.tlsConfig != null) {
+              sr.tlsConfig.validate(errors, "schema_registry.ssl", "Schema Registry");
+            }
           }
           checkLocalConfigNotAllowed(errors, newSpec);
           checkCCloudConfigNotAllowed(errors, newSpec);

@@ -1096,20 +1096,6 @@ public class ConnectionsResourceTest {
                 .withSource("kafka_cluster")
                 .withDetail("Kafka cluster configuration is not allowed when type is LOCAL")
         ),
-        new TestInput(
-            "Local spec is invalid with verify server certificate hostname",
-            """
-            {
-              "name": "Connection 1",
-              "type": "LOCAL",
-              "verify_server_certificate_hostname": true
-            }
-            """,
-            createError()
-                .withSource("verify_server_certificate_hostname")
-                .withDetail("Verify server certificate hostname is not allowed when type is LOCAL")
-        ),
-
         // CCloud connections
         new TestInput(
             "CCloud spec is valid with name and no config",
@@ -1227,19 +1213,6 @@ public class ConnectionsResourceTest {
                 .withSource("schema_registry")
                 .withDetail( "Schema Registry configuration is not allowed when type is CCLOUD")
         ),
-        new TestInput(
-            "CCloud spec is invalid with verify server certificate hostname",
-            """
-            {
-              "name": "Connection 1",
-              "type": "CCLOUD",
-              "verify_server_certificate_hostname": true
-            }
-            """,
-            createError()
-                .withSource("verify_server_certificate_hostname")
-                .withDetail("Verify server certificate hostname is not allowed when type is CCLOUD")
-        ),
         // Direct connections
         new TestInput(
             "Direct spec is valid with name and no config",
@@ -1257,7 +1230,8 @@ public class ConnectionsResourceTest {
               "name": "Some connection name",
               "type": "DIRECT",
               "kafka_cluster": {
-                "bootstrap_servers": "localhost:9092"
+                "bootstrap_servers": "localhost:9092",
+                "ssl": { "enabled": true }
               }
             }
             """
@@ -1273,7 +1247,8 @@ public class ConnectionsResourceTest {
                 "credentials": {
                   "username": "user",
                   "password": "pass"
-                }
+                },
+                "ssl": { "enabled": true }
               }
             }
             """
@@ -1285,7 +1260,8 @@ public class ConnectionsResourceTest {
               "name": "Some connection name",
               "type": "DIRECT",
               "schema_registry": {
-                "uri": "http://localhost:8081"
+                "uri": "http://localhost:8081",
+                "ssl": { "enabled": true }
               }
             }
             """
@@ -1300,7 +1276,8 @@ public class ConnectionsResourceTest {
                 "bootstrap_servers": "localhost:9092"
               },
               "schema_registry": {
-                "uri": "http://localhost:8081"
+                "uri": "http://localhost:8081",
+                "ssl": { "enabled": true }
               }
             }
             """
@@ -1312,9 +1289,9 @@ public class ConnectionsResourceTest {
               "name": "Some connection name",
               "type": "DIRECT",
               "kafka_cluster": {
-                "bootstrap_servers": "localhost:9092"
-              },
-              "verify_server_certificate_hostname": true
+                "bootstrap_servers": "localhost:9092",
+                "ssl": { "enabled": true, "verify_hostname": true}
+              }
             }
             """
         ),
@@ -1325,9 +1302,9 @@ public class ConnectionsResourceTest {
               "name": "Some connection name",
               "type": "DIRECT",
               "kafka_cluster": {
-                "bootstrap_servers": "localhost:9092"
-              },
-              "verify_server_certificate_hostname": false
+                "bootstrap_servers": "localhost:9092",
+                "ssl": { "enabled": true, "verify_hostname": false}
+              }
             }
             """
         ),
@@ -1338,16 +1315,17 @@ public class ConnectionsResourceTest {
               "name": "Some connection name",
               "type": "DIRECT",
               "kafka_cluster": {
-                "bootstrap_servers": "localhost:9092"
+                "bootstrap_servers": "localhost:9092",
+                "ssl": {
+                  "enabled": true,
+                  "truststore": {
+                    "path": "/path/to/truststore.jks",
+                    "password": "truststore-password"
+                  }
+                }
               },
               "schema_registry": {
                 "uri": "https://localhost:8081"
-              },
-              "ssl": {
-                "truststore": {
-                  "path": "/path/to/truststore.jks",
-                  "password": "truststore-password"
-                }
               }
             }
             """
@@ -1466,35 +1444,18 @@ public class ConnectionsResourceTest {
               "name": "Connection 1",
               "type": "DIRECT",
               "kafka_cluster": {
-                "bootstrap_servers": "localhost:9092"
-              },
-              "ssl": {
-                "truststore": {
-                  "password": "truststore-password"
+                "bootstrap_servers": "localhost:9092",
+                "ssl": {
+                  "truststore": {
+                    "password": "truststore-password"
+                  }
                 }
               }
             }
             """,
             createError()
-                .withSource("ssl.truststore.path")
-                .withDetail("SSL configuration truststore path is required and may not be blank")
-        ),
-        new TestInput(
-            "Direct spec is invalid with SSL without truststore specified",
-            """
-            {
-              "name": "Connection 1",
-              "type": "DIRECT",
-              "kafka_cluster": {
-                "bootstrap_servers": "localhost:9092"
-              },
-              "ssl": {
-              }
-            }
-            """,
-            createError()
-                .withSource("ssl.truststore")
-                .withDetail("SSL configuration truststore is required")
+                .withSource("kafka_cluster.ssl.truststore.path")
+                .withDetail("Kafka cluster truststore path is required and may not be blank")
         ),
         new TestInput(
             "Direct spec is invalid with SSL having keystore only",
@@ -1503,20 +1464,20 @@ public class ConnectionsResourceTest {
               "name": "Connection 1",
               "type": "DIRECT",
               "kafka_cluster": {
-                "bootstrap_servers": "localhost:9092"
-              },
-              "ssl": {
-                "keystore": {
-                  "path": "/path/to/keystore.jks",
-                  "password": "keystore-password",
-                  "key_password": "key-password"
+                "bootstrap_servers": "localhost:9092",
+                "ssl": {
+                  "keystore": {
+                    "path": "/path/to/keystore.jks",
+                    "password": "keystore-password",
+                    "key_password": "key-password"
+                  }
                 }
               }
             }
             """,
             createError()
-                .withSource("ssl.truststore")
-                .withDetail("SSL configuration truststore is required")
+                .withSource("kafka_cluster.ssl.keystore")
+                .withDetail("Kafka cluster keystore cannot be set without a truststore")
         ),
         new TestInput(
             "Direct spec is invalid with SSL keystore not having path",
@@ -1525,23 +1486,23 @@ public class ConnectionsResourceTest {
               "name": "Connection 1",
               "type": "DIRECT",
               "kafka_cluster": {
-                "bootstrap_servers": "localhost:9092"
-              },
-              "ssl": {
-                "truststore": {
-                  "path": "/path/to/truststore.jks",
-                  "password": "truststore-password"
-                },
-                "keystore": {
-                  "password": "keystore-password",
-                  "key_password": "key-password"
+                "bootstrap_servers": "localhost:9092",
+                "ssl": {
+                  "truststore": {
+                    "path": "/path/to/truststore.jks",
+                    "password": "truststore-password"
+                  },
+                  "keystore": {
+                    "password": "keystore-password",
+                    "key_password": "key-password"
+                  }
                 }
               }
             }
             """,
             createError()
-                .withSource("ssl.keystore.path")
-                .withDetail("SSL configuration keystore path is required and may not be blank")
+                .withSource("kafka_cluster.ssl.keystore.path")
+                .withDetail("Kafka cluster keystore path is required and may not be blank")
         ),
 
         // Combination

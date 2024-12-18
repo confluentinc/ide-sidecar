@@ -64,11 +64,6 @@ public class DirectConnectionState extends ConnectionState {
       null
   );
 
-  static final TLSConfig DEFAULT_SSL_ENABLED_CONFIG = TLSConfigBuilder
-      .builder()
-      .enabled(true)
-      .build();
-
   public DirectConnectionState() {
     super(null, null);
   }
@@ -147,9 +142,11 @@ public class DirectConnectionState extends ConnectionState {
   @Override
   public Optional<TLSConfig> getKafkaTLSConfig() {
     if (spec.kafkaClusterConfig() != null) {
-      return Optional.of(spec.kafkaClusterConfig().tlsConfig() != null
+      return Optional.of(
+          spec.kafkaClusterConfig().tlsConfig() != null
           ? spec.kafkaClusterConfig().tlsConfig()
-          : DEFAULT_SSL_ENABLED_CONFIG
+          // Use the default TLS configuration if none is provided
+          : new TLSConfig()
       );
     }
 
@@ -159,9 +156,11 @@ public class DirectConnectionState extends ConnectionState {
   @Override
   public Optional<TLSConfig> getSchemaRegistryTLSConfig() {
     if (spec.schemaRegistryConfig() != null) {
-      return Optional.of(spec.schemaRegistryConfig().tlsConfig() != null
+      return Optional.of(
+          spec.schemaRegistryConfig().tlsConfig() != null
           ? spec.schemaRegistryConfig().tlsConfig()
-          : DEFAULT_SSL_ENABLED_CONFIG
+          // Use the default TLS configuration if none is provided
+          : new TLSConfig()
       );
     }
 
