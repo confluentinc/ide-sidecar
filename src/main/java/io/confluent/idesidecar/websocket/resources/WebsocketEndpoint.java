@@ -274,7 +274,7 @@ public class WebsocketEndpoint {
 
     var id = existingSession != null ? existingSession.processId() : "unknown";
     Log.errorf(
-        "Websocket error for workspace pid %s, session id %s. Closed and removed session.",
+        "Websocket error for workspace pid %s, session id %s. Closed and removed session. %s",
         id,
         session.getId(),
         throwable.getMessage()
@@ -295,7 +295,7 @@ public class WebsocketEndpoint {
       try {
         broadcastWorkspacesChanged();
       } catch (IOException e) {
-        Log.errorf("Failed to broadcast workspace removed message: %s", e.getMessage());
+        Log.errorf(e, "Failed to broadcast workspace removed message: %s", e.getMessage());
       }
     }
   }
@@ -309,7 +309,7 @@ public class WebsocketEndpoint {
     // new connected/authorized workspace count.
 
     var message = new Message(
-        new MessageHeaders(MessageType.WORKSPACE_COUNT_CHANGED, "sidecar"),
+        new MessageHeaders(MessageType.WORKSPACE_COUNT_CHANGED),
         new WorkspacesChangedBody(this.sessions.size())
     );
 
@@ -337,17 +337,17 @@ public class WebsocketEndpoint {
     Log.info(msg);
     try {
       var errorMessage = new Message(
-          new MessageHeaders(MessageType.PROTOCOL_ERROR, "sidecar"),
+          new MessageHeaders(MessageType.PROTOCOL_ERROR),
           new ProtocolErrorBody(msg, originalMessageId)
       );
       session.getAsyncRemote()
              .sendText(mapper.writeValueAsString(errorMessage));
     } catch (IOException e) {
       Log.errorf(
+          e,
           "Unable to send error message to session %s: %s",
           session.getId(),
-          e.getMessage(),
-          e
+          e.getMessage()
       );
     } finally {
       try {
@@ -355,10 +355,10 @@ public class WebsocketEndpoint {
         session.close();
       } catch (IOException e) {
         Log.errorf(
+            e,
             "Unable to close session %s: %s",
             session.getId(),
-            e.getMessage(),
-            e
+            e.getMessage()
         );
       }
     }
@@ -374,7 +374,7 @@ public class WebsocketEndpoint {
   static MessageHeaders validateHeadersForSidecarBroadcast(Message outboundMessage) {
     MessageHeaders headers = outboundMessage.headers();
 
-    if (!headers.originator().equals("sidecar")) {
+    if (!headers.originatedBySidecar()) {
       Log.errorf(
           "Message id %s is not originator=sidecar message, cannot broadcast.",
           headers.id()
