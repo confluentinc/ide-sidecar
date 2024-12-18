@@ -282,6 +282,11 @@ public class WebsocketEndpoint {
     // May or may not actually remove -- if had not yet been authorized, it won't be in the map.
     // (but will definitely not be in the map after this statement.)
     var existingSession = sessions.remove(session);
+    if (existingSession == null) {
+      // Must have been in purgatory and had an error before saying hello.
+      purgatorySessions.remove(session);
+    }
+
     session.close();
 
     var id = existingSession != null ? existingSession.processId() : "unknown";
