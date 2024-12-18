@@ -118,8 +118,6 @@ public class CCloudConnectionState extends ConnectionState {
             // Need to re-read errors which might have been updated during the auth status check
             var errors = getAuthErrors(oauthContext);
             if (canAuthenticateWithConfluentCloud) {
-              // Notify the listener of successful authentication
-              listener.connected(this);
               // Generate the updated status
               var user = oauthContext.getUser();
               return ConnectionStatusBuilder
@@ -133,9 +131,6 @@ public class CCloudConnectionState extends ConnectionState {
                       )
                   ).build();
             } else {
-              // Notify the listener of no authentication, which we treat as expired
-              // since we already handled non-transient errors above
-              listener.disconnected(this);
               // And return updated status
               return ConnectionStatusBuilder
                   .builder()
