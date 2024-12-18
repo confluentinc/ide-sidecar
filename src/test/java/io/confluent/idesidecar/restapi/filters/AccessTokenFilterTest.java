@@ -27,7 +27,9 @@ public class AccessTokenFilterTest {
       "/schemas/id/fake-schema-id/subjects",
       // the filter should summarily reject before the graphql endpoint
       // has chance to complain about not being a POST
-      "/gateway/v1/graphql"
+      "/gateway/v1/graphql",
+      // the websocket route
+      "/ws"
   };
 
   @Inject
