@@ -52,7 +52,7 @@ public class ConnectionEvents {
     try {
       websockets.broadcast(new Message(headers, body));
     } catch (Exception e) {
-      Log.errorf("Failed to broadcast connection event %s", body);
+      Log.errorf(e, "Failed to broadcast connection event %s", body);
     }
   }
 }

@@ -274,7 +274,7 @@ public class WebsocketEndpoint {
 
     var id = existingSession != null ? existingSession.processId() : "unknown";
     Log.errorf(
-        "Websocket error for workspace pid %s, session id %s. Closed and removed session.",
+        "Websocket error for workspace pid %s, session id %s. Closed and removed session. %s",
         id,
         session.getId(),
         throwable.getMessage()
@@ -295,7 +295,7 @@ public class WebsocketEndpoint {
       try {
         broadcastWorkspacesChanged();
       } catch (IOException e) {
-        Log.errorf("Failed to broadcast workspace removed message: %s", e.getMessage());
+        Log.errorf(e, "Failed to broadcast workspace removed message: %s", e.getMessage());
       }
     }
   }
@@ -344,10 +344,10 @@ public class WebsocketEndpoint {
              .sendText(mapper.writeValueAsString(errorMessage));
     } catch (IOException e) {
       Log.errorf(
+          e,
           "Unable to send error message to session %s: %s",
           session.getId(),
-          e.getMessage(),
-          e
+          e.getMessage()
       );
     } finally {
       try {
@@ -355,10 +355,10 @@ public class WebsocketEndpoint {
         session.close();
       } catch (IOException e) {
         Log.errorf(
+            e,
             "Unable to close session %s: %s",
             session.getId(),
-            e.getMessage(),
-            e
+            e.getMessage()
         );
       }
     }
