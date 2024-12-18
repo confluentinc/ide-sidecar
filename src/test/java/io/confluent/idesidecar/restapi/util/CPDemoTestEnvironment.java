@@ -66,17 +66,21 @@ public class CPDemoTestEnvironment implements TestEnvironment {
 
     network = createReusableNetwork("cp-demo");
     // Check if zookeeper, kafka1, kafka2, ldap, schemaRegistry are already running
+    Log.info("Starting Tools...");
     tools = new ToolsContainer(network);
     tools.start();
 
     if (!cpDemoRunning) {
+      Log.info("Registering root CA...");
       registerRootCA();
     }
 
+    Log.info("Starting Zookeeper...");
     zookeeper = new ZookeeperContainer(network);
     zookeeper.waitingFor(Wait.forHealthcheck());
     zookeeper.start();
 
+    Log.info("Starting OpenLDAP...");
     ldap = new OpenldapContainer(network);
     ldap.start();
 
@@ -114,13 +118,16 @@ public class CPDemoTestEnvironment implements TestEnvironment {
     ));
 
     // Must be started in parallel
+    Log.info("Starting Kafka brokers...");
     Startables.deepStart(List.of(kafka1, kafka2)).join();
 
     if (!cpDemoRunning) {
+      Log.info("Creating role bindings...");
       runToolScript("/tmp/helper/create-role-bindings.sh");
       setMinISR();
     }
 
+    Log.info("Starting Schema Registry...");
     schemaRegistry = new SchemaRegistryContainer(network);
     schemaRegistry.start();
   }
@@ -279,19 +286,33 @@ public class CPDemoTestEnvironment implements TestEnvironment {
   @Override
   public Optional<ConnectionSpec> directConnectionSpec() {
     var cwd = System.getProperty("user.dir");
-    var trustStoreLocation = new File(cwd,
+    var schemaRegistryTrustStoreLocation = new File(cwd,
         ".cp-demo/scripts/security/kafka.schemaregistry.truststore.jks"
     ).getAbsolutePath();
-    var trustStorePassword = new Password("confluent".toCharArray());
+    var password = new Password("confluent".toCharArray());
+    var kafkaTrustStoreLocation = new File(cwd,
+        ".cp-demo/scripts/security/kafka.kafka1.truststore.jks"
+    ).getAbsolutePath();
+
     return Optional.of(
         ConnectionSpec.createDirect(
             "direct-to-local-connection",
             "Direct to Local",
             ConnectionSpecKafkaClusterConfigBuilder
                 .builder()
-                .bootstrapServers("localhost:11091,localhost:11092")
-                // Disable TLS
-                .tlsConfig(TLSConfigBuilder.builder().enabled(false).build())
+                .bootstrapServers("localhost:11091")
+                .tlsConfig(TLSConfigBuilder
+                    .builder()
+                    // TODO: Figure out what the keystore config needs to be
+                    //       for mutual TLS.
+                    .truststore(new TLSConfig.TrustStore(
+                        kafkaTrustStoreLocation,
+                        password,
+                        null
+                    ))
+                    .enabled(true)
+                    .build()
+                )
                 .build(),
             ConnectionSpecSchemaRegistryConfigBuilder
               .builder()
@@ -303,7 +324,9 @@ public class CPDemoTestEnvironment implements TestEnvironment {
                       new Password("superUser".toCharArray())
                   )
               )
-              .tlsConfig(new TLSConfig(trustStoreLocation, trustStorePassword))
+              .tlsConfig(new TLSConfig(
+                  schemaRegistryTrustStoreLocation, password
+              ))
               .build()
         )
     );
