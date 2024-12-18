@@ -29,6 +29,7 @@ public class CCloudConnectionState extends ConnectionState {
           null
       ),
       null,
+      null,
       null
   );
 

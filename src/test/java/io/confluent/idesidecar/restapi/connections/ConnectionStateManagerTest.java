@@ -124,7 +124,7 @@ class ConnectionStateManagerTest {
   void shouldUpdateConnection()
       throws ConnectionNotFoundException, CreateConnectionException, InvalidInputException {
     // When a connection is added
-    var original = new ConnectionSpec("1", "Original", ConnectionType.PLATFORM);
+    var original = new ConnectionSpec("1", "Original", ConnectionType.LOCAL);
     ConnectionState connectionState = ConnectionStates.from(original, null);
     manager.createConnectionState(connectionState.getSpec());
     assertConnectionFound(original);
