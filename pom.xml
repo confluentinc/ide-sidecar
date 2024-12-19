@@ -68,7 +68,7 @@
     <build-tools.dir>${project.basedir}/build-tools</build-tools.dir>
     <spotbugs.maven.plugin.version>4.8.5.0</spotbugs.maven.plugin.version>
     <jacoco-maven-plugin.version>0.8.12</jacoco-maven-plugin.version>
-    <quarkus.platform.version>3.17.4</quarkus.platform.version>
+    <quarkus.platform.version>3.15.1</quarkus.platform.version>
     <io.confluent.common.version>7.7.0</io.confluent.common.version>
     <avro.version>1.12.0</avro.version>
     <jackson-dataformat.version>2.17.1</jackson-dataformat.version>
@@ -349,6 +349,44 @@
                 </configuration>
               </execution>
             </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>jenkins</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration combine.children="append">
+              <redirectTestOutputToFile>true</redirectTestOutputToFile>
+              <systemPropertyVariables>
+                <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
+                <log4j.configuration>file:${build-tools.dir}/logging/log4j-surefire.properties</log4j.configuration>
+                <!-- see https://quarkus.io/guides/tests-with-coverage#working-with-multi-module-projects -->
+                <quarkus.jacoco.data-file>${project.build.directory}/target/jacoco.exec</quarkus.jacoco.data-file>
+                <quarkus.jacoco.reuse-data-file>true</quarkus.jacoco.reuse-data-file>
+                <quarkus.jacoco.report-location>${project.build.directory}/target/coverage</quarkus.jacoco.report-location>
+                <maven.home>${maven.home}</maven.home>
+              </systemPropertyVariables>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <configuration combine.children="append">
+              <redirectTestOutputToFile>true</redirectTestOutputToFile>
+              <systemPropertyVariables>
+                <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
+                <log4j.configuration>file:${build-tools.dir}/logging/log4j-failsafe.properties</log4j.configuration>
+                <!-- see https://quarkus.io/guides/tests-with-coverage#working-with-multi-module-projects -->
+                <quarkus.jacoco.data-file>${project.build.directory}/target/jacoco.exec</quarkus.jacoco.data-file>
+                <quarkus.jacoco.reuse-data-file>true</quarkus.jacoco.reuse-data-file>
+                <quarkus.jacoco.report-location>${project.build.directory}/target/coverage</quarkus.jacoco.report-location>
+              </systemPropertyVariables>
+            </configuration>
           </plugin>
         </plugins>
       </build>
