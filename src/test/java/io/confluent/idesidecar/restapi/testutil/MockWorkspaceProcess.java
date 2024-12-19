@@ -1,5 +1,7 @@
 package io.confluent.idesidecar.restapi.testutil;
 
+import io.confluent.idesidecar.restapi.application.KnownWorkspacesBean.WorkspacePid;
+
 /**
  * Class as test suite stand in for vs code workspace process.
  * Needs to be an OS-level process that will hang around long enough to be noticed by
@@ -12,7 +14,7 @@ public class MockWorkspaceProcess {
       "sleep", "900"
   };
 
-  public final Long pid;
+  public final WorkspacePid pid;
   public final String pid_string;
   private final Process process;
 
@@ -20,7 +22,7 @@ public class MockWorkspaceProcess {
     try {
       ProcessBuilder pb = new ProcessBuilder(COMMAND);
       process = pb.start();
-      pid = process.pid();
+      pid = new WorkspacePid(process.pid());
       pid_string = String.valueOf(pid);
     } catch (Exception e) {
       throw new RuntimeException("Failed to start mock workspace process: " + e.getMessage());
