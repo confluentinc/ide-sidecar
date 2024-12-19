@@ -12,6 +12,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import org.apache.kafka.clients.CommonClientConfigs;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 @Schema(description = "Basic authentication credentials")
@@ -49,15 +51,14 @@ public record BasicCredentials(
       KafkaConnectionOptions options
   ) {
     var config = new LinkedHashMap<String, String>();
-    if (options.ssl()) {
-      config.put("security.protocol", "SASL_SSL");
+    var tlsConfig = options.tlsConfig();
+    if (tlsConfig.enabled()) {
+      tlsConfig.getProperties(options.redact()).ifPresent(config::putAll);
+      config.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_SSL");
     } else {
-      config.put("security.protocol", "SASL_PLAINTEXT");
+      config.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT");
     }
     config.put("sasl.mechanism", "PLAIN");
-    if (!options.verifyCertificates()) {
-      config.put("ssl.endpoint.identification.algorithm", "");
-    }
     config.put(
         "sasl.jaas.config",
         "%s required username=\"%s\" password=\"%s\";".formatted(
@@ -75,6 +76,10 @@ public record BasicCredentials(
   ) {
     var config = new LinkedHashMap<String, String>();
     config.put("basic.auth.credentials.source", "USER_INFO");
+    options
+        .tlsConfig()
+        .getProperties(options.redact())
+        .ifPresent(config::putAll);
     config.put(
         "basic.auth.user.info",
         "%s:%s".formatted(username, password.asString(options.redact()))

@@ -82,6 +82,23 @@ public class ProxyContext {
 
   // Getters and setters
   // Add additional getters and setters as needed
+
+  public String getProxyRequestAbsoluteUrl() {
+    return proxyRequestAbsoluteUrl;
+  }
+
+  public MultiMap getProxyRequestHeaders() {
+    return proxyRequestHeaders;
+  }
+
+  public HttpMethod getProxyRequestMethod() {
+    return proxyRequestMethod;
+  }
+
+  public Buffer getProxyRequestBody() {
+    return proxyRequestBody;
+  }
+
   public String getRequestUri() {
     return requestUri;
   }
