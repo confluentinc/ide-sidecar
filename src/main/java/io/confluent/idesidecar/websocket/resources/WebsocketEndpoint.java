@@ -22,7 +22,10 @@ import jakarta.validation.constraints.NotNull;
 import java.awt.*;
 import java.io.IOException;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -57,9 +60,10 @@ public class WebsocketEndpoint {
   }
 
   /** Wrapper for a websocket session, with additional state tracking. */
-  public static class WorkspaceWebsocketSession {
+  static class WorkspaceWebsocketSession {
     private final SessionKey key;
     private final Session session;
+    private final Instant createdAt;
     // will grow an Instant createdAt when we start to expire the inactive sessions
     // after some time -- todo next branch.
 
@@ -67,10 +71,19 @@ public class WebsocketEndpoint {
     @Nullable
     private final WorkspacePid workspacePid;
 
-    public WorkspaceWebsocketSession(Session session, WorkspacePid workspacePid) {
+    public WorkspaceWebsocketSession(Session session, WorkspacePid workspacePid, Instant createdAt) {
       key = new SessionKey(session.getId());
       this.session = session;
       this.workspacePid = workspacePid;
+      this.createdAt = createdAt;
+    }
+
+    /**
+     * Return a new workspace session instance which knows its workspace pid, and thereby
+     * smells 'active'.
+     */
+    public WorkspaceWebsocketSession makeActive(WorkspacePid workspacePid) {
+      return new WorkspaceWebsocketSession(this.session, workspacePid, this.createdAt);
     }
 
     /** The websocket session id in SessionKey wrapping, used as the key in the sessions map. */
@@ -96,6 +109,10 @@ public class WebsocketEndpoint {
      */
     public boolean isActive() {
       return workspacePid != null;
+    }
+
+    public Instant createdAt() {
+      return createdAt;
     }
 
     /**
@@ -132,6 +149,8 @@ public class WebsocketEndpoint {
       return Uni.createFrom().completionStage(future);
     }
   }
+
+  // Done with WorkspaceWebsocketSession definition, on to WorkspaceWebsocketSession proper.
 
   /**
    * Map of all workspace sessions (valid or not), keyed by the websocket
@@ -266,7 +285,10 @@ public class WebsocketEndpoint {
     // so we can assume that the session is authorized.
     // The workspace process id will come to us in a subsequent HELLO_WORKSPACE
     // message, at which time we'll replace this mapping with one that carries the pid.
-    sessions.put(new SessionKey(session.getId()), new WorkspaceWebsocketSession(session, null));
+    sessions.put(
+        new SessionKey(session.getId()),
+        new WorkspaceWebsocketSession(session, null, Instant.now())
+    );
   }
 
   /**
@@ -390,7 +412,7 @@ public class WebsocketEndpoint {
     // All good! Upgrade the session in the map to an active workspace session.
     sessions.put(
         workspaceSession.key(),
-        new WorkspaceWebsocketSession(workspaceSession.session(), workspacePid)
+        workspaceSession.makeActive(workspacePid)
     );
     Log.infof("Session %s HELLO as pid %s authorized and marked active.", workspaceSession.key(), workspacePid);
 
@@ -449,6 +471,33 @@ public class WebsocketEndpoint {
     Log.info("Broadcasting workspace count change message to all workspaces.");
 
     broadcast(message);
+  }
+
+  public static final int purgatoryMaxDurationSecs = 30;
+  /**
+   * Groom sessions map from any sessions that have lingered too long
+   * without saying hello.
+   */
+  public void groomInactiveSessions() {
+    Log.info("Grooming inactive sessions.");
+    var now = Instant.now();
+
+    // Find all inactive sessions that have been inactive for too long.
+    var toPurge = sessions.values().stream()
+        .filter(wws -> !wws.isActive() && Duration.between(wws.createdAt(), now).toSeconds() > purgatoryMaxDurationSecs)
+        .collect(Collectors.toList());
+
+    if(!toPurge.isEmpty()) {
+      Log.infof("Purging %d inactive session(s) that have lingered too long.", toPurge.size());
+      toPurge.forEach(wws -> {
+        sendErrorAndCloseSession(
+              wws,
+              null,
+              "Inactive session %s lingered too long. Closing.",
+              wws.key()
+          );
+      });
+    }
   }
 
   private void sendErrorAndCloseSession(

@@ -1,6 +1,9 @@
 package io.confluent.idesidecar.websocket.resources;
 
+import static java.util.spi.ToolProvider.findFirst;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
+import graphql.Assert;
 import io.confluent.idesidecar.restapi.application.KnownWorkspacesBean;
 import io.confluent.idesidecar.restapi.application.KnownWorkspacesBean.WorkspacePid;
 import io.confluent.idesidecar.restapi.application.SidecarAccessTokenBean;
@@ -13,6 +16,8 @@ import io.confluent.idesidecar.websocket.messages.MessageHeaders;
 import io.confluent.idesidecar.websocket.messages.MessageType;
 import io.confluent.idesidecar.websocket.messages.ProtocolErrorBody;
 import io.confluent.idesidecar.websocket.messages.WorkspacesChangedBody;
+import io.confluent.idesidecar.websocket.resources.WebsocketEndpoint.SessionKey;
+import io.confluent.idesidecar.websocket.resources.WebsocketEndpoint.WorkspaceWebsocketSession;
 import io.quarkus.test.common.http.TestHTTPResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.RestAssured;
@@ -26,6 +31,7 @@ import jakarta.websocket.Session;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.URI;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -158,6 +164,12 @@ public class WebsocketEndpointTest {
 
     public WorkspacePid processId() {
       return mockWorkspaceProcess.pid;
+    }
+
+    /** Return the websocket session id as a SessionKey as would be found
+     * as key for the entry in WebsocketEndpoint.sessions */
+    public SessionKey sessionKey() {
+      return new SessionKey(session.getId());
     }
 
 
@@ -745,6 +757,57 @@ public class WebsocketEndpointTest {
       Assertions.assertEquals(0, websocketEndpoint.sessions.size());
     }
   }
+
+  @Test
+  public void testGroomInactiveSessions() {
+
+    var sessions = websocketEndpoint.sessions;
+    // Calling when empty map should do nothing.
+    websocketEndpoint.groomInactiveSessions();
+
+    // Given a workspace connected happy websocket ...
+    ConnectedWorkspace connectedWorkspace = connectWorkspace(true);
+    // consume the initial WORKSPACE_COUNT_CHANGED message.
+    connectedWorkspace.waitForMessageOfType(MessageType.WORKSPACE_COUNT_CHANGED, 1000);
+
+    // Calling again should leave the session alone.
+    websocketEndpoint.groomInactiveSessions();
+    Assertions.assertEquals(1, sessions.size());
+
+    // But make a second connection which does not say hello.
+    ConnectedWorkspace connectedWorkspace2 = connectWorkspace(false);
+
+    // find the inactive session in server-side sessions map ...
+    var existingInactiveSession = sessions.values().stream().filter(
+        session -> !session.isActive()
+    ).findFirst().get();
+
+    // .., and replace it with a session that is 10 minutes old.
+    var olderSession = new WorkspaceWebsocketSession(
+        existingInactiveSession.session(),
+        existingInactiveSession.workspacePid(),
+        Instant.now().minusSeconds(600) // 10 minutes ago
+    );
+    sessions.put(existingInactiveSession.key(), olderSession);
+
+    // Should be two entries still ...
+    Assertions.assertEquals(2, sessions.size());
+
+    // Now groom the sessions. Will send an error message to the older session and close it,
+    // then ultimately will remove it from the sessions map.
+    websocketEndpoint.groomInactiveSessions();
+
+    // get the error message.
+    var closureMessage = connectedWorkspace2.waitForMessageOfType(MessageType.PROTOCOL_ERROR, 1000);
+
+    // expect closing.
+    connectedWorkspace2.waitForClose(1000);
+
+    // Should be only one entry left, not the older session.
+    Assertions.assertEquals(1, sessions.size());
+    Assertions.assertFalse(sessions.containsKey(existingInactiveSession.key()));
+  }
+
 
   /** Connect a mock workspace process to the websocket endpoint successfully. */
   private ConnectedWorkspace connectWorkspace(boolean sayHello) {
