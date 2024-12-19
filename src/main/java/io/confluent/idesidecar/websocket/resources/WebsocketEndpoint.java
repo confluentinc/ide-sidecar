@@ -268,7 +268,7 @@ public class WebsocketEndpoint {
               // and is not the sender
               wws.session().isOpen()
                   && wws.isActive()
-                  && wws.workspacePid() != workspaceSession.workspacePid()
+                  && ! wws.workspacePid().equals(workspaceSession.workspacePid())
           ).forEach(wws ->
               futures.add(wws.session().getAsyncRemote().sendText(messageString))
           );
