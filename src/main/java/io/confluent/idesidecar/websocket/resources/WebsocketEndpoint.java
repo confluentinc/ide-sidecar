@@ -13,12 +13,19 @@ import io.confluent.idesidecar.websocket.messages.MessageType;
 import io.confluent.idesidecar.websocket.messages.ProtocolErrorBody;
 import io.confluent.idesidecar.websocket.messages.WorkspacesChangedBody;
 import io.quarkus.logging.Log;
+import io.smallrye.mutiny.Multi;
+import io.smallrye.mutiny.Uni;
+import io.vertx.core.CompositeFuture;
 import jakarta.inject.Singleton;
 import jakarta.validation.constraints.NotNull;
+import java.awt.*;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
 import jakarta.inject.Inject;
 import jakarta.websocket.OnClose;
@@ -29,6 +36,8 @@ import jakarta.websocket.Session;
 import jakarta.websocket.server.ServerEndpoint;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * Websocket endpoint for "control plane" variety async messaging between sidecar and workspaces,
@@ -100,6 +109,40 @@ public class WebsocketEndpoint {
     public boolean isActive() {
       return workspacePid != null;
     }
+
+    /**
+     * Send the text message with the given message ID, and return a {@link Uni} that returns
+     * the message ID when the message is sent.
+     *
+     * @param messageText
+     * @param messageId
+     * @return the message ID when the message is sent.
+     */
+    public Uni<String> sendAsync(String messageText, String messageId) {
+      Log.debugf(
+          "Sending broadcast message %s to workspace pid %d",
+          messageId,
+          workspacePid.id()
+      );
+
+      var future = CompletableFuture.supplyAsync(() -> {
+        session.getAsyncRemote().sendText(messageText, result -> {
+          if (result.isOK()) {
+            Log.debugf(
+                "Successfully sent broadcast message %s to workspace pid %d",
+                messageId,
+                workspacePid.id()
+            );
+          } else {
+            var cause = result.getException();
+            Log.errorf("Failed to send broadcast message to workspace: %s", cause.getMessage());
+            throw new CompletionException(cause);
+          }
+        });
+        return messageId;
+      });
+      return Uni.createFrom().completionStage(future);
+    }
   }
 
   /**
@@ -126,17 +169,35 @@ public class WebsocketEndpoint {
    * @throws IOException              if there is an error serializing the message to JSON.
    * @throws IllegalArgumentException if the headers of the message are not valid for broadcasting.
    * */
-  public void broadcast(Message message) throws IOException, IllegalArgumentException {
-    final MessageHeaders headers = validateHeadersForSidecarBroadcast(message);
+  public Multi<String> broadcast(Message message) throws IOException, IllegalArgumentException {
+    return broadcast(message, WorkspaceWebsocketSession::isActive, "active");
+  }
 
+  /**
+   * Broadcast a message originating from sidecar to connected workspaces that match the supplied
+   * filter.
+   *
+   * @param message           the message to broadcast
+   * @param filter            the filter to apply to the workspace sessions
+   * @param sessionsAdjective the adjective to describe the sessions in the log message.
+   * @throws IOException              if there is an error serializing the message to JSON.
+   * @throws IllegalArgumentException if the headers of the message are not valid for broadcasting.
+   * */
+  public Multi<String> broadcast(
+      Message message,
+      Predicate<WorkspaceWebsocketSession> filter,
+      String sessionsAdjective
+  ) throws IOException, IllegalArgumentException {
     var activeWorkspaceSessions = sessions.values().stream()
-        .filter(WorkspaceWebsocketSession::isActive)
-        .toList();
+                                          .filter(filter)
+                                          .toList();
 
     if (activeWorkspaceSessions.isEmpty()) {
-      Log.debug("No active workspaces to broadcast message to.");
-      return;
+      Log.debugf("No %s workspaces to broadcast message to.", sessionsAdjective);
+      return Multi.createFrom().empty();
     }
+
+    final MessageHeaders headers = validateHeadersForSidecarBroadcast(message);
 
     // Serialize the message to JSON
     String jsonMessage = mapper.writeValueAsString(message);
@@ -146,30 +207,45 @@ public class WebsocketEndpoint {
         headers.id()
     );
 
+    return broadcast(jsonMessage, headers.id(), filter, sessionsAdjective);
+  }
 
-    // And broadcast the message to the active sessions, collecting the futures along the way.
-    List<Future> futures = new ArrayList<>();
-    activeWorkspaceSessions.forEach(ws -> {
-      Log.debugf(
-          "Sending broadcast message %s to workspace pid %d",
-          headers.id(),
-          ws.workspacePid().id()
-      );
-      futures.add(ws.session().getAsyncRemote().sendText(jsonMessage));
-    });
+  /**
+   * Broadcast a message originating from sidecar to connected workspaces that match the supplied
+   * filter.
+   *
+   * @param jsonMessage       the message to broadcast
+   * @param messageId         the ID of the message (used for logging)
+   * @param filter            the filter to apply to the workspace sessions
+   * @param sessionsAdjective the adjective to describe the sessions in the log message.
+   * @throws IOException              if there is an error serializing the message to JSON.
+   * @throws IllegalArgumentException if the headers of the message are not valid for broadcasting.
+   * */
+  public Multi<String> broadcast(
+      String jsonMessage,
+      String messageId,
+      Predicate<WorkspaceWebsocketSession> filter,
+      String sessionsAdjective
+  ) {
 
-    // Wait for all the futures to complete.
-    for (Future f : futures) {
-      try {
-        f.get();
-      } catch (Exception e) {
-        Log.errorf("Failed to send broadcast message to workspace: %s", e.getMessage());
+    var activeWorkspaceSessions = sessions.values().stream()
+                                          .filter(filter)
+                                          .toList();
 
-        if (e instanceof InterruptedException) {
-          Thread.currentThread().interrupt();
-        }
-      }
+    if (activeWorkspaceSessions.isEmpty()) {
+      Log.debugf("No %s workspaces to broadcast message to.", sessionsAdjective);
+      return Multi.createFrom().empty();
     }
+
+    var promises = activeWorkspaceSessions
+        .stream()
+        .map(session -> session.sendAsync(jsonMessage, messageId))
+        .toList();
+    return Multi
+        .createFrom()
+        .iterable(promises)
+        .onItem()
+        .transformToMultiAndMerge(Uni::toMulti);
   }
 
   /**
@@ -242,49 +318,13 @@ public class WebsocketEndpoint {
     );
 
     // At this time, all websocket messages received from workspaces are intended to
-    // be proxied to all the other workspaces. Do that here.
-    var otherCount = sessions.size() - 1;
-    if (otherCount <= 0) {
-      Log.debug("No other workspaces to broadcast message to.");
-    } else {
-      Log.debugf(
-          "Proxying message %s from workspace %s to %d other workspace(s)",
-          m.id(),
-          workspaceSession.workspacePid(),
-          otherCount
-      );
-
-      List<Future> futures = new ArrayList<>();
-
-      // Async send the message to all other active workspaces, collecting the futures along
-      // the way.
-      sessions
-          .values()
-          .stream()
-          .filter(wws ->
-              // happy websocket
-              // where workspace has sent a HELLO_WORKSPACE message
-              // and is not the sender
-              wws.session().isOpen()
-                  && wws.isActive()
-                  && ! wws.workspacePid().equals(workspaceSession.workspacePid())
-          ).forEach(wws ->
-              futures.add(wws.session().getAsyncRemote().sendText(messageString))
-          );
-
-      // Wait for all the futures to complete.
-      for (Future f : futures) {
-        try {
-          f.get();
-        } catch (Exception e) {
-          Log.errorf("Failed to send message to workspace: %s", e.getMessage());
-
-          if (e instanceof InterruptedException) {
-            Thread.currentThread().interrupt();
-          }
-        }
-      }
-    }
+    // be proxied to all the other workspaces. Do so here.
+    broadcast(
+        messageString,
+        m.id(),
+        wws -> wws.session().isOpen() && wws.isActive() && wws.workspacePid() != workspaceSession.workspacePid(),
+        "other"
+    );
   }
 
   /**
@@ -295,7 +335,7 @@ public class WebsocketEndpoint {
    * sessions map, and the new workspace count is broadcast to all workspaces (inclusive).
    * Otherwise an error message is sent to the session and it is closed.
    *
-   * @param session the session that sent the message.
+   * @param workspaceSession the session that sent the message.
    * @param messageString the JSON string message.
    */
   private void handleHelloMessage(WorkspaceWebsocketSession workspaceSession, String messageString) {
@@ -504,9 +544,9 @@ public class WebsocketEndpoint {
    * it is of the expected type and body payload.
    * If the message is invalid, an error message is sent to the session, the session is closed, and
    * null is returned.
-   * @param session the session that sent the message.
-   * @param messageString the JSON string message.
-   * @param expectedType the expected message type.
+   * @param workspaceSession the session that sent the message.
+   * @param messageString    the JSON string message.
+   * @param expectedType     the expected message type.
    * @return the deserialized message, or null if the message is invalid.
    */
   @VisibleForTesting
