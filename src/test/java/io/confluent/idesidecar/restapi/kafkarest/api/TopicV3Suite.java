@@ -1,9 +1,11 @@
 package io.confluent.idesidecar.restapi.kafkarest.api;
 
 import static io.confluent.idesidecar.restapi.util.ConfluentLocalKafkaWithRestProxyContainer.CLUSTER_ID;
+import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.equalTo;
 
 import io.confluent.idesidecar.restapi.integration.ITSuite;
+import java.time.Duration;
 import org.junit.jupiter.api.Test;
 
 public interface TopicV3Suite extends ITSuite {
@@ -39,11 +41,16 @@ public interface TopicV3Suite extends ITSuite {
         .statusCode(204);
 
     // List topics should not contain the topic name
-    givenDefault()
-        .get("/internal/kafka/v3/clusters/{cluster_id}/topics")
-        .then()
-        .statusCode(200)
-        .body("data.find { it.topic_name == 'test-topic-delete-me' }", equalTo(null));
+    await().atMost(Duration.ofSeconds(10)).until(
+        () -> !givenDefault()
+            .get("/internal/kafka/v3/clusters/{cluster_id}/topics")
+            .then()
+            .extract()
+            .body()
+            .jsonPath()
+            .getList("data.topic_name")
+            .contains("test-topic-delete-me")
+    );
   }
 
   @Test

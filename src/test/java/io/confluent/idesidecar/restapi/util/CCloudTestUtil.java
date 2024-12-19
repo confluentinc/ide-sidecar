@@ -19,6 +19,7 @@ import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.CCloudConfig;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
+import io.confluent.idesidecar.restapi.models.ConnectionSpecBuilder;
 import io.vertx.core.json.JsonObject;
 import jakarta.ws.rs.core.MediaType;
 import java.io.IOException;
@@ -256,15 +257,12 @@ public class CCloudTestUtil {
       ConnectionType connectionType
   ) {
     return createConnection(
-        new ConnectionSpec(
-            connectionId,
-            connectionName,
-            connectionType,
-            null,
-            null,
-            null,
-            null
-        )
+        ConnectionSpecBuilder
+            .builder()
+            .id(connectionId)
+            .name(connectionName)
+            .type(connectionType)
+            .build()
     );
   }
 
