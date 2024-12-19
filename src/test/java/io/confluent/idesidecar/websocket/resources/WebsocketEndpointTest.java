@@ -719,7 +719,14 @@ public class WebsocketEndpointTest {
     // Connect as a workspace to establish a session, then directly call onError() with the
     // server side session handle.
     ConnectedWorkspace connectedWorkspace = connectWorkspace(true);
-    // Grab the first entry from the sessions map.
+
+    // Block until we get the initial WORKSPACE_COUNT_CHANGED message.
+    connectedWorkspace.waitForMessageOfType(MessageType.WORKSPACE_COUNT_CHANGED, 1000);
+
+    // should have exactly one session in the sessions map.
+    Assertions.assertEquals(1, websocketEndpoint.sessions.size());
+
+    // Grab that session from the sessions map.
     Session session = websocketEndpoint.sessions.values().iterator().next().session();
 
     // If we're testing the case where the session is not found in the sessions map, remove it.

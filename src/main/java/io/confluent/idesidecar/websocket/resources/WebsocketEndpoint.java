@@ -13,6 +13,7 @@ import io.confluent.idesidecar.websocket.messages.MessageType;
 import io.confluent.idesidecar.websocket.messages.ProtocolErrorBody;
 import io.confluent.idesidecar.websocket.messages.WorkspacesChangedBody;
 import io.quarkus.logging.Log;
+import io.smallrye.common.constraint.Nullable;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
 import io.vertx.core.CompositeFuture;
@@ -62,30 +63,17 @@ public class WebsocketEndpoint {
     // will grow an Instant createdAt when we start to expire the inactive sessions
     // after some time -- todo next branch.
 
-    /** Assigned when the workspace sends a proper HELLO_WORKSPACE message. */
-    private volatile WorkspacePid workspacePid = null;
+    /** Will be null if session has not sent HELLO_WORKSPACE message carrying its process id. */
+    @Nullable
+    private final WorkspacePid workspacePid;
 
-    public WorkspaceWebsocketSession(Session session) {
+    public WorkspaceWebsocketSession(Session session, WorkspacePid workspacePid) {
       key = new SessionKey(session.getId());
       this.session = session;
-    }
-
-    /**
-     *  Mark this workspace session as active, in that it has sent a HELLO_WORKSPACE message
-     *  with its process id. Can only be called once.
-     *
-     * @param workspacePid the workspace process id.
-     * @throws IllegalStateException if the session is already assigned to a workspace.
-     */
-    public void markActive(WorkspacePid workspacePid) {
-      if (this.workspacePid != null) {
-        throw new IllegalStateException(
-            "Session already assigned to workspace %s".formatted(this.workspacePid)
-        );
-      }
       this.workspacePid = workspacePid;
     }
 
+    /** The websocket session id in SessionKey wrapping, used as the key in the sessions map. */
     public SessionKey key() {
       return key;
     }
@@ -268,8 +256,8 @@ public class WebsocketEndpoint {
     // Request must have had a valid access token to pass through AccessTokenFilter,
     // so we can assume that the session is authorized.
     // The workspace process id will come to us in a subsequent HELLO_WORKSPACE
-    // message, which will then mark the session as active.
-    sessions.put(new SessionKey(session.getId()), new WorkspaceWebsocketSession(session));
+    // message, at which time we'll replace this mapping with one that carries the pid.
+    sessions.put(new SessionKey(session.getId()), new WorkspaceWebsocketSession(session, null));
   }
 
   /**
@@ -390,9 +378,12 @@ public class WebsocketEndpoint {
         return;
     }
 
-    // All good! Upgrade the session to an active workspace session.
-    workspaceSession.markActive(workspacePid);
-    Log.infof("Workspace %s authorized and added to sessions.", workspacePid);
+    // All good! Upgrade the session in the map to an active workspace session.
+    sessions.put(
+        workspaceSession.key(),
+        new WorkspaceWebsocketSession(workspaceSession.session(), workspacePid)
+    );
+    Log.infof("Session %s HELLO as pid %s authorized and marked active.", workspaceSession.key(), workspacePid);
 
     // Announce to all  workspaces (inclusive) that the active workspace count has changed.
     try {
@@ -406,18 +397,18 @@ public class WebsocketEndpoint {
   public void onError(Session session, Throwable throwable) throws IOException {
     // The session should be found in the map, assuming onOpen() is working properly.
     // (but be defensive anyway)
-    var existingSession = sessions.remove(new SessionKey(session.getId()));
-    try {
-      session.close();
-    } finally {
-      var pid = existingSession != null ? existingSession.workspacePidString() : "unknown";
-      Log.errorf(
-          "Websocket error for workspace pid %s, session id %s. Reason: %s. Closed and removed session.",
-          pid,
-          session.getId(),
-          throwable.getMessage()
-      );
-    }
+    var existingSession = sessions.get(new SessionKey(session.getId()));
+
+    var pid = existingSession != null ? existingSession.workspacePidString() : "unknown";
+    Log.errorf(
+        "Websocket error for workspace pid %s, session id %s. Reason: %s. Closing session.",
+        pid,
+        session.getId(),
+        throwable.getMessage()
+    );
+
+    // onClose() will fire and remove the session from the map.
+    session.close();
   }
 
   @OnClose
@@ -444,12 +435,17 @@ public class WebsocketEndpoint {
     // changedWorkspace was either just added or removed. Inform all workspaces about the
     // new connected/authorized workspace count.
 
+    if (sessions.isEmpty()) {
+      Log.info("No workspaces connected. Not broadcasting workspace count change message.");
+      return;
+    }
+
     var message = new Message(
         new MessageHeaders(MessageType.WORKSPACE_COUNT_CHANGED, "sidecar"),
         new WorkspacesChangedBody(this.sessions.size())
     );
 
-    Log.info("Broadcasting workspace count change message to all workspaces...");
+    Log.info("Broadcasting workspace count change message to all workspaces.");
 
     broadcast(message);
   }
