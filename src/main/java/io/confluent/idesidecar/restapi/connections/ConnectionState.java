@@ -18,9 +18,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @see LocalConnectionState
  * @see PlatformConnectionState
  */
-public abstract class
-
-ConnectionState {
+public abstract class ConnectionState {
 
   /**
    * A listener for internal state changes on {@link ConnectionState} objects.
