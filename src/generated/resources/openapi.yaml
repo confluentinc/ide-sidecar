@@ -1,34 +1,477 @@
 ---
-openapi: 3.1.0
+openapi: 3.0.3
+info:
+  title: Confluent ide-sidecar API
+  description: "API for the Confluent ide-sidecar, part of Confluent for VS Code"
+  termsOfService: Your terms here
+  contact:
+    name: Confluent for VS Code Support
+    url: https://confluent.io/contact
+    email: vscode@confluent.io
+  version: 1.0.1
+servers:
+- url: http://127.0.0.1:26636
+  description: Auto generated value
+tags:
+- name: Feature Flags
+  description: Feature flags
+- name: Templates
+  description: Code generation templates
+paths:
+  /api/login/realm:
+    get:
+      tags:
+      - Login Realm Resource
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json: {}
+  /gateway/v1/callback-vscode-docs:
+    get:
+      tags:
+      - O Auth Callback Resource
+      parameters:
+      - name: code
+        in: query
+        schema:
+          type: string
+      - name: state
+        in: query
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            text/html:
+              schema:
+                type: string
+  /gateway/v1/clusters/{cluster_id}/topics/{topic_name}/partitions/-/consume:
+    post:
+      tags:
+      - Kafka Consume Resource
+      parameters:
+      - name: cluster_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: topic_name
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: x-connection-id
+        in: header
+        description: Connection ID
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SimpleConsumeMultiPartitionRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SimpleConsumeMultiPartitionResponse"
+  /gateway/v1/connections:
+    get:
+      tags:
+      - Connections Resource
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConnectionsList"
+    post:
+      tags:
+      - Connections Resource
+      parameters:
+      - name: dry_run
+        in: query
+        schema:
+          description: Whether to validate the connection spec and determine the connection
+            status without creating the connection
+          default: false
+          type: boolean
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConnectionSpec"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Connection"
+  /gateway/v1/connections/{id}:
+    get:
+      tags:
+      - Connections Resource
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Connection"
+    put:
+      tags:
+      - Connections Resource
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConnectionSpec"
+      responses:
+        "200":
+          description: Connection updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Connection"
+        "404":
+          description: Connection not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Failure"
+        "401":
+          description: Could not authenticate with updated connection configuration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Failure"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Failure"
+    delete:
+      tags:
+      - Connections Resource
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+  /gateway/v1/feature-flags/{id}/value:
+    get:
+      tags:
+      - Feature Flags
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JsonNode"
+        "401":
+          description: Not Authorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Failure"
+        "404":
+          description: Feature flag not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Failure"
+        "500":
+          description: Internal error parsing feature flags
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Failure"
+  /gateway/v1/handshake:
+    get:
+      tags:
+      - Handshake Resource
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SidecarAccessToken"
+  /gateway/v1/preferences:
+    get:
+      tags:
+      - Preferences Resource
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Preferences"
+    put:
+      tags:
+      - Preferences Resource
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Preferences"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Preferences"
+        "400":
+          description: Provided preferences are not valid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Failure"
+  /gateway/v1/templates:
+    get:
+      tags:
+      - Templates
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TemplateList"
+  /gateway/v1/templates/{name}:
+    get:
+      tags:
+      - Templates
+      parameters:
+      - name: name
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Template"
+  /gateway/v1/templates/{name}/apply:
+    post:
+      tags:
+      - Templates
+      summary: Apply a template
+      description: Applies the specified template and returns the result as a zip
+        file.
+      parameters:
+      - name: name
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApplyTemplateRequest"
+      responses:
+        "200":
+          description: Template applied successfully
+          content:
+            application/octet-stream:
+              schema:
+                format: binary
+                type: string
+  /gateway/v1/version:
+    get:
+      tags:
+      - Version Resource
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SidecarVersionResponse"
+  /gateway/v1/health:
+    summary: MicroProfile Health provides a way for your application to distribute
+      information about its healthiness state to state whether or not it is able to
+      function properly
+    description: MicroProfile Health Endpoint
+    get:
+      tags:
+      - MicroProfile Health
+      summary: "An aggregated view of the Liveness, Readiness and Startup of this\
+        \ application"
+      description: Check the health of the application
+      operationId: microprofile_health_root
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+        "503":
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+  /gateway/v1/health/live:
+    summary: Liveness checks are utilized to tell whether the application should be
+      restarted
+    description: MicroProfile Health - Liveness Endpoint
+    get:
+      tags:
+      - MicroProfile Health
+      summary: The Liveness check of this application
+      description: Check the liveness of the application
+      operationId: microprofile_health_liveness
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+        "503":
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+  /gateway/v1/health/ready:
+    summary: Readiness checks are used to tell whether the application is able to
+      process requests
+    description: MicroProfile Health - Readiness Endpoint
+    get:
+      tags:
+      - MicroProfile Health
+      summary: The Readiness check of this application
+      description: Check the readiness of the application
+      operationId: microprofile_health_readiness
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+        "503":
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+  /gateway/v1/health/started:
+    summary: Startup checks are an used to tell when the application has started
+    description: MicroProfile Health - Startup Endpoint
+    get:
+      tags:
+      - MicroProfile Health
+      summary: The Startup check of this application
+      description: Check the startup of the application
+      operationId: microprofile_health_startup
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+        "503":
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
 components:
   schemas:
     ApiKeyAndSecret:
       description: Basic authentication credentials
-      type: object
       required:
       - api_key
       - api_secret
+      type: object
       properties:
         api_key:
-          type: string
-          maxLength: 64
-          minLength: 1
           description: The API key to use when connecting to the external service.
-        api_secret:
           maxLength: 64
           minLength: 1
-          description: The API secret to use when connecting to the external service.
           type: string
-          $ref: "#/components/schemas/ApiSecret"
+        api_secret:
+          description: The API secret to use when connecting to the external service.
+          maxLength: 64
+          minLength: 1
+          type: string
+          allOf:
+          - $ref: "#/components/schemas/ApiSecret"
     ApiSecret:
-      type: string
+      description: A user-provided API secret that is always masked in responses
       maxLength: 64
       minLength: 1
-      description: A user-provided API secret that is always masked in responses
+      type: string
     ApplyTemplateRequest:
-      type: object
       required:
       - options
+      type: object
       properties:
         options:
           type: object
@@ -53,9 +496,9 @@ components:
           $ref: "#/components/schemas/AuthError"
     Authentication:
       description: The authentication-related status (deprecated).
-      type: object
       required:
       - status
+      type: object
       properties:
         status:
           $ref: "#/components/schemas/Status"
@@ -67,58 +510,63 @@ components:
           $ref: "#/components/schemas/AuthErrors"
     BasicCredentials:
       description: Basic authentication credentials
-      type: object
       required:
       - username
       - password
+      type: object
       properties:
         username:
-          type: string
-          maxLength: 64
-          minLength: 1
           description: The username to use when connecting to the external service.
-        password:
           maxLength: 64
           minLength: 1
-          description: The password to use when connecting to the external service.
           type: string
-          $ref: "#/components/schemas/Password"
+        password:
+          description: The password to use when connecting to the external service.
+          maxLength: 64
+          minLength: 1
+          type: string
+          allOf:
+          - $ref: "#/components/schemas/Password"
     CCloudConfig:
-      type: object
       description: Configuration for Confluent Cloud connections
       required:
       - organization_id
+      type: object
       properties:
         organization_id:
-          type: string
           description: The identifier of the CCloud organization to use. The user's
             default organization is used when absent.
-          minLength: 36
           maxLength: 36
+          minLength: 36
+          type: string
     CCloudStatus:
       description: The status related to CCloud.
-      type: object
       required:
       - state
+      type: object
       properties:
         state:
           description: The state of the connection to CCloud.
           type: string
-          $ref: "#/components/schemas/ConnectedState"
+          allOf:
+          - $ref: "#/components/schemas/ConnectedState"
         requires_authentication_at:
           description: "If the connection's auth context holds a valid token, this\
             \ attribute holds the time at which the user must re-authenticate because,\
             \ for instance, the refresh token reached the end of its absolute lifetime."
           type: string
-          $ref: "#/components/schemas/Instant"
+          allOf:
+          - $ref: "#/components/schemas/Instant"
         user:
           description: "Information about the authenticated principal, if known."
           type: object
-          $ref: "#/components/schemas/UserInfo"
+          allOf:
+          - $ref: "#/components/schemas/UserInfo"
         errors:
           description: Errors related to the connection to the Kafka cluster.
           type: object
-          $ref: "#/components/schemas/AuthErrors"
+          allOf:
+          - $ref: "#/components/schemas/AuthErrors"
     CollectionMetadata:
       type: object
       properties:
@@ -127,23 +575,25 @@ components:
         next:
           type: string
         total_size:
-          type: integer
           format: int32
+          type: integer
     ConnectedState:
-      type: string
       enum:
       - NONE
       - ATTEMPTING
       - SUCCESS
       - EXPIRED
       - FAILED
+      type: string
     Connection:
-      type: object
       required:
       - api_version
       - kind
       - id
+      - metadata
+      - spec
       - status
+      type: object
       properties:
         api_version:
           type: string
@@ -171,36 +621,43 @@ components:
       type: object
       properties:
         id:
-          type: string
           description: The unique identifier of the connection resource.
-          minLength: 1
           maxLength: 64
-        name:
+          minLength: 1
           type: string
+        name:
           description: The user-supplied name of the connection resource.
           maxLength: 64
+          type: string
         type:
           description: The type of connection resource.
           type: string
-          $ref: "#/components/schemas/ConnectionType"
+          allOf:
+          - $ref: "#/components/schemas/ConnectionType"
         ccloud_config:
           description: The details for connecting to CCloud.
           type: object
-          $ref: "#/components/schemas/CCloudConfig"
+          allOf:
+          - $ref: "#/components/schemas/CCloudConfig"
         local_config:
           description: The details for connecting to Confluent Local.
           type: object
-          $ref: "#/components/schemas/LocalConfig"
+          allOf:
+          - $ref: "#/components/schemas/LocalConfig"
         kafka_cluster:
           description: "The details for connecting to a CCloud, Confluent Platform,\
             \ or Apache Kafka cluster."
           type: object
-          $ref: "#/components/schemas/KafkaClusterConfig"
+          allOf:
+          - $ref: "#/components/schemas/KafkaClusterConfig"
         schema_registry:
           description: The details for connecting to a Schema Registry.
           type: object
-          $ref: "#/components/schemas/SchemaRegistryConfig"
+          allOf:
+          - $ref: "#/components/schemas/SchemaRegistryConfig"
     ConnectionStatus:
+      required:
+      - authentication
       type: object
       properties:
         ccloud:
@@ -211,22 +668,20 @@ components:
           $ref: "#/components/schemas/SchemaRegistryStatus"
         authentication:
           $ref: "#/components/schemas/Authentication"
-      required:
-      - authentication
     ConnectionType:
-      type: string
       enum:
       - LOCAL
       - PLATFORM
       - CCLOUD
       - DIRECT
+      type: string
     ConnectionsList:
-      type: object
       required:
       - api_version
       - kind
       - metadata
       - data
+      type: object
       properties:
         api_version:
           type: string
@@ -239,8 +694,8 @@ components:
           items:
             $ref: "#/components/schemas/Connection"
     Error:
-      type: object
       description: Describes a particular error encountered while performing an operation.
+      type: object
       properties:
         code:
           type: string
@@ -279,10 +734,9 @@ components:
           items:
             $ref: "#/components/schemas/Error"
     Instant:
-      type: string
       format: date-time
-      examples:
-      - 2022-03-10T16:15:50Z
+      type: string
+      example: 2022-03-10T16:15:50Z
     JsonNode:
       type: object
       properties:
@@ -331,7 +785,6 @@ components:
         binary:
           type: boolean
     JsonNodeType:
-      type: string
       enum:
       - ARRAY
       - BINARY
@@ -342,67 +795,70 @@ components:
       - OBJECT
       - POJO
       - STRING
+      type: string
     KafkaClusterConfig:
-      type: object
       description: Kafka cluster configuration.
       required:
       - bootstrap_servers
+      type: object
       properties:
         bootstrap_servers:
-          type: string
           description: A list of host/port pairs to use for establishing the initial
             connection to the Kafka cluster.
-          minLength: 1
           maxLength: 256
+          minLength: 1
+          type: string
         credentials:
+          description: "The credentials for the Kafka cluster, or null if no authentication\
+            \ is required"
           oneOf:
           - $ref: "#/components/schemas/BasicCredentials"
           - $ref: "#/components/schemas/ApiKeyAndSecret"
-          description: "The credentials for the Kafka cluster, or null if no authentication\
-            \ is required"
+          nullable: true
         ssl:
-          type:
-          - boolean
-          - "null"
           description: "Whether to communicate with the Kafka cluster over TLS/SSL.\
             \ Defaults to 'true', but set to 'false' when the Kafka cluster does not\
             \ support TLS/SSL."
           default: true
+          type: boolean
+          nullable: true
         verify_ssl_certificates:
-          type:
-          - boolean
-          - "null"
           description: "Whether to verify the Kafka cluster certificates. Defaults\
             \ to 'true', but set to 'false' when the Kafka cluster has self-signed\
             \ certificates."
           default: true
+          type: boolean
+          nullable: true
     KafkaClusterStatus:
       description: The status related to the specified Kafka cluster.
-      type: object
       required:
       - state
+      type: object
       properties:
         state:
           description: The state of the connection to the Kafka cluster.
           type: string
-          $ref: "#/components/schemas/ConnectedState"
+          allOf:
+          - $ref: "#/components/schemas/ConnectedState"
         user:
           description: "Information about the authenticated principal, if known."
           type: object
-          $ref: "#/components/schemas/UserInfo"
+          allOf:
+          - $ref: "#/components/schemas/UserInfo"
         errors:
           description: Errors related to the connection to the Kafka cluster.
           type: object
-          $ref: "#/components/schemas/AuthErrors"
+          allOf:
+          - $ref: "#/components/schemas/AuthErrors"
     LocalConfig:
-      type: object
       description: Configuration when using Confluent Local and optionally a local
         Schema Registry.
+      type: object
       properties:
         schema-registry-uri:
-          type: string
           description: The URL of the Schema Registry running locally.
           maxLength: 512
+          type: string
     ObjectMetadata:
       type: object
       properties:
@@ -411,10 +867,10 @@ components:
         resource_name:
           type: string
     OptionProperties:
-      type: object
       required:
       - display_name
       - description
+      type: object
       properties:
         display_name:
           type: string
@@ -433,17 +889,17 @@ components:
         initial_value:
           type: string
         min_length:
-          type: integer
           format: int32
+          type: integer
     PartitionConsumeData:
       type: object
       properties:
         partition_id:
-          type: integer
           format: int32
-        next_offset:
           type: integer
+        next_offset:
           format: int64
+          type: integer
         records:
           type: array
           items:
@@ -452,14 +908,14 @@ components:
       type: object
       properties:
         partition_id:
-          type: integer
           format: int32
+          type: integer
         offset:
-          type: integer
           format: int64
+          type: integer
         timestamp:
-          type: integer
           format: int64
+          type: integer
         timestamp_type:
           $ref: "#/components/schemas/TimestampType"
         headers:
@@ -487,22 +943,22 @@ components:
       type: object
       properties:
         partition_id:
-          type: integer
           format: int32
-        offset:
           type: integer
+        offset:
           format: int64
+          type: integer
     Password:
-      type: string
+      description: A user-provided password that is always masked in responses
       maxLength: 64
       minLength: 1
-      description: A user-provided password that is always masked in responses
+      type: string
     Preferences:
-      type: object
       required:
       - api_version
       - kind
       - spec
+      type: object
       properties:
         api_version:
           type: string
@@ -513,9 +969,9 @@ components:
         spec:
           $ref: "#/components/schemas/PreferencesSpec"
     PreferencesMetadata:
-      type: object
       required:
       - self
+      type: object
       properties:
         self:
           type: string
@@ -529,44 +985,48 @@ components:
         trust_all_certificates:
           type: boolean
     SchemaRegistryConfig:
-      type: object
       description: Schema Registry configuration.
+      required:
+      - uri
+      type: object
       properties:
         id:
-          type: string
           description: "The identifier of the Schema Registry cluster, if known."
           maxLength: 64
-        uri:
           type: string
+        uri:
           description: The URL of the Schema Registry.
-          minLength: 1
           maxLength: 256
+          minLength: 1
+          type: string
         credentials:
+          description: "The credentials for the Schema Registry, or null if no authentication\
+            \ is required"
           oneOf:
           - $ref: "#/components/schemas/BasicCredentials"
           - $ref: "#/components/schemas/ApiKeyAndSecret"
-          description: "The credentials for the Schema Registry, or null if no authentication\
-            \ is required"
-      required:
-      - uri
+          nullable: true
     SchemaRegistryStatus:
       description: The status related to the specified Schema Registry.
-      type: object
       required:
       - state
+      type: object
       properties:
         state:
           description: The state of the connection to the Schema Registry.
           type: string
-          $ref: "#/components/schemas/ConnectedState"
+          allOf:
+          - $ref: "#/components/schemas/ConnectedState"
         user:
           description: "Information about the authenticated principal, if known."
           type: object
-          $ref: "#/components/schemas/UserInfo"
+          allOf:
+          - $ref: "#/components/schemas/UserInfo"
         errors:
           description: Errors related to the connection to the Schema Registry.
           type: object
-          $ref: "#/components/schemas/AuthErrors"
+          allOf:
+          - $ref: "#/components/schemas/AuthErrors"
     SidecarAccessToken:
       type: object
       properties:
@@ -585,17 +1045,17 @@ components:
           items:
             $ref: "#/components/schemas/PartitionOffset"
         max_poll_records:
-          type: integer
           format: int32
+          type: integer
         timestamp:
-          type: integer
           format: int64
+          type: integer
         fetch_max_bytes:
-          type: integer
           format: int32
+          type: integer
         message_max_bytes:
-          type: integer
           format: int32
+          type: integer
         from_beginning:
           type: boolean
     SimpleConsumeMultiPartitionResponse:
@@ -610,19 +1070,20 @@ components:
           items:
             $ref: "#/components/schemas/PartitionConsumeData"
     Status:
-      type: string
       enum:
       - NO_TOKEN
       - VALID_TOKEN
       - INVALID_TOKEN
       - FAILED
+      type: string
     Template:
-      type: object
       required:
       - api_version
       - kind
       - id
       - metadata
+      - spec
+      type: object
       properties:
         api_version:
           type: string
@@ -635,12 +1096,12 @@ components:
         spec:
           $ref: "#/components/schemas/TemplateManifest"
     TemplateList:
-      type: object
       required:
       - api_version
       - kind
       - metadata
       - data
+      type: object
       properties:
         api_version:
           type: string
@@ -653,7 +1114,6 @@ components:
           items:
             $ref: "#/components/schemas/Template"
     TemplateManifest:
-      type: object
       required:
       - template_api_version
       - name
@@ -662,6 +1122,7 @@ components:
       - language
       - version
       - tags
+      type: object
       properties:
         template_api_version:
           type: string
@@ -684,11 +1145,11 @@ components:
           additionalProperties:
             $ref: "#/components/schemas/OptionProperties"
     TimestampType:
-      type: string
       enum:
       - NO_TIMESTAMP_TYPE
       - CREATE_TIME
       - LOG_APPEND_TIME
+      type: string
     UserInfo:
       type: object
       properties:
@@ -707,488 +1168,25 @@ components:
     HealthResponse:
       type: object
       properties:
-        status:
-          type: string
-          enum:
-          - UP
-          - DOWN
         checks:
           type: array
           items:
             $ref: "#/components/schemas/HealthCheck"
-    HealthCheck:
-      type: object
-      properties:
-        data:
-          type:
-          - object
-          - "null"
-        name:
-          type: string
         status:
-          type: string
           enum:
           - UP
           - DOWN
-paths:
-  /api/login/realm:
-    get:
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json: {}
-      summary: Proxy Login Realm Request
-      tags:
-      - Login Realm Resource
-  /gateway/v1/callback-vscode-docs:
-    get:
-      parameters:
-      - name: code
-        in: query
-        schema:
           type: string
-      - name: state
-        in: query
-        schema:
+    HealthCheck:
+      type: object
+      properties:
+        status:
+          enum:
+          - UP
+          - DOWN
           type: string
-      responses:
-        "200":
-          description: OK
-          content:
-            text/html:
-              schema:
-                type: string
-      summary: Callback
-      tags:
-      - O Auth Callback Resource
-  /gateway/v1/clusters/{cluster_id}/topics/{topic_name}/partitions/-/consume:
-    post:
-      parameters:
-      - name: cluster_id
-        in: path
-        required: true
-        schema:
+        data:
+          type: object
+          nullable: true
+        name:
           type: string
-      - name: topic_name
-        in: path
-        required: true
-        schema:
-          type: string
-      - description: Connection ID
-        in: header
-        name: x-connection-id
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/SimpleConsumeMultiPartitionRequest"
-        required: true
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SimpleConsumeMultiPartitionResponse"
-      summary: Message Viewer
-      tags:
-      - Kafka Consume Resource
-  /gateway/v1/connections:
-    get:
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ConnectionsList"
-      summary: List Connections
-      tags:
-      - Connections Resource
-    post:
-      parameters:
-      - name: dry_run
-        in: query
-        schema:
-          description: Whether to validate the connection spec and determine the connection
-            status without creating the connection
-          type: boolean
-          default: false
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ConnectionSpec"
-        required: true
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Connection"
-      summary: Create Connection
-      tags:
-      - Connections Resource
-  /gateway/v1/connections/{id}:
-    put:
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ConnectionSpec"
-        required: true
-      responses:
-        "200":
-          description: Connection updated
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Connection"
-        "404":
-          description: Connection not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Failure"
-        "401":
-          description: Could not authenticate with updated connection configuration
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Failure"
-        "400":
-          description: Invalid input
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Failure"
-      summary: Update Connection
-      tags:
-      - Connections Resource
-    get:
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Connection"
-      summary: Get Connection
-      tags:
-      - Connections Resource
-    delete:
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        "204":
-          description: No Content
-      summary: Delete Connection
-      tags:
-      - Connections Resource
-  /gateway/v1/feature-flags/{id}/value:
-    get:
-      tags:
-      - Feature Flags
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/JsonNode"
-        "401":
-          description: Not Authorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Failure"
-        "404":
-          description: Feature flag not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Failure"
-        "500":
-          description: Internal error parsing feature flags
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Failure"
-      summary: Evaluate Flag
-  /gateway/v1/handshake:
-    get:
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SidecarAccessToken"
-      summary: Handshake
-      tags:
-      - Handshake Resource
-  /gateway/v1/preferences:
-    put:
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/Preferences"
-        required: true
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Preferences"
-        "400":
-          description: Provided preferences are not valid
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Failure"
-      summary: Update Preferences
-      tags:
-      - Preferences Resource
-    get:
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Preferences"
-      summary: Get Preferences
-      tags:
-      - Preferences Resource
-  /gateway/v1/templates:
-    get:
-      tags:
-      - Templates
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TemplateList"
-      summary: List
-  /gateway/v1/templates/{name}:
-    get:
-      tags:
-      - Templates
-      parameters:
-      - name: name
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Template"
-      summary: Get
-  /gateway/v1/templates/{name}/apply:
-    post:
-      summary: Apply a template
-      description: Applies the specified template and returns the result as a zip
-        file.
-      tags:
-      - Templates
-      parameters:
-      - name: name
-        in: path
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ApplyTemplateRequest"
-        required: true
-      responses:
-        "200":
-          description: Template applied successfully
-          content:
-            application/octet-stream:
-              schema:
-                format: binary
-                type: string
-  /gateway/v1/version:
-    get:
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SidecarVersionResponse"
-      summary: Version
-      tags:
-      - Version Resource
-  /gateway/v1/health:
-    description: MicroProfile Health Endpoint
-    summary: MicroProfile Health provides a way for your application to distribute
-      information about its healthiness state to state whether or not it is able to
-      function properly
-    get:
-      operationId: microprofile_health_root
-      description: Check the health of the application
-      tags:
-      - MicroProfile Health
-      summary: "An aggregated view of the Liveness, Readiness and Startup of this\
-        \ application"
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HealthResponse"
-        "503":
-          description: Service Unavailable
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HealthResponse"
-        "500":
-          description: Internal Server Error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HealthResponse"
-  /gateway/v1/health/live:
-    description: MicroProfile Health - Liveness Endpoint
-    summary: Liveness checks are utilized to tell whether the application should be
-      restarted
-    get:
-      operationId: microprofile_health_liveness
-      description: Check the liveness of the application
-      tags:
-      - MicroProfile Health
-      summary: The Liveness check of this application
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HealthResponse"
-        "503":
-          description: Service Unavailable
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HealthResponse"
-        "500":
-          description: Internal Server Error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HealthResponse"
-  /gateway/v1/health/ready:
-    description: MicroProfile Health - Readiness Endpoint
-    summary: Readiness checks are used to tell whether the application is able to
-      process requests
-    get:
-      operationId: microprofile_health_readiness
-      description: Check the readiness of the application
-      tags:
-      - MicroProfile Health
-      summary: The Readiness check of this application
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HealthResponse"
-        "503":
-          description: Service Unavailable
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HealthResponse"
-        "500":
-          description: Internal Server Error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HealthResponse"
-  /gateway/v1/health/started:
-    description: MicroProfile Health - Startup Endpoint
-    summary: Startup checks are an used to tell when the application has started
-    get:
-      operationId: microprofile_health_startup
-      description: Check the startup of the application
-      tags:
-      - MicroProfile Health
-      summary: The Startup check of this application
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HealthResponse"
-        "503":
-          description: Service Unavailable
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HealthResponse"
-        "500":
-          description: Internal Server Error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HealthResponse"
-tags:
-- name: Feature Flags
-  description: Feature flags
-- name: Templates
-  description: Code generation templates
-info:
-  title: Confluent ide-sidecar API
-  version: 1.0.1
-  description: "API for the Confluent ide-sidecar, part of Confluent for VS Code"
-  termsOfService: Your terms here
-  contact:
-    name: Confluent for VS Code Support
-    email: vscode@confluent.io
-    url: https://confluent.io/contact
-servers:
-- url: http://127.0.0.1:26636
-  description: Auto generated value
