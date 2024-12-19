@@ -519,6 +519,10 @@ public class WebsocketEndpointTest {
     // wait for the workspace count change message.
     connectedWorkspace.waitForMessageOfType(MessageType.WORKSPACE_COUNT_CHANGED, 1000);
 
+    // should be one session kept track of in the sessions map, but is almost like
+    // the injection is working right / we're getting a different instance or something.
+    Assertions.assertEquals(1, websocketEndpoint.sessions.size());
+
     // Now reach in and remove this session from the known sessions map, as if
     // some other code path had made a mistake.
     websocketEndpoint.sessions.clear();
@@ -532,11 +536,11 @@ public class WebsocketEndpointTest {
 
     connectedWorkspace.send(message);
 
-    // should get a PROTOCOL_ERROR message back from the sidecar complaining about 'originator'
+    // should get a PROTOCOL_ERROR message back from the sidecar complaining about 'unknown session'
     // and the session should be closed.
     Message errorMessage = connectedWorkspace.waitForMessageOfType(MessageType.PROTOCOL_ERROR, 5000);
     ProtocolErrorBody errorBody = (ProtocolErrorBody) errorMessage.body();
-    assert errorBody.error().contains("originator");
+    assert errorBody.error().contains("Received message from unknown session");
 
     // Should then be closed server-side.
     connectedWorkspace.waitForClose(1000);

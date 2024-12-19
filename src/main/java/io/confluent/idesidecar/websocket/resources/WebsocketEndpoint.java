@@ -98,7 +98,7 @@ public class WebsocketEndpoint {
    * Map of all workspace sessions (valid or not yet), keyed by the websocket session id.
    */
   @VisibleForTesting
-  final Map<String, WorkspaceWebsocketSession> sessions = new ConcurrentHashMap<>();
+  final static Map<String, WorkspaceWebsocketSession> sessions = new ConcurrentHashMap<>();
 
   /**
    * Authority on the known workspaces in the system. Used to validate workspace ids.
@@ -196,10 +196,6 @@ public class WebsocketEndpoint {
     Log.infof("Received message from session %s", senderSession.getId());
     var workspaceSession = sessions.get(senderSession.getId());
     if (workspaceSession == null) {
-      Log.infof(
-          "Received message from unknown session %s. Closing session.",
-          senderSession.getId()
-      );
       // Strange. Shouldn't ever happen unless onOpen grossly err'd. Close the session.
       sendErrorAndCloseSession(
           senderSession,
@@ -209,8 +205,6 @@ public class WebsocketEndpoint {
       );
       return;
     }
-
-    Log.infof("Received message from found session pid %s", workspaceSession.workspacePid());
 
     if (!workspaceSession.isActive()) {
       // Only expect a hello message when in this state.
