@@ -2,6 +2,7 @@ package io.confluent.idesidecar.websocket.resources;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.idesidecar.restapi.application.KnownWorkspacesBean;
+import io.confluent.idesidecar.restapi.application.KnownWorkspacesBean.WorkspacePid;
 import io.confluent.idesidecar.restapi.application.SidecarAccessTokenBean;
 import io.confluent.idesidecar.restapi.filters.WorkspaceProcessIdFilter;
 import io.confluent.idesidecar.restapi.testutil.MockWorkspaceProcess;
@@ -154,7 +155,7 @@ public class WebsocketEndpointTest {
   ) {
 
     /* Get the process pid */
-    public Long processId() {
+    public WorkspacePid processId() {
       return mockWorkspaceProcess.pid;
     }
 
@@ -431,7 +432,7 @@ public class WebsocketEndpointTest {
     // match the body's payload (and be known to the sidecar).
     Message message = new Message(
         new MessageHeaders(MessageType.WORKSPACE_HELLO, "1234", "message-id-here"),
-        new HelloBody(connectedWorkspace.mockWorkspaceProcess.pid)
+        new HelloBody(connectedWorkspace.mockWorkspaceProcess.pid.id())
     );
     connectedWorkspace.send(message);
 
@@ -649,7 +650,7 @@ public class WebsocketEndpointTest {
       // (it will, but we're not testing that here.)
       Message helloMessage = new Message(
           new MessageHeaders(MessageType.WORKSPACE_HELLO, mockWorkspaceProcess.pid_string, "message-id-here"),
-          new HelloBody(mockWorkspaceProcess.pid)
+          new HelloBody(mockWorkspaceProcess.pid.id())
       );
       try {
         workspace.send(helloMessage);

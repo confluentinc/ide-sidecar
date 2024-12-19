@@ -30,6 +30,14 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 @Singleton
 public class KnownWorkspacesBean {
 
+  /** Typesafe wrapper for a workspace process id. */
+  public static record WorkspacePid(Long id) {
+    @Override
+    public String toString() {
+      return String.valueOf(id);
+    }
+  }
+
   // What we call to shut down the system when we notice last vs code workspace
   // has exited. Default to Quarkus::asyncExit. Overrideable for test suite.
   ShutdownSystemFunction shutdownSystemFunction = Quarkus::asyncExit;
@@ -47,7 +55,7 @@ public class KnownWorkspacesBean {
    *
    * @see #hasLivingWorkspaceClients() for grooming.
    */
-  Set<Long> knownWorkspacePIDs = new HashSet<>();
+  Set<WorkspacePid> knownWorkspacePids = new HashSet<>();
 
   /**
    * Should {@link #hasLivingWorkspaceClients()} return true if there are no known workspaces?
@@ -59,11 +67,11 @@ public class KnownWorkspacesBean {
 
   /**
    * Adds a workspace process id to the set of known workspaces.
-   * @param workspaceId the workspace id to add
+   * @param workspacePid the workspace id to add
    * @return true if the workspace id is new (not already known), false otherwise
    */
-  public synchronized boolean addWorkspacePID(Long workspaceId) {
-    boolean wasNew = knownWorkspacePIDs.add(workspaceId);
+  public synchronized boolean addWorkspacePid(WorkspacePid workspacePid) {
+    boolean wasNew = knownWorkspacePids.add(workspacePid);
 
     // First handshake has definitely happened by time the request filter calls addWorkspacePID().
     if (wasNew && allowNoWorkspaces) {
@@ -77,7 +85,7 @@ public class KnownWorkspacesBean {
    * Is this a known workspace id?
    */
   public synchronized boolean isKnownWorkspace(Long workspaceId) {
-    return knownWorkspacePIDs.contains(workspaceId);
+    return knownWorkspacePids.contains(workspaceId);
   }
 
   /**
@@ -105,17 +113,17 @@ public class KnownWorkspacesBean {
 
     // Remove any workspace process ids that are no longer running.
     // (Use explicit iterator to avoid ConcurrentModificationException)
-    Iterator<Long> knownWorkspacePIDsIterator = knownWorkspacePIDs.iterator();
+    Iterator<WorkspacePid> knownWorkspacePIDsIterator = knownWorkspacePids.iterator();
     while (knownWorkspacePIDsIterator.hasNext()) {
       var workspacePid = knownWorkspacePIDsIterator.next();
-      ProcessHandle processHandle = ProcessHandle.of(workspacePid).orElse(null);
+      ProcessHandle processHandle = ProcessHandle.of(workspacePid.id()).orElse(null);
       if (processHandle == null || !processHandle.isAlive()) {
         knownWorkspacePIDsIterator.remove();
       }
     }
 
     // We're happy if there's at least one workspace process still alive.
-    return !knownWorkspacePIDs.isEmpty();
+    return !knownWorkspacePids.isEmpty();
   }
 
 
