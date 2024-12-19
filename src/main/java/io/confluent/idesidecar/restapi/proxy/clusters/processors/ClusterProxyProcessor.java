@@ -48,6 +48,30 @@ public class ClusterProxyProcessor extends
     context.setProxyRequestMethod(context.getRequestMethod());
     context.setProxyRequestBody(context.getRequestBody());
 
+    // Set TLS options
+    var connectionState = context.getConnectionState();
+
+    switch (context.getClusterType()) {
+      case KAFKA -> {
+        // Confluent Local Kafka REST Proxy is not configured with TLS.
+        // However, Confluent Cloud Kafka REST does support mutual TLS. It only requires
+        // the keystore options to be set. This is a TODO item for the future.
+        // (https://github.com/confluentinc/ide-sidecar/issues/235)
+      }
+      case SCHEMA_REGISTRY ->
+        connectionState
+            .getSchemaRegistryTLSConfig()
+            .ifPresent(
+                tlsConfig -> {
+                  if (tlsConfig.truststore() != null) {
+                    context.setTruststoreOptions(tlsConfig.truststore());
+                  }
+                  if (tlsConfig.keystore() != null) {
+                    context.setKeystoreOptions(tlsConfig.keystore());
+                  }
+                });
+    }
+
     return next().process(context).map(
         processedContext -> {
           if (processedContext.getProxyResponseBody() != null) {
