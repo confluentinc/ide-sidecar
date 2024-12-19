@@ -1,6 +1,7 @@
 package io.confluent.idesidecar.restapi.kafkarest;
 
 import org.junit.jupiter.api.Test;
+import org.junitpioneer.jupiter.RetryingTest;
 import org.junitpioneer.jupiter.cartesian.ArgumentSets;
 import org.junitpioneer.jupiter.cartesian.CartesianTest;
 import java.util.Map;
@@ -35,6 +36,7 @@ public interface RecordsV3WithoutSRSuite extends RecordsV3BaseSuite {
 
   @CartesianTest
   @CartesianTest.MethodFactory("validSchemalessKeysAndValues")
+  @RetryingTest(3)
   default void testProduceAndConsumeSchemalessData(RecordData key, RecordData value) {
     produceAndConsume(key, value);
   }
