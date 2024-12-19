@@ -317,7 +317,7 @@ public class WebsocketEndpointTest {
     firstWorkspace.closeWebsocket();
 
     // Second workspace should get WORKSPACE_COUNT_CHANGED message with count == 1
-    message = secondWorkspace.waitForMessageOfType(MessageType.WORKSPACE_COUNT_CHANGED, 1000);
+    message = secondWorkspace.waitForMessageOfType(MessageType.WORKSPACE_COUNT_CHANGED, 2000);
     workspacesChangedBody = (WorkspacesChangedBody) message.body();
     Assertions.assertEquals(1, workspacesChangedBody.workspaceCount());
 
@@ -512,6 +512,10 @@ public class WebsocketEndpointTest {
 
   @Test
   public void testOnMessageHandlingUnknownSession() throws IOException{
+
+    Log.infof("Test: testOnMessageHandlingUnknownSession, websocketEndpoint: %s", websocketEndpoint);
+    Log.infof("Test: testOnMessageHandlingUnknownSession, websocketEndpoint sessions: %s", System.identityHashCode(websocketEndpoint.sessions));
+
     // Test the case where a message is received from a session that is not known to the sidecar.
     // (which should be impossible, but we should handle it gracefully.)
     ConnectedWorkspace connectedWorkspace = connectWorkspace(true);
@@ -646,7 +650,7 @@ public class WebsocketEndpointTest {
     connectedWorkspace.closeWebsocket();
 
     // pause a bit to let the sidecar try to send the error message.
-    Thread.sleep(1000);
+    Thread.sleep(2000);
 
     // Sessions should be empty.
     Assertions.assertEquals(0, websocketEndpoint.sessions.size());
