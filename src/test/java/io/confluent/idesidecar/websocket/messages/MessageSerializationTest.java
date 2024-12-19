@@ -49,6 +49,11 @@ public class MessageSerializationTest {
             "websocket-messages/protocol-error.json",
             MessageType.PROTOCOL_ERROR,
             ProtocolErrorBody.class
+        ),
+        new TestInput(
+            "websocket-messages/connection-valid.json",
+            MessageType.CONNECTION_EVENT,
+            ConnectionEventBody.class
         )
     );
 

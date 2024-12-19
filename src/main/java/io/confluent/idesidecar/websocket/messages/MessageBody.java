@@ -17,6 +17,7 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
     @JsonSubTypes.Type(value = ProtocolErrorBody.class),
     @JsonSubTypes.Type(value = HelloBody.class),
     @JsonSubTypes.Type(value = DynamicMessageBody.class),
+    @JsonSubTypes.Type(value = ConnectionEventBody.class),
 })
 @RegisterForReflection
 public interface MessageBody {
