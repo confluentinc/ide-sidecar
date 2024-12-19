@@ -264,13 +264,6 @@ quarkus:
     # Disable file caching in Vert.X since the native executable includes the path of the tmp dir
     # of the machine where the native image was built.
     caching: false
-  package:
-    write-transformed-bytecode-to-build-output: true
-  test:
-    # FIXME: This is currently super hacky and brittle. Figure out how to set this dynamically from
-    #        the failsafe plugin execution.
-    arg-line:
-      - '-javaagent:/Users/rohitsanjay/.m2/repository/org/jacoco/org.jacoco.agent/0.8.12/org.jacoco.agent-0.8.12-runtime.jar=destfile=/Users/rohitsanjay/ide-sidecar/target/jacoco-quarkus.exec,append=true'
 
 # Hide the /internal/kafka route from the OpenAPI spec
 mp:
