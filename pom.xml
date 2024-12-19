@@ -408,11 +408,12 @@
             <artifactId>maven-failsafe-plugin</artifactId>
             <executions>
               <execution>
+                <id>integration-test</id>
                 <goals>
                   <goal>integration-test</goal>
                   <goal>verify</goal>
                 </goals>
-                <configuration>
+                <configuration combine.children="append">
                   <failIfNoTests>true</failIfNoTests>
                   <systemPropertyVariables>
                     <native.image.path>
@@ -773,6 +774,7 @@
         <artifactId>maven-failsafe-plugin</artifactId>
         <executions>
           <execution>
+            <id>integration-test</id>
             <goals>
               <goal>integration-test</goal>
               <goal>verify</goal>
