@@ -1,5 +1,11 @@
 package io.confluent.idesidecar.websocket.resources;
 
+import static io.restassured.RestAssured.given;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.idesidecar.restapi.application.KnownWorkspacesBean;
 import io.confluent.idesidecar.restapi.application.KnownWorkspacesBean.WorkspacePid;
@@ -13,9 +19,9 @@ import io.confluent.idesidecar.websocket.messages.MessageHeaders;
 import io.confluent.idesidecar.websocket.messages.MessageType;
 import io.confluent.idesidecar.websocket.messages.ProtocolErrorBody;
 import io.confluent.idesidecar.websocket.messages.WorkspacesChangedBody;
+import io.quarkus.logging.Log;
 import io.quarkus.test.common.http.TestHTTPResource;
 import io.quarkus.test.junit.QuarkusTest;
-import io.restassured.RestAssured;
 import jakarta.inject.Inject;
 import jakarta.websocket.ClientEndpoint;
 import jakarta.websocket.ClientEndpointConfig;
@@ -32,13 +38,10 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-
-import io.quarkus.logging.Log;
 
 /**
  * Tests over workspaces connecting to /ws as websocket clients, access filtering, and message handling.
@@ -79,8 +82,7 @@ public class WebsocketEndpointTest {
     private static final ObjectMapper mapper = new ObjectMapper();
 
     @Override
-    public void onMessage(String messageString)
-    {
+    public void onMessage(String messageString) {
       Log.info("Test client received message: " + messageString);
       rawMessageStrings.add(messageString);
       try {
@@ -160,19 +162,18 @@ public class WebsocketEndpointTest {
       return mockWorkspaceProcess.pid;
     }
 
-
     /**
-      * Send a HELLO message to the websocket endpoint. Do not wait for a response.
+     * Send a HELLO message to the websocket endpoint. Do not wait for a response.
      */
     public void sayHello() {
       sayHello(null, null);
     }
 
     /**
-      * Send a HELLO message to the websocket endpoint. Do not wait for a response.
-      * Caller can provide an alternate pid to hello with if so desired, for either
-      * the pid spelled in general message header, or in the body of the hello.
-      * Defaults to the pid of the mock workspace process.
+     * Send a HELLO message to the websocket endpoint. Do not wait for a response.
+     * Caller can provide an alternate pid to hello with if so desired, for either
+     * the pid spelled in general message header, or in the body of the hello.
+     * Defaults to the pid of the mock workspace process.
      */
     public void sayHello(WorkspacePid headerPid,  WorkspacePid bodyPid) {
 
@@ -239,7 +240,7 @@ public class WebsocketEndpointTest {
         }
 
         // Must be the message type we're looking for.
-        Assertions.assertEquals(messageType, message.messageType());
+        assertEquals(messageType, message.messageType());
         return message;
       }
     }
@@ -314,7 +315,7 @@ public class WebsocketEndpointTest {
     // Block until we get the initial WORKSPACE_COUNT_CHANGED message.
     var message = firstWorkspace.waitForMessageOfType(MessageType.WORKSPACE_COUNT_CHANGED, 1000);
     var workspacesChangedBody = (WorkspacesChangedBody) message.body();
-    Assertions.assertEquals(1, workspacesChangedBody.workspaceCount());
+    assertEquals(1, workspacesChangedBody.workspaceCount());
 
     // Now connect a second workspace.
     var secondWorkspace = connectWorkspace(true);
@@ -324,11 +325,11 @@ public class WebsocketEndpointTest {
     for (var workspace : workspaces) {
       message = workspace.waitForMessageOfType(MessageType.WORKSPACE_COUNT_CHANGED, 1000);
       workspacesChangedBody = (WorkspacesChangedBody) message.body();
-      Assertions.assertEquals(2, workspacesChangedBody.workspaceCount());
+      assertEquals(2, workspacesChangedBody.workspaceCount());
     }
 
     // Have the first workspace send a message that should be broadcast to all workspaces.
-    Message broadcastMessage = new Message(
+    var broadcastMessage = new Message(
         new MessageHeaders(MessageType.UNKNOWN, firstWorkspace.processIdString(), "broadcast-message-id"),
         new DynamicMessageBody(Map.of("foonly", 3))
     );
@@ -337,7 +338,7 @@ public class WebsocketEndpointTest {
 
     // The second workspace should receive that message.
     message = secondWorkspace.waitForMessageOfType(MessageType.UNKNOWN, 1000);
-    Assertions.assertEquals("broadcast-message-id", message.id());
+    assertEquals("broadcast-message-id", message.id());
 
     // Now have first workspace disconnect.
     firstWorkspace.closeWebsocket();
@@ -345,7 +346,7 @@ public class WebsocketEndpointTest {
     // Second workspace should get WORKSPACE_COUNT_CHANGED message with count == 1
     message = secondWorkspace.waitForMessageOfType(MessageType.WORKSPACE_COUNT_CHANGED, 2000);
     workspacesChangedBody = (WorkspacesChangedBody) message.body();
-    Assertions.assertEquals(1, workspacesChangedBody.workspaceCount());
+    assertEquals(1, workspacesChangedBody.workspaceCount());
 
     // Have the second workspace send a message that should be broadcast to all workspaces, but
     // no one is there to receive it.
@@ -359,7 +360,7 @@ public class WebsocketEndpointTest {
     // Should not receive any messages.
 
     // assert raises RuntimeException since no message received in time ...
-    Assertions.assertThrows(RuntimeException.class, () -> {
+    assertThrows(RuntimeException.class, () -> {
       secondWorkspace.waitForMessageOfType(MessageType.UNKNOWN, 1000);
     });
 
@@ -370,13 +371,13 @@ public class WebsocketEndpointTest {
   @Test
   public void testConnectWithoutAccessHeaderFails() {
     // Given a workspace process ...
-    MockWorkspaceProcess mockWorkspaceProcess = new MockWorkspaceProcess();
+    var mockWorkspaceProcess = new MockWorkspaceProcess();
 
     // known in the set of workspace ids.
     getKnownWorkspacePidsFromBean().add(mockWorkspaceProcess.pid);
 
     // When the workspace process tries to connect to the websocket endpoint without the access token header ...
-    RestAssured.given()
+    given()
         .when()
         .get("/ws")
         .then()
@@ -387,7 +388,7 @@ public class WebsocketEndpointTest {
   @Test
   public void testConnectWithInvalidAccessHeaderFails() {
     // Given a workspace process ...
-    MockWorkspaceProcess mockWorkspaceProcess = new MockWorkspaceProcess();
+    var mockWorkspaceProcess = new MockWorkspaceProcess();
 
     // Make it smell as if the handshake has happened.
     setAuthToken("valid-token");
@@ -396,11 +397,13 @@ public class WebsocketEndpointTest {
 
     // When the workspace process tries to connect to the websocket endpoint with an invalid access token header,
     // but a known workspace id, it should fail ...
-    RestAssured.given()
+    given()
         .when()
         .header("Authorization", "Bearer invalid-token")
-        .header(WorkspaceProcessIdFilter.WORKSPACE_PID_HEADER,
-            mockWorkspaceProcess.pid_string)
+        .header(
+            WorkspaceProcessIdFilter.WORKSPACE_PID_HEADER,
+            mockWorkspaceProcess.pid_string
+        )
         .get("/ws")
         .then()
         .assertThat()
@@ -414,15 +417,15 @@ public class WebsocketEndpointTest {
   @ValueSource(booleans = {true, false})
   public void testSendingInvalidMessageStructureClosesSession(boolean sayHelloFirst) throws IOException, InterruptedException {
     // Given a workspace connected happy websocket ...
-    ConnectedWorkspace connectedWorkspace = connectWorkspace(sayHelloFirst);
+    var connectedWorkspace = connectWorkspace(sayHelloFirst);
 
     // When the workspace sends first a message with an invalid JSON structure ...
     connectedWorkspace.send("not a json object");
 
     // then should receive an error message
-    Message errorMessage = connectedWorkspace.waitForMessageOfType(MessageType.PROTOCOL_ERROR, 1000);
+    var errorMessage = connectedWorkspace.waitForMessageOfType(MessageType.PROTOCOL_ERROR, 1000);
     var errorString = ((ProtocolErrorBody) errorMessage.body()).error();
-    Assertions.assertTrue(errorString.startsWith("Unparseable message"));
+    assertTrue(errorString.startsWith("Unparseable message"));
 
     // Then the session should be closed very soon after.
     connectedWorkspace.waitForClose(10000);
@@ -432,19 +435,19 @@ public class WebsocketEndpointTest {
   @Test
   public void testSendingRandomMessageFirstClosesSession() throws IOException, InterruptedException {
     // Given a workspace connected happy websocket ...
-    ConnectedWorkspace connectedWorkspace = connectWorkspace(false);
+    var connectedWorkspace = connectWorkspace(false);
 
     // When the workspace sends a random message as the first message ...
-    Message message = new Message(
+    var message = new Message(
         new MessageHeaders(MessageType.UNKNOWN, connectedWorkspace.processIdString(), "message-id-here"),
         new DynamicMessageBody(Map.of("foonly", 3))
     );
     connectedWorkspace.send(message);
 
     // then should receive an error message
-    Message errorMessage = connectedWorkspace.waitForMessageOfType(MessageType.PROTOCOL_ERROR, 1000);
+    var errorMessage = connectedWorkspace.waitForMessageOfType(MessageType.PROTOCOL_ERROR, 1000);
     var errorString = ((ProtocolErrorBody) errorMessage.body()).error();
-    Assertions.assertEquals("Expected WORKSPACE_HELLO message, got UNKNOWN. Closing session.",
+    assertEquals("Expected WORKSPACE_HELLO message, got UNKNOWN. Closing session.",
         errorString);
 
     // Then the session should be closed very soon after.
@@ -455,22 +458,22 @@ public class WebsocketEndpointTest {
   @Test
   public void testSendingHelloMessageWithMismatchedOriginator() throws IOException, InterruptedException {
     // Given a workspace connected happy websocket ...
-    ConnectedWorkspace connectedWorkspace = connectWorkspace(false);
+    var connectedWorkspace = connectWorkspace(false);
 
     // When the workspace sends a WORKSPACE_HELLO message with wrong originator value. It should
     // match the body's payload (and be known to the sidecar).
-    Message message = new Message(
+    var message = new Message(
         new MessageHeaders(MessageType.WORKSPACE_HELLO, "1234", "message-id-here"),
         new HelloBody(connectedWorkspace.mockWorkspaceProcess.pid.id())
     );
     connectedWorkspace.send(message);
 
     // then should receive an error message
-    Message errorMessage = connectedWorkspace.waitForMessageOfType(MessageType.PROTOCOL_ERROR, 1000);
+    var errorMessage = connectedWorkspace.waitForMessageOfType(MessageType.PROTOCOL_ERROR, 1000);
     var errorString = ((ProtocolErrorBody) errorMessage.body()).error();
 
     var expectedPrefix = String.format("Workspace %s sent message with incorrect originator value: 1234. Removing and closing session", connectedWorkspace.processId());
-    Assertions.assertTrue(
+    assertTrue(
         errorString.startsWith(expectedPrefix)
     );
 
@@ -483,21 +486,21 @@ public class WebsocketEndpointTest {
   @Test
   public void testSendingHelloMessageWithUnknownProcessId() throws IOException, InterruptedException {
     // Given a workspace connected happy websocket ...
-    ConnectedWorkspace connectedWorkspace = connectWorkspace(false);
+    var connectedWorkspace = connectWorkspace(false);
 
     // When the workspace sends a WORKSPACE_HELLO message with both header and body pid values
     // not corresponding with their process id as previously presented...
-    Message message = new Message(
+    var message = new Message(
         new MessageHeaders(MessageType.WORKSPACE_HELLO, "1234", "message-id-here"),
         new HelloBody(1234)
     );
     connectedWorkspace.send(message);
 
     // then should receive an error message
-    Message errorMessage = connectedWorkspace.waitForMessageOfType(MessageType.PROTOCOL_ERROR, 1000);
+    var errorMessage = connectedWorkspace.waitForMessageOfType(MessageType.PROTOCOL_ERROR, 1000);
     var errorString = ((ProtocolErrorBody) errorMessage.body()).error();
 
-    Assertions.assertEquals(
+    assertEquals(
         "handleHelloMessage: Unknown workspace pid 1234. Closing session.",
         errorString
     );
@@ -516,19 +519,19 @@ public class WebsocketEndpointTest {
   @ParameterizedTest
   public void testWrongOriginatorValueInMessageClosesSession(String invalidOriginator) throws IOException, InterruptedException {
     // Given a workspace connected happy websocket ...
-    ConnectedWorkspace connectedWorkspace = connectWorkspace(true);
+    var connectedWorkspace = connectWorkspace(true);
 
     // When the workspace sends a message with an invalid originator value not corresponding with
     // their process id ...
-    Message message = new Message(
+    var message = new Message(
         new MessageHeaders(MessageType.UNKNOWN, invalidOriginator, "message-id-here"),
         new DynamicMessageBody(Map.of("foonly", 3))
     );
     connectedWorkspace.send(message);
 
     // Should get a PROTOCOL_ERROR message back from the sidecar complaining about 'originator' and the session should be closed.
-    Message errorMessage = connectedWorkspace.waitForMessageOfType(MessageType.PROTOCOL_ERROR, 1000);
-    ProtocolErrorBody errorBody = (ProtocolErrorBody) errorMessage.body();
+    var errorMessage = connectedWorkspace.waitForMessageOfType(MessageType.PROTOCOL_ERROR, 1000);
+    var errorBody = (ProtocolErrorBody) errorMessage.body();
     assert errorBody.error().contains("originator");
     assert errorBody.originalMessageId().equals("message-id-here");
 
@@ -551,7 +554,7 @@ public class WebsocketEndpointTest {
 
     // should be one session kept track of in the sessions map, but is almost like
     // the injection is working right / we're getting a different instance or something.
-    Assertions.assertEquals(1, websocketEndpoint.sessions.size());
+    assertEquals(1, websocketEndpoint.sessions.size());
 
     // Now reach in and remove this session from the known sessions map, as if
     // some other code path had made a mistake.
@@ -559,7 +562,7 @@ public class WebsocketEndpointTest {
 
     // Now send a message from the workspace, should hit the first error block
     // in onMessage();
-    Message message = new Message(
+    var message = new Message(
         new MessageHeaders(MessageType.UNKNOWN, connectedWorkspace.processIdString(), "message-id-here"),
         new DynamicMessageBody(Map.of("foonly", 3))
     );
@@ -568,8 +571,8 @@ public class WebsocketEndpointTest {
 
     // should get a PROTOCOL_ERROR message back from the sidecar complaining about 'unknown session'
     // and the session should be closed.
-    Message errorMessage = connectedWorkspace.waitForMessageOfType(MessageType.PROTOCOL_ERROR, 5000);
-    ProtocolErrorBody errorBody = (ProtocolErrorBody) errorMessage.body();
+    var errorMessage = connectedWorkspace.waitForMessageOfType(MessageType.PROTOCOL_ERROR, 5000);
+    var errorBody = (ProtocolErrorBody) errorMessage.body();
     assert errorBody.error().contains("Received message from unknown session");
 
     // Should then be closed server-side.
@@ -579,7 +582,7 @@ public class WebsocketEndpointTest {
   @Test
   public void testWorkspaceBroadcastingWhenNoOtherWorkspaces() throws IOException, InterruptedException {
     // Given a workspace connected happy websocket ...
-    ConnectedWorkspace connectedWorkspace = connectWorkspace(true);
+    var connectedWorkspace = connectWorkspace(true);
 
     // Block until we get the initial WORKSPACE_COUNT_CHANGED message.
     connectedWorkspace.waitForMessageOfType(MessageType.WORKSPACE_COUNT_CHANGED, 1000);
@@ -588,7 +591,7 @@ public class WebsocketEndpointTest {
     connectedWorkspace.clearReceivedMessages();
 
     // When the workspace sends a message that should be broadcast to all other workspaces ...
-    Message message = new Message(
+    var message = new Message(
         new MessageHeaders(MessageType.UNKNOWN, connectedWorkspace.processIdString(), "message-id-here"),
         new DynamicMessageBody(Map.of("foonly", 3))
     );
@@ -598,8 +601,8 @@ public class WebsocketEndpointTest {
     // should not have been received by the workspace itself.
     Thread.sleep(1000);
 
-    Assertions.assertTrue(connectedWorkspace.session.isOpen());
-    Assertions.assertEquals(0, connectedWorkspace.receivedMessageCount());
+    assertTrue(connectedWorkspace.session.isOpen());
+    assertEquals(0, connectedWorkspace.receivedMessageCount());
 
     // close the session so we don't leave it hanging around polluting other tests.
     connectedWorkspace.closeWebsocket();
@@ -608,33 +611,22 @@ public class WebsocketEndpointTest {
   @Test
   public void testValidateHeadersForSidecarBroadcast() {
     // originator "sidecar" is allowed and expected.
-    Message message = new Message(
+    var message = new Message(
         new MessageHeaders(MessageType.UNKNOWN, "sidecar", "message-id-here"),
         new DynamicMessageBody(Map.of("foonly", 3))
     );
 
-    boolean thrown = false;
-    try {
-      WebsocketEndpoint.validateHeadersForSidecarBroadcast(message);
-    } catch (IllegalArgumentException e) {
-      thrown = true;
-    }
-
-    Assertions.assertFalse(thrown);
+    WebsocketEndpoint.validateHeadersForSidecarBroadcast(message);
 
     // originator "1234" indicating is from a workspace is not allowed, however.
-    message = new Message(
+    var message2 = new Message(
         new MessageHeaders(MessageType.UNKNOWN, "1234", "message-id-here"),
         new DynamicMessageBody(Map.of("foonly", 3))
     );
 
-    try {
-      WebsocketEndpoint.validateHeadersForSidecarBroadcast(message);
-    } catch (IllegalArgumentException e) {
-      thrown = true;
-    }
-
-    Assertions.assertTrue(thrown);
+    assertThrows(IllegalArgumentException.class, () ->
+      WebsocketEndpoint.validateHeadersForSidecarBroadcast(message2)
+    );
   }
 
   @Test
@@ -652,7 +644,7 @@ public class WebsocketEndpointTest {
     // then should receive an error message
     Message errorMessage = connectedWorkspace.waitForMessageOfType(MessageType.PROTOCOL_ERROR, 1000);
     var errorString = ((ProtocolErrorBody) errorMessage.body()).error();
-    Assertions.assertEquals(
+    assertEquals(
         "Expected HelloBody message body, got DynamicMessageBody. Closing session.",
         errorString
     );
@@ -679,35 +671,35 @@ public class WebsocketEndpointTest {
     Thread.sleep(2000);
 
     // Sessions should be empty.
-    Assertions.assertEquals(0, websocketEndpoint.sessions.size());
+    assertEquals(0, websocketEndpoint.sessions.size());
   }
 
   @Test
   void testTwoConnectionsFromSameWorkspacePid() {
     // Given a workspace connected happy websocket ...
-    ConnectedWorkspace connectedWorkspace = connectWorkspace(true);
-    WorkspacePid firstWorkspacePid = connectedWorkspace.processId();
+    var connectedWorkspace = connectWorkspace(true);
+    var firstWorkspacePid = connectedWorkspace.processId();
     // Block until we get the initial WORKSPACE_COUNT_CHANGED message.
     connectedWorkspace.waitForMessageOfType(MessageType.WORKSPACE_COUNT_CHANGED, 1000);
 
     // Now make second websocket connection, saying hello with the same pid as from the first
     // (in the body of the message, not the header. We want to get to a later error than if
     // the wrong pid was in the header.)
-    ConnectedWorkspace connectedWorkspace2 = connectWorkspace(false);
+    var connectedWorkspace2 = connectWorkspace(false);
     connectedWorkspace2.sayHello(firstWorkspacePid, firstWorkspacePid);
 
     // The second workspace should get a PROTOCOL_ERROR message back from the sidecar complaining about
     // 'duplicate workspace pid' and the session should be closed.
-    Message errorMessage = connectedWorkspace2.waitForMessageOfType(MessageType.PROTOCOL_ERROR, 1000);
-    ProtocolErrorBody errorBody = (ProtocolErrorBody) errorMessage.body();
-    String expected = "Workspace id %s already connected. Closing session.".formatted(firstWorkspacePid);
-    Assertions.assertEquals(expected, errorBody.error());
+    var errorMessage = connectedWorkspace2.waitForMessageOfType(MessageType.PROTOCOL_ERROR, 1000);
+    var errorBody = (ProtocolErrorBody) errorMessage.body();
+    var expected = "Workspace id %s already connected. Closing session.".formatted(firstWorkspacePid);
+    assertEquals(expected, errorBody.error());
 
     // Should then be closed server-side.
     connectedWorkspace2.waitForClose(1000);
 
     // The first workspace should still be connected.
-    Assertions.assertTrue(connectedWorkspace.session.isOpen());
+    assertTrue(connectedWorkspace.session.isOpen());
 
     // close the session so we don't leave it hanging around polluting other tests.
     connectedWorkspace.closeWebsocket();
@@ -718,16 +710,16 @@ public class WebsocketEndpointTest {
   public void testOnError(boolean shouldFindSession) throws IOException {
     // Connect as a workspace to establish a session, then directly call onError() with the
     // server side session handle.
-    ConnectedWorkspace connectedWorkspace = connectWorkspace(true);
+    var connectedWorkspace = connectWorkspace(true);
 
     // Block until we get the initial WORKSPACE_COUNT_CHANGED message.
     connectedWorkspace.waitForMessageOfType(MessageType.WORKSPACE_COUNT_CHANGED, 1000);
 
     // should have exactly one session in the sessions map.
-    Assertions.assertEquals(1, websocketEndpoint.sessions.size());
+    assertEquals(1, websocketEndpoint.sessions.size());
 
     // Grab that session from the sessions map.
-    Session session = websocketEndpoint.sessions.values().iterator().next().session();
+    var session = websocketEndpoint.sessions.values().iterator().next().session();
 
     // If we're testing the case where the session is not found in the sessions map, remove it.
     if (!shouldFindSession) {
@@ -742,17 +734,17 @@ public class WebsocketEndpointTest {
 
     // and the entry removed from the sessions map (if it was there to begin with).
     if (shouldFindSession) {
-      Assertions.assertEquals(0, websocketEndpoint.sessions.size());
+      assertEquals(0, websocketEndpoint.sessions.size());
     }
   }
 
   /** Connect a mock workspace process to the websocket endpoint successfully. */
   private ConnectedWorkspace connectWorkspace(boolean sayHello) {
     // Given a workspace process ...
-    MockWorkspaceProcess mockWorkspaceProcess = new MockWorkspaceProcess();
+    var mockWorkspaceProcess = new MockWorkspaceProcess();
 
     // Make it smell as if the handshake has happened.
-    String expectedTokenValue = "valid-token";
+    var expectedTokenValue = "valid-token";
     setAuthToken(expectedTokenValue);
     // Make websocket connection request carry the right header value
     TestWebsocketClientConfigurator.setAccessToken(expectedTokenValue);
@@ -764,20 +756,17 @@ public class WebsocketEndpointTest {
     Session session = null;
     try {
       session = ContainerProvider.getWebSocketContainer()
-          .connectToServer(TestWebsocketClient.class, uri);
+                                 .connectToServer(TestWebsocketClient.class, uri);
     } catch (DeploymentException | IOException e) {
-      Log.errorf("Failed to connect to websocket endpoint: %s", e.getMessage());
-      throw new RuntimeException(e);
+      fail("Failed to connect to websocket endpoint: " + e.getMessage());
     }
 
     TestWebsocketClientMessageHandler clientHandler = new TestWebsocketClientMessageHandler();
     session.addMessageHandler(clientHandler);
 
-
     var workspace = new ConnectedWorkspace(mockWorkspaceProcess, session, clientHandler);
 
-    if (sayHello)
-    {
+    if (sayHello) {
       workspace.sayHello();
     }
 
@@ -816,7 +805,7 @@ public class WebsocketEndpointTest {
   private Set<WorkspacePid> getKnownWorkspacePidsFromBean() {
     try {
       Field knownWorkspacePIDsField = knownWorkspacesBean.getClass()
-          .getDeclaredField("knownWorkspacePids");
+                                                         .getDeclaredField("knownWorkspacePids");
       knownWorkspacePIDsField.setAccessible(true);
       return (Set<WorkspacePid>) knownWorkspacePIDsField.get(knownWorkspacesBean);
     } catch (NoSuchFieldException | IllegalAccessException e) {
@@ -841,4 +830,3 @@ public class WebsocketEndpointTest {
   }
 
 }
-
