@@ -150,7 +150,7 @@ public record TLSConfig(
       @Schema(
           description =
               "The password for the local key store file. If a password is not set, key "
-                  + " store file configured will still be used, but integrity checking is "
+                  + "store file configured will still be used, but integrity checking is "
                   + "disabled. A key store password is not supported for PEM format.",
           nullable = true
       )
