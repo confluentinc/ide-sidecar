@@ -412,7 +412,7 @@
                   <goal>integration-test</goal>
                   <goal>verify</goal>
                 </goals>
-                <configuration combine.children="append">
+                <configuration combine.self="override" combine.children="append">
                   <failIfNoTests>true</failIfNoTests>
                   <systemPropertyVariables>
                     <native.image.path>
