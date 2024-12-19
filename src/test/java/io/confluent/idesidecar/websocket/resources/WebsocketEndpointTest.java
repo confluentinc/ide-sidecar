@@ -156,9 +156,35 @@ public class WebsocketEndpointTest {
       TestWebsocketClientMessageHandler messageHandler
   ) {
 
-    /* Get the process pid */
     public WorkspacePid processId() {
       return mockWorkspaceProcess.pid;
+    }
+
+
+    /**
+      * Send a HELLO message to the websocket endpoint. Do not wait for a response.
+     */
+    public void sayHello() {
+      sayHello(null, null);
+    }
+
+    /**
+      * Send a HELLO message to the websocket endpoint. Do not wait for a response.
+      * Caller can provide an alternate pid to hello with if so desired, for either
+      * the pid spelled in general message header, or in the body of the hello.
+      * Defaults to the pid of the mock workspace process.
+     */
+    public void sayHello(WorkspacePid headerPid,  WorkspacePid bodyPid) {
+
+      headerPid = headerPid != null ? headerPid : mockWorkspaceProcess.pid;
+      bodyPid = bodyPid != null ? bodyPid : mockWorkspaceProcess.pid;
+
+      Message helloMessage = new Message(
+          new MessageHeaders(MessageType.WORKSPACE_HELLO, headerPid.toString(),
+              "message-id-here"),
+          new HelloBody(bodyPid.id())
+      );
+      send(helloMessage);
     }
 
     /**
@@ -656,6 +682,38 @@ public class WebsocketEndpointTest {
     Assertions.assertEquals(0, websocketEndpoint.sessions.size());
   }
 
+  @Test
+  void testTwoConnectionsFromSameWorkspacePid() {
+    // Given a workspace connected happy websocket ...
+    ConnectedWorkspace connectedWorkspace = connectWorkspace(true);
+    WorkspacePid firstWorkspacePid = connectedWorkspace.processId();
+    // Block until we get the initial WORKSPACE_COUNT_CHANGED message.
+    connectedWorkspace.waitForMessageOfType(MessageType.WORKSPACE_COUNT_CHANGED, 1000);
+
+    // Now make second websocket connection, saying hello with the same pid as from the first
+    // (in the body of the message, not the header. We want to get to a later error than if
+    // the wrong pid was in the header.)
+    ConnectedWorkspace connectedWorkspace2 = connectWorkspace(false);
+    connectedWorkspace2.sayHello(firstWorkspacePid, firstWorkspacePid);
+
+    // The second workspace should get a PROTOCOL_ERROR message back from the sidecar complaining about
+    // 'duplicate workspace pid' and the session should be closed.
+    Message errorMessage = connectedWorkspace2.waitForMessageOfType(MessageType.PROTOCOL_ERROR, 1000);
+    ProtocolErrorBody errorBody = (ProtocolErrorBody) errorMessage.body();
+    String expected = "Workspace id %s already connected. Closing session.".formatted(firstWorkspacePid);
+    Assertions.assertEquals(expected, errorBody.error());
+
+    // Should then be closed server-side.
+    connectedWorkspace2.waitForClose(1000);
+
+    // The first workspace should still be connected.
+    Assertions.assertTrue(connectedWorkspace.session.isOpen());
+
+    // close the session so we don't leave it hanging around polluting other tests.
+    connectedWorkspace.closeWebsocket();
+
+  }
+
   /** Connect a mock workspace process to the websocket endpoint successfully. */
   private ConnectedWorkspace connectWorkspace(boolean sayHello) {
     // Given a workspace process ...
@@ -688,13 +746,7 @@ public class WebsocketEndpointTest {
 
     if (sayHello)
     {
-      // send a hello message to the sidecar, but do not expect the sidecar to send a message back.
-      // (it will, but we're not testing that here.)
-      Message helloMessage = new Message(
-          new MessageHeaders(MessageType.WORKSPACE_HELLO, mockWorkspaceProcess.pid_string, "message-id-here"),
-          new HelloBody(mockWorkspaceProcess.pid.id())
-      );
-      workspace.send(helloMessage);
+      workspace.sayHello();
     }
 
     return workspace;
