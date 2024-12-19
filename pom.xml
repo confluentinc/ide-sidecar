@@ -412,7 +412,7 @@
                   <goal>integration-test</goal>
                   <goal>verify</goal>
                 </goals>
-                <configuration>
+                <configuration combine.children="append">
                   <failIfNoTests>true</failIfNoTests>
                   <systemPropertyVariables>
                     <native.image.path>
@@ -420,6 +420,9 @@
                     </native.image.path>
                     <java.util.logging.manager>org.jboss.logmanager.LogManager
                     </java.util.logging.manager>
+                    <!-- Intentionally empty to avoid setting JaCoCo agent when running
+                         native executable in integration tests -->
+                    <quarkus.test.arg-line></quarkus.test.arg-line>
                   </systemPropertyVariables>
                   <environmentVariables>
                     <QUARKUS_CONFIG_LOCATIONS>src/test/resources/application-nativeit.yaml</QUARKUS_CONFIG_LOCATIONS>
@@ -622,28 +625,80 @@
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
         <version>${jacoco-maven-plugin.version}</version>
+        <configuration>
+          <includes>
+            <include>io/confluent/**</include>
+          </includes>
+          <excludes>
+            <exclude>io/confluent/idesidecar/restapi/kafkarest/model/**</exclude>
+            <exclude>io/confluent/idesidecar/restapi/proto/**/*</exclude>
+          </excludes>
+        </configuration>
         <executions>
           <execution>
+            <id>prepare-agent-unit</id>
             <goals>
               <goal>prepare-agent</goal>
             </goals>
             <configuration>
               <exclClassLoaders>*QuarkusClassLoader</exclClassLoaders>
-              <destFile>${project.build.directory}/jacoco-quarkus.exec</destFile>
-              <append>true</append>
+              <propertyName>jacoco.surefire.args</propertyName>
             </configuration>
           </execution>
           <execution>
-            <id>generate-code-coverage-report</id>
-            <phase>test</phase>
+            <id>prepare-agent-integration</id>
             <goals>
-              <goal>report</goal>
-              <goal>report-aggregate</goal>
+              <goal>prepare-agent-integration</goal>
             </goals>
             <configuration>
-              <includes>
-                <include>io/confluent/**</include>
-              </includes>
+              <propertyName>jacoco.failsafe.args</propertyName>
+            </configuration>
+          </execution>
+          <execution>
+            <id>report-unit-tests</id>
+            <goals>
+              <goal>report</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}/jacoco-report</outputDirectory>
+            </configuration>
+          </execution>
+          <execution>
+            <id>report-it</id>
+            <goals>
+              <goal>report-integration</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}/jacoco-report-it</outputDirectory>
+            </configuration>
+          </execution>
+          <execution>
+            <id>merge-results</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>merge</goal>
+            </goals>
+            <configuration>
+              <fileSets>
+                <fileSet>
+                  <directory>${project.build.directory}</directory>
+                  <includes>
+                    <include>*.exec</include>
+                  </includes>
+                </fileSet>
+              </fileSets>
+              <destFile>${project.build.directory}/jacoco-merged.exec</destFile>
+            </configuration>
+          </execution>
+          <execution>
+            <id>report-merged</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>report</goal>
+            </goals>
+            <configuration>
+              <dataFile>${project.build.directory}/jacoco-merged.exec</dataFile>
+              <outputDirectory>${project.build.directory}/jacoco-report-merged</outputDirectory>
             </configuration>
           </execution>
         </executions>
@@ -718,6 +773,7 @@
         <artifactId>maven-failsafe-plugin</artifactId>
         <executions>
           <execution>
+            <id>integration-test</id>
             <goals>
               <goal>integration-test</goal>
               <goal>verify</goal>
@@ -749,9 +805,10 @@
           <systemPropertyVariables>
             <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
             <!-- see https://quarkus.io/guides/tests-with-coverage#working-with-multi-module-projects -->
-            <quarkus.jacoco.data-file>${project.build.directory}/target/jacoco.exec</quarkus.jacoco.data-file>
+            <quarkus.jacoco.data-file>${project.build.directory}/jacoco-it.exec</quarkus.jacoco.data-file>
             <quarkus.jacoco.reuse-data-file>true</quarkus.jacoco.reuse-data-file>
-            <quarkus.jacoco.report-location>${project.build.directory}/target/coverage</quarkus.jacoco.report-location>
+            <quarkus.jacoco.report>false</quarkus.jacoco.report>
+            <quarkus.test.arg-line>${jacoco.failsafe.args}</quarkus.test.arg-line>
           </systemPropertyVariables>
           <environmentVariables>
             <QUARKUS_CONFIG_LOCATIONS>src/test/resources/application-nativeit.yaml</QUARKUS_CONFIG_LOCATIONS>
@@ -762,12 +819,13 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration combine.children="append">
+          <argLine>${jacoco.surefire.args}</argLine>
           <systemPropertyVariables>
             <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
             <!-- see https://quarkus.io/guides/tests-with-coverage#working-with-multi-module-projects -->
-            <quarkus.jacoco.data-file>${project.build.directory}/target/jacoco.exec</quarkus.jacoco.data-file>
+            <quarkus.jacoco.data-file>${project.build.directory}/jacoco.exec</quarkus.jacoco.data-file>
             <quarkus.jacoco.reuse-data-file>true</quarkus.jacoco.reuse-data-file>
-            <quarkus.jacoco.report-location>${project.build.directory}/target/coverage</quarkus.jacoco.report-location>
+            <quarkus.jacoco.report>false</quarkus.jacoco.report>
           </systemPropertyVariables>
         </configuration>
       </plugin>
@@ -783,6 +841,21 @@
               <goal>generate-code</goal>
               <goal>generate-code-tests</goal>
             </goals>
+          </execution>
+          <execution>
+            <id>prepare-build-integration-test</id>
+            <phase>pre-integration-test</phase>
+            <goals>
+              <goal>build</goal>
+              <goal>generate-code</goal>
+              <goal>generate-code-tests</goal>
+            </goals>
+            <configuration>
+              <systemProperties>
+                <!-- https://quarkus.io/guides/tests-with-coverage#coverage-for-integration-tests -->
+                <quarkus.package.write-transformed-bytecode-to-build-output>true</quarkus.package.write-transformed-bytecode-to-build-output>
+              </systemProperties>
+            </configuration>
           </execution>
         </executions>
       </plugin>
@@ -807,6 +880,8 @@
           </annotationProcessorPaths>
           <compilerArgs>
             <arg>-Aproject=${project.groupId}/${project.artifactId}</arg>
+            <!-- https://github.com/Randgalt/record-builder/blob/8f8f92d8d369f74c6ab63e9a60ac6153f0c0afc0/record-builder-core/src/main/java/io/soabase/recordbuilder/core/RecordBuilder.java#L264-L268 -->
+            <arg>-AaddClassRetainedGenerated=true</arg>
           </compilerArgs>
         </configuration>
       </plugin>
@@ -935,24 +1010,6 @@
             </configuration>
           </reportSet>
         </reportSets>
-      </plugin>
-      <plugin>
-        <groupId>org.jacoco</groupId>
-        <artifactId>jacoco-maven-plugin</artifactId>
-        <version>${jacoco-maven-plugin.version}</version>
-        <reportSets>
-          <reportSet>
-            <id>jacoco-report</id>
-            <reports>
-              <report>report-aggregate</report>
-            </reports>
-          </reportSet>
-        </reportSets>
-        <configuration>
-          <includes>
-            <include>io/confluent/**</include>
-          </includes>
-        </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
