@@ -164,6 +164,10 @@ public class WebsocketEndpoint {
         f.get();
       } catch (Exception e) {
         Log.errorf("Failed to send broadcast message to workspace: %s", e.getMessage());
+
+        if (e instanceof InterruptedException) {
+          Thread.currentThread().interrupt();
+        }
       }
     }
   }
@@ -274,6 +278,10 @@ public class WebsocketEndpoint {
           f.get();
         } catch (Exception e) {
           Log.errorf("Failed to send message to workspace: %s", e.getMessage());
+
+          if (e instanceof InterruptedException) {
+            Thread.currentThread().interrupt();
+          }
         }
       }
     }
@@ -451,6 +459,9 @@ public class WebsocketEndpoint {
           e.getMessage(),
           e
       );
+      if (e instanceof InterruptedException) {
+        Thread.currentThread().interrupt();
+      }
     } finally {
       try {
         // And always close the session
