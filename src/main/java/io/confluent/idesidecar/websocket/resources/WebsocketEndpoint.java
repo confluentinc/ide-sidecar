@@ -184,8 +184,6 @@ public class WebsocketEndpoint {
   @OnOpen
   public void onOpen(Session session) throws IOException {
     Log.infof("New websocket session opened, not yet considered active: %s", session.getId());
-    Log.infof("websocketEndpoint: %s", this);
-    Log.infof("websocketEndpoint: sessions %s", System.identityHashCode(sessions));
 
     // Request must have had a valid access token to pass through AccessTokenFilter,
     // so we can assume that the session is authorized.
@@ -203,7 +201,6 @@ public class WebsocketEndpoint {
    */
   @OnMessage
   public void onMessage(String messageString, Session senderSession) throws IOException {
-    Log.infof("Received message from session %s", senderSession.getId());
     var workspaceSession = sessions.get(new SessionKey(senderSession.getId()));
     if (workspaceSession == null) {
       // Strange. Shouldn't ever happen unless onOpen grossly err'd. Close the session.
@@ -229,7 +226,6 @@ public class WebsocketEndpoint {
     // Validate message.header.originator corresponds to the authorized workspace process id.
     // (messages sent from workspaces to sidecar should have the workspace's process id as
     // the originator)
-
     if (!validateOriginator(workspaceSession, m, workspaceSession.workspacePid())) {
       return;
     }
@@ -242,8 +238,7 @@ public class WebsocketEndpoint {
     );
 
     // At this time, all websocket messages received from workspaces are intended to
-    // be proxied to all the other workspaces. Do so here.
-
+    // be proxied to all the other workspaces. Do that here.
     var otherCount = sessions.size() - 1;
     if (otherCount <= 0) {
       Log.debug("No other workspaces to broadcast message to.");
@@ -257,7 +252,7 @@ public class WebsocketEndpoint {
 
       List<Future> futures = new ArrayList<>();
 
-      // Send the message to all other active workspaces, collecting the futures along
+      // Async send the message to all other active workspaces, collecting the futures along
       // the way.
       sessions
           .values()
@@ -361,10 +356,9 @@ public class WebsocketEndpoint {
 
   @OnError
   public void onError(Session session, Throwable throwable) throws IOException {
-    // May or may not actually remove -- if had not yet been authorized, it won't be in the map.
-    // (but will definitely not be in the map after this statement.)
+    // The session should be found in the map, assuming onOpen() is working properly.
+    // (but be defensive anyway)
     var existingSession = sessions.remove(new SessionKey(session.getId()));
-
     try {
       session.close();
     } finally {
@@ -447,6 +441,7 @@ public class WebsocketEndpoint {
           new MessageHeaders(MessageType.PROTOCOL_ERROR, "sidecar"),
           new ProtocolErrorBody(msg, originalMessageId)
       );
+      // Do not convert to getBasicRemote(), for some reason breaks tests.
       session.getAsyncRemote()
              .sendText(mapper.writeValueAsString(errorMessage)).get();
     } catch (IOException | InterruptedException | ExecutionException e) {

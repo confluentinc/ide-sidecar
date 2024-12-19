@@ -711,7 +711,32 @@ public class WebsocketEndpointTest {
 
     // close the session so we don't leave it hanging around polluting other tests.
     connectedWorkspace.closeWebsocket();
+  }
 
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  public void testOnError(boolean shouldFindSession) throws IOException {
+    // Connect as a workspace to establish a session, then directly call onError() with the
+    // server side session handle.
+    ConnectedWorkspace connectedWorkspace = connectWorkspace(true);
+    // Grab the first entry from the sessions map.
+    Session session = websocketEndpoint.sessions.values().iterator().next().session();
+
+    // If we're testing the case where the session is not found in the sessions map, remove it.
+    if (!shouldFindSession) {
+      websocketEndpoint.sessions.clear();
+    }
+
+    // Call onError() with the session.
+    websocketEndpoint.onError(session, new RuntimeException("test error"));
+
+    // The client-side session should be closed.
+    connectedWorkspace.waitForClose(1000);
+
+    // and the entry removed from the sessions map (if it was there to begin with).
+    if (shouldFindSession) {
+      Assertions.assertEquals(0, websocketEndpoint.sessions.size());
+    }
   }
 
   /** Connect a mock workspace process to the websocket endpoint successfully. */
