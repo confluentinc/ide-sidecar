@@ -155,9 +155,10 @@ public class WebsocketEndpoint {
    *
    * @param message the message to broadcast
    * @throws IOException              if there is an error serializing the message to JSON.
-   * @throws IllegalArgumentException if the headers of the message are not valid for broadcasting.
-   * */
-  public Multi<String> broadcast(Message message) throws IOException, IllegalArgumentException {
+   * @throws IllegalArgumentException if the headers of the message are not valid for broadcasting,
+   *                                  or if the Message is not JSONable.
+   */
+  public Multi<String> broadcast(Message message) throws IllegalArgumentException {
     return broadcast(message, WorkspaceWebsocketSession::isActive, "active");
   }
 
@@ -168,14 +169,14 @@ public class WebsocketEndpoint {
    * @param message           the message to broadcast
    * @param filter            the filter to apply to the workspace sessions
    * @param sessionsAdjective the adjective to describe the sessions in the log message.
-   * @throws IOException              if there is an error serializing the message to JSON.
-   * @throws IllegalArgumentException if the headers of the message are not valid for broadcasting.
-   * */
+   * @throws IllegalArgumentException if the headers of the message are not valid for broadcasting,
+   *                                  or if the Message is not JSONable.
+   */
   public Multi<String> broadcast(
       Message message,
       Predicate<WorkspaceWebsocketSession> filter,
       String sessionsAdjective
-  ) throws IOException, IllegalArgumentException {
+  ) throws IllegalArgumentException {
     var activeWorkspaceSessions = sessions.values().stream()
                                           .filter(filter)
                                           .toList();
@@ -187,8 +188,15 @@ public class WebsocketEndpoint {
 
     final MessageHeaders headers = validateHeadersForSidecarBroadcast(message);
 
-    // Serialize the message to JSON
-    String jsonMessage = mapper.writeValueAsString(message);
+    String jsonMessage;
+    try {
+      // Serialize the message to JSON
+      jsonMessage = mapper.writeValueAsString(message);
+    } catch (IOException e) {
+      Log.errorf("Failed to serialize message to JSON: %s", e.getMessage());
+      throw new IllegalArgumentException("Failed to serialize message to JSON", e);
+    }
+
     Log.debugf(
         "Broadcasting %d char message, id %s to all workspaces",
         jsonMessage.length(),
@@ -196,6 +204,7 @@ public class WebsocketEndpoint {
     );
 
     return broadcast(jsonMessage, headers.id(), filter, sessionsAdjective);
+
   }
 
   /**
@@ -386,11 +395,7 @@ public class WebsocketEndpoint {
     Log.infof("Session %s HELLO as pid %s authorized and marked active.", workspaceSession.key(), workspacePid);
 
     // Announce to all  workspaces (inclusive) that the active workspace count has changed.
-    try {
-      broadcastWorkspacesChanged();
-    } catch (IOException e) {
-      Log.errorf("Failed to broadcast workspace added message: %s", e.getMessage());
-    }
+    broadcastWorkspacesChanged();
   }
 
   @OnError
@@ -419,11 +424,7 @@ public class WebsocketEndpoint {
 
     if (existing != null && existing.isActive()) {
       // was an active workspace session. Announce to all other workspaces the list has changed
-      try {
-        broadcastWorkspacesChanged();
-      } catch (IOException e) {
-        Log.errorf("Failed to broadcast workspace removed message: %s", e.getMessage());
-      }
+      broadcastWorkspacesChanged();
     }
   }
 
@@ -431,7 +432,7 @@ public class WebsocketEndpoint {
    * Send a message to all workspaces that the count of authorized workspaces has changed.
    * Used whenever a workspace is added or removed.
    */
-  private void broadcastWorkspacesChanged() throws IOException {
+  private void broadcastWorkspacesChanged()  {
     // changedWorkspace was either just added or removed. Inform all workspaces about the
     // new connected/authorized workspace count.
 
