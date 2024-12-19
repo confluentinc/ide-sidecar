@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import io.confluent.idesidecar.restapi.application.KnownWorkspacesBean.WorkspacePid;
 import io.confluent.idesidecar.restapi.testutil.MockWorkspaceProcess;
 import jakarta.inject.Provider;
 import org.junit.jupiter.api.Test;
@@ -19,21 +20,21 @@ public class KnownWorkspacesBeanTest {
     var knownWorkspacesBean = new KnownWorkspacesBean();
 
     // Add a workspace PID
-    var workspacePid = 123L;
-    var newlyAdded = knownWorkspacesBean.addWorkspacePID(workspacePid);
+    var workspacePid = new WorkspacePid(123L);
+    var newlyAdded = knownWorkspacesBean.addWorkspacePid(workspacePid);
     assertTrue(newlyAdded);
 
     // Add the same workspace PID again
-    newlyAdded = knownWorkspacesBean.addWorkspacePID(workspacePid);
+    newlyAdded = knownWorkspacesBean.addWorkspacePid(workspacePid);
     assertFalse(newlyAdded);
 
     // Add a different workspace PID
-    workspacePid = 456L;
-    newlyAdded = knownWorkspacesBean.addWorkspacePID(workspacePid);
+    workspacePid = new WorkspacePid(456L);
+    newlyAdded = knownWorkspacesBean.addWorkspacePid(workspacePid);
     assertTrue(newlyAdded);
 
     // Add the same workspace PID again
-    newlyAdded = knownWorkspacesBean.addWorkspacePID(workspacePid);
+    newlyAdded = knownWorkspacesBean.addWorkspacePid(workspacePid);
     assertFalse(newlyAdded);
   }
 
@@ -52,7 +53,7 @@ public class KnownWorkspacesBeanTest {
     try {
       var mockWorkspaceProcess = new MockWorkspaceProcess();
 
-      knownWorkspacesBean.addWorkspacePID(mockWorkspaceProcess.pid);
+      knownWorkspacesBean.addWorkspacePid(mockWorkspaceProcess.pid);
       // Process is still alive, so we should report true.
       assertTrue(knownWorkspacesBean.hasLivingWorkspaceClients());
 
@@ -89,7 +90,7 @@ public class KnownWorkspacesBeanTest {
       // check again. We still should not call shutdown yet.
       var mockWorkspaceProcess = new MockWorkspaceProcess();
 
-      knownWorkspacesBean.addWorkspacePID(mockWorkspaceProcess.pid);
+      knownWorkspacesBean.addWorkspacePid(mockWorkspaceProcess.pid);
 
       // Should never call shutdown, as we have a workspace process alive (or was not enabled).
       knownWorkspacesBean.possiblyShutdownIfNoReasonToExist();

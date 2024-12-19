@@ -1,6 +1,7 @@
 package io.confluent.idesidecar.restapi.filters;
 
 import io.confluent.idesidecar.restapi.application.KnownWorkspacesBean;
+import io.confluent.idesidecar.restapi.application.KnownWorkspacesBean.WorkspacePid;
 import io.confluent.idesidecar.restapi.application.SidecarAccessTokenBean;
 import io.confluent.idesidecar.restapi.testutil.MockWorkspaceProcess;
 import io.quarkus.test.junit.QuarkusTest;
@@ -53,7 +54,7 @@ public class WorkspaceProcessIdFilterTest {
 
         // Should now know of mockWorkspaceProcesses[0]'s pid.
         var knownWorkspacePids = getKnownWorkspacePidsFromBean();
-        assertTrue(knownWorkspacePids.contains(Long.valueOf(mockWorkspaceProcesses[0].pid_string)));
+        assertTrue(knownWorkspacePids.contains(mockWorkspaceProcesses[0].pid));
         // And the process is still alive, so ...
         assertTrue(knownWorkspacesBean.hasLivingWorkspaceClients());
 
@@ -69,8 +70,7 @@ public class WorkspaceProcessIdFilterTest {
                 .assertThat()
                 .statusCode(200);
 
-            assertTrue(knownWorkspacePids.contains(
-                Long.valueOf(mockWorkspaceProcess.pid_string)));
+            assertTrue(knownWorkspacePids.contains(mockWorkspaceProcess.pid));
         }
 
         // They're all alive still so ...
@@ -122,7 +122,7 @@ public class WorkspaceProcessIdFilterTest {
         // Check that the pid was not added to the known workspaces, that the bad auth header
         // rejected the request first, by subtle inference. Add it directly, but expect the return
         // result to be true, indicating was just now newly added.
-        assertTrue(knownWorkspacesBean.addWorkspacePID(rejectedPid));
+        assertTrue(knownWorkspacesBean.addWorkspacePid(new WorkspacePid(rejectedPid)));
     }
 
     /**
@@ -146,12 +146,12 @@ public class WorkspaceProcessIdFilterTest {
      * Get at the knownWorkspacesBean's knownWorkspacePIDs field through cheating reflection
      * (That functionality not needed by any external business methods.)
      */
-    private Set<Long> getKnownWorkspacePidsFromBean() {
+    private Set<WorkspacePid> getKnownWorkspacePidsFromBean() {
         try {
             Field knownWorkspacePIDsField = knownWorkspacesBean.getClass()
-                .getDeclaredField("knownWorkspacePIDs");
+                .getDeclaredField("knownWorkspacePids");
             knownWorkspacePIDsField.setAccessible(true);
-            return (Set<Long>) knownWorkspacePIDsField.get(knownWorkspacesBean);
+            return (Set<WorkspacePid>) knownWorkspacePIDsField.get(knownWorkspacesBean);
         } catch (NoSuchFieldException | IllegalAccessException e) {
             throw new RuntimeException(e);
         }

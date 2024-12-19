@@ -1,6 +1,7 @@
 package io.confluent.idesidecar.restapi.filters;
 
 import io.confluent.idesidecar.restapi.application.KnownWorkspacesBean;
+import io.confluent.idesidecar.restapi.application.KnownWorkspacesBean.WorkspacePid;
 import io.quarkus.logging.Log;
 import io.quarkus.vertx.web.RouteFilter;
 import io.vertx.ext.web.RoutingContext;
@@ -39,7 +40,7 @@ public class WorkspaceProcessIdFilter {
         return;
       }
 
-      boolean newlyAdded = knownWorkspacesBean.addWorkspacePID(workspacePidLong);
+      boolean newlyAdded = knownWorkspacesBean.addWorkspacePid(new WorkspacePid(workspacePidLong));
       if (newlyAdded) {
         Log.infof("Added workspace process id %s to known workspaces", workspacePid);
       }

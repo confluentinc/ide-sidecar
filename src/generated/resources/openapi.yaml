@@ -1185,8 +1185,8 @@ components:
           - UP
           - DOWN
           type: string
+        name:
+          type: string
         data:
           type: object
           nullable: true
-        name:
-          type: string
