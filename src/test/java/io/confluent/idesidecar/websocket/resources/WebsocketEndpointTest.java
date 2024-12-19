@@ -29,6 +29,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Assertions;
@@ -80,6 +81,7 @@ public class WebsocketEndpointTest {
     @Override
     public void onMessage(String messageString)
     {
+      Log.info("Test client received message: " + messageString);
       rawMessageStrings.add(messageString);
       try {
         // Deserialize json -> Message, add to our list of messages so that the main
@@ -91,7 +93,7 @@ public class WebsocketEndpointTest {
       }
     }
 
-    /** Empty out any recieved messages */
+    /** Empty out any received messages */
     public void clear() {
       messages.clear();
       rawMessageStrings.clear();
@@ -162,16 +164,25 @@ public class WebsocketEndpointTest {
     /**
      * Send an encoded message to the websocket endpoint.
      */
-    public void send(Message message) throws IOException {
+    public void send(Message message)  {
       ObjectMapper mapper = new ObjectMapper();
-      session.getBasicRemote().sendText(mapper.writeValueAsString(message));
+      try {
+        session.getAsyncRemote().sendText(mapper.writeValueAsString(message)).get();
+        Log.info("Test client sent message: " + message);
+      } catch (IOException | ExecutionException | InterruptedException e) {
+        throw new RuntimeException(e);
+      }
     }
 
     /**
      * Send an arbitrary string message to the websocket endpoint.
      */
-    public void send(String message) throws IOException {
-      session.getBasicRemote().sendText(message);
+    public void send(String message)  {
+      try {
+        session.getAsyncRemote().sendText(message).get();
+      }  catch (ExecutionException | InterruptedException e) {
+        throw new RuntimeException(e);
+      }
     }
 
     /**
@@ -296,11 +307,7 @@ public class WebsocketEndpointTest {
         new DynamicMessageBody(Map.of("foonly", 3))
     );
 
-    try {
-      firstWorkspace.send(broadcastMessage);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    firstWorkspace.send(broadcastMessage);
 
     // The second workspace should receive that message.
     message = secondWorkspace.waitForMessageOfType(MessageType.UNKNOWN, 1000);
@@ -321,11 +328,7 @@ public class WebsocketEndpointTest {
         new DynamicMessageBody(Map.of("foonly", 3))
     );
 
-    try {
-      secondWorkspace.send(broadcastMessage);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    secondWorkspace.send(broadcastMessage);
 
     // Should not receive any messages.
 
@@ -344,7 +347,7 @@ public class WebsocketEndpointTest {
     MockWorkspaceProcess mockWorkspaceProcess = new MockWorkspaceProcess();
 
     // known in the set of workspace ids.
-    getKnownWorkspacePidsFromBean().add(Long.valueOf(mockWorkspaceProcess.pid_string));
+    getKnownWorkspacePidsFromBean().add(mockWorkspaceProcess.pid);
 
     // When the workspace process tries to connect to the websocket endpoint without the access token header ...
     RestAssured.given()
@@ -363,7 +366,7 @@ public class WebsocketEndpointTest {
     // Make it smell as if the handshake has happened.
     setAuthToken("valid-token");
 
-    getKnownWorkspacePidsFromBean().add(Long.valueOf(mockWorkspaceProcess.pid_string));
+    getKnownWorkspacePidsFromBean().add(mockWorkspaceProcess.pid);;
 
     // When the workspace process tries to connect to the websocket endpoint with an invalid access token header,
     // but a known workspace id, it should fail ...
@@ -440,7 +443,7 @@ public class WebsocketEndpointTest {
     Message errorMessage = connectedWorkspace.waitForMessageOfType(MessageType.PROTOCOL_ERROR, 1000);
     var errorString = ((ProtocolErrorBody) errorMessage.body()).error();
 
-    var expectedPrefix = String.format("Workspace %d sent message with incorrect originator value: 1234. Removing and closing session", connectedWorkspace.processId());
+    var expectedPrefix = String.format("Workspace %s sent message with incorrect originator value: 1234. Removing and closing session", connectedWorkspace.processId());
     Assertions.assertTrue(
         errorString.startsWith(expectedPrefix)
     );
@@ -469,7 +472,7 @@ public class WebsocketEndpointTest {
     var errorString = ((ProtocolErrorBody) errorMessage.body()).error();
 
     Assertions.assertEquals(
-        "handleHelloMessage: Unknown workspace id 1234. Closing session.",
+        "handleHelloMessage: Unknown workspace pid 1234. Closing session.",
         errorString
     );
 
@@ -502,6 +505,38 @@ public class WebsocketEndpointTest {
     ProtocolErrorBody errorBody = (ProtocolErrorBody) errorMessage.body();
     assert errorBody.error().contains("originator");
     assert errorBody.originalMessageId().equals("message-id-here");
+
+    // Should then be closed server-side.
+    connectedWorkspace.waitForClose(1000);
+  }
+
+  @Test
+  public void testOnMessageHandlingUnknownSession() throws IOException{
+    // Test the case where a message is received from a session that is not known to the sidecar.
+    // (which should be impossible, but we should handle it gracefully.)
+    ConnectedWorkspace connectedWorkspace = connectWorkspace(true);
+
+    // wait for the workspace count change message.
+    connectedWorkspace.waitForMessageOfType(MessageType.WORKSPACE_COUNT_CHANGED, 1000);
+
+    // Now reach in and remove this session from the known sessions map, as if
+    // some other code path had made a mistake.
+    websocketEndpoint.sessions.clear();
+
+    // Now send a message from the workspace, should hit the first error block
+    // in onMessage();
+    Message message = new Message(
+        new MessageHeaders(MessageType.UNKNOWN, connectedWorkspace.processIdString(), "message-id-here"),
+        new DynamicMessageBody(Map.of("foonly", 3))
+    );
+
+    connectedWorkspace.send(message);
+
+    // should get a PROTOCOL_ERROR message back from the sidecar complaining about 'originator'
+    // and the session should be closed.
+    Message errorMessage = connectedWorkspace.waitForMessageOfType(MessageType.PROTOCOL_ERROR, 5000);
+    ProtocolErrorBody errorBody = (ProtocolErrorBody) errorMessage.body();
+    assert errorBody.error().contains("originator");
 
     // Should then be closed server-side.
     connectedWorkspace.waitForClose(1000);
@@ -609,9 +644,8 @@ public class WebsocketEndpointTest {
     // pause a bit to let the sidecar try to send the error message.
     Thread.sleep(1000);
 
-    // both sessions and purgatory should be empty.
+    // Sessions should be empty.
     Assertions.assertEquals(0, websocketEndpoint.sessions.size());
-    Assertions.assertEquals(0, websocketEndpoint.purgatorySessions.size());
   }
 
   /** Connect a mock workspace process to the websocket endpoint successfully. */
@@ -626,7 +660,7 @@ public class WebsocketEndpointTest {
     TestWebsocketClientConfigurator.setAccessToken(expectedTokenValue);
 
     // And known in the set of workspace ids.
-    getKnownWorkspacePidsFromBean().add(Long.valueOf(mockWorkspaceProcess.pid_string));
+    getKnownWorkspacePidsFromBean().add(mockWorkspaceProcess.pid);
 
     Log.infof("Test: ConnectedWorkspace %s connecting to websocket.", mockWorkspaceProcess.pid_string);
     Session session = null;
@@ -652,11 +686,7 @@ public class WebsocketEndpointTest {
           new MessageHeaders(MessageType.WORKSPACE_HELLO, mockWorkspaceProcess.pid_string, "message-id-here"),
           new HelloBody(mockWorkspaceProcess.pid.id())
       );
-      try {
-        workspace.send(helloMessage);
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
+      workspace.send(helloMessage);
     }
 
     return workspace;
@@ -691,12 +721,12 @@ public class WebsocketEndpointTest {
    * Get at the knownWorkspacesBean's knownWorkspacePIDs field through cheating reflection
    * (That functionality not needed by any external business methods.)
    */
-  private Set<Long> getKnownWorkspacePidsFromBean() {
+  private Set<WorkspacePid> getKnownWorkspacePidsFromBean() {
     try {
       Field knownWorkspacePIDsField = knownWorkspacesBean.getClass()
-          .getDeclaredField("knownWorkspacePIDs");
+          .getDeclaredField("knownWorkspacePids");
       knownWorkspacePIDsField.setAccessible(true);
-      return (Set<Long>) knownWorkspacePIDsField.get(knownWorkspacesBean);
+      return (Set<WorkspacePid>) knownWorkspacePIDsField.get(knownWorkspacesBean);
     } catch (NoSuchFieldException | IllegalAccessException e) {
       throw new RuntimeException(e);
     }
