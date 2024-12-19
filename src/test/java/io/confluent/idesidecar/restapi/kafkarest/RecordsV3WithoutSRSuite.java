@@ -36,7 +36,6 @@ public interface RecordsV3WithoutSRSuite extends RecordsV3BaseSuite {
 
   @CartesianTest
   @CartesianTest.MethodFactory("validSchemalessKeysAndValues")
-  @RetryingTest(3)
   default void testProduceAndConsumeSchemalessData(RecordData key, RecordData value) {
     produceAndConsume(key, value);
   }
