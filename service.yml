@@ -28,3 +28,8 @@ sonarqube:
     - "**/*.pb.*"
     - "**/mk-files/**/*"
     - "**/test/**/*"
+    - "**/static/templates/**/*"
+  coverage_reports:
+    - "**/jacoco-report/jacoco.xml"
+    - "**/jacoco-report-it/jacoco.xml"
+  main_branch: main
