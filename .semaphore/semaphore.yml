@@ -34,23 +34,35 @@ global_job_config:
         - make store-test-results-to-semaphore
 
 blocks:
-  - name: "Build and Test"
+  - name: "Build JARs and Unit Test"
+    dependencies: []
+    task:
+      prologue:
+        commands:
+          - sem-version java 21
+      epilogue:
+        always:
+          commands:
+            - emit-sonarqube-data --run_only_sonar_scan
+      jobs:
+        - name: "Build JARs and Unit Test"
+          commands:
+            - make build
+            - make test
+
+  - name: "Build Native Executable and Test"
     dependencies: []
     task:
       prologue:
         commands:
           - sem-version java 21
       jobs:
-        - name: "Build JARs and Unit Test"
-          commands:
-            - make build
-            - make test
         - name: "Build Native Executable and Test"
           commands:
             - make mvn-verify-native-executable
 
   - name: "Release"
-    dependencies: ["Build and Test"]
+    dependencies: ["Build JARs and Unit Test", "Build Native Executable and Test"]
     run:
       when: "branch =~ '.*'"
     task:
