@@ -1,6 +1,5 @@
 package io.confluent.idesidecar.websocket.messages;
 
-
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
@@ -25,16 +24,22 @@ public enum MessageType {
    */
   WORKSPACE_HELLO,
 
-  /** Message sent by the sidecar to all workspaces when count of connected workspaces
-   * (that have sent proper WORKSPACE_HELLO messages) has increased or decreased. */
+  /**
+   * Message sent by the sidecar to all workspaces when count of connected workspaces
+   * (that have sent proper WORKSPACE_HELLO messages) has increased or decreased.
+   */
   WORKSPACE_COUNT_CHANGED,
 
-  /** Message sent by sidecar to a workspace when sidecar has noticed a websocket messaging
-   * error and is going to disconnect its end of the websocket. */
+  /**
+   * Message sent by sidecar to a workspace when sidecar has noticed a websocket messaging
+   * error and is going to disconnect its end of the websocket.
+   */
   PROTOCOL_ERROR,
 
-  /** Placeholder for unknown-to-sidecar message types for messages intended to be
-   * for extension -> extension messaging via sidecar. */
+  /**
+   * Placeholder for unknown-to-sidecar message types for messages intended to be
+   * for extension -> extension messaging via sidecar.
+   */
   UNKNOWN;
 
   /**
