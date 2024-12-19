@@ -37,6 +37,12 @@ public enum MessageType {
   PROTOCOL_ERROR,
 
   /**
+   * Message sent by sidecar to workspaces when a connection has been created, changed, deleted,
+   * or its status has changed.
+   */
+  CONNECTION_EVENT,
+
+  /**
    * Placeholder for unknown-to-sidecar message types for messages intended to be
    * for extension -> extension messaging via sidecar.
    */
@@ -49,6 +55,7 @@ public enum MessageType {
       WORKSPACE_HELLO, HelloBody.class,
       WORKSPACE_COUNT_CHANGED, WorkspacesChangedBody.class,
       PROTOCOL_ERROR, ProtocolErrorBody.class,
+      CONNECTION_EVENT, ConnectionEventBody.class,
       UNKNOWN, DynamicMessageBody.class
   );
 
