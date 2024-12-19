@@ -1,6 +1,7 @@
 package io.confluent.idesidecar.restapi.kafkarest;
 
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
+import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -13,6 +14,7 @@ import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequest;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequestData;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequestBuilder;
 import io.confluent.kafka.schemaregistry.client.rest.entities.Schema;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -143,8 +145,8 @@ public interface RecordsV3BaseSuite extends ITSuite {
     // Create topic with a single partition
     createTopic(topicName);
 
-    Schema keySchema = null, valueSchema = null;
-    String keySubject = null, valueSubject = null;
+    Schema keySchema, valueSchema;
+    String keySubject, valueSubject;
 
     // Create key schema if not null
     if (key.hasSchema()) {
@@ -154,6 +156,9 @@ public interface RecordsV3BaseSuite extends ITSuite {
           key.schemaFormat().name(),
           key.rawSchema()
       );
+    } else {
+      keySubject = null;
+      keySchema = null;
     }
 
     // Create value schema if not null
@@ -164,41 +169,55 @@ public interface RecordsV3BaseSuite extends ITSuite {
           value.schemaFormat().name(),
           value.rawSchema()
       );
+    } else {
+      valueSubject = null;
+      valueSchema = null;
     }
 
     // Produce record to topic
-    var resp = produceRecordThen(
-        topicName,
-        ProduceRequest
-            .builder()
-            .partitionId(null)
-            .key(
-                ProduceRequestData
-                    .builder()
-                    .schemaVersion(Optional.ofNullable(keySchema).map(Schema::getVersion).orElse(null))
-                    .data(key.data())
-                    .subject(keySubject)
-                    .subjectNameStrategy(
-                        Optional.ofNullable(key.subjectNameStrategy).map(Enum::toString).orElse(null)
-                    )
-                    .build()
-            )
-            .value(
-                ProduceRequestData
-                    .builder()
-                    .schemaVersion(Optional.ofNullable(valueSchema).map(Schema::getVersion).orElse(null))
-                    .data(value.data())
-                    .subject(valueSubject)
-                    .subjectNameStrategy(
-                        Optional.ofNullable(value.subjectNameStrategy).map(Enum::toString).orElse(null)
-                    )
-                    .build()
-            )
-            .build()
-    );
+    var produceRequest = ProduceRequest
+        .builder()
+        .partitionId(null)
+        .key(
+            ProduceRequestData
+                .builder()
+                .schemaVersion(Optional.ofNullable(keySchema).map(Schema::getVersion).orElse(null))
+                .data(key.data())
+                .subject(keySubject)
+                .subjectNameStrategy(
+                    Optional.ofNullable(key.subjectNameStrategy).map(Enum::toString).orElse(null)
+                )
+                .build()
+        )
+        .value(
+            ProduceRequestData
+                .builder()
+                .schemaVersion(Optional.ofNullable(valueSchema).map(Schema::getVersion).orElse(null))
+                .data(value.data())
+                .subject(valueSubject)
+                .subjectNameStrategy(
+                    Optional.ofNullable(value.subjectNameStrategy).map(Enum::toString).orElse(null)
+                )
+                .build()
+        )
+        .build();
+
+    // Send produce request
+    var resp = produceRecordThen(topicName, produceRequest);
 
     if (key.data() != null || value.data() != null) {
-      resp.statusCode(200);
+      // Retry if 404
+      if (resp.extract().statusCode() == 404) {
+        // Keep trying until 200
+        await()
+            .atMost(Duration.ofSeconds(10))
+            .pollInterval(Duration.ofMillis(500))
+            .untilAsserted(() -> {
+              var retry = produceRecordThen(topicName, produceRequest);
+              assertEquals(200, retry.extract().statusCode());
+            });
+      }
+
       assertTopicHasRecord(key, value, topicName);
     } else {
       // A "SadPath" test in a "HappyPath" test?! Blasphemy!

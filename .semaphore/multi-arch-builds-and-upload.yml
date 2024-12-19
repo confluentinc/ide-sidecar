@@ -13,11 +13,13 @@ global_job_config:
       - checkout
       - make ci-bin-sem-cache-restore
       - make docker-login-ci
+      - make load-cached-docker-images
   epilogue:
     always:
       commands:
-        - make ci-bin-sem-cache-store
         - make store-test-results-to-semaphore
+        - make ci-bin-sem-cache-store
+        - make cache-docker-images
 
 blocks:
   - name: "Build Native Executable (MacOS AMD64)"

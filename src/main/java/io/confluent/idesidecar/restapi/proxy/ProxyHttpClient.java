@@ -1,24 +1,37 @@
 package io.confluent.idesidecar.restapi.proxy;
 
 import io.confluent.idesidecar.restapi.exceptions.ProcessorFailedException;
+import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
 import io.confluent.idesidecar.restapi.util.WebClientFactory;
 import io.vertx.core.Future;
+import io.vertx.core.Vertx;
+import io.vertx.ext.web.client.WebClient;
 
 /**
  * HTTP client used when proxying requests to the Kafka REST and Schema Registry APIs.
  */
-public class ProxyHttpClient<T extends ProxyContext> {
+public class ProxyHttpClient<T extends ClusterProxyContext> {
   WebClientFactory webClientFactory;
+  Vertx vertx;
 
-  public ProxyHttpClient(WebClientFactory webClientFactory) {
+  public ProxyHttpClient(WebClientFactory webClientFactory, Vertx vertx) {
     this.webClientFactory = webClientFactory;
+    this.vertx = vertx;
   }
 
   public Future<T> send(T context) {
-    return webClientFactory.getWebClient()
-        .requestAbs(context.proxyRequestMethod, context.proxyRequestAbsoluteUrl)
-        .putHeaders(context.proxyRequestHeaders)
-        .sendBuffer(context.proxyRequestBody)
+    var options = webClientFactory.getDefaultWebClientOptions();
+    if (context.getTruststoreOptions() != null) {
+      options.setTrustStoreOptions(context.getTruststoreOptions());
+    }
+    if (context.getKeystoreOptions() != null) {
+      options.setKeyStoreOptions(context.getKeystoreOptions());
+    }
+
+    return WebClient.create(vertx, options)
+        .requestAbs(context.getProxyRequestMethod(), context.getProxyRequestAbsoluteUrl())
+        .putHeaders(context.getProxyRequestHeaders())
+        .sendBuffer(context.getProxyRequestBody())
         .compose(
             // If success, update context and pass it to the next processor
             // Success means we were able to make a call to the server & we got a response.
