@@ -149,7 +149,7 @@ public class WebsocketEndpoint {
    * Map of all workspace sessions (valid or not), keyed by the websocket
    * session id wrapped as SessionKey.
    */
-  Map<SessionKey, WorkspaceWebsocketSession> sessions = new ConcurrentHashMap<>();
+  final Map<SessionKey, WorkspaceWebsocketSession> sessions = new ConcurrentHashMap<>();
 
   /**
    * Authority on the known workspaces in the system. Used to validate workspace ids.
@@ -322,7 +322,7 @@ public class WebsocketEndpoint {
     broadcast(
         messageString,
         m.id(),
-        wws -> wws.session().isOpen() && wws.isActive() && wws.workspacePid() != workspaceSession.workspacePid(),
+        wws -> wws.session().isOpen() && wws.isActive() && !wws.workspacePid().equals(workspaceSession.workspacePid()),
         "other"
     );
   }
