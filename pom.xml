@@ -801,7 +801,10 @@
           <threadCount>10</threadCount>
           <systemPropertyVariables>
             <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
-            <maven.home>${maven.home}</maven.home>
+            <!-- see https://quarkus.io/guides/tests-with-coverage#working-with-multi-module-projects -->
+            <quarkus.jacoco.data-file>${project.build.directory}/jacoco-it.exec</quarkus.jacoco.data-file>
+            <quarkus.jacoco.reuse-data-file>true</quarkus.jacoco.reuse-data-file>
+            <quarkus.jacoco.report>false</quarkus.jacoco.report>
             <quarkus.test.arg-line>${jacoco.failsafe.args}</quarkus.test.arg-line>
             <!-- https://quarkus.io/guides/tests-with-coverage#coverage-for-integration-tests -->
           </systemPropertyVariables>
@@ -816,9 +819,11 @@
         <configuration combine.children="append">
           <argLine>${jacoco.surefire.args}</argLine>
           <systemPropertyVariables>
-            <exclClassLoaders>*QuarkusClassLoader</exclClassLoaders>
             <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
-            <maven.home>${maven.home}</maven.home>
+            <!-- see https://quarkus.io/guides/tests-with-coverage#working-with-multi-module-projects -->
+            <quarkus.jacoco.data-file>${project.build.directory}/jacoco.exec</quarkus.jacoco.data-file>
+            <quarkus.jacoco.reuse-data-file>true</quarkus.jacoco.reuse-data-file>
+            <quarkus.jacoco.report>false</quarkus.jacoco.report>
           </systemPropertyVariables>
         </configuration>
       </plugin>
