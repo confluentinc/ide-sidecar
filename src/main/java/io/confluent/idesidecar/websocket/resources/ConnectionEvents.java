@@ -8,14 +8,16 @@ import io.confluent.idesidecar.websocket.messages.Message;
 import io.confluent.idesidecar.websocket.messages.MessageHeaders;
 import io.confluent.idesidecar.websocket.messages.MessageType;
 import io.quarkus.logging.Log;
-import jakarta.enterprise.context.ApplicationScoped;
+import io.quarkus.runtime.Startup;
 import jakarta.enterprise.event.ObservesAsync;
 import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 /**
  * Application bean that broadcasts connection-related events to all workspaces.
  */
-@ApplicationScoped
+@Startup
+@Singleton
 public class ConnectionEvents {
 
   @Inject
