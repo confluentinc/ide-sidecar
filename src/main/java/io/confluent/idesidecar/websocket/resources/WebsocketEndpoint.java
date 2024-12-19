@@ -16,32 +16,26 @@ import io.quarkus.logging.Log;
 import io.smallrye.common.constraint.Nullable;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
-import io.vertx.core.CompositeFuture;
 import jakarta.inject.Singleton;
-import jakarta.validation.constraints.NotNull;
-import java.awt.*;
-import java.io.IOException;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.ConcurrentHashMap;
 import jakarta.inject.Inject;
+import jakarta.validation.constraints.NotNull;
 import jakarta.websocket.OnClose;
 import jakarta.websocket.OnError;
 import jakarta.websocket.OnMessage;
 import jakarta.websocket.OnOpen;
 import jakarta.websocket.Session;
 import jakarta.websocket.server.ServerEndpoint;
+import java.io.IOException;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
 
 /**
  * Websocket endpoint for "control plane" variety async messaging between sidecar and workspaces,
@@ -80,9 +74,9 @@ public class WebsocketEndpoint {
 
     /**
      * Return a new workspace session instance which knows its workspace pid, and thereby
-     * smells 'active'.
+     * is 'active'.
      */
-    public WorkspaceWebsocketSession makeActive(WorkspacePid workspacePid) {
+    public WorkspaceWebsocketSession buildActive(WorkspacePid workspacePid) {
       return new WorkspaceWebsocketSession(this.session, workspacePid, this.createdAt);
     }
 
@@ -412,7 +406,7 @@ public class WebsocketEndpoint {
     // All good! Upgrade the session in the map to an active workspace session.
     sessions.put(
         workspaceSession.key(),
-        workspaceSession.makeActive(workspacePid)
+        workspaceSession.buildActive(workspacePid)
     );
     Log.infof("Session %s HELLO as pid %s authorized and marked active.", workspaceSession.key(), workspacePid);
 
@@ -464,7 +458,7 @@ public class WebsocketEndpoint {
     }
 
     var message = new Message(
-        new MessageHeaders(MessageType.WORKSPACE_COUNT_CHANGED, "sidecar"),
+        new MessageHeaders(MessageType.WORKSPACE_COUNT_CHANGED),
         new WorkspacesChangedBody(this.sessions.size())
     );
 
@@ -532,7 +526,7 @@ public class WebsocketEndpoint {
     Log.error(msg);
     try {
       var errorMessage = new Message(
-          new MessageHeaders(MessageType.PROTOCOL_ERROR, "sidecar"),
+          new MessageHeaders(MessageType.PROTOCOL_ERROR),
           new ProtocolErrorBody(msg, originalMessageId)
       );
       // Do not convert to getBasicRemote(), for some reason breaks tests.
@@ -540,10 +534,10 @@ public class WebsocketEndpoint {
              .sendText(mapper.writeValueAsString(errorMessage)).get();
     } catch (IOException | InterruptedException | ExecutionException e) {
       Log.errorf(
+          e,
           "Unable to send error message to session %s: %s",
           session.getId(),
-          e.getMessage(),
-          e
+          e.getMessage()
       );
       if (e instanceof InterruptedException) {
         Thread.currentThread().interrupt();
@@ -554,10 +548,10 @@ public class WebsocketEndpoint {
         session.close();
       } catch (IOException e) {
         Log.errorf(
+            e,
             "Unable to close session %s: %s",
             session.getId(),
-            e.getMessage(),
-            e
+            e.getMessage()
         );
       }
     }
@@ -573,7 +567,7 @@ public class WebsocketEndpoint {
   static MessageHeaders validateHeadersForSidecarBroadcast(Message outboundMessage) {
     MessageHeaders headers = outboundMessage.headers();
 
-    if (!headers.originator().equals("sidecar")) {
+    if (!headers.originatedBySidecar()) {
       Log.errorf(
           "Message id %s is not originator=sidecar message, cannot broadcast.",
           headers.id()

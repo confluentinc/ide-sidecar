@@ -1,9 +1,9 @@
 package io.confluent.idesidecar.websocket.messages;
 
-import static org.junit.Assert.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.HashSet;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class MessageTypeTest {
@@ -15,9 +15,15 @@ public class MessageTypeTest {
   @Test
   public void testBodyClass() {
     var seenClasses = new HashSet<Class<? extends MessageBody>>();
-    for (MessageType messageType : MessageType.values()) {
-      Assertions.assertNotEquals(null, messageType.bodyClass());
-      Assertions.assertNotEquals(true, seenClasses.contains(messageType.bodyClass()));
+    for (var messageType : MessageType.values()) {
+      assertNotNull(
+          messageType.bodyClass(),
+          "Expected body class to be non-null for MessageType: " + messageType
+      );
+      assertFalse(
+          seenClasses.contains(messageType.bodyClass()),
+          "Expected body class to be unique for MessageType: " + messageType
+      );
       seenClasses.add(messageType.bodyClass());
     }
   }
