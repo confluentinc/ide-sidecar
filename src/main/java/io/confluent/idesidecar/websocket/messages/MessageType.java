@@ -17,10 +17,12 @@ import java.util.Map;
 @JsonDeserialize(using = MessageType.MessageTypeDeserializer.class)
 public enum MessageType {
 
-  /** Message sent by the workspace to the sidecar when it first connects, combined with
+  /**
+   * Message sent by the workspace to the sidecar when it first connects, combined with
    * a HelloBody body payload. Receipt of this message (containing a valid workspace id
    * in the body) is what will mark this as a good session and cause an increase in sidecar's
-   * workspace count. */
+   * workspace count.
+   */
   WORKSPACE_HELLO,
 
   /** Message sent by the sidecar to all workspaces when count of connected workspaces

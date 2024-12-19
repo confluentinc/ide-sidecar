@@ -8,10 +8,11 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
  * that the client is ready to go. Sidecar crosschecks the workspace (process) id, then stores the
  * websocket session into its map of happy sessions and then announces the connected workspace
  * count change to everyone.
- * **/
+ *
+ * @param workspaceId The newly connected workspace id.
+ */
 @RegisterForReflection
 public record HelloBody (
-    /* The newly connected workspace id. **/
     @JsonProperty("workspace_id") long workspaceId
 ) implements MessageBody {
 }
