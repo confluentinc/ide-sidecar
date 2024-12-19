@@ -1,6 +1,7 @@
 package io.confluent.idesidecar.restapi.proxy;
 
 import io.confluent.idesidecar.restapi.exceptions.ProcessorFailedException;
+import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
 import io.confluent.idesidecar.restapi.util.WebClientFactory;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
@@ -22,6 +23,9 @@ public class ProxyHttpClient<T extends ClusterProxyContext> {
     var options = webClientFactory.getDefaultWebClientOptions();
     if (context.getTruststoreOptions() != null) {
       options.setTrustStoreOptions(context.getTruststoreOptions());
+    }
+    if (context.getKeystoreOptions() != null) {
+      options.setKeyStoreOptions(context.getKeystoreOptions());
     }
 
     return WebClient.create(vertx, options)

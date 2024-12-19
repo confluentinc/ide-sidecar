@@ -25,17 +25,24 @@ import io.confluent.idesidecar.restapi.credentials.BasicCredentials;
 import io.confluent.idesidecar.restapi.credentials.Password;
 import io.confluent.idesidecar.restapi.exceptions.Failure;
 import io.confluent.idesidecar.restapi.exceptions.Failure.Error;
-import io.confluent.idesidecar.restapi.models.*;
+import io.confluent.idesidecar.restapi.models.CollectionMetadata;
+import io.confluent.idesidecar.restapi.models.Connection;
+import io.confluent.idesidecar.restapi.models.ConnectionMetadata;
+import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.CCloudConfig;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
-import io.confluent.idesidecar.restapi.models.ConnectionSpec.SchemaRegistryConfig;
+import io.confluent.idesidecar.restapi.models.ConnectionSpecBuilder;
+import io.confluent.idesidecar.restapi.models.ConnectionSpecSchemaRegistryConfigBuilder;
+import io.confluent.idesidecar.restapi.models.ConnectionStatus;
 import io.confluent.idesidecar.restapi.models.ConnectionStatus.Authentication.Status;
 import io.confluent.idesidecar.restapi.models.ConnectionStatus.ConnectedState;
+import io.confluent.idesidecar.restapi.models.ConnectionsList;
+import io.confluent.idesidecar.restapi.models.ObjectMetadata;
+import io.confluent.idesidecar.restapi.util.CCloudTestUtil.AccessToken;
+import io.confluent.idesidecar.restapi.util.UuidFactory;
 import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
 import io.confluent.idesidecar.restapi.testutil.QueryResourceUtil;
 import io.confluent.idesidecar.restapi.util.CCloudTestUtil;
-import io.confluent.idesidecar.restapi.util.CCloudTestUtil.AccessToken;
-import io.confluent.idesidecar.restapi.util.UuidFactory;
 import io.quarkiverse.wiremock.devservice.ConnectWireMock;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.common.http.TestHTTPEndpoint;
@@ -1337,11 +1344,11 @@ public class ConnectionsResourceTest {
               "name": "Connection 1",
               "type": "DIRECT",
               "kafka_cluster": {
-                "bootstrap_servers": "localhost:9092"
-              },
-              "ssl": {
-                "truststore": {
-                  "path": "/path/to/truststore.jks"
+                "bootstrap_servers": "localhost:9092",
+                "ssl": {
+                  "truststore": {
+                    "path": "/path/to/truststore.jks"
+                  }
                 }
               }
             }
@@ -1354,20 +1361,31 @@ public class ConnectionsResourceTest {
               "name": "Some connection name",
               "type": "DIRECT",
               "kafka_cluster": {
-                "bootstrap_servers": "localhost:9092"
+                "bootstrap_servers": "localhost:9092",
+                "ssl": {
+                  "truststore": {
+                    "path": "/path/to/truststore.jks",
+                    "password": "truststore-password"
+                  },
+                  "keystore": {
+                    "path": "/path/to/keystore.jks",
+                    "password": "keystore-password",
+                    "key_password": "key-password"
+                  }
+                }
               },
               "schema_registry": {
-                "uri": "https://localhost:8081"
-              },
-              "ssl": {
-                "truststore": {
-                  "path": "/path/to/truststore.jks",
-                  "password": "truststore-password"
-                },
-                "keystore": {
-                  "path": "/path/to/keystore.jks",
-                  "password": "keystore-password",
-                  "key_password": "key-password"
+                "uri": "https://localhost:8081",
+                "ssl": {
+                  "truststore": {
+                    "path": "/path/to/truststore.jks",
+                    "password": "truststore-password"
+                  },
+                  "keystore": {
+                    "path": "/path/to/keystore.jks",
+                    "password": "keystore-password",
+                    "key_password": "key-password"
+                  }
                 }
               }
             }
@@ -1458,7 +1476,7 @@ public class ConnectionsResourceTest {
                 .withDetail("Kafka cluster truststore path is required and may not be blank")
         ),
         new TestInput(
-            "Direct spec is invalid with SSL having keystore only",
+            "Direct spec is valid with SSL having keystore only",
             """
             {
               "name": "Connection 1",
@@ -1474,10 +1492,7 @@ public class ConnectionsResourceTest {
                 }
               }
             }
-            """,
-            createError()
-                .withSource("kafka_cluster.ssl.keystore")
-                .withDetail("Kafka cluster keystore cannot be set without a truststore")
+            """
         ),
         new TestInput(
             "Direct spec is invalid with SSL keystore not having path",

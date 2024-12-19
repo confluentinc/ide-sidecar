@@ -2,7 +2,6 @@ package io.confluent.idesidecar.restapi.connections;
 
 import io.confluent.idesidecar.restapi.credentials.Credentials;
 import io.confluent.idesidecar.restapi.credentials.Credentials.KafkaConnectionOptions;
-import io.confluent.idesidecar.restapi.credentials.Credentials.SchemaRegistryConnectionOptions;
 import io.confluent.idesidecar.restapi.credentials.CredentialsKafkaConnectionOptionsBuilder;
 import io.confluent.idesidecar.restapi.credentials.CredentialsSchemaRegistryConnectionOptionsBuilder;
 import io.confluent.idesidecar.restapi.credentials.TLSConfig;

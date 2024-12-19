@@ -12,6 +12,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import org.apache.kafka.clients.CommonClientConfigs;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 @Schema(description = "Basic authentication credentials")
@@ -52,9 +54,9 @@ public record BasicCredentials(
     var tlsConfig = options.tlsConfig();
     if (tlsConfig.enabled()) {
       tlsConfig.getProperties(options.redact()).ifPresent(config::putAll);
-      config.put("security.protocol", "SASL_SSL");
+      config.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_SSL");
     } else {
-      config.put("security.protocol", "SASL_PLAINTEXT");
+      config.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT");
     }
     config.put("sasl.mechanism", "PLAIN");
     config.put(

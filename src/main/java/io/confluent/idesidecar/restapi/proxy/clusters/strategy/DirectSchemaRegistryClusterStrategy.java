@@ -1,7 +1,7 @@
 package io.confluent.idesidecar.restapi.proxy.clusters.strategy;
 
 import io.confluent.idesidecar.restapi.connections.DirectConnectionState;
-import io.confluent.idesidecar.restapi.proxy.ClusterProxyContext;
+import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
 import io.vertx.core.MultiMap;
 import jakarta.enterprise.context.ApplicationScoped;
 

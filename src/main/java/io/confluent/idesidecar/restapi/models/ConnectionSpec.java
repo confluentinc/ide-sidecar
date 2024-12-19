@@ -325,10 +325,10 @@ public record ConnectionSpec(
               "To disable, set `enabled` to false. " +
               "To use the default SSL settings, set `enabled` to true and " +
               "leave the `truststore` and `keystore` fields unset.",
-          required = true
+          nullable = true
       )
       @JsonProperty(value = "ssl")
-      @NotNull
+      @Null
       TLSConfig tlsConfig
   ) implements ConnectionSpecKafkaClusterConfigBuilder.With {
 

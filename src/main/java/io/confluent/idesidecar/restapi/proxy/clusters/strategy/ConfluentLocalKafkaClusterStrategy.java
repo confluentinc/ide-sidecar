@@ -3,7 +3,7 @@ package io.confluent.idesidecar.restapi.proxy.clusters.strategy;
 import static io.confluent.idesidecar.restapi.util.RequestHeadersConstants.CONNECTION_ID_HEADER;
 
 import io.confluent.idesidecar.restapi.application.SidecarAccessTokenBean;
-import io.confluent.idesidecar.restapi.proxy.ClusterProxyContext;
+import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
 import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpHeaders;
 import jakarta.enterprise.context.ApplicationScoped;

@@ -14,6 +14,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import org.apache.kafka.clients.CommonClientConfigs;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 @Schema(description = "OAuth 2.0 authentication credentials")
@@ -118,9 +120,9 @@ public record OAuthCredentials(
     var tlsConfig = options.tlsConfig();
     if (tlsConfig.enabled()) {
       tlsConfig.getProperties(options.redact()).ifPresent(config::putAll);
-      config.put("security.protocol", "SASL_SSL");
+      config.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_SSL");
     } else {
-      config.put("security.protocol", "SASL_PLAINTEXT");
+      config.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT");
     }
 
     return Optional.of(config);

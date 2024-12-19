@@ -12,9 +12,9 @@ import io.vertx.core.Future;
  * Processor that checks for the `x-connection-id` header and retrieves the connection state from
  * the connection state manager.
  *
- * @param <T> The proxy context type, which must extend {@link io.confluent.idesidecar.restapi.proxy.ClusterProxyContext}
+ * @param <T> The proxy context type, which must extend {@link ProxyContext}
  */
-public class ConnectionProcessor<T extends ClusterProxyContext> extends
+public class ConnectionProcessor<T extends ProxyContext> extends
     Processor<T, Future<T>> {
 
   ConnectionStateManager connectionStateManager;
@@ -50,25 +50,6 @@ public class ConnectionProcessor<T extends ClusterProxyContext> extends
     }
     // Store the connection details in the context
     context.setConnectionState(connectionState);
-
-    switch (context.getClusterType()) {
-      case KAFKA ->
-        connectionState
-            .getKafkaTLSConfig()
-            .ifPresent(kafkaOptions -> {
-              if (kafkaOptions.truststore() != null) {
-                context.setTruststoreOptions(kafkaOptions.truststore());
-              }
-            });
-      case SCHEMA_REGISTRY ->
-        connectionState
-            .getSchemaRegistryTLSConfig()
-            .ifPresent(schemaRegistryOptions -> {
-              if (schemaRegistryOptions.truststore() != null) {
-                context.setTruststoreOptions(schemaRegistryOptions.truststore());
-              }
-            });
-    }
 
     // All right, we may now proceed
     return next().process(context);

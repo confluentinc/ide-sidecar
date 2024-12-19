@@ -1,0 +1,100 @@
+package io.confluent.idesidecar.restapi.proxy.clusters;
+
+import io.confluent.idesidecar.restapi.credentials.TLSConfig;
+import io.confluent.idesidecar.restapi.models.ClusterType;
+import io.confluent.idesidecar.restapi.models.graph.Cluster;
+import io.confluent.idesidecar.restapi.proxy.ProxyContext;
+import io.confluent.idesidecar.restapi.proxy.clusters.strategy.ClusterStrategy;
+import io.vertx.codegen.annotations.Nullable;
+import io.vertx.core.MultiMap;
+import io.vertx.core.buffer.Buffer;
+import io.vertx.core.http.HttpMethod;
+import io.vertx.core.net.JksOptions;
+import io.vertx.core.net.KeyStoreOptions;
+import io.vertx.core.net.KeyStoreOptionsBase;
+
+import java.util.Map;
+
+/**
+ * Shared context model for:
+ * <ul>
+ *    <li> Kafka REST proxy </li>
+ *    <li> Schema Registry REST proxy </li>
+ * </ul>
+ */
+public class ClusterProxyContext extends ProxyContext {
+
+  final String clusterId;
+  final ClusterType clusterType;
+  Cluster clusterInfo;
+  ClusterStrategy clusterStrategy;
+
+  // TLS options
+  JksOptions truststoreOptions;
+  JksOptions keystoreOptions;
+
+  public ClusterProxyContext(
+      String requestUri,
+      MultiMap requestHeaders,
+      HttpMethod requestMethod,
+      Buffer requestBody,
+      Map<String, String> requestPathParams,
+      @Nullable String connectionId,
+      String clusterId,
+      ClusterType clusterType
+  ) {
+    super(requestUri, requestHeaders, requestMethod, requestBody, requestPathParams, connectionId);
+    this.clusterId = clusterId;
+    this.clusterType = clusterType;
+  }
+
+  public Cluster getClusterInfo() {
+    return clusterInfo;
+  }
+
+  public void setClusterInfo(Cluster clusterInfo) {
+    this.clusterInfo = clusterInfo;
+  }
+
+  public ClusterStrategy getClusterStrategy() {
+    return clusterStrategy;
+  }
+
+  public void setClusterStrategy(ClusterStrategy clusterStrategy) {
+    this.clusterStrategy = clusterStrategy;
+  }
+
+  public String getClusterId() {
+    return clusterId;
+  }
+
+  public ClusterType getClusterType() {
+    return clusterType;
+  }
+
+  public JksOptions getTruststoreOptions() {
+    return truststoreOptions;
+  }
+
+  public void setTruststoreOptions(TLSConfig.TrustStore trustStore) {
+    this.truststoreOptions = new JksOptions()
+        .setPath(trustStore.path())
+        .setPassword(trustStore.password().asString(false));
+  }
+
+  public JksOptions getKeystoreOptions() {
+    return keystoreOptions;
+  }
+
+  public void setKeystoreOptions(TLSConfig.KeyStore keyStore) {
+    var keystoreOptions = new JksOptions()
+        .setPath(keyStore.path())
+        .setPassword(keyStore.password().asString(false));
+
+    if (keyStore.keyPassword() != null) {
+      keystoreOptions.setAliasPassword(keyStore.keyPassword().asString(false));
+    }
+
+    this.keystoreOptions = keystoreOptions;
+  }
+}

@@ -6,7 +6,6 @@ import io.confluent.idesidecar.restapi.auth.AuthErrors;
 import io.confluent.idesidecar.restapi.clients.ClientConfigurator;
 import io.confluent.idesidecar.restapi.credentials.Credentials;
 import io.confluent.idesidecar.restapi.credentials.TLSConfig;
-import io.confluent.idesidecar.restapi.credentials.TLSConfigBuilder;
 import io.confluent.idesidecar.restapi.models.ClusterType;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
@@ -31,6 +30,7 @@ import io.vertx.core.http.HttpHeaders;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.time.Duration;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -143,10 +143,11 @@ public class DirectConnectionState extends ConnectionState {
   public Optional<TLSConfig> getKafkaTLSConfig() {
     if (spec.kafkaClusterConfig() != null) {
       return Optional.of(
-          spec.kafkaClusterConfig().tlsConfig() != null
-          ? spec.kafkaClusterConfig().tlsConfig()
-          // Use the default TLS configuration if none is provided
-          : new TLSConfig()
+          Objects.requireNonNullElse(
+              spec.kafkaClusterConfig().tlsConfig(),
+              // Use the default TLS configuration if none is provided
+              new TLSConfig()
+          )
       );
     }
 

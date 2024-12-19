@@ -14,6 +14,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import org.apache.kafka.clients.CommonClientConfigs;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 @Schema(description = "API key and secret authentication credentials")
@@ -56,10 +58,10 @@ public record ApiKeyAndSecret(
     var config = new LinkedHashMap<String, String>();
     var tlsConfig = options.tlsConfig();
     if (tlsConfig.enabled()) {
-      config.put("security.protocol", "SASL_SSL");
+      config.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_SSL");
       tlsConfig.getProperties(options.redact()).ifPresent(config::putAll);
     } else {
-      config.put("security.protocol", "SASL_PLAINTEXT");
+      config.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT");
     }
     config.put("sasl.mechanism", "PLAIN");
     config.put(

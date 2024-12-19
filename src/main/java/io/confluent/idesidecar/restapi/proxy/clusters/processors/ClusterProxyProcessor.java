@@ -3,7 +3,7 @@ package io.confluent.idesidecar.restapi.proxy.clusters.processors;
 import io.confluent.idesidecar.restapi.application.ProxyProcessorBeanProducers;
 import io.confluent.idesidecar.restapi.processors.Processor;
 import io.confluent.idesidecar.restapi.proxy.ProxyRequestProcessor;
-import io.confluent.idesidecar.restapi.proxy.ClusterProxyContext;
+import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
 import io.vertx.core.Future;
 import io.vertx.core.buffer.Buffer;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -47,6 +47,30 @@ public class ClusterProxyProcessor extends
     // Pass request method and body straight through, no processing needed
     context.setProxyRequestMethod(context.getRequestMethod());
     context.setProxyRequestBody(context.getRequestBody());
+
+    // Set TLS options
+    var connectionState = context.getConnectionState();
+
+    switch (context.getClusterType()) {
+      case KAFKA -> {
+        // Confluent Local Kafka REST Proxy is not configured with TLS.
+        // However, Confluent Cloud Kafka REST does support mutual TLS. It only requires
+        // the keystore options to be set. This is a TODO item for the future.
+        // (https://github.com/confluentinc/ide-sidecar/issues/235)
+      }
+      case SCHEMA_REGISTRY ->
+        connectionState
+            .getSchemaRegistryTLSConfig()
+            .ifPresent(
+                tlsConfig -> {
+                  if (tlsConfig.truststore() != null) {
+                    context.setTruststoreOptions(tlsConfig.truststore());
+                  }
+                  if (tlsConfig.keystore() != null) {
+                    context.setKeystoreOptions(tlsConfig.keystore());
+                  }
+                });
+    }
 
     return next().process(context).map(
         processedContext -> {

@@ -1,7 +1,6 @@
 package io.confluent.idesidecar.restapi.kafkarest;
 
 import org.junit.jupiter.api.Test;
-import org.junitpioneer.jupiter.RetryingTest;
 import org.junitpioneer.jupiter.cartesian.ArgumentSets;
 import org.junitpioneer.jupiter.cartesian.CartesianTest;
 import java.util.Map;

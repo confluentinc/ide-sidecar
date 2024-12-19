@@ -149,7 +149,7 @@ public record TLSConfig(
 
       @Schema(
           description =
-              "The password for the local key store file. If a password is not set, trust "
+              "The password for the local key store file. If a password is not set, key "
                   + " store file configured will still be used, but integrity checking is "
                   + "disabled. A key store password is not supported for PEM format.",
           nullable = true
@@ -361,14 +361,6 @@ public record TLSConfig(
 
       if (keystore != null) {
         keystore.validate(errors, "%s.keystore".formatted(path), what);
-      }
-
-      if (truststore == null && keystore != null) {
-        errors.add(
-            Error.create()
-                .withDetail("%s keystore cannot be set without a truststore", what)
-                .withSource("%s.keystore", path)
-        );
       }
     }
   }

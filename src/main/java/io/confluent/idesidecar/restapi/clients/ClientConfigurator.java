@@ -267,7 +267,7 @@ public class ClientConfigurator {
       // No credentials, but maybe TLS config is present
       var tlsConfig = connection.getKafkaTLSConfig().get();
       if (tlsConfig.enabled()) {
-        props.put("security.protocol", "SSL");
+        props.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SSL");
         tlsConfig.getProperties(redact).ifPresent(props::putAll);
       }
     }

@@ -800,7 +800,6 @@ components:
       description: Kafka cluster configuration.
       required:
       - bootstrap_servers
-      - ssl
       type: object
       properties:
         bootstrap_servers:
@@ -825,6 +824,7 @@ components:
           type: object
           allOf:
           - $ref: "#/components/schemas/TLSConfig"
+          nullable: true
     KafkaClusterStatus:
       description: The status related to the specified Kafka cluster.
       required:
@@ -858,7 +858,7 @@ components:
           type: string
         password:
           description: "The password for the local key store file. If a password is\
-            \ not set, trust  store file configured will still be used, but integrity\
+            \ not set, key  store file configured will still be used, but integrity\
             \ checking is disabled. A key store password is not supported for PEM\
             \ format."
           type: string
@@ -1319,13 +1319,13 @@ components:
     HealthCheck:
       type: object
       properties:
+        data:
+          type: object
+          nullable: true
         status:
           enum:
           - UP
           - DOWN
           type: string
-        data:
-          type: object
-          nullable: true
         name:
           type: string

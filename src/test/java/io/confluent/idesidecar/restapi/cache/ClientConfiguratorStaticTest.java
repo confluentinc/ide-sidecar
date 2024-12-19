@@ -8,9 +8,16 @@ import static org.mockito.Mockito.when;
 
 import io.confluent.idesidecar.restapi.clients.ClientConfigurator;
 import io.confluent.idesidecar.restapi.connections.ConnectionState;
-import io.confluent.idesidecar.restapi.credentials.*;
+import io.confluent.idesidecar.restapi.credentials.ApiKeyAndSecret;
+import io.confluent.idesidecar.restapi.credentials.ApiSecret;
+import io.confluent.idesidecar.restapi.credentials.BasicCredentials;
+import io.confluent.idesidecar.restapi.credentials.Credentials;
 import io.confluent.idesidecar.restapi.credentials.Credentials.KafkaConnectionOptions;
 import io.confluent.idesidecar.restapi.credentials.Credentials.SchemaRegistryConnectionOptions;
+import io.confluent.idesidecar.restapi.credentials.OAuthCredentials;
+import io.confluent.idesidecar.restapi.credentials.Password;
+import io.confluent.idesidecar.restapi.credentials.TLSConfig;
+import io.confluent.idesidecar.restapi.credentials.TLSConfigBuilder;
 import io.confluent.idesidecar.restapi.credentials.TLSConfig.KeyStore;
 import io.confluent.idesidecar.restapi.credentials.TLSConfig.TrustStore;
 import io.confluent.idesidecar.restapi.models.graph.KafkaCluster;

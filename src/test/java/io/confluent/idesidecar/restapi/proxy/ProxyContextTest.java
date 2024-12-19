@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 @QuarkusTest
-class ClusterProxyContextTest {
+class ProxyContextTest {
 
   @InjectMock
   UuidFactory uuidFactory;
@@ -20,21 +20,13 @@ class ClusterProxyContextTest {
     Mockito.when(uuidFactory.getRandomUuid()).thenReturn("99a2b4ce-7a87-4dd2-b967-fe9f34fcbea4");
   }
 
-  final ClusterProxyContext createDummyContext() {
-    return new ClusterProxyContext(
-        "http://localhost:8080",
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null);
+  final ProxyContext createDummyContext() {
+    return new ProxyContext("http://localhost:8080", null, null, null, null, null);
   }
 
   @Test
   void testCreatingFailureWithErrors() {
-    ClusterProxyContext context = createDummyContext();
+    ProxyContext context = createDummyContext();
     context.error("code 1", "title 1")
         // Such fluent, much wow
         .error("code 2", "title 2")
@@ -50,7 +42,7 @@ class ClusterProxyContextTest {
 
   @Test
   void testCreatingFailureWithoutErrors() {
-    ClusterProxyContext context = createDummyContext();
+    ProxyContext context = createDummyContext();
 
     var failure = context.fail(429, "Too many requests");
 
@@ -62,7 +54,7 @@ class ClusterProxyContextTest {
 
   @Test
   void testFormattedFailureMessage() {
-    ClusterProxyContext context = createDummyContext();
+    ProxyContext context = createDummyContext();
     var failure = context.failf(429, "Too many requests: %s %d", "This is a test", 42);
 
     // Such formatting, much %s

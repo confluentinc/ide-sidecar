@@ -1106,7 +1106,7 @@
       },
       "KafkaClusterConfig" : {
         "description" : "Kafka cluster configuration.",
-        "required" : [ "bootstrap_servers", "ssl" ],
+        "required" : [ "bootstrap_servers" ],
         "type" : "object",
         "properties" : {
           "bootstrap_servers" : {
@@ -1131,7 +1131,8 @@
             "type" : "object",
             "allOf" : [ {
               "$ref" : "#/components/schemas/TLSConfig"
-            } ]
+            } ],
+            "nullable" : true
           }
         }
       },
@@ -1173,7 +1174,7 @@
             "type" : "string"
           },
           "password" : {
-            "description" : "The password for the local key store file. If a password is not set, trust  store file configured will still be used, but integrity checking is disabled. A key store password is not supported for PEM format.",
+            "description" : "The password for the local key store file. If a password is not set, key  store file configured will still be used, but integrity checking is disabled. A key store password is not supported for PEM format.",
             "type" : "string",
             "allOf" : [ {
               "$ref" : "#/components/schemas/Password"
@@ -1746,13 +1747,13 @@
       "HealthCheck" : {
         "type" : "object",
         "properties" : {
-          "status" : {
-            "enum" : [ "UP", "DOWN" ],
-            "type" : "string"
-          },
           "data" : {
             "type" : "object",
             "nullable" : true
+          },
+          "status" : {
+            "enum" : [ "UP", "DOWN" ],
+            "type" : "string"
           },
           "name" : {
             "type" : "string"
