@@ -185,7 +185,6 @@ public class ConnectionsResource {
         .chain(ignored -> Uni.createFrom().item(() -> getConnectionModel(id)));
   }
 
-
   @DELETE
   @Path("{id}")
   public void deleteConnection(@PathParam("id") String id) throws ConnectionNotFoundException {
