@@ -274,7 +274,8 @@ public abstract class AbstractIT extends SidecarClient implements ITSuite {
       Class<T> testClass,
       Optional<ConnectionSpec> connectionSpec
   ) {
-    setupConnection(testClass.getSimpleName(), connectionSpec.orElseThrow());
+    var fullyQualifiedName = testClass.getName();
+    setupConnection(fullyQualifiedName, connectionSpec.orElseThrow());
   }
 
   /**
