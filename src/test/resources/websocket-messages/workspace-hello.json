@@ -1,0 +1,10 @@
+{
+  "headers": {
+    "message_type": "workspace_hello",
+    "originator": "2343",
+    "message_id": "message-id-1"
+  },
+  "body": {
+    "workspace_id": 2343
+  }
+}
