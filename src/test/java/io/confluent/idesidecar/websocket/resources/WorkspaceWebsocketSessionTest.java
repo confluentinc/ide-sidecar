@@ -17,15 +17,20 @@ public class WorkspaceWebsocketSessionTest {
   public void testActiveInactiveBehavior() {
     // inactive / not yet pid known session
     Instant now = Instant.now();
-    WorkspaceWebsocketSession session = new WorkspaceWebsocketSession(getMockSession(), null, now);
+    var mockSession = getMockSession();
+    WorkspaceWebsocketSession session = new WorkspaceWebsocketSession(mockSession, null, now);
     Assertions.assertFalse(session.isActive());
     // inactive session should report "unknown" for its pid string
     assertEquals("unknown", session.workspacePidString());
 
-    // But should report the pid as string when active
-    session = new WorkspaceWebsocketSession(getMockSession(), new WorkspacePid(1L));
+    // But should report the pid as string when building an active version
+    // with a workspace pid. (post-HELLO websocket message)
+    session = session.buildActive(new WorkspacePid(1L));
     assertTrue(session.isActive());
     assertEquals("1", session.workspacePidString());
+    // remains the same.
+    assertEquals(now, session.createdAt());
+    assertEquals(mockSession, session.session());
   }
 
   private Session getMockSession() {
