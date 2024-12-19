@@ -28,3 +28,4 @@ sonarqube:
     - "**/*.pb.*"
     - "**/mk-files/**/*"
     - "**/test/**/*"
+  main_branch: main
