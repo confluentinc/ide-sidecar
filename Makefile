@@ -171,17 +171,17 @@ cache-docker-images:
 
 .PHONY: load-cached-docker-images
 load-cached-docker-images:
-	cache restore $(SEMAPHORE_CP_ZOOKEEPER_DOCKER) \
-    [ -f cp-zookeeper.tgz ] && docker load -i cp-zookeeper.tgz && rm -rf cp-zookeeper.tgz || true
+	cache restore $(SEMAPHORE_CP_ZOOKEEPER_DOCKER)
+	[ -f cp-zookeeper.tgz ] && docker load -i cp-zookeeper.tgz && rm -rf cp-zookeeper.tgz || true
 
-	cache restore $(SEMAPHORE_CP_SERVER_DOCKER) \
+	cache restore $(SEMAPHORE_CP_SERVER_DOCKER)
 	[ -f cp-server.tgz ] && docker load -i cp-server.tgz && rm -rf cp-server.tgz || true
 
-	cache restore $(SEMAPHORE_OPENLDAP_DOCKER) \
+	cache restore $(SEMAPHORE_OPENLDAP_DOCKER)
 	[ -f openldap.tgz ] && docker load -i openldap.tgz && rm -rf openldap.tgz || true
 
-	cache restore $(SEMAPHORE_CNFLDEMOS_TOOLS_DOCKER) \
+	cache restore $(SEMAPHORE_CNFLDEMOS_TOOLS_DOCKER)
 	[ -f cnfdemos-tools.tgz ] && docker load -i cnfdemos-tools.tgz && rm -rf cnfdemos-tools.tgz || true
 
-	cache restore $(SEMAPHORE_CONFLUENT_LOCAL_DOCKER) \
+	cache restore $(SEMAPHORE_CONFLUENT_LOCAL_DOCKER)
 	[ -f cp-local.tgz ] && docker load -i cp-local.tgz && rm -rf cp-local.tgz || true
