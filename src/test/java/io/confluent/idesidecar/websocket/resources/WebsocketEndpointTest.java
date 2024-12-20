@@ -750,11 +750,11 @@ public class WebsocketEndpointTest {
   }
 
   @Test
-  public void testGroomInactiveSessions() {
+  public void testPurgeInactiveSessions() {
 
     var sessions = websocketEndpoint.sessions;
     // Calling when empty map should do nothing.
-    websocketEndpoint.groomInactiveSessions();
+    websocketEndpoint.purgeInactiveSessions();
 
     // Given a workspace connected happy websocket ...
     ConnectedWorkspace connectedWorkspace = connectWorkspace(true);
@@ -762,7 +762,7 @@ public class WebsocketEndpointTest {
     connectedWorkspace.waitForMessageOfType(MessageType.WORKSPACE_COUNT_CHANGED, 1000);
 
     // Calling again should leave the session alone.
-    websocketEndpoint.groomInactiveSessions();
+    websocketEndpoint.purgeInactiveSessions();
     assertEquals(1, sessions.size());
 
     // But make a second connection which does not say hello.
@@ -773,11 +773,13 @@ public class WebsocketEndpointTest {
         session -> !session.isActive()
     ).findFirst().get();
 
-    // .., and replace it with a session that is 10 minutes old.
+    // .., and replace it with a session that is older than the pre-grace period.
+    var maxAllowedSeconds = websocketEndpoint.initialGraceSeconds.get();
+
     var olderSession = new WorkspaceWebsocketSession(
         existingInactiveSession.session(),
         existingInactiveSession.workspacePid(),
-        Instant.now().minusSeconds(600) // 10 minutes ago
+        Instant.now().minusSeconds(maxAllowedSeconds + 1) // slightly too old!
     );
     sessions.put(existingInactiveSession.key(), olderSession);
 
@@ -786,7 +788,7 @@ public class WebsocketEndpointTest {
 
     // Now groom the sessions. Will send an error message to the older session and close it,
     // then ultimately will remove it from the sessions map.
-    websocketEndpoint.groomInactiveSessions();
+    websocketEndpoint.purgeInactiveSessions();
 
     // get the error message.
     var closureMessage = connectedWorkspace2.waitForMessageOfType(MessageType.PROTOCOL_ERROR, 1000);

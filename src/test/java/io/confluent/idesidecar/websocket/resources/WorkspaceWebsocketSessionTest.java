@@ -13,6 +13,10 @@ import org.junit.jupiter.api.Test;
 
 public class WorkspaceWebsocketSessionTest {
 
+  /**
+   * Test that by default, a WorkspaceWebsocketSession is inactive and has an unknown pid, and that
+   * buildActive() will produce an equivalent session with the pid known and reports as active.
+   */
   @Test
   public void testActiveInactiveBehavior() {
     // inactive / not yet pid known session

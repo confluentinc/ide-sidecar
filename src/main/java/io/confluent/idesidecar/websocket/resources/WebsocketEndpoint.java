@@ -16,6 +16,7 @@ import io.quarkus.logging.Log;
 import io.smallrye.common.constraint.Nullable;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import jakarta.inject.Inject;
 import jakarta.validation.constraints.NotNull;
@@ -35,6 +36,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 
 /**
@@ -44,6 +46,10 @@ import java.util.stream.Collectors;
 @ServerEndpoint("/ws")
 @Singleton
 public class WebsocketEndpoint {
+
+  /** How long to allow inactive sessions to linger before purging them. */
+  @ConfigProperty(name = "ide-sidecar.websockets.initial-grace-seconds", defaultValue = "30")
+  Provider<Integer> initialGraceSeconds;
 
   /** Typesafe wrapper for a websocket session id (string). */
   public static record SessionKey(String sessionId) {
@@ -467,18 +473,19 @@ public class WebsocketEndpoint {
     broadcast(message);
   }
 
-  public static final int purgatoryMaxDurationSecs = 30;
   /**
-   * Groom sessions map from any sessions that have lingered too long
-   * without saying hello.
+   * Purge any sessions that have lingered too long
+   * in the initial state without saying hello (""inactive" sessions).
    */
-  public void groomInactiveSessions() {
-    Log.info("Grooming inactive sessions.");
+  public void purgeInactiveSessions() {
+    Log.info("Checking for overdue inactive sessions.");
     var now = Instant.now();
+
+    var maxAllowedSeconds = initialGraceSeconds.get();
 
     // Find all inactive sessions that have been inactive for too long.
     var toPurge = sessions.values().stream()
-        .filter(wws -> !wws.isActive() && Duration.between(wws.createdAt(), now).toSeconds() > purgatoryMaxDurationSecs)
+        .filter(wws -> !wws.isActive() && Duration.between(wws.createdAt(), now).toSeconds() > maxAllowedSeconds)
         .collect(Collectors.toList());
 
     if(!toPurge.isEmpty()) {
