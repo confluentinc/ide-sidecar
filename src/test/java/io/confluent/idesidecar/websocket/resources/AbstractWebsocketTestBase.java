@@ -60,6 +60,16 @@ abstract class AbstractWebsocketTestBase implements WebsocketClients {
   /**
    * Connect a new mock workspace process to the websocket endpoint.
    *
+   * @param sayHello Whether to send a HELLO message after connecting.
+   * @return A ConnectedWorkspace instance representing the connection.
+   * */
+  ConnectedWorkspace connectWorkspace(boolean sayHello) {
+    return connectWorkspace(sayHello, sayHello);
+  }
+
+  /**
+   * Connect a new mock workspace process to the websocket endpoint.
+   *
    * @param sayHello                     Whether to send a HELLO message after connecting.
    * @param consumeInitialWorkspaceCount Whether to wait for the initial
    *                                     WORKSPACE_COUNT_CHANGED response to the HELLO.
