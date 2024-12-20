@@ -5,12 +5,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.confluent.idesidecar.restapi.application.KnownWorkspacesBean;
-import io.confluent.idesidecar.restapi.application.KnownWorkspacesBean.WorkspacePid;
-import io.confluent.idesidecar.restapi.application.SidecarAccessTokenBean;
 import io.confluent.idesidecar.restapi.filters.WorkspaceProcessIdFilter;
 import io.confluent.idesidecar.restapi.testutil.MockWorkspaceProcess;
 import io.confluent.idesidecar.websocket.messages.DynamicMessageBody;
@@ -20,29 +15,13 @@ import io.confluent.idesidecar.websocket.messages.MessageHeaders;
 import io.confluent.idesidecar.websocket.messages.MessageType;
 import io.confluent.idesidecar.websocket.messages.ProtocolErrorBody;
 import io.confluent.idesidecar.websocket.messages.WorkspacesChangedBody;
-import io.confluent.idesidecar.websocket.resources.WebsocketEndpoint.SessionKey;
 import io.confluent.idesidecar.websocket.resources.WebsocketEndpoint.WorkspaceWebsocketSession;
 import io.quarkus.logging.Log;
-import io.quarkus.test.common.http.TestHTTPResource;
 import io.quarkus.test.junit.QuarkusTest;
-import jakarta.inject.Inject;
-import jakarta.websocket.ClientEndpoint;
-import jakarta.websocket.ClientEndpointConfig;
-import jakarta.websocket.ContainerProvider;
-import jakarta.websocket.DeploymentException;
-import jakarta.websocket.MessageHandler;
-import jakarta.websocket.Session;
 import java.io.IOException;
-import java.lang.reflect.Field;
-import java.net.URI;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.TimeUnit;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -51,258 +30,7 @@ import org.junit.jupiter.params.provider.ValueSource;
  * Tests over workspaces connecting to /ws as websocket clients, access filtering, and message handling.
  */
 @QuarkusTest
-public class WebsocketEndpointTest {
-
-  @Inject
-  SidecarAccessTokenBean accessTokenBean;
-
-  @Inject
-  KnownWorkspacesBean knownWorkspacesBean;
-
-  @Inject
-  WebsocketEndpoint websocketEndpoint;
-
-
-  @TestHTTPResource("/ws")
-  URI uri;
-
-  // First some static inner classes to handle websocket client side for this test.
-
-  /**
-   * A websocket client message handler that stores messages received into a LinkedBlockingDeque<Message> on
-   * behalf of a test. The test can then interact with LinkedBlockingDeque<Message> messages.
-   * */
-  public static class TestWebsocketClientMessageHandler implements MessageHandler.Whole<String>
-  {
-    // Where this client will store deserialized messages received.
-    public final LinkedBlockingDeque<Message> messages = new LinkedBlockingDeque<>();
-
-    // likewise, but for the raw message json strings. Needed for tests which send explictly
-    // unknown message types whose serialization will coerce to DynamicMessageBody + MessageTypes.UNKNOWN,
-    // but when delivered through to other workspaces, the original message type should be preserved.
-    public final LinkedBlockingDeque<String> rawMessageStrings = new LinkedBlockingDeque<>();
-
-    // For deserializing messages.
-    private static final ObjectMapper mapper = new ObjectMapper();
-
-    @Override
-    public void onMessage(String messageString) {
-      Log.info("Test client received message: " + messageString);
-      rawMessageStrings.add(messageString);
-      try {
-        // Deserialize json -> Message, add to our list of messages so that the main
-        // test can check them.
-        Message message = mapper.readValue(messageString, Message.class);
-        messages.add(message);
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }
-
-    /** Empty out any received messages */
-    public void clear() {
-      messages.clear();
-      rawMessageStrings.clear();
-    }
-  }
-
-  /**
-   * A websocket client configurator that sets the access token in the headers. This is a
-   * requirement for us --- AccessTokeFilter guards the /ws route.
-   */
-  public static class TestWebsocketClientConfigurator extends ClientEndpointConfig.Configurator {
-
-    /**
-     * The access token to embed in the ws connect GET route hit.
-     * Will be assigned once the handshake is done. Must be static
-     * because we don't have control over when the instances of
-     * this class are created, sigh.
-     * */
-    private static String accessToken = "";
-
-    public static void setAccessToken(String token) {
-      accessToken = token;
-    }
-
-    public TestWebsocketClientConfigurator() {
-    }
-
-    /**
-     * Add the access token to the headers used in the client-side GET request starting a websocket
-     * connection.
-     */
-    @Override
-    public void beforeRequest(Map<String, List<String>> headers) {
-      headers.put("Authorization", List.of("Bearer " + accessToken));
-    }
-  }
-
-  /**
-   * A websocket client that connects to the websocket endpoint.
-   * I can't find a way to control the construction of this class when needing to use
-   * the TestWebsocketClientConfigurator, so the real work assisting the test
-   * is being done by the TestWebsocketClientMessageHandler instances thar are
-   * correlated with each of these clients.
-   * */
-  @ClientEndpoint(configurator = TestWebsocketClientConfigurator.class)
-  public static class TestWebsocketClient{
-
-  }
-
-  /**
-   * Finally, a convenience bundle of the above:
-   * 1. a mock workspace process,
-   * 2. its websocket session,
-   * 3. and the message handler that will store messages received by the client.
-   * See {@link #connectWorkspace}
-   */
-  private record ConnectedWorkspace (
-      MockWorkspaceProcess mockWorkspaceProcess,
-      Session session,
-      TestWebsocketClientMessageHandler messageHandler
-  ) {
-
-    public WorkspacePid processId() {
-      return mockWorkspaceProcess.pid;
-    }
-
-    /** Return the websocket session id as a SessionKey as would be found
-     * as key for the entry in WebsocketEndpoint.sessions */
-    public SessionKey sessionKey() {
-      return new SessionKey(session.getId());
-    }
-
-
-    /**
-     * Send a HELLO message to the websocket endpoint. Do not wait for a response.
-     */
-    public void sayHello() {
-      sayHello(null, null);
-    }
-
-    /**
-     * Send a HELLO message to the websocket endpoint. Do not wait for a response.
-     * Caller can provide an alternate pid to hello with if so desired, for either
-     * the pid spelled in general message header, or in the body of the hello.
-     * Defaults to the pid of the mock workspace process.
-     */
-    public void sayHello(WorkspacePid headerPid,  WorkspacePid bodyPid) {
-
-      headerPid = headerPid != null ? headerPid : mockWorkspaceProcess.pid;
-      bodyPid = bodyPid != null ? bodyPid : mockWorkspaceProcess.pid;
-
-      Message helloMessage = new Message(
-          new MessageHeaders(MessageType.WORKSPACE_HELLO, headerPid.toString(),
-              "message-id-here"),
-          new HelloBody(bodyPid.id())
-      );
-      send(helloMessage);
-    }
-
-    /**
-     * Send an encoded message to the websocket endpoint.
-     */
-    public void send(Message message)  {
-      ObjectMapper mapper = new ObjectMapper();
-      try {
-        session.getAsyncRemote().sendText(mapper.writeValueAsString(message)).get();
-        Log.info("Test client sent message: " + message);
-      } catch (IOException | ExecutionException | InterruptedException e) {
-        throw new RuntimeException(e);
-      }
-    }
-
-    /**
-     * Send an arbitrary string message to the websocket endpoint.
-     */
-    public void send(String message)  {
-      try {
-        session.getAsyncRemote().sendText(message).get();
-      }  catch (ExecutionException | InterruptedException e) {
-        throw new RuntimeException(e);
-      }
-    }
-
-    /**
-     * Block until a message of the given type is received. Return it.
-     *
-     * @throws RuntimeException if the message is not received within the given time.
-     */
-    public Message waitForMessageOfType(MessageType messageType, long waitAtMostMillis) {
-      long start = System.currentTimeMillis();
-
-      while (true) {
-        Message message = null;
-
-        try {
-          message = messageHandler.messages.poll(250, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
-          // do nothing, fallthrough
-        }
-
-        if (message == null || message.messageType() != messageType) {
-          // waited too long?
-          if (System.currentTimeMillis() - start > waitAtMostMillis) {
-            throw new RuntimeException("Timed out waiting for message of type " + messageType);
-          }
-
-          // otherwise loop back try again
-          continue;
-        }
-
-        // Must be the message type we're looking for.
-        assertEquals(messageType, message.messageType());
-        return message;
-      }
-    }
-
-    /**
-     * Bounded wait for the websocket to become closed.
-     * @throws RuntimeException if the websocket does not close within the given time.
-     */
-    public void waitForClose(long waitAtMostMillis) {
-      long start = System.currentTimeMillis();
-
-      while (session.isOpen()) {
-        try {
-          Thread.sleep(100);
-        } catch (InterruptedException e) {
-          // do nothing, fallthrough
-        }
-
-        if (System.currentTimeMillis() - start > waitAtMostMillis) {
-          throw new RuntimeException("Timed out waiting for websocket to close");
-        }
-      }
-    }
-
-    /**
-     * Close the websocket
-     */
-    public void closeWebsocket() {
-      try {
-        session.close();
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }
-
-    /**
-     * Clear any previously received messages.
-     */
-    public void clearReceivedMessages() {
-      messageHandler.clear();
-    }
-
-    public int receivedMessageCount() {
-      return messageHandler.messages.size();
-    }
-
-    public String processIdString() {
-      return mockWorkspaceProcess.pid_string;
-    }
-  }
-
+public class WebsocketEndpointTest extends AbstractWebsocketTestBase {
 
   /**
    * Test websocket lifecycle using two mock workspace processes.
@@ -319,8 +47,7 @@ public class WebsocketEndpointTest {
    * 9. Have the second one disconnect.
    */
   @Test
-  public void testWebsocketLifecycle()
-  {
+  public void testWebsocketLifecycle() {
     var firstWorkspace = connectWorkspace(true, false);
 
     // Block until we get the initial WORKSPACE_COUNT_CHANGED message.
@@ -384,8 +111,8 @@ public class WebsocketEndpointTest {
     // Given a workspace process ...
     var mockWorkspaceProcess = new MockWorkspaceProcess();
 
-    // known in the set of workspace ids.
-    getKnownWorkspacePidsFromBean().add(mockWorkspaceProcess.pid);
+    // that will be considered a known workspace
+    expectKnownWorkspacePids(mockWorkspaceProcess.pid);
 
     // When the workspace process tries to connect to the websocket endpoint without the access token header ...
     given()
@@ -401,10 +128,11 @@ public class WebsocketEndpointTest {
     // Given a workspace process ...
     var mockWorkspaceProcess = new MockWorkspaceProcess();
 
-    // Make it smell as if the handshake has happened.
+    // that has had a successful handshake
     setAuthToken("valid-token");
 
-    getKnownWorkspacePidsFromBean().add(mockWorkspaceProcess.pid);;
+    // that will be considered a known workspace
+    expectKnownWorkspacePids(mockWorkspaceProcess.pid);
 
     // When the workspace process tries to connect to the websocket endpoint with an invalid access token header,
     // but a known workspace id, it should fail ...
@@ -426,7 +154,7 @@ public class WebsocketEndpointTest {
    * and deserializeMessage() cannot deserialize non-json. */
   @ParameterizedTest
   @ValueSource(booleans = {true, false})
-  public void testSendingInvalidMessageStructureClosesSession(boolean sayHelloFirst) throws IOException, InterruptedException {
+  public void testSendingInvalidMessageStructureClosesSession(boolean sayHelloFirst) {
     // Given a workspace connected happy websocket ...
     var connectedWorkspace = connectWorkspace(sayHelloFirst, false);
 
@@ -444,7 +172,7 @@ public class WebsocketEndpointTest {
 
   /** Test sending a random message as the first message instead of a WORKSPACE_HELLO message. */
   @Test
-  public void testSendingRandomMessageFirstClosesSession() throws IOException, InterruptedException {
+  public void testSendingRandomMessageFirstClosesSession() {
     // Given a workspace connected happy websocket ...
     var connectedWorkspace = connectWorkspace(false, false);
 
@@ -465,9 +193,11 @@ public class WebsocketEndpointTest {
     connectedWorkspace.waitForClose(1000);
   }
 
-  /** Test sending a WORKSPACE_HELLO message with an originator+payload pid mismatch. */
+  /**
+   * Test sending a WORKSPACE_HELLO message with an originator+payload pid mismatch.
+   */
   @Test
-  public void testSendingHelloMessageWithMismatchedOriginator() throws IOException, InterruptedException {
+  public void testSendingHelloMessageWithMismatchedOriginator() {
     // Given a workspace connected happy websocket ...
     var connectedWorkspace = connectWorkspace(false, false);
 
@@ -475,7 +205,7 @@ public class WebsocketEndpointTest {
     // match the body's payload (and be known to the sidecar).
     var message = new Message(
         new MessageHeaders(MessageType.WORKSPACE_HELLO, "1234", "message-id-here"),
-        new HelloBody(connectedWorkspace.mockWorkspaceProcess.pid.id())
+        new HelloBody(connectedWorkspace.mockWorkspaceProcess().pid.id())
     );
     connectedWorkspace.send(message);
 
@@ -492,10 +222,11 @@ public class WebsocketEndpointTest {
     connectedWorkspace.waitForClose(1000);
   }
 
-
-  /** Test sending a WORKSPACE_HELLO message with an originator+payload pid mismatch. */
+  /**
+   * Test sending a WORKSPACE_HELLO message with an originator+payload pid mismatch.
+   */
   @Test
-  public void testSendingHelloMessageWithUnknownProcessId() throws IOException, InterruptedException {
+  public void testSendingHelloMessageWithUnknownProcessId() {
     // Given a workspace connected happy websocket ...
     var connectedWorkspace = connectWorkspace(false, false);
 
@@ -520,15 +251,17 @@ public class WebsocketEndpointTest {
     connectedWorkspace.waitForClose(1000);
   }
 
-  /** Test some error cases within WebsocketEndpoint::onMessage() when the originator header value
-   * is wrong given the sending workspace session. */
+  /**
+   * Test some error cases within WebsocketEndpoint::onMessage() when the originator header value
+   * is wrong given the sending workspace session.
+   */
   @ValueSource(strings = {
       "not-a-valid-pid",
       "sidecar",
       "1234" // an unknown workspace id
   })
   @ParameterizedTest
-  public void testWrongOriginatorValueInMessageClosesSession(String invalidOriginator) throws IOException, InterruptedException {
+  public void testWrongOriginatorValueInMessageClosesSession(String invalidOriginator) {
     // Given a workspace connected happy websocket ...
     var connectedWorkspace = connectWorkspace(true, true);
 
@@ -551,7 +284,7 @@ public class WebsocketEndpointTest {
   }
 
   @Test
-  public void testOnMessageHandlingUnknownSession() throws IOException{
+  public void testOnMessageHandlingUnknownSession() {
 
     Log.infof("Test: testOnMessageHandlingUnknownSession, websocketEndpoint: %s", websocketEndpoint);
     Log.infof("Test: testOnMessageHandlingUnknownSession, websocketEndpoint sessions: %s", System.identityHashCode(websocketEndpoint.sessions));
@@ -588,7 +321,7 @@ public class WebsocketEndpointTest {
   }
 
   @Test
-  public void testWorkspaceBroadcastingWhenNoOtherWorkspaces() throws IOException, InterruptedException {
+  public void testWorkspaceBroadcastingWhenNoOtherWorkspaces() throws InterruptedException {
     // Given a workspace connected happy websocket ...
     var connectedWorkspace = connectWorkspace(true, true);
 
@@ -606,7 +339,7 @@ public class WebsocketEndpointTest {
     // should not have been received by the workspace itself.
     Thread.sleep(1000);
 
-    assertTrue(connectedWorkspace.session.isOpen());
+    assertTrue(connectedWorkspace.session().isOpen());
     assertEquals(0, connectedWorkspace.receivedMessageCount());
 
     // close the session so we don't leave it hanging around polluting other tests.
@@ -635,7 +368,7 @@ public class WebsocketEndpointTest {
   }
 
   @Test
-  public void testSendingMismatchedBodyType() throws IOException {
+  public void testSendingMismatchedBodyType() {
     // Given a workspace connected happy websocket ...
     ConnectedWorkspace connectedWorkspace = connectWorkspace(false, false);
 
@@ -659,7 +392,7 @@ public class WebsocketEndpointTest {
   }
 
   @Test
-  public void testDisconnectingBeforeErrorSent() throws IOException, InterruptedException {
+  public void testDisconnectingBeforeErrorSent() throws InterruptedException {
     // Send a bad hello message, but disconnect before the error message is sent.
     // Gets coverage over sendErrorAndCloseSession() error paths.
     ConnectedWorkspace connectedWorkspace = connectWorkspace(false, false);
@@ -702,7 +435,7 @@ public class WebsocketEndpointTest {
     connectedWorkspace2.waitForClose(1000);
 
     // The first workspace should still be connected.
-    assertTrue(connectedWorkspace.session.isOpen());
+    assertTrue(connectedWorkspace.session().isOpen());
 
     // close the session so we don't leave it hanging around polluting other tests.
     connectedWorkspace.closeWebsocket();
@@ -788,115 +521,4 @@ public class WebsocketEndpointTest {
     assertEquals(1, sessions.size());
     assertFalse(sessions.containsKey(existingInactiveSession.key()));
   }
-
-
-  /**
-   * Connect a mock workspace process to the websocket endpoint.
-   *
-   * @param sayHello If true, the workspace will send a HELLO message after connecting.
-   * @param consumeInitialWorkspaceCount If true, the workspace will wait for the initial
-   *                                     WORKSPACE_COUNT_CHANGED response to the HELLO.
-   *                                     (Only meaningful when sayHello is true.)
-   * @return A ConnectedWorkspace instance representing the connection.
-   * */
-  private ConnectedWorkspace connectWorkspace(boolean sayHello, boolean consumeInitialWorkspaceCount) {
-    if (consumeInitialWorkspaceCount && !sayHello) {
-      throw new IllegalArgumentException("consumeInitialWorkspaceCount only makes sense when sayHello is true.");
-    }
-
-    // Given a workspace process ...
-    var mockWorkspaceProcess = new MockWorkspaceProcess();
-
-    // Make it smell as if the handshake has happened.
-    var expectedTokenValue = "valid-token";
-    setAuthToken(expectedTokenValue);
-    // Make websocket connection request carry the right header value
-    TestWebsocketClientConfigurator.setAccessToken(expectedTokenValue);
-
-    // And known in the set of workspace ids.
-    getKnownWorkspacePidsFromBean().add(mockWorkspaceProcess.pid);
-
-    Log.infof("Test: ConnectedWorkspace %s connecting to websocket.", mockWorkspaceProcess.pid_string);
-    Session session = null;
-    try {
-      session = ContainerProvider.getWebSocketContainer()
-                                 .connectToServer(TestWebsocketClient.class, uri);
-    } catch (DeploymentException | IOException e) {
-      fail("Failed to connect to websocket endpoint: " + e.getMessage());
-    }
-
-    TestWebsocketClientMessageHandler clientHandler = new TestWebsocketClientMessageHandler();
-    session.addMessageHandler(clientHandler);
-
-    var workspace = new ConnectedWorkspace(mockWorkspaceProcess, session, clientHandler);
-
-    if (sayHello) {
-      workspace.sayHello();
-
-      if(consumeInitialWorkspaceCount) {
-        // Block until we get the initial WORKSPACE_COUNT_CHANGED message, the expected
-        // response to the HELLO message.
-        workspace.waitForMessageOfType(MessageType.WORKSPACE_COUNT_CHANGED, 1000);
-      }
-    }
-
-    return workspace;
-  }
-
-  @BeforeEach
-  public void resetKnownWorkspacesBean() {
-    try {
-      Field allowNoWorkspacesField = knownWorkspacesBean.getClass().getDeclaredField("allowNoWorkspaces");
-      allowNoWorkspacesField.setAccessible(true);
-      allowNoWorkspacesField.set(knownWorkspacesBean, true);
-    } catch (NoSuchFieldException | IllegalAccessException e) {
-      throw new RuntimeException(e);
-    }
-
-    getKnownWorkspacePidsFromBean().clear();
-  }
-
-  @BeforeEach
-  public void resetAccessTokenBean() {
-    setAuthToken(null);
-  }
-
-  @BeforeEach
-  public void resetCurrentWebsocketCount() {
-    // empty out websocketEndpoint's sessions, in case any from prior test
-    // linger, which may throw off behavior of the next test.
-    websocketEndpoint.sessions.clear();
-  }
-
-  /**
-   * Get at the knownWorkspacesBean's knownWorkspacePIDs field through cheating reflection
-   * (That functionality not needed by any external business methods.)
-   */
-  private Set<WorkspacePid> getKnownWorkspacePidsFromBean() {
-    try {
-      Field knownWorkspacePIDsField = knownWorkspacesBean.getClass()
-                                                         .getDeclaredField("knownWorkspacePids");
-      knownWorkspacePIDsField.setAccessible(true);
-      return (Set<WorkspacePid>) knownWorkspacePIDsField.get(knownWorkspacesBean);
-    } catch (NoSuchFieldException | IllegalAccessException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-
-  /**
-   * Explicitly set the access token value in the SidecarAccessTokenBean, consulted by the filter.
-   *
-   * @param value The value to set the access token to.
-   */
-  void setAuthToken(String value) {
-    try {
-      Field tokenField = accessTokenBean.getClass().getDeclaredField("token");
-      tokenField.setAccessible(true);
-      tokenField.set(accessTokenBean, value);
-    } catch (NoSuchFieldException | IllegalAccessException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
 }
