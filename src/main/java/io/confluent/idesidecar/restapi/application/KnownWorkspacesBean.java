@@ -6,9 +6,9 @@ import io.quarkus.logging.Log;
 import io.quarkus.runtime.Quarkus;
 import io.quarkus.scheduler.Scheduled;
 import io.quarkus.scheduler.Scheduled.ConcurrentExecution;
+import io.vertx.core.impl.ConcurrentHashSet;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -55,7 +55,7 @@ public class KnownWorkspacesBean {
    *
    * @see #hasLivingWorkspaceClients() for grooming.
    */
-  Set<WorkspacePid> knownWorkspacePids = new HashSet<>();
+  Set<WorkspacePid> knownWorkspacePids = new ConcurrentHashSet<>();
 
   /**
    * Should {@link #hasLivingWorkspaceClients()} return true if there are no known workspaces?
