@@ -45,12 +45,12 @@ public class ConnectionEvents {
 
   void broadcast(ConnectionState connection, Action action) {
     broadcast(
-        new ConnectionEventBody(connection, action),
-        new MessageHeaders(MessageType.CONNECTION_EVENT)
+        new MessageHeaders(MessageType.CONNECTION_EVENT),
+        new ConnectionEventBody(connection, action)
     );
   }
 
-  void broadcast(ConnectionEventBody body, MessageHeaders headers) {
+  void broadcast(MessageHeaders headers, ConnectionEventBody body) {
     try {
       websockets.broadcast(new Message(headers, body));
     } catch (Exception e) {
