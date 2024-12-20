@@ -123,11 +123,11 @@ cp-demo-stop:
 
 CONFLUENT_DOCKER_TAG = $(shell yq e '.ide-sidecar.integration-tests.cp-demo.tag' src/main/resources/application.yml | sed 's/^v//')
 # See io.confluent.idesidecar.restapi.util.ConfluentLocalKafkaWithRestProxyContainer
-CONFLUENT_LOCAL_DOCKER_TAG = "7.6.0"
+CONFLUENT_LOCAL_DOCKER_TAG = 7.6.0
 # See io.confluent.idesidecar.restapi.util.cpdemo.OpenldapContainer
-OSIXIA_OPENLDAP_DOCKER_TAG = "1.3.0"
+OSIXIA_OPENLDAP_DOCKER_TAG = 1.3.0
 # See io.confluent.idesidecar.restapi.util.cpdemo.ToolsContainer
-CNFLDEMOS_TOOLS_DOCKER_TAG = "0.3"
+CNFLDEMOS_TOOLS_DOCKER_TAG = 0.3
 
 # Key for storing docker images in Semaphore CI cache
 SEMAPHORE_CP_ZOOKEEPER_DOCKER := ide-sidecar-docker-cp-zookeeper-$(CONFLUENT_DOCKER_TAG)
@@ -164,10 +164,10 @@ cache-docker-images:
 		rm -rf cnfdemos-tools.tgz)
 
 	cache has_key $(SEMAPHORE_CONFLUENT_LOCAL_DOCKER) || (\
-		docker pull confluentinc/cp-local:$(CONFLUENT_LOCAL_DOCKER_TAG) && \
-		docker save confluentinc/cp-local:$(CONFLUENT_LOCAL_DOCKER_TAG) | gzip > cp-local.tgz && \
-		cache store $(SEMAPHORE_CONFLUENT_LOCAL_DOCKER) cp-local.tgz && \
-		rm -rf cp-local.tgz)
+		docker pull confluentinc/confluent-local:$(CONFLUENT_LOCAL_DOCKER_TAG) && \
+		docker save confluentinc/confluent-local:$(CONFLUENT_LOCAL_DOCKER_TAG) | gzip > confluent-local.tgz && \
+		cache store $(SEMAPHORE_CONFLUENT_LOCAL_DOCKER) confluent-local.tgz && \
+		rm -rf confluent-local.tgz)
 
 .PHONY: load-cached-docker-images
 load-cached-docker-images:
@@ -184,4 +184,4 @@ load-cached-docker-images:
 	[ -f cnfdemos-tools.tgz ] && docker load -i cnfdemos-tools.tgz && rm -rf cnfdemos-tools.tgz || true
 
 	cache restore $(SEMAPHORE_CONFLUENT_LOCAL_DOCKER)
-	[ -f cp-local.tgz ] && docker load -i cp-local.tgz && rm -rf cp-local.tgz || true
+	[ -f confluent-local.tgz ] && docker load -i confluent-local.tgz && rm -rf confluent-local.tgz || true
