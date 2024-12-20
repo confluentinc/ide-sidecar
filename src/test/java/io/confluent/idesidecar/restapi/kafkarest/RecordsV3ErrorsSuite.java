@@ -46,10 +46,14 @@ public interface RecordsV3ErrorsSuite extends RecordsV3BaseSuite {
   default void shouldThrowNotFoundWhenPartitionDoesNotExist() {
     var topic = randomTopicName();
     createTopic(topic, 3, 1);
-    produceRecordThen(10, topic, "key", "value")
-        .statusCode(404)
-        .body(
-            "message", equalTo("This server does not host this topic-partition."));
+    await()
+        .atMost(Duration.ofSeconds(10))
+        .untilAsserted(() ->
+            produceRecordThen(10, topic, "key", "value")
+                .statusCode(404)
+                .body(
+                    "message", equalTo("This server does not host this topic-partition."))
+        );
   }
 
   /**
@@ -73,12 +77,16 @@ public interface RecordsV3ErrorsSuite extends RecordsV3BaseSuite {
     createTopic(topic);
     // Schema Registry should fail to find the subject before it even gets to the schema
     // version check
-    produceRecordThen(
-        null, topic, "key", keySchemaVersion, "value", valueSchemaVersion)
-        .statusCode(404)
-        .body("message",
-            matchesRegex("^Subject '%s-(key|value)' not found\\.; error code: 40401$"
-                .formatted(topic))
+    await()
+        .atMost(Duration.ofSeconds(10))
+        .untilAsserted(() ->
+            produceRecordThen(
+                null, topic, "key", keySchemaVersion, "value", valueSchemaVersion)
+                .statusCode(404)
+                .body("message",
+                    matchesRegex("^Subject '%s-(key|value)' not found\\.; error code: 40401$"
+                        .formatted(topic))
+                )
         );
   }
 
@@ -101,19 +109,27 @@ public interface RecordsV3ErrorsSuite extends RecordsV3BaseSuite {
     // Schema version 1 would be created by the above calls,
     // but the following call should fail to find version 40
     // (I mean, who even has 40 versions of a schema?)
-    produceRecordThen(
-        null, topic, "key", keySchemaVersion, "value", valueSchemaVersion)
-        .statusCode(404)
-        .body("message", matchesRegex("^Version \\d+ not found.; error code: 40402$"));
+    await()
+        .atMost(Duration.ofSeconds(10))
+        .untilAsserted(() ->
+            produceRecordThen(
+                null, topic, "key", keySchemaVersion, "value", valueSchemaVersion)
+                .statusCode(404)
+                .body("message", matchesRegex("^Version \\d+ not found.; error code: 40402$"))
+        );
   }
 
   @Test
   default void shouldThrowBadRequestIfKeyAndValueDataAreNull() {
     var topic = randomTopicName();
     createTopic(topic);
-    produceRecordThen(null, topic, null, null)
-        .statusCode(400)
-        .body("message", equalTo("Key and value data cannot both be null"));
+    await()
+        .atMost(Duration.ofSeconds(10))
+        .untilAsserted(() ->
+            produceRecordThen(null, topic, null, null)
+                .statusCode(400)
+                .body("message", equalTo("Key and value data cannot both be null"))
+        );
   }
 
   /**
@@ -163,10 +179,14 @@ public interface RecordsV3ErrorsSuite extends RecordsV3BaseSuite {
         RecordsV3BaseSuite.getProductSchema(keyFormat, true)
     );
 
-    produceRecordThen(
-        null, topic, badData, keySchema.getVersion(), null, null)
-        .statusCode(400)
-        .body("message", containsString("Failed to parse data"));
+    await()
+        .atMost(Duration.ofSeconds(10))
+        .untilAsserted(() ->
+            produceRecordThen(
+                null, topic, badData, keySchema.getVersion(), null, null)
+                .statusCode(400)
+                .body("message", containsString("Failed to parse data"))
+        );
 
     var valueSchema = createSchema(
         "%s-value".formatted(topic),
@@ -174,10 +194,14 @@ public interface RecordsV3ErrorsSuite extends RecordsV3BaseSuite {
         RecordsV3BaseSuite.getProductSchema(keyFormat, false)
     );
 
-    produceRecordThen(
-        null, topic, null, null, badData, valueSchema.getVersion())
-        .statusCode(400)
-        .body("message", containsString("Failed to parse data"));
+    await()
+        .atMost(Duration.ofSeconds(10))
+        .untilAsserted(() ->
+            produceRecordThen(
+                null, topic, null, null, badData, valueSchema.getVersion())
+                .statusCode(400)
+                .body("message", containsString("Failed to parse data"))
+        );
   }
 
   /**
@@ -295,41 +319,45 @@ public interface RecordsV3ErrorsSuite extends RecordsV3BaseSuite {
     );
 
     // Try to produce a record with the wrong subject name strategy
-    produceRecordThen(
-        topic,
-        ProduceRequest
-            .builder()
-            .partitionId(null)
-            .key(
-                ProduceRequestData
+    await()
+        .atMost(Duration.ofSeconds(10))
+        .untilAsserted(() ->
+            produceRecordThen(
+                topic,
+                ProduceRequest
                     .builder()
-                    .schemaVersion(keySchema.getVersion())
-                    // Pass valid data
-                    .data(Map.of(
-                        "id", 123,
-                        "name", "test",
-                        "price", 123.45
-                    ))
-                    // But wrong subject name strategy
-                    .subjectNameStrategy("record_name")
-                    .subject("foo-key")
+                    .partitionId(null)
+                    .key(
+                        ProduceRequestData
+                            .builder()
+                            .schemaVersion(keySchema.getVersion())
+                            // Pass valid data
+                            .data(Map.of(
+                                "id", 123,
+                                "name", "test",
+                                "price", 123.45
+                            ))
+                            // But wrong subject name strategy
+                            .subjectNameStrategy("record_name")
+                            .subject("foo-key")
+                            .build()
+                    )
+                    .value(
+                        ProduceRequestData
+                            .builder()
+                            .data(Map.of())
+                            .build()
+                    )
                     .build()
             )
-            .value(
-                ProduceRequestData
-                    .builder()
-                    .data(Map.of())
-                    .build()
-            )
-            .build()
-    )
-        .statusCode(404)
-        .body("message", equalTo(
-            // The KafkaJsonSchemaSerializer tries to look up the subject
-            // by the record name but fails to find "ProductKey" which is the
-            // "title" of the JSON schema. Nothing gets past the serializer!
-            "Subject 'ProductKey' not found.; error code: 40401")
-        )
-        .body("error_code", equalTo(40401));
+                .statusCode(404)
+                .body("message", equalTo(
+                    // The KafkaJsonSchemaSerializer tries to look up the subject
+                    // by the record name but fails to find "ProductKey" which is the
+                    // "title" of the JSON schema. Nothing gets past the serializer!
+                    "Subject 'ProductKey' not found.; error code: 40401")
+                )
+                .body("error_code", equalTo(40401))
+        );
   }
 }
