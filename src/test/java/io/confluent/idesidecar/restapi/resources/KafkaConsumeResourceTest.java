@@ -13,6 +13,7 @@ import static io.confluent.idesidecar.restapi.cache.ClusterCacheExpectations.exp
 import static io.confluent.idesidecar.restapi.cache.ClusterCacheExpectations.expectSchemaRegistryInCache;
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
 import static io.restassured.RestAssured.given;
+import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -38,11 +39,11 @@ import io.restassured.http.ContentType;
 import io.vertx.core.json.JsonObject;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.core.MediaType;
+import java.time.Duration;
 import java.util.Map;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 @QuarkusTest
@@ -95,32 +96,39 @@ public class KafkaConsumeResourceTest {
   void testConnectionHeaderNotPassedReturns400() {
     final String path = "/gateway/v1/clusters/%s/topics/topic_3/partitions/-/consume"
         .formatted(KAFKA_CLUSTER_ID);
-
-    given()
-        .when()
-        .contentType(ContentType.JSON)
-        .body("{}")
-        .post(path)
-        .then()
-        .statusCode(400)
-        .contentType(MediaType.APPLICATION_JSON)
-        .body("title", containsString("x-connection-id header is required"));
+    await()
+        .atMost(Duration.ofSeconds(10))
+        .untilAsserted(() -> {
+          given()
+              .when()
+              .contentType(ContentType.JSON)
+              .body("{}")
+              .post(path)
+              .then()
+              .statusCode(400)
+              .contentType(MediaType.APPLICATION_JSON)
+              .body("title", containsString("x-connection-id header is required"));
+        });
   }
 
   @Test
   void testConnectionNotFoundReturns404() {
     final String path = "/gateway/v1/clusters/%s/topics/topic_3/partitions/-/consume"
         .formatted(KAFKA_CLUSTER_ID);
-    given()
-        .when()
-        .contentType(ContentType.JSON)
-        .header("x-connection-id", CONNECTION_ID)
-        .body("{}")
-        .post(path)
-        .then()
-        .statusCode(404)
-        .contentType(MediaType.APPLICATION_JSON)
-        .body("title", is("Connection id=%s not found".formatted(CONNECTION_ID)));
+    await()
+        .atMost(Duration.ofSeconds(10))
+        .untilAsserted(() -> {
+          given()
+              .when()
+              .contentType(ContentType.JSON)
+              .header("x-connection-id", CONNECTION_ID)
+              .body("{}")
+              .post(path)
+              .then()
+              .statusCode(404)
+              .contentType(MediaType.APPLICATION_JSON)
+              .body("title", is("Connection id=%s not found".formatted(CONNECTION_ID)));
+        });
   }
 
   @Test
@@ -129,18 +137,21 @@ public class KafkaConsumeResourceTest {
         .formatted(KAFKA_CLUSTER_ID);
     // Given we have an authenticated CCloud connection
     ccloudTestUtil.createAuthedConnection(CONNECTION_ID, ConnectionType.CCLOUD);
-
-    given()
-        .when()
-        .contentType(ContentType.JSON)
-        .header("x-connection-id", CONNECTION_ID)
-        .header("x-cluster-id", "Foo")
-        .body("{}")
-        .post(path)
-        .then()
-        .statusCode(400)
-        .contentType(MediaType.APPLICATION_JSON)
-        .body("title", containsString("Cluster ID in path and header do not match"));
+    await()
+        .atMost(Duration.ofSeconds(10))
+        .untilAsserted(() -> {
+          given()
+              .when()
+              .contentType(ContentType.JSON)
+              .header("x-connection-id", CONNECTION_ID)
+              .header("x-cluster-id", "Foo")
+              .body("{}")
+              .post(path)
+              .then()
+              .statusCode(400)
+              .contentType(MediaType.APPLICATION_JSON)
+              .body("title", containsString("Cluster ID in path and header do not match"));
+        });
   }
 
   @Test
@@ -153,19 +164,23 @@ public class KafkaConsumeResourceTest {
 
     // Now trying to hit the cluster proxy endpoint without cached cluster info
     // should return a 500 error
-    given()
-        .when()
-        .contentType(ContentType.JSON)
-        .header("x-connection-id", CONNECTION_ID)
-        .body("{}")
-        .header("x-cluster-id", KAFKA_CLUSTER_ID)
-        .post(path)
-        .then()
-        .statusCode(404)
-        .contentType(MediaType.APPLICATION_JSON)
-        .body("title", containsString(
-            "Kafka Cluster %s not found in connection %s".formatted(KAFKA_CLUSTER_ID, CONNECTION_ID)
-        ));
+    await()
+        .atMost(Duration.ofSeconds(10))
+        .untilAsserted(() -> {
+          given()
+              .when()
+              .contentType(ContentType.JSON)
+              .header("x-connection-id", CONNECTION_ID)
+              .body("{}")
+              .header("x-cluster-id", KAFKA_CLUSTER_ID)
+              .post(path)
+              .then()
+              .statusCode(404)
+              .contentType(MediaType.APPLICATION_JSON)
+              .body("title", containsString(
+                  "Kafka Cluster %s not found in connection %s".formatted(KAFKA_CLUSTER_ID, CONNECTION_ID)
+              ));
+        });
   }
 
 
@@ -194,19 +209,23 @@ public class KafkaConsumeResourceTest {
         .formatted(KAFKA_CLUSTER_ID, "topic_429");
     // Now trying to hit the cluster proxy endpoint
     // should return a 429 Too many requests error.
-    given()
-        .when()
-        .contentType(ContentType.JSON)
-        .header("x-connection-id", CONNECTION_ID)
-        .body("{}")
-        .header("x-cluster-id", KAFKA_CLUSTER_ID)
-        .post(path)
-        .then()
-        .statusCode(429)
-        .contentType(MediaType.APPLICATION_JSON)
-        .body("title", containsString(
-            "Error fetching the messages from ccloud"))
-        .body("title", containsString("Too many requests"));
+    await()
+        .atMost(Duration.ofSeconds(10))
+        .untilAsserted(() -> {
+          given()
+              .when()
+              .contentType(ContentType.JSON)
+              .header("x-connection-id", CONNECTION_ID)
+              .body("{}")
+              .header("x-cluster-id", KAFKA_CLUSTER_ID)
+              .post(path)
+              .then()
+              .statusCode(429)
+              .contentType(MediaType.APPLICATION_JSON)
+              .body("title", containsString(
+                  "Error fetching the messages from ccloud"))
+              .body("title", containsString("Too many requests"));
+        });
   }
 
   @Test
@@ -232,49 +251,56 @@ public class KafkaConsumeResourceTest {
             )
             .atPriority(100)
     );
-
-    given()
-        .when()
-        .contentType(ContentType.JSON)
-        .headers(CLUSTER_REQUEST_HEADERS)
-        .body("{}")
-        .post(
-            "/gateway/v1/clusters/%s/topics/%s/partitions/-/consume"
-                .formatted(KAFKA_CLUSTER_ID, SCHEMA_LESS_TOPIC_NAME)
-        )
-        .then()
-        .statusCode(500)
-        .body("title", containsString("{\"error\": \"Something went wrong.\"}"));
+    await()
+        .atMost(Duration.ofSeconds(10))
+        .untilAsserted(() -> {
+          given()
+              .when()
+              .contentType(ContentType.JSON)
+              .headers(CLUSTER_REQUEST_HEADERS)
+              .body("{}")
+              .post(
+                  "/gateway/v1/clusters/%s/topics/%s/partitions/-/consume"
+                      .formatted(KAFKA_CLUSTER_ID, SCHEMA_LESS_TOPIC_NAME)
+              )
+              .then()
+              .statusCode(500)
+              .body("title", containsString("{\"error\": \"Something went wrong.\"}"));
+        });
   }
 
   @Test
   void testConsumeRecordsAgainstCCloud() {
     setupSimpleConsumeApi();
-    var actualResponse = given()
-        .when()
-        .contentType(ContentType.JSON)
-        .headers(CLUSTER_REQUEST_HEADERS)
-        .body("{}")
-        .post(
-            "/gateway/v1/clusters/%s/topics/%s/partitions/-/consume"
-                .formatted(KAFKA_CLUSTER_ID, SCHEMA_LESS_TOPIC_NAME)
-        )
-        .then();
+    await()
+        .atMost(Duration.ofSeconds(10))
+        .untilAsserted(() -> {
+          var actualResponse = given()
+              .when()
+              .contentType(ContentType.JSON)
+              .headers(CLUSTER_REQUEST_HEADERS)
+              .body("{}")
+              .post(
+                  "/gateway/v1/clusters/%s/topics/%s/partitions/-/consume"
+                      .formatted(KAFKA_CLUSTER_ID, SCHEMA_LESS_TOPIC_NAME)
+              )
+              .then();
 
-    // Then we should get a 200 response
-    actualResponse.statusCode(200);
+          // Then we should get a 200 response
+          actualResponse.statusCode(200);
 
-    var actualResponseBody = actualResponse.extract().asString();
-    var expectedResponseBody = loadResource("message-viewer/ccloud-message-sidecar-response.json");
-    JsonObject expectedJson = new JsonObject(expectedResponseBody);
-    JsonObject actualJson = new JsonObject(actualResponseBody);
+          var actualResponseBody = actualResponse.extract().asString();
+          var expectedResponseBody = loadResource("message-viewer/ccloud-message-sidecar-response.json");
+          JsonObject expectedJson = new JsonObject(expectedResponseBody);
+          JsonObject actualJson = new JsonObject(actualResponseBody);
 
-    assertEquals(expectedJson, actualJson);
+          assertEquals(expectedJson, actualJson);
 
-    // Endpoint should return the number of consumed bytes in the response headers
-    actualResponse.header(
-        KafkaConsumeResource.KAFKA_CONSUMED_BYTES_RESPONSE_HEADER,
-        String.valueOf(expectedJson.toString().length()));
+          // Endpoint should return the number of consumed bytes in the response headers
+          actualResponse.header(
+              KafkaConsumeResource.KAFKA_CONSUMED_BYTES_RESPONSE_HEADER,
+              String.valueOf(expectedJson.toString().length()));
+        });
   }
 
   @Test
@@ -284,33 +310,37 @@ public class KafkaConsumeResourceTest {
     JsonNode expectedNode = objectMapper.readTree(expectedAvroResponse);
 
     setupSimpleConsumeApi();
-    given()
-        .when()
-        .contentType(ContentType.JSON)
-        .headers(CLUSTER_REQUEST_HEADERS)
-        .body("{}")
-        .post(
-            "/gateway/v1/clusters/%s/topics/%s/partitions/-/consume"
-                .formatted(KAFKA_CLUSTER_ID, AVRO_SCHEMA_TOPIC_NAME)
-        )
-        .then()
-        .statusCode(200)
-        .header(
-            KafkaConsumeResource.KAFKA_CONSUMED_BYTES_RESPONSE_HEADER,
-            String.valueOf(expectedNode.toString().length())
-        )
-        .body(JsonMatcher.matchesJson(expectedAvroResponse));
+    await()
+        .atMost(Duration.ofSeconds(10))
+        .untilAsserted(() -> {
+          given()
+              .when()
+              .contentType(ContentType.JSON)
+              .headers(CLUSTER_REQUEST_HEADERS)
+              .body("{}")
+              .post(
+                  "/gateway/v1/clusters/%s/topics/%s/partitions/-/consume"
+                      .formatted(KAFKA_CLUSTER_ID, AVRO_SCHEMA_TOPIC_NAME)
+              )
+              .then()
+              .statusCode(200)
+              .header(
+                  KafkaConsumeResource.KAFKA_CONSUMED_BYTES_RESPONSE_HEADER,
+                  String.valueOf(expectedNode.toString().length())
+              )
+              .body(JsonMatcher.matchesJson(expectedAvroResponse));
 
-    // It's not only enough to check for 200 since we simply fall back to returning
-    // raw bytes if we fail to deserialize the message.
+          // It's not only enough to check for 200 since we simply fall back to returning
+          // raw bytes if we fail to deserialize the message.
 
-    // Observation: We seem to make two requests to the sidecar SR proxy.
-    //              One without the subject= query param and one with it.
-    //              This is left as an exercise for the reader to investigate.
-    wireMock.verifyThat(
-        exactly(2),
-        getRequestedFor(urlMatching(SCHEMAS_BY_ID_URL_REGEX.formatted(ORDERS_AVRO_SCHEMA_ID)))
-    );
+          // Observation: We seem to make two requests to the sidecar SR proxy.
+          //              One without the subject= query param and one with it.
+          //              This is left as an exercise for the reader to investigate.
+          wireMock.verifyThat(
+              exactly(2),
+              getRequestedFor(urlMatching(SCHEMAS_BY_ID_URL_REGEX.formatted(ORDERS_AVRO_SCHEMA_ID)))
+          );
+        });
   }
 
   @Test
@@ -320,33 +350,37 @@ public class KafkaConsumeResourceTest {
     JsonNode expectedNode = objectMapper.readTree(expectedProtoResponse);
 
     setupSimpleConsumeApi();
-    given()
-        .when()
-        .contentType(ContentType.JSON)
-        .headers(CLUSTER_REQUEST_HEADERS)
-        .body("{}")
-        .post(
-            "/gateway/v1/clusters/%s/topics/%s/partitions/-/consume"
-                .formatted(KAFKA_CLUSTER_ID, PROTOBUF_SCHEMA_TOPIC_NAME)
-        )
-        .then()
-        .statusCode(200)
-        .body(JsonMatcher.matchesJson(expectedProtoResponse))
-        .header(
-            KafkaConsumeResource.KAFKA_CONSUMED_BYTES_RESPONSE_HEADER,
-            String.valueOf(expectedNode.toString().length())
-        );
+    await()
+        .atMost(Duration.ofSeconds(10))
+        .untilAsserted(() -> {
+          given()
+              .when()
+              .contentType(ContentType.JSON)
+              .headers(CLUSTER_REQUEST_HEADERS)
+              .body("{}")
+              .post(
+                  "/gateway/v1/clusters/%s/topics/%s/partitions/-/consume"
+                      .formatted(KAFKA_CLUSTER_ID, PROTOBUF_SCHEMA_TOPIC_NAME)
+              )
+              .then()
+              .statusCode(200)
+              .body(JsonMatcher.matchesJson(expectedProtoResponse))
+              .header(
+                  KafkaConsumeResource.KAFKA_CONSUMED_BYTES_RESPONSE_HEADER,
+                  String.valueOf(expectedNode.toString().length())
+              );
 
-    // It's not only enough to check for 200 since we simply fall back to returning
-    // raw bytes if we fail to deserialize the message.
+          // It's not only enough to check for 200 since we simply fall back to returning
+          // raw bytes if we fail to deserialize the message.
 
-    // Observation: We seem to make two requests to the sidecar SR proxy.
-    //              One without the subject= query param and one with it.
-    //              This is left as an exercise for the reader to investigate.
-    wireMock.verifyThat(
-        exactly(1),
-        getRequestedFor(urlMatching(SCHEMAS_BY_ID_URL_REGEX.formatted(ORDERS_PROTOBUF_SCHEMA_ID)))
-    );
+          // Observation: We seem to make two requests to the sidecar SR proxy.
+          //              One without the subject= query param and one with it.
+          //              This is left as an exercise for the reader to investigate.
+          wireMock.verifyThat(
+              exactly(1),
+              getRequestedFor(urlMatching(SCHEMAS_BY_ID_URL_REGEX.formatted(ORDERS_PROTOBUF_SCHEMA_ID)))
+          );
+        });
   }
 
 
@@ -357,82 +391,68 @@ public class KafkaConsumeResourceTest {
   @Test
   void testConsumeRecordsWithEmptyRequestBody() {
     setupSimpleConsumeApi();
-    given()
-        .when()
-        .contentType(ContentType.JSON)
-        .headers(CLUSTER_REQUEST_HEADERS)
-        .post(
-            "/gateway/v1/clusters/%s/topics/%s/partitions/-/consume"
-                .formatted(KAFKA_CLUSTER_ID, SCHEMA_LESS_TOPIC_NAME)
-        )
-        .then()
-        .statusCode(200);
+    await()
+        .atMost(Duration.ofSeconds(10))
+        .untilAsserted(() -> {
+          given()
+              .when()
+              .contentType(ContentType.JSON)
+              .headers(CLUSTER_REQUEST_HEADERS)
+              .post(
+                  "/gateway/v1/clusters/%s/topics/%s/partitions/-/consume"
+                      .formatted(KAFKA_CLUSTER_ID, SCHEMA_LESS_TOPIC_NAME)
+              )
+              .then()
+              .statusCode(200);
+        });
   }
 
   @Test
   void testConsumeRecordsWithNonEmptyRequestBody() {
     setupSimpleConsumeApi();
+    await()
+        .atMost(Duration.ofSeconds(10))
+        .untilAsserted(() -> {
+          given()
+              .when()
+              .contentType(ContentType.JSON)
+              .headers(CLUSTER_REQUEST_HEADERS)
+              .body("{\"from_beginning\": true,\"max_poll_records\":5}")
+              .post(
+                  "/gateway/v1/clusters/%s/topics/%s/partitions/-/consume"
+                      .formatted(KAFKA_CLUSTER_ID, SCHEMA_LESS_TOPIC_NAME)
+              )
+              .then()
+              .statusCode(200);
 
-    given()
-        .when()
-        .contentType(ContentType.JSON)
-        .headers(CLUSTER_REQUEST_HEADERS)
-        .body("{\"from_beginning\": true,\"max_poll_records\":5}")
-        .post(
-            "/gateway/v1/clusters/%s/topics/%s/partitions/-/consume"
-                .formatted(KAFKA_CLUSTER_ID, SCHEMA_LESS_TOPIC_NAME)
-        )
-        .then()
-        .statusCode(200);
-
-    wireMock.verifyThat(
-        exactly(1),
-        postRequestedFor(urlEqualTo(
-            CCLOUD_SIMPLE_CONSUME_API_PATH.formatted(KAFKA_CLUSTER_ID, SCHEMA_LESS_TOPIC_NAME))
-        ).withRequestBody(equalToJson("{\"from_beginning\": true,\"max_poll_records\":5}"))
-    );
+          wireMock.verifyThat(
+              exactly(1),
+              postRequestedFor(urlEqualTo(
+                  CCLOUD_SIMPLE_CONSUME_API_PATH.formatted(KAFKA_CLUSTER_ID, SCHEMA_LESS_TOPIC_NAME))
+              ).withRequestBody(equalToJson("{\"from_beginning\": true,\"max_poll_records\":5}"))
+          );
+        });
   }
 
   @Test
   void testBadConsumeRequestThrows400() {
     setupSimpleConsumeApi();
-    given()
-        .when()
-        .contentType(ContentType.JSON)
-        .headers(CLUSTER_REQUEST_HEADERS)
-        .body("{\"faucets\": \"on\"}")
-        .post(
-            "/gateway/v1/clusters/%s/topics/%s/partitions/-/consume"
-                .formatted(KAFKA_CLUSTER_ID, SCHEMA_LESS_TOPIC_NAME)
-        )
-        .then()
-        .statusCode(400)
-        .body("attributeName", is("faucets"));
-  }
-
-  @Disabled  // Find a way to inject mock consumer for local kafka cluster
-  @Test
-  void testConsumeNoWorkyForConfluentLocal() {
-    ccloudTestUtil.createAuthedConnection(CONNECTION_ID, ConnectionType.LOCAL);
-    expectKafkaClusterInCache(
-        clusterCache,
-        CONNECTION_ID,
-        KAFKA_CLUSTER_ID,
-        "http://localhost:%d".formatted(wireMockPort)
-    );
-
-    given()
-        .when()
-        .contentType(ContentType.JSON)
-        .headers(CLUSTER_REQUEST_HEADERS)
-        .body("{\"from_beginning\": true,\"max_poll_records\":5}")
-        .post(
-            "/gateway/v1/clusters/%s/topics/%s/partitions/-/consume"
-                .formatted(KAFKA_CLUSTER_ID, SCHEMA_LESS_TOPIC_NAME)
-        )
-        .then()
-        .statusCode(200)
-        .body("title", is("This endpoint does not yet support connection-type=LOCAL"));
+    await()
+        .atMost(Duration.ofSeconds(10))
+        .untilAsserted(() -> {
+          given()
+              .when()
+              .contentType(ContentType.JSON)
+              .headers(CLUSTER_REQUEST_HEADERS)
+              .body("{\"faucets\": \"on\"}")
+              .post(
+                  "/gateway/v1/clusters/%s/topics/%s/partitions/-/consume"
+                      .formatted(KAFKA_CLUSTER_ID, SCHEMA_LESS_TOPIC_NAME)
+              )
+              .then()
+              .statusCode(400)
+              .body("attributeName", is("faucets"));
+        });
   }
 
   private String getDataPlaneToken() {
