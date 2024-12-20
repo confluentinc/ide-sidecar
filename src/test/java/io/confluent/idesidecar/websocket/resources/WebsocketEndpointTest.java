@@ -205,7 +205,7 @@ public class WebsocketEndpointTest extends AbstractWebsocketTestBase {
     // match the body's payload (and be known to the sidecar).
     var message = new Message(
         new MessageHeaders(MessageType.WORKSPACE_HELLO, "1234", "message-id-here"),
-        new HelloBody(connectedWorkspace.mockWorkspaceProcess().pid.id())
+        new HelloBody(connectedWorkspace.workspacePid().id())
     );
     connectedWorkspace.send(message);
 
@@ -213,7 +213,7 @@ public class WebsocketEndpointTest extends AbstractWebsocketTestBase {
     var errorMessage = connectedWorkspace.waitForMessageOfType(MessageType.PROTOCOL_ERROR, 1000);
     var errorString = ((ProtocolErrorBody) errorMessage.body()).error();
 
-    var expectedPrefix = String.format("Workspace %s sent message with incorrect originator value: 1234. Removing and closing session", connectedWorkspace.processId());
+    var expectedPrefix = String.format("Workspace %s sent message with incorrect originator value: 1234. Removing and closing session", connectedWorkspace.workspacePid());
     assertTrue(
         errorString.startsWith(expectedPrefix)
     );
@@ -416,13 +416,17 @@ public class WebsocketEndpointTest extends AbstractWebsocketTestBase {
   void testTwoConnectionsFromSameWorkspacePid() {
     // Given a workspace connected happy websocket ...
     var connectedWorkspace = connectWorkspace(true, true);
-    var firstWorkspacePid = connectedWorkspace.processId();
+    var firstWorkspacePid = connectedWorkspace.workspacePid();
 
     // Now make second websocket connection, saying hello with the same pid as from the first
     // (in the body of the message, not the header. We want to get to a later error than if
     // the wrong pid was in the header.)
-    var connectedWorkspace2 = connectWorkspace(false, false);
-    connectedWorkspace2.sayHello(firstWorkspacePid, firstWorkspacePid);
+    var connectedWorkspace2 = connectWorkspace(
+        connectedWorkspace.workspacePid(), // this is the pid of the first session!
+        false,
+        false
+    );
+    connectedWorkspace2.sayHello();
 
     // The second workspace should get a PROTOCOL_ERROR message back from the sidecar complaining about
     // 'duplicate workspace pid' and the session should be closed.
