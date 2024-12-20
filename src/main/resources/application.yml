@@ -67,6 +67,7 @@ vscode:
   extension:
     version: unknown
   version: unknown
+
 ide-sidecar:
   api:
     group: gateway
@@ -151,7 +152,7 @@ ide-sidecar:
     # How long do we allow a connection to be established w/o it saying HELLO?
     initial-grace-seconds: 60
     # ... and how often do we check?
-    groom-interval-seconds: 60
+    purge-interval-seconds: 60
   # Configuration set by the sidecar when instantiating the Kafka Admin client
   # (We may choose to allow connection-specific overrides in the future)
   admin-client-configs:

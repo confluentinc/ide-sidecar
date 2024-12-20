@@ -13,6 +13,8 @@ import io.confluent.idesidecar.websocket.messages.MessageType;
 import io.confluent.idesidecar.websocket.messages.ProtocolErrorBody;
 import io.confluent.idesidecar.websocket.messages.WorkspacesChangedBody;
 import io.quarkus.logging.Log;
+import io.quarkus.scheduler.Scheduled;
+import io.quarkus.scheduler.Scheduled.ConcurrentExecution;
 import io.smallrye.common.constraint.Nullable;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
@@ -47,6 +49,10 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 @Singleton
 public class WebsocketEndpoint {
 
+  /** How often to check for inactive sessions to purge. */
+  @ConfigProperty(name = "ide-sidecar.websockets.purge-interval-seconds")
+  Provider<Integer> purgeIntervalSeconds;
+
   /** How long to allow inactive sessions to linger before purging them. */
   @ConfigProperty(name = "ide-sidecar.websockets.initial-grace-seconds", defaultValue = "30")
   Provider<Integer> initialGraceSeconds;
@@ -64,14 +70,12 @@ public class WebsocketEndpoint {
     private final SessionKey key;
     private final Session session;
     private final Instant createdAt;
-    // will grow an Instant createdAt when we start to expire the inactive sessions
-    // after some time -- todo next branch.
 
     /** Will be null if session has not sent HELLO_WORKSPACE message carrying its process id. */
     @Nullable
     private final WorkspacePid workspacePid;
 
-    public WorkspaceWebsocketSession(Session session, WorkspacePid workspacePid, Instant createdAt) {
+    WorkspaceWebsocketSession(Session session, WorkspacePid workspacePid, Instant createdAt) {
       key = new SessionKey(session.getId());
       this.session = session;
       this.workspacePid = workspacePid;
@@ -473,21 +477,33 @@ public class WebsocketEndpoint {
     broadcast(message);
   }
 
+  /** Has purgeInactiveSessions logged the first time? */
+  boolean purgeLogged = false;
   /**
    * Purge any sessions that have lingered too long
-   * in the initial state without saying hello (""inactive" sessions).
+   * in the initial state without saying hello (""not active" sessions).
    */
+  @Scheduled(
+      every = "${ide-sidecar.websockets.purge-interval-seconds}s",
+      concurrentExecution = ConcurrentExecution.SKIP)
   public void purgeInactiveSessions() {
-    Log.info("Checking for overdue inactive sessions.");
-    var now = Instant.now();
-
     var maxAllowedSeconds = initialGraceSeconds.get();
 
+    // Only log the first time to not to be too spammy.
+    if (!purgeLogged) {
+      Log.infof("Checking for overdue inactive websocket sessions to purge every %ds,"
+          + " max allowed initial connection duration %ds.", purgeIntervalSeconds.get(), maxAllowedSeconds);
+      purgeLogged = true;
+    }
+
     // Find all inactive sessions that have been inactive for too long.
+    var now = Instant.now();
+
     var toPurge = sessions.values().stream()
         .filter(wws -> !wws.isActive() && Duration.between(wws.createdAt(), now).toSeconds() > maxAllowedSeconds)
         .collect(Collectors.toList());
 
+    // Purge any identified sessions.
     if(!toPurge.isEmpty()) {
       Log.infof("Purging %d inactive session(s) that have lingered too long.", toPurge.size());
       toPurge.forEach(wws -> {
