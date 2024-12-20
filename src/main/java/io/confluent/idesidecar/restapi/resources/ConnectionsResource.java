@@ -184,7 +184,7 @@ public class ConnectionsResource {
     }
 
     return connectionStateManager
-        .updateSpecForConnectionState(id, spec)
+        .patchSpecForConnectionState(id, spec)
         .onItem().transformToUni(updated -> Uni.createFrom().item(() -> getConnectionModel(id)))
         .onFailure().invoke(e -> {
           // Log the error

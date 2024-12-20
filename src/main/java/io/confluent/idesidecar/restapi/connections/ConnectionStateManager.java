@@ -255,6 +255,53 @@ public class ConnectionStateManager {
         });
   }
 
+  public Uni<Void> patchSpecForConnectionState(String id, ConnectionSpec newSpec) {
+    // Check if the connection state exists
+    if (!connectionStates.containsKey(id)) {
+      return Uni.createFrom().failure(
+          new ConnectionNotFoundException(CONNECTION_NOT_FOUND.formatted(id)));
+    }
+
+    // Get the existing spec
+    ConnectionSpec existingSpec = getConnectionSpec(id);
+
+    // Merge the new spec into the existing spec
+    ConnectionSpec mergedSpec = existingSpec.merge(newSpec);
+
+    return Uni.createFrom()
+        .item(() -> mergedSpec.validateUpdate(newSpec))
+        .onItem()
+        .transformToUni(errors -> {
+          if (!errors.isEmpty()) {
+            return Uni.createFrom().failure(new InvalidInputException(errors));
+          }
+          return Uni.createFrom().voidItem();
+        })
+        .chain(ignored -> switch (mergedSpec.type()) {
+          // Make sure the Confluent Cloud organization ID is valid for this user
+          case CCLOUD -> validateCCloudOrganizationId(id, mergedSpec.ccloudOrganizationId());
+          // TODO: DIRECT connection changes need to be validated
+          case DIRECT -> Uni.createFrom().voidItem();
+          // No need to validate the spec for LOCAL, DIRECT, and PLATFORM connections
+          case LOCAL, PLATFORM -> Uni.createFrom().voidItem();
+        })
+        .chain(ignored -> {
+          // Get and update the connection spec after all validations are green
+          var updated = connectionStates.get(id);
+          updated.setSpec(mergedSpec);
+
+          // Fire an event
+          Events.fireAsyncEvent(
+              connectionStateEvents,
+              updated,
+              LifecycleQualifier.updated(),
+              ConnectionTypeQualifier.typeQualifier(updated)
+          );
+
+          return Uni.createFrom().voidItem();
+        });
+  }
+
   /**
    * Validate the provided Confluent Cloud configuration for a connection. We do this by
    * refreshing the OAuth tokens using the provided organization ID. If the organization ID is
