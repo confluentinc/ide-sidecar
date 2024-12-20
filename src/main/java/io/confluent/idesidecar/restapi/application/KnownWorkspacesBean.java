@@ -70,7 +70,7 @@ public class KnownWorkspacesBean {
    * @param workspacePid the workspace id to add
    * @return true if the workspace id is new (not already known), false otherwise
    */
-  public synchronized boolean addWorkspacePid(WorkspacePid workspacePid) {
+  public boolean addWorkspacePid(WorkspacePid workspacePid) {
     boolean wasNew = knownWorkspacePids.add(workspacePid);
 
     // First handshake has definitely happened by time the request filter calls addWorkspacePID().
@@ -84,7 +84,7 @@ public class KnownWorkspacesBean {
   /**
    * Is this a known workspace id?
    */
-  public synchronized boolean isKnownWorkspace(WorkspacePid workspaceId) {
+  public boolean isKnownWorkspace(WorkspacePid workspaceId) {
     return knownWorkspacePids.contains(workspaceId);
   }
 
@@ -101,7 +101,7 @@ public class KnownWorkspacesBean {
    *
    * @return true if the sidecar should remain alive, false otherwise
    */
-  public synchronized boolean hasLivingWorkspaceClients() {
+  public boolean hasLivingWorkspaceClients() {
     // Loop through all known workspaces and remove any that are no longer running.
     // If there are no more workspaces left, return false to indicate we should no
     // longer be alive.
@@ -112,15 +112,10 @@ public class KnownWorkspacesBean {
     }
 
     // Remove any workspace process ids that are no longer running.
-    // (Use explicit iterator to avoid ConcurrentModificationException)
-    Iterator<WorkspacePid> knownWorkspacePIDsIterator = knownWorkspacePids.iterator();
-    while (knownWorkspacePIDsIterator.hasNext()) {
-      var workspacePid = knownWorkspacePIDsIterator.next();
-      ProcessHandle processHandle = ProcessHandle.of(workspacePid.id()).orElse(null);
-      if (processHandle == null || !processHandle.isAlive()) {
-        knownWorkspacePIDsIterator.remove();
-      }
-    }
+    knownWorkspacePids.removeIf(workspacePid -> {
+      var processHandle = ProcessHandle.of(workspacePid.id()).orElse(null);
+      return processHandle == null || !processHandle.isAlive();
+    });
 
     // We're happy if there's at least one workspace process still alive.
     return !knownWorkspacePids.isEmpty();
@@ -142,7 +137,7 @@ public class KnownWorkspacesBean {
   @Scheduled(
       every = "${ide-sidecar.grim-reaper.interval-seconds}s",
       concurrentExecution = ConcurrentExecution.SKIP)
-  synchronized void possiblyShutdownIfNoReasonToExist() {
+  void possiblyShutdownIfNoReasonToExist() {
 
     if (grimReaperEnabled.get()) {
       if (!hasLoggedInShutdownFirstTime) {
