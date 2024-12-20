@@ -172,7 +172,7 @@ cache-docker-images:
 .PHONY: load-cached-docker-images
 load-cached-docker-images:
 	cache restore $(SEMAPHORE_CP_ZOOKEEPER_DOCKER)
-	[ -f cp-server.tgz ] && docker load -i cp-zookeeper.tgz && rm -rf cp-zookeeper.tgz || true
+	[ -f cp-zookeeper.tgz ] && docker load -i cp-zookeeper.tgz && rm -rf cp-zookeeper.tgz || true
 
 	cache restore $(SEMAPHORE_CP_SERVER_DOCKER)
 	[ -f cp-server.tgz ] && docker load -i cp-server.tgz && rm -rf cp-server.tgz || true
