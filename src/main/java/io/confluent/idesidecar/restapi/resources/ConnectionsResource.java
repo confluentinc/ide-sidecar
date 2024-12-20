@@ -173,16 +173,23 @@ public class ConnectionsResource {
           }),
   })
   public Uni<Connection> patchConnection(
-      @PathParam("id")
-      String id,
+      @PathParam("id") String id,
       ConnectionSpec spec
   ) {
+    if (id == null || id.isEmpty()) {
+      return Uni.createFrom().failure(new IllegalArgumentException("ID cannot be null or empty"));
+    }
+    if (spec == null) {
+      return Uni.createFrom().failure(new IllegalArgumentException("ConnectionSpec cannot be null"));
+    }
+
     return connectionStateManager
-        .updateSpecForConnectionState(
-            id,
-            spec
-        )
-        .chain(ignored -> Uni.createFrom().item(() -> getConnectionModel(id)));
+        .updateSpecForConnectionState(id, spec)
+        .onItem().transformToUni(updated -> Uni.createFrom().item(() -> getConnectionModel(id)))
+        .onFailure().invoke(e -> {
+          // Log the error
+          System.err.println("Failed to update connection: " + e.getMessage());
+        });
   }
 
   @DELETE
