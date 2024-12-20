@@ -9,6 +9,9 @@ import static org.mockito.Mockito.when;
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
 import io.confluent.idesidecar.restapi.connections.DirectConnectionState;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
+import io.confluent.idesidecar.restapi.models.ConnectionSpecBuilder;
+import io.confluent.idesidecar.restapi.models.ConnectionSpecKafkaClusterConfigBuilder;
+import io.confluent.idesidecar.restapi.models.ConnectionSpecSchemaRegistryConfigBuilder;
 import io.confluent.kafka.schemaregistry.client.MockSchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
@@ -33,53 +36,51 @@ public class RealDirectFetcherTest {
   private static final String SR_CLUSTER_ID = "schema-registry-1";
   private static final String SR_URL = "http://localhost:123456";
   private static final Duration ONE_SECOND = Duration.ofSeconds(1);
-  private static final ConnectionSpec KAFKA_AND_SR_SPEC = new ConnectionSpec(
-      CONNECTION_ID,
-      "my connection",
-      ConnectionSpec.ConnectionType.DIRECT,
-      null,
-      null,
-      new ConnectionSpec.KafkaClusterConfig(
-          KAFKA_BOOTSTRAP_SERVERS,
-          null,
-          false,
-          false
-      ),
-      new ConnectionSpec.SchemaRegistryConfig(
-          SR_CLUSTER_ID,
-          SR_URL,
-          null
+  private static final ConnectionSpec KAFKA_AND_SR_SPEC = ConnectionSpecBuilder
+      .builder()
+      .id(CONNECTION_ID)
+      .name("my connection")
+      .type(ConnectionSpec.ConnectionType.DIRECT)
+      .kafkaClusterConfig(
+          ConnectionSpecKafkaClusterConfigBuilder
+              .builder()
+              .bootstrapServers(KAFKA_BOOTSTRAP_SERVERS)
+              .build()
       )
-  );
-
-  private static final ConnectionSpec NO_KAFKA_SPEC = new ConnectionSpec(
-      CONNECTION_ID,
-      "my connection",
-      ConnectionSpec.ConnectionType.DIRECT,
-      null,
-      null,
-      null,
-      new ConnectionSpec.SchemaRegistryConfig(
-          SR_CLUSTER_ID,
-          SR_URL,
-          null
+      .schemaRegistryConfig(
+          ConnectionSpecSchemaRegistryConfigBuilder
+              .builder()
+              .uri(SR_URL)
+              .id(SR_CLUSTER_ID)
+              .build()
       )
-  );
+      .build();
 
-  private static final ConnectionSpec NO_SR_SPEC = new ConnectionSpec(
-      CONNECTION_ID,
-      "my connection",
-      ConnectionSpec.ConnectionType.DIRECT,
-      null,
-      null,
-      new ConnectionSpec.KafkaClusterConfig(
-          KAFKA_BOOTSTRAP_SERVERS,
-          null,
-          false,
-          false
-      ),
-      null
-  );
+  private static final ConnectionSpec NO_KAFKA_SPEC = ConnectionSpecBuilder
+      .builder()
+      .id(CONNECTION_ID)
+      .name("my connection")
+      .type(ConnectionSpec.ConnectionType.DIRECT)
+      .schemaRegistryConfig(
+          ConnectionSpecSchemaRegistryConfigBuilder
+              .builder()
+              .uri(SR_URL)
+              .id(SR_CLUSTER_ID)
+              .build()
+      )
+      .build();
+
+  private static final ConnectionSpec NO_SR_SPEC = ConnectionSpecBuilder
+      .builder()
+      .id(CONNECTION_ID)
+      .name("my connection")
+      .type(ConnectionSpec.ConnectionType.DIRECT)
+      .kafkaClusterConfig(ConnectionSpecKafkaClusterConfigBuilder
+          .builder()
+          .bootstrapServers(KAFKA_BOOTSTRAP_SERVERS)
+          .build()
+      )
+      .build();
 
   @InjectMock
   ConnectionStateManager connections;
