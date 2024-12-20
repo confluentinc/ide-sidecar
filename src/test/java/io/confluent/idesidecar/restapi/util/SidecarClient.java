@@ -520,11 +520,15 @@ public class SidecarClient implements SidecarClientApi {
       Object value,
       Integer valueSchemaVersion
   ) {
-    var resp = produceRecordThen(
-        partitionId, topicName, key, keySchemaVersion, value, valueSchemaVersion
-    ).extract().response();
-    // Log the response body in case of an error to ease debugging
-    assertEquals(200, resp.statusCode(), resp.body().asString());
+    await()
+        .atMost(Duration.ofSeconds(10))
+        .untilAsserted(() -> {
+          var resp = produceRecordThen(
+              partitionId, topicName, key, keySchemaVersion, value, valueSchemaVersion
+          ).extract().response();
+          // Log the response body in case of an error to ease debugging
+          assertEquals(200, resp.statusCode(), resp.body().asString());
+        });
   }
 
   public void produceRecord(
@@ -613,17 +617,23 @@ public class SidecarClient implements SidecarClientApi {
   public SimpleConsumeMultiPartitionResponse consume(
       String topicName, SimpleConsumeMultiPartitionRequest requestBody
   ) {
-    return fromCluster(currentKafkaClusterId, () ->
-        givenDefault()
-            .body(requestBody)
-            .post("/gateway/v1/clusters/{cluster_id}/topics/%s/partitions/-/consume"
-                .formatted(topicName)
-            )
-            .then()
-            .statusCode(200)
-            .extract()
-            .body().as(SimpleConsumeMultiPartitionResponse.class)
-      );
+    var response = await()
+        .atMost(Duration.ofSeconds(10))
+        .until(() ->
+                fromCluster(currentKafkaClusterId, () ->
+                    givenDefault()
+                        .body(requestBody)
+                        .post("/gateway/v1/clusters/{cluster_id}/topics/%s/partitions/-/consume"
+                            .formatted(topicName)
+                        )
+                        .then()
+                ),
+            resp -> resp.extract().statusCode() == 200
+        );
+    return response
+        .extract()
+        .body()
+        .as(SimpleConsumeMultiPartitionResponse.class);
   }
 
   /**
