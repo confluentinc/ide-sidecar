@@ -9,7 +9,6 @@ import io.quarkus.scheduler.Scheduled.ConcurrentExecution;
 import io.vertx.core.impl.ConcurrentHashSet;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
-import java.util.Iterator;
 import java.util.Set;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
