@@ -321,7 +321,7 @@ public class WebsocketEndpointTest {
   @Test
   public void testWebsocketLifecycle()
   {
-    var firstWorkspace = connectWorkspace(true);
+    var firstWorkspace = connectWorkspace(true, false);
 
     // Block until we get the initial WORKSPACE_COUNT_CHANGED message.
     var message = firstWorkspace.waitForMessageOfType(MessageType.WORKSPACE_COUNT_CHANGED, 1000);
@@ -329,7 +329,7 @@ public class WebsocketEndpointTest {
     assertEquals(1, workspacesChangedBody.workspaceCount());
 
     // Now connect a second workspace.
-    var secondWorkspace = connectWorkspace(true);
+    var secondWorkspace = connectWorkspace(true, false);
 
     var workspaces = List.of(firstWorkspace, secondWorkspace);
     // Both should get WORKSPACE_COUNT_CHANGED message with count == 2
@@ -428,7 +428,7 @@ public class WebsocketEndpointTest {
   @ValueSource(booleans = {true, false})
   public void testSendingInvalidMessageStructureClosesSession(boolean sayHelloFirst) throws IOException, InterruptedException {
     // Given a workspace connected happy websocket ...
-    var connectedWorkspace = connectWorkspace(sayHelloFirst);
+    var connectedWorkspace = connectWorkspace(sayHelloFirst, false);
 
     // When the workspace sends first a message with an invalid JSON structure ...
     connectedWorkspace.send("not a json object");
@@ -446,7 +446,7 @@ public class WebsocketEndpointTest {
   @Test
   public void testSendingRandomMessageFirstClosesSession() throws IOException, InterruptedException {
     // Given a workspace connected happy websocket ...
-    var connectedWorkspace = connectWorkspace(false);
+    var connectedWorkspace = connectWorkspace(false, false);
 
     // When the workspace sends a random message as the first message ...
     var message = new Message(
@@ -469,7 +469,7 @@ public class WebsocketEndpointTest {
   @Test
   public void testSendingHelloMessageWithMismatchedOriginator() throws IOException, InterruptedException {
     // Given a workspace connected happy websocket ...
-    var connectedWorkspace = connectWorkspace(false);
+    var connectedWorkspace = connectWorkspace(false, false);
 
     // When the workspace sends a WORKSPACE_HELLO message with wrong originator value. It should
     // match the body's payload (and be known to the sidecar).
@@ -497,7 +497,7 @@ public class WebsocketEndpointTest {
   @Test
   public void testSendingHelloMessageWithUnknownProcessId() throws IOException, InterruptedException {
     // Given a workspace connected happy websocket ...
-    var connectedWorkspace = connectWorkspace(false);
+    var connectedWorkspace = connectWorkspace(false, false);
 
     // When the workspace sends a WORKSPACE_HELLO message with both header and body pid values
     // not corresponding with their process id as previously presented...
@@ -530,7 +530,7 @@ public class WebsocketEndpointTest {
   @ParameterizedTest
   public void testWrongOriginatorValueInMessageClosesSession(String invalidOriginator) throws IOException, InterruptedException {
     // Given a workspace connected happy websocket ...
-    var connectedWorkspace = connectWorkspace(true);
+    var connectedWorkspace = connectWorkspace(true, true);
 
     // When the workspace sends a message with an invalid originator value not corresponding with
     // their process id ...
@@ -558,10 +558,7 @@ public class WebsocketEndpointTest {
 
     // Test the case where a message is received from a session that is not known to the sidecar.
     // (which should be impossible, but we should handle it gracefully.)
-    ConnectedWorkspace connectedWorkspace = connectWorkspace(true);
-
-    // wait for the workspace count change message.
-    connectedWorkspace.waitForMessageOfType(MessageType.WORKSPACE_COUNT_CHANGED, 1000);
+    ConnectedWorkspace connectedWorkspace = connectWorkspace(true, true);
 
     // should be one session kept track of in the sessions map, but is almost like
     // the injection is working right / we're getting a different instance or something.
@@ -593,13 +590,10 @@ public class WebsocketEndpointTest {
   @Test
   public void testWorkspaceBroadcastingWhenNoOtherWorkspaces() throws IOException, InterruptedException {
     // Given a workspace connected happy websocket ...
-    var connectedWorkspace = connectWorkspace(true);
-
-    // Block until we get the initial WORKSPACE_COUNT_CHANGED message.
-    connectedWorkspace.waitForMessageOfType(MessageType.WORKSPACE_COUNT_CHANGED, 1000);
+    var connectedWorkspace = connectWorkspace(true, true);
 
     // clear any messages received so far.
-    connectedWorkspace.clearReceivedMessages();
+    // connectedWorkspace.clearReceivedMessages();
 
     // When the workspace sends a message that should be broadcast to all other workspaces ...
     var message = new Message(
@@ -643,7 +637,7 @@ public class WebsocketEndpointTest {
   @Test
   public void testSendingMismatchedBodyType() throws IOException {
     // Given a workspace connected happy websocket ...
-    ConnectedWorkspace connectedWorkspace = connectWorkspace(false);
+    ConnectedWorkspace connectedWorkspace = connectWorkspace(false, false);
 
     // Send wrong body type for the HELLO message.
     Message message = new Message(
@@ -668,7 +662,7 @@ public class WebsocketEndpointTest {
   public void testDisconnectingBeforeErrorSent() throws IOException, InterruptedException {
     // Send a bad hello message, but disconnect before the error message is sent.
     // Gets coverage over sendErrorAndCloseSession() error paths.
-    ConnectedWorkspace connectedWorkspace = connectWorkspace(false);
+    ConnectedWorkspace connectedWorkspace = connectWorkspace(false, false);
     var badHelloMessage = new Message(
         new MessageHeaders(MessageType.WORKSPACE_HELLO, connectedWorkspace.processIdString(), "message-id-here"),
         new DynamicMessageBody(Map.of("foonly", 3))
@@ -688,15 +682,13 @@ public class WebsocketEndpointTest {
   @Test
   void testTwoConnectionsFromSameWorkspacePid() {
     // Given a workspace connected happy websocket ...
-    var connectedWorkspace = connectWorkspace(true);
+    var connectedWorkspace = connectWorkspace(true, true);
     var firstWorkspacePid = connectedWorkspace.processId();
-    // Block until we get the initial WORKSPACE_COUNT_CHANGED message.
-    connectedWorkspace.waitForMessageOfType(MessageType.WORKSPACE_COUNT_CHANGED, 1000);
 
     // Now make second websocket connection, saying hello with the same pid as from the first
     // (in the body of the message, not the header. We want to get to a later error than if
     // the wrong pid was in the header.)
-    var connectedWorkspace2 = connectWorkspace(false);
+    var connectedWorkspace2 = connectWorkspace(false, false);
     connectedWorkspace2.sayHello(firstWorkspacePid, firstWorkspacePid);
 
     // The second workspace should get a PROTOCOL_ERROR message back from the sidecar complaining about
@@ -721,10 +713,7 @@ public class WebsocketEndpointTest {
   public void testOnError(boolean shouldFindSession) throws IOException {
     // Connect as a workspace to establish a session, then directly call onError() with the
     // server side session handle.
-    var connectedWorkspace = connectWorkspace(true);
-
-    // Block until we get the initial WORKSPACE_COUNT_CHANGED message.
-    connectedWorkspace.waitForMessageOfType(MessageType.WORKSPACE_COUNT_CHANGED, 1000);
+    var connectedWorkspace = connectWorkspace(true, true);
 
     // should have exactly one session in the sessions map.
     assertEquals(1, websocketEndpoint.sessions.size());
@@ -753,20 +742,19 @@ public class WebsocketEndpointTest {
   public void testPurgeInactiveSessions() {
 
     var sessions = websocketEndpoint.sessions;
-    // Calling when empty map should do nothing.
+    // Calling when empty connection map should do nothing.
     websocketEndpoint.purgeInactiveSessions();
 
     // Given a workspace connected happy websocket ...
-    ConnectedWorkspace connectedWorkspace = connectWorkspace(true);
-    // consume the initial WORKSPACE_COUNT_CHANGED message.
-    connectedWorkspace.waitForMessageOfType(MessageType.WORKSPACE_COUNT_CHANGED, 1000);
+    ConnectedWorkspace connectedWorkspace = connectWorkspace(true, true);
+
 
     // Calling again should leave the session alone.
     websocketEndpoint.purgeInactiveSessions();
     assertEquals(1, sessions.size());
 
     // But make a second connection which does not say hello.
-    ConnectedWorkspace connectedWorkspace2 = connectWorkspace(false);
+    ConnectedWorkspace connectedWorkspace2 = connectWorkspace(false, false);
 
     // find the inactive session in server-side sessions map ...
     var existingInactiveSession = sessions.values().stream().filter(
@@ -802,8 +790,20 @@ public class WebsocketEndpointTest {
   }
 
 
-  /** Connect a mock workspace process to the websocket endpoint successfully. */
-  private ConnectedWorkspace connectWorkspace(boolean sayHello) {
+  /**
+   * Connect a mock workspace process to the websocket endpoint.
+   *
+   * @param sayHello If true, the workspace will send a HELLO message after connecting.
+   * @param consumeInitialWorkspaceCount If true, the workspace will wait for the initial
+   *                                     WORKSPACE_COUNT_CHANGED response to the HELLO.
+   *                                     (Only meaningful when sayHello is true.)
+   * @return A ConnectedWorkspace instance representing the connection.
+   * */
+  private ConnectedWorkspace connectWorkspace(boolean sayHello, boolean consumeInitialWorkspaceCount) {
+    if (consumeInitialWorkspaceCount && !sayHello) {
+      throw new IllegalArgumentException("consumeInitialWorkspaceCount only makes sense when sayHello is true.");
+    }
+
     // Given a workspace process ...
     var mockWorkspaceProcess = new MockWorkspaceProcess();
 
@@ -832,6 +832,12 @@ public class WebsocketEndpointTest {
 
     if (sayHello) {
       workspace.sayHello();
+
+      if(consumeInitialWorkspaceCount) {
+        // Block until we get the initial WORKSPACE_COUNT_CHANGED message, the expected
+        // response to the HELLO message.
+        workspace.waitForMessageOfType(MessageType.WORKSPACE_COUNT_CHANGED, 1000);
+      }
     }
 
     return workspace;
