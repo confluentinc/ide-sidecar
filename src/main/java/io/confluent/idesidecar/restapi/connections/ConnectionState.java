@@ -114,13 +114,6 @@ public abstract class ConnectionState {
     );
   }
 
-  /**
-   * Set the connection status to the {@link #getInitialStatus() initial status}.
-   */
-  public final void setInitialStatus() {
-    updateStatus(this.cachedStatus.get(), getInitialStatus());
-  }
-
   private void updateStatus(ConnectionStatus original, ConnectionStatus updated) {
     // update the cached status
     this.cachedStatus.set(updated);
