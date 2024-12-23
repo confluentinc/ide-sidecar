@@ -365,6 +365,11 @@ public class SidecarClient implements SidecarClientApi {
 
   @Override
   public Connection createConnection(ConnectionSpec spec) {
+    return createConnection(spec, false);
+  }
+
+  @Override
+  public Connection createConnection(ConnectionSpec spec, boolean waitUntilConnected) {
     // Create connection
     try {
       given()
@@ -380,7 +385,9 @@ public class SidecarClient implements SidecarClientApi {
 
     // If the connection spec configures a Kafka cluster or a Schema Registry, wait until the
     // connection to the Kafka cluster or Schema registry has been established
-    if (spec.kafkaClusterConfig() != null || spec.schemaRegistryConfig() != null) {
+    if (waitUntilConnected
+        && (spec.kafkaClusterConfig() != null || spec.schemaRegistryConfig() != null)
+    ) {
       await().atMost(Duration.ofSeconds(10)).until(() -> {
         var connection = given()
             .when()
