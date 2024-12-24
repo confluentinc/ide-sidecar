@@ -3,6 +3,7 @@ package io.confluent.idesidecar.restapi.clients;
 import io.confluent.idesidecar.restapi.cache.ClusterCache;
 import io.confluent.idesidecar.restapi.connections.ConnectionState;
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
+import io.confluent.idesidecar.restapi.credentials.TLSConfig;
 import io.confluent.idesidecar.restapi.exceptions.ClusterNotFoundException;
 import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
 import io.confluent.idesidecar.restapi.kafkarest.SchemaManager;
@@ -258,18 +259,25 @@ public class ClientConfigurator {
     // Second, add any connection properties for Kafka cluster credentials (if defined)
     var options = connection.getKafkaConnectionOptions().withRedact(redact);
 
+    if (options.tlsConfig() == null) {
+      options = options.withTlsConfig(new TLSConfig());
+    }
+
+    if (options.tlsConfig().enabled()) {
+      // This may be overridden based on the type of credentials used
+      props.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SSL");
+      options
+          .tlsConfig()
+          .getProperties(redact)
+          .ifPresent(props::putAll);
+    }
+
     if (connection.getKafkaCredentials().isPresent()) {
+      var finalOptions = options;
       connection
           .getKafkaCredentials()
-          .flatMap(creds -> creds.kafkaClientProperties(options))
+          .flatMap(creds -> creds.kafkaClientProperties(finalOptions))
           .ifPresent(props::putAll);
-    } else if (connection.getKafkaTLSConfig().isPresent()) {
-      // No credentials, but maybe TLS config is present
-      var tlsConfig = connection.getKafkaTLSConfig().get();
-      if (tlsConfig.enabled()) {
-        props.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SSL");
-        tlsConfig.getProperties(redact).ifPresent(props::putAll);
-      }
     }
 
     // Add any auth properties for Schema Registry to the Kafka client config,
@@ -327,17 +335,24 @@ public class ClientConfigurator {
         .getSchemaRegistryOptions()
         .withRedact(redact)
         .withLogicalClusterId(logicalId);
+
+    if (options.tlsConfig() == null) {
+      options = options.withTlsConfig(new TLSConfig());
+    }
+
+    if (options.tlsConfig().enabled()) {
+      options
+          .tlsConfig()
+          .getProperties(redact)
+          .ifPresent(props::putAll);
+    }
+
     if (connection.getSchemaRegistryCredentials().isPresent()) {
+      var finalOptions = options;
       connection
           .getSchemaRegistryCredentials()
-          .flatMap(creds -> creds.schemaRegistryClientProperties(options))
+          .flatMap(creds -> creds.schemaRegistryClientProperties(finalOptions))
           .ifPresent(props::putAll);
-    } else if (connection.getSchemaRegistryTLSConfig().isPresent()) {
-      // No credentials, but maybe TLS config is present
-      var tlsConfig = connection.getSchemaRegistryTLSConfig().get();
-      if (tlsConfig.enabled()) {
-        tlsConfig.getProperties(redact).ifPresent(props::putAll);
-      }
     }
 
     return props;
