@@ -365,7 +365,7 @@ public class SidecarClient implements SidecarClientApi {
 
   @Override
   public Connection createConnection(ConnectionSpec spec) {
-    return createConnection(spec, false);
+    return createConnection(spec, true);
   }
 
   @Override

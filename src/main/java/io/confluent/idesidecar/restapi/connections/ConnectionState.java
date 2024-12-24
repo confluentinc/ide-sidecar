@@ -57,7 +57,7 @@ public abstract class ConnectionState {
   protected ConnectionState(ConnectionSpec spec, StateChangedListener listener) {
     this.spec = spec;
     this.listener = listener != null ? listener : StateChangedListener.NO_OP;
-    updateStatus(null, getInitialStatus());
+    this.cachedStatus.set(getInitialStatus());
   }
 
   public ConnectionSpec getSpec() {
@@ -119,7 +119,7 @@ public abstract class ConnectionState {
     this.cachedStatus.set(updated);
 
     // If the status has changed, notify the listener
-    if (original != null && !updated.equals(original)) {
+    if (!updated.equals(original)) {
       if (updated.isConnected()) {
         listener.connected(this);
       } else {

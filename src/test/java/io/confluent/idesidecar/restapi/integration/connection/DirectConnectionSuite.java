@@ -306,6 +306,8 @@ public interface DirectConnectionSuite extends ITSuite {
     var correctSpec = environment().directConnectionSpec().orElse(null);
     assertNotNull(correctSpec, "Expected environment %s has direct connection spec".formatted(environment().name()));
 
+    correctSpec = correctSpec.withId("direct-connection-update");
+
     // Create the connection with incorrect Kafka cluster credentials
     var incorrectSpec = correctSpec
         .withKafkaClusterConfig(
