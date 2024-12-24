@@ -307,6 +307,28 @@ class ClientConfiguratorStaticTest {
                 """.formatted(USERNAME, PASSWORD, MTLS_TRUSTSTORE_PATH, MTLS_TRUSTSTORE_PASSWORD)
         ),
         new TestInput(
+            "With basic credentials and TLS null (enabled but no config)",
+            kafka,
+            BASIC_CREDENTIALS,
+            schemaRegistry,
+            BASIC_CREDENTIALS,
+            null,
+            null,
+            false,
+            null,
+            """
+                bootstrap.servers=localhost:9092
+                security.protocol=SASL_SSL
+                sasl.mechanism=PLAIN
+                sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username="%s" password="%s";
+                """.formatted(USERNAME, PASSWORD),
+            """
+                schema.registry.url=http://localhost:8081
+                basic.auth.credentials.source=USER_INFO
+                basic.auth.user.info=%s:%s
+                """.formatted(USERNAME, PASSWORD)
+        ),
+        new TestInput(
             "With basic credentials and Mutual TLS",
             kafka,
             BASIC_CREDENTIALS,
