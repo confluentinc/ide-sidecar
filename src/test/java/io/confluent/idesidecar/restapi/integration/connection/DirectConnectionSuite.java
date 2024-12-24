@@ -13,11 +13,16 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import io.confluent.idesidecar.restapi.credentials.Password;
 import io.confluent.idesidecar.restapi.integration.ITSuite;
 import io.confluent.idesidecar.restapi.models.Connection;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
 import io.confluent.idesidecar.restapi.models.ConnectionStatus.Authentication.Status;
 import io.confluent.idesidecar.restapi.models.ConnectionStatus.ConnectedState;
+import io.confluent.idesidecar.restapi.util.SidecarClient;
 import io.restassured.http.ContentType;
 import jakarta.ws.rs.core.MediaType;
 import java.time.Duration;
@@ -296,4 +301,78 @@ public interface DirectConnectionSuite extends ITSuite {
     );
   }
 
+  @Test
+  default void shouldTransitionToInitialStatusOnConnectionUpdate() throws JsonProcessingException {
+    var correctSpec = environment().directConnectionSpec().orElse(null);
+    assertNotNull(correctSpec, "Expected environment %s has direct connection spec".formatted(environment().name()));
+
+    correctSpec = correctSpec.withId("direct-connection-update");
+
+    // Create the connection with incorrect Kafka cluster credentials
+    var incorrectSpec = correctSpec
+        .withKafkaClusterConfig(
+            correctSpec.kafkaClusterConfig().withBootstrapServers("invalid:9092")
+        );
+    var connection = createConnection(
+        incorrectSpec,
+        // Don't wait until the connection is ready
+        false
+    );
+    useConnection(connection.id());
+
+    // Wait until the status turns to FAILED
+    await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
+      given()
+          .when()
+          .get("/gateway/v1/connections/{id}", connection.id())
+          .then()
+          .statusCode(200)
+          .body("status.kafka_cluster.state", equalTo(ConnectedState.FAILED.name()));
+    });
+
+    var objectMapper = new ObjectMapper();
+    objectMapper.registerModule(
+        new SimpleModule().addSerializer(Password.class, new SidecarClient.PasswordSerializer())
+    );
+
+    // Update the connection with correct Kafka cluster credentials
+    given()
+        .when()
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(objectMapper.writeValueAsString(correctSpec))
+        .put("/gateway/v1/connections/{id}", connection.id())
+        .then()
+        .statusCode(200)
+        .body("status.kafka_cluster.state", equalTo(ConnectedState.ATTEMPTING.name()));
+
+    // Now wait until the status changes to SUCCESS
+    await().atMost(Duration.ofSeconds(10)).untilAsserted(() ->
+        given()
+          .when()
+          .get("/gateway/v1/connections/{id}", connection.id())
+          .then()
+          .statusCode(200)
+          .body("status.kafka_cluster.state", equalTo(ConnectedState.SUCCESS.name()))
+    );
+
+    // Update the connection with incorrect Kafka cluster credentials
+    given()
+        .when()
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(objectMapper.writeValueAsString(incorrectSpec))
+        .put("/gateway/v1/connections/{id}", connection.id())
+        .then()
+        .statusCode(200)
+        .body("status.kafka_cluster.state", equalTo(ConnectedState.ATTEMPTING.name()));
+
+    // Now wait until the status changes to FAILED
+    await().atMost(Duration.ofSeconds(10)).untilAsserted(() ->
+        given()
+            .when()
+            .get("/gateway/v1/connections/{id}", connection.id())
+            .then()
+            .statusCode(200)
+            .body("status.kafka_cluster.state", equalTo(ConnectedState.FAILED.name()))
+    );
+  }
 }

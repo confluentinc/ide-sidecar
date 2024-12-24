@@ -107,6 +107,8 @@ public interface SidecarClientApi {
 
   Connection createConnection(ConnectionSpec spec);
 
+  Connection createConnection(ConnectionSpec spec, boolean waitUntilConnected);
+
   Connection createLocalConnectionTo(TestEnvironment env, String scope);
 
   Connection createDirectConnectionTo(TestEnvironment env, String scope);
