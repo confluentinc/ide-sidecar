@@ -53,7 +53,6 @@ public record BasicCredentials(
     var config = new LinkedHashMap<String, String>();
     var tlsConfig = options.tlsConfig();
     if (tlsConfig.enabled()) {
-      tlsConfig.getProperties(options.redact()).ifPresent(config::putAll);
       config.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_SSL");
     } else {
       config.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT");
@@ -76,10 +75,6 @@ public record BasicCredentials(
   ) {
     var config = new LinkedHashMap<String, String>();
     config.put("basic.auth.credentials.source", "USER_INFO");
-    options
-        .tlsConfig()
-        .getProperties(options.redact())
-        .ifPresent(config::putAll);
     config.put(
         "basic.auth.user.info",
         "%s:%s".formatted(username, password.asString(options.redact()))

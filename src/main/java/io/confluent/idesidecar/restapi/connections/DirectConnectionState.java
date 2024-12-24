@@ -142,8 +142,12 @@ public class DirectConnectionState extends ConnectionState {
   @Override
   public Optional<TLSConfig> getKafkaTLSConfig() {
     if (spec.kafkaClusterConfig() != null) {
-      return Optional.ofNullable(
-          spec.kafkaClusterConfig().tlsConfig()
+      return Optional.of(
+          Objects.requireNonNullElse(
+              spec.kafkaClusterConfig().tlsConfig(),
+              // Use the default TLS configuration if none is provided
+              new TLSConfig()
+          )
       );
     }
 
@@ -153,8 +157,11 @@ public class DirectConnectionState extends ConnectionState {
   @Override
   public Optional<TLSConfig> getSchemaRegistryTLSConfig() {
     if (spec.schemaRegistryConfig() != null) {
-      return Optional.ofNullable(
-          spec.kafkaClusterConfig().tlsConfig()
+      return Optional.of(
+          spec.schemaRegistryConfig().tlsConfig() != null
+          ? spec.schemaRegistryConfig().tlsConfig()
+          // Use the default TLS configuration if none is provided
+          : new TLSConfig()
       );
     }
 

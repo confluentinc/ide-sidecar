@@ -119,7 +119,6 @@ public record OAuthCredentials(
 
     var tlsConfig = options.tlsConfig();
     if (tlsConfig.enabled()) {
-      tlsConfig.getProperties(options.redact()).ifPresent(config::putAll);
       config.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_SSL");
     } else {
       config.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT");
@@ -146,10 +145,6 @@ public record OAuthCredentials(
     if (identityPool != null) {
       config.put("bearer.auth.identity.pool.id", identityPool);
     }
-    options
-        .tlsConfig()
-        .getProperties(options.redact())
-        .ifPresent(config::putAll);
     return Optional.of(config);
   }
 

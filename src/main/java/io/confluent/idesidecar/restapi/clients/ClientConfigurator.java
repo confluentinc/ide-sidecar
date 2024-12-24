@@ -259,17 +259,12 @@ public class ClientConfigurator {
     // Second, add any connection properties for Kafka cluster credentials (if defined)
     var options = connection.getKafkaConnectionOptions().withRedact(redact);
 
-    if (options.tlsConfig() == null) {
-      options = options.withTlsConfig(new TLSConfig());
-    }
-
-    if (options.tlsConfig().enabled()) {
+    var tlsConfig = connection.getKafkaTLSConfig();
+    if (tlsConfig.isPresent() && tlsConfig.get().enabled()) {
       // This may be overridden based on the type of credentials used
       props.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SSL");
-      options
-          .tlsConfig()
-          .getProperties(redact)
-          .ifPresent(props::putAll);
+      tlsConfig.get().getProperties(redact).ifPresent(props::putAll);
+      options = options.withTlsConfig(tlsConfig.get());
     }
 
     if (connection.getKafkaCredentials().isPresent()) {
@@ -336,15 +331,10 @@ public class ClientConfigurator {
         .withRedact(redact)
         .withLogicalClusterId(logicalId);
 
-    if (options.tlsConfig() == null) {
-      options = options.withTlsConfig(new TLSConfig());
-    }
-
-    if (options.tlsConfig().enabled()) {
-      options
-          .tlsConfig()
-          .getProperties(redact)
-          .ifPresent(props::putAll);
+    var tlsConfig = connection.getSchemaRegistryTLSConfig();
+    if (tlsConfig.isPresent() && tlsConfig.get().enabled()) {
+      tlsConfig.get().getProperties(redact).ifPresent(props::putAll);
+      options = options.withTlsConfig(tlsConfig.get());
     }
 
     if (connection.getSchemaRegistryCredentials().isPresent()) {
