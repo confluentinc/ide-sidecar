@@ -280,7 +280,6 @@ public class ConnectionStateManager {
         .chain(ignored -> switch (mergedSpec.type()) {
           // Make sure the Confluent Cloud organization ID is valid for this user
           case CCLOUD -> validateCCloudOrganizationId(id, mergedSpec.ccloudOrganizationId());
-          // TODO: DIRECT connection changes need to be validated
           case DIRECT -> Uni.createFrom().voidItem();
           // No need to validate the spec for LOCAL, DIRECT, and PLATFORM connections
           case LOCAL, PLATFORM -> Uni.createFrom().voidItem();
