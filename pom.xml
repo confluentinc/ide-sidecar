@@ -11,7 +11,7 @@
 
   <groupId>io.confluent</groupId>
   <artifactId>ide-sidecar</artifactId>
-  <version>0.122.0</version>
+  <version>0.130.0</version>
   <packaging>jar</packaging>
   <name>IDE Sidecar</name>
   <description>Sidecar used by Confluent for VS Code.</description>
@@ -399,6 +399,7 @@
         </property>
       </activation>
       <properties>
+        <skipUTs>true</skipUTs>
         <skipITs>false</skipITs>
         <quarkus.native.enabled>true</quarkus.native.enabled>
       </properties>
@@ -828,6 +829,7 @@
             <quarkus.jacoco.reuse-data-file>true</quarkus.jacoco.reuse-data-file>
             <quarkus.jacoco.report>false</quarkus.jacoco.report>
           </systemPropertyVariables>
+          <skip>${skipUTs}</skip>
         </configuration>
       </plugin>
       <plugin>
