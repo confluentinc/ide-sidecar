@@ -186,10 +186,9 @@ public class ConnectionsResource {
     return connectionStateManager
         .patchSpecForConnectionState(id, spec)
         .onItem().transformToUni(updated -> Uni.createFrom().item(() -> getConnectionModel(id)))
-        .onFailure().invoke(e -> {
-          // Log the error
-          System.err.println("Failed to update connection: " + e.getMessage());
-        });
+        .onFailure().invoke(e -> // Log the error
+          System.err.println("Failed to update connection: " + e.getMessage())
+        );
   }
 
   @DELETE
