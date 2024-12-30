@@ -70,6 +70,9 @@ public abstract class ConnectionState {
 
   public void setSpec(ConnectionSpec in) {
     this.spec = in;
+
+    // Reset the status to the initial status when the spec changes
+    updateStatus(this.cachedStatus.get(), getInitialStatus());
   }
 
   /**
