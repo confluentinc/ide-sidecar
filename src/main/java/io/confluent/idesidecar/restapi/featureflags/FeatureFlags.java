@@ -758,7 +758,8 @@ public class FeatureFlags {
           .set("os.type", sidecar.osType().name());
       sidecar.vsCode().ifPresent(vscode -> context
           .set("vscode.extension.version", vscode.extensionVersion())
-          .set("vscode.version", vscode.version()));
+          .set("vscode.version", vscode.version())
+          .set("vscode.uri.scheme", vscode.uriScheme()));
     }
     this.deviceContext.set(context.build());
   }
