@@ -59,7 +59,6 @@ public record ApiKeyAndSecret(
     var tlsConfig = options.tlsConfig();
     if (tlsConfig.enabled()) {
       config.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_SSL");
-      tlsConfig.getProperties(options.redact()).ifPresent(config::putAll);
     } else {
       config.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT");
     }
@@ -81,10 +80,6 @@ public record ApiKeyAndSecret(
   ) {
     var config = new LinkedHashMap<String, String>();
     config.put("basic.auth.credentials.source", "USER_INFO");
-    options
-        .tlsConfig()
-        .getProperties(options.redact())
-        .ifPresent(config::putAll);
     config.put(
         "basic.auth.user.info",
         "%s:%s".formatted(key, secret.asString(options.redact()))
