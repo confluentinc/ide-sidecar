@@ -1,5 +1,6 @@
 package io.confluent.idesidecar.restapi.resources;
 
+import io.confluent.idesidecar.restapi.application.SidecarInfo;
 import io.confluent.idesidecar.restapi.connections.CCloudConnectionState;
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
 import io.confluent.idesidecar.restapi.exceptions.CCloudAuthenticationFailedException;
@@ -34,8 +35,8 @@ public class OAuthCallbackResource {
   // upon rendering the callback HTML, the user will be redirected to either their locally-running
   // VS Code instance (where the extension is installed, and the auth flow was initiated) or the
   // VS Code extension marketplace page for the extension.
-  private static final String CCLOUD_OAUTH_VSCODE_EXTENSION_URI = ConfigProvider.getConfig()
-      .getOptionalValue("ide-sidecar.connections.ccloud.oauth.vscode-extension-uri", String.class)
+  private static final String CCLOUD_OAUTH_REDIRECT_PATH = ConfigProvider.getConfig()
+      .getOptionalValue("ide-sidecar.connections.ccloud.oauth.vscode-extension-uri-path", String.class)
       .orElse("https://marketplace.visualstudio.com/items?itemName=confluentinc.vscode-confluent");
 
   static final String TLS_HANDSHAKE_ERROR_MESSAGE =
@@ -52,6 +53,15 @@ public class OAuthCallbackResource {
   @Inject
   @Location("callback_failure.html")
   Template callbackFailure;
+
+  @Inject
+  SidecarInfo sidecarInfo;
+
+  private String getVsCodeRedirectUri() {
+    return sidecarInfo.vsCode()
+        .map(vscode -> vscode.uriScheme() + "://" + CCLOUD_OAUTH_REDIRECT_PATH)
+        .orElse("vscode://" + CCLOUD_OAUTH_REDIRECT_PATH);
+  }
 
   @GET
   @Produces(MediaType.TEXT_HTML)
@@ -70,7 +80,7 @@ public class OAuthCallbackResource {
                 callback
                     .data("email", authContext.getUserEmail())
                     .data("confluent_cloud_homepage", CCLOUD_HOMEPAGE_URI)
-                    .data("vscode_redirect_uri", CCLOUD_OAUTH_VSCODE_EXTENSION_URI)
+                    .data("vscode_redirect_uri", getVsCodeRedirectUri())
                     .render()
             )
             .recover(this::renderFailure)
@@ -117,7 +127,7 @@ public class OAuthCallbackResource {
     return Future.succeededFuture(
         callbackFailure
             .data("error", errorMessage)
-            .data("vscode_redirect_uri", CCLOUD_OAUTH_VSCODE_EXTENSION_URI)
+            .data("vscode_redirect_uri", getVsCodeRedirectUri())
             .render()
     );
   }
