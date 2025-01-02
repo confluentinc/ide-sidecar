@@ -182,6 +182,46 @@ paths:
       responses:
         "204":
           description: No Content
+    patch:
+      tags:
+      - Connections Resource
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConnectionSpec"
+      responses:
+        "200":
+          description: Connection updated with PATCH
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Connection"
+        "404":
+          description: Connection not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Failure"
+        "401":
+          description: Could not authenticate with connection configuration updated
+            with PATCH
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Failure"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Failure"
   /gateway/v1/feature-flags/{id}/value:
     get:
       tags:
@@ -1307,18 +1347,20 @@ components:
     HealthResponse:
       type: object
       properties:
-        checks:
-          type: array
-          items:
-            $ref: "#/components/schemas/HealthCheck"
         status:
           enum:
           - UP
           - DOWN
           type: string
+        checks:
+          type: array
+          items:
+            $ref: "#/components/schemas/HealthCheck"
     HealthCheck:
       type: object
       properties:
+        name:
+          type: string
         status:
           enum:
           - UP
@@ -1327,5 +1369,3 @@ components:
         data:
           type: object
           nullable: true
-        name:
-          type: string
