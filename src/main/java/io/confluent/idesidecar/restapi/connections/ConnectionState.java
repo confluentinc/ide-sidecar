@@ -136,7 +136,17 @@ public abstract class ConnectionState {
             );
 
             // Refresh the status again if it has been updated since the refresh was started
-            return refreshStatus();
+            return doRefreshStatus().onSuccess(updated2 -> {
+              updateStatus(originalState, updated2);
+              Log.infof(
+                  "Updated connection status for %s: %s, " +
+                      "last updated: %s, before starting refresh time: %s",
+                  spec.id(),
+                  updated2,
+                  lastUpdatedInstant,
+                  beforeStartingRefresh
+              );
+            });
           } else {
             // Update the status if it has not been updated since the refresh was started
             updateStatus(originalState, updated);
