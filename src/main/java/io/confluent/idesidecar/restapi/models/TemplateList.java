@@ -4,8 +4,10 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import io.confluent.cloud.scaffold.v1.model.ScaffoldV1TemplateList;
 import io.confluent.idesidecar.restapi.resources.TemplateResource;
 import io.quarkus.runtime.annotations.RegisterForReflection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
@@ -40,6 +42,17 @@ public class TemplateList extends BaseList<Template> {
             data.length,
             TemplateResource.API_RESOURCE_PATH
         )
+    );
+  }
+
+  public TemplateList(ScaffoldV1TemplateList scaffoldV1TemplateList) {
+    this(
+        scaffoldV1TemplateList
+            .getData()
+            .stream()
+            .map(Template::new)
+            .sorted(Comparator.comparing(Template::id))
+            .toList()
     );
   }
 

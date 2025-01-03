@@ -1,13 +1,13 @@
 package io.confluent.idesidecar.restapi.models;
 
-import static io.confluent.idesidecar.restapi.models.ObjectMetadata.selfFromResourcePath;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.confluent.idesidecar.restapi.resources.TemplateResource;
-import io.confluent.idesidecar.scaffolding.models.TemplateManifest;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.confluent.cloud.scaffold.v1.model.ScaffoldV1Template;
+import io.confluent.cloud.scaffold.v1.model.ScaffoldV1TemplateListDataInner;
+import io.confluent.cloud.scaffold.v1.model.ScaffoldV1TemplateSpec;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import java.util.Objects;
 
@@ -19,24 +19,34 @@ import java.util.Objects;
     "metadata"
 })
 @RegisterForReflection
-public class Template extends BaseModel<TemplateManifest, ObjectMetadata> {
+public class Template extends BaseModel<ScaffoldV1TemplateSpec, ObjectMetadata> {
+
+  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   @JsonCreator
   public Template(
-      @JsonProperty(value = "spec", required = true) TemplateManifest templateManifest,
+      @JsonProperty(value = "spec", required = true) ScaffoldV1TemplateSpec templateManifest,
       @JsonProperty(value = "metadata", required = true) ObjectMetadata metadata
   ) {
-    super(templateManifest.name(), metadata, templateManifest);
+    super(templateManifest.getName(), metadata, templateManifest);
   }
 
-  public Template(TemplateManifest templateManifest) {
+  public Template(ScaffoldV1TemplateListDataInner item) {
     this(
-        templateManifest,
+        OBJECT_MAPPER.convertValue(item.getSpec(), ScaffoldV1TemplateSpec.class),
         new ObjectMetadata(
-            selfFromResourcePath(TemplateResource.API_RESOURCE_PATH, templateManifest.name()),
-            null
-        )
-    );
+            item.getMetadata().getSelf().toString(),
+            item.getMetadata().getResourceName().toString()
+        ));
+  }
+
+  public Template(ScaffoldV1Template item) {
+    this(
+        OBJECT_MAPPER.convertValue(item.getSpec(), ScaffoldV1TemplateSpec.class),
+        new ObjectMetadata(
+            item.getMetadata().getSelf().toString(),
+            item.getMetadata().getResourceName().toString()
+        ));
   }
 
   @Override
