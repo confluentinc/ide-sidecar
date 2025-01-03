@@ -261,15 +261,13 @@ public interface RecordsV3BaseSuite extends ITSuite {
     assertSame(records.getFirst().value(), value.data());
 
     // Assert headers are the same
-    assertEquals(headers, convertResponseHeaders(records));
+    assertEquals(headers, convertResponseHeaders(records.getFirst().headers()));
   }
 
   private static Set<ProduceRequestHeader> convertResponseHeaders(
-      List<SimpleConsumeMultiPartitionResponse.PartitionConsumeRecord> records
+      List<SimpleConsumeMultiPartitionResponse.PartitionConsumeRecordHeader> headers
   ) {
-    return records
-        .getFirst()
-        .headers()
+    return headers
         .stream()
         .map(h ->
             ProduceRequestHeader
