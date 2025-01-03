@@ -91,6 +91,8 @@ public class ClusterProxyProcessor extends
 
                     options.setKeyStoreOptions(keystoreOptions);
                   }
+
+                  context.setWebClientOptions(options);
                 });
     }
 
