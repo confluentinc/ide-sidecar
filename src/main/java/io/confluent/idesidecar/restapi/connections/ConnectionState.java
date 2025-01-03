@@ -53,6 +53,12 @@ public abstract class ConnectionState {
   protected ConnectionSpec spec;
 
   private final AtomicReference<ConnectionStatus> cachedStatus = new AtomicReference<>();
+
+  /**
+   * The instant at which the cached status was last updated. This is used to prevent stale status
+   * updates from being applied by the scheduled refresh task
+   * (in {@link RefreshConnectionStatuses}).
+   */
   private final AtomicReference<Instant> lastUpdated = new AtomicReference<>(
       Instant.now()
   );
@@ -117,19 +123,21 @@ public abstract class ConnectionState {
     // Always set the cached status when the future completes successfully
     return doRefreshStatus().onSuccess(updated -> {
       var lastUpdatedInstant = lastUpdated.get();
-      if (beforeStartingRefresh.equals(lastUpdatedInstant) ||
-          beforeStartingRefresh.isAfter(lastUpdatedInstant)) {
+      if (lastUpdatedInstant.isAfter(beforeStartingRefresh)) {
         Log.infof(
-            "Updated connection status for %s: %s, last updated: %s, before starting refresh time: %s",
+            "Ignoring stale connection status update for %s: %s. " +
+                "last updated: %s, before starting refresh time: %s",
             spec.id(),
             updated,
             lastUpdatedInstant,
             beforeStartingRefresh
         );
-        updateStatus(originalState, updated);
       } else {
+        // Update the status if it has not been updated since the refresh was started
+        updateStatus(originalState, updated);
         Log.infof(
-            "Ignoring stale connection status update for %s: %s. last updated: %s, before starting refresh time: %s",
+            "Updated connection status for %s: %s, " +
+                "last updated: %s, before starting refresh time: %s",
             spec.id(),
             updated,
             lastUpdatedInstant,
@@ -149,6 +157,7 @@ public abstract class ConnectionState {
         updated,
         lastUpdated.get()
     );
+
     // If the status has changed, notify the listener
     if (!updated.equals(original)) {
       if (updated.isConnected()) {
