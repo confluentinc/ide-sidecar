@@ -11,6 +11,7 @@ import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequestData;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
@@ -27,8 +28,12 @@ public interface RecordsV3ErrorsSuite extends RecordsV3BaseSuite {
     givenConnectionId()
         .header("Content-Type", "application/json")
         .body(createProduceRequest(
-            null, "key", null, "value", null
-        ))
+            null,
+            "key",
+            null,
+            "value",
+            null,
+            Set.of()))
         .post("/kafka/v3/clusters/non-existent-cluster/topics/foo/records")
         .then()
         .statusCode(404)
@@ -81,7 +86,7 @@ public interface RecordsV3ErrorsSuite extends RecordsV3BaseSuite {
         .atMost(Duration.ofSeconds(10))
         .untilAsserted(() ->
             produceRecordThen(
-                null, topic, "key", keySchemaVersion, "value", valueSchemaVersion)
+                null, topic, "key", keySchemaVersion, "value", valueSchemaVersion, Set.of())
                 .statusCode(404)
                 .body("message",
                     matchesRegex("^Subject '%s-(key|value)' not found\\.; error code: 40401$"
@@ -113,7 +118,7 @@ public interface RecordsV3ErrorsSuite extends RecordsV3BaseSuite {
         .atMost(Duration.ofSeconds(10))
         .untilAsserted(() ->
             produceRecordThen(
-                null, topic, "key", keySchemaVersion, "value", valueSchemaVersion)
+                null, topic, "key", keySchemaVersion, "value", valueSchemaVersion, Set.of())
                 .statusCode(404)
                 .body("message", matchesRegex("^Version \\d+ not found.; error code: 40402$"))
         );
@@ -183,7 +188,7 @@ public interface RecordsV3ErrorsSuite extends RecordsV3BaseSuite {
         .atMost(Duration.ofSeconds(10))
         .untilAsserted(() ->
             produceRecordThen(
-                null, topic, badData, keySchema.getVersion(), null, null)
+                null, topic, badData, keySchema.getVersion(), null, null, Set.of())
                 .statusCode(400)
                 .body("message", containsString("Failed to parse data"))
         );
@@ -198,7 +203,7 @@ public interface RecordsV3ErrorsSuite extends RecordsV3BaseSuite {
         .atMost(Duration.ofSeconds(10))
         .untilAsserted(() ->
             produceRecordThen(
-                null, topic, null, null, badData, valueSchema.getVersion())
+                null, topic, null, null, badData, valueSchema.getVersion(), Set.of())
                 .statusCode(400)
                 .body("message", containsString("Failed to parse data"))
         );
