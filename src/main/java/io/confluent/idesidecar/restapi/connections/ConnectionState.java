@@ -111,7 +111,7 @@ public abstract class ConnectionState {
    *
    * <p>This method always calls {@link #doRefreshStatus()} and then on success updates
    * the {@link #getStatus() cached connection status}. If we see that the status has been updated
-   * since the refresh was started, we ignore the update and refresh the status again.
+   * since the refresh was started, we ignore the update.
    *
    * @return the future that will complete with the updated connection status
    * @see #getConnectionStatus()
@@ -122,45 +122,30 @@ public abstract class ConnectionState {
     var beforeStartingRefresh = Instant.now();
 
     // Always set the cached status when the future completes successfully
-    return doRefreshStatus()
-        .compose(updated -> {
-          var lastUpdatedInstant = lastUpdated.get();
-          if (lastUpdatedInstant.isAfter(beforeStartingRefresh)) {
-            Log.infof(
-                "Found stale connection status update for %s: %s. Refreshing again. " +
-                    "last updated: %s, before starting refresh time: %s",
-                spec.id(),
-                updated,
-                lastUpdatedInstant,
-                beforeStartingRefresh
-            );
-
-            // Refresh the status again if it has been updated since the refresh was started
-            return doRefreshStatus().onSuccess(updated2 -> {
-              updateStatus(originalState, updated2);
-              Log.infof(
-                  "Updated connection status for %s: %s, " +
-                      "last updated: %s, before starting refresh time: %s",
-                  spec.id(),
-                  updated2,
-                  lastUpdatedInstant,
-                  beforeStartingRefresh
-              );
-            });
-          } else {
-            // Update the status if it has not been updated since the refresh was started
-            updateStatus(originalState, updated);
-            Log.infof(
-                "Updated connection status for %s: %s, " +
-                    "last updated: %s, before starting refresh time: %s",
-                spec.id(),
-                updated,
-                lastUpdatedInstant,
-                beforeStartingRefresh
-            );
-            return Future.succeededFuture(updated);
-          }
-        });
+    return doRefreshStatus().onSuccess(updated -> {
+      var lastUpdatedInstant = lastUpdated.get();
+      if (lastUpdatedInstant.isAfter(beforeStartingRefresh)) {
+        Log.infof(
+            "Ignoring stale connection status update for %s: %s. " +
+                "last updated: %s, before starting refresh time: %s",
+            spec.id(),
+            updated,
+            lastUpdatedInstant,
+            beforeStartingRefresh
+        );
+      } else {
+        // Update the status if it has not been updated since the refresh was started
+        updateStatus(originalState, updated);
+        Log.infof(
+            "Updated connection status for %s: %s, " +
+                "last updated: %s, before starting refresh time: %s",
+            spec.id(),
+            updated,
+            lastUpdatedInstant,
+            beforeStartingRefresh
+        );
+      }
+    });
   }
 
   private void updateStatus(ConnectionStatus original, ConnectionStatus updated) {
