@@ -21,7 +21,7 @@ import java.util.Objects;
 @RegisterForReflection
 public class Template extends BaseModel<ScaffoldV1TemplateSpec, ObjectMetadata> {
 
-  private final static ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   @JsonCreator
   public Template(
