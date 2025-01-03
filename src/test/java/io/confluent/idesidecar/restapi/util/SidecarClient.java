@@ -26,6 +26,7 @@ import io.confluent.idesidecar.restapi.credentials.Redactable;
 import io.confluent.idesidecar.restapi.kafkarest.model.CreateTopicRequestData;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequest;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequestData;
+import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequestHeader;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequest;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
 import io.confluent.idesidecar.restapi.models.Connection;
@@ -516,7 +517,7 @@ public class SidecarClient implements SidecarClientApi {
       Object key,
       Object value
   ) {
-    produceRecord(partitionId, topicName, key, null, value, null);
+    produceRecord(partitionId, topicName, key, null, value, null, Set.of());
   }
 
   public void produceRecord(
@@ -525,13 +526,14 @@ public class SidecarClient implements SidecarClientApi {
       Object key,
       Integer keySchemaVersion,
       Object value,
-      Integer valueSchemaVersion
+      Integer valueSchemaVersion,
+      Set<ProduceRequestHeader> headers
   ) {
     await()
         .atMost(Duration.ofSeconds(10))
         .untilAsserted(() -> {
           var resp = produceRecordThen(
-              partitionId, topicName, key, keySchemaVersion, value, valueSchemaVersion
+              partitionId, topicName, key, keySchemaVersion, value, valueSchemaVersion, headers
           ).extract().response();
           // Log the response body in case of an error to ease debugging
           assertEquals(200, resp.statusCode(), resp.body().asString());
@@ -545,7 +547,7 @@ public class SidecarClient implements SidecarClientApi {
       Object value,
       Integer valueSchemaVersion
   ) {
-    produceRecord(null, topicName, key, keySchemaVersion, value, valueSchemaVersion);
+    produceRecord(null, topicName, key, keySchemaVersion, value, valueSchemaVersion, Set.of());
   }
 
   public ValidatableResponse produceRecordThen(
@@ -554,7 +556,7 @@ public class SidecarClient implements SidecarClientApi {
       Object key,
       Object value
   ) {
-    return produceRecordThen(partitionId, topicName, key, null, value, null);
+    return produceRecordThen(partitionId, topicName, key, null, value, null, Set.of());
   }
 
   public ValidatableResponse produceRecordThen(
@@ -563,11 +565,13 @@ public class SidecarClient implements SidecarClientApi {
       Object key,
       Integer keySchemaVersion,
       Object value,
-      Integer valueSchemaVersion
+      Integer valueSchemaVersion,
+      Set<ProduceRequestHeader> headers
   ) {
     return fromCluster(currentKafkaClusterId, () ->
         givenDefault()
-            .body(createProduceRequest(partitionId, key, keySchemaVersion, value, valueSchemaVersion))
+            .body(createProduceRequest(
+                partitionId, key, keySchemaVersion, value, valueSchemaVersion, headers))
             .post("/kafka/v3/clusters/{cluster_id}/topics/%s/records".formatted(topicName))
             .then()
     );
@@ -599,11 +603,12 @@ public class SidecarClient implements SidecarClientApi {
       Object key,
       Integer keySchemaVersion,
       Object value,
-      Integer valueSchemaVersion
-  ) {
+      Integer valueSchemaVersion,
+      Set<ProduceRequestHeader> headers) {
     return ProduceRequest
         .builder()
         .partitionId(partitionId)
+        .headers(headers.stream().toList())
         .key(
             ProduceRequestData
                 .builder()
