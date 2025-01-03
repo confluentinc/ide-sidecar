@@ -4,9 +4,12 @@ import io.confluent.idesidecar.restapi.application.ProxyProcessorBeanProducers;
 import io.confluent.idesidecar.restapi.processors.Processor;
 import io.confluent.idesidecar.restapi.proxy.ProxyRequestProcessor;
 import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
+import io.confluent.idesidecar.restapi.util.WebClientFactory;
 import io.vertx.core.Future;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.net.JksOptions;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
@@ -33,6 +36,9 @@ public class ClusterProxyProcessor extends
 
   @ConfigProperty(name = "ide-sidecar.api.host")
   String sidecarHost;
+
+  @Inject
+  WebClientFactory webClientFactory;
 
   @Override
   public Future<ClusterProxyContext> process(ClusterProxyContext context) {
@@ -63,11 +69,27 @@ public class ClusterProxyProcessor extends
             .getSchemaRegistryTLSConfig()
             .ifPresent(
                 tlsConfig -> {
+                  var options = webClientFactory.getDefaultWebClientOptions();
                   if (tlsConfig.truststore() != null) {
-                    context.setTruststoreOptions(tlsConfig.truststore());
+                    var trustStore = tlsConfig.truststore();
+                    var trustStoreOptions = new JksOptions()
+                        .setPath(trustStore.path())
+                        .setPassword(trustStore.password().asString(false));
+
+                    options.setTrustStoreOptions(trustStoreOptions);
                   }
+
                   if (tlsConfig.keystore() != null) {
-                    context.setKeystoreOptions(tlsConfig.keystore());
+                    var keyStore = tlsConfig.keystore();
+                    var keystoreOptions = new JksOptions()
+                        .setPath(keyStore.path())
+                        .setPassword(keyStore.password().asString(false));
+
+                    if (keyStore.keyPassword() != null) {
+                      keystoreOptions.setAliasPassword(keyStore.keyPassword().asString(false));
+                    }
+
+                    options.setKeyStoreOptions(keystoreOptions);
                   }
                 });
     }

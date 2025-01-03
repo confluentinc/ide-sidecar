@@ -52,6 +52,8 @@
       # Unset the store-schema-directory to avoid storing
       # OpenAPI schemas with the test port.
       store-schema-directory: ""
+  scaffolding-service:
+    base-uri: https://api.stag.cpdev.cloud/scaffold/v1
 
 "%dev":
   ide-sidecar:
@@ -208,6 +210,12 @@ ide-sidecar:
     # cp-demo configs used by Confluent Platform integration tests
     cp-demo:
       tag: v7.7.1
+  scaffolding-service:
+    base-uri: https://api.confluent.cloud/scaffold/v1
+    default-template-collection: vscode
+    list-templates-uri: ${ide-sidecar.scaffolding-service.base-uri}/template-collections/${ide-sidecar.scaffolding-service.default-template-collection}/templates
+    get-template-uri: ${ide-sidecar.scaffolding-service.base-uri}/template-collections/${ide-sidecar.scaffolding-service.default-template-collection}/templates/%s
+    apply-template-uri: ${ide-sidecar.scaffolding-service.base-uri}/template-collections/${ide-sidecar.scaffolding-service.default-template-collection}/templates/%s/apply
 
 quarkus:
   apicurio-registry:
