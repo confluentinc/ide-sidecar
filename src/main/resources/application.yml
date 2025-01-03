@@ -53,7 +53,7 @@
       # OpenAPI schemas with the test port.
       store-schema-directory: ""
   scaffolding-service:
-    base-uri: https://api.stag.cpdev.cloud/scaffold/v1
+    base-uri: http://localhost:${quarkus.wiremock.devservices.port}/scaffold/v1
 
 "%dev":
   ide-sidecar:
