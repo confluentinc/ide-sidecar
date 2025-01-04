@@ -78,8 +78,6 @@ blocks:
           commands:
             - cache store windows_maven_cache "$Env:USERPROFILE\.m2\repository"
       env_vars:
-        - name: MAVEN_PROFILES
-          value: "!unix,windows"
         - name: OS
           value: "windows"
         - name: ARCH

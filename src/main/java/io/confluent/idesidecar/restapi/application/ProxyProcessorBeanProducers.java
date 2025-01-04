@@ -4,12 +4,14 @@ import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
 import io.confluent.idesidecar.restapi.processors.Processor;
 import io.confluent.idesidecar.restapi.proxy.ConnectionProcessor;
 import io.confluent.idesidecar.restapi.proxy.EmptyProcessor;
+import io.confluent.idesidecar.restapi.proxy.ProxyContext;
 import io.confluent.idesidecar.restapi.proxy.ProxyRequestProcessor;
 import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
 import io.confluent.idesidecar.restapi.proxy.clusters.processors.ClusterAuthenticationProcessor;
 import io.confluent.idesidecar.restapi.proxy.clusters.processors.ClusterInfoProcessor;
 import io.confluent.idesidecar.restapi.proxy.clusters.processors.ClusterProxyProcessor;
 import io.confluent.idesidecar.restapi.proxy.clusters.processors.ClusterStrategyProcessor;
+import io.confluent.idesidecar.restapi.proxy.scaffolding.ScaffoldingProxyProcessor;
 import io.confluent.idesidecar.restapi.util.WebClientFactory;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
@@ -49,6 +51,19 @@ public class ProxyProcessorBeanProducers {
         clusterInfoProcessor,
         clusterStrategyProcessor,
         clusterProxyProcessor,
+        new ProxyRequestProcessor<>(webClientFactory, vertx),
+        new EmptyProcessor<>()
+    );
+  }
+
+  @Produces
+  @Singleton
+  @Named("scaffoldingProxyProcessor")
+  public Processor<ProxyContext, Future<ProxyContext>> scaffoldingProxyProcessor(
+      ScaffoldingProxyProcessor scaffoldingProxyProcessor
+  ) {
+    return Processor.chain(
+        scaffoldingProxyProcessor,
         new ProxyRequestProcessor<>(webClientFactory, vertx),
         new EmptyProcessor<>()
     );

@@ -1,0 +1,98 @@
+{
+  "api_version": "scaffold/v1",
+  "kind": "Template",
+  "metadata": {
+    "created_at": "2024-10-15T00:00:00Z",
+    "resource_name": "crn://confluent.cloud/template-collection=vscode/template=go-consumer",
+    "self": "https://api.confluent.cloud/scaffold/v1/template-collections/vscode/templates/go-consumer",
+    "updated_at": "2024-10-15T00:00:00Z"
+  },
+  "spec": {
+    "description": "A simple Go project that reads messages from a topic in Confluent Cloud. Ideal for developers new to Kafka who want to learn about stream processing with Kafka.\n",
+    "display_name": "Go Consumer Application",
+    "language": "Go",
+    "name": "go-consumer",
+    "options": {
+      "api_key": {
+        "description": "The API key for accessing the Kafka cluster in Confluent Cloud.",
+        "display_name": "Kafka Cluster API Key",
+        "enum": null,
+        "examples": null,
+        "format": "",
+        "hint": "",
+        "initial_value": "",
+        "min_length": 0,
+        "pattern": "^[a-zA-Z0-9=\\/\\+]{16}$"
+      },
+      "api_secret": {
+        "description": "The API secret for accessing the Kafka cluster in Confluent Cloud.",
+        "display_name": "Kafka Cluster API Secret",
+        "enum": null,
+        "examples": null,
+        "format": "password",
+        "hint": "",
+        "initial_value": "",
+        "min_length": 0,
+        "pattern": "^[a-zA-Z0-9=\\/\\+]{64,72}$"
+      },
+      "auto_offset_reset": {
+        "description": "What to do when there is no initial offset in the Kafka topic or if the current offset does not exist any more on the server (e.g. because that data has been deleted).",
+        "display_name": "Begin Consuming From",
+        "enum": [
+          "earliest",
+          "latest"
+        ],
+        "examples": null,
+        "format": "",
+        "hint": "",
+        "initial_value": "earliest",
+        "min_length": 0,
+        "pattern": ""
+      },
+      "cc_bootstrap_server": {
+        "description": "One or more comma-separated host and port pairs that are the addresses where Kafka brokers accept client bootstrap requests.",
+        "display_name": "Kafka Bootstrap Server",
+        "enum": null,
+        "examples": null,
+        "format": "",
+        "hint": "",
+        "initial_value": "",
+        "min_length": 0,
+        "pattern": "^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\\-.]{0,61}[a-zA-Z0-9])[:]([0-9]{2,8}))(,([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\\-.]{0,61}[a-zA-Z0-9])[:]([0-9]{2,8}))*$"
+      },
+      "cc_topic": {
+        "description": "The name of the Kafka topic to consume.",
+        "display_name": "Topic Name",
+        "enum": null,
+        "examples": null,
+        "format": "",
+        "hint": "",
+        "initial_value": "",
+        "min_length": 0,
+        "pattern": "^([a-zA-Z0-9._-]{1,255})$"
+      },
+      "group_id": {
+        "description": "A unique string that identifies the consumer group this consumer belongs to. This property is required if the consumer subscribes to a topic or uses the Kafka-based offset management strategy.",
+        "display_name": "Consumer Group",
+        "enum": null,
+        "examples": null,
+        "format": "",
+        "hint": "",
+        "initial_value": "",
+        "min_length": 0,
+        "pattern": "^([a-zA-Z0-9._-]{1,255})$"
+      }
+    },
+    "tags": [
+      "consumer",
+      "getting started",
+      "go"
+    ],
+    "template_collection": {
+      "id": "vscode",
+      "related": "https://api.confluent.cloud/scaffold/v1/template-collections/vscode",
+      "resource_name": "crn://confluent.cloud/template-collection=vscode"
+    },
+    "version": "0.0.1"
+  }
+}

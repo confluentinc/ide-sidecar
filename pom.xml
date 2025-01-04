@@ -436,74 +436,6 @@
         </plugins>
       </build>
     </profile>
-    <profile>
-      <!-- The "unix" profile holds common configuration across Linux and MacOS. Can be disabled on Windows with
-       -DskipUnix -->
-      <id>unix</id>
-      <activation>
-        <property>
-          <name>!skipUnix</name>
-        </property>
-      </activation>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>exec-maven-plugin</artifactId>
-            <executions>
-              <execution>
-                <id>zip-templates</id>
-                <phase>initialize</phase>
-                <goals>
-                  <goal>exec</goal>
-                </goals>
-                <configuration>
-                  <executable>/bin/bash</executable>
-                  <workingDirectory>${maven.multiModuleProjectDirectory}</workingDirectory>
-                  <arguments>
-                    <argument>-c</argument>
-                    <argument>make zip-templates</argument>
-                  </arguments>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-    <profile>
-      <id>windows</id>
-      <activation>
-        <os>
-          <family>windows</family>
-        </os>
-      </activation>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>exec-maven-plugin</artifactId>
-            <executions>
-              <execution>
-                <id>zip-templates</id>
-                <phase>initialize</phase>
-                <goals>
-                  <goal>exec</goal>
-                </goals>
-                <configuration>
-                  <executable>cmd.exe</executable>
-                  <workingDirectory>${maven.multiModuleProjectDirectory}</workingDirectory>
-                  <arguments>
-                    <argument>/c</argument>
-                    <argument>make zip-templates-windows</argument>
-                  </arguments>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
   </profiles>
 
   <build>
@@ -936,6 +868,30 @@
                 <useSwaggerAnnotations>false</useSwaggerAnnotations>
                 <openApiNullable>false</openApiNullable>
                 <useTags>true</useTags>
+              </configOptions>
+              <enablePostProcessFile>true</enablePostProcessFile>
+            </configuration>
+          </execution>
+          <execution>
+            <id>scaffolding-service-spec</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <configuration>
+              <inputSpec>src/main/resources/scaffolding/scaffold.openapi.yaml</inputSpec>
+              <generatorName>jaxrs-spec</generatorName>
+              <generateSupportingFiles>false</generateSupportingFiles>
+              <addCompileSourceRoot>true</addCompileSourceRoot>
+              <generateApis>false</generateApis>
+              <configOptions>
+                <library>quarkus</library>
+                <useMicroProfileOpenAPIAnnotations>false</useMicroProfileOpenAPIAnnotations>
+                <modelPackage>io.confluent.cloud.scaffold.v1.model</modelPackage>
+                <generateBuilders>true</generateBuilders>
+                <openApiNullable>false</openApiNullable>
+                <useJakartaEe>true</useJakartaEe>
+                <useSwaggerAnnotations>false</useSwaggerAnnotations>
               </configOptions>
               <enablePostProcessFile>true</enablePostProcessFile>
             </configuration>

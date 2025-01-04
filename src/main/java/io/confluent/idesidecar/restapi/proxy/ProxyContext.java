@@ -8,6 +8,7 @@ import io.vertx.codegen.annotations.Nullable;
 import io.vertx.core.MultiMap;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.ext.web.client.WebClientOptions;
 import jakarta.ws.rs.core.Response.Status;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,6 +34,7 @@ public class ProxyContext {
   MultiMap proxyRequestHeaders;
   HttpMethod proxyRequestMethod;
   Buffer proxyRequestBody;
+  WebClientOptions webClientOptions;
 
   // Store the proxy response
   Buffer proxyResponseBody;
@@ -43,8 +45,14 @@ public class ProxyContext {
 
   private static final UuidFactory uuidFactory = new UuidFactory();
 
-  public ProxyContext(String requestUri, MultiMap requestHeaders, HttpMethod requestMethod,
-      Buffer requestBody, Map<String, String> requestPathParams, @Nullable String connectionId) {
+  public ProxyContext(
+      String requestUri,
+      MultiMap requestHeaders,
+      HttpMethod requestMethod,
+      Buffer requestBody,
+      Map<String, String> requestPathParams,
+      @Nullable String connectionId
+  ) {
     this.requestUri = requestUri;
     this.requestHeaders = requestHeaders;
     this.requestMethod = requestMethod;
@@ -166,5 +174,13 @@ public class ProxyContext {
 
   public @Nullable String getConnectionId() {
     return connectionId;
+  }
+
+  public void setWebClientOptions(WebClientOptions webClientOptions) {
+    this.webClientOptions = webClientOptions;
+  }
+
+  public WebClientOptions getWebClientOptions() {
+    return webClientOptions;
   }
 }

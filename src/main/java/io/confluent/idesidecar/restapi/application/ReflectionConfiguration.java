@@ -4,7 +4,27 @@ import com.google.protobuf.Any;
 import com.google.protobuf.Message;
 import com.sun.security.auth.module.JndiLoginModule;
 import com.sun.security.auth.module.KeyStoreLoginModule;
-import io.confluent.idesidecar.scaffolding.models.TemplateManifest;
+import io.confluent.cloud.scaffold.v1.model.ApplyScaffoldV1TemplateRequest;
+import io.confluent.cloud.scaffold.v1.model.Error;
+import io.confluent.cloud.scaffold.v1.model.ErrorSource;
+import io.confluent.cloud.scaffold.v1.model.Failure;
+import io.confluent.cloud.scaffold.v1.model.GlobalObjectReference;
+import io.confluent.cloud.scaffold.v1.model.ListMeta;
+import io.confluent.cloud.scaffold.v1.model.ObjectMeta;
+import io.confluent.cloud.scaffold.v1.model.ObjectReference;
+import io.confluent.cloud.scaffold.v1.model.ScaffoldV1Template;
+import io.confluent.cloud.scaffold.v1.model.ScaffoldV1TemplateCollection;
+import io.confluent.cloud.scaffold.v1.model.ScaffoldV1TemplateCollectionList;
+import io.confluent.cloud.scaffold.v1.model.ScaffoldV1TemplateCollectionListDataInner;
+import io.confluent.cloud.scaffold.v1.model.ScaffoldV1TemplateCollectionListMetadata;
+import io.confluent.cloud.scaffold.v1.model.ScaffoldV1TemplateCollectionMetadata;
+import io.confluent.cloud.scaffold.v1.model.ScaffoldV1TemplateCollectionSpec;
+import io.confluent.cloud.scaffold.v1.model.ScaffoldV1TemplateList;
+import io.confluent.cloud.scaffold.v1.model.ScaffoldV1TemplateListDataInner;
+import io.confluent.cloud.scaffold.v1.model.ScaffoldV1TemplateListMetadata;
+import io.confluent.cloud.scaffold.v1.model.ScaffoldV1TemplateMetadata;
+import io.confluent.cloud.scaffold.v1.model.ScaffoldV1TemplateOption;
+import io.confluent.cloud.scaffold.v1.model.ScaffoldV1TemplateSpec;
 import io.confluent.kafka.schemaregistry.avro.AvroSchema;
 import io.confluent.kafka.schemaregistry.client.rest.entities.Config;
 import io.confluent.kafka.schemaregistry.client.rest.entities.ErrorMessage;
@@ -69,7 +89,6 @@ import org.apache.kafka.common.serialization.ByteArrayDeserializer;
         CooperativeStickyAssignor.class,
         RangeAssignor.class,
         SchemaString.class,
-        TemplateManifest.class,
         Schema.class,
         RegisterSchemaRequest.class,
         ProtobufSchema.class,
@@ -127,7 +146,29 @@ import org.apache.kafka.common.serialization.ByteArrayDeserializer;
         RuleSet.class,
         Config.class,
         EntityType.class,
-        Any.class
+        Any.class,
+        // Scaffolding Service models
+        ApplyScaffoldV1TemplateRequest.class,
+        Error.class,
+        ErrorSource.class,
+        Failure.class,
+        GlobalObjectReference.class,
+        ListMeta.class,
+        ObjectMeta.class,
+        ObjectReference.class,
+        ScaffoldV1Template.class,
+        ScaffoldV1TemplateCollection.class,
+        ScaffoldV1TemplateCollectionList.class,
+        ScaffoldV1TemplateCollectionListDataInner.class,
+        ScaffoldV1TemplateCollectionListMetadata.class,
+        ScaffoldV1TemplateCollectionMetadata.class,
+        ScaffoldV1TemplateCollectionSpec.class,
+        ScaffoldV1TemplateList.class,
+        ScaffoldV1TemplateListDataInner.class,
+        ScaffoldV1TemplateListMetadata.class,
+        ScaffoldV1TemplateMetadata.class,
+        ScaffoldV1TemplateOption.class,
+        ScaffoldV1TemplateSpec.class,
     }
 )
 public class ReflectionConfiguration {

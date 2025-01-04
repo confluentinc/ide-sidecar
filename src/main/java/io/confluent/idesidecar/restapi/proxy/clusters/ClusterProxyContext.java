@@ -81,20 +81,4 @@ public class ClusterProxyContext extends ProxyContext {
         .setPath(trustStore.path())
         .setPassword(trustStore.password().asString(false));
   }
-
-  public JksOptions getKeystoreOptions() {
-    return keystoreOptions;
-  }
-
-  public void setKeystoreOptions(TLSConfig.KeyStore keyStore) {
-    var keystoreOptions = new JksOptions()
-        .setPath(keyStore.path())
-        .setPassword(keyStore.password().asString(false));
-
-    if (keyStore.keyPassword() != null) {
-      keystoreOptions.setAliasPassword(keyStore.keyPassword().asString(false));
-    }
-
-    this.keystoreOptions = keystoreOptions;
-  }
 }
