@@ -31,9 +31,12 @@ import org.eclipse.microprofile.config.ConfigProvider;
  *   <li>{@link VsCode#version()} -- the value of the '{@value #VSCODE_VERSION_KEY}' system property
  *     (e.g., {@code -Dvscode.version=0.17.1}, or if not defined from the
  *     {@value #VSCODE_VERSION_ENV} environment variable</li>
- *   <li>{@link VsCode#extensionVersion()} ()} -- the value of the '{@value #VSCODE_VERSION_KEY}'
+ *   <li>{@link VsCode#extensionVersion()} -- the value of the '{@value #VSCODE_VERSION_KEY}'
  *     system property (e.g., {@code -Dvscode.extension.version=0.17.1}, or if not defined
  *     from the {@value #VSCODE_EXTENSION_VERSION_ENV} environment variable</li>
+ *   <li>{@link VsCode#uriScheme()} -- the value of the '{@value #VSCODE_URI_SCHEME_KEY}' system
+ *     property (e.g., {@code -Dvscode.uri.scheme=vscode}, or if not defined from the
+ *     {@value #VSCODE_URI_SCHEME_ENV} environment variable</li>
  * </ul>
  */
 @Startup
@@ -45,7 +48,8 @@ public class SidecarInfo {
 
   public record VsCode(
       String version,
-      String extensionVersion
+      String extensionVersion,
+      String uriScheme
   ) {
   }
 
@@ -71,6 +75,8 @@ public class SidecarInfo {
   static final String VSCODE_VERSION_KEY = "vscode.version";
   static final String VSCODE_EXTENSION_VERSION_ENV = "VSCODE_EXTENSION_VERSION";
   static final String VSCODE_EXTENSION_VERSION_KEY = "vscode.extension.version";
+  static final String VSCODE_URI_SCHEME_ENV = "VSCODE_URI_SCHEME";
+  static final String VSCODE_URI_SCHEME_KEY = "vscode.uri.scheme";
 
   private final String osArch;
   private final OperatingSystemType osType;
@@ -107,8 +113,15 @@ public class SidecarInfo {
     if (vscodeExtensionVersion == null) {
       vscodeExtensionVersion = semanticVersionWithin(env, VSCODE_EXTENSION_VERSION_ENV, null);
     }
+    // Set the VS Code URI scheme if available (may not be "vscode", but "code"/"cursor"/etc.)
+    // so the variable naming may need to change later depending on support for other IDEs/clients
+    var vscodeUriScheme = system.getProperty(VSCODE_URI_SCHEME_KEY, null);
+    if (vscodeUriScheme == null) {
+      vscodeUriScheme = env.getProperty(VSCODE_URI_SCHEME_ENV, "vscode");
+    }
+
     if (vscodeVersion != null) {
-      vscode = Optional.of(new VsCode(vscodeVersion, vscodeExtensionVersion));
+      vscode = Optional.of(new VsCode(vscodeVersion, vscodeExtensionVersion, vscodeUriScheme));
     } else {
       vscode = Optional.empty();
     }
@@ -142,12 +155,13 @@ public class SidecarInfo {
 
   @Override
   public String toString() {
-    return "OS: %s %s (%s); VS Code %s, extension version %s".formatted(
+    return "OS: %s %s (%s); VS Code %s, extension version %s, callback URI scheme %s".formatted(
         osName,
         osVersion,
         osType.name(),
         vsCode().map(VsCode::version).orElse("unknown"),
-        vsCode().map(VsCode::extensionVersion).orElse("unknown")
+        vsCode().map(VsCode::extensionVersion).orElse("unknown"),
+        vsCode().map(VsCode::uriScheme).orElse("vscode")
     );
   }
 

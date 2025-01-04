@@ -6,6 +6,7 @@ import static io.confluent.idesidecar.restapi.application.SidecarInfo.OS_VERSION
 import static io.confluent.idesidecar.restapi.application.SidecarInfo.SIDECAR_VERSION;
 import static io.confluent.idesidecar.restapi.application.SidecarInfo.VSCODE_EXTENSION_VERSION_KEY;
 import static io.confluent.idesidecar.restapi.application.SidecarInfo.VSCODE_VERSION_KEY;
+import static io.confluent.idesidecar.restapi.application.SidecarInfo.VSCODE_URI_SCHEME_KEY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -75,7 +76,7 @@ public class SidecarInfoTest {
             "22.0413",
             "aarch64",
             OperatingSystemType.Linux,
-            new SidecarInfo.VsCode("20.1.2", "1.2.3"),
+            new SidecarInfo.VsCode("20.1.2", "1.2.3", "vscode"),
             null,
             "Confluent-for-VSCode/v1.2.3 (https://confluent.io; support@confluent.io) sidecar/v%s (linux/aarch64)"
         ),
@@ -85,7 +86,7 @@ public class SidecarInfoTest {
             "22.0413",
             "aarch64",
             OperatingSystemType.Linux,
-            new SidecarInfo.VsCode("20.1.2", "1.2.3"),
+            new SidecarInfo.VsCode("20.1.2", "1.2.3", "vscode"),
             "v",
             "Confluent-for-VSCode/v1.2.3 (https://confluent.io; support@confluent.io) sidecar/v%s (linux/aarch64)"),
         new TestInputs(
@@ -104,7 +105,7 @@ public class SidecarInfoTest {
             "13.1",
             "amd64",
             OperatingSystemType.MacOS,
-            new SidecarInfo.VsCode("20.1.2", "1.2.3"),
+            new SidecarInfo.VsCode("20.1.2", "1.2.3", "vscode"),
             "",
             "Confluent-for-VSCode/v1.2.3 (https://confluent.io; support@confluent.io) sidecar/v%s (macos/amd64)"),
         new TestInputs(
@@ -113,7 +114,7 @@ public class SidecarInfoTest {
             "13.1",
             "amd64",
             OperatingSystemType.MacOS,
-            new SidecarInfo.VsCode("20.1.2", "1.2.3"),
+            new SidecarInfo.VsCode("20.1.2", "1.2.3", "vscode"),
             "v",
             "Confluent-for-VSCode/v1.2.3 (https://confluent.io; support@confluent.io) sidecar/v%s (macos/amd64)"),
         new TestInputs(
@@ -132,7 +133,7 @@ public class SidecarInfoTest {
             "10.0.1904562",
             "x86_64",
             OperatingSystemType.Windows,
-            new SidecarInfo.VsCode("20.1.2", "1.2.3"),
+            new SidecarInfo.VsCode("20.1.2", "1.2.3", "vscode"),
             "",
             "Confluent-for-VSCode/v1.2.3 (https://confluent.io; support@confluent.io) sidecar/v%s (windows/x86_64)"),
         new TestInputs(
@@ -141,7 +142,7 @@ public class SidecarInfoTest {
             "10.0.1904562",
             "x86_64",
             OperatingSystemType.Windows,
-            new SidecarInfo.VsCode("20.1.2", "1.2.3"),
+            new SidecarInfo.VsCode("20.1.2", "1.2.3", "vscode"),
             "v",
             "Confluent-for-VSCode/v1.2.3 (https://confluent.io; support@confluent.io) sidecar/v%s (windows/x86_64)")
 ,
@@ -162,7 +163,7 @@ public class SidecarInfoTest {
             "10.0.1904562",
             "x86_64",
             OperatingSystemType.Windows,
-            new SidecarInfo.VsCode("20.1.2", "1.2.3"),
+            new SidecarInfo.VsCode("20.1.2", "1.2.3", "vscode"),
             "",
             "Confluent-for-VSCode/v1.2.3 (https://confluent.io; support@confluent.io) sidecar/v%s (windows/x86_64)"
         ),
@@ -172,7 +173,7 @@ public class SidecarInfoTest {
             "10.0.1904562",
             "x86_64",
             OperatingSystemType.Windows,
-            new SidecarInfo.VsCode("20.1.2", "1.2.3"),
+            new SidecarInfo.VsCode("20.1.2", "1.2.3", "vscode"),
             "v",
             "Confluent-for-VSCode/v1.2.3 (https://confluent.io; support@confluent.io) sidecar/v%s (windows/x86_64)"),
         new TestInputs(
@@ -192,7 +193,7 @@ public class SidecarInfoTest {
             "4.1.X.Y",
             "sparc",
             OperatingSystemType.Unix,
-            new SidecarInfo.VsCode("20.1.2", "1.2.3"),
+            new SidecarInfo.VsCode("20.1.2", "1.2.3", "vscode"),
             "",
             "Confluent-for-VSCode/v1.2.3 (https://confluent.io; support@confluent.io) sidecar/v%s (unix/sparc)"
         ),
@@ -202,7 +203,7 @@ public class SidecarInfoTest {
             "4.1.X.Y",
             "sparc",
             OperatingSystemType.Unix,
-            new SidecarInfo.VsCode("20.1.2", "1.2.3"),
+            new SidecarInfo.VsCode("20.1.2", "1.2.3", "vscode"),
             "v",
             "Confluent-for-VSCode/v1.2.3 (https://confluent.io; support@confluent.io) sidecar/v%s (unix/sparc)")
 ,
@@ -212,7 +213,7 @@ public class SidecarInfoTest {
             "4.1.X.Y",
             "sparc",
             OperatingSystemType.Unix,
-            new SidecarInfo.VsCode("20.1.2", "1.2.3"),
+            new SidecarInfo.VsCode("20.1.2", "1.2.3", "vscode"),
             "v",
             "Confluent-for-VSCode/v1.2.3 (https://confluent.io; support@confluent.io) sidecar/v%s (unix/sparc)"
         )
@@ -246,11 +247,14 @@ public class SidecarInfoTest {
     // Don't use the constants, so that we check that the constants are correct
     final String vscodeVersionKey = "vscode.version";
     final String vscodeExtensionVersionKey = "vscode.extension.version";
+    final String vscodeUriSchemeKey = "vscode.uri.scheme";
     final String existingVscodeVersion = System.getProperty(vscodeVersionKey);
     final String existingVscodeExtensionVersion = System.getProperty(vscodeExtensionVersionKey);
+    final String existingVscodeUriScheme = System.getProperty(vscodeUriSchemeKey);
     try {
       System.clearProperty(vscodeVersionKey);
       System.clearProperty(vscodeExtensionVersionKey);
+      System.clearProperty(vscodeUriSchemeKey);
       SidecarInfo sidecar = new SidecarInfo();
       assertNotNull(sidecar.osType());
       assertEquals(System.getProperty("os.name"), sidecar.osName());
@@ -267,6 +271,9 @@ public class SidecarInfoTest {
       if (existingVscodeExtensionVersion != null) {
         System.setProperty(vscodeExtensionVersionKey, existingVscodeExtensionVersion);
       }
+      if (existingVscodeUriScheme != null) {
+        System.setProperty(vscodeUriSchemeKey, existingVscodeUriScheme);
+      }
     }
   }
 
@@ -274,9 +281,11 @@ public class SidecarInfoTest {
   void shouldEvaluateCurrentOsWithVSCode() {
     final String existingVscodeVersion = System.getProperty(VSCODE_VERSION_KEY);
     final String existingVscodeExtensionVersion = System.getProperty(VSCODE_EXTENSION_VERSION_KEY);
+    final String existingVscodeUriScheme = System.getProperty(VSCODE_URI_SCHEME_KEY);
     try {
       System.setProperty(VSCODE_VERSION_KEY, "v20.1.2");
       System.setProperty(VSCODE_EXTENSION_VERSION_KEY, "v1.2.3");
+      System.setProperty(VSCODE_URI_SCHEME_KEY, "vscode-insiders");
       SidecarInfo sidecar = new SidecarInfo();
       assertNotNull(sidecar.osType());
       assertEquals(System.getProperty("os.name"), sidecar.osName());
@@ -284,6 +293,7 @@ public class SidecarInfoTest {
       assertTrue(sidecar.vsCode().isPresent());
       assertEquals("20.1.2", sidecar.vsCode().get().version());
       assertEquals("1.2.3", sidecar.vsCode().get().extensionVersion());
+      assertEquals("vscode-insiders", sidecar.vsCode().get().uriScheme());
       // And there is a non-other type
       assertNotNull(sidecar.osType());
       assertNotEquals(OperatingSystemType.Other, sidecar.osType());
@@ -299,6 +309,11 @@ public class SidecarInfoTest {
         System.clearProperty(VSCODE_EXTENSION_VERSION_KEY);
       } else {
         System.setProperty(VSCODE_EXTENSION_VERSION_KEY, existingVscodeExtensionVersion);
+      }
+      if (existingVscodeUriScheme == null) {
+        System.clearProperty(VSCODE_URI_SCHEME_KEY);
+      } else {
+        System.setProperty(VSCODE_URI_SCHEME_KEY, existingVscodeUriScheme);
       }
     }
   }

@@ -152,6 +152,7 @@ class FeatureFlagsContextTest extends BaseFeatureFlagsTest implements FeatureFla
     assertEquals(OS_TYPE.name(), deviceContext.getValue("os.type").stringValue());
     assertEquals(VS_CODE.extensionVersion(), deviceContext.getValue("vscode.extension.version").stringValue());
     assertEquals(VS_CODE.version(), deviceContext.getValue("vscode.version").stringValue());
+    assertEquals(VS_CODE.uriScheme(), deviceContext.getValue("vscode.uri.scheme").stringValue());
     assertEquals(SIDECAR_VERSION, deviceContext.getValue("sidecar.version").stringValue());
     assertAttributeNames(
         deviceContext,
@@ -161,7 +162,8 @@ class FeatureFlagsContextTest extends BaseFeatureFlagsTest implements FeatureFla
         "os.type",
         "sidecar.version",
         "vscode.extension.version",
-        "vscode.version"
+        "vscode.version",
+        "vscode.uri.scheme"
     );
   }
 
