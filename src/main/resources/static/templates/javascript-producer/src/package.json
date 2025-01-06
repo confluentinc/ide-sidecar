@@ -1,6 +1,0 @@
-{
-    "dependencies": {
-        "@confluentinc/kafka-javascript": "^0.2.1",
-        "dotenv": "^16.4.5"
-    }
-}

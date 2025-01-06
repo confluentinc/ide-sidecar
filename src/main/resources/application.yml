@@ -135,9 +135,6 @@ ide-sidecar:
     ccloud-project:
       client-id: 5c636508aa445d32c86f26b1
       eval-uri: https://confluent.cloud/ldapi/sdk/evalx/%s/contexts/%s
-  template-registries:
-    local:
-      templates-zip-resource: static/templates.zip
   access_token_filter:
     excluded_paths:
       # Following needed by oauth
