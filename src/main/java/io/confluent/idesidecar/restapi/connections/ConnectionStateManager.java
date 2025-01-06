@@ -255,7 +255,7 @@ public class ConnectionStateManager {
         });
   }
 
-  public ConnectionState patchSpecForConnectionState(String id, ConnectionSpec newSpec) {
+  public Uni<ConnectionState> patchSpecForConnectionState(String id, ConnectionSpec newSpec) {
 
     // Get the existing spec
     ConnectionSpec existingSpec = getConnectionSpec(id);
@@ -277,16 +277,15 @@ public class ConnectionStateManager {
             return validateCCloudOrganizationId(id, mergedSpec.ccloudOrganizationId());
           } else if (
               mergedSpec.type() == ConnectionType.DIRECT ||
-              mergedSpec.type() == ConnectionType.LOCAL ||
-              mergedSpec.type() == ConnectionType.PLATFORM
-          )
-          {
+                  mergedSpec.type() == ConnectionType.LOCAL ||
+                  mergedSpec.type() == ConnectionType.PLATFORM
+          ) {
             return Uni.createFrom().voidItem();
           } else {
             return Uni.createFrom().failure(new InvalidInputException(List.of(Error.create()
-              .withSource("type")
-              .withTitle("Invalid connection type")
-              .withDetail("The connection type %s is not supported.".formatted(mergedSpec.type()))
+                .withSource("type")
+                .withTitle("Invalid connection type")
+                .withDetail("The connection type %s is not supported.".formatted(mergedSpec.type()))
             )));
           }
         })
@@ -303,10 +302,9 @@ public class ConnectionStateManager {
               ConnectionTypeQualifier.typeQualifier(updated)
           );
 
-          return mergedSpec;
+          return Uni.createFrom().item(updated);
         });
   }
-
   /**
    * Validate the provided Confluent Cloud configuration for a connection. We do this by
    * refreshing the OAuth tokens using the provided organization ID. If the organization ID is
