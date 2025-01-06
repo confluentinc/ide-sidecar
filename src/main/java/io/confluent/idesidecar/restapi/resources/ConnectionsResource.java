@@ -1,6 +1,5 @@
 package io.confluent.idesidecar.restapi.resources;
 
-import io.confluent.idesidecar.restapi.connections.ConnectionState;
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
 import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
 import io.confluent.idesidecar.restapi.exceptions.CreateConnectionException;
@@ -14,6 +13,7 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.PATCH;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
@@ -119,7 +119,7 @@ public class ConnectionsResource {
         }),
     @APIResponse(
         responseCode = "401",
-        description = "Could not authenticate with updated connection configuration",
+        description = "Could not authenticate with provided API token",
         content = {
             @Content(mediaType = "application/json",
                 schema = @Schema(implementation = Failure.class))
@@ -136,6 +136,60 @@ public class ConnectionsResource {
     return connectionStateManager
         .updateSpecForConnectionState(id, spec)
         .chain(ignored -> Uni.createFrom().item(() -> getConnectionModel(id)));
+  }
+
+  @PATCH
+  @Path("/{id}")
+  @Consumes(MediaType.APPLICATION_JSON)
+  @Produces(MediaType.APPLICATION_JSON)
+  @APIResponses(value = {
+      @APIResponse(
+          responseCode = "200",
+          description = "Connection updated with PATCH",
+          content = {
+              @Content(mediaType = "application/json",
+                  schema = @Schema(implementation = Connection.class))
+          }),
+      @APIResponse(
+          responseCode = "404",
+          description = "Connection not found",
+          content = {
+              @Content(mediaType = "application/json",
+                  schema = @Schema(implementation = Failure.class))
+          }),
+      @APIResponse(
+          responseCode = "401",
+          description = "Could not authenticate with provided API token",
+          content = {
+              @Content(mediaType = "application/json",
+                  schema = @Schema(implementation = Failure.class))
+          }),
+      @APIResponse(
+          responseCode = "400",
+          description = "Invalid input",
+          content = {
+              @Content(mediaType = "application/json",
+                  schema = @Schema(implementation = Failure.class))
+          }),
+  })
+  public Uni<Connection> patchConnection(
+      @PathParam("id") String id,
+      ConnectionSpec spec
+  ) {
+    if (id == null || id.isEmpty()) {
+      return Uni.createFrom().failure(new IllegalArgumentException("ID cannot be null or empty"));
+    }
+    if (spec == null) {
+      return Uni.createFrom().failure(new IllegalArgumentException("ConnectionSpec cannot be null"));
+    }
+
+    var result = connectionStateManager.patchSpecForConnectionState(id, spec);
+
+    if (result instanceof Uni) {
+      return (Uni<Connection>) result;
+    } else {
+      return Uni.createFrom().failure(new ClassCastException("Expected Uni<Connection> but got " + result.getClass().getName()));
+    }
   }
 
   @DELETE
