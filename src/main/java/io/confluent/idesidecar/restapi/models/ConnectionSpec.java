@@ -173,6 +173,29 @@ public record ConnectionSpec(
   }
 
   /**
+   * Merges the current ConnectionSpec with a new ConnectionSpec.
+   *
+   * <p>This method creates a new ConnectionSpec that combines the fields of the
+   * existing spec with the fields of the new spec. If a field in the new spec is
+   * null, the corresponding field from the existing spec is used.</p>
+   *
+   * @param newSpec the new ConnectionSpec to merge with the existing spec
+   * @return a new ConnectionSpec that combines the fields of the existing spec and the new spec
+   */
+  public ConnectionSpec merge(ConnectionSpec newSpec) {
+    // Create a new spec that combines the existing spec with the new spec
+    return new ConnectionSpec(
+        this.id, // ID should remain the same
+        newSpec.name != null ? newSpec.name : this.name,
+        newSpec.type != null ? newSpec.type : this.type,
+        newSpec.ccloudConfig != null ? newSpec.ccloudConfig : this.ccloudConfig,
+        newSpec.localConfig != null ? newSpec.localConfig : this.localConfig,
+        newSpec.kafkaClusterConfig != null ? newSpec.kafkaClusterConfig : this.kafkaClusterConfig,
+        newSpec.schemaRegistryConfig != null ? newSpec.schemaRegistryConfig : this.schemaRegistryConfig
+    );
+  }
+
+  /**
    * Convenience method to return a new ConnectionSpec with the provided
    * Confluent Cloud organization ID set in the CCloudConfig.
    *
@@ -471,7 +494,7 @@ public record ConnectionSpec(
    * The spec may still have missing or incomplete fields, but it should be structurally sound.
    */
   public List<Error> validate() {
-    return validateUpdate(this);
+    return validateUpdate(this, false);
   }
 
   /**
@@ -483,21 +506,24 @@ public record ConnectionSpec(
       "CyclomaticComplexity",
       "NPathComplexity"
   })
-  public List<Error> validateUpdate(ConnectionSpec newSpec) {
+  public List<Error> validateUpdate(ConnectionSpec newSpec, boolean isPatch) {
     var errors = new ArrayList<Error>();
 
     // Check required fields and immutability
-    if (newSpec.name == null || newSpec.name.isBlank()) {
-      checkRequired(errors, "name", "Connection name");
+    if (!isPatch) {
+      if (newSpec.name == null || newSpec.name.isBlank()) {
+        checkRequired(errors, "name", "Connection name");
+      }
+      if (newSpec.type == null) {
+        checkRequired(errors, "type", "Connection type");
+      }
     }
     if (newSpec.id == null || newSpec.id.isBlank()) {
       checkRequired(errors, "id", "Connection ID");
     } else if (!Objects.equals(newSpec.id, id)) {
       checkImmutable(errors, "id", "Connection ID");
     }
-    if (newSpec.type == null) {
-      checkRequired(errors, "type", "Connection type");
-    } else if (!Objects.equals(newSpec.type, type)) {
+    if (!Objects.equals(newSpec.type, type)) {
       checkImmutable(errors, "type", "Connection type");
     } else {
       // The type is the same, so we can check type-specific fields
