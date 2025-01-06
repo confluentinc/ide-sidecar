@@ -11,7 +11,7 @@
 
   <groupId>io.confluent</groupId>
   <artifactId>ide-sidecar</artifactId>
-  <version>0.134.0</version>
+  <version>0.135.0</version>
   <packaging>jar</packaging>
   <name>IDE Sidecar</name>
   <description>Sidecar used by Confluent for VS Code.</description>
