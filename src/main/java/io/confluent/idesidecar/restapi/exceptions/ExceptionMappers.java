@@ -34,10 +34,31 @@ public class ExceptionMappers {
   public Response mapProcessorFailedException(ProcessorFailedException exception) {
     var failure = exception.getFailure();
     return Response
-        .status(Integer.parseInt(failure.status()))
+        .status(extractStatus(failure))
         .entity(failure)
         .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
         .build();
+  }
+
+  @ServerExceptionMapper
+  public Response mapScaffoldingException(ScaffoldingException exception) {
+    var failure = exception.getFailure();
+    return Response
+        .status(extractStatus(failure))
+        .entity(failure)
+        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+        .build();
+  }
+
+  private int extractStatus(Failure failure) {
+    // Either get status if set, or look through errors
+    if (failure.status() != null) {
+      return Integer.parseInt(failure.status());
+    } else if (failure.errors() != null && !failure.errors().isEmpty()) {
+      return Integer.parseInt(failure.errors().getFirst().status());
+    } else {
+      return Status.INTERNAL_SERVER_ERROR.getStatusCode();
+    }
   }
 
   @ServerExceptionMapper
