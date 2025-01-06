@@ -13,7 +13,7 @@ import io.confluent.idesidecar.restapi.exceptions.CreateConnectionException;
 import io.confluent.idesidecar.restapi.exceptions.Failure.Error;
 import io.confluent.idesidecar.restapi.exceptions.InvalidInputException;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
-import io.confluent.idesidecar.restapi.models.ConnectionStatus;
+import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
 import io.confluent.idesidecar.restapi.util.UuidFactory;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -198,7 +198,7 @@ public class ConnectionStateManager {
     var connection = ConnectionStates.from(spec, stateChangeListener);
     connectionStates.put(spec.id(), connection);
 
-    // And fire a event signaling the creation
+    // And fire an event signaling the creation
     Events.fireAsyncEvent(
         connectionStateEvents,
         connection,
@@ -222,7 +222,7 @@ public class ConnectionStateManager {
     }
 
     return Uni.createFrom()
-        .item(() -> getConnectionSpec(id).validateUpdate(newSpec))
+        .item(() -> getConnectionSpec(id).validateUpdate(newSpec, false))
         .onItem()
         .transformToUni(errors -> {
           if (!errors.isEmpty()) {
@@ -255,12 +255,7 @@ public class ConnectionStateManager {
         });
   }
 
-  public Uni<Void> patchSpecForConnectionState(String id, ConnectionSpec newSpec) {
-    // Check if the connection state exists
-    if (!connectionStates.containsKey(id)) {
-      return Uni.createFrom().failure(
-          new ConnectionNotFoundException(CONNECTION_NOT_FOUND.formatted(id)));
-    }
+  public ConnectionState patchSpecForConnectionState(String id, ConnectionSpec newSpec) {
 
     // Get the existing spec
     ConnectionSpec existingSpec = getConnectionSpec(id);
@@ -269,7 +264,7 @@ public class ConnectionStateManager {
     ConnectionSpec mergedSpec = existingSpec.merge(newSpec);
 
     return Uni.createFrom()
-        .item(() -> mergedSpec.validateUpdate(newSpec))
+        .item(() -> mergedSpec.validateUpdate(newSpec, true))
         .onItem()
         .transformToUni(errors -> {
           if (!errors.isEmpty()) {
@@ -277,12 +272,23 @@ public class ConnectionStateManager {
           }
           return Uni.createFrom().voidItem();
         })
-        .chain(ignored -> switch (mergedSpec.type()) {
-          // Make sure the Confluent Cloud organization ID is valid for this user
-          case CCLOUD -> validateCCloudOrganizationId(id, mergedSpec.ccloudOrganizationId());
-          case DIRECT -> Uni.createFrom().voidItem();
-          // No need to validate the spec for LOCAL, DIRECT, and PLATFORM connections
-          case LOCAL, PLATFORM -> Uni.createFrom().voidItem();
+        .chain(ignored -> {
+          if (mergedSpec.type() == ConnectionType.CCLOUD) {
+            return validateCCloudOrganizationId(id, mergedSpec.ccloudOrganizationId());
+          } else if (
+              mergedSpec.type() == ConnectionType.DIRECT ||
+              mergedSpec.type() == ConnectionType.LOCAL ||
+              mergedSpec.type() == ConnectionType.PLATFORM
+          )
+          {
+            return Uni.createFrom().voidItem();
+          } else {
+            return Uni.createFrom().failure(new InvalidInputException(List.of(Error.create()
+              .withSource("type")
+              .withTitle("Invalid connection type")
+              .withDetail("The connection type %s is not supported.".formatted(mergedSpec.type()))
+            )));
+          }
         })
         .chain(ignored -> {
           // Get and update the connection spec after all validations are green
@@ -297,7 +303,7 @@ public class ConnectionStateManager {
               ConnectionTypeQualifier.typeQualifier(updated)
           );
 
-          return Uni.createFrom().voidItem();
+          return mergedSpec;
         });
   }
 
@@ -340,7 +346,7 @@ public class ConnectionStateManager {
       // There was no connection with this id
       throw new ConnectionNotFoundException(String.format(CONNECTION_NOT_FOUND, id));
     }
-    // Removal was successful, so fire a event
+    // Removal was successful, so fire an event
     Events.fireAsyncEvent(
         connectionStateEvents,
         removed,

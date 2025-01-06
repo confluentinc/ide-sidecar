@@ -21,8 +21,6 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
@@ -40,7 +38,6 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 @Consumes(MediaType.APPLICATION_JSON)
 @Blocking
 public class ConnectionsResource {
-  private static final Logger logger = LoggerFactory.getLogger(ConnectionsResource.class);
 
   public static final String API_RESOURCE_PATH = "/gateway/v1/connections";
 
@@ -122,7 +119,7 @@ public class ConnectionsResource {
         }),
     @APIResponse(
         responseCode = "401",
-        description = "Could not authenticate with updated connection configuration",
+        description = "Could not authenticate with provided API token",
         content = {
             @Content(mediaType = "application/json",
                 schema = @Schema(implementation = Failure.class))
@@ -162,7 +159,7 @@ public class ConnectionsResource {
           }),
       @APIResponse(
           responseCode = "401",
-          description = "Could not authenticate with connection configuration updated with PATCH",
+          description = "Could not authenticate with provided API token",
           content = {
               @Content(mediaType = "application/json",
                   schema = @Schema(implementation = Failure.class))
@@ -186,12 +183,13 @@ public class ConnectionsResource {
       return Uni.createFrom().failure(new IllegalArgumentException("ConnectionSpec cannot be null"));
     }
 
-    return connectionStateManager
-        .patchSpecForConnectionState(id, spec)
-        .onItem().transformToUni(updated -> Uni.createFrom().item(() -> getConnectionModel(id)))
-        .onFailure().invoke(e ->
-            logger.error("Failed to update connection: {}", e.getMessage())
-        );
+    var result = connectionStateManager.patchSpecForConnectionState(id, spec);
+
+    if (result instanceof Uni) {
+      return (Uni<Connection>) result;
+    } else {
+      return Uni.createFrom().failure(new ClassCastException("Expected Uni<Connection> but got " + result.getClass().getName()));
+    }
   }
 
   @DELETE

@@ -494,7 +494,7 @@ public record ConnectionSpec(
    * The spec may still have missing or incomplete fields, but it should be structurally sound.
    */
   public List<Error> validate() {
-    return validateUpdate(this);
+    return validateUpdate(this, false);
   }
 
   /**
@@ -506,21 +506,24 @@ public record ConnectionSpec(
       "CyclomaticComplexity",
       "NPathComplexity"
   })
-  public List<Error> validateUpdate(ConnectionSpec newSpec) {
+  public List<Error> validateUpdate(ConnectionSpec newSpec, boolean isPatch) {
     var errors = new ArrayList<Error>();
 
     // Check required fields and immutability
-    if (newSpec.name == null || newSpec.name.isBlank()) {
-      checkRequired(errors, "name", "Connection name");
+    if (!isPatch) {
+      if (newSpec.name == null || newSpec.name.isBlank()) {
+        checkRequired(errors, "name", "Connection name");
+      }
+      if (newSpec.type == null) {
+        checkRequired(errors, "type", "Connection type");
+      }
     }
     if (newSpec.id == null || newSpec.id.isBlank()) {
       checkRequired(errors, "id", "Connection ID");
     } else if (!Objects.equals(newSpec.id, id)) {
       checkImmutable(errors, "id", "Connection ID");
     }
-    if (newSpec.type == null) {
-      checkRequired(errors, "type", "Connection type");
-    } else if (!Objects.equals(newSpec.type, type)) {
+    if (!Objects.equals(newSpec.type, type)) {
       checkImmutable(errors, "type", "Connection type");
     } else {
       // The type is the same, so we can check type-specific fields
