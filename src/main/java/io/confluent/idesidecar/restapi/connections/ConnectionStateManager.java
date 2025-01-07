@@ -13,7 +13,7 @@ import io.confluent.idesidecar.restapi.exceptions.CreateConnectionException;
 import io.confluent.idesidecar.restapi.exceptions.Failure.Error;
 import io.confluent.idesidecar.restapi.exceptions.InvalidInputException;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
-import io.confluent.idesidecar.restapi.models.ConnectionStatus;
+import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
 import io.confluent.idesidecar.restapi.util.UuidFactory;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -198,7 +198,7 @@ public class ConnectionStateManager {
     var connection = ConnectionStates.from(spec, stateChangeListener);
     connectionStates.put(spec.id(), connection);
 
-    // And fire a event signaling the creation
+    // And fire an event signaling the creation
     Events.fireAsyncEvent(
         connectionStateEvents,
         connection,
@@ -222,7 +222,7 @@ public class ConnectionStateManager {
     }
 
     return Uni.createFrom()
-        .item(() -> getConnectionSpec(id).validateUpdate(newSpec))
+        .item(() -> getConnectionSpec(id).validateUpdate(newSpec, false))
         .onItem()
         .transformToUni(errors -> {
           if (!errors.isEmpty()) {
@@ -294,7 +294,7 @@ public class ConnectionStateManager {
       // There was no connection with this id
       throw new ConnectionNotFoundException(String.format(CONNECTION_NOT_FOUND, id));
     }
-    // Removal was successful, so fire a event
+    // Removal was successful, so fire an event
     Events.fireAsyncEvent(
         connectionStateEvents,
         removed,
