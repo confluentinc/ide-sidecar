@@ -255,56 +255,6 @@ public class ConnectionStateManager {
         });
   }
 
-  public Uni<ConnectionState> patchSpecForConnectionState(String id, ConnectionSpec newSpec) {
-
-    // Get the existing spec
-    ConnectionSpec existingSpec = getConnectionSpec(id);
-
-    // Merge the new spec into the existing spec
-    ConnectionSpec mergedSpec = existingSpec.merge(newSpec);
-
-    return Uni.createFrom()
-        .item(() -> mergedSpec.validateUpdate(newSpec, true))
-        .onItem()
-        .transformToUni(errors -> {
-          if (!errors.isEmpty()) {
-            return Uni.createFrom().failure(new InvalidInputException(errors));
-          }
-          return Uni.createFrom().voidItem();
-        })
-        .chain(ignored -> {
-          if (mergedSpec.type() == ConnectionType.CCLOUD) {
-            return validateCCloudOrganizationId(id, mergedSpec.ccloudOrganizationId());
-          } else if (
-              mergedSpec.type() == ConnectionType.DIRECT ||
-                  mergedSpec.type() == ConnectionType.LOCAL ||
-                  mergedSpec.type() == ConnectionType.PLATFORM
-          ) {
-            return Uni.createFrom().voidItem();
-          } else {
-            return Uni.createFrom().failure(new InvalidInputException(List.of(Error.create()
-                .withSource("type")
-                .withTitle("Invalid connection type")
-                .withDetail("The connection type %s is not supported.".formatted(mergedSpec.type()))
-            )));
-          }
-        })
-        .chain(ignored -> {
-          // Get and update the connection spec after all validations are green
-          var updated = connectionStates.get(id);
-          updated.setSpec(mergedSpec);
-
-          // Fire an event
-          Events.fireAsyncEvent(
-              connectionStateEvents,
-              updated,
-              LifecycleQualifier.updated(),
-              ConnectionTypeQualifier.typeQualifier(updated)
-          );
-
-          return Uni.createFrom().item(updated);
-        });
-  }
   /**
    * Validate the provided Confluent Cloud configuration for a connection. We do this by
    * refreshing the OAuth tokens using the provided organization ID. If the organization ID is

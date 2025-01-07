@@ -7,6 +7,10 @@ import io.confluent.idesidecar.restapi.exceptions.Failure;
 import io.confluent.idesidecar.restapi.models.Connection;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionsList;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.fge.jsonpatch.JsonPatchException;
+import com.github.fge.jsonpatch.mergepatch.JsonMergePatch;
 import io.smallrye.common.annotation.Blocking;
 import io.smallrye.mutiny.Uni;
 import jakarta.inject.Inject;
@@ -21,6 +25,8 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
+import java.io.IOException;
+import java.util.concurrent.CompletableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
@@ -175,24 +181,20 @@ public class ConnectionsResource {
                   schema = @Schema(implementation = Failure.class))
           }),
   })
-  public Uni<Connection> patchConnection(
-      @PathParam("id") String id,
-      ConnectionSpec spec
-  ) {
-    if (id == null || id.isEmpty()) {
-      return Uni.createFrom().failure(new IllegalArgumentException("ID cannot be null or empty"));
-    }
-    if (spec == null) {
-      return Uni.createFrom().failure(new IllegalArgumentException("ConnectionSpec cannot be null"));
-    }
-
-    return connectionStateManager
-        .patchSpecForConnectionState(id, spec)
-        .onItem().transformToUni(updated -> Uni.createFrom().item(() -> getConnectionModel(id)))
-        .onFailure().invoke(e ->
-            logger.error("Failed to update connection: {}", e.getMessage())
-        );
-  }
+  public Uni<Connection> patchConnection(@PathParam("id") String id, JsonMergePatch patch) {
+    ObjectMapper mapper = new ObjectMapper();
+          try {
+            JsonNode existingSpecNode = mapper.valueToTree(connectionStateManager
+                .getConnectionState(id).getSpec());
+            JsonNode patchedSpecNode = patch.apply(existingSpecNode);
+            ConnectionSpec patchedSpec = mapper.treeToValue(patchedSpecNode, ConnectionSpec.class);
+            return connectionStateManager.updateSpecForConnectionState(id, patchedSpec)
+                .map(ignored -> getConnectionModel(id));
+          } catch (JsonPatchException | IOException e) {
+            logger.error("Failed to patch connection: {}", e.getMessage());
+            return Uni.createFrom().nullItem();
+          }
+        }
 
   @DELETE
   @Path("{id}")
