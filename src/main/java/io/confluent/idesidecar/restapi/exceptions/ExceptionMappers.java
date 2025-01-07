@@ -1,12 +1,7 @@
 package io.confluent.idesidecar.restapi.exceptions;
 
-import io.confluent.idesidecar.restapi.exceptions.Failure.Error;
 import io.confluent.idesidecar.restapi.kafkarest.UnknownAlterConfigOperation;
 import io.confluent.idesidecar.restapi.util.UuidFactory;
-import io.confluent.idesidecar.scaffolding.exceptions.InvalidTemplateOptionsProvided;
-import io.confluent.idesidecar.scaffolding.exceptions.TemplateNotFoundException;
-import io.confluent.idesidecar.scaffolding.exceptions.TemplateRegistryException;
-import io.confluent.idesidecar.scaffolding.exceptions.TemplateRegistryIOException;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
@@ -81,24 +76,6 @@ public class ExceptionMappers {
   }
 
   @ServerExceptionMapper
-  public Response mapTemplateNotFoundException(
-      TemplateNotFoundException exception) {
-
-    Failure failure = new Failure(
-        exception,
-        Status.NOT_FOUND,
-        "resource_missing", "Template not found", uuidFactory.getRandomUuid(),
-        null);
-    return Response
-        .status(Status.NOT_FOUND)
-        .entity(failure)
-        // Explicitly set the content type to JSON here
-        // since the resource method may have set it to something else
-        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-        .build();
-  }
-
-  @ServerExceptionMapper
   public Response mapFlagNotFoundException(
       FlagNotFoundException exception
   ) {
@@ -113,59 +90,6 @@ public class ExceptionMappers {
         .entity(failure)
         // Explicitly set the content type to JSON here
         // since the resource method may have set it to something else
-        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-        .build();
-  }
-
-  @ServerExceptionMapper
-  public Response mapGenericTemplateRegistryException(TemplateRegistryException exception) {
-    Failure failure = new Failure(
-        exception,
-        Status.INTERNAL_SERVER_ERROR,
-        exception.getCode(),
-        Status.INTERNAL_SERVER_ERROR.getReasonPhrase(),
-        uuidFactory.getRandomUuid(),
-        null
-    );
-    return Response
-        .status(Status.INTERNAL_SERVER_ERROR)
-        .entity(failure)
-        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-        .build();
-  }
-
-  @ServerExceptionMapper
-  public Response mapInvalidTemplateOptionsException(
-      InvalidTemplateOptionsProvided exception) {
-    var errors = exception.getErrors().stream()
-        .map(error -> new Error(error.code(), error.title(), error.detail(), error.source()))
-        .toList();
-    Failure failure = new Failure(
-        Status.BAD_REQUEST,
-        exception.getCode(), exception.getMessage(), uuidFactory.getRandomUuid(),
-        errors
-    );
-    return Response
-        .status(Status.BAD_REQUEST)
-        .entity(failure)
-        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-        .build();
-  }
-
-  @ServerExceptionMapper
-  public Response mapTemplateRegistryIOException(
-      TemplateRegistryIOException exception) {
-    Failure failure = new Failure(
-        exception,
-        Status.INTERNAL_SERVER_ERROR,
-        exception.getCode(),
-        Status.INTERNAL_SERVER_ERROR.getReasonPhrase(),
-        uuidFactory.getRandomUuid(),
-        null
-    );
-    return Response
-        .status(Status.INTERNAL_SERVER_ERROR)
-        .entity(failure)
         .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
         .build();
   }
