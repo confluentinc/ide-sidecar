@@ -98,8 +98,17 @@ blocks:
               Write-Host "Signing executable $executable_with_os_arch";
               signtool sign /debug /v /f certificate.pfx "$executable_with_os_arch";
               try {artifact push workflow $executable_with_os_arch --destination "native-executables/$(Split-Path -Leaf $executable_with_os_arch)"} catch {Write-Host "Artifact push failed"}
-              $Env:GH_TOKEN = [Environment]::GetEnvironmentVariable('GITHUB_TOKEN', 'Machine')
-              gh config set prompt disabled
-              gh auth login
-              gh auth status
+              if (Test-Path "$HOME/.gh-token") {
+                $Env:GH_TOKEN = Get-Content "$HOME/.gh-token" -Raw | ForEach-Object { $_.Trim() }
+                if ([string]::IsNullOrEmpty($Env:GH_TOKEN)) {
+                    Write-Error "Token file exists but is empty"
+                    exit 1
+                }
+                gh config set prompt disabled
+                $Env:GH_TOKEN | gh auth login --with-token
+                gh auth status
+              } else {
+                  Write-Error "Token file not found at $HOME/.gh-token"
+                  exit 1
+              }
               gh release upload "$(sem-context get release_version)" $executable_with_os_arch --clobber
