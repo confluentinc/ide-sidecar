@@ -181,7 +181,10 @@ public class ConnectionsResource {
                   schema = @Schema(implementation = Failure.class))
           }),
   })
-  public Uni<Connection> patchConnection(@PathParam("id") String id, JsonMergePatch patch) {
+  public Uni<Connection> patchConnection(
+      @PathParam("id") String id,
+      JsonMergePatch patch
+  ) {
     ObjectMapper mapper = new ObjectMapper();
           try {
             JsonNode existingSpecNode = mapper.valueToTree(connectionStateManager
