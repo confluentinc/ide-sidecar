@@ -7,6 +7,7 @@ import io.confluent.idesidecar.restapi.exceptions.Failure;
 import io.confluent.idesidecar.restapi.models.Connection;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionsList;
+import io.quarkus.logging.Log;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.fge.jsonpatch.JsonPatchException;
@@ -26,9 +27,6 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import java.io.IOException;
-import java.util.concurrent.CompletableFuture;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
@@ -46,7 +44,6 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 @Consumes(MediaType.APPLICATION_JSON)
 @Blocking
 public class ConnectionsResource {
-  private static final Logger logger = LoggerFactory.getLogger(ConnectionsResource.class);
 
   public static final String API_RESOURCE_PATH = "/gateway/v1/connections";
 
@@ -199,7 +196,7 @@ public class ConnectionsResource {
             return connectionStateManager.updateSpecForConnectionState(id, patchedSpec)
                 .map(ignored -> getConnectionModel(id));
           } catch (JsonPatchException | IOException e) {
-            logger.error("Failed to patch connection: {}", e.getMessage());
+            Log.errorf("Failed to patch connection: {}", e.getMessage());
             return Uni.createFrom().nullItem();
           }
         }
