@@ -605,7 +605,7 @@ public class FeatureFlags {
 
       if (forced || now.isAfter(doNotRunUntil)) {
         // We should refresh the flags
-        Log.infof(
+        Log.debugf(
             "Checking for current feature flags in projects %s, using %d defaults, %d overrides",
             allProjects,
             defaults.size(),
@@ -630,7 +630,7 @@ public class FeatureFlags {
         // Set the next minimum time the flags CAN be run, using "almost" the interval
         doNotRunUntil = now.plus(scheduledInterval);
         if (scheduledInterval.isPositive()) {
-          Log.infof(
+          Log.debugf(
               "Next evaluation of feature flags will be after %s (in %ss)",
               HOUR_MINUTE.format(doNotRunUntil),
               scheduledInterval.getSeconds()
@@ -640,7 +640,7 @@ public class FeatureFlags {
         // And finally return the latch that will complete when the refreshes do
         return latch;
       } else {
-        Log.infof(
+        Log.debugf(
             "Skipping evaluation of feature flags until %s",
             HOUR_MINUTE.format(doNotRunUntil)
         );
