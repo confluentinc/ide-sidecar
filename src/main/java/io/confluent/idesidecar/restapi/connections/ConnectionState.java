@@ -10,7 +10,9 @@ import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
 import io.confluent.idesidecar.restapi.models.ConnectionStatus;
 import io.confluent.idesidecar.restapi.resources.ConnectionsResource;
+import io.quarkus.logging.Log;
 import io.vertx.core.Future;
+import java.time.Instant;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -52,6 +54,15 @@ public abstract class ConnectionState {
 
   private final AtomicReference<ConnectionStatus> cachedStatus = new AtomicReference<>();
 
+  /**
+   * The instant at which the cached status was last updated. This is used to prevent stale status
+   * updates from being applied by the scheduled refresh task
+   * (in {@link RefreshConnectionStatuses}).
+   */
+  private final AtomicReference<Instant> lastUpdated = new AtomicReference<>(
+      Instant.now()
+  );
+
   private final StateChangedListener listener;
 
   protected ConnectionState(ConnectionSpec spec, StateChangedListener listener) {
@@ -70,6 +81,9 @@ public abstract class ConnectionState {
 
   public void setSpec(ConnectionSpec in) {
     this.spec = in;
+
+    // Reset the status to the initial status when the spec changes
+    updateStatus(this.cachedStatus.get(), getInitialStatus());
   }
 
   /**
@@ -96,7 +110,8 @@ public abstract class ConnectionState {
    * update the {@link #getStatus() cached results}.
    *
    * <p>This method always calls {@link #doRefreshStatus()} and then on success updates
-   * the {@link #getStatus() cached connection status}.
+   * the {@link #getStatus() cached connection status}. If we see that the status has been updated
+   * since the refresh was started, we ignore the update.
    *
    * @return the future that will complete with the updated connection status
    * @see #getConnectionStatus()
@@ -104,16 +119,45 @@ public abstract class ConnectionState {
    */
   public final Future<ConnectionStatus> refreshStatus() {
     var originalState = this.cachedStatus.get();
+    var beforeStartingRefresh = Instant.now();
 
     // Always set the cached status when the future completes successfully
-    return doRefreshStatus().onSuccess(updated ->
-        updateStatus(originalState, updated)
-    );
+    return doRefreshStatus().onSuccess(updated -> {
+      var lastUpdatedInstant = lastUpdated.get();
+      if (lastUpdatedInstant.isAfter(beforeStartingRefresh)) {
+        Log.infof(
+            "Ignoring stale connection status update for %s: %s. " +
+                "last updated: %s, before starting refresh time: %s",
+            spec.id(),
+            updated,
+            lastUpdatedInstant,
+            beforeStartingRefresh
+        );
+      } else {
+        // Update the status if it has not been updated since the refresh was started
+        updateStatus(originalState, updated);
+        Log.infof(
+            "Updated connection status for %s: %s, " +
+                "last updated: %s, before starting refresh time: %s",
+            spec.id(),
+            updated,
+            lastUpdatedInstant,
+            beforeStartingRefresh
+        );
+      }
+    });
   }
 
   private void updateStatus(ConnectionStatus original, ConnectionStatus updated) {
     // update the cached status
     this.cachedStatus.set(updated);
+    this.lastUpdated.set(Instant.now());
+    Log.infof(
+        "Updated connection status for %s: %s, last updated: %s",
+        spec.id(),
+        updated,
+        lastUpdated.get()
+    );
 
     // If the status has changed, notify the listener
     if (!updated.equals(original)) {

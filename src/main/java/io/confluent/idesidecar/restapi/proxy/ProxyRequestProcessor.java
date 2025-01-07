@@ -12,7 +12,7 @@ import io.vertx.core.Vertx;
  *
  * @param <T> The type of the context that must extend {@link ProxyContext}
  */
-public class ProxyRequestProcessor<T extends ClusterProxyContext> extends
+public class ProxyRequestProcessor<T extends ProxyContext> extends
     Processor<T, Future<T>> {
 
   ProxyHttpClient<T> proxyHttpClient;

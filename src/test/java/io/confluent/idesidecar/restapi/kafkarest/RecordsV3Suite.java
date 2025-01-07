@@ -2,11 +2,14 @@ package io.confluent.idesidecar.restapi.kafkarest;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequestHeader;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequest;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequestBuilder;
 import io.confluent.kafka.schemaregistry.client.rest.entities.SchemaReference;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.junitpioneer.jupiter.cartesian.ArgumentSets;
@@ -40,6 +43,41 @@ public interface RecordsV3Suite extends RecordsV3BaseSuite {
   @CartesianTest.MethodFactory("validKeysAndValues")
   default void testProduceAndConsumeData(RecordData key, RecordData value) {
     produceAndConsume(key, value);
+  }
+
+  @Test
+  default void shouldProduceRecordWithHeaders() {
+    var topicName = randomTopicName();
+    createTopic(topicName);
+
+    var headers = Set.of(
+        ProduceRequestHeader
+            .builder()
+            .name("header1")
+            .value(Base64.getEncoder().encode("value1".getBytes()))
+            .build(),
+        ProduceRequestHeader
+            .builder().name("header2")
+            .value(Base64.getEncoder().encode("value2".getBytes()))
+            .build()
+    );
+
+    produceRecord(
+        null,
+        topicName,
+        "foo",
+        null,
+        "value",
+        null,
+        headers
+    );
+
+    assertTopicHasRecord(
+        RecordsV3BaseSuite.schemalessData("foo"),
+        new RecordData(null, null, null, "value"),
+        topicName,
+        headers
+    );
   }
 
   @Test

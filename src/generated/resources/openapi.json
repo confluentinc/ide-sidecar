@@ -266,68 +266,6 @@
             "description" : "No Content"
           }
         }
-      },
-      "patch" : {
-        "tags" : [ "Connections Resource" ],
-        "parameters" : [ {
-          "name" : "id",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/ConnectionSpec"
-              }
-            }
-          }
-        },
-        "responses" : {
-          "200" : {
-            "description" : "Connection updated with PATCH",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Connection"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "Connection not found",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Failure"
-                }
-              }
-            }
-          },
-          "401" : {
-            "description" : "Could not authenticate with connection configuration updated with PATCH",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Failure"
-                }
-              }
-            }
-          },
-          "400" : {
-            "description" : "Invalid input",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Failure"
-                }
-              }
-            }
-          }
-        }
       }
     },
     "/gateway/v1/feature-flags/{id}/value" : {
@@ -1086,6 +1024,27 @@
           }
         }
       },
+      "GlobalObjectReference" : {
+        "required" : [ "id" ],
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "maxLength" : 255,
+            "minLength" : 1,
+            "type" : "string"
+          },
+          "related" : {
+            "format" : "uri",
+            "minLength" : 1,
+            "type" : "string"
+          },
+          "resource_name" : {
+            "format" : "uri",
+            "minLength" : 1,
+            "type" : "string"
+          }
+        }
+      },
       "Instant" : {
         "format" : "date-time",
         "type" : "string",
@@ -1324,40 +1283,6 @@
           }
         }
       },
-      "OptionProperties" : {
-        "required" : [ "display_name", "description" ],
-        "type" : "object",
-        "properties" : {
-          "display_name" : {
-            "type" : "string"
-          },
-          "description" : {
-            "type" : "string"
-          },
-          "hint" : {
-            "type" : "string"
-          },
-          "format" : {
-            "type" : "string"
-          },
-          "pattern" : {
-            "type" : "string"
-          },
-          "enum" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            }
-          },
-          "initial_value" : {
-            "type" : "string"
-          },
-          "min_length" : {
-            "format" : "int32",
-            "type" : "integer"
-          }
-        }
-      },
       "PartitionConsumeData" : {
         "type" : "object",
         "properties" : {
@@ -1486,6 +1411,95 @@
           },
           "trust_all_certificates" : {
             "type" : "boolean"
+          }
+        }
+      },
+      "ScaffoldV1TemplateOption" : {
+        "required" : [ "display_name", "description" ],
+        "type" : "object",
+        "properties" : {
+          "display_name" : {
+            "maxLength" : 60,
+            "type" : "string"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "hint" : {
+            "type" : "string"
+          },
+          "format" : {
+            "type" : "string"
+          },
+          "pattern" : {
+            "type" : "string"
+          },
+          "_enum" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "initial_value" : {
+            "type" : "string"
+          },
+          "min_length" : {
+            "format" : "int32",
+            "minimum" : 0,
+            "type" : "integer"
+          },
+          "examples" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "enum" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        }
+      },
+      "ScaffoldV1TemplateSpec" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "maxLength" : 253,
+            "minLength" : 2,
+            "pattern" : "^[a-z0-9]+[a-z0-9-]{0,251}[a-z0-9]+$",
+            "type" : "string"
+          },
+          "display_name" : {
+            "maxLength" : 60,
+            "type" : "string"
+          },
+          "description" : {
+            "maxLength" : 300,
+            "type" : "string"
+          },
+          "version" : {
+            "pattern" : "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-] [0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-] +(?:\\.[0-9a-zA-Z-]+)*))?$",
+            "type" : "string"
+          },
+          "language" : {
+            "type" : "string"
+          },
+          "tags" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "options" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "$ref" : "#/components/schemas/ScaffoldV1TemplateOption"
+            }
+          },
+          "template_collection" : {
+            "$ref" : "#/components/schemas/GlobalObjectReference"
           }
         }
       },
@@ -1675,7 +1689,7 @@
             "$ref" : "#/components/schemas/ObjectMetadata"
           },
           "spec" : {
-            "$ref" : "#/components/schemas/TemplateManifest"
+            "$ref" : "#/components/schemas/ScaffoldV1TemplateSpec"
           }
         }
       },
@@ -1696,42 +1710,6 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/Template"
-            }
-          }
-        }
-      },
-      "TemplateManifest" : {
-        "required" : [ "template_api_version", "name", "display_name", "description", "language", "version", "tags" ],
-        "type" : "object",
-        "properties" : {
-          "template_api_version" : {
-            "type" : "string"
-          },
-          "name" : {
-            "type" : "string"
-          },
-          "display_name" : {
-            "type" : "string"
-          },
-          "description" : {
-            "type" : "string"
-          },
-          "language" : {
-            "type" : "string"
-          },
-          "version" : {
-            "type" : "string"
-          },
-          "tags" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            }
-          },
-          "options" : {
-            "type" : "object",
-            "additionalProperties" : {
-              "$ref" : "#/components/schemas/OptionProperties"
             }
           }
         }
@@ -1812,13 +1790,13 @@
           "name" : {
             "type" : "string"
           },
-          "status" : {
-            "enum" : [ "UP", "DOWN" ],
-            "type" : "string"
-          },
           "data" : {
             "type" : "object",
             "nullable" : true
+          },
+          "status" : {
+            "enum" : [ "UP", "DOWN" ],
+            "type" : "string"
           }
         }
       }

@@ -12,13 +12,18 @@ import com.google.common.collect.Lists;
 import io.confluent.idesidecar.restapi.integration.ITSuite;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequest;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequestData;
+import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequestHeader;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequestBuilder;
+import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
 import io.confluent.kafka.schemaregistry.client.rest.entities.Schema;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.Set;
 
 /**
  * Base suite interface containing common methods for testing the
@@ -229,6 +234,12 @@ public interface RecordsV3BaseSuite extends ITSuite {
   }
 
   default void assertTopicHasRecord(RecordData key, RecordData value, String topicName) {
+    assertTopicHasRecord(key, value, topicName, Collections.emptySet());
+  }
+
+  default void assertTopicHasRecord(
+      RecordData key, RecordData value, String topicName, Set<ProduceRequestHeader> headers
+  ) {
     var consumeResponse = consume(
         topicName,
         SimpleConsumeMultiPartitionRequestBuilder
@@ -244,10 +255,28 @@ public interface RecordsV3BaseSuite extends ITSuite {
         .getFirst()
         .records();
 
-    assertEquals(records.size(), 1);
+    assertEquals(1, records.size());
 
     assertSame(records.getFirst().key(), key.data());
     assertSame(records.getFirst().value(), value.data());
+
+    // Assert headers are the same
+    assertEquals(headers, convertResponseHeaders(records.getFirst().headers()));
+  }
+
+  private static Set<ProduceRequestHeader> convertResponseHeaders(
+      List<SimpleConsumeMultiPartitionResponse.PartitionConsumeRecordHeader> headers
+  ) {
+    return headers
+        .stream()
+        .map(h ->
+            ProduceRequestHeader
+                .builder()
+                .name(h.key())
+                .value(h.value().getBytes(StandardCharsets.UTF_8))
+                .build()
+        )
+        .collect(Collectors.toSet());
   }
 
   default void assertSame(JsonNode actual, Object expected) {

@@ -1,0 +1,10 @@
+{
+  "errors": [
+    {
+      "id": "b2103de43a6aabc2b7197e0cef64d9c2",
+      "status": "404",
+      "detail": "Template not found: not found",
+      "source": {}
+    }
+  ]
+}
