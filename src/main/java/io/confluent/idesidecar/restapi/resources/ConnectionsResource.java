@@ -189,6 +189,11 @@ public class ConnectionsResource {
           try {
             JsonNode existingSpecNode = mapper.valueToTree(connectionStateManager
                 .getConnectionState(id).getSpec());
+
+            if (existingSpecNode.get("name") == null || existingSpecNode.get("type") == null) {
+              return Uni.createFrom().failure(new IllegalArgumentException("Spec name and/or type cannot be null"));
+            }
+
             JsonNode patchedSpecNode = patch.apply(existingSpecNode);
             ConnectionSpec patchedSpec = mapper.treeToValue(patchedSpecNode, ConnectionSpec.class);
             return connectionStateManager.updateSpecForConnectionState(id, patchedSpec)

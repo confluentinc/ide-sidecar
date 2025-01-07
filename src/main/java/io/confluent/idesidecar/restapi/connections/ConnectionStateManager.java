@@ -222,7 +222,7 @@ public class ConnectionStateManager {
     }
 
     return Uni.createFrom()
-        .item(() -> getConnectionSpec(id).validateUpdate(newSpec, false))
+        .item(() -> getConnectionSpec(id).validateUpdate(newSpec))
         .onItem()
         .transformToUni(errors -> {
           if (!errors.isEmpty()) {
