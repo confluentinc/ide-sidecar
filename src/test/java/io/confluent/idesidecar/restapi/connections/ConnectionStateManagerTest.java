@@ -132,7 +132,7 @@ class ConnectionStateManagerTest {
     // Then that spec's name can be updated
     var newName = original.name() + " Updated";
     var updatedSpec = new ConnectionSpec(original.id(), newName, original.type());
-    manager.updateSpecForConnectionState("1", updatedSpec).subscribe().asCompletionStage().join();
+    manager.updateSpecForConnectionState("1", updatedSpec, false).subscribe().asCompletionStage().join();
     assertEquals(newName, manager.getConnectionSpec(original.id()).name());
   }
 
@@ -146,7 +146,7 @@ class ConnectionStateManagerTest {
     var newSpec = new ConnectionSpec(id, "Updated", ConnectionType.LOCAL);
     var exc = assertThrows(
         CompletionException.class,
-        () -> manager.updateSpecForConnectionState(id, newSpec)
+        () -> manager.updateSpecForConnectionState(id, newSpec, false)
             .subscribe().asCompletionStage().join()
     );
 
