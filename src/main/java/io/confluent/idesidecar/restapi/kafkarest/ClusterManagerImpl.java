@@ -143,7 +143,7 @@ public class ClusterManagerImpl implements ClusterManager {
 
     // Controller may be null
     if (cluster.controllerId() != null) {
-      clusterData.controller(forController(cluster.id(), cluster.controllerId()));
+      clusterData = clusterData.controller(forController(cluster.id(), cluster.controllerId()));
     }
 
     return clusterData;
