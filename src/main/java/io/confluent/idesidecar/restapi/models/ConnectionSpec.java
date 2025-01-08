@@ -471,7 +471,7 @@ public record ConnectionSpec(
    * The spec may still have missing or incomplete fields, but it should be structurally sound.
    */
   public List<Error> validate() {
-    return validateUpdate(this, false);
+    return validateUpdate(this);
   }
 
   /**
@@ -483,27 +483,21 @@ public record ConnectionSpec(
       "CyclomaticComplexity",
       "NPathComplexity"
   })
-  public List<Error> validateUpdate(ConnectionSpec newSpec, boolean isPatch) {
+  public List<Error> validateUpdate(ConnectionSpec newSpec) {
     var errors = new ArrayList<Error>();
 
     // Check required fields and immutability
-    if (newSpec.name == null) {
-      checkRequired(errors, "name", "Connection name");
-    } else if (!isPatch && (newSpec.name.isEmpty() || newSpec.name.isBlank())) {
+    if (newSpec.name == null || newSpec.name.isBlank()) {
       checkRequired(errors, "name", "Connection name");
     }
-
-    if (newSpec.type == null) {
-      checkRequired(errors, "type", "Connection type");
-    }
-
     if (newSpec.id == null || newSpec.id.isBlank()) {
       checkRequired(errors, "id", "Connection ID");
     } else if (!Objects.equals(newSpec.id, id)) {
       checkImmutable(errors, "id", "Connection ID");
     }
-
-    if (!Objects.equals(newSpec.type, type)) {
+    if (newSpec.type == null) {
+      checkRequired(errors, "type", "Connection type");
+    } else if (!Objects.equals(newSpec.type, type)) {
       checkImmutable(errors, "type", "Connection type");
     } else {
       // The type is the same, so we can check type-specific fields
@@ -527,9 +521,9 @@ public record ConnectionSpec(
           if (sr != null && local != null && local.schemaRegistryUri != null) {
             errors.add(
                 Error.create()
-                     .withDetail(
-                         "Local config cannot be used with schema_registry configuration")
-                     .withSource("local_config.schema-registry-uri")
+                    .withDetail(
+                        "Local config cannot be used with schema_registry configuration")
+                    .withSource("local_config.schema-registry-uri")
             );
           }
         }
@@ -562,8 +556,8 @@ public record ConnectionSpec(
         default -> {
           errors.add(
               Error.create()
-                   .withDetail("Unknown connection type: %s".formatted(newSpec.type()))
-                   .withSource("type")
+                  .withDetail("Unknown connection type: %s".formatted(newSpec.type()))
+                  .withSource("type")
           );
         }
       }

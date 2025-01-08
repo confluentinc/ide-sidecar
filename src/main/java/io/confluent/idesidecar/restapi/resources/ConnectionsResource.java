@@ -140,7 +140,7 @@ public class ConnectionsResource {
   })
   public Uni<Connection> updateConnection(@PathParam("id") String id, ConnectionSpec spec) {
     return connectionStateManager
-        .updateSpecForConnectionState(id, spec, false)
+        .updateSpecForConnectionState(id, spec)
         .chain(ignored -> Uni.createFrom().item(() -> getConnectionModel(id)));
   }
 
@@ -189,7 +189,7 @@ public class ConnectionsResource {
 
             JsonNode patchedSpecNode = patch.apply(existingSpecNode);
             ConnectionSpec patchedSpec = mapper.treeToValue(patchedSpecNode, ConnectionSpec.class);
-            return connectionStateManager.updateSpecForConnectionState(id, patchedSpec, true)
+            return connectionStateManager.updateSpecForConnectionState(id, patchedSpec)
                 .chain(ignored -> Uni.createFrom().item(() -> getConnectionModel(id)));
           } catch (JsonPatchException | IOException e) {
             Log.errorf("Failed to patch connection: {}", e.getMessage());

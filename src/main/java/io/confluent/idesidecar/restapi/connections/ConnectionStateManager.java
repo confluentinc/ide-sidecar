@@ -213,7 +213,7 @@ public class ConnectionStateManager {
     return connection;
   }
 
-  public Uni<Void> updateSpecForConnectionState(String id, ConnectionSpec newSpec, boolean isPatch) {
+  public Uni<Void> updateSpecForConnectionState(String id, ConnectionSpec newSpec) {
     // Check if the connection state exists
     if (!connectionStates.containsKey(id)) {
       return Uni.createFrom().failure(
@@ -221,7 +221,7 @@ public class ConnectionStateManager {
     }
 
     return Uni.createFrom()
-        .item(() -> getConnectionSpec(id).validateUpdate(newSpec, isPatch))
+        .item(() -> getConnectionSpec(id).validateUpdate(newSpec))
         .onItem()
         .transformToUni(errors -> {
           if (!errors.isEmpty()) {
