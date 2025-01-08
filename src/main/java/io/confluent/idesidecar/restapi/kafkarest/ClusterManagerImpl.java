@@ -109,15 +109,20 @@ public class ClusterManagerImpl implements ClusterManager {
         .chain(describeClusterResult ->
             uniStage(describeClusterResult.clusterId().toCompletionStage())
                 .map(id -> new ClusterDescribe(describeClusterResult).withId(id)))
-        .chain(cid -> uniStage(cid.result.controller().toCompletionStage()).map(Node::id)
-            .map(cid::withControllerId)
+        .chain(cid -> uniStage(cid.result.controller().toCompletionStage())
+            .map(controller -> {
+              if (controller == null || controller.isEmpty()) {
+                return cid;
+              }
+              return cid.withControllerId(controller.id());
+            })
         ).chain(cid -> uniStage(cid.result.nodes().toCompletionStage())
             .map(cid::withNodes)
         );
   }
 
   private ClusterData fromClusterId(ClusterDescribe cluster) {
-    return ClusterData
+    var clusterData = ClusterData
         .builder()
         .kind("KafkaCluster")
         .metadata(ResourceMetadata
@@ -131,11 +136,17 @@ public class ClusterManagerImpl implements ClusterManager {
         .acls(forAcls(cluster.id()))
         .brokerConfigs(forBrokerConfigs(cluster.id()))
         .brokers(forBrokers(cluster.id()))
-        .controller(forController(cluster.id(), cluster.controllerId()))
         .consumerGroups(forConsumerGroups(cluster.id()))
         .topics(forTopics(cluster.id()))
         .partitionReassignments(forAllPartitionReassignments(cluster.id()))
         .build();
+
+    // Controller may be null
+    if (cluster.controllerId() != null) {
+      clusterData = clusterData.controller(forController(cluster.id(), cluster.controllerId()));
+    }
+
+    return clusterData;
   }
 
   /**
