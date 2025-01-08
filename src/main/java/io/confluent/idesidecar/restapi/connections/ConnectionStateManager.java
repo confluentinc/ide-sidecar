@@ -13,7 +13,6 @@ import io.confluent.idesidecar.restapi.exceptions.CreateConnectionException;
 import io.confluent.idesidecar.restapi.exceptions.Failure.Error;
 import io.confluent.idesidecar.restapi.exceptions.InvalidInputException;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
-import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
 import io.confluent.idesidecar.restapi.util.UuidFactory;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -214,7 +213,7 @@ public class ConnectionStateManager {
     return connection;
   }
 
-  public Uni<Void> updateSpecForConnectionState(String id, ConnectionSpec newSpec) {
+  public Uni<Void> updateSpecForConnectionState(String id, ConnectionSpec newSpec, boolean isPatch) {
     // Check if the connection state exists
     if (!connectionStates.containsKey(id)) {
       return Uni.createFrom().failure(
@@ -222,7 +221,7 @@ public class ConnectionStateManager {
     }
 
     return Uni.createFrom()
-        .item(() -> getConnectionSpec(id).validateUpdate(newSpec))
+        .item(() -> getConnectionSpec(id).validateUpdate(newSpec, isPatch))
         .onItem()
         .transformToUni(errors -> {
           if (!errors.isEmpty()) {

@@ -140,7 +140,7 @@ public class ConnectionsResource {
   })
   public Uni<Connection> updateConnection(@PathParam("id") String id, ConnectionSpec spec) {
     return connectionStateManager
-        .updateSpecForConnectionState(id, spec)
+        .updateSpecForConnectionState(id, spec, false)
         .chain(ignored -> Uni.createFrom().item(() -> getConnectionModel(id)));
   }
 
@@ -187,13 +187,9 @@ public class ConnectionsResource {
             JsonNode existingSpecNode = mapper.valueToTree(connectionStateManager
                 .getConnectionState(id).getSpec());
 
-            if (existingSpecNode.get("name") == null || existingSpecNode.get("type") == null) {
-              return Uni.createFrom().failure(new IllegalArgumentException("Spec name and/or type cannot be null"));
-            }
-
             JsonNode patchedSpecNode = patch.apply(existingSpecNode);
             ConnectionSpec patchedSpec = mapper.treeToValue(patchedSpecNode, ConnectionSpec.class);
-            return connectionStateManager.updateSpecForConnectionState(id, patchedSpec)
+            return connectionStateManager.updateSpecForConnectionState(id, patchedSpec, true)
                 .map(ignored -> getConnectionModel(id));
           } catch (JsonPatchException | IOException e) {
             Log.errorf("Failed to patch connection: {}", e.getMessage());
