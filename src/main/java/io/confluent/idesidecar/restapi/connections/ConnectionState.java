@@ -136,14 +136,6 @@ public abstract class ConnectionState {
       } else {
         // Update the status if it has not been updated since the refresh was started
         updateStatus(originalState, updated);
-        Log.infof(
-            "Updated connection status for %s: %s, " +
-                "last updated: %s, before starting refresh time: %s",
-            spec.id(),
-            updated,
-            lastUpdatedInstant,
-            beforeStartingRefresh
-        );
       }
     });
   }
@@ -152,15 +144,16 @@ public abstract class ConnectionState {
     // update the cached status
     this.cachedStatus.set(updated);
     this.lastUpdated.set(Instant.now());
-    Log.infof(
-        "Updated connection status for %s: %s, last updated: %s",
-        spec.id(),
-        updated,
-        lastUpdated.get()
-    );
 
     // If the status has changed, notify the listener
     if (!updated.equals(original)) {
+      Log.infof(
+          "Updated status for connection ID=%s. Original spec: %s, Updated spec: %s, Last updated: %s",
+          spec.id(),
+          original,
+          updated,
+          lastUpdated.get()
+      );
       if (updated.isConnected()) {
         listener.connected(this);
       } else {
