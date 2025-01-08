@@ -79,8 +79,6 @@ public class WebsocketEndpoint {
     private final Session session;
     private final Instant createdAt;
 
-
-
     /** Will be null if session has not sent HELLO_WORKSPACE message carrying its process id. */
     @Nullable
     private final WorkspacePid workspacePid;
