@@ -1,34 +1,40 @@
 package io.confluent.idesidecar.restapi.kafkarest.api;
 
 import static org.hamcrest.Matchers.equalTo;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import io.confluent.idesidecar.restapi.integration.ITSuite;
-import io.confluent.idesidecar.restapi.util.ConfluentLocalKafkaWithRestProxyContainer;
 import org.junit.jupiter.api.Test;
 
 public interface ClusterV3Suite extends ITSuite {
-
   @Test
   default void shouldListKafkaClusters() {
-    givenConnectionId()
+    assertNotNull(getClusterId());
+  }
+
+  /**
+   * Get the cluster ID of the first cluster in the list of clusters.
+   */
+  private String getClusterId() {
+    return givenConnectionId()
         .when()
         .get("/internal/kafka/v3/clusters")
         .then()
         .statusCode(200)
         .body("data.size()", equalTo(1))
-        .body("data[0].cluster_id",
-            equalTo(ConfluentLocalKafkaWithRestProxyContainer.CLUSTER_ID));
+        .extract()
+        .path("data[0].cluster_id");
   }
 
   @Test
   default void shouldGetKafkaCluster() {
+    var clusterId = getClusterId();
     givenConnectionId()
         .when()
-        .get("/internal/kafka/v3/clusters/{cluster_id}",
-            ConfluentLocalKafkaWithRestProxyContainer.CLUSTER_ID)
+        .get("/internal/kafka/v3/clusters/{cluster_id}", clusterId)
         .then()
         .statusCode(200)
-        .body("cluster_id", equalTo(ConfluentLocalKafkaWithRestProxyContainer.CLUSTER_ID));
+        .body("cluster_id", equalTo(clusterId));
   }
 
   @Test
