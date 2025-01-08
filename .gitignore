@@ -44,8 +44,4 @@ charts/package/
 # servicebot workdir
 .servicebot/
 
-# Ignore the templates.zip file created in main and test resources
-src/main/resources/static/templates.zip
-src/test/resources/static/templates.zip
-
 .cp-demo
