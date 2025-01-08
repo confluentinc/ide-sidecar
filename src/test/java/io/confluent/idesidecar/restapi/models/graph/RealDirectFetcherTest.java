@@ -265,11 +265,11 @@ public class RealDirectFetcherTest {
     }
 
     @Test
-    void shouldFailToFetchSchemaRegistryWhenSrClientFailsToReturnsMode() throws IOException, RestClientException {
+    void shouldFailToFetchSchemaRegistryWhenSrClientFailsToReturnsAllSubjects() throws IOException, RestClientException {
       // When we have an SR client that returns the SR cluster's mode
       var mockSrClient = mock(SchemaRegistryClient.class);
-      when(mockSrClient.getMode()).thenThrow(
-          new RuntimeException("Failed to get mode with Schema Registry client")
+      when(mockSrClient.getAllSubjects()).thenThrow(
+          new RuntimeException("Failed to get all subjects with Schema Registry client")
       );
 
       // And a direct connection that thinks it has connected to SR and returns that SR client

@@ -241,8 +241,8 @@ public class DirectConnectionState extends ConnectionState {
   protected Future<SchemaRegistryStatus> getSchemaRegistryConnectionStatus() {
     return withSchemaRegistryClient(srClient -> {
       // There is a configuration, so validate the connection by creating a SchemaRegistryClient
-      // and getting the global mode.
-      srClient.getMode();
+      // and getting all subjects.
+      srClient.getAllSubjects();
       return Future.succeededFuture(
           ConnectionStatusSchemaRegistryStatusBuilder
               .builder()
