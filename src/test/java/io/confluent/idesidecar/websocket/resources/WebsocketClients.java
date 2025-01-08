@@ -56,6 +56,12 @@ public interface WebsocketClients {
     // but when delivered through to other workspaces, the original message type should be preserved.
     private final LinkedBlockingDeque<String> rawMessageStrings = new LinkedBlockingDeque<>();
 
+    private final ObjectMapper mapper;
+
+    public TestWebsocketClientMessageHandler(ObjectMapper mapper) {
+      this.mapper = mapper;
+    }
+
     // For deserializing messages.
     @Override
     public void onMessage(String messageString) {
@@ -64,7 +70,7 @@ public interface WebsocketClients {
       try {
         // Deserialize json -> Message, add to our list of messages so that the main
         // test can check them.
-        Message message = MAPPER.readValue(messageString, Message.class);
+        Message message = mapper.readValue(messageString, Message.class);
         messages.add(message);
       } catch (IOException e) {
         throw new RuntimeException(e);
@@ -132,12 +138,14 @@ public interface WebsocketClients {
 
   /**
    * Finally, a convenience bundle of the above:
-   * 1. a mock workspace process,
-   * 2. its websocket session,
-   * 3. and the message handler that will store messages received by the client.
+   * 1. a reference to the @Injected ObjectMapper,
+   * 2. a mock workspace process,
+   * 3. its websocket session,
+   * 4. The message handler that will store messages received by the client,
    * See {@link #connectWorkspace}
    */
   record ConnectedWorkspace (
+      ObjectMapper mapper,
       WorkspacePid workspacePid,
       Session session,
       TestWebsocketClientMessageHandler messageHandler
@@ -172,7 +180,7 @@ public interface WebsocketClients {
      */
     public ConnectedWorkspace send(Message message)  {
       try {
-        session.getAsyncRemote().sendText(MAPPER.writeValueAsString(message)).get();
+        session.getAsyncRemote().sendText(mapper.writeValueAsString(message)).get();
         Log.info("Test client sent message: " + message);
       } catch (IOException | ExecutionException | InterruptedException e) {
         throw new RuntimeException(e);
@@ -289,8 +297,6 @@ public interface WebsocketClients {
     }
   }
 
-  ObjectMapper MAPPER = new ObjectMapper();
-
   /**
    * Establish a websocket client session, without
    * {@link ConnectedWorkspace#sayHello() binding to a workspace process}.
@@ -303,9 +309,10 @@ public interface WebsocketClients {
   default ConnectedWorkspace connectWorkspace(
       URI uri,
       String authToken,
-      WorkspacePid workspaceProcess
+      WorkspacePid workspaceProcess,
+      ObjectMapper mapper
   ) {
-    return connectWorkspace(uri, authToken, workspaceProcess, false, null);
+    return connectWorkspace(mapper, uri, authToken, workspaceProcess, false, null);
   }
 
   /**
@@ -322,12 +329,15 @@ public interface WebsocketClients {
    * @return A ConnectedWorkspace instance representing the connection.
    */
   default ConnectedWorkspace connectWorkspace(
+      ObjectMapper mapper,
       URI uri,
       String authToken,
       WorkspacePid workspaceProcess,
       boolean sayHello,
       Duration maxTimeToWaitForWorkspaceCount
+
   ) {
+
     if (maxTimeToWaitForWorkspaceCount != null && !sayHello) {
       throw new IllegalArgumentException("maxTimeToWaitForWorkspaceCount only makes sense when saying hello.");
     }
@@ -342,10 +352,10 @@ public interface WebsocketClients {
     }
 
     TestWebsocketClientConfigurator.setAccessToken(authToken);
-    TestWebsocketClientMessageHandler clientHandler = new TestWebsocketClientMessageHandler();
+    TestWebsocketClientMessageHandler clientHandler = new TestWebsocketClientMessageHandler(mapper);
     session.addMessageHandler(clientHandler);
 
-    var workspace = new ConnectedWorkspace(workspaceProcess, session, clientHandler);
+    var workspace = new ConnectedWorkspace(mapper, workspaceProcess, session, clientHandler);
 
     if (sayHello) {
       workspace = workspace.sayHello();
