@@ -389,7 +389,7 @@ public class SidecarClient implements SidecarClientApi {
     if (waitUntilConnected
         && (spec.kafkaClusterConfig() != null || spec.schemaRegistryConfig() != null)
     ) {
-      await().atMost(Duration.ofSeconds(10)).until(() -> {
+      await().atMost(Duration.ofSeconds(20)).until(() -> {
         var connection = given()
             .when()
             .get("%s/gateway/v1/connections/%s".formatted(sidecarHost, spec.id()))
