@@ -1,5 +1,6 @@
 package io.confluent.idesidecar.websocket.resources;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.idesidecar.restapi.application.KnownWorkspacesBean;
 import io.confluent.idesidecar.restapi.application.KnownWorkspacesBean.WorkspacePid;
 import io.confluent.idesidecar.restapi.application.SidecarAccessTokenBean;
@@ -23,6 +24,9 @@ abstract class AbstractWebsocketTestBase implements WebsocketClients {
 
   @Inject
   WebsocketEndpoint websocketEndpoint;
+
+  @Inject
+  ObjectMapper mapper;
 
   @TestHTTPResource("/ws")
   URI uri;
@@ -113,6 +117,7 @@ abstract class AbstractWebsocketTestBase implements WebsocketClients {
     TestWebsocketClientConfigurator.setAccessToken(expectedTokenValue);
 
     return connectWorkspace(
+        mapper,
         uri,
         "valid-token",
         workspacePid,

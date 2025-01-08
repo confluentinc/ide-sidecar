@@ -4,14 +4,21 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.idesidecar.restapi.application.KnownWorkspacesBean.WorkspacePid;
 import io.confluent.idesidecar.websocket.resources.WebsocketEndpoint.WorkspaceWebsocketSession;
+import io.quarkus.test.junit.QuarkusTest;
+import jakarta.inject.Inject;
 import jakarta.websocket.Session;
 import java.time.Instant;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+@QuarkusTest
 public class WorkspaceWebsocketSessionTest {
+
+  @Inject
+  ObjectMapper mapper;
 
   /**
    * Test that by default, a WorkspaceWebsocketSession is inactive and has an unknown pid, and that
@@ -22,7 +29,7 @@ public class WorkspaceWebsocketSessionTest {
     // inactive / not yet pid known session
     Instant now = Instant.now();
     var mockSession = getMockSession();
-    WorkspaceWebsocketSession session = new WorkspaceWebsocketSession(mockSession, null, now);
+    WorkspaceWebsocketSession session = new WorkspaceWebsocketSession(this.mapper, mockSession, null, now);
     Assertions.assertFalse(session.isActive());
     // inactive session should report "unknown" for its pid string
     assertEquals("unknown", session.workspacePidString());

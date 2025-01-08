@@ -54,6 +54,13 @@ public class MessageSerializationTest {
             "websocket-messages/connection-valid.json",
             MessageType.CONNECTION_EVENT,
             ConnectionEventBody.class
+        ),
+        new TestInput(
+            // Has some java.time.Instant fields, not serializable by default
+            // ObjectMapper instances.
+            "websocket-messages/ccloud-connection-connected.json",
+            MessageType.CONNECTION_EVENT,
+            ConnectionEventBody.class
         )
     );
 
