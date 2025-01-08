@@ -18,7 +18,16 @@ import wiremock.com.github.jknack.handlebars.internal.Files;
 
 public class ResourceIOUtil {
 
-  private static final ObjectMapper MAPPER = new ObjectMapper();
+  private static ObjectMapper MAPPER = createObjectMapper();
+
+  private static ObjectMapper createObjectMapper() {
+    ObjectMapper mapper = new ObjectMapper();
+    // Automatically registers JavaTimeModule and others as would be done for the ObjectMapper
+    // used within Quarkus will be. Alas that ResourceIOUtil is used as collection
+    // of static methods, @Inject is not possible here.
+    mapper.findAndRegisterModules();
+    return mapper;
+  }
 
   /**
    * Load a resource file at the given path relative to the current thread's context class loader.

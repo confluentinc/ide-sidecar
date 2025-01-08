@@ -57,6 +57,13 @@ public class WebsocketEndpoint {
   @ConfigProperty(name = "ide-sidecar.websockets.initial-grace-seconds", defaultValue = "30")
   Provider<Integer> initialGraceSeconds;
 
+  /**
+   * Be sure to use the Quarkus-app-wide ObjectMapper instance, configured for extras like
+   * java.time.Instant serialization.
+   */
+  @Inject
+  ObjectMapper mapper;
+
   /** Typesafe wrapper for a websocket session id (string). */
   public static record SessionKey(String sessionId) {
     @Override
@@ -67,19 +74,24 @@ public class WebsocketEndpoint {
 
   /** Wrapper for a websocket session, with additional state tracking. */
   static class WorkspaceWebsocketSession {
+    private final ObjectMapper mapper;
     private final SessionKey key;
     private final Session session;
     private final Instant createdAt;
+
+
 
     /** Will be null if session has not sent HELLO_WORKSPACE message carrying its process id. */
     @Nullable
     private final WorkspacePid workspacePid;
 
-    WorkspaceWebsocketSession(Session session, WorkspacePid workspacePid, Instant createdAt) {
-      key = new SessionKey(session.getId());
+    WorkspaceWebsocketSession(ObjectMapper mapper, Session session, WorkspacePid workspacePid, Instant createdAt) {
+      this.mapper = mapper;
       this.session = session;
+      this.key = new SessionKey(session.getId());
       this.workspacePid = workspacePid;
       this.createdAt = createdAt;
+
     }
 
     /**
@@ -87,7 +99,7 @@ public class WebsocketEndpoint {
      * is 'active'.
      */
     public WorkspaceWebsocketSession buildActive(WorkspacePid workspacePid) {
-      return new WorkspaceWebsocketSession(this.session, workspacePid, this.createdAt);
+      return new WorkspaceWebsocketSession(this.mapper, this.session, workspacePid, this.createdAt);
     }
 
     /** The websocket session id in SessionKey wrapping, used as the key in the sessions map. */
@@ -167,11 +179,6 @@ public class WebsocketEndpoint {
    */
   @Inject
   KnownWorkspacesBean knownWorkspacesBean;
-
-  private final ObjectMapper mapper = JsonMapper
-      .builder()
-      .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS)
-      .build();
 
   /**
    * Broadcast a message originating from sidecar to all active connected workspaces.
@@ -291,7 +298,7 @@ public class WebsocketEndpoint {
     // message, at which time we'll replace this mapping with one that carries the pid.
     sessions.put(
         new SessionKey(session.getId()),
-        new WorkspaceWebsocketSession(session, null, Instant.now())
+        new WorkspaceWebsocketSession(this.mapper, session, null, Instant.now())
     );
   }
 
