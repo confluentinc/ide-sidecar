@@ -1,13 +1,17 @@
 package io.confluent.idesidecar.websocket.resources;
 
+import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResourceAsObject;
 import static io.restassured.RestAssured.given;
 import static org.junit.Assert.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.idesidecar.restapi.filters.WorkspaceProcessIdFilter;
 import io.confluent.idesidecar.restapi.testutil.MockWorkspaceProcess;
+import io.confluent.idesidecar.websocket.messages.ConnectionEventBody;
 import io.confluent.idesidecar.websocket.messages.DynamicMessageBody;
 import io.confluent.idesidecar.websocket.messages.HelloBody;
 import io.confluent.idesidecar.websocket.messages.Message;
@@ -18,6 +22,7 @@ import io.confluent.idesidecar.websocket.messages.WorkspacesChangedBody;
 import io.confluent.idesidecar.websocket.resources.WebsocketEndpoint.WorkspaceWebsocketSession;
 import io.quarkus.logging.Log;
 import io.quarkus.test.junit.QuarkusTest;
+import jakarta.inject.Inject;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
@@ -31,6 +36,12 @@ import org.junit.jupiter.params.provider.ValueSource;
  */
 @QuarkusTest
 public class WebsocketEndpointTest extends AbstractWebsocketTestBase {
+
+  // Refer to the same ObjectMapper that quarkus and WebsocketEndpoint uses
+  // when we try to deserialize messages.
+  @Inject
+  ObjectMapper objectMapper;
+
 
   /**
    * Test websocket lifecycle using two mock workspace processes.
@@ -249,6 +260,28 @@ public class WebsocketEndpointTest extends AbstractWebsocketTestBase {
 
     // Then the session should be closed very soon after.
     connectedWorkspace.waitForClose(1000);
+  }
+
+  @Test
+  public void testSendingCCloudConnectionStatusMessage() {
+    // Given a workspace connected happy websocket ...
+    var connectedWorkspace = connectWorkspace(true, true);
+
+    // Load a CCloud connection update with java.time.Instant instances in the body, proving
+    // that websocket-land is using the same well-configured ObjectMapper as the rest of the Quarkus application.
+    var message = loadResourceAsObject("websocket-messages/ccloud-connection-connected.json", Message.class);
+
+    // Send it out from sidecar to all connected workspaces, including the one we just connected.
+    // Should be serialized properly.
+    websocketEndpoint.broadcast(message);
+
+    // wait for the message to be received by the workspace.
+    var recievedMessage = connectedWorkspace.waitForMessageOfType(MessageType.CONNECTION_EVENT, 1000);
+    var receivedBody = (ConnectionEventBody) recievedMessage.body();
+
+    // assert that body.connection.status.authentication.requires_authentication_at round-tripped as a java.time.Instant
+    assertInstanceOf(Instant.class,
+        receivedBody.connection().status().authentication().requiresAuthenticationAt());
   }
 
   /**
@@ -502,6 +535,7 @@ public class WebsocketEndpointTest extends AbstractWebsocketTestBase {
     var maxAllowedSeconds = websocketEndpoint.initialGraceSeconds.get();
 
     var olderSession = new WorkspaceWebsocketSession(
+        this.mapper,
         existingInactiveSession.session(),
         existingInactiveSession.workspacePid(),
         Instant.now().minusSeconds(maxAllowedSeconds + 1) // slightly too old!

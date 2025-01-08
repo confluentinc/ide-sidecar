@@ -1,0 +1,51 @@
+{
+  "headers": {
+    "message_type": "CONNECTION_EVENT",
+    "originator": "sidecar",
+    "message_id": "4597525f-ac86-4aeb-b656-25658987ff0c"
+  },
+  "body": {
+    "action": "CONNECTED",
+    "connection": {
+      "api_version": "gateway/v1",
+      "kind": "Connection",
+      "id": "vscode-confluent-cloud-connection",
+      "metadata": {
+        "self": "http://localhost:26636/gateway/v1/connections/vscode-confluent-cloud-connection",
+        "resource_name": null,
+        "sign_in_uri": "https://login.confluent.io/oauth/authorize?..."
+      },
+      "spec": {
+        "id": "vscode-confluent-cloud-connection",
+        "name": "Confluent Cloud",
+        "type": "CCLOUD"
+      },
+      "status": {
+        "authentication": {
+          "status": "VALID_TOKEN",
+          "user": {
+            "id": "u-foo",
+            "username": "foo@bar.com",
+            "first_name": "Foo",
+            "last_name": "Bar",
+            "social_connection": "",
+            "auth_type": "AUTH_TYPE_LOCAL"
+          },
+          "requires_authentication_at": "2025-01-09T02:16:28.903418Z"
+        },
+        "ccloud": {
+          "state": "SUCCESS",
+          "user": {
+            "id": "u-foo",
+            "username": "foo@bar.com",
+            "first_name": "Foo",
+            "last_name": "Bar",
+            "social_connection": "",
+            "auth_type": "AUTH_TYPE_LOCAL"
+          },
+          "requires_authentication_at": "2025-01-09T02:16:28.903418Z"
+        }
+      }
+    }
+  }
+}
