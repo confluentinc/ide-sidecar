@@ -190,7 +190,7 @@ public class ConnectionsResource {
             JsonNode patchedSpecNode = patch.apply(existingSpecNode);
             ConnectionSpec patchedSpec = mapper.treeToValue(patchedSpecNode, ConnectionSpec.class);
             return connectionStateManager.updateSpecForConnectionState(id, patchedSpec, true)
-                .map(ignored -> getConnectionModel(id));
+                .chain(ignored -> Uni.createFrom().item(() -> getConnectionModel(id)));
           } catch (JsonPatchException | IOException e) {
             Log.errorf("Failed to patch connection: {}", e.getMessage());
             return Uni.createFrom().nullItem();

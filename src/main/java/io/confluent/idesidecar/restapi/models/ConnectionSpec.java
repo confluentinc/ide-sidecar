@@ -487,22 +487,22 @@ public record ConnectionSpec(
     var errors = new ArrayList<Error>();
 
     // Check required fields and immutability
-    if (!isPatch) {
-      if (newSpec.name.isBlank()) {
-        checkRequired(errors, "name", "Connection name");
-      }
-    }
     if (newSpec.name == null) {
       checkRequired(errors, "name", "Connection name");
+    } else if (!isPatch && (newSpec.name.isEmpty() || newSpec.name.isBlank())) {
+      checkRequired(errors, "name", "Connection name");
     }
+
     if (newSpec.type == null) {
       checkRequired(errors, "type", "Connection type");
     }
+
     if (newSpec.id == null || newSpec.id.isBlank()) {
       checkRequired(errors, "id", "Connection ID");
     } else if (!Objects.equals(newSpec.id, id)) {
       checkImmutable(errors, "id", "Connection ID");
     }
+
     if (!Objects.equals(newSpec.type, type)) {
       checkImmutable(errors, "type", "Connection type");
     } else {
@@ -639,3 +639,5 @@ public record ConnectionSpec(
     );
   }
 }
+
+
