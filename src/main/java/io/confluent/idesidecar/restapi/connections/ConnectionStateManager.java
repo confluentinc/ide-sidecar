@@ -279,15 +279,14 @@ public class ConnectionStateManager {
                     .createFrom()
                     .failure(
                         new InvalidInputException(
-                            List.of(
-                                Error
-                                    .create()
-                                    .withSource("ccloud_config.organization_id")
-                                    .withTitle("Invalid organization ID")
-                                    .withDetail(
-                                        "Could not authenticate with the provided organization ID: %s".formatted(organizationId)
-                                    )
-                            )
+                            Error
+                                .create()
+                                .withSource("ccloud_config.organization_id")
+                                .withTitle("Invalid organization ID")
+                                .withDetail(
+                                    "Could not authenticate with the provided organization ID: %s".formatted(
+                                        organizationId)
+                                )
                         )
                     );
               } else {
@@ -295,15 +294,13 @@ public class ConnectionStateManager {
                     .createFrom()
                     .failure(
                         new InvalidInputException(
-                            List.of(
-                                Error
-                                    .create()
-                                    .withSource("ccloud_config")
-                                    .withTitle("Could not authenticate")
-                                    .withDetail(
-                                        "Could not authenticate with Confluent Cloud using the provided config"
-                                    )
-                            )
+                            Error
+                                .create()
+                                .withSource("ccloud_config")
+                                .withTitle("Could not authenticate")
+                                .withDetail(
+                                    "Could not authenticate with Confluent Cloud using the provided config"
+                                )
                         )
                     );
               }
