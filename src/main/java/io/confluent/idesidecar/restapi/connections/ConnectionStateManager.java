@@ -265,21 +265,44 @@ public class ConnectionStateManager {
     var connectionState = (CCloudConnectionState) connectionStates.get(id);
     CCloudOAuthContext authContext = connectionState.getOauthContext();
 
-    return Uni.createFrom()
-        .completionStage(authContext
-            .refreshIgnoreFailures(organizationId).toCompletionStage())
-        .onFailure(CCloudAuthenticationFailedException.class).recoverWithUni(
+    return Uni
+        .createFrom()
+        .completionStage(
+            authContext.refreshIgnoreFailures(organizationId).toCompletionStage()
+        )
+        .onFailure(CCloudAuthenticationFailedException.class)
+        .recoverWithUni(
             error -> {
               // If Confluent Cloud tells us that the organization ID is invalid, return a 400
               if (error.getMessage().contains("invalid resource id")) {
-                return Uni.createFrom().failure(new InvalidInputException(List.of(Error.create()
-                  .withSource("ccloud_config.organization_id")
-                  .withTitle("Invalid organization ID")
-                  .withDetail("Could not authenticate with the provided organization ID: %s"
-                      .formatted(organizationId))
-                )));
+                return Uni
+                    .createFrom()
+                    .failure(
+                        new InvalidInputException(
+                            Error
+                                .create()
+                                .withSource("ccloud_config.organization_id")
+                                .withTitle("Invalid organization ID")
+                                .withDetail(
+                                    "Could not authenticate with the provided organization ID: %s".formatted(
+                                        organizationId)
+                                )
+                        )
+                    );
               } else {
-                return Uni.createFrom().failure(error);
+                return Uni
+                    .createFrom()
+                    .failure(
+                        new InvalidInputException(
+                            Error
+                                .create()
+                                .withSource("ccloud_config")
+                                .withTitle("Could not authenticate")
+                                .withDetail(
+                                    "Could not authenticate with Confluent Cloud using the provided config"
+                                )
+                        )
+                    );
               }
             }
         )

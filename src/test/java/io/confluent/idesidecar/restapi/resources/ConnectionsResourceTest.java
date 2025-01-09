@@ -784,9 +784,9 @@ public class ConnectionsResourceTest {
           .body(connectionSpec.withCCloudOrganizationId("d6fc52f8-ae8a-405c-9692-e997965b730dc"))
           .when().put("/gateway/v1/connections/{id}", connectionSpec.id())
           .then()
-          .statusCode(401)
+          .statusCode(400)
           .body("errors.size()", is(1))
-          .body("errors[0].title", is("Unauthorized"));
+          .body("errors[0].title", is("Could not authenticate"));
 
       // The above update should have triggered a failed auth refresh, which is fine
       assertAuthStatus(connectionId, "NO_TOKEN")
