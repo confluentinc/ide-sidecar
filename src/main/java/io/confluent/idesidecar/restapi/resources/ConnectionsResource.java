@@ -125,7 +125,7 @@ public class ConnectionsResource {
         }),
     @APIResponse(
         responseCode = "401",
-        description = "Could not authenticate with provided API token",
+        description = "Could not authenticate",
         content = {
             @Content(mediaType = "application/json",
                 schema = @Schema(implementation = Failure.class))
@@ -165,7 +165,7 @@ public class ConnectionsResource {
           }),
       @APIResponse(
           responseCode = "401",
-          description = "Could not authenticate with provided API token",
+          description = "Could not authenticate",
           content = {
               @Content(mediaType = "application/json",
                   schema = @Schema(implementation = Failure.class))
