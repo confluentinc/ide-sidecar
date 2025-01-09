@@ -64,9 +64,15 @@ import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.EmptySource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.NullSource;
 import org.mockito.Mockito;
+import io.restassured.RestAssured;
+import io.restassured.parsing.Parser;
+import static org.hamcrest.Matchers.containsString;
 
 @QuarkusTest
 @ConnectWireMock
@@ -91,6 +97,7 @@ public class ConnectionsResourceTest {
   @BeforeEach
   public void setup() {
     connectionStateManager.clearAllConnectionStates();
+    RestAssured.defaultParser = Parser.JSON;
   }
 
   private static final String FAKE_AUTHORIZATION_CODE = "fake_authorization_code";
@@ -470,23 +477,112 @@ public class ConnectionsResourceTest {
     assertConnectionList(expectedList, actualList);
   }
 
-  @ParameterizedTest
-  @NullAndEmptySource
-  void updateConnectionWithNullOrEmptyIdShouldFail(String id) {
-    var originalId = "c1";
-    var connectionSpec = ccloudTestUtil.createConnection(
-        originalId, "Connection 1", ConnectionType.LOCAL);
+  @ParameterizedTest(name = "{0}")
+  @MethodSource("invalidConnectionUpdateParams")
+  void updateConnectionViaPatchWithInvalidInputShouldFail(
+      String testName,
+      String requestId,
+      String requestName,
+      String requestType,
+      String expectedErrorSource,
+      String expectedErrorDetail) {
 
-    var badSpec = connectionSpec.withId(id);
+    var connectionId = "c1";
+    var connectionName = "Connection 1";
+    var connectionType = ConnectionType.CCLOUD;
+
+    // Create authenticated connection
+    ccloudTestUtil.createAuthedConnection(connectionId, connectionName, connectionType);
+
+    // Log current state if testing type change
+    if (testName.contains("Change Type")) {
+      var currentConnection = given()
+          .when()
+          .get("/gateway/v1/connections/{id}", connectionId)
+          .then()
+          .extract()
+          .response();
+      System.out.println("Current connection before PATCH: " + currentConnection.asString());
+    }
+
+    var patchRequest = String.format("""
+            {"id": %s, "name": %s, "type": %s}
+            """,
+        requestId == null ? "null" : "\"" + requestId + "\"",
+        requestName == null ? "null" : "\"" + requestName + "\"",
+        requestType == null ? "null" : "\"" + requestType + "\"");
+
     var response = given()
         .contentType(ContentType.JSON)
-        .body(badSpec)
-        .when().put("/gateway/v1/connections/{id}", originalId)
+        .body(patchRequest)
+        .when()
+        .log().all()
+        .patch("/gateway/v1/connections/{id}", connectionId)
         .then()
+        .log().all()
         .statusCode(400);
+
     assertResponseMatches(
         response,
-        createError().withSource("id").withDetail("Connection ID is required and may not be blank")
+        createError()
+            .withSource(expectedErrorSource)
+            .withDetail(expectedErrorDetail)
+    );
+
+    // Verify type hasn't changed if testing type change
+    if (testName.contains("Change Type")) {
+      var afterConnection = given()
+          .when()
+          .get("/gateway/v1/connections/{id}", connectionId)
+          .then()
+          .extract()
+          .response();
+      System.out.println("Connection after PATCH attempt: " + afterConnection.asString());
+    }
+  }
+
+  private static Stream<Arguments> invalidConnectionUpdateParams() {
+    return Stream.of(
+        Arguments.of(
+            "Null ID",
+            null,
+            "Connection 1",
+            "CCLOUD",
+            "id",
+            "Connection ID is required and may not be blank"
+        ),
+        Arguments.of(
+            "Empty ID",
+            " ",
+            "Connection 1",
+            "CCLOUD",
+            "id",
+            "Connection ID is required and may not be blank"
+        ),
+        Arguments.of(
+            "Empty Name",
+            "c1",
+            " ",
+            "CCLOUD",
+            "name",
+            "Connection name is required and may not be blank"
+        ),
+        Arguments.of(
+            "Null Type",
+            "c1",
+            "Connection 1",
+            null,
+            "type",
+            "Connection type is required and may not be blank"
+        ),
+        Arguments.of(
+            "Change Type",
+            "c1",
+            "Connection 1",
+            "PLATFORM",
+            "type",
+            "Connection type may not be changed"
+        )
     );
   }
 
