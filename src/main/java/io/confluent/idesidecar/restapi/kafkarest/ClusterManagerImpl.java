@@ -9,6 +9,7 @@ import static io.confluent.idesidecar.restapi.kafkarest.RelationshipUtil.forClus
 import static io.confluent.idesidecar.restapi.kafkarest.RelationshipUtil.forConsumerGroups;
 import static io.confluent.idesidecar.restapi.kafkarest.RelationshipUtil.forController;
 import static io.confluent.idesidecar.restapi.kafkarest.RelationshipUtil.forTopics;
+import static io.confluent.idesidecar.restapi.models.ClusterType.KAFKA;
 import static io.confluent.idesidecar.restapi.util.MutinyUtil.uniItem;
 import static io.confluent.idesidecar.restapi.util.MutinyUtil.uniStage;
 import static io.confluent.idesidecar.restapi.util.RequestHeadersConstants.CONNECTION_ID_HEADER;
@@ -20,6 +21,7 @@ import io.confluent.idesidecar.restapi.kafkarest.model.ClusterData;
 import io.confluent.idesidecar.restapi.kafkarest.model.ClusterDataList;
 import io.confluent.idesidecar.restapi.kafkarest.model.ResourceCollectionMetadata;
 import io.confluent.idesidecar.restapi.kafkarest.model.ResourceMetadata;
+import io.confluent.idesidecar.restapi.models.ClusterType;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.infrastructure.Infrastructure;
 import io.vertx.core.http.HttpServerRequest;
@@ -120,16 +122,24 @@ public class ClusterManagerImpl implements ClusterManager {
             .map(cid::withNodes)
         );
   }
-
+//  ClusterType clusterType = KAFKA;
+//  String resourceName = KafkaRestUtil.constructResourceName(clusterType, clusterId, topicName);
+//    return ResourceMetadata
+//        .builder()
+//        .resourceName(resourceName)
+//        .self(forTopic(clusterId, topicName).getRelated())
+//      .build();
   private ClusterData fromClusterId(ClusterDescribe cluster) {
+    var clusterId = cluster.id();
+    var clusterType = KAFKA;
+    String resourceName = KafkaRestUtil.constructResourceName(clusterType, clusterId);
     var clusterData = ClusterData
         .builder()
         .kind("KafkaCluster")
         .metadata(ResourceMetadata
             .builder()
             .self(forCluster(cluster.id()).getRelated())
-            // TODO: Construct resource name based on the connection/cluster type
-            .resourceName(null)
+            .resourceName(resourceName)
             .build()
         )
         .clusterId(cluster.id())
