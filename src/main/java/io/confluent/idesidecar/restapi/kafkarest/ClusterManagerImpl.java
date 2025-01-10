@@ -122,13 +122,7 @@ public class ClusterManagerImpl implements ClusterManager {
             .map(cid::withNodes)
         );
   }
-//  ClusterType clusterType = KAFKA;
-//  String resourceName = KafkaRestUtil.constructResourceName(clusterType, clusterId, topicName);
-//    return ResourceMetadata
-//        .builder()
-//        .resourceName(resourceName)
-//        .self(forTopic(clusterId, topicName).getRelated())
-//      .build();
+
   private ClusterData fromClusterId(ClusterDescribe cluster) {
     var clusterId = cluster.id();
     var clusterType = KAFKA;
