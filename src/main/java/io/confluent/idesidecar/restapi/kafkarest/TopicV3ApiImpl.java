@@ -5,6 +5,7 @@ import static io.confluent.idesidecar.restapi.kafkarest.RelationshipUtil.forPart
 import static io.confluent.idesidecar.restapi.kafkarest.RelationshipUtil.forTopic;
 import static io.confluent.idesidecar.restapi.kafkarest.RelationshipUtil.forTopicConfigs;
 import static io.confluent.idesidecar.restapi.kafkarest.RelationshipUtil.forTopics;
+import static io.confluent.idesidecar.restapi.models.ClusterType.KAFKA;
 import static io.confluent.idesidecar.restapi.util.MutinyUtil.uniItem;
 
 import io.confluent.idesidecar.restapi.kafkarest.api.TopicV3Api;
@@ -14,6 +15,8 @@ import io.confluent.idesidecar.restapi.kafkarest.model.ResourceMetadata;
 import io.confluent.idesidecar.restapi.kafkarest.model.TopicData;
 import io.confluent.idesidecar.restapi.kafkarest.model.TopicDataList;
 import io.confluent.idesidecar.restapi.kafkarest.model.UpdatePartitionCountRequestData;
+import io.confluent.idesidecar.restapi.models.ClusterType;
+import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
@@ -112,10 +115,11 @@ public class TopicV3ApiImpl implements TopicV3Api {
   }
 
   private static ResourceMetadata getTopicMetadata(String clusterId, String topicName) {
+    ClusterType clusterType = KAFKA;
+    String resourceName = KafkaRestUtil.constructResourceName(clusterType, clusterId, topicName);
     return ResourceMetadata
         .builder()
-        // TODO: Construct resource name based on the connection/cluster type
-        .resourceName(null)
+        .resourceName(resourceName)
         .self(forTopic(clusterId, topicName).getRelated())
         .build();
   }
