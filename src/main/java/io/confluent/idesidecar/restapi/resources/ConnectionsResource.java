@@ -25,7 +25,9 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import java.io.IOException;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
@@ -188,12 +190,14 @@ public class ConnectionsResource {
                 .getConnectionState(id).getSpec());
 
             JsonNode patchedSpecNode = patch.apply(existingSpecNode);
-            ConnectionSpec patchedSpec = mapper.treeToValue(patchedSpecNode, ConnectionSpec.class);
-            return connectionStateManager.updateSpecForConnectionState(id, patchedSpec)
+            ConnectionSpec patchedSpec = mapper.treeToValue(patchedSpecNode,
+                ConnectionSpec.class);
+            return connectionStateManager
+                .updateSpecForConnectionState(id, patchedSpec)
                 .chain(ignored -> Uni.createFrom().item(() -> getConnectionModel(id)));
           } catch (JsonPatchException | IOException e) {
             Log.errorf("Failed to patch connection: {}", e.getMessage());
-            return Uni.createFrom().nullItem();
+            throw new WebApplicationException("Failed to patch connection", Response.Status.BAD_REQUEST);
           }
         }
 
