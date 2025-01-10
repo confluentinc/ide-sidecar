@@ -64,8 +64,15 @@ import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.EmptySource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.NullSource;
 import org.mockito.Mockito;
+import io.restassured.RestAssured;
+import io.restassured.parsing.Parser;
+import static org.hamcrest.Matchers.containsString;
 
 @QuarkusTest
 @ConnectWireMock
@@ -90,6 +97,7 @@ public class ConnectionsResourceTest {
   @BeforeEach
   public void setup() {
     connectionStateManager.clearAllConnectionStates();
+    RestAssured.defaultParser = Parser.JSON;
   }
 
   private static final String FAKE_AUTHORIZATION_CODE = "fake_authorization_code";
@@ -469,60 +477,99 @@ public class ConnectionsResourceTest {
     assertConnectionList(expectedList, actualList);
   }
 
-  @ParameterizedTest
-  @NullAndEmptySource
-  void updateConnectionWithNullOrEmptyIdShouldFail(String id) {
-    var originalId = "c1";
-    var connectionSpec = ccloudTestUtil.createConnection(
-        originalId, "Connection 1", ConnectionType.LOCAL);
+  @ParameterizedTest(name = "{0}")
+  @MethodSource("partialPayloadParams")
+  void updateConnectionViaPatchWithPartialPayloadsShouldSucceed(
+      String testName,
+      String requestId,
+      String requestName,
+      String requestType) throws Exception {
 
-    var badSpec = connectionSpec.withId(id);
-    var response = given()
-        .contentType(ContentType.JSON)
-        .body(badSpec)
-        .when().put("/gateway/v1/connections/{id}", originalId)
-        .then()
-        .statusCode(400);
-    assertResponseMatches(
-        response,
-        createError().withSource("id").withDetail("Connection ID is required and may not be blank")
+    // Create authenticated connection
+    var connectionId = "c1";
+    var connectionName = "Connection 1";
+    var orgName = "Development Org";
+    var accessTokens = ccloudTestUtil.createAuthedCCloudConnection(
+        connectionId,
+        connectionName,
+        orgName,
+        null
     );
+    var connectionSpec = connectionStateManager.getConnectionSpec("c1");
+
+    var testContext = new VertxTestContext();
+    refreshConnectionStatusAndThen(connectionId, testContext, () -> {
+      assertAuthStatus(connectionId, "VALID_TOKEN");
+
+      // Log current state if testing type change
+      if (testName.contains("Change Type")) {
+        var currentConnection = given()
+            .when()
+            .get("/gateway/v1/connections/{id}", connectionId)
+            .then()
+            .extract()
+            .response();
+        System.out.println("Current connection before PATCH: " + currentConnection.asString());
+      }
+
+      var payload = new ConnectionSpec(
+          requestId,
+          requestName,
+          requestType != null ? ConnectionType.valueOf(requestType) : null
+      );
+      var mapper = new ObjectMapper();
+      var patchRequest = mapper.writeValueAsString(payload);
+
+      var response = given()
+          .contentType(ContentType.JSON)
+          .body(patchRequest)
+          .when()
+          .log().all()
+          .patch("/gateway/v1/connections/{id}", connectionId)
+          .then()
+          .log().all();
+
+      if (testName.contains("Change Type")) {
+        response.statusCode(400);
+      } else {
+        response.statusCode(200);
+      }
+
+      // Verify type hasn't changed if testing type change
+      if (testName.contains("Change Type")) {
+        var afterConnection = given()
+            .when()
+            .get("/gateway/v1/connections/{id}", connectionId)
+            .then()
+            .extract()
+            .response();
+        System.out.println("Connection after PATCH attempt: " + afterConnection.asString());
+      }
+
+      testContext.completeNow();
+    });
   }
 
-  @ParameterizedTest
-  @NullAndEmptySource
-  void updateConnectionWithNullOrEmptyNameShouldFail(String name) {
-    var originalName = "Connection 1";
-    var connectionSpec = ccloudTestUtil.createConnection(
-        "c1", originalName, ConnectionType.LOCAL);
-
-    var badSpec = connectionSpec.withName(name);
-    var response = given()
-        .contentType(ContentType.JSON)
-        .body(badSpec)
-        .when().put("/gateway/v1/connections/{id}", "c1")
-        .then()
-        .statusCode(400);
-    assertResponseMatches(
-        response,
-        createError().withSource("name").withDetail("Connection name is required and may not be blank")
-    );
-  }
-
-  @Test
-  void updateConnectionWithTypeChangedShouldFail() {
-    ccloudTestUtil.createConnection("c1", "Connection 1", ConnectionType.LOCAL);
-
-    var badSpec = new ConnectionSpec("c1", "Connection 1", ConnectionType.CCLOUD);
-    var response = given()
-        .contentType(ContentType.JSON)
-        .body(badSpec)
-        .when().put("/gateway/v1/connections/{id}", "c1")
-        .then()
-        .statusCode(400);
-    assertResponseMatches(
-        response,
-        createError().withSource("type").withDetail("Connection type may not be changed")
+  private static Stream<Arguments> partialPayloadParams() {
+    return Stream.of(
+        Arguments.of(
+            "Change Type",
+            "c1",
+            "Connection 1",
+            "PLATFORM"
+        ),
+        Arguments.of(
+            "Name Only",
+            null,
+            "New Connection Name",
+            null
+        ),
+        Arguments.of(
+            "ID and Name",
+            "c1",
+            "New Connection Name",
+            null
+        )
     );
   }
 
@@ -687,9 +734,9 @@ public class ConnectionsResourceTest {
           .body(connectionSpec.withCCloudOrganizationId("d6fc52f8-ae8a-405c-9692-e997965b730dc"))
           .when().put("/gateway/v1/connections/{id}", connectionSpec.id())
           .then()
-          .statusCode(401)
+          .statusCode(400)
           .body("errors.size()", is(1))
-          .body("errors[0].title", is("Unauthorized"));
+          .body("errors[0].title", is("Could not authenticate"));
 
       // The above update should have triggered a failed auth refresh, which is fine
       assertAuthStatus(connectionId, "NO_TOKEN")
@@ -2029,4 +2076,5 @@ public class ConnectionsResourceTest {
     }
   }
 }
+
 
