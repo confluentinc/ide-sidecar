@@ -5,6 +5,7 @@ import static io.confluent.idesidecar.restapi.kafkarest.RelationshipUtil.forPart
 import static io.confluent.idesidecar.restapi.kafkarest.RelationshipUtil.forReassignment;
 import static io.confluent.idesidecar.restapi.kafkarest.RelationshipUtil.forReplicas;
 import static io.confluent.idesidecar.restapi.kafkarest.RelationshipUtil.forTopicPartitions;
+import static io.confluent.idesidecar.restapi.models.ClusterType.KAFKA;
 
 import io.confluent.idesidecar.restapi.kafkarest.api.PartitionV3Api;
 import io.confluent.idesidecar.restapi.kafkarest.model.PartitionData;
@@ -13,6 +14,7 @@ import io.confluent.idesidecar.restapi.kafkarest.model.ReassignmentData;
 import io.confluent.idesidecar.restapi.kafkarest.model.ReassignmentDataList;
 import io.confluent.idesidecar.restapi.kafkarest.model.ResourceCollectionMetadata;
 import io.confluent.idesidecar.restapi.kafkarest.model.ResourceMetadata;
+import io.confluent.idesidecar.restapi.models.ClusterType;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
@@ -60,13 +62,14 @@ public class PartitionV3ApiImpl implements PartitionV3Api {
   private static PartitionData getPartitionData(
       String clusterId, String topicName, TopicPartitionInfo partitionInfo
   ) {
+    ClusterType clusterType = KAFKA;
+    String resourceName = KafkaRestUtil.constructResourceName(clusterType, clusterId, topicName);
     return PartitionData.builder()
         .kind("KafkaPartition")
         .metadata(
             ResourceMetadata.builder()
                 .self(forPartition(clusterId, topicName, partitionInfo.partition()).getRelated())
-                // TODO: Construct resource name based on the connection/cluster type
-                .resourceName(null)
+                .resourceName(resourceName)
                 .build()
         )
         .clusterId(clusterId)
