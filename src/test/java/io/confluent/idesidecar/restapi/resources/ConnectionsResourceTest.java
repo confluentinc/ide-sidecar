@@ -573,6 +573,64 @@ public class ConnectionsResourceTest {
     );
   }
 
+  @ParameterizedTest
+  @NullAndEmptySource
+  void updateConnectionWithNullOrEmptyIdShouldFail(String id) {
+    var originalId = "c1";
+    var connectionSpec = ccloudTestUtil.createConnection(
+        originalId, "Connection 1", ConnectionType.LOCAL);
+
+    var badSpec = connectionSpec.withId(id);
+    var response = given()
+        .contentType(ContentType.JSON)
+        .body(badSpec)
+        .when().put("/gateway/v1/connections/{id}", originalId)
+        .then()
+        .statusCode(400);
+    assertResponseMatches(
+        response,
+        createError().withSource("id").withDetail("Connection ID is required and may not be blank")
+    );
+  }
+
+  @ParameterizedTest
+  @NullAndEmptySource
+  void updateConnectionWithNullOrEmptyNameShouldFail(String name) {
+    var originalName = "Connection 1";
+    var connectionSpec = ccloudTestUtil.createConnection(
+        "c1", originalName, ConnectionType.LOCAL);
+
+    var badSpec = connectionSpec.withName(name);
+    var response = given()
+        .contentType(ContentType.JSON)
+        .body(badSpec)
+        .when().put("/gateway/v1/connections/{id}", "c1")
+        .then()
+        .statusCode(400);
+    assertResponseMatches(
+        response,
+        createError().withSource("name").withDetail("Connection name is required and may not be blank")
+    );
+  }
+
+  @Test
+  void updateConnectionWithTypeChangedShouldFail() {
+    ccloudTestUtil.createConnection("c1", "Connection 1", ConnectionType.LOCAL);
+
+    var badSpec = new ConnectionSpec("c1", "Connection 1", ConnectionType.CCLOUD);
+    var response = given()
+        .contentType(ContentType.JSON)
+        .body(badSpec)
+        .when().put("/gateway/v1/connections/{id}", "c1")
+        .then()
+        .statusCode(400);
+    assertResponseMatches(
+        response,
+        createError().withSource("type").withDetail("Connection type may not be changed")
+    );
+  }
+
+
   @Test
   void updateConnectionWithMultipleValidationErrors() {
     ccloudTestUtil.createConnection("c1", "Connection 1", ConnectionType.LOCAL);
