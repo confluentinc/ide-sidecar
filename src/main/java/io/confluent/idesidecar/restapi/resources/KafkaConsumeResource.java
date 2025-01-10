@@ -80,7 +80,7 @@ public class KafkaConsumeResource {
                 e.getMessage());
             throw new RuntimeException("Error converting response to JSON", e);
           }
-          long consumedBytes = jsonResponse.getBytes(StandardCharsets.UTF_8).length;q
+          long consumedBytes = jsonResponse.getBytes(StandardCharsets.UTF_8).length;
           // Manually build the response so that we can fill the header
           // Kafka-Multi-Partition-Consume-Bytes
           return Response
