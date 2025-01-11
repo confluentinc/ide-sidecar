@@ -35,8 +35,7 @@ public interface Credentials {
   @RecordBuilder
   record SchemaRegistryConnectionOptions(
       boolean redact,
-      TLSConfig tlsConfig,
-      String logicalClusterId
+      TLSConfig tlsConfig
   ) implements CredentialsSchemaRegistryConnectionOptionsBuilder.With {
   }
 

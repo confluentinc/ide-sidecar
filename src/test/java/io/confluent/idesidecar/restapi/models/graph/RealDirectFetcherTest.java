@@ -6,14 +6,14 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import io.confluent.idesidecar.restapi.clients.SchemaRegistryClient;
+import io.confluent.idesidecar.restapi.cache.MockSchemaRegistryClient;
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
 import io.confluent.idesidecar.restapi.connections.DirectConnectionState;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionSpecBuilder;
 import io.confluent.idesidecar.restapi.models.ConnectionSpecKafkaClusterConfigBuilder;
 import io.confluent.idesidecar.restapi.models.ConnectionSpecSchemaRegistryConfigBuilder;
-import io.confluent.kafka.schemaregistry.client.MockSchemaRegistryClient;
-import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
@@ -268,8 +268,8 @@ public class RealDirectFetcherTest {
     void shouldFailToFetchSchemaRegistryWhenSrClientFailsToReturnsAllSubjects() throws IOException, RestClientException {
       // When we have an SR client that returns the SR cluster's mode
       var mockSrClient = mock(SchemaRegistryClient.class);
-      when(mockSrClient.getAllSubjects()).thenThrow(
-          new RuntimeException("Failed to get all subjects with Schema Registry client")
+      when(mockSrClient.getSchemaTypes()).thenThrow(
+          new RuntimeException("Failed to get schema types using Schema Registry client")
       );
 
       // And a direct connection that thinks it has connected to SR and returns that SR client

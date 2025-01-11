@@ -60,12 +60,14 @@ public record OAuthCredentials(
   @Schema(description = "Additional property that can be added in the request header to identify "
       + "the logical cluster ID to connect to. For example, this may be a Confluent Cloud " +
       "Kafka or Schema Registry cluster ID.")
+  @JsonProperty(value = "logical_cluster_id")
   @Null
   String logicalClusterId,
 
   @Schema(description = "Additional property that can be added in the request header to identify "
                         + "the principal ID for authorization. For example, this may be"
                         + "a Confluent Cloud identity pool ID.")
+  @JsonProperty(value = "identity_pool_id")
   @Null
   String identityPoolId
 ) implements Credentials {
@@ -159,8 +161,8 @@ public record OAuthCredentials(
     if (scope != null) {
       config.put("bearer.auth.scope", scope);
     }
-    if (options.logicalClusterId() != null) {
-      config.put("bearer.auth.logical.cluster", options.logicalClusterId());
+    if (logicalClusterId != null) {
+      config.put("bearer.auth.logical.cluster", logicalClusterId);
     }
     if (identityPoolId != null) {
       config.put("bearer.auth.identity.pool.id", identityPoolId);

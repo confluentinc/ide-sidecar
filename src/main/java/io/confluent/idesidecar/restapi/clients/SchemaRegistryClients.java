@@ -1,14 +1,10 @@
 package io.confluent.idesidecar.restapi.clients;
 
 import static io.confluent.idesidecar.restapi.kafkarest.SchemaManager.SCHEMA_PROVIDERS;
-import static jakarta.ws.rs.core.HttpHeaders.AUTHORIZATION;
 
 import io.confluent.idesidecar.restapi.application.SidecarAccessTokenBean;
 import io.confluent.idesidecar.restapi.cache.Clients;
 import io.confluent.idesidecar.restapi.cache.ClusterCache;
-import io.confluent.idesidecar.restapi.util.RequestHeadersConstants;
-import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
-import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.rest.RestService;
 import io.confluent.kafka.schemaregistry.client.security.SslFactory;
 import io.quarkus.logging.Log;
@@ -52,13 +48,9 @@ public class SchemaRegistryClients extends Clients<SchemaRegistryClient> {
               connectionId,
               clusterId
           );
-          var headers = Map.of(
-              RequestHeadersConstants.CONNECTION_ID_HEADER, connectionId,
-              RequestHeadersConstants.CLUSTER_ID_HEADER, clusterId,
-              AUTHORIZATION, "Bearer %s".formatted(accessTokenBean.getToken())
-          );
           // Create the Schema Registry client
-          var client = createClient(sidecarHost, config.asMap(), headers);
+          var schemaRegistryCluster = clusterCache.getSchemaRegistry(connectionId, clusterId);
+          var client = createClient(schemaRegistryCluster.uri(), config.asMap(), Map.of());
           Log.debugf(
               "Created SR client %s for connection %s and cluster %s with configuration:\n  %s",
               client,
@@ -95,7 +87,7 @@ public class SchemaRegistryClients extends Clients<SchemaRegistryClient> {
       restService.setSslSocketFactory(sslFactory.sslContext().getSocketFactory());
     }
 
-    return new CachedSchemaRegistryClient(
+    return new SidecarSchemaRegistryClient(
         restService,
         SR_CACHE_SIZE,
         SCHEMA_PROVIDERS,

@@ -656,7 +656,7 @@ class ClientConfiguratorStaticTest {
               var options = new KafkaConnectionOptions(input.redact, input.kafkaTLSConfig);
               expectGetKafkaConnectionOptions(options);
               var srOptions = new SchemaRegistryConnectionOptions(
-                  input.redact, input.schemaRegistryTLSConfig, null
+                  input.redact, input.schemaRegistryTLSConfig
               );
               expectGetSchemaRegistryConnectionOptions(srOptions);
 
