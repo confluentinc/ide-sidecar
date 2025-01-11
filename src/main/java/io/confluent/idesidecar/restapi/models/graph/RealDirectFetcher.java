@@ -2,6 +2,7 @@ package io.confluent.idesidecar.restapi.models.graph;
 
 import static io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType.DIRECT;
 
+import io.confluent.idesidecar.restapi.clients.SchemaRegistryClient;
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
 import io.confluent.idesidecar.restapi.connections.DirectConnectionState;
 import io.confluent.idesidecar.restapi.events.ClusterKind;
@@ -10,7 +11,6 @@ import io.confluent.idesidecar.restapi.events.ServiceKind;
 import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
 import io.confluent.idesidecar.restapi.models.ClusterType;
 import io.confluent.idesidecar.restapi.models.Connection;
-import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 import io.quarkus.logging.Log;
 import io.quarkus.runtime.annotations.RegisterForReflection;
@@ -201,7 +201,7 @@ public class RealDirectFetcher extends ConfluentRestClient implements DirectFetc
       SchemaRegistryClient srClient
   ) throws RestClientException, IOException {
     // Use the client to get *some* information, to verify that we can connect
-    var mode = srClient.getAllSubjects();
+    var schemaTypes = srClient.getSchemaTypes();
 
     // Construct the cluster object
     var srConfig = state.getSpec().schemaRegistryConfig();
