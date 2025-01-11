@@ -1,6 +1,7 @@
 package io.confluent.idesidecar.restapi.connections;
 
 import static io.confluent.idesidecar.restapi.util.ExceptionUtil.unwrap;
+import static io.confluent.idesidecar.restapi.util.RequestHeadersConstants.TARGET_SR_CLUSTER_HEADER;
 
 import io.confluent.idesidecar.restapi.auth.AuthErrors;
 import io.confluent.idesidecar.restapi.clients.SidecarSchemaRegistryClient;
@@ -103,25 +104,6 @@ public class DirectConnectionState extends ConnectionState {
   public boolean isSchemaRegistryConnected() {
     var status = getStatus();
     return status.schemaRegistry() != null && status.schemaRegistry().isConnected();
-  }
-
-  public MultiMap getAuthenticationHeaders(ClusterType clusterType) {
-    var headers = HttpHeaders.headers();
-    var credentials = switch (clusterType) {
-      case KAFKA ->
-          spec.kafkaClusterConfig() != null
-          ? spec.kafkaClusterConfig().credentials()
-          : null;
-      case SCHEMA_REGISTRY ->
-          spec.schemaRegistryConfig() != null
-          ? spec.schemaRegistryConfig().credentials()
-          : null;
-      default -> null;
-    };
-    if (credentials != null) {
-      credentials.httpClientHeaders().ifPresent(map -> map.forEach(headers::add));
-    }
-    return headers;
   }
 
   @Override

@@ -1,6 +1,5 @@
 package io.confluent.idesidecar.restapi.proxy.clusters.strategy;
 
-import io.confluent.idesidecar.restapi.connections.CCloudConnectionState;
 import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
 import io.vertx.core.MultiMap;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -10,18 +9,19 @@ import jakarta.enterprise.context.ApplicationScoped;
  * headers to the request, along with the `target-sr-cluster` header set to the SR cluster ID.
  */
 @ApplicationScoped
-public class ConfluentCloudSchemaRegistryClusterStrategy extends ClusterStrategy {
-  private static final String TARGET_SR_CLUSTER_HEADER = "target-sr-cluster";
+public class SchemaRegistryClusterStrategy extends ClusterStrategy {
 
   @Override
   public MultiMap constructProxyHeaders(ClusterProxyContext context) {
     var headers = super.constructProxyHeaders(context);
-    if (context.getConnectionState() instanceof CCloudConnectionState cCloudConnectionState) {
-      cCloudConnectionState.getOauthContext()
-          .getDataPlaneAuthenticationHeaders()
-          .forEach(headers::add);
+    switch (context.getClusterType()) {
+      case KAFKA -> headers.addAll(context.getConnectionState().getKafkaAuthenticationHeaders());
+      case SCHEMA_REGISTRY -> headers.addAll(
+          context.getConnectionState().getSchemaRegistryAuthenticationHeaders(
+              context.getClusterId()
+          )
+      );
     }
-    headers.add(TARGET_SR_CLUSTER_HEADER, context.getClusterId());
 
     return headers;
   }

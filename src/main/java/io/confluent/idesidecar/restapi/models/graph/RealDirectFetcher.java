@@ -75,10 +75,8 @@ public class RealDirectFetcher extends ConfluentRestClient implements DirectFetc
   @Override
   protected MultiMap headersFor(String connectionId) throws ConnectionNotFoundException {
     var connectionState = connections.getConnectionState(connectionId);
-    // Direct connections might only use the Kafka REST proxy of a direct connection
-    // (and never the SR REST API). So not use REST clients, so don't include the headers in the request
-    if (connectionState instanceof DirectConnectionState directConnectionState) {
-      return directConnectionState.getAuthenticationHeaders(ClusterType.KAFKA);
+    if (connectionState instanceof DirectConnectionState) {
+      return MultiMap.caseInsensitiveMultiMap();
     }
     throw new ConnectionNotFoundException(
         String.format("Connection with ID=%s is not a direct connection.", connectionId)

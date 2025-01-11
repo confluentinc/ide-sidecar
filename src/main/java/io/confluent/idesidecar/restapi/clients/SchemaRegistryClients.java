@@ -2,16 +2,17 @@ package io.confluent.idesidecar.restapi.clients;
 
 import static io.confluent.idesidecar.restapi.kafkarest.SchemaManager.SCHEMA_PROVIDERS;
 
-import io.confluent.idesidecar.restapi.application.SidecarAccessTokenBean;
 import io.confluent.idesidecar.restapi.cache.Clients;
 import io.confluent.idesidecar.restapi.cache.ClusterCache;
+import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
 import io.confluent.kafka.schemaregistry.client.rest.RestService;
 import io.confluent.kafka.schemaregistry.client.security.SslFactory;
 import io.quarkus.logging.Log;
+import io.vertx.core.MultiMap;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import java.util.HashMap;
 import java.util.Map;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
  * Create an ApplicationScoped bean to cache SchemaRegistryClient instances
@@ -22,16 +23,13 @@ public class SchemaRegistryClients extends Clients<SchemaRegistryClient> {
   private static final int SR_CACHE_SIZE = 10;
 
   @Inject
+  ConnectionStateManager connectionStateManager;
+
+  @Inject
   ClusterCache clusterCache;
 
   @Inject
   ClientConfigurator configurator;
-
-  @Inject
-  SidecarAccessTokenBean accessTokenBean;
-
-  @ConfigProperty(name = "ide-sidecar.api.host")
-  String sidecarHost;
 
   /**
    * Get a SchemaRegistryClient for the given connection ID and cluster ID. We rely on the
@@ -50,7 +48,9 @@ public class SchemaRegistryClients extends Clients<SchemaRegistryClient> {
           );
           // Create the Schema Registry client
           var schemaRegistryCluster = clusterCache.getSchemaRegistry(connectionId, clusterId);
-          var client = createClient(schemaRegistryCluster.uri(), config.asMap(), Map.of());
+          var connection = connectionStateManager.getConnectionState(connectionId);
+          var headers = connection.getSchemaRegistryAuthenticationHeaders(clusterId);
+          var client = createClient(schemaRegistryCluster.uri(), config.asMap(), headers);
           Log.debugf(
               "Created SR client %s for connection %s and cluster %s with configuration:\n  %s",
               client,
@@ -76,11 +76,14 @@ public class SchemaRegistryClients extends Clients<SchemaRegistryClient> {
   private SchemaRegistryClient createClient(
       String srClusterUri,
       Map<String, Object> configurationProperties,
-      Map<String, String> headers
+      MultiMap headers
   ) {
     var restService = new RestService(srClusterUri);
     restService.configure(configurationProperties);
-    restService.setHttpHeaders(headers);
+
+    var httpHeaders = new HashMap<String, String>();
+    headers.forEach(entry -> httpHeaders.put(entry.getKey(), entry.getValue()));
+    restService.setHttpHeaders(httpHeaders);
 
     var sslFactory = new SslFactory(configurationProperties);
     if (sslFactory.sslContext() != null) {
