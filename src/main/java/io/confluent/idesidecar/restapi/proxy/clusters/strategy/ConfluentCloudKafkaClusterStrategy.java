@@ -1,6 +1,5 @@
 package io.confluent.idesidecar.restapi.proxy.clusters.strategy;
 
-import io.confluent.idesidecar.restapi.connections.CCloudConnectionState;
 import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
 import io.vertx.core.MultiMap;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -15,11 +14,11 @@ public class ConfluentCloudKafkaClusterStrategy extends ClusterStrategy {
   @Override
   public MultiMap constructProxyHeaders(ClusterProxyContext context) {
     var headers = super.constructProxyHeaders(context);
-    if (context.getConnectionState() instanceof CCloudConnectionState cCloudConnectionState) {
-      cCloudConnectionState.getOauthContext()
-          .getDataPlaneAuthenticationHeaders()
-          .forEach(headers::add);
-    }
+    headers.addAll(
+        context
+            .getConnectionState()
+            .getKafkaAuthenticationHeaders()
+    );
     return headers;
   }
 }
