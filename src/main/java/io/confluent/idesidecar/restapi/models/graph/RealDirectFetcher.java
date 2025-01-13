@@ -2,6 +2,7 @@ package io.confluent.idesidecar.restapi.models.graph;
 
 import static io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType.DIRECT;
 
+import io.confluent.idesidecar.restapi.clients.SchemaRegistryClient;
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
 import io.confluent.idesidecar.restapi.connections.DirectConnectionState;
 import io.confluent.idesidecar.restapi.events.ClusterKind;
@@ -10,7 +11,6 @@ import io.confluent.idesidecar.restapi.events.ServiceKind;
 import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
 import io.confluent.idesidecar.restapi.models.ClusterType;
 import io.confluent.idesidecar.restapi.models.Connection;
-import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 import io.quarkus.logging.Log;
 import io.quarkus.runtime.annotations.RegisterForReflection;
@@ -57,33 +57,6 @@ public class RealDirectFetcher extends ConfluentRestClient implements DirectFetc
   // TODO: DIRECT fetcher should use logic similar to RealLocalFetcher to find the cluster
   // information from a Kafka REST URL endpoint, if it is available.
   // That is left to future improvements.
-
-  /**
-   * Construct the headers that will be used for REST requests made by this fetcher.
-   * This {@link RealDirectFetcher} will only submit REST requests to the Kafka REST proxy
-   * of a direct connection, in order to discover the Kafka cluster details.
-   * It will never submit REST requests to a direct connection's Schema Registry.
-   *
-   * <p>Therefore, this method only constructs the headers using the direct connection's
-   * Kafka credentials.
-   *
-   * @param connectionId the connection ID
-   * @return the headers
-   * @throws ConnectionNotFoundException if the connection does not exist or is not a
-   *                                     direct connection
-   */
-  @Override
-  protected MultiMap headersFor(String connectionId) throws ConnectionNotFoundException {
-    var connectionState = connections.getConnectionState(connectionId);
-    // Direct connections might only use the Kafka REST proxy of a direct connection
-    // (and never the SR REST API). So not use REST clients, so don't include the headers in the request
-    if (connectionState instanceof DirectConnectionState directConnectionState) {
-      return directConnectionState.getAuthenticationHeaders(ClusterType.KAFKA);
-    }
-    throw new ConnectionNotFoundException(
-        String.format("Connection with ID=%s is not a direct connection.", connectionId)
-    );
-  }
 
   <ClusterT extends Cluster> ClusterT onLoad(String connectionId, ClusterT cluster) {
     // Fire an event for this cluster
@@ -201,7 +174,7 @@ public class RealDirectFetcher extends ConfluentRestClient implements DirectFetc
       SchemaRegistryClient srClient
   ) throws RestClientException, IOException {
     // Use the client to get *some* information, to verify that we can connect
-    var mode = srClient.getAllSubjects();
+    var schemaTypes = srClient.getSchemaTypes();
 
     // Construct the cluster object
     var srConfig = state.getSpec().schemaRegistryConfig();

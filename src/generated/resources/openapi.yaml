@@ -858,10 +858,15 @@ components:
             provider.
           minimum: 0
           type: integer
-        identityPool:
+        logical_cluster_id:
+          description: "Additional property that can be added in the request header\
+            \ to identify the logical cluster ID to connect to. For example, this\
+            \ may be a Confluent Cloud Kafka or Schema Registry cluster ID."
+          type: string
+        identity_pool_id:
           description: "Additional property that can be added in the request header\
             \ to identify the principal ID for authorization. For example, this may\
-            \ bea Confluent Cloud identity pool."
+            \ be a Confluent Cloud identity pool ID."
           type: string
     PartitionConsumeData:
       type: object
