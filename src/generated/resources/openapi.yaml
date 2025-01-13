@@ -15,8 +15,6 @@ servers:
 tags:
 - name: Feature Flags
   description: Feature flags
-- name: Templates
-  description: Code generation templates
 paths:
   /api/login/realm:
     get:
@@ -260,60 +258,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Failure"
-  /gateway/v1/templates:
-    get:
-      tags:
-      - Templates
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TemplateList"
-  /gateway/v1/templates/{name}:
-    get:
-      tags:
-      - Templates
-      parameters:
-      - name: name
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Template"
-  /gateway/v1/templates/{name}/apply:
-    post:
-      tags:
-      - Templates
-      summary: Apply a template
-      description: Applies the specified template and returns the result as a zip
-        file.
-      parameters:
-      - name: name
-        in: path
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ApplyTemplateRequest"
-      responses:
-        "200":
-          description: Template applied successfully
-          content:
-            application/octet-stream:
-              schema:
-                format: binary
-                type: string
   /gateway/v1/version:
     get:
       tags:
@@ -468,14 +412,6 @@ components:
       maxLength: 64
       minLength: 1
       type: string
-    ApplyTemplateRequest:
-      required:
-      - options
-      type: object
-      properties:
-        options:
-          type: object
-          additionalProperties: {}
     AuthError:
       type: object
       properties:
@@ -733,23 +669,6 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Error"
-    GlobalObjectReference:
-      required:
-      - id
-      type: object
-      properties:
-        id:
-          maxLength: 255
-          minLength: 1
-          type: string
-        related:
-          format: uri
-          minLength: 1
-          type: string
-        resource_name:
-          format: uri
-          minLength: 1
-          type: string
     Instant:
       format: date-time
       type: string
@@ -944,13 +863,6 @@ components:
             \ to identify the principal ID for authorization. For example, this may\
             \ bea Confluent Cloud identity pool."
           type: string
-    ObjectMetadata:
-      type: object
-      properties:
-        self:
-          type: string
-        resource_name:
-          type: string
     PartitionConsumeData:
       type: object
       properties:
@@ -1044,72 +956,6 @@ components:
             type: string
         trust_all_certificates:
           type: boolean
-    ScaffoldV1TemplateOption:
-      required:
-      - display_name
-      - description
-      type: object
-      properties:
-        display_name:
-          maxLength: 60
-          type: string
-        description:
-          type: string
-        hint:
-          type: string
-        format:
-          type: string
-        pattern:
-          type: string
-        _enum:
-          type: array
-          items:
-            type: string
-        initial_value:
-          type: string
-        min_length:
-          format: int32
-          minimum: 0
-          type: integer
-        examples:
-          type: array
-          items:
-            type: string
-        enum:
-          type: array
-          items:
-            type: string
-    ScaffoldV1TemplateSpec:
-      type: object
-      properties:
-        name:
-          maxLength: 253
-          minLength: 2
-          pattern: "^[a-z0-9]+[a-z0-9-]{0,251}[a-z0-9]+$"
-          type: string
-        display_name:
-          maxLength: 60
-          type: string
-        description:
-          maxLength: 300
-          type: string
-        version:
-          pattern: "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\\
-            d*|\\d*[a-zA-Z-] [0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\\
-            +([0-9a-zA-Z-] +(?:\\.[0-9a-zA-Z-]+)*))?$"
-          type: string
-        language:
-          type: string
-        tags:
-          type: array
-          items:
-            type: string
-        options:
-          type: object
-          additionalProperties:
-            $ref: "#/components/schemas/ScaffoldV1TemplateOption"
-        template_collection:
-          $ref: "#/components/schemas/GlobalObjectReference"
     SchemaRegistryConfig:
       description: Schema Registry configuration.
       required:
@@ -1247,43 +1093,6 @@ components:
           allOf:
           - $ref: "#/components/schemas/KeyStore"
           nullable: true
-    Template:
-      required:
-      - api_version
-      - kind
-      - id
-      - metadata
-      - spec
-      type: object
-      properties:
-        api_version:
-          type: string
-        kind:
-          type: string
-        id:
-          type: string
-        metadata:
-          $ref: "#/components/schemas/ObjectMetadata"
-        spec:
-          $ref: "#/components/schemas/ScaffoldV1TemplateSpec"
-    TemplateList:
-      required:
-      - api_version
-      - kind
-      - metadata
-      - data
-      type: object
-      properties:
-        api_version:
-          type: string
-        kind:
-          type: string
-        metadata:
-          $ref: "#/components/schemas/CollectionMetadata"
-        data:
-          type: array
-          items:
-            $ref: "#/components/schemas/Template"
     TimestampType:
       enum:
       - NO_TIMESTAMP_TYPE
