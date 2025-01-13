@@ -7,11 +7,10 @@ import io.confluent.idesidecar.restapi.processors.Processor;
 import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
 import io.confluent.idesidecar.restapi.proxy.clusters.strategy.ClusterStrategy;
 import io.confluent.idesidecar.restapi.proxy.clusters.strategy.ConfluentCloudKafkaClusterStrategy;
-import io.confluent.idesidecar.restapi.proxy.clusters.strategy.ConfluentCloudSchemaRegistryClusterStrategy;
+import io.confluent.idesidecar.restapi.proxy.clusters.strategy.SchemaRegistryClusterStrategy;
 import io.confluent.idesidecar.restapi.proxy.clusters.strategy.ConfluentLocalKafkaClusterStrategy;
 import io.confluent.idesidecar.restapi.proxy.clusters.strategy.ConfluentLocalSchemaRegistryClusterStrategy;
 import io.confluent.idesidecar.restapi.proxy.clusters.strategy.DirectKafkaClusterStrategy;
-import io.confluent.idesidecar.restapi.proxy.clusters.strategy.DirectSchemaRegistryClusterStrategy;
 import io.vertx.core.Future;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -33,13 +32,10 @@ public class ClusterStrategyProcessor extends
   DirectKafkaClusterStrategy directKafkaClusterStrategy;
 
   @Inject
-  ConfluentCloudSchemaRegistryClusterStrategy confluentCloudSchemaRegistryClusterStrategy;
+  SchemaRegistryClusterStrategy schemaRegistryClusterStrategy;
 
   @Inject
   ConfluentLocalSchemaRegistryClusterStrategy confluentLocalSchemaRegistryClusterStrategy;
-
-  @Inject
-  DirectSchemaRegistryClusterStrategy directSchemaRegistryClusterStrategy;
 
 
   @Override
@@ -67,9 +63,8 @@ public class ClusterStrategyProcessor extends
         case PLATFORM -> null;
       };
       case SCHEMA_REGISTRY -> switch (connectionType) {
-        case CCLOUD -> confluentCloudSchemaRegistryClusterStrategy;
+        case CCLOUD, DIRECT -> schemaRegistryClusterStrategy;
         case LOCAL -> confluentLocalSchemaRegistryClusterStrategy;
-        case DIRECT -> directSchemaRegistryClusterStrategy;
         case PLATFORM -> null;
       };
     };

@@ -12,6 +12,7 @@ import io.confluent.idesidecar.restapi.models.ConnectionStatus;
 import io.confluent.idesidecar.restapi.resources.ConnectionsResource;
 import io.quarkus.logging.Log;
 import io.vertx.core.Future;
+import io.vertx.core.MultiMap;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
@@ -235,6 +236,14 @@ public abstract class ConnectionState {
         .builder()
         .redact(false)
         .build();
+  }
+
+  public MultiMap getKafkaAuthenticationHeaders() {
+    return MultiMap.caseInsensitiveMultiMap();
+  }
+
+  public MultiMap getSchemaRegistryAuthenticationHeaders(String clusterId) {
+    return MultiMap.caseInsensitiveMultiMap();
   }
 
   /**

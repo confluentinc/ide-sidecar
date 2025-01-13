@@ -35,8 +35,7 @@ public interface Credentials {
   @RecordBuilder
   record SchemaRegistryConnectionOptions(
       boolean redact,
-      TLSConfig tlsConfig,
-      String logicalClusterId
+      TLSConfig tlsConfig
   ) implements CredentialsSchemaRegistryConnectionOptionsBuilder.With {
   }
 
@@ -111,17 +110,6 @@ public interface Credentials {
   default Optional<Map<String, String>> schemaRegistryClientProperties(
       SchemaRegistryConnectionOptions options
   ) {
-    return Optional.empty();
-  }
-
-  /**
-   * Create the header(s) for an HTTP client connection. This is needed for connecting and
-   * authenticating to a Kafka REST proxy, Schema Registry, or MDS over HTTP.
-   *
-   * @return the authentication-related HTTP client headers, or empty if these credentials
-   *         cannot be used with HTTP client properties
-   */
-  default Optional<MultiMap> httpClientHeaders() {
     return Optional.empty();
   }
 
