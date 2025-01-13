@@ -35,16 +35,6 @@ public class ExceptionMappers {
         .build();
   }
 
-  @ServerExceptionMapper
-  public Response mapScaffoldingException(ScaffoldingException exception) {
-    var failure = exception.getFailure();
-    return Response
-        .status(extractStatus(failure))
-        .entity(failure)
-        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-        .build();
-  }
-
   private int extractStatus(Failure failure) {
     // Either get status if set, or look through errors
     if (failure.status() != null) {
