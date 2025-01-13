@@ -544,7 +544,7 @@ class ClientConfiguratorStaticTest {
                 sasl.mechanism=OAUTHBEARER
                 sasl.oauthbearer.token.endpoint.url=http://localhost:8081/oauth/token
                 sasl.login.callback.handler.class=org.apache.kafka.common.security.oauthbearer.secured.OAuthBearerLoginCallbackHandler
-                sasl.jaas.config=org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required clientId="%s" clientSecret="%s"
+                sasl.jaas.config=org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required clientId="%s" clientSecret="%s";
                 """.formatted(OAUTH_CLIENT_ID, OAUTH_SECRET),
             """
                 schema.registry.url=http://localhost:8081
@@ -570,7 +570,7 @@ class ClientConfiguratorStaticTest {
                 sasl.mechanism=OAUTHBEARER
                 sasl.oauthbearer.token.endpoint.url=http://localhost:8081/oauth/token
                 sasl.login.callback.handler.class=org.apache.kafka.common.security.oauthbearer.secured.OAuthBearerLoginCallbackHandler
-                sasl.jaas.config=org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required clientId="%s" clientSecret="%s"
+                sasl.jaas.config=org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required clientId="%s" clientSecret="%s";
                 ssl.truststore.location=%s
                 ssl.truststore.password=%s
                 """.formatted(
@@ -602,7 +602,7 @@ class ClientConfiguratorStaticTest {
                 sasl.mechanism=OAUTHBEARER
                 sasl.oauthbearer.token.endpoint.url=http://localhost:8081/oauth/token
                 sasl.login.callback.handler.class=org.apache.kafka.common.security.oauthbearer.secured.OAuthBearerLoginCallbackHandler
-                sasl.jaas.config=org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required clientId="%s" clientSecret="%s" scope="%s"
+                sasl.jaas.config=org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required clientId="%s" clientSecret="%s" scope="%s";
                 """.formatted(OAUTH_CLIENT_ID, OAUTH_SECRET, OAUTH_SCOPE),
             """
                 schema.registry.url=http://localhost:8081
@@ -630,7 +630,7 @@ class ClientConfiguratorStaticTest {
                 sasl.mechanism=OAUTHBEARER
                 sasl.oauthbearer.token.endpoint.url=http://localhost:8081/oauth/token
                 sasl.login.callback.handler.class=org.apache.kafka.common.security.oauthbearer.secured.OAuthBearerLoginCallbackHandler
-                sasl.jaas.config=org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required clientId="%s" clientSecret="%s"
+                sasl.jaas.config=org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required clientId="%s" clientSecret="%s";
                 """.formatted(OAUTH_CLIENT_ID, OAUTH_SECRET),
             """
                 schema.registry.url=http://localhost:8081
@@ -656,7 +656,7 @@ class ClientConfiguratorStaticTest {
               var options = new KafkaConnectionOptions(input.redact, input.kafkaTLSConfig);
               expectGetKafkaConnectionOptions(options);
               var srOptions = new SchemaRegistryConnectionOptions(
-                  input.redact, input.schemaRegistryTLSConfig, null
+                  input.redact, input.schemaRegistryTLSConfig
               );
               expectGetSchemaRegistryConnectionOptions(srOptions);
 

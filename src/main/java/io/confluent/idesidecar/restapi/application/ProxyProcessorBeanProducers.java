@@ -2,19 +2,18 @@ package io.confluent.idesidecar.restapi.application;
 
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
 import io.confluent.idesidecar.restapi.processors.Processor;
+import io.confluent.idesidecar.restapi.proxy.ClusterProxyRequestProcessor;
 import io.confluent.idesidecar.restapi.proxy.ConnectionProcessor;
 import io.confluent.idesidecar.restapi.proxy.EmptyProcessor;
 import io.confluent.idesidecar.restapi.proxy.ProxyContext;
-import io.confluent.idesidecar.restapi.proxy.ProxyRequestProcessor;
+import io.confluent.idesidecar.restapi.proxy.ScaffoldingProxyRequestProcessor;
 import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
 import io.confluent.idesidecar.restapi.proxy.clusters.processors.ClusterAuthenticationProcessor;
 import io.confluent.idesidecar.restapi.proxy.clusters.processors.ClusterInfoProcessor;
 import io.confluent.idesidecar.restapi.proxy.clusters.processors.ClusterProxyProcessor;
 import io.confluent.idesidecar.restapi.proxy.clusters.processors.ClusterStrategyProcessor;
 import io.confluent.idesidecar.restapi.proxy.scaffolding.ScaffoldingProxyProcessor;
-import io.confluent.idesidecar.restapi.util.WebClientFactory;
 import io.vertx.core.Future;
-import io.vertx.core.Vertx;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Inject;
@@ -30,12 +29,6 @@ public class ProxyProcessorBeanProducers {
   @Inject
   ConnectionStateManager connectionStateManager;
 
-  @Inject
-  WebClientFactory webClientFactory;
-
-  @Inject
-  Vertx vertx;
-
   @Produces
   @Singleton
   @Named("clusterProxyProcessor")
@@ -43,7 +36,8 @@ public class ProxyProcessorBeanProducers {
       ClusterProxyProcessor clusterProxyProcessor,
       ClusterStrategyProcessor clusterStrategyProcessor,
       ClusterInfoProcessor clusterInfoProcessor,
-      ClusterAuthenticationProcessor clusterAuthenticationProcessor
+      ClusterAuthenticationProcessor clusterAuthenticationProcessor,
+      ClusterProxyRequestProcessor clusterProxyRequestProcessor
   ) {
     return Processor.chain(
         new ConnectionProcessor<>(connectionStateManager),
@@ -51,7 +45,7 @@ public class ProxyProcessorBeanProducers {
         clusterInfoProcessor,
         clusterStrategyProcessor,
         clusterProxyProcessor,
-        new ProxyRequestProcessor<>(webClientFactory, vertx),
+        clusterProxyRequestProcessor,
         new EmptyProcessor<>()
     );
   }
@@ -60,11 +54,13 @@ public class ProxyProcessorBeanProducers {
   @Singleton
   @Named("scaffoldingProxyProcessor")
   public Processor<ProxyContext, Future<ProxyContext>> scaffoldingProxyProcessor(
-      ScaffoldingProxyProcessor scaffoldingProxyProcessor
+      ScaffoldingProxyProcessor scaffoldingProxyProcessor,
+      ScaffoldingProxyRequestProcessor scaffoldingProxyRequestProcessor
   ) {
     return Processor.chain(
+        // TODO: Combine these two processors into one
         scaffoldingProxyProcessor,
-        new ProxyRequestProcessor<>(webClientFactory, vertx),
+        scaffoldingProxyRequestProcessor,
         new EmptyProcessor<>()
     );
   }

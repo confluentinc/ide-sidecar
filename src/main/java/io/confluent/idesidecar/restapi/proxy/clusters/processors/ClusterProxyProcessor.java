@@ -2,7 +2,6 @@ package io.confluent.idesidecar.restapi.proxy.clusters.processors;
 
 import io.confluent.idesidecar.restapi.application.ProxyProcessorBeanProducers;
 import io.confluent.idesidecar.restapi.processors.Processor;
-import io.confluent.idesidecar.restapi.proxy.ProxyRequestProcessor;
 import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
 import io.confluent.idesidecar.restapi.util.WebClientFactory;
 import io.vertx.core.Future;
@@ -14,7 +13,7 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
  * Processor that handles the cluster proxying logic. This is the last Kafka processor before
- * handing off to the {@link ProxyRequestProcessor} to
+ * handing off to the {@link io.confluent.idesidecar.restapi.proxy.ClusterProxyRequestProcessor} to
  * make the actual request to the Kafka cluster (Kafka REST), and the first processor to handle the
  * response from the Kafka cluster.
  * <p>
