@@ -286,3 +286,5 @@ mp:
     scan:
       exclude:
         packages: io.confluent.idesidecar.restapi.kafkarest
+        # TODO: Remove the Scaffolding Service proxy functionality at a later date
+        classes: io.confluent.idesidecar.restapi.resources.TemplateResource
