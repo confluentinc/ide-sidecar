@@ -2,7 +2,10 @@ package io.confluent.idesidecar.restapi.connections;
 
 import io.confluent.idesidecar.restapi.auth.AuthErrors;
 import io.confluent.idesidecar.restapi.auth.CCloudOAuthContext;
-import io.confluent.idesidecar.restapi.models.*;
+import io.confluent.idesidecar.restapi.models.ConnectionSpec;
+import io.confluent.idesidecar.restapi.models.ConnectionStatus;
+import io.confluent.idesidecar.restapi.models.ConnectionStatusBuilder;
+import io.confluent.idesidecar.restapi.models.ConnectionMetadata;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
 import io.confluent.idesidecar.restapi.models.ConnectionStatus.CCloudStatus;
 import io.confluent.idesidecar.restapi.models.ConnectionStatus.ConnectedState;
@@ -183,7 +186,9 @@ public class CCloudConnectionState extends ConnectionState {
   @Override
   public MultiMap getSchemaRegistryAuthenticationHeaders(String clusterId) {
     var headers = HttpHeaders.headers();
-    getOauthContext().getDataPlaneAuthenticationHeaders().forEach(headers::add);
+    getOauthContext()
+        .getDataPlaneAuthenticationHeaders()
+        .forEach(headers::add);
     headers.add(TARGET_SR_CLUSTER_HEADER, clusterId);
     return headers;
   }

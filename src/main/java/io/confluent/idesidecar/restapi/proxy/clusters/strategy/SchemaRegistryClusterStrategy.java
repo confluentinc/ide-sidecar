@@ -14,15 +14,11 @@ public class SchemaRegistryClusterStrategy extends ClusterStrategy {
   @Override
   public MultiMap constructProxyHeaders(ClusterProxyContext context) {
     var headers = super.constructProxyHeaders(context);
-    switch (context.getClusterType()) {
-      case KAFKA -> headers.addAll(context.getConnectionState().getKafkaAuthenticationHeaders());
-      case SCHEMA_REGISTRY -> headers.addAll(
-          context.getConnectionState().getSchemaRegistryAuthenticationHeaders(
-              context.getClusterId()
-          )
-      );
-    }
-
+    headers.addAll(
+        context
+            .getConnectionState()
+            .getSchemaRegistryAuthenticationHeaders(context.getClusterId())
+    );
     return headers;
   }
 }
