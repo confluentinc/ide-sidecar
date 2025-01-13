@@ -866,7 +866,7 @@ components:
         identity_pool_id:
           description: "Additional property that can be added in the request header\
             \ to identify the principal ID for authorization. For example, this may\
-            \ bea Confluent Cloud identity pool ID."
+            \ be a Confluent Cloud identity pool ID."
           type: string
     PartitionConsumeData:
       type: object

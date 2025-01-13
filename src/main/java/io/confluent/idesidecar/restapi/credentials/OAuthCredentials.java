@@ -66,7 +66,7 @@ public record OAuthCredentials(
 
   @Schema(description = "Additional property that can be added in the request header to identify "
                         + "the principal ID for authorization. For example, this may be"
-                        + "a Confluent Cloud identity pool ID.")
+                        + " a Confluent Cloud identity pool ID.")
   @JsonProperty(value = "identity_pool_id")
   @Null
   String identityPoolId

@@ -1158,7 +1158,7 @@
             "type" : "string"
           },
           "identity_pool_id" : {
-            "description" : "Additional property that can be added in the request header to identify the principal ID for authorization. For example, this may bea Confluent Cloud identity pool ID.",
+            "description" : "Additional property that can be added in the request header to identify the principal ID for authorization. For example, this may be a Confluent Cloud identity pool ID.",
             "type" : "string"
           }
         }
