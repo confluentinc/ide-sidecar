@@ -541,38 +541,55 @@ public class ConnectionsResourceTest {
             new ConnectionSpec(
                 "c1",
                 "Connection 1",
-                ConnectionType.PLATFORM), 200),
+                ConnectionType.PLATFORM
+            ),
+            200
+        ),
         Arguments.of(
             "Name Only",
             new ConnectionSpec(
                 null,
                 "New Connection name",
-                null), 200),
+                null
+            ),
+            200
+        ),
         Arguments.of(
             "ID and Name",
             new ConnectionSpec(
                 "c1",
                 "New Connection name",
-                null), 200),
+                null
+            ),
+            200
+        ),
         // Negative test cases
         Arguments.of(
             "Invalid Type",
             new ConnectionSpec(
                 "c1",
                 "Connection 1",
-                null), 400), // Handle invalid type separately
+                null
+            ),
+            400
+        ),
         Arguments.of(
             "Empty Name",
             new ConnectionSpec(
                 "c1",
                 "",
-                ConnectionType.PLATFORM), 400),
+                ConnectionType.PLATFORM),
+            400
+        ),
         Arguments.of(
             "Null ID",
             new ConnectionSpec(
                 null,
                 "Connection 1",
-                ConnectionType.PLATFORM), 400)
+                ConnectionType.PLATFORM
+            ),
+            400
+        )
     );
   }
 
