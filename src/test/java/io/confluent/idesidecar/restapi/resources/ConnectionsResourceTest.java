@@ -482,9 +482,8 @@ public class ConnectionsResourceTest {
   @MethodSource("partialPayloadParams")
   void updateConnectionViaPatchWithPartialPayloadsShouldSucceed(
       String testName,
-      String requestId,
-      String requestName,
-      String requestType) throws Exception {
+      ConnectionSpec payload,
+      int expectedStatusCode) throws Exception {
 
     // Create authenticated connection
     var connectionId = "c1";
@@ -497,18 +496,12 @@ public class ConnectionsResourceTest {
         null
     );
     var connectionSpec = connectionStateManager.getConnectionSpec("c1");
-    var testUpdatesConnectionType = !connectionSpec.type().equals(
-        ConnectionType.valueOf(requestType));
+    var testUpdatesConnectionType = payload.type() != null && !connectionSpec.type().equals(payload.type());
 
     var testContext = new VertxTestContext();
     refreshConnectionStatusAndThen(connectionId, testContext, () -> {
       assertAuthStatus(connectionId, "VALID_TOKEN");
 
-      var payload = new ConnectionSpec(
-          requestId,
-          requestName,
-          requestType != null ? ConnectionType.valueOf(requestType) : null
-      );
       var mapper = new ObjectMapper();
       var patchRequest = mapper.writeValueAsString(payload);
       var response = given()
@@ -518,18 +511,16 @@ public class ConnectionsResourceTest {
           .log().all()
           .patch("/gateway/v1/connections/{id}", connectionId)
           .then()
-          .log().all();
+          .log().all()
+          .statusCode(expectedStatusCode);
 
-      // Log current state if testing type change
-      if (testUpdatesConnectionType) {
+      if (expectedStatusCode == 200 && testUpdatesConnectionType) {
         var currentConnection = given()
             .when()
             .get("/gateway/v1/connections/{id}", connectionId)
             .then()
             .extract()
             .response();
-
-        response.statusCode(400);
 
         // Verify type hasn't changed if testing type change
         var afterConnection = given()
@@ -539,25 +530,25 @@ public class ConnectionsResourceTest {
             .extract()
             .response();
       }
-      response.statusCode(200);
       testContext.completeNow();
     });
   }
 
   private static Stream<Arguments> partialPayloadParams() {
     return Stream.of(
-        Arguments.of(
-            "Change Type",
-            new ConnectionSpec("c1", "Connection 1", PLATFORM)
-        ),
-        Arguments.of(
-            "Name Only",
-            new ConnectionSpec(null, "New Connection name", null)
-        ),
-        Arguments.of(
-            "ID and Name",
-            new ConnectionSpec("c1", "New Connection name", null)
-        )
+        Arguments.of("Change Type", new ConnectionSpec("c1", "Connection 1", ConnectionType.PLATFORM), 200),
+        Arguments.of("Name Only", new ConnectionSpec(null, "New Connection name", null), 200),
+        Arguments.of("ID and Name", new ConnectionSpec("c1", "New Connection name", null), 200),
+        // Negative test cases
+        Arguments.of("Invalid Type", new ConnectionSpec("c1", "Connection 1", null), 400), // Handle invalid type separately
+        Arguments.of("Empty Name", new ConnectionSpec("c1", "", ConnectionType.PLATFORM), 400),
+        Arguments.of("Null ID", new ConnectionSpec(null, "Connection 1", ConnectionType.PLATFORM), 400)
+    );
+  }
+
+  private static Stream<Arguments> invalidTypeParams() {
+    return Stream.of(
+        Arguments.of("Invalid Type", "INVALID_TYPE")
     );
   }
 
