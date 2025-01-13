@@ -1,5 +1,6 @@
 package io.confluent.idesidecar.restapi.resources;
 
+import static io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType.PLATFORM;
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.asJson;
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.asObject;
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
@@ -496,21 +497,12 @@ public class ConnectionsResourceTest {
         null
     );
     var connectionSpec = connectionStateManager.getConnectionSpec("c1");
+    var testUpdatesConnectionType = !connectionSpec.type().equals(
+        ConnectionType.valueOf(requestType));
 
     var testContext = new VertxTestContext();
     refreshConnectionStatusAndThen(connectionId, testContext, () -> {
       assertAuthStatus(connectionId, "VALID_TOKEN");
-
-      // Log current state if testing type change
-      if (testName.contains("Change Type")) {
-        var currentConnection = given()
-            .when()
-            .get("/gateway/v1/connections/{id}", connectionId)
-            .then()
-            .extract()
-            .response();
-        System.out.println("Current connection before PATCH: " + currentConnection.asString());
-      }
 
       var payload = new ConnectionSpec(
           requestId,
@@ -519,7 +511,6 @@ public class ConnectionsResourceTest {
       );
       var mapper = new ObjectMapper();
       var patchRequest = mapper.writeValueAsString(payload);
-
       var response = given()
           .contentType(ContentType.JSON)
           .body(patchRequest)
@@ -529,23 +520,26 @@ public class ConnectionsResourceTest {
           .then()
           .log().all();
 
-      if (testName.contains("Change Type")) {
-        response.statusCode(400);
-      } else {
-        response.statusCode(200);
-      }
+      // Log current state if testing type change
+      if (testUpdatesConnectionType) {
+        var currentConnection = given()
+            .when()
+            .get("/gateway/v1/connections/{id}", connectionId)
+            .then()
+            .extract()
+            .response();
 
-      // Verify type hasn't changed if testing type change
-      if (testName.contains("Change Type")) {
+        response.statusCode(400);
+
+        // Verify type hasn't changed if testing type change
         var afterConnection = given()
             .when()
             .get("/gateway/v1/connections/{id}", connectionId)
             .then()
             .extract()
             .response();
-        System.out.println("Connection after PATCH attempt: " + afterConnection.asString());
       }
-
+      response.statusCode(200);
       testContext.completeNow();
     });
   }
@@ -554,21 +548,15 @@ public class ConnectionsResourceTest {
     return Stream.of(
         Arguments.of(
             "Change Type",
-            "c1",
-            "Connection 1",
-            "PLATFORM"
+            new ConnectionSpec("c1", "Connection 1", PLATFORM)
         ),
         Arguments.of(
             "Name Only",
-            null,
-            "New Connection Name",
-            null
+            new ConnectionSpec(null, "New Connection name", null)
         ),
         Arguments.of(
             "ID and Name",
-            "c1",
-            "New Connection Name",
-            null
+            new ConnectionSpec("c1", "New Connection name", null)
         )
     );
   }
@@ -640,7 +628,7 @@ public class ConnectionsResourceTest {
         .builder()
         .id("c3")
         .name("Connection name changed!")
-        .type(ConnectionType.PLATFORM)
+        .type(PLATFORM)
         .ccloudConfig(new CCloudConfig("org-id"))
         .build();
 

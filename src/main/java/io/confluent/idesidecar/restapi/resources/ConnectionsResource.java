@@ -196,8 +196,8 @@ public class ConnectionsResource {
                 .updateSpecForConnectionState(id, patchedSpec)
                 .chain(ignored -> Uni.createFrom().item(() -> getConnectionModel(id)));
           } catch (JsonPatchException | IOException e) {
-            Log.errorf("Failed to patch connection: {}", e.getMessage());
-            throw new WebApplicationException("Failed to patch connection", Response.Status.BAD_REQUEST);
+            Log.errorf("Failed to patch connection: {}, Connection ID:{}, Request: {}", e.getMessage(), id, patch);
+            throw new WebApplicationException("Failed to patch connection, please check the format of your request", Response.Status.BAD_REQUEST);
           }
         }
 
