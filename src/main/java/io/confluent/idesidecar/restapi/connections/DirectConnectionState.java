@@ -1,7 +1,6 @@
 package io.confluent.idesidecar.restapi.connections;
 
 import static io.confluent.idesidecar.restapi.util.ExceptionUtil.unwrap;
-import static io.confluent.idesidecar.restapi.util.RequestHeadersConstants.TARGET_SR_CLUSTER_HEADER;
 
 import io.confluent.idesidecar.restapi.auth.AuthErrors;
 import io.confluent.idesidecar.restapi.clients.SidecarSchemaRegistryClient;
@@ -9,7 +8,6 @@ import io.confluent.idesidecar.restapi.clients.ClientConfigurator;
 import io.confluent.idesidecar.restapi.clients.SchemaRegistryClient;
 import io.confluent.idesidecar.restapi.credentials.Credentials;
 import io.confluent.idesidecar.restapi.credentials.TLSConfig;
-import io.confluent.idesidecar.restapi.models.ClusterType;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
 import io.confluent.idesidecar.restapi.models.ConnectionStatus;
@@ -26,8 +24,6 @@ import io.quarkus.logging.Log;
 import io.smallrye.common.constraint.NotNull;
 import io.smallrye.common.constraint.Nullable;
 import io.vertx.core.Future;
-import io.vertx.core.MultiMap;
-import io.vertx.core.http.HttpHeaders;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.time.Duration;
@@ -36,7 +32,6 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
-
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.common.config.ConfigException;
 import org.eclipse.microprofile.config.ConfigProvider;

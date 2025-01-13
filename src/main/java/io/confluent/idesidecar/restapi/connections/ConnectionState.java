@@ -238,10 +238,17 @@ public abstract class ConnectionState {
         .build();
   }
 
+  /**
+   * HTTP auth headers provided by the {@link ConnectionState} to use for Kafka REST API requests.
+   */
   public MultiMap getKafkaAuthenticationHeaders() {
     return MultiMap.caseInsensitiveMultiMap();
   }
 
+  /**
+   * HTTP auth headers provided by the {@link ConnectionState}
+   * to use for Schema Registry API requests.
+   */
   public MultiMap getSchemaRegistryAuthenticationHeaders(String clusterId) {
     return MultiMap.caseInsensitiveMultiMap();
   }

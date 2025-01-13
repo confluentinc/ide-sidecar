@@ -17,7 +17,6 @@ import jakarta.inject.Inject;
 import jakarta.json.Json;
 import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -38,7 +37,7 @@ public class ClusterProxyRequestProcessor extends
   @ConfigProperty(name = "ide-sidecar.cluster-proxy.http-header-exclusions")
   List<String> httpHeaderExclusions;
 
-  ProxyHttpClient<ClusterProxyContext> proxyHttpClient;
+  private final ProxyHttpClient<ClusterProxyContext> proxyHttpClient;
 
   @Inject
   public ClusterProxyRequestProcessor(WebClientFactory webClientFactory, Vertx vertx) {
@@ -62,7 +61,7 @@ public class ClusterProxyRequestProcessor extends
     );
   }
 
-  public Future<ClusterProxyContext> processSchemaRegistry(ClusterProxyContext context) {
+  private Future<ClusterProxyContext> processSchemaRegistry(ClusterProxyContext context) {
     var client = clients.getClient(context.getConnectionId(), context.getClusterId());
     try {
       var resp = client.httpRequest(
@@ -115,7 +114,7 @@ public class ClusterProxyRequestProcessor extends
     return Future.succeededFuture(context);
   }
 
-  public Map<String, String> sanitizeHeaders(MultiMap requestHeaders) {
+  private Map<String, String> sanitizeHeaders(MultiMap requestHeaders) {
     var headers = new HashMap<String, String>();
     requestHeaders.forEach(
         entry -> headers.put(entry.getKey(), entry.getValue())

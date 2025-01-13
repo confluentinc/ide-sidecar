@@ -5,11 +5,13 @@ import com.google.common.base.Ticker;
 import io.confluent.kafka.schemaregistry.SchemaProvider;
 import io.confluent.kafka.schemaregistry.client.rest.RestService;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
-
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * A Schema Registry Client that implements our custom SchemaRegistryClient interface.
+ */
 public class SidecarSchemaRegistryClient
     extends io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient
     implements SchemaRegistryClient {

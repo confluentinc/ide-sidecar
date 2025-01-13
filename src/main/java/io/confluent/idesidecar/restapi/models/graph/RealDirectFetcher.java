@@ -58,31 +58,6 @@ public class RealDirectFetcher extends ConfluentRestClient implements DirectFetc
   // information from a Kafka REST URL endpoint, if it is available.
   // That is left to future improvements.
 
-  /**
-   * Construct the headers that will be used for REST requests made by this fetcher.
-   * This {@link RealDirectFetcher} will only submit REST requests to the Kafka REST proxy
-   * of a direct connection, in order to discover the Kafka cluster details.
-   * It will never submit REST requests to a direct connection's Schema Registry.
-   *
-   * <p>Therefore, this method only constructs the headers using the direct connection's
-   * Kafka credentials.
-   *
-   * @param connectionId the connection ID
-   * @return the headers
-   * @throws ConnectionNotFoundException if the connection does not exist or is not a
-   *                                     direct connection
-   */
-  @Override
-  protected MultiMap headersFor(String connectionId) throws ConnectionNotFoundException {
-    var connectionState = connections.getConnectionState(connectionId);
-    if (connectionState instanceof DirectConnectionState) {
-      return MultiMap.caseInsensitiveMultiMap();
-    }
-    throw new ConnectionNotFoundException(
-        String.format("Connection with ID=%s is not a direct connection.", connectionId)
-    );
-  }
-
   <ClusterT extends Cluster> ClusterT onLoad(String connectionId, ClusterT cluster) {
     // Fire an event for this cluster
     ClusterEvent.onLoad(

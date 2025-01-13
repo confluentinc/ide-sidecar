@@ -1,5 +1,7 @@
 package io.confluent.idesidecar.restapi.connections;
 
+import static io.confluent.idesidecar.restapi.util.RequestHeadersConstants.TARGET_SR_CLUSTER_HEADER;
+
 import io.confluent.idesidecar.restapi.auth.AuthErrors;
 import io.confluent.idesidecar.restapi.auth.CCloudOAuthContext;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
@@ -16,10 +18,7 @@ import io.smallrye.common.constraint.Nullable;
 import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpHeaders;
-
 import java.util.HashSet;
-
-import static io.confluent.idesidecar.restapi.util.RequestHeadersConstants.TARGET_SR_CLUSTER_HEADER;
 
 /**
  * Implementation of the connection state for Confluent Cloud ({@link ConnectionType#CCLOUD}).
