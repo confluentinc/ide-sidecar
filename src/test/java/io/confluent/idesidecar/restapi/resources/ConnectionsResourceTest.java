@@ -12,6 +12,7 @@ import static org.hamcrest.Matchers.startsWith;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -536,7 +537,7 @@ public class ConnectionsResourceTest {
         .id("c3")
         .name("Connection name changed!")
         .type(ConnectionType.PLATFORM)
-        .ccloudConfig(new CCloudConfig("org-id"))
+        .ccloudConfig(new CCloudConfig("org-id", null))
         .build();
 
     var response = given()
@@ -596,9 +597,9 @@ public class ConnectionsResourceTest {
     );
 
     // Update org to Test Org and expect the current org to be updated
-    accessTokens = updateCCloudOrganization(
+    accessTokens = updateCCloudConfig(
         accessTokens,
-        connectionSpec.withCCloudOrganizationId("d6fc52f8-ae8a-405c-9692-e997965b730dc"),
+        connectionSpec.withCCloudConfig(new CCloudConfig("d6fc52f8-ae8a-405c-9692-e997965b730dc", null)),
         "Test Org"
     );
 
@@ -608,9 +609,9 @@ public class ConnectionsResourceTest {
     );
 
     // Update org to Staging Org and expect the current org to be updated
-    accessTokens = updateCCloudOrganization(
+    accessTokens = updateCCloudConfig(
         accessTokens,
-        connectionSpec.withCCloudOrganizationId("1a507773-d2cb-4055-917e-ffb205f3c433"),
+        connectionSpec.withCCloudConfig(new CCloudConfig("1a507773-d2cb-4055-917e-ffb205f3c433", null)),
         "Staging Org"
     );
 
@@ -619,9 +620,9 @@ public class ConnectionsResourceTest {
         "1a507773-d2cb-4055-917e-ffb205f3c433"
     );
 
-    updateCCloudOrganization(
+    updateCCloudConfig(
         accessTokens,
-        connectionSpec.withCCloudOrganizationId("23b1185e-d874-4f61-81d6-c9c61aa8969c"),
+        connectionSpec.withCCloudConfig(new CCloudConfig("23b1185e-d874-4f61-81d6-c9c61aa8969c", null)),
         "Development Org"
     );
 
@@ -656,7 +657,7 @@ public class ConnectionsResourceTest {
 
       // Update org to Development Org with the same ID and expect the current org to
       // remain the same
-      updateCCloudOrganization(
+      updateCCloudConfig(
           accessTokens,
           connectionSpec,
           orgName
@@ -684,7 +685,7 @@ public class ConnectionsResourceTest {
     refreshConnectionStatusAndThen(connectionId, testContext, () -> {
       given()
           .contentType(ContentType.JSON)
-          .body(connectionSpec.withCCloudOrganizationId("d6fc52f8-ae8a-405c-9692-e997965b730dc"))
+          .body(connectionSpec.withCCloudConfig(new CCloudConfig("d6fc52f8-ae8a-405c-9692-e997965b730dc", null)))
           .when().put("/gateway/v1/connections/{id}", connectionSpec.id())
           .then()
           .statusCode(401)
@@ -713,7 +714,7 @@ public class ConnectionsResourceTest {
 
 
   @Test
-  void updateConnectionCCloudOrganizationToNonExistentOrg() throws Throwable {
+  void updateConnectionCCloudOrganizationToNonExistentOrg() {
     // Start with default org
     var connectionId = "c1";
     var accessTokens = ccloudTestUtil.createAuthedCCloudConnection(
@@ -741,7 +742,7 @@ public class ConnectionsResourceTest {
       var connectionSpec = connectionStateManager.getConnectionSpec(connectionId);
       given()
           .contentType(ContentType.JSON)
-          .body(connectionSpec.withCCloudOrganizationId("non-existent-org-id"))
+          .body(connectionSpec.withCCloudConfig(new CCloudConfig("non-existent-org-id", null)))
           .when().put("/gateway/v1/connections/{id}", connectionSpec.id())
           .then()
           .statusCode(400)
@@ -753,7 +754,7 @@ public class ConnectionsResourceTest {
   }
 
   @Test
-  void updateConnectionCCloudOrganizationToDefault() throws Throwable {
+  void updateConnectionCCloudOrganizationToDefault() {
     // Start with non-default org
     var connectionId = "c1";
     var accessTokens = ccloudTestUtil.createAuthedCCloudConnection(
@@ -771,7 +772,7 @@ public class ConnectionsResourceTest {
     });
 
     var connectionSpec = connectionStateManager.getConnectionSpec(connectionId);
-    updateCCloudOrganization(
+    updateCCloudConfig(
         accessTokens,
         // Set ccloud_config to null
         new ConnectionSpec(connectionSpec.id(), connectionSpec.name(), connectionSpec.type()),
@@ -787,6 +788,40 @@ public class ConnectionsResourceTest {
       );
       testContext.completeNow();
     });
+  }
+
+  @Test
+  void updateConnectionCCloudIdeAuthCallbackUri() {
+    // Create authenticated CCloud connection
+    var connectionId = "c1";
+    var accessTokens = ccloudTestUtil.createAuthedCCloudConnection(connectionId, "Connection 1");
+    var connectionSpec = connectionStateManager.getConnectionSpec(connectionId);
+
+    // By default, the CCloudConfig is null
+    assertNull(connectionSpec.ccloudConfig());
+
+    // Update the connection's ideAuthCallbackUri
+    var ideAuthCallbackUri = "vscode://confluentinc.vscode-confluent/my-custom-auth-callback-uri";
+    accessTokens = updateCCloudConfig(
+        accessTokens,
+        connectionSpec.withCCloudConfig(new CCloudConfig(null, ideAuthCallbackUri)),
+        "default"
+    );
+
+    // The ideAuthCallbackUri should be updated and the org ID should be null
+    var updatedConnectionSpec = connectionStateManager.getConnectionSpec(connectionId);
+    assertEquals(ideAuthCallbackUri, updatedConnectionSpec.ccloudConfig().ideAuthCallbackUri());
+    assertNull(updatedConnectionSpec.ccloudConfig().organizationId());
+
+    // We should be able to set it to null
+    updateCCloudConfig(
+        accessTokens,
+        connectionSpec.withCCloudConfig(new CCloudConfig(null, null)),
+        "default"
+    );
+    updatedConnectionSpec = connectionStateManager.getConnectionSpec(connectionId);
+    assertNull(updatedConnectionSpec.ccloudConfig().ideAuthCallbackUri());
+    assertNull(updatedConnectionSpec.ccloudConfig().organizationId());
   }
 
   private Error createError() {
@@ -1667,7 +1702,7 @@ public class ConnectionsResourceTest {
             "Updated of local config is invalid with both local and CCloud config",
             validLocalSpec,
             validLocalSpec
-                .withCCloudOrganizationId("12345"),
+                .withCCloudConfig(new CCloudConfig("12345", null)),
             createError().withSource("ccloud_config").withDetail("CCloud configuration is not allowed when type is LOCAL")
         ),
         new TestInput(
@@ -1675,7 +1710,7 @@ public class ConnectionsResourceTest {
             validLocalSpec,
             validLocalSpec
                 .withoutLocalConfig()
-                .withCCloudOrganizationId("12345"),
+                .withCCloudConfig(new CCloudConfig("12345", null)),
             createError().withSource("ccloud_config").withDetail("CCloud configuration is not allowed when type is LOCAL")
         )
     );
@@ -1741,10 +1776,10 @@ public class ConnectionsResourceTest {
   }
 
   /**
-   * Update the connection with a new CCloud organization ID, returns
-   * the refreshed tokens after updating the connection with the new organization ID.
+   * Update the connection with a new CCloudConfig, returns the refreshed tokens after updating the
+   * connection with the new config.
    */
-  private AccessToken updateCCloudOrganization(
+  private AccessToken updateCCloudConfig(
       AccessToken accessTokens,
       ConnectionSpec newSpec,
       String ccloudOrganizationName
