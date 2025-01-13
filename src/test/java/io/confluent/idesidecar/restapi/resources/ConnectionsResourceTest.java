@@ -642,7 +642,6 @@ public class ConnectionsResourceTest {
     );
   }
 
-
   @Test
   void updateConnectionWithMultipleValidationErrors() {
     ccloudTestUtil.createConnection("c1", "Connection 1", ConnectionType.LOCAL);
