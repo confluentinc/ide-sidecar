@@ -578,7 +578,8 @@ public class ConnectionsResourceTest {
             new ConnectionSpec(
                 "c1",
                 "",
-                ConnectionType.PLATFORM),
+                ConnectionType.PLATFORM
+            ),
             400
         ),
         Arguments.of(
@@ -589,15 +590,6 @@ public class ConnectionsResourceTest {
                 ConnectionType.PLATFORM
             ),
             400
-        )
-    );
-  }
-
-  private static Stream<Arguments> invalidTypeParams() {
-    return Stream.of(
-        Arguments.of(
-            "Invalid Type",
-            "INVALID_TYPE"
         )
     );
   }
