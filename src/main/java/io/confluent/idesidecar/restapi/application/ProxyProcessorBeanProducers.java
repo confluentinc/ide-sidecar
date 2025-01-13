@@ -5,14 +5,11 @@ import io.confluent.idesidecar.restapi.processors.Processor;
 import io.confluent.idesidecar.restapi.proxy.ClusterProxyRequestProcessor;
 import io.confluent.idesidecar.restapi.proxy.ConnectionProcessor;
 import io.confluent.idesidecar.restapi.proxy.EmptyProcessor;
-import io.confluent.idesidecar.restapi.proxy.ProxyContext;
-import io.confluent.idesidecar.restapi.proxy.ScaffoldingProxyRequestProcessor;
 import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
 import io.confluent.idesidecar.restapi.proxy.clusters.processors.ClusterAuthenticationProcessor;
 import io.confluent.idesidecar.restapi.proxy.clusters.processors.ClusterInfoProcessor;
 import io.confluent.idesidecar.restapi.proxy.clusters.processors.ClusterProxyProcessor;
 import io.confluent.idesidecar.restapi.proxy.clusters.processors.ClusterStrategyProcessor;
-import io.confluent.idesidecar.restapi.proxy.scaffolding.ScaffoldingProxyProcessor;
 import io.vertx.core.Future;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Produces;
@@ -46,21 +43,6 @@ public class ProxyProcessorBeanProducers {
         clusterStrategyProcessor,
         clusterProxyProcessor,
         clusterProxyRequestProcessor,
-        new EmptyProcessor<>()
-    );
-  }
-
-  @Produces
-  @Singleton
-  @Named("scaffoldingProxyProcessor")
-  public Processor<ProxyContext, Future<ProxyContext>> scaffoldingProxyProcessor(
-      ScaffoldingProxyProcessor scaffoldingProxyProcessor,
-      ScaffoldingProxyRequestProcessor scaffoldingProxyRequestProcessor
-  ) {
-    return Processor.chain(
-        // TODO: Combine these two processors into one
-        scaffoldingProxyProcessor,
-        scaffoldingProxyRequestProcessor,
         new EmptyProcessor<>()
     );
   }

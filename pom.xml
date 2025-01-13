@@ -285,11 +285,6 @@
       <version>3.1.0</version>
     </dependency>
     <dependency>
-      <groupId>com.github.spullara.mustache.java</groupId>
-      <artifactId>compiler</artifactId>
-      <version>0.9.13</version>
-    </dependency>
-    <dependency>
       <groupId>org.jboss.logging</groupId>
       <artifactId>jboss-logging</artifactId>
       <version>3.6.0.Final</version>
@@ -868,30 +863,6 @@
                 <useSwaggerAnnotations>false</useSwaggerAnnotations>
                 <openApiNullable>false</openApiNullable>
                 <useTags>true</useTags>
-              </configOptions>
-              <enablePostProcessFile>true</enablePostProcessFile>
-            </configuration>
-          </execution>
-          <execution>
-            <id>scaffolding-service-spec</id>
-            <phase>generate-sources</phase>
-            <goals>
-              <goal>generate</goal>
-            </goals>
-            <configuration>
-              <inputSpec>src/main/resources/scaffolding/scaffold.openapi.yaml</inputSpec>
-              <generatorName>jaxrs-spec</generatorName>
-              <generateSupportingFiles>false</generateSupportingFiles>
-              <addCompileSourceRoot>true</addCompileSourceRoot>
-              <generateApis>false</generateApis>
-              <configOptions>
-                <library>quarkus</library>
-                <useMicroProfileOpenAPIAnnotations>false</useMicroProfileOpenAPIAnnotations>
-                <modelPackage>io.confluent.cloud.scaffold.v1.model</modelPackage>
-                <generateBuilders>true</generateBuilders>
-                <openApiNullable>false</openApiNullable>
-                <useJakartaEe>true</useJakartaEe>
-                <useSwaggerAnnotations>false</useSwaggerAnnotations>
               </configOptions>
               <enablePostProcessFile>true</enablePostProcessFile>
             </configuration>
