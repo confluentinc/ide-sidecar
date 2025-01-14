@@ -60,16 +60,16 @@ public record OAuthCredentials(
   @Schema(description = "Additional property that can be added in the request header to identify "
       + "the logical cluster ID to connect to. For example, this may be a Confluent Cloud " +
       "Kafka or Schema Registry cluster ID.")
-  @JsonProperty(value = "logical_cluster_id")
+  @JsonProperty(value = "ccloud_logical_cluster_id")
   @Null
-  String logicalClusterId,
+  String ccloudLogicalClusterId,
 
   @Schema(description = "Additional property that can be added in the request header to identify "
                         + "the principal ID for authorization. For example, this may be"
                         + " a Confluent Cloud identity pool ID.")
-  @JsonProperty(value = "identity_pool_id")
+  @JsonProperty(value = "ccloud_identity_pool_id")
   @Null
-  String identityPoolId
+  String ccloudIdentityPoolId
 ) implements Credentials {
 
   private static final int TOKENS_URL_MAX_LEN = 256;
@@ -120,11 +120,11 @@ public record OAuthCredentials(
 
     // During the OAuth token retrieval step, extensions are ignored,
     // but will be passed to the broker using the SASL extension mechanism from KIP-342.
-    if (logicalClusterId != null) {
-      jaasConfig += " extension_logicalCluster=\"%s\"".formatted(logicalClusterId);
+    if (ccloudLogicalClusterId != null) {
+      jaasConfig += " extension_logicalCluster=\"%s\"".formatted(ccloudLogicalClusterId);
     }
-    if (identityPoolId != null) {
-      jaasConfig += " extension_identityPoolId=\"%s\"".formatted(identityPoolId);
+    if (ccloudIdentityPoolId != null) {
+      jaasConfig += " extension_identityPoolId=\"%s\"".formatted(ccloudIdentityPoolId);
     }
 
     // Terminate the JAAS configuration with a semicolon
@@ -161,11 +161,11 @@ public record OAuthCredentials(
     if (scope != null) {
       config.put("bearer.auth.scope", scope);
     }
-    if (logicalClusterId != null) {
-      config.put("bearer.auth.logical.cluster", logicalClusterId);
+    if (ccloudLogicalClusterId != null) {
+      config.put("bearer.auth.logical.cluster", ccloudLogicalClusterId);
     }
-    if (identityPoolId != null) {
-      config.put("bearer.auth.identity.pool.id", identityPoolId);
+    if (ccloudIdentityPoolId != null) {
+      config.put("bearer.auth.identity.pool.id", ccloudIdentityPoolId);
     }
     return Optional.of(config);
   }
