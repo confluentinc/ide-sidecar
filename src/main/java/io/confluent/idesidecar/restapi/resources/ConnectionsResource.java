@@ -1,6 +1,5 @@
 package io.confluent.idesidecar.restapi.resources;
 
-import io.confluent.idesidecar.restapi.connections.ConnectionState;
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
 import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
 import io.confluent.idesidecar.restapi.exceptions.CreateConnectionException;
@@ -8,19 +7,28 @@ import io.confluent.idesidecar.restapi.exceptions.Failure;
 import io.confluent.idesidecar.restapi.models.Connection;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionsList;
+import io.quarkus.logging.Log;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.fge.jsonpatch.JsonPatchException;
+import com.github.fge.jsonpatch.mergepatch.JsonMergePatch;
 import io.smallrye.common.annotation.Blocking;
 import io.smallrye.mutiny.Uni;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.PATCH;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import java.io.IOException;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
@@ -119,7 +127,7 @@ public class ConnectionsResource {
         }),
     @APIResponse(
         responseCode = "401",
-        description = "Could not authenticate with updated connection configuration",
+        description = "Could not authenticate",
         content = {
             @Content(mediaType = "application/json",
                 schema = @Schema(implementation = Failure.class))
@@ -136,6 +144,70 @@ public class ConnectionsResource {
     return connectionStateManager
         .updateSpecForConnectionState(id, spec)
         .chain(ignored -> Uni.createFrom().item(() -> getConnectionModel(id)));
+  }
+
+  @PATCH
+  @Path("/{id}")
+  @Consumes(MediaType.APPLICATION_JSON)
+  @Produces(MediaType.APPLICATION_JSON)
+  @APIResponses(value = {
+      @APIResponse(
+          responseCode = "200",
+          description = "Connection updated with PATCH",
+          content = {
+              @Content(mediaType = "application/json",
+                  schema = @Schema(implementation = Connection.class))
+          }),
+      @APIResponse(
+          responseCode = "404",
+          description = "Connection not found",
+          content = {
+              @Content(mediaType = "application/json",
+                  schema = @Schema(implementation = Failure.class))
+          }),
+      @APIResponse(
+          responseCode = "401",
+          description = "Could not authenticate",
+          content = {
+              @Content(mediaType = "application/json",
+                  schema = @Schema(implementation = Failure.class))
+          }),
+      @APIResponse(
+          responseCode = "400",
+          description = "Invalid input",
+          content = {
+              @Content(mediaType = "application/json",
+                  schema = @Schema(implementation = Failure.class))
+          }),
+  })
+  public Uni<Connection> patchConnection(
+      @PathParam("id") String id,
+      JsonMergePatch patch
+  ) {
+    ObjectMapper mapper = new ObjectMapper();
+    try {
+      JsonNode existingSpecNode = mapper.valueToTree(
+          connectionStateManager
+              .getConnectionState(id).getSpec());
+
+      JsonNode patchedSpecNode = patch.apply(existingSpecNode);
+      ConnectionSpec patchedSpec = mapper.treeToValue(patchedSpecNode,
+          ConnectionSpec.class);
+      return connectionStateManager
+          .updateSpecForConnectionState(id, patchedSpec)
+          .chain(ignored -> Uni.createFrom().item(() -> getConnectionModel(id)));
+    } catch (JsonPatchException | IOException e) {
+      Log.errorf(
+          "Failed to patch connection: %s, Connection ID: %s, Request: %s",
+          e.getMessage(),
+          id,
+          patch
+      );
+      throw new WebApplicationException(
+          "Failed to patch connection, please check the format of your request",
+          Response.Status.BAD_REQUEST
+      );
+    }
   }
 
   @DELETE

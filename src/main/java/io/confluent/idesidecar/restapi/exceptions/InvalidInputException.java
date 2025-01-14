@@ -15,6 +15,11 @@ public class InvalidInputException extends RuntimeException {
     this.errors = errors;
   }
 
+  public InvalidInputException(Error error) {
+    super("Invalid input");
+    this.errors = List.of(error);
+  }
+
   public List<Error> errors() {
     return errors;
   }
