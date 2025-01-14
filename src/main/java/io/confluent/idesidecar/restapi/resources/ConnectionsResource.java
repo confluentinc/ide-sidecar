@@ -185,21 +185,30 @@ public class ConnectionsResource {
       JsonMergePatch patch
   ) {
     ObjectMapper mapper = new ObjectMapper();
-          try {
-            JsonNode existingSpecNode = mapper.valueToTree(connectionStateManager
-                .getConnectionState(id).getSpec());
+    try {
+      JsonNode existingSpecNode = mapper.valueToTree(
+          connectionStateManager
+              .getConnectionState(id).getSpec());
 
-            JsonNode patchedSpecNode = patch.apply(existingSpecNode);
-            ConnectionSpec patchedSpec = mapper.treeToValue(patchedSpecNode,
-                ConnectionSpec.class);
-            return connectionStateManager
-                .updateSpecForConnectionState(id, patchedSpec)
-                .chain(ignored -> Uni.createFrom().item(() -> getConnectionModel(id)));
-          } catch (JsonPatchException | IOException e) {
-            Log.errorf("Failed to patch connection: {}, Connection ID:{}, Request: {}", e.getMessage(), id, patch);
-            throw new WebApplicationException("Failed to patch connection, please check the format of your request", Response.Status.BAD_REQUEST);
-          }
-        }
+      JsonNode patchedSpecNode = patch.apply(existingSpecNode);
+      ConnectionSpec patchedSpec = mapper.treeToValue(patchedSpecNode,
+          ConnectionSpec.class);
+      return connectionStateManager
+          .updateSpecForConnectionState(id, patchedSpec)
+          .chain(ignored -> Uni.createFrom().item(() -> getConnectionModel(id)));
+    } catch (JsonPatchException | IOException e) {
+      Log.errorf(
+          "Failed to patch connection: %s, Connection ID: %s, Request: %s",
+          e.getMessage(),
+          id,
+          patch
+      );
+      throw new WebApplicationException(
+          "Failed to patch connection, please check the format of your request",
+          Response.Status.BAD_REQUEST
+      );
+    }
+  }
 
   @DELETE
   @Path("{id}")
