@@ -14,7 +14,7 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
  *
  * @see ConfluentCloudKafkaClusterStrategy
  * @see ConfluentLocalKafkaClusterStrategy
- * @see ConfluentCloudSchemaRegistryClusterStrategy
+ * @see SchemaRegistryClusterStrategy
  */
 public abstract class ClusterStrategy {
 

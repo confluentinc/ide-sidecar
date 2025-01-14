@@ -292,7 +292,9 @@ public abstract class ConfluentRestClient {
    * @return the headers; never null but possibly empty
    * @throws ConnectionNotFoundException if the connection with the given ID could not be found
    */
-  protected abstract MultiMap headersFor(String connectionId) throws ConnectionNotFoundException;
+  protected MultiMap headersFor(String connectionId) throws ConnectionNotFoundException {
+    return MultiMap.caseInsensitiveMultiMap();
+  }
 
   /**
    * Utility method useful for creating type-specific {@link ListParser} methods.

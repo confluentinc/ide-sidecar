@@ -87,32 +87,6 @@ public record ApiKeyAndSecret(
     return Optional.of(config);
   }
 
-  /**
-   * Create the header(s) for an HTTP client connection. This implementation adds an
-   * {@code Authorization} HTTP header of the form:
-   * <pre>
-   *   Authorization: Basic &lt;credentials>
-   * </pre>
-   * where {@code &lt;credentials>} is the Base64 encoding of ID (or username) and password
-   * joined by a single colon <code>:</code>. See
-   * <a href="https://en.wikipedia.org/wiki/Basic_access_authentication">Basic authentication</a>
-   * for details.
-   *
-   * @return the authentication-related HTTP client headers, or empty if these credentials
-   *         cannot be used with HTTP client properties
-   */
-  @Override
-  public Optional<MultiMap> httpClientHeaders() {
-    var headers = MultiMap.caseInsensitiveMultiMap();
-    if (key != null || secret != null) {
-      // base64 encode the username and password
-      var value = "%s:%s".formatted(key, secret.asString());
-      value = Base64.getEncoder().encodeToString(value.getBytes(StandardCharsets.UTF_8));
-      headers.add(AUTHORIZATION, "Basic %s".formatted(value));
-    }
-    return Optional.of(headers);
-  }
-
   @Override
   public void validate(
       List<Failure.Error> errors,
