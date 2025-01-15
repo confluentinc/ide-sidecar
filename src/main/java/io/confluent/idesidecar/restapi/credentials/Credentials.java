@@ -20,7 +20,8 @@ import java.util.Optional;
 @JsonSubTypes({
     @Type(value = BasicCredentials.class),
     @Type(value = ApiKeyAndSecret.class),
-    @Type(value = OAuthCredentials.class)
+    @Type(value = OAuthCredentials.class),
+    @Type(value = ScramCredentials.class)
 })
 @RegisterForReflection
 public interface Credentials {
@@ -44,6 +45,7 @@ public interface Credentials {
     MUTUAL_TLS,
     OAUTH2,
     API_KEY_AND_SECRET,
+    SCRAM
   }
 
   /**
