@@ -293,7 +293,7 @@ public class CCloudTestUtil {
     createCCloudConnection(
         connectionId,
         connectionName,
-        new CCloudConfig(ccloudOrganizationId)
+        new CCloudConfig(ccloudOrganizationId, null)
     );
     return authenticateCCloudConnection(connectionId, ccloudOrganizationName, ccloudOrganizationId);
   }
