@@ -21,7 +21,7 @@ public record ScramCredentials(
     @NotNull
     HashAlgorithm hashAlgorithm,
     @NotNull
-    String name,
+    String username,
     @NotNull
     Password password
 ) implements Credentials {
@@ -39,10 +39,10 @@ public record ScramCredentials(
   public Optional<Map<String, String>> kafkaClientProperties(
       KafkaConnectionOptions options
   ) {
-    var jaasConfig = "%s required name=\"%s\" password=\"%s\"".formatted(
+    var jaasConfig = "%s required username=\"%s\" password=\"%s\"".formatted(
         SCRAM_LOGIN_MODULE_CLASS,
-        name,
-        password
+        username,
+        password.asString(options.redact())
     );
 
     // Terminate the JAAS configuration with a semicolon
@@ -50,9 +50,14 @@ public record ScramCredentials(
 
     var config = new LinkedHashMap<String, String>();
     config.put("sasl.jaas.config", jaasConfig);
-    config.put("sasl.scram.client.hash.algorithm", hashAlgorithm.getValue());
+    config.put("sasl.mechanism", "SCRAM-SHA-256");
+    config.put("security.protocol", "SASL_PLAINTEXT");
+
+    System.out.println(config);
     return Optional.of(config);
   }
+
+
 
   @Override
   public void validate(
@@ -69,11 +74,11 @@ public record ScramCredentials(
     }
     password.validate(errors, path, what);
 
-    if (name == null || name.isBlank()) {
+    if (username == null || username.isBlank()) {
       errors.add(
           Error.create()
               .withDetail("%s Username is required and may not be blank", what)
-              .withSource("%s.name", path)
+              .withSource("%s.username", path)
       );
     }
   }
