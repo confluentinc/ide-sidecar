@@ -11,7 +11,7 @@
 
   <groupId>io.confluent</groupId>
   <artifactId>ide-sidecar</artifactId>
-  <version>0.139.0</version>
+  <version>0.142.0</version>
   <packaging>jar</packaging>
   <name>IDE Sidecar</name>
   <description>Sidecar used by Confluent for VS Code.</description>
@@ -159,6 +159,11 @@
       <version>${netty.version}</version>
     </dependency>
     <dependency>
+      <groupId>com.github.java-json-tools</groupId>
+      <artifactId>json-patch</artifactId>
+      <version>1.13</version>
+    </dependency>
+    <dependency>
       <groupId>commons-codec</groupId>
       <artifactId>commons-codec</artifactId>
       <version>${commons-codec.version}</version>
@@ -283,11 +288,6 @@
       <groupId>com.vdurmont</groupId>
       <artifactId>semver4j</artifactId>
       <version>3.1.0</version>
-    </dependency>
-    <dependency>
-      <groupId>com.github.spullara.mustache.java</groupId>
-      <artifactId>compiler</artifactId>
-      <version>0.9.13</version>
     </dependency>
     <dependency>
       <groupId>org.jboss.logging</groupId>
@@ -868,30 +868,6 @@
                 <useSwaggerAnnotations>false</useSwaggerAnnotations>
                 <openApiNullable>false</openApiNullable>
                 <useTags>true</useTags>
-              </configOptions>
-              <enablePostProcessFile>true</enablePostProcessFile>
-            </configuration>
-          </execution>
-          <execution>
-            <id>scaffolding-service-spec</id>
-            <phase>generate-sources</phase>
-            <goals>
-              <goal>generate</goal>
-            </goals>
-            <configuration>
-              <inputSpec>src/main/resources/scaffolding/scaffold.openapi.yaml</inputSpec>
-              <generatorName>jaxrs-spec</generatorName>
-              <generateSupportingFiles>false</generateSupportingFiles>
-              <addCompileSourceRoot>true</addCompileSourceRoot>
-              <generateApis>false</generateApis>
-              <configOptions>
-                <library>quarkus</library>
-                <useMicroProfileOpenAPIAnnotations>false</useMicroProfileOpenAPIAnnotations>
-                <modelPackage>io.confluent.cloud.scaffold.v1.model</modelPackage>
-                <generateBuilders>true</generateBuilders>
-                <openApiNullable>false</openApiNullable>
-                <useJakartaEe>true</useJakartaEe>
-                <useSwaggerAnnotations>false</useSwaggerAnnotations>
               </configOptions>
               <enablePostProcessFile>true</enablePostProcessFile>
             </configuration>

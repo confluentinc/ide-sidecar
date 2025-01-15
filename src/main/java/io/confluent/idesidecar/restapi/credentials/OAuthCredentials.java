@@ -3,6 +3,7 @@ package io.confluent.idesidecar.restapi.credentials;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.confluent.idesidecar.restapi.exceptions.Failure;
 import io.confluent.idesidecar.restapi.exceptions.Failure.Error;
+import io.soabase.recordbuilder.core.RecordBuilder;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Null;
@@ -19,6 +20,7 @@ import org.apache.kafka.clients.CommonClientConfigs;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 @Schema(description = "OAuth 2.0 authentication credentials")
+@RecordBuilder
 public record OAuthCredentials(
 
   @Schema(description = "The URL of the OAuth 2.0 identity provider's token endpoint.")
@@ -56,10 +58,18 @@ public record OAuthCredentials(
   Integer connectTimeoutMillis,
 
   @Schema(description = "Additional property that can be added in the request header to identify "
-                        + "the principal ID for authorization. For example, this may be"
-                        + "a Confluent Cloud identity pool.")
+      + "the logical cluster ID to connect to. For example, this may be a Confluent Cloud " +
+      "Kafka or Schema Registry cluster ID.")
+  @JsonProperty(value = "ccloud_logical_cluster_id")
   @Null
-  String identityPool
+  String ccloudLogicalClusterId,
+
+  @Schema(description = "Additional property that can be added in the request header to identify "
+                        + "the principal ID for authorization. For example, this may be"
+                        + " a Confluent Cloud identity pool ID.")
+  @JsonProperty(value = "ccloud_identity_pool_id")
+  @Null
+  String ccloudIdentityPoolId
 ) implements Credentials {
 
   private static final int TOKENS_URL_MAX_LEN = 256;
@@ -77,7 +87,7 @@ public record OAuthCredentials(
       String clientId,
       Password clientSecret,
       String scope) {
-    this(tokensUrl, clientId, clientSecret, scope, null, null);
+    this(tokensUrl, clientId, clientSecret, scope, null, null, null);
   }
 
   public OAuthCredentials(
@@ -85,7 +95,7 @@ public record OAuthCredentials(
       String clientId,
       Password clientSecret
   ) {
-    this(tokensUrl, clientId, clientSecret, null, null, null);
+    this(tokensUrl, clientId, clientSecret, null, null, null, null);
   }
 
   @Override
@@ -107,6 +117,18 @@ public record OAuthCredentials(
     if (scope != null) {
       jaasConfig += " scope=\"%s\"".formatted(scope);
     }
+
+    // During the OAuth token retrieval step, extensions are ignored,
+    // but will be passed to the broker using the SASL extension mechanism from KIP-342.
+    if (ccloudLogicalClusterId != null) {
+      jaasConfig += " extension_logicalCluster=\"%s\"".formatted(ccloudLogicalClusterId);
+    }
+    if (ccloudIdentityPoolId != null) {
+      jaasConfig += " extension_identityPoolId=\"%s\"".formatted(ccloudIdentityPoolId);
+    }
+
+    // Terminate the JAAS configuration with a semicolon
+    jaasConfig += ";";
 
     var config = new LinkedHashMap<String, String>();
     config.put("sasl.mechanism", "OAUTHBEARER");
@@ -139,11 +161,11 @@ public record OAuthCredentials(
     if (scope != null) {
       config.put("bearer.auth.scope", scope);
     }
-    if (options.logicalClusterId() != null) {
-      config.put("bearer.auth.logical.cluster", options.logicalClusterId());
+    if (ccloudLogicalClusterId != null) {
+      config.put("bearer.auth.logical.cluster", ccloudLogicalClusterId);
     }
-    if (identityPool != null) {
-      config.put("bearer.auth.identity.pool.id", identityPool);
+    if (ccloudIdentityPoolId != null) {
+      config.put("bearer.auth.identity.pool.id", ccloudIdentityPoolId);
     }
     return Optional.of(config);
   }

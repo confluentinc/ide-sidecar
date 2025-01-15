@@ -88,7 +88,6 @@ public class KafkaConsumeResourceTest {
   @AfterEach
   void tearDown() {
     connectionStateManager.clearAllConnectionStates();
-    wireMock.resetMappings();
     clusterCache.clear();
   }
 

@@ -2,6 +2,7 @@ package io.confluent.idesidecar.restapi.resources;
 
 import static io.confluent.idesidecar.restapi.cache.ClusterCacheExpectations.expectClusterInCache;
 import static io.confluent.idesidecar.restapi.cache.ClusterCacheExpectations.expectClusterNotInCache;
+import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.asJson;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.emptyString;
@@ -332,7 +333,8 @@ class ClusterRestProxyResourceTest {
                 "schema-registry-rest-mock-responses/list-schemas-ccloud.json")
     ).readAllBytes());
     // Then the response body should be the same as the expected response body
-    assertEquals(expectedResponseBody, actualResponseBody);
+    // Assert JSON equality
+    assertEquals(asJson(expectedResponseBody), asJson(actualResponseBody));
   }
 
   @Test

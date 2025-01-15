@@ -318,18 +318,10 @@ public class ClientConfigurator {
       props.put("schema.registry.request.timeout.ms", defaultTimeout.toMillis());
     }
 
-    // CCloud requires the logical cluster ID to be set in the properties, so examine the URL
-    var logicalId = CCloud.SchemaRegistryIdentifier
-        .parse(srUri)
-        .map(CCloud.LsrcId.class::cast)
-        .map(CCloud.LsrcId::id)
-        .orElse(null);
-
     // Add any properties for SR credentials (if defined)
     var options = connection
         .getSchemaRegistryOptions()
-        .withRedact(redact)
-        .withLogicalClusterId(logicalId);
+        .withRedact(redact);
 
     var tlsConfig = connection.getSchemaRegistryTLSConfig();
     if (tlsConfig.isPresent() && tlsConfig.get().enabled()) {

@@ -1,5 +1,6 @@
 package io.confluent.idesidecar.restapi.resources;
 
+import static io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType.PLATFORM;
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.asJson;
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.asObject;
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
@@ -65,8 +66,15 @@ import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.EmptySource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.NullSource;
 import org.mockito.Mockito;
+import io.restassured.RestAssured;
+import io.restassured.parsing.Parser;
+import static org.hamcrest.Matchers.containsString;
 
 @QuarkusTest
 @ConnectWireMock
@@ -91,6 +99,7 @@ public class ConnectionsResourceTest {
   @BeforeEach
   public void setup() {
     connectionStateManager.clearAllConnectionStates();
+    RestAssured.defaultParser = Parser.JSON;
   }
 
   private static final String FAKE_AUTHORIZATION_CODE = "fake_authorization_code";
@@ -470,6 +479,122 @@ public class ConnectionsResourceTest {
     assertConnectionList(expectedList, actualList);
   }
 
+  @ParameterizedTest(name = "{0}")
+  @MethodSource("partialPayloadParams")
+  void updateConnectionViaPatchWithPartialPayloadsShouldSucceed(
+      String testName,
+      ConnectionSpec payload,
+      int expectedStatusCode) throws Exception {
+
+    // Create authenticated connection
+    var connectionId = "c1";
+    var connectionName = "Connection 1";
+    var orgName = "Development Org";
+    var accessTokens = ccloudTestUtil.createAuthedCCloudConnection(
+        connectionId,
+        connectionName,
+        orgName,
+        null
+    );
+    var connectionSpec = connectionStateManager.getConnectionSpec("c1");
+    var testUpdatesConnectionType = payload.type() != null && !connectionSpec.type().equals(payload.type());
+
+    var testContext = new VertxTestContext();
+    refreshConnectionStatusAndThen(connectionId, testContext, () -> {
+      assertAuthStatus(connectionId, "VALID_TOKEN");
+
+      var mapper = new ObjectMapper();
+      var patchRequest = mapper.writeValueAsString(payload);
+      var response = given()
+          .contentType(ContentType.JSON)
+          .body(patchRequest)
+          .when()
+          .log().all()
+          .patch("/gateway/v1/connections/{id}", connectionId)
+          .then()
+          .log().all()
+          .statusCode(expectedStatusCode);
+
+      if (expectedStatusCode == 200 && testUpdatesConnectionType) {
+        var currentConnection = given()
+            .when()
+            .get("/gateway/v1/connections/{id}", connectionId)
+            .then()
+            .extract()
+            .response();
+
+        // Verify type hasn't changed if testing type change
+        var afterConnection = given()
+            .when()
+            .get("/gateway/v1/connections/{id}", connectionId)
+            .then()
+            .extract()
+            .response();
+      }
+      testContext.completeNow();
+    });
+  }
+
+  private static Stream<Arguments> partialPayloadParams() {
+    return Stream.of(
+        Arguments.of(
+            "Change Type",
+            new ConnectionSpec(
+                "c1",
+                "Connection 1",
+                ConnectionType.PLATFORM
+            ),
+            200
+        ),
+        Arguments.of(
+            "Name Only",
+            new ConnectionSpec(
+                null,
+                "New Connection name",
+                null
+            ),
+            200
+        ),
+        Arguments.of(
+            "ID and Name",
+            new ConnectionSpec(
+                "c1",
+                "New Connection name",
+                null
+            ),
+            200
+        ),
+        // Negative test cases
+        Arguments.of(
+            "Invalid Type",
+            new ConnectionSpec(
+                "c1",
+                "Connection 1",
+                null
+            ),
+            400
+        ),
+        Arguments.of(
+            "Empty Name",
+            new ConnectionSpec(
+                "c1",
+                "",
+                ConnectionType.PLATFORM
+            ),
+            400
+        ),
+        Arguments.of(
+            "Null ID",
+            new ConnectionSpec(
+                null,
+                "Connection 1",
+                ConnectionType.PLATFORM
+            ),
+            400
+        )
+    );
+  }
+
   @ParameterizedTest
   @NullAndEmptySource
   void updateConnectionWithNullOrEmptyIdShouldFail(String id) {
@@ -688,9 +813,9 @@ public class ConnectionsResourceTest {
           .body(connectionSpec.withCCloudConfig(new CCloudConfig("d6fc52f8-ae8a-405c-9692-e997965b730dc", null)))
           .when().put("/gateway/v1/connections/{id}", connectionSpec.id())
           .then()
-          .statusCode(401)
+          .statusCode(400)
           .body("errors.size()", is(1))
-          .body("errors[0].title", is("Unauthorized"));
+          .body("errors[0].title", is("Could not authenticate"));
 
       // The above update should have triggered a failed auth refresh, which is fine
       assertAuthStatus(connectionId, "NO_TOKEN")
@@ -2064,4 +2189,5 @@ public class ConnectionsResourceTest {
     }
   }
 }
+
 

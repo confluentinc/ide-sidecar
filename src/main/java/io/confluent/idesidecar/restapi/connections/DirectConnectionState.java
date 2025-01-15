@@ -3,10 +3,11 @@ package io.confluent.idesidecar.restapi.connections;
 import static io.confluent.idesidecar.restapi.util.ExceptionUtil.unwrap;
 
 import io.confluent.idesidecar.restapi.auth.AuthErrors;
+import io.confluent.idesidecar.restapi.clients.SidecarSchemaRegistryClient;
 import io.confluent.idesidecar.restapi.clients.ClientConfigurator;
+import io.confluent.idesidecar.restapi.clients.SchemaRegistryClient;
 import io.confluent.idesidecar.restapi.credentials.Credentials;
 import io.confluent.idesidecar.restapi.credentials.TLSConfig;
-import io.confluent.idesidecar.restapi.models.ClusterType;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
 import io.confluent.idesidecar.restapi.models.ConnectionStatus;
@@ -16,8 +17,6 @@ import io.confluent.idesidecar.restapi.models.ConnectionStatus.SchemaRegistrySta
 import io.confluent.idesidecar.restapi.models.ConnectionStatusBuilder;
 import io.confluent.idesidecar.restapi.models.ConnectionStatusKafkaClusterStatusBuilder;
 import io.confluent.idesidecar.restapi.models.ConnectionStatusSchemaRegistryStatusBuilder;
-import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
-import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.rest.RestService;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 import io.confluent.kafka.schemaregistry.client.security.SslFactory;
@@ -25,8 +24,6 @@ import io.quarkus.logging.Log;
 import io.smallrye.common.constraint.NotNull;
 import io.smallrye.common.constraint.Nullable;
 import io.vertx.core.Future;
-import io.vertx.core.MultiMap;
-import io.vertx.core.http.HttpHeaders;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.time.Duration;
@@ -102,25 +99,6 @@ public class DirectConnectionState extends ConnectionState {
   public boolean isSchemaRegistryConnected() {
     var status = getStatus();
     return status.schemaRegistry() != null && status.schemaRegistry().isConnected();
-  }
-
-  public MultiMap getAuthenticationHeaders(ClusterType clusterType) {
-    var headers = HttpHeaders.headers();
-    var credentials = switch (clusterType) {
-      case KAFKA ->
-          spec.kafkaClusterConfig() != null
-          ? spec.kafkaClusterConfig().credentials()
-          : null;
-      case SCHEMA_REGISTRY ->
-          spec.schemaRegistryConfig() != null
-          ? spec.schemaRegistryConfig().credentials()
-          : null;
-      default -> null;
-    };
-    if (credentials != null) {
-      credentials.httpClientHeaders().ifPresent(map -> map.forEach(headers::add));
-    }
-    return headers;
   }
 
   @Override
@@ -241,8 +219,8 @@ public class DirectConnectionState extends ConnectionState {
   protected Future<SchemaRegistryStatus> getSchemaRegistryConnectionStatus() {
     return withSchemaRegistryClient(srClient -> {
       // There is a configuration, so validate the connection by creating a SchemaRegistryClient
-      // and getting all subjects.
-      srClient.getAllSubjects();
+      // and getting all schema types
+      srClient.getSchemaTypes();
       return Future.succeededFuture(
           ConnectionStatusSchemaRegistryStatusBuilder
               .builder()
@@ -409,6 +387,6 @@ public class DirectConnectionState extends ConnectionState {
     if (sslFactory.sslContext() != null) {
       restService.setSslSocketFactory(sslFactory.sslContext().getSocketFactory());
     }
-    return new CachedSchemaRegistryClient(restService, 10);
+    return new SidecarSchemaRegistryClient(restService, 10);
   }
 }

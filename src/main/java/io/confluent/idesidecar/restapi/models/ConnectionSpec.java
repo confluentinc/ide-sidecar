@@ -527,9 +527,9 @@ public record ConnectionSpec(
           if (sr != null && local != null && local.schemaRegistryUri != null) {
             errors.add(
                 Error.create()
-                     .withDetail(
-                         "Local config cannot be used with schema_registry configuration")
-                     .withSource("local_config.schema-registry-uri")
+                    .withDetail(
+                        "Local config cannot be used with schema_registry configuration")
+                    .withSource("local_config.schema-registry-uri")
             );
           }
         }
@@ -562,8 +562,8 @@ public record ConnectionSpec(
         default -> {
           errors.add(
               Error.create()
-                   .withDetail("Unknown connection type: %s".formatted(newSpec.type()))
-                   .withSource("type")
+                  .withDetail("Unknown connection type: %s".formatted(newSpec.type()))
+                  .withSource("type")
           );
         }
       }
@@ -639,3 +639,5 @@ public record ConnectionSpec(
     );
   }
 }
+
+

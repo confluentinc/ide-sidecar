@@ -20,7 +20,6 @@ public class AccessTokenFilterTest {
   static final String[] KNOWN_GUARDED_ROUTES = new String[]{
       "/gateway/v1/connections",
       "/gateway/v1/health/ready",
-      "/gateway/v1/templates",
       // anything under the kafka meta proxy route
       "/kafka/v3/",
       "/subjects/fake-subject/versions/fake-version/schema",
