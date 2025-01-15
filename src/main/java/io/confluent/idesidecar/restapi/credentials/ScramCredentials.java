@@ -13,17 +13,15 @@ import java.util.Optional;
 
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
-@Schema(description = "OAuth 2.0 authentication credentials")
+@Schema(description = "Scram authentication credentials")
 @RecordBuilder
 public record ScramCredentials(
-
     @Schema(description = "Hash algorithm")
     @JsonProperty(value = "hash_algorithm")
     @NotNull
-    String hashAlgorithm,
-    // ^ should be enum
+    HashAlgorithm hashAlgorithm,
     @NotNull
-    String username,
+    String name,
     @NotNull
     Password password
 ) implements Credentials {
@@ -33,7 +31,6 @@ public record ScramCredentials(
     return Type.SCRAM;
   }
 
-//TODO add enum
   private static final String SCRAM_LOGIN_MODULE_CLASS =
       "org.apache.kafka.common.security.scram.ScramLoginModule";
 
@@ -42,9 +39,9 @@ public record ScramCredentials(
   public Optional<Map<String, String>> kafkaClientProperties(
       KafkaConnectionOptions options
   ) {
-    var jaasConfig = "%s required username=\"%s\" password=\"%s\"".formatted(
+    var jaasConfig = "%s required name=\"%s\" password=\"%s\"".formatted(
         SCRAM_LOGIN_MODULE_CLASS,
-        username,
+        name,
         password
     );
 
@@ -53,9 +50,7 @@ public record ScramCredentials(
 
     var config = new LinkedHashMap<String, String>();
     config.put("sasl.jaas.config", jaasConfig);
-    if (hashAlgorithm != null) {
-      config.put("sasl.scram.client.hash.algorithm", hashAlgorithm);
-    }
+    config.put("sasl.scram.client.hash.algorithm", hashAlgorithm.getValue());
     return Optional.of(config);
   }
 
@@ -65,7 +60,7 @@ public record ScramCredentials(
       String path,
       String what
   ) {
-    if (hashAlgorithm == null || hashAlgorithm.isBlank()) {
+    if (hashAlgorithm == null) {
       errors.add(
           Error.create()
               .withDetail("%s Hash algorithm is required and may not be blank", what)
@@ -74,11 +69,11 @@ public record ScramCredentials(
     }
     password.validate(errors, path, what);
 
-    if (username == null || username.isBlank()) {
+    if (name == null || name.isBlank()) {
       errors.add(
           Error.create()
               .withDetail("%s Username is required and may not be blank", what)
-              .withSource("%s.username", path)
+              .withSource("%s.name", path)
       );
     }
   }
