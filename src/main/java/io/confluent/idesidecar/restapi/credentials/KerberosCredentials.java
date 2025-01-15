@@ -102,7 +102,7 @@ public record KerberosCredentials(
       errors.add(
           Error.create()
                .withDetail("%s keytab path is required and may not be blank", what)
-               .withSource("%s.keytabPath".formatted(path))
+               .withSource("%s.keytab_path".formatted(path))
       );
     }
   }
