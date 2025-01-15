@@ -314,6 +314,7 @@ public record ConnectionSpec(
               BasicCredentials.class,
               ApiKeyAndSecret.class,
               OAuthCredentials.class,
+              KerberosCredentials.class,
           },
           nullable = true
       )

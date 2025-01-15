@@ -1031,6 +1031,8 @@
               "$ref" : "#/components/schemas/ApiKeyAndSecret"
             }, {
               "$ref" : "#/components/schemas/OAuthCredentials"
+            }, {
+              "$ref" : "#/components/schemas/KerberosCredentials"
             } ],
             "nullable" : true
           },
@@ -1069,6 +1071,26 @@
             "allOf" : [ {
               "$ref" : "#/components/schemas/AuthErrors"
             } ]
+          }
+        }
+      },
+      "KerberosCredentials" : {
+        "description" : "Kerberos authentication credentials",
+        "required" : [ "principal", "keytab_path" ],
+        "type" : "object",
+        "properties" : {
+          "principal" : {
+            "description" : "The Kerberos principal to use when connecting to the external service.",
+            "type" : "string"
+          },
+          "keytab_path" : {
+            "description" : "The Kerberos keytab file path.",
+            "type" : "string"
+          },
+          "service_name" : {
+            "description" : "Service name that matches the primary name of the Kafka brokers configured in the Broker JAAS file. Defaults to 'kafka'.",
+            "default" : "kafka",
+            "type" : "string"
           }
         }
       },

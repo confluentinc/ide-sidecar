@@ -1644,6 +1644,75 @@ public class ConnectionsResourceTest {
                 .withSource("kafka_cluster.ssl.keystore.path")
                 .withDetail("Kafka cluster keystore path is required and may not be blank")
         ),
+        new TestInput(
+            "Direct spec is valid with Kerberos keytab and principal",
+            """
+            {
+              "name": "Connection 1",
+              "type": "DIRECT",
+              "kafka_cluster": {
+                "bootstrap_servers": "localhost:9092",
+                "credentials": {
+                  "keytab_path": "/path/to/keytab",
+                  "principal": "alice@EXAMPLE.com"
+                }
+              }
+            }
+            """
+        ),
+        new TestInput(
+            "Direct spec is valid with Kerberos keytab, principal and service name",
+            """
+            {
+              "name": "Connection 1",
+              "type": "DIRECT",
+              "kafka_cluster": {
+                "bootstrap_servers": "localhost:9092",
+                "credentials": {
+                  "keytab_path": "/path/to/keytab",
+                  "principal": "alice@EXAMPLE.com",
+                  "service_name": "foobar"
+                }
+              }
+            }
+            """
+        ),
+        new TestInput(
+            "Direct spec is invalid with Kerberos keytab but no principal",
+            """
+            {
+              "name": "Connection 1",
+              "type": "DIRECT",
+              "kafka_cluster": {
+                "bootstrap_servers": "localhost:9092",
+                "credentials": {
+                  "keytab_path": "/path/to/keytab"
+                }
+              }
+            }
+            """,
+            createError()
+                .withSource("kafka_cluster.credentials.principal")
+                .withDetail("Kafka cluster principal is required and may not be blank")
+        ),
+        new TestInput(
+            "Direct spec is invalid with Kerberos principal but no keytab",
+            """
+            {
+              "name": "Connection 1",
+              "type": "DIRECT",
+              "kafka_cluster": {
+                "bootstrap_servers": "localhost:9092",
+                "credentials": {
+                  "principal": "alice@EXAMPLE.com"
+                }
+              }
+            }
+            """,
+            createError()
+                .withSource("kafka_cluster.credentials.keytab_path")
+                .withDetail("Kafka cluster keytab path is required and may not be blank")
+        ),
 
         // Combination
         new TestInput(
