@@ -48,7 +48,7 @@ public interface Credentials {
     SCRAM
   }
 
-  public enum HashAlgorithm {
+  enum HashAlgorithm {
     SCRAM_SHA_256("SCRAM-SHA-256"),
     SCRAM_SHA_512("SCRAM-SHA-512");
 
