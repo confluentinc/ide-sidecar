@@ -16,7 +16,7 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 @Schema(description = "Scram authentication credentials")
 @RecordBuilder
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
 @JsonSubTypes({
     @JsonSubTypes.Type(value = ScramCredentials.class, name = "SCRAM")
 })
@@ -31,26 +31,38 @@ public record ScramCredentials(
     Password password
 ) implements Credentials {
 
+  public enum HashAlgorithm {
+    SCRAM_SHA_256("SCRAM-SHA-256"),
+    SCRAM_SHA_512("SCRAM-SHA-512");
+
+    private final String value;
+
+    HashAlgorithm(String value) {
+      this.value = value;
+    }
+
+    public String getValue() {
+      return value;
+    }
+  }
+
   @Override
   public Type type() {
     return Type.SCRAM;
   }
 
-  private static final String SCRAM_LOGIN_MODULE_CLASS =
-      "org.apache.kafka.common.security.scram.ScramLoginModule";
+  private static final String SCRAM_LOGIN_MODULE_CLASS = "org.apache.kafka.common.security.scram.ScramLoginModule";
 
   @Override
   public Optional<Map<String, String>> kafkaClientProperties(
       KafkaConnectionOptions options
   ) {
-    var jaasConfig = "%s required username=\"%s\" password=\"%s\"".formatted(
+
+    var jaasConfig = "%s required username=\"%s\" password=\"%s\";".formatted(
         SCRAM_LOGIN_MODULE_CLASS,
         username,
         password.asString(options.redact())
     );
-
-    // Terminate the JAAS configuration with a semicolon
-    jaasConfig += ";";
 
     var config = new LinkedHashMap<String, String>();
     config.put("sasl.jaas.config", jaasConfig);
@@ -67,8 +79,6 @@ public record ScramCredentials(
           "SASL_PLAINTEXT"
       );
     }
-
-    System.out.println(config);
     return Optional.of(config);
   }
 
@@ -82,7 +92,7 @@ public record ScramCredentials(
       errors.add(
           Error.create()
               .withDetail(
-                  "%s Hash algorithm is required and may not be blank",
+                  "%s Hash algorithm is required, may not be blank, and must be one of the supported algorithms (SCRAM_SHA_256 or SCRAM_SHA_512)\",",
                   what
               )
               .withSource(

@@ -48,21 +48,6 @@ public interface Credentials {
     SCRAM
   }
 
-  enum HashAlgorithm {
-    SCRAM_SHA_256("SCRAM-SHA-256"),
-    SCRAM_SHA_512("SCRAM-SHA-512");
-
-    private final String value;
-
-    HashAlgorithm(String value) {
-      this.value = value;
-    }
-
-    public String getValue() {
-      return value;
-    }
-  }
-
   /**
    * Get the type of credentials. This is not included in the JSON serialized representations.
    *
@@ -93,7 +78,7 @@ public interface Credentials {
   }
 
   /**
-   * Return true if this is an SCRAM credentials object.
+   * Return true if this is an SCRAM credentials object, return false otherwise.
    *
    * @return true if {@link #type()} equals {@link Type#SRCAM}
    */

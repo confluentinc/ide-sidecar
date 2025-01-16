@@ -2,7 +2,7 @@ package io.confluent.idesidecar.restapi.credentials;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import io.confluent.idesidecar.restapi.credentials.Credentials.HashAlgorithm;
+import io.confluent.idesidecar.restapi.credentials.ScramCredentials.HashAlgorithm;
 import org.junit.jupiter.api.Test;
 
 class ScramCredentialsTest extends RedactedTestBase<ScramCredentials> {
