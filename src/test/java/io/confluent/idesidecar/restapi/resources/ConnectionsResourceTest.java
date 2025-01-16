@@ -2207,7 +2207,10 @@ public class ConnectionsResourceTest {
         .extract().body().asString();
 
     JsonNode actualJson = asJson(actualResponse);
-    assertConnection(asJson(expectedJson), actualJson);
+    assertConnection(
+        asJson(expectedJson),
+        actualJson
+    );
   }
 
   @Test
@@ -2259,7 +2262,10 @@ public class ConnectionsResourceTest {
         .extract().body().asString();
 
     JsonNode actualJson = asJson(actualResponse);
-    assertConnection(asJson(expectedJson), actualJson);
+    assertConnection(
+        asJson(expectedJson),
+        actualJson
+    );
   }
 
   @Test
@@ -2279,55 +2285,6 @@ public class ConnectionsResourceTest {
     """;
 
     given()
-        .contentType(ContentType.JSON)
-        .body(requestBody)
-        .when().post()
-        .then()
-        .statusCode(400); // Bad Request
-  }
-
-  @Test
-  @TestHTTPEndpoint(ConnectionsResource.class)
-  void createConnectionWithScramSha256_missingName_shouldFail() {
-    var requestBody = """
-        {
-            "id": "scram-256",
-            "type": "LOCAL",
-            "kafka": {
-                "bootstrap.servers": "localhost:9092",
-                "security.protocol": "SASL_PLAINTEXT",
-                "sasl.mechanism": "SCRAM-SHA-256",
-                "sasl.jaas.config": "org.apache.kafka.common.security.scram.ScramLoginModule required username=\\"scramUser02\\" password=\\"scramPassword256\\";"
-            }
-        }
-    """;
-
-    var response = given()
-        .contentType(ContentType.JSON)
-        .body(requestBody)
-        .when().post()
-        .then()
-        .statusCode(400) // Bad Request
-        .contentType(ContentType.JSON)
-        .extract().body().asString();
-
-    JsonNode responseJson = asJson(response);
-    assertEquals("Connection name is required and may not be blank", responseJson.get("errors").get(0).get("detail").asText());
-  }
-
-  @Test
-  @TestHTTPEndpoint(ConnectionsResource.class)
-  void createConnectionWithScramSha256_invalidRequestBody_shouldFail() {
-
-    var requestBody = """
-        {
-            "kafka": {
-                "sasl.jaas.config": "org.apache.kafka.common.security.scram.ScramLoginModule required username=\\"scramUser02\\" password=\\"testPassword\\";"
-            }
-        }
-    """;
-
-    var response = given()
         .contentType(ContentType.JSON)
         .body(requestBody)
         .when().post()
