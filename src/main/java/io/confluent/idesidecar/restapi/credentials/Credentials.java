@@ -20,7 +20,8 @@ import java.util.Optional;
 @JsonSubTypes({
     @Type(value = BasicCredentials.class),
     @Type(value = ApiKeyAndSecret.class),
-    @Type(value = OAuthCredentials.class)
+    @Type(value = OAuthCredentials.class),
+    @Type(value = ScramCredentials.class)
 })
 @RegisterForReflection
 public interface Credentials {
@@ -44,6 +45,22 @@ public interface Credentials {
     MUTUAL_TLS,
     OAUTH2,
     API_KEY_AND_SECRET,
+    SCRAM
+  }
+
+  enum HashAlgorithm {
+    SCRAM_SHA_256("SCRAM-SHA-256"),
+    SCRAM_SHA_512("SCRAM-SHA-512");
+
+    private final String value;
+
+    HashAlgorithm(String value) {
+      this.value = value;
+    }
+
+    public String getValue() {
+      return value;
+    }
   }
 
   /**
@@ -73,6 +90,16 @@ public interface Credentials {
   @JsonIgnore
   default boolean isOauth2() {
     return type() == Type.OAUTH2;
+  }
+
+  /**
+   * Return true if this is an SCRAM credentials object.
+   *
+   * @return true if {@link #type()} equals {@link Type#SRCAM}
+   */
+  @JsonIgnore
+  default boolean isScram() {
+    return type() == Type.SCRAM;
   }
 
   /**
