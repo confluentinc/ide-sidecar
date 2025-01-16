@@ -95,7 +95,7 @@ public interface Credentials {
   /**
    * Return true if this is an SCRAM credentials object.
    *
-   * @return true if {@link #type()} equals {@link Type#OAUTH2}
+   * @return true if {@link #type()} equals {@link Type#SRCAM}
    */
   @JsonIgnore
   default boolean isScram() {
