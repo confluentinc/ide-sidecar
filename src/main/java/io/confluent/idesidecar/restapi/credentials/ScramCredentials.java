@@ -1,5 +1,7 @@
 package io.confluent.idesidecar.restapi.credentials;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.confluent.idesidecar.restapi.exceptions.Failure;
 import io.confluent.idesidecar.restapi.exceptions.Failure.Error;
@@ -14,6 +16,10 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 @Schema(description = "Scram authentication credentials")
 @RecordBuilder
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
+@JsonSubTypes({
+    @JsonSubTypes.Type(value = ScramCredentials.class, name = "SCRAM")
+})
 public record ScramCredentials(
     @Schema(description = "Hash algorithm")
     @JsonProperty(value = "hash_algorithm")
@@ -51,16 +57,20 @@ public record ScramCredentials(
     config.put("sasl.mechanism", hashAlgorithm.getValue());
     var tlsConfig = options.tlsConfig();
     if (tlsConfig.enabled()) {
-      config.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_SSL");
+      config.put(
+          CommonClientConfigs.SECURITY_PROTOCOL_CONFIG,
+          "SASL_SSL"
+      );
     } else {
-      config.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT");
+      config.put(
+          CommonClientConfigs.SECURITY_PROTOCOL_CONFIG,
+          "SASL_PLAINTEXT"
+      );
     }
 
     System.out.println(config);
     return Optional.of(config);
   }
-
-
 
   @Override
   public void validate(
@@ -71,19 +81,31 @@ public record ScramCredentials(
     if (hashAlgorithm == null) {
       errors.add(
           Error.create()
-              .withDetail("%s Hash algorithm is required and may not be blank", what)
-              .withSource("%s.hash_algorithm", path)
+              .withDetail(
+                  "%s Hash algorithm is required and may not be blank",
+                  what
+              )
+              .withSource(
+                  "%s.hash_algorithm",
+                  path
+              )
       );
     }
+
     password.validate(errors, path, what);
 
     if (username == null || username.isBlank()) {
       errors.add(
           Error.create()
-              .withDetail("%s Username is required and may not be blank", what)
-              .withSource("%s.username", path)
+              .withDetail(
+                  "%s Username is required and may not be blank",
+                  what
+              )
+              .withSource(
+                  "%s.username",
+                  path
+              )
       );
     }
   }
 }
-
