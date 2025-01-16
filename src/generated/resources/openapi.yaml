@@ -157,7 +157,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Failure"
         "401":
-          description: Could not authenticate with updated connection configuration
+          description: Could not authenticate
           content:
             application/json:
               schema:
@@ -180,6 +180,45 @@ paths:
       responses:
         "204":
           description: No Content
+    patch:
+      tags:
+      - Connections Resource
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JsonMergePatch"
+      responses:
+        "200":
+          description: Connection updated with PATCH
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Connection"
+        "404":
+          description: Connection not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Failure"
+        "401":
+          description: Could not authenticate
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Failure"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Failure"
   /gateway/v1/feature-flags/{id}/value:
     get:
       tags:
@@ -669,10 +708,17 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Error"
+    HashAlgorithm:
+      enum:
+      - SCRAM_SHA_256
+      - SCRAM_SHA_512
+      type: string
     Instant:
       format: date-time
       type: string
       example: 2022-03-10T16:15:50Z
+    JsonMergePatch:
+      type: object
     JsonNode:
       type: object
       properties:
@@ -1013,6 +1059,23 @@ components:
           type: object
           allOf:
           - $ref: "#/components/schemas/AuthErrors"
+    ScramCredentials:
+      description: Scram authentication credentials
+      required:
+      - hash_algorithm
+      - username
+      - password
+      type: object
+      properties:
+        hash_algorithm:
+          description: Hash algorithm
+          type: string
+          allOf:
+          - $ref: "#/components/schemas/HashAlgorithm"
+        username:
+          type: string
+        password:
+          $ref: "#/components/schemas/Password"
     SidecarAccessToken:
       type: object
       properties:
@@ -1148,15 +1211,15 @@ components:
     HealthResponse:
       type: object
       properties:
+        checks:
+          type: array
+          items:
+            $ref: "#/components/schemas/HealthCheck"
         status:
           enum:
           - UP
           - DOWN
           type: string
-        checks:
-          type: array
-          items:
-            $ref: "#/components/schemas/HealthCheck"
     HealthCheck:
       type: object
       properties:

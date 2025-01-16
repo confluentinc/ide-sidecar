@@ -12,9 +12,21 @@ class ScramCredentialsTest extends RedactedTestBase<ScramCredentials> {
     HashAlgorithm hashAlgorithm = HashAlgorithm.SCRAM_SHA_256;
     var username = "username";
     var password = new Password("password".toCharArray());
-    var scramCredentials = new ScramCredentials(hashAlgorithm, username, password);
-    assertEquals(username, scramCredentials.username());
-    assertEquals(Redactable.MASKED_VALUE, scramCredentials.password().toString());
+    var scramCredentials = new ScramCredentials(
+        hashAlgorithm,
+        username,
+        password
+    );
+    assertEquals(
+        username,
+        scramCredentials.username()
+    );
+    assertEquals(
+        Redactable.MASKED_VALUE,
+        scramCredentials
+            .password()
+            .toString()
+    );
   }
 
   @Test
