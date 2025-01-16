@@ -1,6 +1,5 @@
 package io.confluent.idesidecar.restapi.credentials;
 
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.confluent.idesidecar.restapi.exceptions.Failure;
 import io.confluent.idesidecar.restapi.exceptions.Failure.Error;
@@ -10,7 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-
+import org.apache.kafka.clients.CommonClientConfigs;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 @Schema(description = "Scram authentication credentials")
@@ -34,7 +33,6 @@ public record ScramCredentials(
   private static final String SCRAM_LOGIN_MODULE_CLASS =
       "org.apache.kafka.common.security.scram.ScramLoginModule";
 
-
   @Override
   public Optional<Map<String, String>> kafkaClientProperties(
       KafkaConnectionOptions options
@@ -50,8 +48,13 @@ public record ScramCredentials(
 
     var config = new LinkedHashMap<String, String>();
     config.put("sasl.jaas.config", jaasConfig);
-    config.put("sasl.mechanism", "SCRAM-SHA-256");
-    config.put("security.protocol", "SASL_PLAINTEXT");
+    config.put("sasl.mechanism", hashAlgorithm.getValue());
+    var tlsConfig = options.tlsConfig();
+    if (tlsConfig.enabled()) {
+      config.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_SSL");
+    } else {
+      config.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT");
+    }
 
     System.out.println(config);
     return Optional.of(config);
