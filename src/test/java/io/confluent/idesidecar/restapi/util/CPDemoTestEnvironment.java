@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import com.github.dockerjava.api.model.Container;
 import io.confluent.idesidecar.restapi.credentials.*;
-import io.confluent.idesidecar.restapi.credentials.Credentials.HashAlgorithm;
+import io.confluent.idesidecar.restapi.credentials.ScramCredentials.HashAlgorithm;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionSpecKafkaClusterConfigBuilder;
 import io.confluent.idesidecar.restapi.models.ConnectionSpecSchemaRegistryConfigBuilder;
