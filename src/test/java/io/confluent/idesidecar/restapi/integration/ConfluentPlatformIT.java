@@ -75,6 +75,28 @@ public class ConfluentPlatformIT {
     }
   }
 
+  @Nested
+  class DirectWithSaslScramConnectionTests {
+    @QuarkusIntegrationTest
+    @Tag("io.confluent.common.utils.IntegrationTest")
+    @TestProfile(NoAccessFilterProfile.class)
+    @Nested
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    class TopicTests extends AbstractIT implements TopicV3Suite {
+
+      @Override
+      public CPDemoTestEnvironment environment() {
+        return TEST_ENVIRONMENT;
+      }
+
+      @BeforeEach
+      @Override
+      public void setupConnection() {
+        setupConnection(this, environment().directConnectionSaslScramAuth());
+      }
+    }
+  }
+
   @QuarkusIntegrationTest
   @Tag("io.confluent.common.utils.IntegrationTest")
   @TestProfile(NoAccessFilterProfile.class)
