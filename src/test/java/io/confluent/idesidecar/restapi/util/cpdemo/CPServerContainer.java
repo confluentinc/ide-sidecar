@@ -22,8 +22,10 @@ public class CPServerContainer extends GenericContainer<CPServerContainer> {
   private final Integer tokenPort;
   private final Integer sslPort;
   private final Integer clearPort;
+  private final Integer internalClearPort;
   private final Integer internalHostPort;
   private final Integer tokenHostPort;
+  private final Integer scramPort;
 
   public CPServerContainer(
       String tag,
@@ -34,8 +36,10 @@ public class CPServerContainer extends GenericContainer<CPServerContainer> {
       Integer tokenPort,
       Integer sslPort,
       Integer clearPort,
+      Integer internalClearPort,
       Integer internalHostPort,
-      Integer tokenHostPort
+      Integer tokenHostPort,
+      Integer scramPort
   ) {
     super(DEFAULT_IMAGE + ":" + tag);
     this.tag = tag;
@@ -45,16 +49,19 @@ public class CPServerContainer extends GenericContainer<CPServerContainer> {
     this.tokenPort = tokenPort;
     this.sslPort = sslPort;
     this.clearPort = clearPort;
+    this.internalClearPort = internalClearPort;
     this.internalHostPort = internalHostPort;
     this.tokenHostPort = tokenHostPort;
+    this.scramPort = scramPort;
 
     super.withNetwork(network);
     super.withNetworkAliases(containerName);
     super
         .withEnv(kafkaZookeeperEnv())
         .withEnv(listenersEnv(
-            internalPort, tokenPort, sslPort, clearPort, internalHostPort, tokenHostPort)
-        )
+            internalPort, tokenPort, sslPort, clearPort, internalClearPort, internalHostPort,
+            tokenHostPort, scramPort
+        ))
         .withEnv(sslEnv())
         .withEnv(confluentSchemaValidationEnv())
         .withEnv(mdsEnv(mdsPort))
@@ -82,6 +89,7 @@ public class CPServerContainer extends GenericContainer<CPServerContainer> {
     super.addFixedExposedPort(clearPort, clearPort);
     super.addFixedExposedPort(internalHostPort, internalHostPort);
     super.addFixedExposedPort(tokenHostPort, tokenHostPort);
+    super.addFixedExposedPort(scramPort, scramPort);
 
     // This just sets the Waiting strategy, doesn't actually wait. I know, it's confusing.
     super.waitingFor(Wait.forHealthcheck());
@@ -110,9 +118,11 @@ public class CPServerContainer extends GenericContainer<CPServerContainer> {
    * @param internalPort      The port for the INTERNAL listener
    * @param tokenPort         The port for the TOKEN listener
    * @param sslPort           The port for the SSL listener
-   * @param clearPort         The port for the CLEAR listener
+   * @param clearPort         The port for the CLEAR listener on localhost
+   * @param internalClearPort The port for the CLEAR listener
    * @param internalHostPort  The port for the INTERNAL listener on localhost
    * @param tokenHostPort     The port for the TOKEN listener on localhost
+   * @param scramPort         The port for the SCRAM listener on localhost
    */
   public CPServerContainer(
       Network network,
@@ -122,11 +132,13 @@ public class CPServerContainer extends GenericContainer<CPServerContainer> {
       Integer tokenPort,
       Integer sslPort,
       Integer clearPort,
+      Integer internalClearPort,
       Integer internalHostPort,
-      Integer tokenHostPort
+      Integer tokenHostPort,
+      Integer scramPort
   ) {
-    this(DEFAULT_CONFLUENT_DOCKER_TAG, network, containerName, mdsPort, internalPort, tokenPort, sslPort, clearPort,
-        internalHostPort, tokenHostPort);
+    this(DEFAULT_CONFLUENT_DOCKER_TAG, network, containerName, mdsPort, internalPort, tokenPort,
+        sslPort, clearPort, internalClearPort, internalHostPort, tokenHostPort, scramPort);
   }
 
   public Map<String, String> kafkaZookeeperEnv() {
@@ -152,33 +164,42 @@ public class CPServerContainer extends GenericContainer<CPServerContainer> {
       Integer tokenPort,
       Integer sslPort,
       Integer clearPort,
+      Integer internalClearPort,
       Integer internalHostPort,
-      Integer tokenHostPort
+      Integer tokenHostPort,
+      Integer scramPort
   ) {
     var env = new HashMap<String, String>();
-    env.put("KAFKA_LISTENER_SECURITY_PROTOCOL_MAP",
-        "INTERNAL:SASL_PLAINTEXT,INTERNALHOST:SASL_PLAINTEXT,TOKEN:SASL_SSL,TOKENHOST:SASL_SSL,SSL:SSL,CLEAR:PLAINTEXT");
+    env.put(
+        "KAFKA_LISTENER_SECURITY_PROTOCOL_MAP",
+        "INTERNAL:SASL_PLAINTEXT,INTERNALHOST:SASL_PLAINTEXT,TOKEN:SASL_SSL,TOKENHOST:SASL_SSL,"
+            + "SSL:SSL,CLEAR:PLAINTEXT,INTERNALCLEAR:PLAINTEXT,SCRAMHOST:SASL_PLAINTEXT"
+    );
     env.put("KAFKA_INTER_BROKER_LISTENER_NAME", "INTERNAL");
     env.put("KAFKA_LISTENERS",
-        "INTERNAL://%s:%d,TOKEN://%s:%d,SSL://%s:%d,CLEAR://%s:%d,INTERNALHOST://%s:%d,TOKENHOST://%s:%d".formatted(
+        "INTERNAL://%s:%d,TOKEN://%s:%d,SSL://%s:%d,CLEAR://%s:%d,INTERNALCLEAR://%s:%d,INTERNALHOST://%s:%d,TOKENHOST://%s:%d,SCRAMHOST://%s:%d".formatted(
             containerName, internalPort,
             containerName, tokenPort,
             containerName, sslPort,
             containerName, clearPort,
+            containerName, internalClearPort,
             containerName, internalHostPort,
-            containerName, tokenHostPort
+            containerName, tokenHostPort,
+            containerName, scramPort
         ));
     env.put("KAFKA_ADVERTISED_LISTENERS",
-        "INTERNAL://%s:%d,TOKEN://%s:%d,SSL://%s:%d,CLEAR://%s:%d,INTERNALHOST://%s:%d,TOKENHOST://%s:%d".formatted(
+        "INTERNAL://%s:%d,TOKEN://%s:%d,SSL://%s:%d,CLEAR://%s:%d,INTERNALCLEAR://%s:%d,INTERNALHOST://%s:%d,TOKENHOST://%s:%d,SCRAMHOST://%s:%d".formatted(
             containerName, internalPort,
             containerName, tokenPort,
             "localhost", sslPort,
             "localhost", clearPort,
+            containerName, internalClearPort,
             "localhost", internalHostPort,
-            "localhost", tokenHostPort
+            "localhost", tokenHostPort,
+            "localhost", scramPort
         ));
     env.put("KAFKA_SASL_MECHANISM_INTER_BROKER_PROTOCOL", "PLAIN");
-    env.put("KAFKA_SASL_ENABLED_MECHANISMS", "PLAIN, OAUTHBEARER");
+    env.put("KAFKA_SASL_ENABLED_MECHANISMS", "PLAIN, OAUTHBEARER, SCRAM-SHA-256");
 
     env.put("KAFKA_LISTENER_NAME_INTERNAL_SASL_ENABLED_MECHANISMS", "PLAIN");
     env.put("KAFKA_LISTENER_NAME_INTERNAL_PLAIN_SASL_JAAS_CONFIG", """
@@ -218,6 +239,15 @@ public class CPServerContainer extends GenericContainer<CPServerContainer> {
     env.put("KAFKA_LISTENER_NAME_TOKENHOST_OAUTHBEARER_SASL_JAAS_CONFIG", """
         org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required \\
         publicKeyPath="/tmp/conf/public.pem";
+        """);
+
+    // Configure SCRAMHOST listener
+    env.put("KAFKA_LISTENER_NAME_SCRAMHOST_SCRAM-SHA-256_SASL_ENABLED_MECHANISMS", "SCRAM-SHA-256");
+    env.put("KAFKA_LISTENER_NAME_SCRAMHOST_SCRAM-SHA-256_SASL_JAAS_CONFIG", """
+        org.apache.kafka.common.security.scram.ScramLoginModule required \\
+        username="admin" \\
+        password="admin-secret" \\
+        user_admin="admin-secret";
         """);
 
     env.put("KAFKA_LISTENER_NAME_SSL_SSL_PRINCIPAL_MAPPING_RULES",
@@ -372,5 +402,9 @@ public class CPServerContainer extends GenericContainer<CPServerContainer> {
 
   public Integer getClearPort() {
     return clearPort;
+  }
+
+  public Integer getScramPort() {
+    return scramPort;
   }
 }
