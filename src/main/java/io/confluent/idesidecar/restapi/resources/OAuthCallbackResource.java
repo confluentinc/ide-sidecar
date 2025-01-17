@@ -16,6 +16,7 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
+import java.util.Objects;
 import javax.net.ssl.SSLHandshakeException;
 import org.eclipse.microprofile.config.ConfigProvider;
 
@@ -27,14 +28,14 @@ import org.eclipse.microprofile.config.ConfigProvider;
 @Path("/gateway/v1/callback-vscode-docs")
 public class OAuthCallbackResource {
 
-  private static final String CCLOUD_HOMEPAGE_URI = ConfigProvider.getConfig()
+  static final String CCLOUD_HOMEPAGE_URI = ConfigProvider.getConfig()
       .getOptionalValue("ide-sidecar.connections.ccloud.resources.homepage-uri", String.class)
       .orElse("https://confluent.cloud");
 
   // upon rendering the callback HTML, the user will be redirected to either their locally-running
   // VS Code instance (where the extension is installed, and the auth flow was initiated) or the
   // VS Code extension marketplace page for the extension.
-  private static final String CCLOUD_OAUTH_VSCODE_EXTENSION_URI = ConfigProvider.getConfig()
+  static final String CCLOUD_OAUTH_VSCODE_EXTENSION_URI = ConfigProvider.getConfig()
       .getOptionalValue("ide-sidecar.connections.ccloud.oauth.vscode-extension-uri", String.class)
       .orElse("https://marketplace.visualstudio.com/items?itemName=confluentinc.vscode-confluent");
 
@@ -55,11 +56,15 @@ public class OAuthCallbackResource {
 
   @GET
   @Produces(MediaType.TEXT_HTML)
-  public Uni<String> callback(@QueryParam("code") String authorizationCode,
-                              @QueryParam("state") String oauthState) {
+  public Uni<String> callback(
+      @QueryParam("code") String authorizationCode,
+      @QueryParam("state") String oauthState
+  ) {
     try {
       var connectionState = mgr.getConnectionStateByInternalId(oauthState);
       if (connectionState instanceof CCloudConnectionState cCloudConnectionState) {
+        var redirectUri = getRedirectUri(cCloudConnectionState);
+
         var response = cCloudConnectionState
             .getOauthContext()
             .createTokensFromAuthorizationCode(
@@ -70,10 +75,10 @@ public class OAuthCallbackResource {
                 callback
                     .data("email", authContext.getUserEmail())
                     .data("confluent_cloud_homepage", CCLOUD_HOMEPAGE_URI)
-                    .data("vscode_redirect_uri", CCLOUD_OAUTH_VSCODE_EXTENSION_URI)
+                    .data("vscode_redirect_uri", redirectUri)
                     .render()
             )
-            .recover(this::renderFailure)
+            .recover((error) -> renderFailure(error, redirectUri))
             // Upon completion of the auth flow, refresh the status of the CCloud connection
             .compose(renderedTemplate ->
                 cCloudConnectionState.refreshStatus().map(ignored -> renderedTemplate)
@@ -109,7 +114,32 @@ public class OAuthCallbackResource {
     }
   }
 
+  /**
+   * Returns the URI that the callback page should redirect to for a specific CCloud connection.
+   * Attempts to read the URI from the connection's spec. If null, returns the URI set via the
+   * application config <code>ide-sidecar.connections.ccloud.oauth.vscode-extension-uri</code>.
+   *
+   * @param connection the CCloud connection
+   * @return the URI
+   */
+  private String getRedirectUri(CCloudConnectionState connection) {
+    var connectionSpec = connection.getSpec();
+
+    if (connectionSpec != null) {
+      var ccloudConfig = connectionSpec.ccloudConfig();
+      if (ccloudConfig != null && ccloudConfig.ideAuthCallbackUri() != null) {
+        return ccloudConfig.ideAuthCallbackUri();
+      }
+    }
+
+    return CCLOUD_OAUTH_VSCODE_EXTENSION_URI;
+  }
+
   private Future<String> renderFailure(Throwable error) {
+    return renderFailure(error, null);
+  }
+
+  private Future<String> renderFailure(Throwable error, String redirectUri) {
     Log.error(error);
     var errorMessage = error instanceof SSLHandshakeException
         ? TLS_HANDSHAKE_ERROR_MESSAGE
@@ -117,7 +147,7 @@ public class OAuthCallbackResource {
     return Future.succeededFuture(
         callbackFailure
             .data("error", errorMessage)
-            .data("vscode_redirect_uri", CCLOUD_OAUTH_VSCODE_EXTENSION_URI)
+            .data("vscode_redirect_uri", Objects.requireNonNullElse(redirectUri, ""))
             .render()
     );
   }

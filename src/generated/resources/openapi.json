@@ -669,9 +669,6 @@
       "AuthError" : {
         "type" : "object",
         "properties" : {
-          "created_at" : {
-            "$ref" : "#/components/schemas/Instant"
-          },
           "message" : {
             "type" : "string"
           },
@@ -737,13 +734,18 @@
       },
       "CCloudConfig" : {
         "description" : "Configuration for Confluent Cloud connections",
-        "required" : [ "organization_id" ],
         "type" : "object",
         "properties" : {
           "organization_id" : {
             "description" : "The identifier of the CCloud organization to use. The user's default organization is used when absent.",
             "maxLength" : 36,
             "minLength" : 36,
+            "type" : "string"
+          },
+          "ide_auth_callback_uri" : {
+            "description" : "The URI that users will be redirected to after successfully completing the authentication flow with Confluent Cloud.",
+            "maxLength" : 200,
+            "minLength" : 10,
             "type" : "string"
           }
         }
@@ -1623,12 +1625,12 @@
       "HealthCheck" : {
         "type" : "object",
         "properties" : {
-          "name" : {
-            "type" : "string"
-          },
           "data" : {
             "type" : "object",
             "nullable" : true
+          },
+          "name" : {
+            "type" : "string"
           },
           "status" : {
             "enum" : [ "UP", "DOWN" ],
