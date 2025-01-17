@@ -1,6 +1,7 @@
 package io.confluent.idesidecar.restapi.util;
 
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.testcontainers.Testcontainers.exposeHostPorts;
 
 import com.github.dockerjava.api.model.Container;
 import io.confluent.idesidecar.restapi.credentials.*;
@@ -15,6 +16,8 @@ import io.confluent.idesidecar.restapi.util.cpdemo.ZookeeperContainer;
 import io.quarkus.logging.Log;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +29,7 @@ import org.junit.runners.model.Statement;
 import org.junitpioneer.jupiter.SetEnvironmentVariable;
 import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.Network;
+import org.testcontainers.containers.PortForwardingContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.lifecycle.Startables;
 import org.testcontainers.utility.TestcontainersConfiguration;
@@ -43,6 +47,7 @@ public class CPDemoTestEnvironment implements TestEnvironment {
   private CPServerContainer kafka1;
   private CPServerContainer kafka2;
   private SchemaRegistryContainer schemaRegistry;
+  private MiniKdcSetup kdc;
 
   private static final List<String> CP_DEMO_CONTAINERS = List.of(
       "tools", "zookeeper", "kafka1", "kafka2", "openldap", "schemaregistry"
@@ -65,6 +70,11 @@ public class CPDemoTestEnvironment implements TestEnvironment {
     runScript("src/test/resources/cp-demo-scripts/setup.sh");
 
     network = createReusableNetwork("cp-demo");
+    var p = new PortForwardingContainer(network);
+    p.start();
+
+    setupKDC();
+
     // Check if zookeeper, kafka1, kafka2, ldap, schemaRegistry are already running
     Log.info("Starting Tools...");
     tools = new ToolsContainer(network);
@@ -93,7 +103,8 @@ public class CPDemoTestEnvironment implements TestEnvironment {
         11091,
         12091,
         13091,
-        14091
+        14091,
+        16091
     );
     kafka1.withEnv(Map.of(
         "KAFKA_BROKER_ID", "1",
@@ -109,7 +120,8 @@ public class CPDemoTestEnvironment implements TestEnvironment {
         11092,
         12092,
         13092,
-        14092
+        14092,
+        16092
     );
     kafka2.withEnv(Map.of(
         "KAFKA_BROKER_ID", "2",
@@ -130,6 +142,43 @@ public class CPDemoTestEnvironment implements TestEnvironment {
     Log.info("Starting Schema Registry...");
     schemaRegistry = new SchemaRegistryContainer(network);
     schemaRegistry.start();
+  }
+
+  private void setupKDC() {
+    // Start KDC
+    kdc = new MiniKdcSetup();
+    kdc.startKdc();
+
+    // Expose the KDC port to all the containers
+    exposeHostPorts(kdc.getPort());
+
+    // Copy the keytab file to the mounted volume
+    try {
+      Files.copy(
+          kdc.getKeytabFile().toPath(),
+          Path.of(".cp-demo/scripts/security/kafka.keytab"),
+          java.nio.file.StandardCopyOption.REPLACE_EXISTING
+      );
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
+    // Copy the krb5 conf to the mounted volume
+    try {
+      var contents = Files.readString(kdc.getKrb5conf().toPath());
+      contents = contents.replace("localhost", "host.testcontainers.internal");
+      Files.writeString(Path.of(".cp-demo/scripts/security/krb5.conf"), contents);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
+    // Copy the krb5 conf to krb5-host.conf
+    try {
+      var contents = Files.readString(kdc.getKrb5conf().toPath());
+      Files.writeString(Path.of(".cp-demo/scripts/security/krb5-host.conf"), contents);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   /**
@@ -365,6 +414,29 @@ public class CPDemoTestEnvironment implements TestEnvironment {
                 .build(),
             null
         ));
+  }
+
+  public Optional<ConnectionSpec> directConnectionKerberosAuth() {
+    return Optional.of(
+        ConnectionSpec.createDirect(
+            "direct-connection-kerberos-auth",
+            "Direct connection (SASL/GSSAPI Auth)",
+            ConnectionSpecKafkaClusterConfigBuilder
+                .builder()
+                .bootstrapServers("localhost:16091")
+                .credentials(
+                    new KerberosCredentials(
+                        "kafka/client@EXAMPLE.COM",
+                        ".cp-demo/scripts/security/kafka.keytab",
+                        null
+                    )
+                )
+                // Disable TLS
+                .tlsConfig(TLSConfigBuilder.builder().enabled(false).build())
+                .build(),
+            null
+        )
+    );
   }
 
   /**
