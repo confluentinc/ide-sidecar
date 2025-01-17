@@ -3,6 +3,7 @@ package io.confluent.idesidecar.restapi.credentials;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import io.confluent.idesidecar.restapi.exceptions.Failure;
 import io.confluent.idesidecar.restapi.exceptions.Failure.Error;
 import io.soabase.recordbuilder.core.RecordBuilder;
@@ -20,6 +21,7 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
 @JsonSubTypes({
     @JsonSubTypes.Type(value = ScramCredentials.class, name = "SCRAM")
 })
+@JsonTypeName("SCRAM")
 public record ScramCredentials(
     @Schema(description = "Hash algorithm")
     @JsonProperty(value = "hash_algorithm")

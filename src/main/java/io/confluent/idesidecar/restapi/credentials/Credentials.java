@@ -16,7 +16,9 @@ import java.util.Optional;
 /**
  * Base interface for credentials objects used with Kafka and Schema Registry clients.
  */
-@JsonTypeInfo(use = JsonTypeInfo.Id.DEDUCTION)
+@JsonTypeInfo(
+    use = JsonTypeInfo.Id.DEDUCTION
+    )
 @JsonSubTypes({
     @Type(value = BasicCredentials.class),
     @Type(value = ApiKeyAndSecret.class),
