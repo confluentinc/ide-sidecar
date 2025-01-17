@@ -311,6 +311,21 @@
       <version>43</version>
       <scope>compile</scope>
     </dependency>
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-minikdc</artifactId>
+      <version>3.4.1</version>
+      <scope>test</scope>
+    </dependency>
+    <!--
+    https://github.com/testcontainers/testcontainers-java/blob/2707f3143d3cfa8351f727bfd5752c1155818bd6/core/build.gradle#L105
+    -->
+    <dependency>
+      <groupId>org.glassfish.main.external</groupId>
+      <artifactId>trilead-ssh2-repackaged</artifactId>
+      <version>4.1.2</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <profiles>

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.confluent.idesidecar.restapi.exceptions.Failure.Error;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import io.soabase.recordbuilder.core.RecordBuilder;
+import jakarta.validation.constraints.Null;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -28,13 +29,22 @@ public record KerberosCredentials(
 
     @Schema(description = "Service name that matches the primary name of the " +
         "Kafka brokers configured in the Broker JAAS file. Defaults to 'kafka'.",
-        defaultValue = "kafka")
+        defaultValue = DEFAULT_SASL_KERBEROS_SERVICE_NAME)
     @JsonProperty(value = "service_name")
+    @Null
     String serviceName
 ) implements Credentials {
 
+  private static final String DEFAULT_SASL_KERBEROS_SERVICE_NAME = "kafka";
+
   private static final String KERBEROS_LOGIN_MODULE_CLASS =
       "com.sun.security.auth.module.Krb5LoginModule";
+
+  public KerberosCredentials {
+    if (serviceName == null) {
+      serviceName = DEFAULT_SASL_KERBEROS_SERVICE_NAME;
+    }
+  }
 
   @Override
   public Type type() {
@@ -61,6 +71,8 @@ public record KerberosCredentials(
             "useKeyTab=true " +
             "doNotPrompt=true " +
             "useTicketCache=false " +
+            "refreshKrb5Config=true " +
+            "debug=true " +
             "keyTab=\"%s\" " +
             "principal=\"%s\";"
         ).formatted(

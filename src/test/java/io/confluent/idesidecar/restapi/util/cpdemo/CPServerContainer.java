@@ -24,6 +24,7 @@ public class CPServerContainer extends GenericContainer<CPServerContainer> {
   private final Integer clearPort;
   private final Integer internalHostPort;
   private final Integer tokenHostPort;
+  private final Integer kerberosPort;
 
   public CPServerContainer(
       String tag,
@@ -35,7 +36,8 @@ public class CPServerContainer extends GenericContainer<CPServerContainer> {
       Integer sslPort,
       Integer clearPort,
       Integer internalHostPort,
-      Integer tokenHostPort
+      Integer tokenHostPort,
+      Integer kerberosPort
   ) {
     super(DEFAULT_IMAGE + ":" + tag);
     this.tag = tag;
@@ -47,13 +49,20 @@ public class CPServerContainer extends GenericContainer<CPServerContainer> {
     this.clearPort = clearPort;
     this.internalHostPort = internalHostPort;
     this.tokenHostPort = tokenHostPort;
+    this.kerberosPort = kerberosPort;
 
     super.withNetwork(network);
     super.withNetworkAliases(containerName);
     super
         .withEnv(kafkaZookeeperEnv())
         .withEnv(listenersEnv(
-            internalPort, tokenPort, sslPort, clearPort, internalHostPort, tokenHostPort)
+            internalPort,
+            tokenPort,
+            sslPort,
+            clearPort,
+            internalHostPort,
+            tokenHostPort,
+            kerberosPort)
         )
         .withEnv(sslEnv())
         .withEnv(confluentSchemaValidationEnv())
@@ -82,6 +91,7 @@ public class CPServerContainer extends GenericContainer<CPServerContainer> {
     super.addFixedExposedPort(clearPort, clearPort);
     super.addFixedExposedPort(internalHostPort, internalHostPort);
     super.addFixedExposedPort(tokenHostPort, tokenHostPort);
+    super.addFixedExposedPort(kerberosPort, kerberosPort);
 
     // This just sets the Waiting strategy, doesn't actually wait. I know, it's confusing.
     super.waitingFor(Wait.forHealthcheck());
@@ -98,6 +108,10 @@ public class CPServerContainer extends GenericContainer<CPServerContainer> {
         ".cp-demo/scripts/security",
         "/etc/kafka/secrets"
     );
+    super.withFileSystemBind(
+        ".cp-demo/scripts/security/krb5.conf",
+        "/etc/krb5.conf"
+    );
     super.withReuse(true);
   }
 
@@ -113,6 +127,7 @@ public class CPServerContainer extends GenericContainer<CPServerContainer> {
    * @param clearPort         The port for the CLEAR listener
    * @param internalHostPort  The port for the INTERNAL listener on localhost
    * @param tokenHostPort     The port for the TOKEN listener on localhost
+   * @param kerberosPort      The port for the Kerberos KDC
    */
   public CPServerContainer(
       Network network,
@@ -123,10 +138,22 @@ public class CPServerContainer extends GenericContainer<CPServerContainer> {
       Integer sslPort,
       Integer clearPort,
       Integer internalHostPort,
-      Integer tokenHostPort
+      Integer tokenHostPort,
+      Integer kerberosPort
   ) {
-    this(DEFAULT_CONFLUENT_DOCKER_TAG, network, containerName, mdsPort, internalPort, tokenPort, sslPort, clearPort,
-        internalHostPort, tokenHostPort);
+    this(
+        DEFAULT_CONFLUENT_DOCKER_TAG,
+        network,
+        containerName,
+        mdsPort,
+        internalPort,
+        tokenPort,
+        sslPort,
+        clearPort,
+        internalHostPort,
+        tokenHostPort,
+        kerberosPort
+    );
   }
 
   public Map<String, String> kafkaZookeeperEnv() {
@@ -153,32 +180,35 @@ public class CPServerContainer extends GenericContainer<CPServerContainer> {
       Integer sslPort,
       Integer clearPort,
       Integer internalHostPort,
-      Integer tokenHostPort
+      Integer tokenHostPort,
+      Integer kerberosPort
   ) {
     var env = new HashMap<String, String>();
     env.put("KAFKA_LISTENER_SECURITY_PROTOCOL_MAP",
-        "INTERNAL:SASL_PLAINTEXT,INTERNALHOST:SASL_PLAINTEXT,TOKEN:SASL_SSL,TOKENHOST:SASL_SSL,SSL:SSL,CLEAR:PLAINTEXT");
+        "INTERNAL:SASL_PLAINTEXT,INTERNALHOST:SASL_PLAINTEXT,TOKEN:SASL_SSL,TOKENHOST:SASL_SSL,SSL:SSL,CLEAR:PLAINTEXT,KERBEROS:SASL_PLAINTEXT");
     env.put("KAFKA_INTER_BROKER_LISTENER_NAME", "INTERNAL");
     env.put("KAFKA_LISTENERS",
-        "INTERNAL://%s:%d,TOKEN://%s:%d,SSL://%s:%d,CLEAR://%s:%d,INTERNALHOST://%s:%d,TOKENHOST://%s:%d".formatted(
+        "INTERNAL://%s:%d,TOKEN://%s:%d,SSL://%s:%d,CLEAR://%s:%d,INTERNALHOST://%s:%d,TOKENHOST://%s:%d,KERBEROS://%s:%d".formatted(
             containerName, internalPort,
             containerName, tokenPort,
             containerName, sslPort,
             containerName, clearPort,
             containerName, internalHostPort,
-            containerName, tokenHostPort
+            containerName, tokenHostPort,
+            containerName, kerberosPort
         ));
     env.put("KAFKA_ADVERTISED_LISTENERS",
-        "INTERNAL://%s:%d,TOKEN://%s:%d,SSL://%s:%d,CLEAR://%s:%d,INTERNALHOST://%s:%d,TOKENHOST://%s:%d".formatted(
+        "INTERNAL://%s:%d,TOKEN://%s:%d,SSL://%s:%d,CLEAR://%s:%d,INTERNALHOST://%s:%d,TOKENHOST://%s:%d,KERBEROS://%s:%d".formatted(
             containerName, internalPort,
             containerName, tokenPort,
             "localhost", sslPort,
             "localhost", clearPort,
             "localhost", internalHostPort,
-            "localhost", tokenHostPort
+            "localhost", tokenHostPort,
+            "localhost", kerberosPort
         ));
     env.put("KAFKA_SASL_MECHANISM_INTER_BROKER_PROTOCOL", "PLAIN");
-    env.put("KAFKA_SASL_ENABLED_MECHANISMS", "PLAIN, OAUTHBEARER");
+    env.put("KAFKA_SASL_ENABLED_MECHANISMS", "PLAIN, OAUTHBEARER, GSSAPI");
 
     env.put("KAFKA_LISTENER_NAME_INTERNAL_SASL_ENABLED_MECHANISMS", "PLAIN");
     env.put("KAFKA_LISTENER_NAME_INTERNAL_PLAIN_SASL_JAAS_CONFIG", """
@@ -224,6 +254,18 @@ public class CPServerContainer extends GenericContainer<CPServerContainer> {
         "RULE:^CN=([a-zA-Z0-9.]*).*$$/$$1/ , DEFAULT");
     env.put("KAFKA_LISTENER_NAME_TOKEN_SSL_PRINCIPAL_MAPPING_RULES",
         "RULE:^CN=([a-zA-Z0-9.]*).*$$/$$1/ , DEFAULT");
+
+    // Configure GSSAPI listener for Kerberos
+    env.put("KAFKA_LISTENER_NAME_KERBEROS_SASL_ENABLED_MECHANISMS", "GSSAPI");
+    env.put("KAFKA_LISTENER_NAME_KERBEROS_SASL_KERBEROS_SERVICE_NAME", "kafka");
+    env.put("KAFKA_LISTENER_NAME_KERBEROS_GSSAPI_SASL_JAAS_CONFIG", """
+        com.sun.security.auth.module.Krb5LoginModule required \\
+        useKeyTab=true \\
+        debug=true \\
+        storeKey=true  \\
+        keyTab="/etc/kafka/secrets/kafka.keytab" \\
+        principal="kafka/broker@EXAMPLE.COM";
+        """);
     return env;
   }
 
