@@ -23,17 +23,7 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 @Schema(description = "API key and secret authentication credentials")
 @RegisterForReflection
-@JsonTypeInfo(
-    use = JsonTypeInfo.Id.NAME,
-    include = JsonTypeInfo.As.PROPERTY,
-    property = "type"
-)
-@JsonSubTypes({
-    @JsonSubTypes.Type(
-        value = ApiKeyAndSecret.class,
-        name = "API_KEY_AND_SECRET"
-    )
-})
+@JsonTypeInfo(use = JsonTypeInfo.Id.DEDUCTION)
 @JsonTypeName("API_KEY_AND_SECRET")
 public record ApiKeyAndSecret(
 

@@ -24,14 +24,7 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 @Schema(description = "OAuth 2.0 authentication credentials")
 @RecordBuilder
-@JsonTypeInfo(
-    use = JsonTypeInfo.Id.NAME,
-    include = JsonTypeInfo.As.PROPERTY,
-    property = "type"
-)
-@JsonSubTypes({
-    @JsonSubTypes.Type(value = OAuthCredentials.class, name = "OAUTH2")
-})
+@JsonTypeInfo(use = JsonTypeInfo.Id.DEDUCTION)
 @JsonTypeName("OAUTH2")
 public record OAuthCredentials(
   @Schema(description = "The URL of the OAuth 2.0 identity provider's token endpoint.")

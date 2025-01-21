@@ -17,10 +17,7 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 @Schema(description = "Scram authentication credentials")
 @RecordBuilder
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
-@JsonSubTypes({
-    @JsonSubTypes.Type(value = ScramCredentials.class, name = "SCRAM")
-})
+@JsonTypeInfo(use = JsonTypeInfo.Id.DEDUCTION)
 @JsonTypeName("SCRAM")
 public record ScramCredentials(
     @Schema(description = "Hash algorithm")

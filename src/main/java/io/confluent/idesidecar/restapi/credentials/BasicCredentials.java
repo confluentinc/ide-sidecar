@@ -15,11 +15,7 @@ import org.apache.kafka.clients.CommonClientConfigs;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 @Schema(description = "Basic authentication credentials")
-@JsonTypeInfo(
-    use = JsonTypeInfo.Id.NAME,
-    include = JsonTypeInfo.As.PROPERTY,
-    property = "type"
-)
+@JsonTypeInfo(use = JsonTypeInfo.Id.DEDUCTION)
 @JsonTypeName("BASIC")
 @RegisterForReflection
 public record BasicCredentials(

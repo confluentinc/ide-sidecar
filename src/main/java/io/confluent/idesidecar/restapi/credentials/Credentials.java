@@ -16,17 +16,7 @@ import java.util.Optional;
 /**
  * Base interface for credentials objects used with Kafka and Schema Registry clients.
  */
-@JsonTypeInfo(
-    use = JsonTypeInfo.Id.NAME,
-    include = JsonTypeInfo.As.PROPERTY,
-    property = "type"
-)
-@JsonSubTypes({
-    @JsonSubTypes.Type(value = BasicCredentials.class, name = "BASIC"),
-    @JsonSubTypes.Type(value = ApiKeyAndSecret.class, name = "API_KEY_AND_SECRET"),
-    @JsonSubTypes.Type(value = OAuthCredentials.class, name = "OAUTH2"),
-    @JsonSubTypes.Type(value = ScramCredentials.class, name = "SCRAM")
-})
+@JsonTypeInfo(use = JsonTypeInfo.Id.DEDUCTION)
 @RegisterForReflection
 public interface Credentials {
 
