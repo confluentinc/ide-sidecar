@@ -3,6 +3,9 @@ package io.confluent.idesidecar.restapi.credentials;
 import static io.vertx.core.http.HttpHeaders.AUTHORIZATION;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import io.confluent.idesidecar.restapi.exceptions.Failure;
 import io.confluent.idesidecar.restapi.exceptions.Failure.Error;
 import io.quarkus.runtime.annotations.RegisterForReflection;
@@ -20,6 +23,8 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 @Schema(description = "API key and secret authentication credentials")
 @RegisterForReflection
+@JsonTypeInfo(use = JsonTypeInfo.Id.DEDUCTION)
+@JsonTypeName("API_KEY_AND_SECRET")
 public record ApiKeyAndSecret(
 
     @Schema(
