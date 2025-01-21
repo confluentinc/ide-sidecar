@@ -17,15 +17,16 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 @Schema(description = "Scram authentication credentials")
 @RecordBuilder
-@JsonTypeInfo(use = JsonTypeInfo.Id.DEDUCTION)
-@JsonTypeName("SCRAM")
 public record ScramCredentials(
     @Schema(description = "Hash algorithm")
     @JsonProperty(value = "hash_algorithm")
     @NotNull
     HashAlgorithm hashAlgorithm,
+
+    @JsonProperty(value="scram_username")
     @NotNull
     String username,
+    @JsonProperty(value="scram_password")
     @NotNull
     Password password
 ) implements Credentials {

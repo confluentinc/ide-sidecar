@@ -2304,6 +2304,8 @@ public class ConnectionsResourceTest {
     );
   }
 
+
+// TODO UPDATE SO WE'RE TESTING SCRAM_USERNAME AND SCRAM_PASSWORD AND USE DIRECT
   @Test
   @TestHTTPEndpoint(ConnectionsResource.class)
   void createConnectionWithScramSha256_missingId_shouldFail() {
@@ -2315,7 +2317,7 @@ public class ConnectionsResourceTest {
                 "bootstrap.servers": "localhost:9092",
                 "security.protocol": "SASL_PLAINTEXT",
                 "sasl.mechanism": "SCRAM-SHA-256",
-                "sasl.jaas.config": "org.apache.kafka.common.security.scram.ScramLoginModule required username=\\"scramUser02\\" password=\\"scramPassword256\\";"
+       
             }
         }
     """;

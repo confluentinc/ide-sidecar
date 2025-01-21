@@ -7,7 +7,6 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.confluent.idesidecar.restapi.exceptions.Failure;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import io.soabase.recordbuilder.core.RecordBuilder;
-import io.vertx.core.MultiMap;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +16,12 @@ import java.util.Optional;
  * Base interface for credentials objects used with Kafka and Schema Registry clients.
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.DEDUCTION)
+@JsonSubTypes({
+    @Type(value = BasicCredentials.class),
+    @Type(value = ApiKeyAndSecret.class),
+    @Type(value = OAuthCredentials.class),
+    @Type(value = ScramCredentials.class)
+})
 @RegisterForReflection
 public interface Credentials {
 
