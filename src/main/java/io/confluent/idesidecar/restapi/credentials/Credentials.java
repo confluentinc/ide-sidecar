@@ -16,11 +16,16 @@ import java.util.Optional;
 /**
  * Base interface for credentials objects used with Kafka and Schema Registry clients.
  */
-@JsonTypeInfo(use = JsonTypeInfo.Id.DEDUCTION)
+@JsonTypeInfo(
+    use = JsonTypeInfo.Id.NAME,
+    include = JsonTypeInfo.As.PROPERTY,
+    property = "type"
+)
 @JsonSubTypes({
-    @Type(value = BasicCredentials.class),
-    @Type(value = ApiKeyAndSecret.class),
-    @Type(value = OAuthCredentials.class)
+    @JsonSubTypes.Type(value = BasicCredentials.class, name = "BASIC"),
+    @JsonSubTypes.Type(value = ApiKeyAndSecret.class, name = "API_KEY_AND_SECRET"),
+    @JsonSubTypes.Type(value = OAuthCredentials.class, name = "OAUTH2"),
+    @JsonSubTypes.Type(value = ScramCredentials.class, name = "SCRAM")
 })
 @RegisterForReflection
 public interface Credentials {
@@ -44,6 +49,7 @@ public interface Credentials {
     MUTUAL_TLS,
     OAUTH2,
     API_KEY_AND_SECRET,
+    SCRAM
   }
 
   /**
@@ -73,6 +79,16 @@ public interface Credentials {
   @JsonIgnore
   default boolean isOauth2() {
     return type() == Type.OAUTH2;
+  }
+
+  /**
+   * Return true if this is an SCRAM credentials object, return false otherwise.
+   *
+   * @return true if {@link #type()} equals {@link Type#SCRAM}
+   */
+  @JsonIgnore
+  default boolean isScram() {
+    return type() == Type.SCRAM;
   }
 
   /**

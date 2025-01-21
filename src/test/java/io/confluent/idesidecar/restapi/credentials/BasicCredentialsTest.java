@@ -2,6 +2,7 @@ package io.confluent.idesidecar.restapi.credentials;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import io.confluent.idesidecar.restapi.credentials.Credentials.Type;
 import org.junit.jupiter.api.Test;
 
 class BasicCredentialsTest extends RedactedTestBase<BasicCredentials> {
