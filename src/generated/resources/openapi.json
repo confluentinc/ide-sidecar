@@ -227,7 +227,7 @@
             }
           },
           "401" : {
-            "description" : "Could not authenticate",
+            "description" : "Could not authenticate with updated connection configuration",
             "content" : {
               "application/json" : {
                 "schema" : {
@@ -261,68 +261,6 @@
         "responses" : {
           "204" : {
             "description" : "No Content"
-          }
-        }
-      },
-      "patch" : {
-        "tags" : [ "Connections Resource" ],
-        "parameters" : [ {
-          "name" : "id",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/JsonMergePatch"
-              }
-            }
-          }
-        },
-        "responses" : {
-          "200" : {
-            "description" : "Connection updated with PATCH",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Connection"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "Connection not found",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Failure"
-                }
-              }
-            }
-          },
-          "401" : {
-            "description" : "Could not authenticate",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Failure"
-                }
-              }
-            }
-          },
-          "400" : {
-            "description" : "Invalid input",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Failure"
-                }
-              }
-            }
           }
         }
       }
@@ -669,6 +607,9 @@
       "AuthError" : {
         "type" : "object",
         "properties" : {
+          "created_at" : {
+            "$ref" : "#/components/schemas/Instant"
+          },
           "message" : {
             "type" : "string"
           },
@@ -734,18 +675,13 @@
       },
       "CCloudConfig" : {
         "description" : "Configuration for Confluent Cloud connections",
+        "required" : [ "organization_id" ],
         "type" : "object",
         "properties" : {
           "organization_id" : {
             "description" : "The identifier of the CCloud organization to use. The user's default organization is used when absent.",
             "maxLength" : 36,
             "minLength" : 36,
-            "type" : "string"
-          },
-          "ide_auth_callback_uri" : {
-            "description" : "The URI that users will be redirected to after successfully completing the authentication flow with Confluent Cloud.",
-            "maxLength" : 200,
-            "minLength" : 10,
             "type" : "string"
           }
         }
@@ -996,13 +932,14 @@
           }
         }
       },
+      "HashAlgorithm" : {
+        "enum" : [ "SCRAM_SHA_256", "SCRAM_SHA_512" ],
+        "type" : "string"
+      },
       "Instant" : {
         "format" : "date-time",
         "type" : "string",
         "example" : "2022-03-10T16:15:50Z"
-      },
-      "JsonMergePatch" : {
-        "type" : "object"
       },
       "JsonNode" : {
         "type" : "object",
@@ -1603,12 +1540,12 @@
       "HealthCheck" : {
         "type" : "object",
         "properties" : {
+          "name" : {
+            "type" : "string"
+          },
           "data" : {
             "type" : "object",
             "nullable" : true
-          },
-          "name" : {
-            "type" : "string"
           },
           "status" : {
             "enum" : [ "UP", "DOWN" ],
