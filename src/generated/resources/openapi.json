@@ -996,6 +996,10 @@
           }
         }
       },
+      "HashAlgorithm" : {
+        "enum" : [ "SCRAM_SHA_256", "SCRAM_SHA_512" ],
+        "type" : "string"
+      },
       "Instant" : {
         "format" : "date-time",
         "type" : "string",
@@ -1423,6 +1427,26 @@
             "allOf" : [ {
               "$ref" : "#/components/schemas/AuthErrors"
             } ]
+          }
+        }
+      },
+      "ScramCredentials" : {
+        "description" : "Scram authentication credentials",
+        "required" : [ "hash_algorithm", "username", "password" ],
+        "type" : "object",
+        "properties" : {
+          "hash_algorithm" : {
+            "description" : "Hash algorithm",
+            "type" : "string",
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/HashAlgorithm"
+            } ]
+          },
+          "username" : {
+            "type" : "string"
+          },
+          "password" : {
+            "$ref" : "#/components/schemas/Password"
           }
         }
       },

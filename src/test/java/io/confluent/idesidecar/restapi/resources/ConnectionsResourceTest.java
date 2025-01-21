@@ -24,6 +24,7 @@ import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
 import io.confluent.idesidecar.restapi.credentials.ApiKeyAndSecret;
 import io.confluent.idesidecar.restapi.credentials.ApiSecret;
 import io.confluent.idesidecar.restapi.credentials.BasicCredentials;
+import io.confluent.idesidecar.restapi.credentials.Credentials;
 import io.confluent.idesidecar.restapi.credentials.Password;
 import io.confluent.idesidecar.restapi.exceptions.Failure;
 import io.confluent.idesidecar.restapi.exceptions.Failure.Error;
@@ -74,6 +75,9 @@ import org.junit.jupiter.params.provider.NullSource;
 import org.mockito.Mockito;
 import io.restassured.RestAssured;
 import io.restassured.parsing.Parser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import static org.hamcrest.Matchers.containsString;
 
 @QuarkusTest
@@ -2188,6 +2192,139 @@ public class ConnectionsResourceTest {
       fail();
     }
   }
+
+  @Test
+  @TestHTTPEndpoint(ConnectionsResource.class)
+  void createConnectionWithScramSha512_createsAndReturnsConnection() {
+
+    var requestBody = """
+        {
+            "id": "scram-512",
+            "name": "SCRAM-SHA-512 Connection",
+            "type": "LOCAL",
+            "kafka": {
+                "bootstrap.servers": "localhost:9092",
+                "security.protocol": "SASL_PLAINTEXT",
+                "sasl.mechanism": "SCRAM-SHA-512",
+                "sasl.jaas.config": "org.apache.kafka.common.security.scram.ScramLoginModule required username=\\"scramUser\\" password=\\"scramPassword\\";"
+            }
+        }
+    """;
+
+    var expectedJson = """
+        {
+          "api_version": "gateway/v1",
+          "kind": "Connection",
+          "id": "scram-512",
+          "metadata": {
+            "self": "http://localhost:26637/gateway/v1/connections/scram-512",
+            "resource_name": null
+          },
+          "spec": {
+            "id": "scram-512",
+            "name": "SCRAM-SHA-512 Connection",
+            "type": "LOCAL"
+          },
+          "status": {
+            "authentication": {
+              "status": "NO_TOKEN"
+            }
+          }
+        }
+    """;
+
+    var actualResponse = given()
+        .contentType(ContentType.JSON)
+        .body(requestBody)
+        .when().post()
+        .then()
+        .statusCode(200)
+        .contentType(ContentType.JSON)
+        .extract().body().asString();
+
+    JsonNode actualJson = asJson(actualResponse);
+    assertConnection(
+        asJson(expectedJson),
+        actualJson
+    );
+  }
+
+  @Test
+  @TestHTTPEndpoint(ConnectionsResource.class)
+  void createConnectionWithScramSha256_createsAndReturnsConnection() {
+    var requestBody = """
+        {
+            "id": "scram-256",
+            "name": "SCRAM-SHA-256 Connection",
+            "type": "LOCAL",
+            "kafka": {
+                "bootstrap.servers": "localhost:9092",
+                "security.protocol": "SASL_PLAINTEXT",
+                "sasl.mechanism": "SCRAM-SHA-256",
+                "sasl.jaas.config": "org.apache.kafka.common.security.scram.ScramLoginModule required username=\\"scramUser02\\" password=\\"scramPassword256\\";"
+            }
+        }
+    """;
+
+    var expectedJson = """
+        {
+          "api_version": "gateway/v1",
+          "kind": "Connection",
+          "id": "scram-256",
+          "metadata": {
+            "self": "http://localhost:26637/gateway/v1/connections/scram-256",
+            "resource_name": null
+          },
+          "spec": {
+            "id": "scram-256",
+            "name": "SCRAM-SHA-256 Connection",
+            "type": "LOCAL"
+          },
+          "status": {
+            "authentication": {
+              "status": "NO_TOKEN"
+            }
+          }
+        }
+    """;
+
+    var actualResponse = given()
+        .contentType(ContentType.JSON)
+        .body(requestBody)
+        .when().post()
+        .then()
+        .statusCode(200)
+        .contentType(ContentType.JSON)
+        .extract().body().asString();
+
+    JsonNode actualJson = asJson(actualResponse);
+    assertConnection(
+        asJson(expectedJson),
+        actualJson
+    );
+  }
+
+  @Test
+  @TestHTTPEndpoint(ConnectionsResource.class)
+  void createConnectionWithScramSha256_missingId_shouldFail() {
+    var requestBody = """
+        {
+            "name": "SCRAM-SHA-256 Connection",
+            "type": "LOCAL",
+            "kafka": {
+                "bootstrap.servers": "localhost:9092",
+                "security.protocol": "SASL_PLAINTEXT",
+                "sasl.mechanism": "SCRAM-SHA-256",
+                "sasl.jaas.config": "org.apache.kafka.common.security.scram.ScramLoginModule required username=\\"scramUser02\\" password=\\"scramPassword256\\";"
+            }
+        }
+    """;
+
+    given()
+        .contentType(ContentType.JSON)
+        .body(requestBody)
+        .when().post()
+        .then()
+        .statusCode(400); // Bad Request
+  }
 }
-
-
