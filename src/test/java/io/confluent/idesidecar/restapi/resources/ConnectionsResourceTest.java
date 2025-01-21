@@ -997,6 +997,7 @@ public class ConnectionsResourceTest {
               "schema_registry": {
                 "uri": "http://localhost:8081",
                 "credentials": {
+                  "type": "BASIC",
                   "username": "user",
                   "password": "pass"
                 }
@@ -1013,6 +1014,7 @@ public class ConnectionsResourceTest {
               "schema_registry": {
                 "uri": "http://localhost:8081",
                 "credentials": {
+                  "type": "API_KEY_AND_SECRET",
                   "api_key": "my-api-key",
                   "api_secret": "my-api-secret"
                 }
@@ -1134,6 +1136,7 @@ public class ConnectionsResourceTest {
               "schema_registry": {
                 "uri": "http://localhost:8081",
                 "credentials": {
+                  "type": "BASIC",
                   "username": "user"
                 }
               }
@@ -1381,6 +1384,7 @@ public class ConnectionsResourceTest {
               "kafka_cluster": {
                 "bootstrap_servers": "localhost:9092",
                 "credentials": {
+                  "type": "BASIC",
                   "username": "user",
                   "password": "pass"
                 },
