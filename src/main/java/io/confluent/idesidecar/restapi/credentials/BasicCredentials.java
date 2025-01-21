@@ -15,18 +15,15 @@ import org.apache.kafka.clients.CommonClientConfigs;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 @Schema(description = "Basic authentication credentials")
-@RegisterForReflection
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
-@JsonSubTypes({
-    @JsonSubTypes.Type(value = BasicCredentials.class, name = "BASIC")
-})
 @JsonTypeName("BASIC")
+@RegisterForReflection
 public record BasicCredentials(
     @Schema(
         description = "The username to use when connecting to the external service.",
         maxLength = USERNAME_MAX_LEN,
         minLength = 1
     )
+
     @NotNull
     String username,
 

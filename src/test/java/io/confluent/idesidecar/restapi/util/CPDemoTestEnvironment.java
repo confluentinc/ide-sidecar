@@ -13,6 +13,7 @@ import io.confluent.idesidecar.restapi.util.cpdemo.OpenldapContainer;
 import io.confluent.idesidecar.restapi.util.cpdemo.SchemaRegistryContainer;
 import io.confluent.idesidecar.restapi.util.cpdemo.ToolsContainer;
 import io.confluent.idesidecar.restapi.util.cpdemo.ZookeeperContainer;
+import io.confluent.idesidecar.restapi.credentials.Credentials;
 import io.quarkus.logging.Log;
 import java.io.File;
 import java.io.IOException;
