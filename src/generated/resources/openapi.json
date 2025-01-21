@@ -227,7 +227,7 @@
             }
           },
           "401" : {
-            "description" : "Could not authenticate",
+            "description" : "Could not authenticate with updated connection configuration",
             "content" : {
               "application/json" : {
                 "schema" : {
@@ -261,68 +261,6 @@
         "responses" : {
           "204" : {
             "description" : "No Content"
-          }
-        }
-      },
-      "patch" : {
-        "tags" : [ "Connections Resource" ],
-        "parameters" : [ {
-          "name" : "id",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/JsonMergePatch"
-              }
-            }
-          }
-        },
-        "responses" : {
-          "200" : {
-            "description" : "Connection updated with PATCH",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Connection"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "Connection not found",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Failure"
-                }
-              }
-            }
-          },
-          "401" : {
-            "description" : "Could not authenticate",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Failure"
-                }
-              }
-            }
-          },
-          "400" : {
-            "description" : "Invalid input",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Failure"
-                }
-              }
-            }
           }
         }
       }
@@ -1003,9 +941,6 @@
         "type" : "string",
         "example" : "2022-03-10T16:15:50Z"
       },
-      "JsonMergePatch" : {
-        "type" : "object"
-      },
       "JsonNode" : {
         "type" : "object",
         "properties" : {
@@ -1428,26 +1363,6 @@
           }
         }
       },
-      "ScramCredentials" : {
-        "description" : "Scram authentication credentials",
-        "required" : [ "hash_algorithm", "username", "password" ],
-        "type" : "object",
-        "properties" : {
-          "hash_algorithm" : {
-            "description" : "Hash algorithm",
-            "type" : "string",
-            "allOf" : [ {
-              "$ref" : "#/components/schemas/HashAlgorithm"
-            } ]
-          },
-          "username" : {
-            "type" : "string"
-          },
-          "password" : {
-            "$ref" : "#/components/schemas/Password"
-          }
-        }
-      },
       "SidecarAccessToken" : {
         "type" : "object",
         "properties" : {
@@ -1610,31 +1525,31 @@
       "HealthResponse" : {
         "type" : "object",
         "properties" : {
+          "status" : {
+            "enum" : [ "UP", "DOWN" ],
+            "type" : "string"
+          },
           "checks" : {
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/HealthCheck"
             }
-          },
-          "status" : {
-            "enum" : [ "UP", "DOWN" ],
-            "type" : "string"
           }
         }
       },
       "HealthCheck" : {
         "type" : "object",
         "properties" : {
-          "status" : {
-            "enum" : [ "UP", "DOWN" ],
-            "type" : "string"
-          },
           "name" : {
             "type" : "string"
           },
           "data" : {
             "type" : "object",
             "nullable" : true
+          },
+          "status" : {
+            "enum" : [ "UP", "DOWN" ],
+            "type" : "string"
           }
         }
       }

@@ -43,7 +43,7 @@ public record AuthErrors(
   public AuthErrors withAuthStatusCheck(String message) {
     return new AuthErrors(
         // Always consider errors that occurred when checking the auth status as transient
-        new AuthError(Instant.now(), message, true),
+        new AuthError(message, true),
         signIn,
         tokenRefresh
     );
@@ -57,7 +57,7 @@ public record AuthErrors(
     return new AuthErrors(
         authStatusCheck,
         // Always consider errors that occurred when signing in as non-transient
-        new AuthError(Instant.now(), message, false),
+        new AuthError(message, false),
         tokenRefresh
     );
   }
@@ -70,7 +70,7 @@ public record AuthErrors(
     return new AuthErrors(
         authStatusCheck,
         signIn,
-        new AuthError(Instant.now(), message, isTransient)
+        new AuthError(message, isTransient)
     );
   }
 
@@ -79,7 +79,6 @@ public record AuthErrors(
   }
 
   public record AuthError(
-      @JsonProperty(value = "created_at") Instant createdAt,
       String message,
       @JsonProperty(value = "is_transient") Boolean isTransient
   ) {

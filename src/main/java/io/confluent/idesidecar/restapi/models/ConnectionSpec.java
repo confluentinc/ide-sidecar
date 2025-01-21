@@ -175,17 +175,16 @@ public record ConnectionSpec(
   }
 
   /**
-   * Convenience method to return a new ConnectionSpec with the provided
-   * Confluent Cloud organization ID set in the CCloudConfig.
+   * Convenience method to return a new ConnectionSpec with the provided CCloudConfig.
    *
-   * @param ccloudOrganizationId the Confluent Cloud organization ID to use; may be null
+   * @param ccloudConfig the Confluent Cloud config to use; may be null
    */
-  public ConnectionSpec withCCloudOrganizationId(String ccloudOrganizationId) {
+  public ConnectionSpec withCCloudConfig(CCloudConfig ccloudConfig) {
     return new ConnectionSpec(
         id,
         name,
         type,
-        new CCloudConfig(ccloudOrganizationId),
+        ccloudConfig,
         localConfig,
         kafkaClusterConfig,
         schemaRegistryConfig
@@ -238,9 +237,16 @@ public record ConnectionSpec(
           description = "The identifier of the CCloud organization to use. "
                         + "The user's default organization is used when absent."
       )
-      @JsonProperty(value = "organization_id", required = true)
+      @JsonProperty(value = "organization_id")
       @Size(min = 36, max = 36)
-      String organizationId
+      String organizationId,
+      @Schema(
+          description = "The URI that users will be redirected to after successfully completing "
+          + "the authentication flow with Confluent Cloud."
+      )
+      @JsonProperty(value = "ide_auth_callback_uri")
+      @Size(min = 10, max = 200)
+      String ideAuthCallbackUri
   ) {
   }
 

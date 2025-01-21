@@ -25,7 +25,10 @@
   <script type="text/javascript">
     // Redirect to the VS Code extension's URI when the page is loaded
     window.onload = function() {
-        window.location.href = "{vscode_redirect_uri}?success=true";
+        const redirectUri = "{vscode_redirect_uri}";
+        if (redirectUri.length > 0) {
+            window.location.href = redirectUri + "?success=true";
+        }
     };
   </script>
 </head>
