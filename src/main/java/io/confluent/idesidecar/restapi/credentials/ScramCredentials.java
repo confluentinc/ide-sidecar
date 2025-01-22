@@ -92,7 +92,7 @@ public record ScramCredentials(
       errors.add(
           Error.create()
               .withDetail(
-                  "%s Hash algorithm is required, may not be blank, and must be one of the supported algorithms (SCRAM_SHA_256 or SCRAM_SHA_512)\",",
+                  "%s Hash algorithm is required, may not be blank, and must be one of the supported algorithms (SCRAM_SHA_256 or SCRAM_SHA_512)",
                   what
               )
               .withSource(
@@ -112,7 +112,7 @@ public record ScramCredentials(
                   what
               )
               .withSource(
-                  "%s.username",
+                  "%s.scram_username",
                   path
               )
       );
