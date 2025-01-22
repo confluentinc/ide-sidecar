@@ -24,6 +24,7 @@ import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
 import io.confluent.idesidecar.restapi.credentials.ApiKeyAndSecret;
 import io.confluent.idesidecar.restapi.credentials.ApiSecret;
 import io.confluent.idesidecar.restapi.credentials.BasicCredentials;
+import io.confluent.idesidecar.restapi.credentials.Credentials;
 import io.confluent.idesidecar.restapi.credentials.Password;
 import io.confluent.idesidecar.restapi.exceptions.Failure;
 import io.confluent.idesidecar.restapi.exceptions.Failure.Error;
@@ -74,6 +75,9 @@ import org.junit.jupiter.params.provider.NullSource;
 import org.mockito.Mockito;
 import io.restassured.RestAssured;
 import io.restassured.parsing.Parser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import static org.hamcrest.Matchers.containsString;
 
 @QuarkusTest
@@ -961,6 +965,94 @@ public class ConnectionsResourceTest {
         Error... expectedErrors
     ) {}
     var inputs = List.of(
+        // Confluent Platform connections
+        new TestInput(
+            "Platform spec is valid with name and Kafka w/ scram credentials for 512 and no Schema Registry",
+            """
+            {
+              "name": "Some connection name",
+              "type": "PLATFORM",
+              "kafka_cluster": {
+                "bootstrap_servers": "localhost:9092",
+                "credentials": {
+                  "hash_algorithm": "SCRAM_SHA_512",
+                  "scram_username": "user",
+                  "scram_password": "pass"
+                },
+                "ssl": { "enabled": true }
+              }
+            }
+            """
+        ),
+        new TestInput(
+            "Platform spec is valid with name and Kafka w/ scram credentials for 256 and no Schema Registry",
+            """
+            {
+              "name": "Some connection name",
+              "type": "PLATFORM",
+              "kafka_cluster": {
+                "bootstrap_servers": "localhost:9092",
+                "credentials": {
+                  "hash_algorithm": "SCRAM_SHA_256",
+                  "scram_username": "user",
+                  "scram_password": "pass"
+                },
+                "ssl": { "enabled": true }
+              }
+            }
+            """
+        ),
+        new TestInput(
+            "Direct spec is invalid with name and Kafka w/ scram credentials for 256 without username",
+            """
+                {
+                    "name": "string",
+                    "type": "DIRECT",
+                    "kafka_cluster": {
+                        "bootstrap_servers": "localhost:9092",
+                        "credentials": {
+                            "hash_algorithm": "SCRAM_SHA_256",
+                            "scram_password" : "pass"
+                         
+                        },
+                        "ssl": {
+                            "enabled": true
+                        }
+                    },
+                    "ssl": {
+                        "enabled": true
+                    }
+                }
+            """,
+            createError()
+                .withSource("kafka_cluster.credentials.scram_username")
+                .withDetail("Kafka cluster Username is required and may not be blank")
+        ),
+        new TestInput(
+            "Direct spec is invalid with name and Kafka w/ scram credentials for 256 without hash algorithm and no Schema Registry",
+            """
+                {
+                    "name": "string",
+                    "type": "DIRECT",
+                    "kafka_cluster": {
+                        "bootstrap_servers": "localhost:9092",
+                        "credentials": {
+                            "scram_password" : "pass",
+                            "scram_username" : "user"
+                        },
+                        "ssl": {
+                            "enabled": true
+                        }
+                    },
+                    "ssl": {
+                        "enabled": true
+                    }
+                }
+            """,
+            createError()
+                .withSource("kafka_cluster.credentials.hash_algorithm")
+                .withDetail("Kafka cluster Hash algorithm is required, may not be blank, and must be one of the supported algorithms (SCRAM_SHA_256 or SCRAM_SHA_512)")
+        ),
         // Local connections
         new TestInput(
             "Local spec is valid with name but no config",
@@ -1398,23 +1490,6 @@ public class ConnectionsResourceTest {
               "type": "DIRECT",
               "kafka_cluster": {
                 "bootstrap_servers": "localhost:9092",
-                "ssl": { "enabled": true }
-              }
-            }
-            """
-        ),
-        new TestInput(
-            "Direct spec is valid with name and Kafka w/ basic credentials and no Schema Registry",
-            """
-            {
-              "name": "Some connection name",
-              "type": "DIRECT",
-              "kafka_cluster": {
-                "bootstrap_servers": "localhost:9092",
-                "credentials": {
-                  "username": "user",
-                  "password": "pass"
-                },
                 "ssl": { "enabled": true }
               }
             }
@@ -2189,5 +2264,3 @@ public class ConnectionsResourceTest {
     }
   }
 }
-
-
