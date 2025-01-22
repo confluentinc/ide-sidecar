@@ -1,6 +1,9 @@
 package io.confluent.idesidecar.restapi.credentials;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import io.confluent.idesidecar.restapi.exceptions.Failure;
 import io.confluent.idesidecar.restapi.exceptions.Failure.Error;
 import io.soabase.recordbuilder.core.RecordBuilder;
@@ -22,7 +25,6 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
 @Schema(description = "OAuth 2.0 authentication credentials")
 @RecordBuilder
 public record OAuthCredentials(
-
   @Schema(description = "The URL of the OAuth 2.0 identity provider's token endpoint.")
   @JsonProperty(value = "tokens_url")
   @Size(max = TOKENS_URL_MAX_LEN)
