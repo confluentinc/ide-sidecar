@@ -1,9 +1,6 @@
 package io.confluent.idesidecar.restapi.credentials;
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonTypeName;
 import io.confluent.idesidecar.restapi.exceptions.Failure;
 import io.confluent.idesidecar.restapi.exceptions.Failure.Error;
 import io.soabase.recordbuilder.core.RecordBuilder;
@@ -13,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.apache.kafka.clients.CommonClientConfigs;
+import org.apache.kafka.common.config.SaslConfigs;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 @Schema(description = "Scram authentication credentials")
@@ -23,13 +21,28 @@ public record ScramCredentials(
     @NotNull
     HashAlgorithm hashAlgorithm,
 
+    @Schema(
+        description = "The username to use when connecting to the external service.",
+        maxLength = SCRAM_USERNAME_MAX_LEN,
+        minLength = 1
+    )
     @JsonProperty(value="scram_username")
     @NotNull
     String username,
+
+    @Schema(
+        description = "The password to use when connecting to the external service.",
+        maxLength = SCRAM_PASSWORD_MAX_LEN,
+        minLength = 1
+    )
     @JsonProperty(value="scram_password")
     @NotNull
     Password password
 ) implements Credentials {
+
+  private static final int SCRAM_USERNAME_MAX_LEN = 64;
+
+  private static final int SCRAM_PASSWORD_MAX_LEN= 64;
 
   public enum HashAlgorithm {
     SCRAM_SHA_256("SCRAM-SHA-256"),
@@ -65,8 +78,8 @@ public record ScramCredentials(
     );
 
     var config = new LinkedHashMap<String, String>();
-    config.put("sasl.jaas.config", jaasConfig);
-    config.put("sasl.mechanism", hashAlgorithm.getValue());
+    config.put(SaslConfigs.SASL_JAAS_CONFIG, jaasConfig);
+    config.put(SaslConfigs.SASL_MECHANISM, hashAlgorithm.getValue());
     var tlsConfig = options.tlsConfig();
     if (tlsConfig.enabled()) {
       config.put(

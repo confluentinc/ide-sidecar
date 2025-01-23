@@ -1,18 +1,10 @@
 package io.confluent.idesidecar.restapi.credentials;
 
-import static io.vertx.core.http.HttpHeaders.AUTHORIZATION;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.annotation.JsonTypeName;
 import io.confluent.idesidecar.restapi.exceptions.Failure;
 import io.confluent.idesidecar.restapi.exceptions.Failure.Error;
 import io.quarkus.runtime.annotations.RegisterForReflection;
-import io.vertx.core.MultiMap;
 import jakarta.validation.constraints.NotNull;
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;

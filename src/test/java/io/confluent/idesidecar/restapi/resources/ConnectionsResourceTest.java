@@ -1,6 +1,5 @@
 package io.confluent.idesidecar.restapi.resources;
 
-import static io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType.PLATFORM;
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.asJson;
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.asObject;
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
@@ -24,7 +23,6 @@ import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
 import io.confluent.idesidecar.restapi.credentials.ApiKeyAndSecret;
 import io.confluent.idesidecar.restapi.credentials.ApiSecret;
 import io.confluent.idesidecar.restapi.credentials.BasicCredentials;
-import io.confluent.idesidecar.restapi.credentials.Credentials;
 import io.confluent.idesidecar.restapi.credentials.Password;
 import io.confluent.idesidecar.restapi.exceptions.Failure;
 import io.confluent.idesidecar.restapi.exceptions.Failure.Error;
@@ -68,17 +66,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.EmptySource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
-import org.junit.jupiter.params.provider.NullSource;
 import org.mockito.Mockito;
 import io.restassured.RestAssured;
 import io.restassured.parsing.Parser;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import static org.hamcrest.Matchers.containsString;
 
 @QuarkusTest
 @ConnectWireMock
@@ -965,13 +957,12 @@ public class ConnectionsResourceTest {
         Error... expectedErrors
     ) {}
     var inputs = List.of(
-        // Confluent Platform connections
         new TestInput(
-            "Platform spec is valid with name and Kafka w/ scram credentials for 512 and no Schema Registry",
+            "Direct spec is valid with name and Kafka w/ scram credentials for 512 and no Schema Registry",
             """
             {
               "name": "Some connection name",
-              "type": "PLATFORM",
+              "type": "DIRECT",
               "kafka_cluster": {
                 "bootstrap_servers": "localhost:9092",
                 "credentials": {
@@ -985,11 +976,11 @@ public class ConnectionsResourceTest {
             """
         ),
         new TestInput(
-            "Platform spec is valid with name and Kafka w/ scram credentials for 256 and no Schema Registry",
+            "Direct spec is valid with name and Kafka w/ scram credentials for 256 and no Schema Registry",
             """
             {
               "name": "Some connection name",
-              "type": "PLATFORM",
+              "type": "DIRECT",
               "kafka_cluster": {
                 "bootstrap_servers": "localhost:9092",
                 "credentials": {
@@ -1397,6 +1388,23 @@ public class ConnectionsResourceTest {
               "type": "CCLOUD",
               "ccloud_config": {
                 "organization_id": "12345"
+              }
+            }
+            """
+        ),
+        new TestInput(
+            "Direct spec is valid with name and Kafka w/ basic credentials and no Schema Registry",
+            """
+            {
+              "name": "Some connection name",
+              "type": "DIRECT",
+              "kafka_cluster": {
+                "bootstrap_servers": "localhost:9092",
+                "credentials": {
+                  "username": "user",
+                  "password": "pass"
+                },
+                "ssl": { "enabled": true }
               }
             }
             """

@@ -1,8 +1,5 @@
 package io.confluent.idesidecar.restapi.credentials;
 
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.annotation.JsonTypeName;
 import io.confluent.idesidecar.restapi.exceptions.Failure.Error;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.validation.constraints.NotNull;
