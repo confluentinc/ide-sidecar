@@ -996,6 +996,10 @@
           }
         }
       },
+      "HashAlgorithm" : {
+        "enum" : [ "SCRAM_SHA_256", "SCRAM_SHA_512" ],
+        "type" : "string"
+      },
       "Instant" : {
         "format" : "date-time",
         "type" : "string",
@@ -1098,6 +1102,8 @@
               "$ref" : "#/components/schemas/ApiKeyAndSecret"
             }, {
               "$ref" : "#/components/schemas/OAuthCredentials"
+            }, {
+              "$ref" : "#/components/schemas/ScramCredentials"
             } ],
             "nullable" : true
           },
@@ -1422,6 +1428,35 @@
             "type" : "object",
             "allOf" : [ {
               "$ref" : "#/components/schemas/AuthErrors"
+            } ]
+          }
+        }
+      },
+      "ScramCredentials" : {
+        "description" : "Scram authentication credentials",
+        "required" : [ "hash_algorithm", "scram_username", "scram_password" ],
+        "type" : "object",
+        "properties" : {
+          "hash_algorithm" : {
+            "description" : "Hash algorithm",
+            "type" : "string",
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/HashAlgorithm"
+            } ]
+          },
+          "scram_username" : {
+            "description" : "The username to use when connecting to the external service.",
+            "maxLength" : 64,
+            "minLength" : 1,
+            "type" : "string"
+          },
+          "scram_password" : {
+            "description" : "The password to use when connecting to the external service.",
+            "maxLength" : 64,
+            "minLength" : 1,
+            "type" : "string",
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/Password"
             } ]
           }
         }

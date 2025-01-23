@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import com.github.dockerjava.api.model.Container;
 import io.confluent.idesidecar.restapi.credentials.*;
+import io.confluent.idesidecar.restapi.credentials.ScramCredentials.HashAlgorithm;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionSpecKafkaClusterConfigBuilder;
 import io.confluent.idesidecar.restapi.models.ConnectionSpecSchemaRegistryConfigBuilder;
@@ -12,6 +13,7 @@ import io.confluent.idesidecar.restapi.util.cpdemo.OpenldapContainer;
 import io.confluent.idesidecar.restapi.util.cpdemo.SchemaRegistryContainer;
 import io.confluent.idesidecar.restapi.util.cpdemo.ToolsContainer;
 import io.confluent.idesidecar.restapi.util.cpdemo.ZookeeperContainer;
+import io.confluent.idesidecar.restapi.credentials.Credentials;
 import io.quarkus.logging.Log;
 import java.io.File;
 import java.io.IOException;
@@ -92,8 +94,10 @@ public class CPDemoTestEnvironment implements TestEnvironment {
         10091,
         11091,
         12091,
+        12093,
         13091,
-        14091
+        14091,
+        15091
     );
     kafka1.withEnv(Map.of(
         "KAFKA_BROKER_ID", "1",
@@ -108,8 +112,10 @@ public class CPDemoTestEnvironment implements TestEnvironment {
         10092,
         11092,
         12092,
+        12094,
         13092,
-        14092
+        14092,
+        15092
     );
     kafka2.withEnv(Map.of(
         "KAFKA_BROKER_ID", "2",
@@ -120,6 +126,9 @@ public class CPDemoTestEnvironment implements TestEnvironment {
     // Must be started in parallel
     Log.info("Starting Kafka brokers...");
     Startables.deepStart(List.of(kafka1, kafka2)).join();
+
+    // Register users for SASL/SCRAM
+    registerScramUsers();
 
     if (!cpDemoRunning) {
       Log.info("Creating role bindings...");
@@ -149,13 +158,30 @@ public class CPDemoTestEnvironment implements TestEnvironment {
     try {
       kafka1.execInContainer(
           "kafka-configs",
-          "--bootstrap-server", "kafka1:12091",
+          "--bootstrap-server", "kafka1:12093",
           "--entity-type", "topics",
           "--entity-name", "_confluent-metadata-auth",
           "--alter",
           "--add-config", "min.insync.replicas=1"
       );
     } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private void registerScramUsers() {
+    Log.info("Creating users for SASL/SCRAM authentication.");
+    try {
+      kafka1.execInContainer(
+          "kafka-configs",
+          "--bootstrap-server", "kafka1:12093",
+          "--entity-type", "users",
+          "--entity-name", "admin",
+          "--alter",
+          "--add-config", "SCRAM-SHA-256=[password=admin-secret]"
+      );
+    } catch (InterruptedException | IOException e) {
+      Log.error("Could not add users for SASL/SCRAM authentication.");
       throw new RuntimeException(e);
     }
   }
@@ -365,6 +391,29 @@ public class CPDemoTestEnvironment implements TestEnvironment {
                 .build(),
             null
         ));
+  }
+
+  public Optional<ConnectionSpec> directConnectionSaslScramAuth() {
+    return Optional.of(
+        ConnectionSpec.createDirect(
+            "direct-connection-sasl-scram-auth",
+            "Direct connection (SASL/SCRAM Auth)",
+            ConnectionSpecKafkaClusterConfigBuilder
+                .builder()
+                .bootstrapServers("localhost:15091")
+                .credentials(
+                    new ScramCredentials(
+                        HashAlgorithm.SCRAM_SHA_256,
+                        "admin",
+                        new Password("admin-secret".toCharArray())
+                    )
+                )
+                // Disable TLS
+                .tlsConfig(TLSConfigBuilder.builder().enabled(false).build())
+                .build(),
+            null
+        )
+    );
   }
 
   /**
