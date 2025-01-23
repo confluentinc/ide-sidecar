@@ -1,6 +1,5 @@
 package io.confluent.idesidecar.restapi.credentials;
 
-import static io.vertx.core.http.HttpHeaders.AUTHORIZATION;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;

@@ -1,6 +1,5 @@
 package io.confluent.idesidecar.restapi.resources;
 
-import static io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType.PLATFORM;
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.asJson;
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.asObject;
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
@@ -67,14 +66,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.EmptySource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
-import org.junit.jupiter.params.provider.NullSource;
 import org.mockito.Mockito;
 import io.restassured.RestAssured;
 import io.restassured.parsing.Parser;
-import static org.hamcrest.Matchers.containsString;
 
 @QuarkusTest
 @ConnectWireMock
@@ -961,6 +957,93 @@ public class ConnectionsResourceTest {
         Error... expectedErrors
     ) {}
     var inputs = List.of(
+        new TestInput(
+            "Direct spec is valid with name and Kafka w/ scram credentials for 512 and no Schema Registry",
+            """
+            {
+              "name": "Some connection name",
+              "type": "DIRECT",
+              "kafka_cluster": {
+                "bootstrap_servers": "localhost:9092",
+                "credentials": {
+                  "hash_algorithm": "SCRAM_SHA_512",
+                  "scram_username": "user",
+                  "scram_password": "pass"
+                },
+                "ssl": { "enabled": true }
+              }
+            }
+            """
+        ),
+        new TestInput(
+            "Direct spec is valid with name and Kafka w/ scram credentials for 256 and no Schema Registry",
+            """
+            {
+              "name": "Some connection name",
+              "type": "DIRECT",
+              "kafka_cluster": {
+                "bootstrap_servers": "localhost:9092",
+                "credentials": {
+                  "hash_algorithm": "SCRAM_SHA_256",
+                  "scram_username": "user",
+                  "scram_password": "pass"
+                },
+                "ssl": { "enabled": true }
+              }
+            }
+            """
+        ),
+        new TestInput(
+            "Direct spec is invalid with name and Kafka w/ scram credentials for 256 without username",
+            """
+                {
+                    "name": "string",
+                    "type": "DIRECT",
+                    "kafka_cluster": {
+                        "bootstrap_servers": "localhost:9092",
+                        "credentials": {
+                            "hash_algorithm": "SCRAM_SHA_256",
+                            "scram_password" : "pass"
+                         
+                        },
+                        "ssl": {
+                            "enabled": true
+                        }
+                    },
+                    "ssl": {
+                        "enabled": true
+                    }
+                }
+            """,
+            createError()
+                .withSource("kafka_cluster.credentials.scram_username")
+                .withDetail("Kafka cluster Username is required and may not be blank")
+        ),
+        new TestInput(
+            "Direct spec is invalid with name and Kafka w/ scram credentials for 256 without hash algorithm and no Schema Registry",
+            """
+                {
+                    "name": "string",
+                    "type": "DIRECT",
+                    "kafka_cluster": {
+                        "bootstrap_servers": "localhost:9092",
+                        "credentials": {
+                            "scram_password" : "pass",
+                            "scram_username" : "user"
+                        },
+                        "ssl": {
+                            "enabled": true
+                        }
+                    },
+                    "ssl": {
+                        "enabled": true
+                    }
+                }
+            """,
+            createError()
+                .withSource("kafka_cluster.credentials.hash_algorithm")
+                .withDetail("Kafka cluster Hash algorithm is required, may not be blank, and must be one of the supported algorithms (SCRAM_SHA_256 or SCRAM_SHA_512)")
+        ),
         // Local connections
         new TestInput(
             "Local spec is valid with name but no config",
@@ -1310,6 +1393,23 @@ public class ConnectionsResourceTest {
             """
         ),
         new TestInput(
+            "Direct spec is valid with name and Kafka w/ basic credentials and no Schema Registry",
+            """
+            {
+              "name": "Some connection name",
+              "type": "DIRECT",
+              "kafka_cluster": {
+                "bootstrap_servers": "localhost:9092",
+                "credentials": {
+                  "username": "user",
+                  "password": "pass"
+                },
+                "ssl": { "enabled": true }
+              }
+            }
+            """
+        ),
+        new TestInput(
             "CCloud spec is invalid without name",
             """
             {
@@ -1398,23 +1498,6 @@ public class ConnectionsResourceTest {
               "type": "DIRECT",
               "kafka_cluster": {
                 "bootstrap_servers": "localhost:9092",
-                "ssl": { "enabled": true }
-              }
-            }
-            """
-        ),
-        new TestInput(
-            "Direct spec is valid with name and Kafka w/ basic credentials and no Schema Registry",
-            """
-            {
-              "name": "Some connection name",
-              "type": "DIRECT",
-              "kafka_cluster": {
-                "bootstrap_servers": "localhost:9092",
-                "credentials": {
-                  "username": "user",
-                  "password": "pass"
-                },
                 "ssl": { "enabled": true }
               }
             }
@@ -2189,5 +2272,3 @@ public class ConnectionsResourceTest {
     }
   }
 }
-
-
