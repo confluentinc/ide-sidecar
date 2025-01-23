@@ -1,13 +1,8 @@
 package io.confluent.idesidecar.restapi.credentials;
 
-import static io.vertx.core.http.HttpHeaders.AUTHORIZATION;
-
 import io.confluent.idesidecar.restapi.exceptions.Failure.Error;
 import io.quarkus.runtime.annotations.RegisterForReflection;
-import io.vertx.core.MultiMap;
 import jakarta.validation.constraints.NotNull;
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
