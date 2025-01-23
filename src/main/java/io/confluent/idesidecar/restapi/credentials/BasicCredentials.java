@@ -19,7 +19,6 @@ public record BasicCredentials(
         maxLength = USERNAME_MAX_LEN,
         minLength = 1
     )
-
     @NotNull
     String username,
 
