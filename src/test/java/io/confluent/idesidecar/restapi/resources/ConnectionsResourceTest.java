@@ -1393,23 +1393,6 @@ public class ConnectionsResourceTest {
             """
         ),
         new TestInput(
-            "Direct spec is valid with name and Kafka w/ basic credentials and no Schema Registry",
-            """
-            {
-              "name": "Some connection name",
-              "type": "DIRECT",
-              "kafka_cluster": {
-                "bootstrap_servers": "localhost:9092",
-                "credentials": {
-                  "username": "user",
-                  "password": "pass"
-                },
-                "ssl": { "enabled": true }
-              }
-            }
-            """
-        ),
-        new TestInput(
             "CCloud spec is invalid without name",
             """
             {
@@ -1498,6 +1481,23 @@ public class ConnectionsResourceTest {
               "type": "DIRECT",
               "kafka_cluster": {
                 "bootstrap_servers": "localhost:9092",
+                "ssl": { "enabled": true }
+              }
+            }
+            """
+        ),
+        new TestInput(
+            "Direct spec is valid with name and Kafka w/ basic credentials and no Schema Registry",
+            """
+            {
+              "name": "Some connection name",
+              "type": "DIRECT",
+              "kafka_cluster": {
+                "bootstrap_servers": "localhost:9092",
+                "credentials": {
+                  "username": "user",
+                  "password": "pass"
+                },
                 "ssl": { "enabled": true }
               }
             }
