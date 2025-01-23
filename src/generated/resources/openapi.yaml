@@ -799,6 +799,7 @@ components:
           - $ref: "#/components/schemas/BasicCredentials"
           - $ref: "#/components/schemas/ApiKeyAndSecret"
           - $ref: "#/components/schemas/OAuthCredentials"
+          - $ref: "#/components/schemas/ScramCredentials"
           nullable: true
         ssl:
           description: "The SSL configuration for connecting to the Kafka cluster.\
@@ -1065,8 +1066,8 @@ components:
       description: Scram authentication credentials
       required:
       - hash_algorithm
-      - username
-      - password
+      - scram_username
+      - scram_password
       type: object
       properties:
         hash_algorithm:
@@ -1074,9 +1075,9 @@ components:
           type: string
           allOf:
           - $ref: "#/components/schemas/HashAlgorithm"
-        username:
+        scram_username:
           type: string
-        password:
+        scram_password:
           $ref: "#/components/schemas/Password"
     SidecarAccessToken:
       type: object
@@ -1225,13 +1226,13 @@ components:
     HealthCheck:
       type: object
       properties:
-        status:
-          enum:
-          - UP
-          - DOWN
+        name:
           type: string
         data:
           type: object
           nullable: true
-        name:
+        status:
+          enum:
+          - UP
+          - DOWN
           type: string
