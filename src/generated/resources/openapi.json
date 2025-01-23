@@ -1445,10 +1445,19 @@
             } ]
           },
           "scram_username" : {
+            "description" : "The username to use when connecting to the external service.",
+            "maxLength" : 64,
+            "minLength" : 1,
             "type" : "string"
           },
           "scram_password" : {
-            "$ref" : "#/components/schemas/Password"
+            "description" : "The password to use when connecting to the external service.",
+            "maxLength" : 64,
+            "minLength" : 1,
+            "type" : "string",
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/Password"
+            } ]
           }
         }
       },
