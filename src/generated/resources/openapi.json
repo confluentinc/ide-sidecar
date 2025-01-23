@@ -1629,12 +1629,12 @@
       "HealthCheck" : {
         "type" : "object",
         "properties" : {
-          "name" : {
-            "type" : "string"
-          },
           "data" : {
             "type" : "object",
             "nullable" : true
+          },
+          "name" : {
+            "type" : "string"
           },
           "status" : {
             "enum" : [ "UP", "DOWN" ],
