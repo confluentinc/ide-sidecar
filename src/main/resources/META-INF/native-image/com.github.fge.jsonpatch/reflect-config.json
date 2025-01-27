@@ -1,0 +1,13 @@
+[
+  {
+    "name":"com.github.fge.jsonpatch.JsonPatchMessages",
+    "methods":[{"name":"<init>","parameterTypes":[] }]
+  },
+  {
+    "name":"com.github.fge.jsonpatch.mergepatch.JsonMergePatch"
+  },
+  {
+    "name":"com.github.fge.jsonpatch.mergepatch.JsonMergePatchDeserializer",
+    "methods":[{"name":"<init>","parameterTypes":[] }]
+  }
+]
