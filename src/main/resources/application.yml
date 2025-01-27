@@ -63,6 +63,12 @@
       # How often to check?
       interval-seconds: 60
 
+"%prod":
+  quarkus:
+    kafka:
+      snappy:
+        enabled: true
+
 vscode:
   extension:
     version: unknown
@@ -218,8 +224,6 @@ quarkus:
     devservices:
       # We do not use the Quarkus Kafka devservices container to start the Kafka cluster
       enabled: false
-    snappy:
-      enabled: true
   log:
     min-level: INFO
     category:
