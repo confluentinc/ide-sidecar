@@ -320,6 +320,7 @@ public record ConnectionSpec(
               BasicCredentials.class,
               ApiKeyAndSecret.class,
               OAuthCredentials.class,
+              ScramCredentials.class
           },
           nullable = true
       )
