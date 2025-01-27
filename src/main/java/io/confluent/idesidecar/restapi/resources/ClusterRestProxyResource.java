@@ -6,6 +6,7 @@ import io.confluent.idesidecar.restapi.processors.Processor;
 import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
 import io.confluent.idesidecar.restapi.util.RequestHeadersConstants;
 import io.quarkus.vertx.web.Route;
+import io.quarkus.vertx.web.Route.HttpMethod;
 import io.smallrye.common.annotation.Blocking;
 import io.vertx.core.Future;
 import io.vertx.core.http.HttpHeaders;
@@ -22,6 +23,7 @@ import jakarta.ws.rs.core.MediaType;
 public class ClusterRestProxyResource {
 
   public static final String KAFKA_PROXY_REGEX = "/kafka/v3/clusters/(?<clusterId>[^\\/]+).*";
+  public static final String RBAC_PROXY_STRING = "/api/metadata/security/v2alpha1/authorize";
   private static final String CLUSTER_ID_PATH_PARAM = "clusterId";
 
   public static final String SCHEMA_REGISTRY_PROXY_REGEX = "(/schemas.*)|(/subjects.*)";
@@ -29,6 +31,10 @@ public class ClusterRestProxyResource {
   @Inject
   @Named("clusterProxyProcessor")
   Processor<ClusterProxyContext, Future<ClusterProxyContext>> clusterProxyProcessor;
+
+  @Inject
+  @Named("RBACProxyProcessor")
+  Processor<ClusterProxyContext, Future<ClusterProxyContext>> RBACProxyProcessor;
 
   @Route(regex = KAFKA_PROXY_REGEX)
   @Blocking
@@ -43,16 +49,33 @@ public class ClusterRestProxyResource {
   }
 
   private void handleClusterProxy(RoutingContext routingContext, ClusterProxyContext proxyContext) {
-    clusterProxyProcessor.process(proxyContext)
+    process(routingContext, clusterProxyProcessor, proxyContext);
+  }
+
+  @Route(methods = HttpMethod.PUT, path = RBAC_PROXY_STRING)
+  @Blocking
+  public void RBACProxyRoute(RoutingContext routingContext) {
+    handleRBACProxy(routingContext);
+  }
+
+  private void handleRBACProxy(RoutingContext routingContext) {
+    Processor<ClusterProxyContext, Future<ClusterProxyContext>> processor = RBACProxyProcessor;
+
+    ClusterProxyContext proxyContext = createKafkaClusterContext(routingContext);
+
+    process(routingContext, processor, proxyContext);
+  }
+
+  private void process(RoutingContext routingContext,
+      Processor<ClusterProxyContext, Future<ClusterProxyContext>> processor,
+      ClusterProxyContext proxyContext) {
+    processor.process(proxyContext)
         .onSuccess(context -> {
           routingContext.response().setStatusCode(context.getProxyResponseStatusCode());
           if (context.getProxyResponseHeaders() != null) {
             routingContext.response().headers().addAll(context.getProxyResponseHeaders());
           }
           if (context.getProxyResponseBody() != null) {
-            // Set content-length header to the length of the response body
-            // so that the client knows when the response is complete.
-            // Set only if transfer-encoding is not set, as it takes precedence.
             if (context.getProxyResponseHeaders().get(HttpHeaders.TRANSFER_ENCODING) == null) {
               routingContext.response().putHeader(
                   HttpHeaders.CONTENT_LENGTH,
@@ -71,7 +94,6 @@ public class ClusterRestProxyResource {
           routingContext.response().send(failure.asJsonString());
         });
   }
-
 
   /*
    DEV NOTES:
