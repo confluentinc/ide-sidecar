@@ -40,6 +40,18 @@ public class ProxyProcessorBeanProducers {
   @Inject
   Vertx vertx;
 
+  @Inject
+  EmptyProcessor<ProxyContext> emptyProcessorProxyContext;
+
+  @Inject
+  EmptyProcessor<ClusterProxyContext> emptyProcessorClusterProxyContext;
+
+  @Inject
+  ConnectionProcessor<ProxyContext> connectionProcessorProxyContext;
+
+  @Inject
+  ConnectionProcessor<ClusterProxyContext> connectionProcessorClusterProxyContext;
+
   @Produces
   @Singleton
   @Named("clusterProxyProcessor")
@@ -51,34 +63,30 @@ public class ProxyProcessorBeanProducers {
       ClusterProxyRequestProcessor clusterProxyRequestProcessor
   ) {
     return Processor.chain(
-        new ConnectionProcessor<>(connectionStateManager),
+        connectionProcessorClusterProxyContext,
         clusterAuthenticationProcessor,
         clusterInfoProcessor,
         clusterStrategyProcessor,
         clusterProxyProcessor,
         clusterProxyRequestProcessor,
-        new EmptyProcessor<>()
+        emptyProcessorClusterProxyContext
     );
+
   }
 
   @Produces
   @Singleton
   @Named("RBACProxyProcessor")
-  public Processor<ProxyContext, Future<ProxyContext>> scaffoldingProxyProcessor(
-      RBACProxyProcessor rbacProxyProcessor,
-      CCloudAuthProcessor ccAuthProcessor,
-      ProxyRequestProcessor proxyRequestProcessor
-
+  public Processor<ProxyContext, Future<ProxyContext>> RbacProxyProcessor(
+      RBACProxyProcessor rbacProxyProcessor
   ) {
     CCloudOAuthContext cCloudOAuthContext = new CCloudOAuthContext();
-    //where to use this controlPlaneToken?
     Token controlPlaneToken = cCloudOAuthContext.getControlPlaneToken();
     return Processor.chain(
         rbacProxyProcessor,
-        ccAuthProcessor,
-        proxyRequestProcessor,
-        new EmptyProcessor<>()
+        new CCloudAuthProcessor(controlPlaneToken),
+        new ProxyRequestProcessor(webClientFactory, vertx),
+        emptyProcessorProxyContext
     );
   }
-
 }

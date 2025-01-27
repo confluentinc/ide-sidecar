@@ -4,24 +4,22 @@ import io.confluent.idesidecar.restapi.processors.Processor;
 import io.confluent.idesidecar.restapi.util.WebClientFactory;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
+import jakarta.enterprise.context.ApplicationScoped;
 
 /**
- * Generic processor that ships the request to the target server and updates the context with the
- * response.
- *
- * @param <T> The type of the context that must extend {@link ProxyContext}
+ * Processor that ships the request to the target server and updates the context with the response.
  */
-public class ProxyRequestProcessor<T extends ProxyContext> extends
-    Processor<T, Future<T>> {
+@ApplicationScoped
+public class ProxyRequestProcessor extends Processor<ProxyContext, Future<ProxyContext>> {
 
-  ProxyHttpClient<T> proxyHttpClient;
+  ProxyHttpClient<ProxyContext> proxyHttpClient;
 
   public ProxyRequestProcessor(WebClientFactory webClientFactory, Vertx vertx) {
     proxyHttpClient = new ProxyHttpClient<>(webClientFactory, vertx);
   }
 
   @Override
-  public Future<T> process(T context) {
+  public Future<ProxyContext> process(ProxyContext context) {
     return proxyHttpClient.send(context).compose(
         processedContext -> next().process(processedContext)
     );

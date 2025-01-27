@@ -34,7 +34,7 @@ public class ClusterRestProxyResource {
 
   @Inject
   @Named("RBACProxyProcessor")
-  Processor<ClusterProxyContext, Future<ClusterProxyContext>> RBACProxyProcessor;
+  Processor<ClusterProxyContext, Future<ClusterProxyContext>> rbacProxyProcessor;
 
   @Route(regex = KAFKA_PROXY_REGEX)
   @Blocking
@@ -59,7 +59,7 @@ public class ClusterRestProxyResource {
   }
 
   private void handleRBACProxy(RoutingContext routingContext) {
-    Processor<ClusterProxyContext, Future<ClusterProxyContext>> processor = RBACProxyProcessor;
+    Processor<ClusterProxyContext, Future<ClusterProxyContext>> processor = rbacProxyProcessor;
 
     ClusterProxyContext proxyContext = createKafkaClusterContext(routingContext);
 

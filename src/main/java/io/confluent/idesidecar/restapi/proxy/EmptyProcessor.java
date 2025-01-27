@@ -2,10 +2,12 @@ package io.confluent.idesidecar.restapi.proxy;
 
 import io.confluent.idesidecar.restapi.processors.Processor;
 import io.vertx.core.Future;
+import jakarta.enterprise.context.Dependent;
 
 /**
  * No-op processor that is typically called at the end of a processing chain.
  */
+@Dependent
 public class EmptyProcessor<T> extends Processor<T, Future<T>> {
 
   @Override
