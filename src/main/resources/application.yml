@@ -218,6 +218,8 @@ quarkus:
     devservices:
       # We do not use the Quarkus Kafka devservices container to start the Kafka cluster
       enabled: false
+    snappy:
+      enabled: true
   log:
     min-level: INFO
     category:
