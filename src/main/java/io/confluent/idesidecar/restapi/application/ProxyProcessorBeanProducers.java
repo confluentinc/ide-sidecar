@@ -71,6 +71,7 @@ public class ProxyProcessorBeanProducers {
 
   ) {
     CCloudOAuthContext cCloudOAuthContext = new CCloudOAuthContext();
+    //where to use this controlPlaneToken?
     Token controlPlaneToken = cCloudOAuthContext.getControlPlaneToken();
     return Processor.chain(
         rbacProxyProcessor,
