@@ -63,6 +63,12 @@
       # How often to check?
       interval-seconds: 60
 
+"%prod":
+  quarkus:
+    kafka:
+      snappy:
+        enabled: true
+
 vscode:
   extension:
     version: unknown
