@@ -20,10 +20,7 @@ public class ProxyHttpClient<T extends ProxyContext> {
   }
 
   public Future<T> send(T context) {
-    var webClient = context.getWebClientOptions() != null
-        ? WebClient.create(vertx, context.getWebClientOptions())
-        : webClientFactory.getWebClient();
-    return webClient
+    return webClientFactory.getWebClient()
         .requestAbs(context.getProxyRequestMethod(), context.getProxyRequestAbsoluteUrl())
         .putHeaders(context.getProxyRequestHeaders())
         .sendBuffer(context.getProxyRequestBody())

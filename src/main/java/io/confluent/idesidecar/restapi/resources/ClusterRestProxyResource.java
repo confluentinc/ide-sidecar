@@ -5,6 +5,7 @@ import io.confluent.idesidecar.restapi.models.ClusterType;
 import io.confluent.idesidecar.restapi.processors.Processor;
 import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
 import io.confluent.idesidecar.restapi.util.RequestHeadersConstants;
+import io.quarkus.logging.Log;
 import io.quarkus.vertx.web.Route;
 import io.smallrye.common.annotation.Blocking;
 import io.vertx.core.Future;
@@ -104,6 +105,14 @@ public class ClusterRestProxyResource {
    * cluster id from the {@code x-cluster-id} header.
    */
   private ClusterProxyContext createSRClusterContext(RoutingContext routingContext) {
+    Log.infof(
+        "New SR cluster context: URI=%s, HEADERS=%s, METHOD=%s, BODY=%s, PATH_PARAMS=%s",
+        routingContext.request().uri(),
+        routingContext.request().headers(),
+        routingContext.request().method(),
+        routingContext.body().buffer(),
+        routingContext.pathParams()
+    );
     return new ClusterProxyContext(
         routingContext.request().uri(),
         routingContext.request().headers(),
