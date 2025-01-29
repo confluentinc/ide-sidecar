@@ -7,6 +7,7 @@ import io.confluent.idesidecar.restapi.connections.PlatformConnectionState;
 import io.confluent.idesidecar.restapi.exceptions.ProcessorFailedException;
 import io.confluent.idesidecar.restapi.processors.Processor;
 import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
+import io.quarkus.logging.Log;
 import io.vertx.core.Future;
 import jakarta.enterprise.context.ApplicationScoped;
 
@@ -20,6 +21,7 @@ public class ClusterAuthenticationProcessor extends
 
   @Override
   public Future<ClusterProxyContext> process(ClusterProxyContext context) {
+    Log.info("Start ClusterAuthenticationProcessor");
     var connectionState = context.getConnectionState();
 
     switch (connectionState) {
@@ -44,6 +46,7 @@ public class ClusterAuthenticationProcessor extends
       }
     }
 
+    Log.info("End ClusterAuthenticationProcessor");
     return next().process(context);
   }
 }

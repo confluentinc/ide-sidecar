@@ -6,6 +6,7 @@ import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
 import io.confluent.idesidecar.restapi.exceptions.ProcessorFailedException;
 import io.confluent.idesidecar.restapi.processors.Processor;
 import io.confluent.idesidecar.restapi.util.RequestHeadersConstants;
+import io.quarkus.logging.Log;
 import io.vertx.core.Future;
 
 /**
@@ -25,6 +26,7 @@ public class ConnectionProcessor<T extends ProxyContext> extends
 
   @Override
   public Future<T> process(T context) {
+    Log.info("Start ConnectionProcessor");
     // First, check for the connection id header
     var connectionId = context.getConnectionId();
     if (connectionId == null) {
@@ -52,6 +54,7 @@ public class ConnectionProcessor<T extends ProxyContext> extends
     context.setConnectionState(connectionState);
 
     // All right, we may now proceed
+    Log.info("End ConnectionProcessor");
     return next().process(context);
   }
 }

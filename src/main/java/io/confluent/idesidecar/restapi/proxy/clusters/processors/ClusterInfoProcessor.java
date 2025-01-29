@@ -8,6 +8,7 @@ import io.confluent.idesidecar.restapi.models.ClusterType;
 import io.confluent.idesidecar.restapi.processors.Processor;
 import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
 import io.confluent.idesidecar.restapi.util.RequestHeadersConstants;
+import io.quarkus.logging.Log;
 import io.vertx.core.Future;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -26,6 +27,7 @@ public class ClusterInfoProcessor extends
 
   @Override
   public Future<ClusterProxyContext> process(ClusterProxyContext context) {
+    Log.info("Start ClusterInfoProcessor");
     var clusterId = context.getClusterId();
     if (clusterId == null) {
       if (context.getClusterType().equals(ClusterType.SCHEMA_REGISTRY)) {
@@ -68,8 +70,10 @@ public class ClusterInfoProcessor extends
     // Load the cluster information
     var connectionId = context.getConnectionId();
     try {
+      Log.info("Load cluster from cache");
       var clusterInfo = clusterCache.getCluster(connectionId, clusterId, context.getClusterType());
       context.setClusterInfo(clusterInfo);
+      Log.info("End ClusterInfoProcessor");
       return next().process(context);
     } catch (ConnectionNotFoundException | ClusterNotFoundException e) {
       return Future.failedFuture(
