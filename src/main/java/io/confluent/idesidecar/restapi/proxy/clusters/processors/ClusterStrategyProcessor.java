@@ -11,6 +11,7 @@ import io.confluent.idesidecar.restapi.proxy.clusters.strategy.SchemaRegistryClu
 import io.confluent.idesidecar.restapi.proxy.clusters.strategy.ConfluentLocalKafkaClusterStrategy;
 import io.confluent.idesidecar.restapi.proxy.clusters.strategy.ConfluentLocalSchemaRegistryClusterStrategy;
 import io.confluent.idesidecar.restapi.proxy.clusters.strategy.DirectKafkaClusterStrategy;
+import io.quarkus.logging.Log;
 import io.vertx.core.Future;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -40,6 +41,7 @@ public class ClusterStrategyProcessor extends
 
   @Override
   public Future<ClusterProxyContext> process(ClusterProxyContext context) {
+    Log.info("Start ClusterStrategyProcessor");
     var connectionType = context.getConnectionState().getType();
     var clusterType = context.getClusterType();
 
@@ -48,7 +50,9 @@ public class ClusterStrategyProcessor extends
       return Future.failedFuture(
           new ProcessorFailedException(context.failf(501, "Cannot handle request")));
     } else {
+      Log.infof("Chose Strategy: %s", strategy);
       context.setClusterStrategy(strategy);
+      Log.info("Start ClusterStrategyProcessor");
       return next().process(context);
     }
   }
