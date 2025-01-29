@@ -48,16 +48,7 @@ public class ClusterProxyRequestProcessor extends
   @Override
   public Future<ClusterProxyContext> process(ClusterProxyContext context) {
     Log.info("Start ClusterProxyRequestProcessor");
-    var clusterOp = switch (context.getClusterType()) {
-      // If Kafka, send the request to the Kafka REST server
-      // using a generic HTTP client
-      case KAFKA -> proxyHttpClient.send(context);
-      // If Schema Registry, use the cached SchemaRegistryClient instance
-      // to send the request to the Schema Registry server. Constructing the full
-      // HTTP request ourselves is error-prone and unnecessary.
-      case SCHEMA_REGISTRY -> processSchemaRegistry(context);
-    };
-
+    var clusterOp = proxyHttpClient.send(context);
     Log.info("End ClusterProxyRequestProcessor");
     return clusterOp.compose(
         processedContext -> next().process(processedContext)
