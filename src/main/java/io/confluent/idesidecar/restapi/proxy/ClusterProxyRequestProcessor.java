@@ -7,6 +7,7 @@ import io.confluent.idesidecar.restapi.processors.Processor;
 import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
 import io.confluent.idesidecar.restapi.util.WebClientFactory;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
+import io.quarkus.logging.Log;
 import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
 import io.vertx.core.Vertx;
@@ -46,6 +47,7 @@ public class ClusterProxyRequestProcessor extends
 
   @Override
   public Future<ClusterProxyContext> process(ClusterProxyContext context) {
+    Log.info("Start ClusterProxyRequestProcessor");
     var clusterOp = switch (context.getClusterType()) {
       // If Kafka, send the request to the Kafka REST server
       // using a generic HTTP client
@@ -56,6 +58,7 @@ public class ClusterProxyRequestProcessor extends
       case SCHEMA_REGISTRY -> processSchemaRegistry(context);
     };
 
+    Log.info("End ClusterProxyRequestProcessor");
     return clusterOp.compose(
         processedContext -> next().process(processedContext)
     );

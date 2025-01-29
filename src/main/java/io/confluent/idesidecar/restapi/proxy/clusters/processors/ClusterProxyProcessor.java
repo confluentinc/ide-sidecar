@@ -4,6 +4,7 @@ import io.confluent.idesidecar.restapi.application.ProxyProcessorBeanProducers;
 import io.confluent.idesidecar.restapi.processors.Processor;
 import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
 import io.confluent.idesidecar.restapi.util.WebClientFactory;
+import io.quarkus.logging.Log;
 import io.vertx.core.Future;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.net.JksOptions;
@@ -41,21 +42,28 @@ public class ClusterProxyProcessor extends
 
   @Override
   public Future<ClusterProxyContext> process(ClusterProxyContext context) {
+    Log.info("Start ClusterProxyProcessor");
     // Set everything needed to do the proxy request
     var requestStrategy = context.getClusterStrategy();
     context.setProxyRequestAbsoluteUrl(
         requestStrategy.constructProxyUri(context.getRequestUri(), context.getClusterInfo().uri())
     );
+    Log.infof("ProxyRequestAbsoluteUrl: %s", context.getProxyRequestAbsoluteUrl());
     context.setProxyRequestHeaders(
         requestStrategy.constructProxyHeaders(context));
+    Log.infof("ProxyRequestHeaders: %s", context.getProxyRequestHeaders());
 
     // Pass request method and body straight through, no processing needed
     context.setProxyRequestMethod(context.getRequestMethod());
+    Log.infof("ProxyRequestMethod: %s", context.getProxyRequestMethod());
     context.setProxyRequestBody(context.getRequestBody());
+    Log.infof("ProxyRequestBody: %s", context.getProxyRequestBody());
 
+    Log.info("End ClusterProxyProcessor");
     return next().process(context).map(
         processedContext -> {
           if (processedContext.getProxyResponseBody() != null) {
+            Log.infof("ProxyResponseBody: %s", processedContext.getProxyResponseBody().toString());
             var processedResponseBody = requestStrategy.processProxyResponse(
                 processedContext.getProxyResponseBody().toString(),
                 context.getClusterInfo().uri(),
