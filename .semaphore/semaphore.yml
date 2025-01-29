@@ -52,7 +52,7 @@ blocks:
             - make build
 
   - name: "Release"
-    dependencies: ["Build JARs and Unit Test", "Build Native Executable and Test"]
+    dependencies: ["Build JARs and Unit Test"]
     run:
       when: "branch =~ '.*'"
     task:
