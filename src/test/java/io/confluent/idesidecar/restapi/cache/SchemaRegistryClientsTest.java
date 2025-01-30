@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
-import io.confluent.idesidecar.restapi.clients.SchemaRegistryClient;
+import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.idesidecar.restapi.clients.SchemaRegistryClients;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
