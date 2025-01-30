@@ -1,10 +1,14 @@
 package io.confluent.idesidecar.restapi.clients;
 
 import static io.confluent.idesidecar.restapi.kafkarest.SchemaManager.SCHEMA_PROVIDERS;
+import static jakarta.ws.rs.core.HttpHeaders.AUTHORIZATION;
 
+import io.confluent.idesidecar.restapi.application.SidecarAccessTokenBean;
 import io.confluent.idesidecar.restapi.cache.Clients;
 import io.confluent.idesidecar.restapi.cache.ClusterCache;
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
+import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
+import io.confluent.idesidecar.restapi.util.RequestHeadersConstants;
 import io.confluent.kafka.schemaregistry.client.rest.RestService;
 import io.confluent.kafka.schemaregistry.client.security.SslFactory;
 import io.quarkus.logging.Log;
@@ -13,6 +17,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.util.HashMap;
 import java.util.Map;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
  * Create an ApplicationScoped bean to cache SchemaRegistryClient instances
@@ -31,6 +36,12 @@ public class SchemaRegistryClients extends Clients<SchemaRegistryClient> {
   @Inject
   ClientConfigurator configurator;
 
+  @ConfigProperty(name = "ide-sidecar.api.host")
+  String sidecarHost;
+
+  @Inject
+  SidecarAccessTokenBean accessTokenBean;
+
   /**
    * Get a SchemaRegistryClient for the given connection ID and cluster ID. We rely on the
    * sidecar's Schema Registry proxy routes to forward the request to the correct Schema Registry
@@ -47,10 +58,25 @@ public class SchemaRegistryClients extends Clients<SchemaRegistryClient> {
               clusterId
           );
           // Create the Schema Registry client
-          var schemaRegistryCluster = clusterCache.getSchemaRegistry(connectionId, clusterId);
           var connection = connectionStateManager.getConnectionState(connectionId);
+          var schemaRegistryCluster = clusterCache.getSchemaRegistry(connectionId, clusterId);
+          var schemaRegistryUri = schemaRegistryCluster.uri();
           var headers = connection.getSchemaRegistryAuthenticationHeaders(clusterId);
-          var client = createClient(schemaRegistryCluster.uri(), config.asMap(), headers);
+
+          // For CCloud connections, we must point the SchemaRegistryClient to the sidecar-exposed
+          // proxy endpoints so that we get access to user-provided HTTP configs, like SSL certs
+          if (connection.getType().equals(ConnectionType.CCLOUD)) {
+            schemaRegistryUri = sidecarHost;
+            headers.addAll(
+                Map.of(
+                    RequestHeadersConstants.CONNECTION_ID_HEADER, connectionId,
+                    RequestHeadersConstants.CLUSTER_ID_HEADER, clusterId,
+                    AUTHORIZATION, "Bearer %s".formatted(accessTokenBean.getToken())
+                )
+            );
+          }
+
+          var client = createClient(schemaRegistryUri, config.asMap(), headers);
           Log.debugf(
               "Created SR client %s for connection %s and cluster %s with configuration:\n  %s",
               client,

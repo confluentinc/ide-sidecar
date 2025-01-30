@@ -50,10 +50,13 @@ public class ClusterProxyRequestProcessor extends
       // If Kafka, send the request to the Kafka REST server
       // using a generic HTTP client
       case KAFKA -> proxyHttpClient.send(context);
-      // If Schema Registry, use the cached SchemaRegistryClient instance
-      // to send the request to the Schema Registry server. Constructing the full
-      // HTTP request ourselves is error-prone and unnecessary.
-      case SCHEMA_REGISTRY -> processSchemaRegistry(context);
+      case SCHEMA_REGISTRY ->
+          switch (context.getConnectionState().getType()) {
+            // For CCloud connections, use Proxy HTTP client
+            case CCLOUD -> proxyHttpClient.send(context);
+            // For all other connections, use SR client
+            case DIRECT, LOCAL, PLATFORM -> processSchemaRegistry(context);
+          };
     };
 
     return clusterOp.compose(
