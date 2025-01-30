@@ -1,18 +1,21 @@
 package io.confluent.idesidecar.restapi.clients;
 
 import static io.confluent.idesidecar.restapi.kafkarest.SchemaManager.SCHEMA_PROVIDERS;
+import static jakarta.ws.rs.core.HttpHeaders.AUTHORIZATION;
 
+import io.confluent.idesidecar.restapi.application.SidecarAccessTokenBean;
 import io.confluent.idesidecar.restapi.cache.Clients;
 import io.confluent.idesidecar.restapi.cache.ClusterCache;
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
-import io.confluent.kafka.schemaregistry.client.rest.RestService;
-import io.confluent.kafka.schemaregistry.client.security.SslFactory;
+import io.confluent.idesidecar.restapi.util.RequestHeadersConstants;
+import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
+import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.quarkus.logging.Log;
-import io.vertx.core.MultiMap;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.Map;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
  * Create an ApplicationScoped bean to cache SchemaRegistryClient instances
@@ -31,6 +34,12 @@ public class SchemaRegistryClients extends Clients<SchemaRegistryClient> {
   @Inject
   ClientConfigurator configurator;
 
+  @ConfigProperty(name = "ide-sidecar.api.host")
+  String sidecarHost;
+
+  @Inject
+  SidecarAccessTokenBean accessTokenBean;
+
   /**
    * Get a SchemaRegistryClient for the given connection ID and cluster ID. We rely on the
    * sidecar's Schema Registry proxy routes to forward the request to the correct Schema Registry
@@ -47,10 +56,12 @@ public class SchemaRegistryClients extends Clients<SchemaRegistryClient> {
               clusterId
           );
           // Create the Schema Registry client
-          var schemaRegistryCluster = clusterCache.getSchemaRegistry(connectionId, clusterId);
-          var connection = connectionStateManager.getConnectionState(connectionId);
-          var headers = connection.getSchemaRegistryAuthenticationHeaders(clusterId);
-          var client = createClient(schemaRegistryCluster.uri(), config.asMap(), headers);
+          var headers = Map.of(
+              RequestHeadersConstants.CONNECTION_ID_HEADER, connectionId,
+              RequestHeadersConstants.CLUSTER_ID_HEADER, clusterId,
+              AUTHORIZATION, "Bearer %s".formatted(accessTokenBean.getToken())
+          );
+          var client = createClient(sidecarHost, config.asMap(), headers);
           Log.debugf(
               "Created SR client %s for connection %s and cluster %s with configuration:\n  %s",
               client,
@@ -76,26 +87,14 @@ public class SchemaRegistryClients extends Clients<SchemaRegistryClient> {
   private SchemaRegistryClient createClient(
       String srClusterUri,
       Map<String, Object> configurationProperties,
-      MultiMap headers
+      Map<String, String> headers
   ) {
-    var restService = new RestService(srClusterUri);
-    restService.configure(configurationProperties);
-
-    var httpHeaders = new HashMap<String, String>();
-    headers.forEach(entry -> httpHeaders.put(entry.getKey(), entry.getValue()));
-    restService.setHttpHeaders(httpHeaders);
-
-    var sslFactory = new SslFactory(configurationProperties);
-    if (sslFactory.sslContext() != null) {
-      restService.setSslSocketFactory(sslFactory.sslContext().getSocketFactory());
-    }
-
-    return new SidecarSchemaRegistryClient(
-        restService,
+    return new CachedSchemaRegistryClient(
+        Collections.singletonList(srClusterUri),
         SR_CACHE_SIZE,
         SCHEMA_PROVIDERS,
-        null,
-        null
+        configurationProperties,
+        headers
     );
   }
 }
