@@ -5,7 +5,6 @@ import io.confluent.idesidecar.restapi.util.WebClientFactory;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.ext.web.client.WebClient;
-import java.util.Objects;
 
 /**
  * HTTP client used when proxying requests to the Kafka REST and Schema Registry APIs.
