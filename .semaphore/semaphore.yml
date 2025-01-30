@@ -50,9 +50,21 @@ blocks:
         - name: "Build JARs and Unit Test"
           commands:
             - make build
+            - make test
+
+  - name: "Build Native Executable and Test"
+    dependencies: []
+    task:
+      prologue:
+        commands:
+          - sem-version java 21
+      jobs:
+        - name: "Build Native Executable and Test"
+          commands:
+            - make mvn-verify-native-executable
 
   - name: "Release"
-    dependencies: ["Build JARs and Unit Test"]
+    dependencies: ["Build JARs and Unit Test", "Build Native Executable and Test"]
     run:
       when: "branch =~ '.*'"
     task:
@@ -97,4 +109,4 @@ promotions:
   - name: "Multi Arch Builds and Upload to GitHub Releases"
     pipeline_file: multi-arch-builds-and-upload.yml
     auto_promote:
-      when: "result = 'passed'"
+      when: "result = 'passed' and branch =~ '.*'"

@@ -24,6 +24,8 @@ global_job_config:
 blocks:
   - name: "Build Native Executable (MacOS AMD64)"
     dependencies: []
+    run:
+      when: "branch =~ '.*'"
     task:
       agent:
         machine:
@@ -46,6 +48,8 @@ blocks:
 
   - name: "Build Native Executable (MacOS ARM64)"
     dependencies: []
+    run:
+      when: "branch =~ '.*'"
     task:
       agent:
         machine:
@@ -68,6 +72,8 @@ blocks:
 
   - name: "Build Native Executable (Linux AMD64)"
     dependencies: []
+    run:
+      when: "branch =~ '.*'"
     task:
       agent:
         machine:
@@ -89,6 +95,8 @@ blocks:
 
   - name: "Build Native Executable (Linux ARM64)"
     dependencies: []
+    run:
+      when: "branch =~ '.*'"
     task:
       agent:
         machine:
@@ -135,3 +143,9 @@ after_pipeline:
       - name: Publish Test Results to Semaphore
         commands:
           - test-results gen-pipeline-report || echo "Could not publish pipeline test result report due to probably no test results to publish"
+
+promotions:
+  - name: "Windows Build Test Release"
+    pipeline_file: windows.yml
+    auto_promote:
+      when: "result = 'passed' and branch =~ '.*'"
