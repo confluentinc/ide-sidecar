@@ -711,7 +711,7 @@ public class SidecarClient implements SidecarClientApi {
         .get("/subjects/%s/versions/latest".formatted(subject))
         .then()
         .statusCode(200)
-        .contentType("application/json")
+        .contentType("application/vnd.schemaregistry.v1+json")
         .extract()
         .body()
         .as(Schema.class);
