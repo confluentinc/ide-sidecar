@@ -16,7 +16,6 @@ import io.vertx.ext.web.RoutingContext;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.core.MediaType;
 import java.util.Map;
 import org.eclipse.microprofile.config.ConfigProvider;
@@ -32,9 +31,10 @@ public class RestProxyResource {
 
   public static final String SCHEMA_REGISTRY_PROXY_REGEX = "(/schemas.*)|(/subjects.*)";
 
+  public static final String RBAC_RESOURCE_PATH = "/api/metadata/security/v2alpha1/authorize";
   static final String RBAC_URI = ConfigProvider
       .getConfig()
-      .getValue("ide-sidecar.connections.rbac-uri", String.class);
+      .getValue("ide-sidecar.connections.ccloud.rbac-uri", String.class);
 
 
   static final MultiMap NO_HEADERS = MultiMap.caseInsensitiveMultiMap();
@@ -68,9 +68,10 @@ public class RestProxyResource {
     process(routingContext, rbacProxyProcessor, createRBACProxyContext(routingContext));
   }
 
-  @PUT
+  @Route(path = RBAC_RESOURCE_PATH, methods = Route.HttpMethod.PUT)
   @Blocking
-  public void RBACProxyRoute(RoutingContext routingContext, ProxyContext proxyContext) {
+  public void RBACProxyRoute(RoutingContext routingContext) {
+    ProxyContext proxyContext = createRBACProxyContext(routingContext);
     handleRBACProxy(routingContext, proxyContext);
   }
 
@@ -186,7 +187,8 @@ public class RestProxyResource {
     );
   }
   private ProxyContext createRBACProxyContext(RoutingContext routingContext){
-     return new ProxyContext(RBAC_URI,
+     return new ProxyContext(
+         RBAC_URI,
       NO_HEADERS,
       HttpMethod.PUT,
       null,
