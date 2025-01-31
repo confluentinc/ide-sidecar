@@ -64,7 +64,14 @@ public class SchemaRegistryClients extends Clients<SchemaRegistryClient> {
           var headers = connection.getSchemaRegistryAuthenticationHeaders(clusterId);
 
           // For CCloud connections, we must point the SchemaRegistryClient to the sidecar-exposed
-          // proxy endpoints so that we get access to user-provided HTTP configs, like SSL certs
+          // SR proxy endpoints instead of directly interacting with the CCloud SR endpoints for two
+          // main reasons:
+          //
+          // (1) the sidecar-exposed SR proxy gives us access to user-provided HTTP configs, like
+          //     custom SSL certs
+          // (2) the sidecar-exposed SR proxy supports authentication with long-lived access tokens,
+          //     so we won't run into issues caused by the cached SchemaRegistryClient holding
+          //     expired CCloud data plane tokens
           if (connection.getType().equals(ConnectionType.CCLOUD)) {
             schemaRegistryUri = sidecarHost;
             headers.addAll(
