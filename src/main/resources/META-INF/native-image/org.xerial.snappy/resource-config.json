@@ -3,7 +3,7 @@
   "resources": {
     "includes": [
       {
-        "pattern": "[A-Za-z0-9\/]+/libsnappyjava.(so|dll|dylib)"
+        "pattern": "[A-Za-z0-9\/]+libsnappyjava.(so|dll|dylib)"
       }
     ]
   }
