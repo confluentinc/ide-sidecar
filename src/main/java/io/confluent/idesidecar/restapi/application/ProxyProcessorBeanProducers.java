@@ -1,12 +1,10 @@
 package io.confluent.idesidecar.restapi.application;
 
-import io.confluent.idesidecar.restapi.proxy.CCloudAuthProcessor;
-import io.confluent.idesidecar.restapi.auth.CCloudOAuthContext;
-import io.confluent.idesidecar.restapi.auth.Token;
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
 import io.confluent.idesidecar.restapi.processors.Processor;
 import io.confluent.idesidecar.restapi.proxy.ClusterProxyRequestProcessor;
 import io.confluent.idesidecar.restapi.proxy.ConnectionProcessor;
+import io.confluent.idesidecar.restapi.proxy.ControlPlaneAuthenticationProcessor;
 import io.confluent.idesidecar.restapi.proxy.EmptyProcessor;
 import io.confluent.idesidecar.restapi.proxy.ProxyContext;
 import io.confluent.idesidecar.restapi.proxy.ProxyRequestProcessor;
@@ -47,10 +45,9 @@ public class ProxyProcessorBeanProducers {
   EmptyProcessor<ClusterProxyContext> emptyProcessorClusterProxyContext;
 
   @Inject
-  ConnectionProcessor<ProxyContext> connectionProcessorProxyContext;
-
-  @Inject
   ConnectionProcessor<ClusterProxyContext> connectionProcessorClusterProxyContext;
+  @Inject
+  ControlPlaneAuthenticationProcessor controlPlaneAuthenticationProcessor;
 
   @Produces
   @Singleton
@@ -80,11 +77,10 @@ public class ProxyProcessorBeanProducers {
   public Processor<ProxyContext, Future<ProxyContext>> RbacProxyProcessor(
       RBACProxyProcessor rbacProxyProcessor
   ) {
-    CCloudOAuthContext cCloudOAuthContext = new CCloudOAuthContext();
-    Token controlPlaneToken = cCloudOAuthContext.getControlPlaneToken();
     return Processor.chain(
+        new ConnectionProcessor<>(connectionStateManager),
+        controlPlaneAuthenticationProcessor,
         rbacProxyProcessor,
-        new CCloudAuthProcessor(controlPlaneToken),
         new ProxyRequestProcessor(webClientFactory, vertx),
         emptyProcessorProxyContext
     );
