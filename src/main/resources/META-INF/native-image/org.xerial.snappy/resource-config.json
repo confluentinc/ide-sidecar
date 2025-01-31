@@ -2,9 +2,10 @@
   "bundles": [],
   "resources": {
     "includes": [
-      {
-        "pattern": "[A-Za-z0-9\/]+libsnappyjava.(so|dll|dylib)"
-      }
+      {"pattern":".*libsnappyjava.dylib"},
+      {"pattern":".*libsnappyjava.so"},
+      {"pattern":".*libsnappyjava.dll"},
+      {"pattern":".*libsnappyjava.a"}
     ]
   }
 }
