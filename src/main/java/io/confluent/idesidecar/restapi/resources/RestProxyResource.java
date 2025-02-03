@@ -65,14 +65,18 @@ public class RestProxyResource {
   }
 
   private void handleRBACProxy(RoutingContext routingContext, ProxyContext proxyContext) {
-    process(routingContext, rbacProxyProcessor, createRBACProxyContext(routingContext));
+    process(routingContext, rbacProxyProcessor, proxyContext);
   }
 
-  @Route(path = RBAC_RESOURCE_PATH, methods = Route.HttpMethod.PUT)
+  @Route(
+      path = RBAC_RESOURCE_PATH,
+      methods = Route.HttpMethod.PUT,
+      produces = MediaType.APPLICATION_JSON,
+      consumes = MediaType.APPLICATION_JSON
+  )
   @Blocking
   public void RBACProxyRoute(RoutingContext routingContext) {
-    ProxyContext proxyContext = createRBACProxyContext(routingContext);
-    handleRBACProxy(routingContext, proxyContext);
+    handleRBACProxy(routingContext, createRBACProxyContext(routingContext));
   }
 
 
@@ -189,10 +193,10 @@ public class RestProxyResource {
   private ProxyContext createRBACProxyContext(RoutingContext routingContext){
      return new ProxyContext(
          RBAC_URI,
-      NO_HEADERS,
-      HttpMethod.PUT,
-      null,
-      NO_PATH_PARAMS,
+         NO_HEADERS,
+         HttpMethod.PUT,
+         routingContext.body().buffer(),
+         NO_PATH_PARAMS,
          routingContext.request().getHeader(RequestHeadersConstants.CONNECTION_ID_HEADER)
      );
   };
