@@ -10,6 +10,7 @@ import io.confluent.idesidecar.restapi.exceptions.ProcessorFailedException;
 import io.confluent.idesidecar.restapi.processors.Processor;
 import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
+import io.vertx.core.http.HttpHeaders;
 import jakarta.enterprise.context.ApplicationScoped;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -36,6 +37,7 @@ public class ControlPlaneAuthenticationProcessor extends
         }
         var headers = context.getProxyRequestHeaders() != null ? context.getProxyRequestHeaders() : MultiMap.caseInsensitiveMultiMap();
         headers.add(AUTHORIZATION, "Bearer %s".formatted(controlPlaneToken.token()));
+        headers.add(HttpHeaders.CONTENT_TYPE, "application/json");
         context.setProxyRequestHeaders(headers);
 
       }

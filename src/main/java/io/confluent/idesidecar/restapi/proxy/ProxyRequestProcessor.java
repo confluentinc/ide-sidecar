@@ -24,9 +24,6 @@ public class ProxyRequestProcessor extends Processor<ProxyContext, Future<ProxyC
   @Override
   public Future<ProxyContext> process(ProxyContext context) {
     final Logger logger = Logger.getLogger(ProxyRequestProcessor.class.getName());
-    // Log the request media type
-    String requestMediaType = context.getRequestHeaders().get(HttpHeaders.CONTENT_TYPE);
-    logger.info("REQ MEDIA TYPE: " + requestMediaType);
 
     return proxyHttpClient.send(context).compose(processedContext -> {
 
