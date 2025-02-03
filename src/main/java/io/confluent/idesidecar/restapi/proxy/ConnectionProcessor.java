@@ -7,6 +7,7 @@ import io.confluent.idesidecar.restapi.exceptions.ProcessorFailedException;
 import io.confluent.idesidecar.restapi.processors.Processor;
 import io.confluent.idesidecar.restapi.util.RequestHeadersConstants;
 import io.vertx.core.Future;
+import jakarta.enterprise.context.Dependent;
 
 /**
  * Processor that checks for the `x-connection-id` header and retrieves the connection state from
@@ -14,6 +15,7 @@ import io.vertx.core.Future;
  *
  * @param <T> The proxy context type, which must extend {@link ProxyContext}
  */
+@Dependent
 public class ConnectionProcessor<T extends ProxyContext> extends
     Processor<T, Future<T>> {
 

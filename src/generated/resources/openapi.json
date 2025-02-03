@@ -33,6 +33,15 @@
         }
       }
     },
+    "/api/metadata/security/v2alpha1/authorize" : {
+      "put" : {
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        }
+      }
+    },
     "/gateway/v1/callback-vscode-docs" : {
       "get" : {
         "tags" : [ "O Auth Callback Resource" ],
@@ -1638,15 +1647,15 @@
       "HealthCheck" : {
         "type" : "object",
         "properties" : {
+          "status" : {
+            "enum" : [ "UP", "DOWN" ],
+            "type" : "string"
+          },
           "data" : {
             "type" : "object",
             "nullable" : true
           },
           "name" : {
-            "type" : "string"
-          },
-          "status" : {
-            "enum" : [ "UP", "DOWN" ],
             "type" : "string"
           }
         }
