@@ -23,6 +23,7 @@ public class ControlPlaneAuthenticationProcessor extends
     Processor<ProxyContext, Future<ProxyContext>> {
 
   private static final Logger logger = Logger.getLogger(ControlPlaneAuthenticationProcessor.class.getName());
+
   @Override
   public Future<ProxyContext> process(ProxyContext context) {
     var connectionState = context.getConnectionState();

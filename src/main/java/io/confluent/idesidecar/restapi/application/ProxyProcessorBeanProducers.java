@@ -46,6 +46,7 @@ public class ProxyProcessorBeanProducers {
 
   @Inject
   ConnectionProcessor<ClusterProxyContext> connectionProcessorClusterProxyContext;
+
   @Inject
   ControlPlaneAuthenticationProcessor controlPlaneAuthenticationProcessor;
 

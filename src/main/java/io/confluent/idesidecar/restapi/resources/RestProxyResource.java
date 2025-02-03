@@ -28,15 +28,11 @@ public class RestProxyResource {
 
   public static final String KAFKA_PROXY_REGEX = "/kafka/v3/clusters/(?<clusterId>[^\\/]+).*";
   private static final String CLUSTER_ID_PATH_PARAM = "clusterId";
-
   public static final String SCHEMA_REGISTRY_PROXY_REGEX = "(/schemas.*)|(/subjects.*)";
-
   public static final String RBAC_RESOURCE_PATH = "/api/metadata/security/v2alpha1/authorize";
   static final String RBAC_URI = ConfigProvider
       .getConfig()
       .getValue("ide-sidecar.connections.ccloud.rbac-uri", String.class);
-
-
   static final MultiMap NO_HEADERS = MultiMap.caseInsensitiveMultiMap();
   static final Map<String, String> NO_PATH_PARAMS = Map.of();
   ;
@@ -89,6 +85,9 @@ public class RestProxyResource {
           if (context.getProxyResponseHeaders() != null) {
             routingContext.response().headers().addAll(context.getProxyResponseHeaders());
           }
+          // Set content-length header to the length of the response body
+          // so that the client knows when the response is complete.
+          // Set only if transfer-encoding is not set, as it takes precedence.
           if (context.getProxyResponseBody() != null) {
             if (context.getProxyResponseHeaders().get(HttpHeaders.TRANSFER_ENCODING) == null) {
               routingContext.response().putHeader(
@@ -135,6 +134,7 @@ public class RestProxyResource {
           routingContext.response().send(failure.asJsonString());
         });
   }
+
   /*
    DEV NOTES:
    We create a ClusterProxyContext from the given RoutingContext. This makes it such that we don't
