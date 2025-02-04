@@ -7,7 +7,6 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.confluent.idesidecar.restapi.exceptions.Failure;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import io.soabase.recordbuilder.core.RecordBuilder;
-import io.vertx.core.MultiMap;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +20,7 @@ import java.util.Optional;
     @Type(value = BasicCredentials.class),
     @Type(value = ApiKeyAndSecret.class),
     @Type(value = OAuthCredentials.class),
+    @Type(value = ScramCredentials.class),
     @Type(value = KerberosCredentials.class),
 })
 @RegisterForReflection
@@ -45,7 +45,8 @@ public interface Credentials {
     MUTUAL_TLS,
     OAUTH2,
     API_KEY_AND_SECRET,
-    KERBEROS
+    SCRAM,
+    KERBEROS,
   }
 
   /**
@@ -75,6 +76,16 @@ public interface Credentials {
   @JsonIgnore
   default boolean isOauth2() {
     return type() == Type.OAUTH2;
+  }
+
+  /**
+   * Return true if this is an SCRAM credentials object, return false otherwise.
+   *
+   * @return true if {@link #type()} equals {@link Type#SCRAM}
+   */
+  @JsonIgnore
+  default boolean isScram() {
+    return type() == Type.SCRAM;
   }
 
   /**

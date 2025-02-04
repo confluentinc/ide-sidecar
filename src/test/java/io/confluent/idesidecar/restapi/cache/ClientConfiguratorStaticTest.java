@@ -18,6 +18,8 @@ import io.confluent.idesidecar.restapi.credentials.KerberosCredentials;
 import io.confluent.idesidecar.restapi.credentials.KerberosCredentialsBuilder;
 import io.confluent.idesidecar.restapi.credentials.OAuthCredentials;
 import io.confluent.idesidecar.restapi.credentials.Password;
+import io.confluent.idesidecar.restapi.credentials.ScramCredentials;
+import io.confluent.idesidecar.restapi.credentials.ScramCredentialsBuilder;
 import io.confluent.idesidecar.restapi.credentials.TLSConfig;
 import io.confluent.idesidecar.restapi.credentials.TLSConfigBuilder;
 import io.confluent.idesidecar.restapi.credentials.TLSConfig.KeyStore;
@@ -119,6 +121,20 @@ class ClientConfiguratorStaticTest {
       .enabled(false)
       .build();
 
+  static final ScramCredentials SCRAM_CREDENTIALS = ScramCredentialsBuilder
+      .builder()
+      .hashAlgorithm(ScramCredentials.HashAlgorithm.SCRAM_SHA_512)
+      .username("scramUser")
+      .password(new Password("scramPassword".toCharArray()))
+      .build();
+
+  static final ScramCredentials SCRAM_CREDENTIALS_WITH_DIFFERENT_ALGORITHM = ScramCredentialsBuilder
+      .builder()
+      .hashAlgorithm(ScramCredentials.HashAlgorithm.SCRAM_SHA_256)
+      .username("scramUser02")
+      .password(new Password("scramPassword256".toCharArray()))
+      .build();
+
   static final TLSConfig HOSTNAME_VERIFICATION_DISABLED = TLSConfigBuilder
       .builder()
       // TLS is enabled but hostname verification is disabled
@@ -162,6 +178,77 @@ class ClientConfiguratorStaticTest {
     when(ccloudSchemaRegistry.id()).thenReturn(SCHEMA_REGISTRY_LSRC_ID);
     when(ccloudSchemaRegistry.uri()).thenReturn(SCHEMA_REGISTRY_CCLOUD_URL);
     when(ccloudSchemaRegistry.logicalId()).thenReturn(Optional.of(new CCloud.LsrcId(SCHEMA_REGISTRY_LSRC_ID)));
+  }
+
+  @TestFactory
+  Stream<DynamicTest> shouldAllowCreateWithValidSpecsOrFailWithInvalidSpecsForSCRAM() {
+    record TestInput(
+        String displayName,
+        KafkaCluster kafkaCluster,
+        Credentials kafkaCredentials,
+        TLSConfig kafkaTLSConfig,
+        boolean redact,
+        Duration timeout,
+        String expectedKafkaConfig
+    ) {}
+
+    var inputs = Stream.of(
+        new TestInput(
+            "With SCRAM-SHA-512 credentials and plaintext",
+            kafka,
+            SCRAM_CREDENTIALS,
+            TLS_DISABLED,
+            false,
+            null,
+            """
+                bootstrap.servers=localhost:9092
+                security.protocol=SASL_PLAINTEXT
+                sasl.mechanism=SCRAM-SHA-512
+                sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="scramUser" password="scramPassword";
+                """
+        ),
+        new TestInput(
+            "With SCRAM-SHA-256 credentials and plaintext",
+            kafka,
+            SCRAM_CREDENTIALS_WITH_DIFFERENT_ALGORITHM,
+            TLS_DISABLED,
+            false,
+            null,
+            """
+                bootstrap.servers=localhost:9092
+                security.protocol=SASL_PLAINTEXT
+                sasl.mechanism=SCRAM-SHA-256
+                sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="scramUser02" password="scramPassword256";
+                """
+        )
+    );
+
+    return inputs.map(input -> DynamicTest.dynamicTest(
+        "Testing: " + input.displayName,
+        () -> {
+          assertNotNull(input.expectedKafkaConfig);
+          var expectedKafkaConfig = loadProperties(input.expectedKafkaConfig);
+
+          expectGetKafkaCredentialsFromConnection(input.kafkaCredentials);
+          expectGetKafkaTLSConfigFromConnection(input.kafkaTLSConfig);
+          var options = new KafkaConnectionOptions(input.redact, input.kafkaTLSConfig);
+          expectGetKafkaConnectionOptions(options);
+
+          var kafkaConfig = ClientConfigurator.getKafkaClientConfig(
+              connection,
+              input.kafkaCluster.bootstrapServers(),
+              null,
+              input.redact,
+              input.timeout,
+              Map.of()
+          );
+          assertMapsEquals(
+              expectedKafkaConfig,
+              kafkaConfig,
+              "Expected Kafka config to match for '%s' test case".formatted(input.displayName)
+          );
+        }
+    ));
   }
 
   @TestFactory
