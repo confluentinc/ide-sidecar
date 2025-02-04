@@ -1,20 +1,23 @@
 package io.confluent.idesidecar.restapi.resources;
 
+import static io.confluent.idesidecar.restapi.resources.ConnectionsResourceTest.assertAuthStatus;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.matching.EqualToPattern;
 import io.confluent.idesidecar.restapi.connections.CCloudConnectionState;
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
-import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
 import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
 import io.confluent.idesidecar.restapi.util.CCloudTestUtil;
 import io.quarkiverse.wiremock.devservice.ConnectWireMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
+import io.vertx.junit5.VertxTestContext;
+import io.vertx.junit5.VertxTestContext.ExecutionBlock;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.core.MediaType;
 import java.util.Map;
@@ -23,7 +26,6 @@ import java.util.stream.Stream;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -50,7 +52,11 @@ class RestProxyResourceTest {
 
   @BeforeEach
   void setUp() {
-    ccloudTestUtil = new CCloudTestUtil(wireMock, connectionStateManager);
+    wireMock = new WireMock(wireMockPort);
+    ccloudTestUtil = new CCloudTestUtil(
+        wireMock,
+        connectionStateManager
+    );
   }
 
   @AfterEach
@@ -69,8 +75,12 @@ class RestProxyResourceTest {
   @MethodSource("pathSource")
   void testConnectionHeaderNotPassedReturns400(String path) {
     given()
+        .contentType(MediaType.APPLICATION_JSON)
+        .accept(MediaType.APPLICATION_JSON)
+        .header("X-Debug", "true")
+        .body("{\"userPrincipal\":\"User:YOUR_USER_ID\",\"actions\":[{\"resourceType\":\"Organization\",\"resourceName\":\"organization\",\"operation\":\"CreateEnvironment\",\"scope\":{\"clusters\":{},\"path\":[\"organization=YOUR_ORG_ID\"]}}]}")
         .when()
-        .get(path)
+        .put(path)
         .then()
         .statusCode(400)
         .contentType(MediaType.APPLICATION_JSON)
@@ -81,81 +91,161 @@ class RestProxyResourceTest {
   @MethodSource("pathSource")
   void testConnectionNotFoundReturns404(String path) {
     given()
-        .when()
+        .contentType(MediaType.APPLICATION_JSON)
+        .accept(MediaType.APPLICATION_JSON)
         .header("x-connection-id", CONNECTION_ID)
-        .get(path)
+        .body("{\"userPrincipal\":\"User:YOUR_USER_ID\",\"actions\":[{\"resourceType\":\"Organization\",\"resourceName\":\"organization\",\"operation\":\"CreateEnvironment\",\"scope\":{\"clusters\":{},\"path\":[\"organization=YOUR_ORG_ID\"]}}]}")
+        .when()
+        .put(path)
         .then()
         .statusCode(404)
         .contentType(MediaType.APPLICATION_JSON)
         .body("title", is("Connection id=%s not found".formatted(CONNECTION_ID)));
   }
 
-  @Test
-  void testRBACProxyAgainstCCloud() throws Throwable {
-    // Given an authenticated CCloud connection
-    ccloudTestUtil.createAuthedConnection(CONNECTION_ID, ConnectionType.CCLOUD);
 
-    // Get the data plane token directly from the connection manager
-    var controlPlaneToken =
-        ((CCloudConnectionState) connectionStateManager.getConnectionState(CONNECTION_ID))
-            .getOauthContext()
-            .getControlPlaneToken();
+  @ParameterizedTest(name = "{0}")
+  @MethodSource("pathSource")
+  void testRBACProxyAgainstCCloud(String path) throws Throwable {
+    // Create authenticated connection
+    var connectionId = "c1";
+    var connectionName = "Connection 1";
+    var orgName = "Development Org";
+    ccloudTestUtil.createAuthedCCloudConnection(connectionId, connectionName, orgName, null);
 
-    // Given we have a fake CCloud RBAC server endpoint
-    wireMock.register(
-        WireMock.put("/api/metadata/security/v2alpha1/authorize")
-            .withHeader("Authorization",
-                new EqualToPattern("Bearer %s".formatted(controlPlaneToken.token()))
-            )
-            .willReturn(
-                WireMock.aResponse()
-                    .withStatus(200)
-                    .withHeader("Content-Type", "application/json")
-                    .withBody(
-                        new String(Objects.requireNonNull(
-                            Thread
-                                .currentThread()
-                                .getContextClassLoader()
-                                .getResourceAsStream(
-                                    "rbac-proxy-mock-responses/authorize-response.json")
-                        ).readAllBytes()))).atPriority(100));
+    var testContext = new VertxTestContext();
+    refreshConnectionStatusAndThen(connectionId, testContext, () -> {
+      assertAuthStatus(connectionId, "VALID_TOKEN");
 
-    // When we hit the Sidecar RBAC proxy endpoint with the right connection ID
-    var actualResponse = given()
-        .when()
-        .headers(REQUEST_HEADERS)
-        .put("/api/metadata/security/v2alpha1/authorize")
-        .then();
+      // Get the data plane token directly from the connection manager
+      var controlPlaneToken =
+          ((CCloudConnectionState) connectionStateManager.getConnectionState(connectionId))
+              .getOauthContext()
+              .getControlPlaneToken();
 
-    // Then we should get a 200 response
-    actualResponse.statusCode(200);
-    // The response should have the correct headers
-    actualResponse.header("Content-Type", "application/json");
+      // Given we have a fake CCloud RBAC server endpoint
+      wireMock.register(
+          WireMock.put(path)
+              .withHeader("Authorization",
+                  new EqualToPattern("Bearer %s".formatted(controlPlaneToken.token()))
+              )
+              .willReturn(
+                  WireMock.aResponse()
+                      .withStatus(200)
+                      .withBody(
+                          new String(Objects.requireNonNull(
+                              Thread
+                                  .currentThread()
+                                  .getContextClassLoader()
+                                  .getResourceAsStream(
+                                      "rbac-proxy-mock-responses/authorize-response.json")
+                          ).readAllBytes()))).atPriority(100));
 
-    var actualResponseBody = actualResponse.extract().asString();
-    var expectedResponseBody = new String(Objects.requireNonNull(
-        Thread
-            .currentThread()
-            .getContextClassLoader()
-            .getResourceAsStream(
-                "rbac-proxy-mock-responses/authorize-response.json")
-    ).readAllBytes());
-    // Then the response body should be the same as the expected response body
-    assertEquals(expectedResponseBody, actualResponseBody);
+      // When we hit the Sidecar RBAC proxy endpoint with the right connection ID
+      var actualResponse = given()
+          .contentType(MediaType.APPLICATION_JSON)
+          .accept(MediaType.APPLICATION_JSON)
+          .headers(REQUEST_HEADERS)
+          .header("Authorization", "Bearer " + controlPlaneToken.token()) // Ensure the header is set
+          .body("{\"userPrincipal\":\"User:YOUR_USER_ID\",\"actions\":[{\"resourceType\":\"Organization\",\"resourceName\":\"organization\",\"operation\":\"CreateEnvironment\",\"scope\":{\"clusters\":{},\"path\":[\"organization=YOUR_ORG_ID\"]}}]}")
+          .when()
+          .put(path)
+          .then();
+
+      // Then we should get a 200 response
+      actualResponse.statusCode(200);
+
+      var actualResponseBody = actualResponse.extract().asString();
+      System.out.println("Actual Response Body: " + actualResponseBody);
+
+      var expectedResponseBody = new String(Objects.requireNonNull(
+          Thread
+              .currentThread()
+              .getContextClassLoader()
+              .getResourceAsStream(
+                  "rbac-proxy-mock-responses/authorize-response.json")
+      ).readAllBytes());
+      System.out.println("Expected Response Body: " + expectedResponseBody);
+      // Then the response body should be the same as the expected response body
+      assertEquals(expectedResponseBody, actualResponseBody);
+
+      testContext.completeNow();
+    });
   }
 
-  @Test
-  void testUnauthedRBACProxyAgainstCCloud() {
-    // Given a non-authenticated CCloud connection
-    ccloudTestUtil.createConnection(CONNECTION_ID, "My Connection", ConnectionType.CCLOUD);
+  @ParameterizedTest
+  @MethodSource("pathSource")
+  void testRBACProxyWithoutAuthReturns401(String path) {
+    // Create authenticated connection
+    var connectionId = "c1";
+    var connectionName = "Connection 1";
+    var orgName = "Development Org";
+    ccloudTestUtil.createAuthedCCloudConnection(
+        connectionId,
+        connectionName,
+        orgName,
+        null
+    );
 
-    // Then requests to the RBAC proxy should return 401
-    given()
-        .when()
-        .headers(REQUEST_HEADERS)
-        .put("/api/metadata/security/v2alpha1/authorize")
-        .then()
-        .statusCode(401)
-        .body("title", containsString("Unauthorized"));
+    var testContext = new VertxTestContext();
+    refreshConnectionStatusAndThen(
+        connectionId,
+        testContext, () -> {
+      assertAuthStatus(connectionId, "VALID_TOKEN");
+
+      // Given we have a fake CCloud RBAC server endpoint
+      wireMock.register(
+          WireMock.put(path)
+              .withHeader("Authorization",
+                  new EqualToPattern("Bearer %s".formatted("invalid_token"))
+              )
+              .willReturn(
+                  WireMock.aResponse()
+                      .withStatus(401)
+                      .withBody("{\"title\":\"Unauthorized\"}")).atPriority(100));
+
+      // When we hit the Sidecar RBAC proxy endpoint without the Authorization header
+      var actualResponse = given()
+          .contentType(MediaType.APPLICATION_JSON)
+          .accept(MediaType.APPLICATION_JSON)
+          .headers(REQUEST_HEADERS)
+          .body("{\"userPrincipal\":\"User:YOUR_USER_ID\",\"actions\":[{\"resourceType\":\"Organization\",\"resourceName\":\"organization\",\"operation\":\"CreateEnvironment\",\"scope\":{\"clusters\":{},\"path\":[\"organization=YOUR_ORG_ID\"]}}]}")
+          .when()
+          .put(path)
+          .then();
+
+      // Then we should get a 401 response
+      actualResponse.statusCode(401)
+          .contentType(MediaType.APPLICATION_JSON)
+          .body("title", is("Unauthorized"));
+
+      testContext.completeNow();
+    });
+  }
+
+  /**
+   * Refreshes the status of a given connection and, after completing the refresh, runs an
+   * {@link ExecutionBlock} of code that can perform assertions. The {@link ExecutionBlock} runs on
+   * a {@link VertxTestContext} and must call {@link VertxTestContext#completeNow()} at the end so
+   * that the {@link VertxTestContext} can be completed successfully. Note that this method will let
+   * the test <code>fail()</code> if the {@link VertxTestContext} has failed.
+   *
+   * @param connectionId The ID of the connection
+   * @param testContext The {@link VertxTestContext} instance used for executing the
+   *                    {@link ExecutionBlock}
+   * @param block The {@link ExecutionBlock} that should be executed after completing the status
+   *              refresh
+   */
+  void refreshConnectionStatusAndThen(
+      String connectionId,
+      VertxTestContext testContext,
+      ExecutionBlock block
+  ) {
+    connectionStateManager.getConnectionState(connectionId)
+        .refreshStatus()
+        .onComplete(testContext.succeeding(ignored -> testContext.verify(block)));
+    if (testContext.failed()) {
+      fail();
+    }
   }
 }
