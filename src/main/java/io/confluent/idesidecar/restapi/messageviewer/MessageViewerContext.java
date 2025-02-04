@@ -5,8 +5,8 @@ import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPart
 import io.confluent.idesidecar.restapi.models.ClusterType;
 import io.confluent.idesidecar.restapi.models.graph.KafkaCluster;
 import io.confluent.idesidecar.restapi.models.graph.SchemaRegistry;
-import io.confluent.idesidecar.restapi.proxy.ProxyContext;
 import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
+import io.confluent.idesidecar.restapi.util.RequestHeadersConstants;
 import io.vertx.core.MultiMap;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
@@ -82,5 +82,23 @@ public class MessageViewerContext extends ClusterProxyContext {
 
   public SimpleConsumeMultiPartitionRequest getConsumeRequest() {
     return this.consumeRequest;
+  }
+
+  public boolean hasOverrideSR() {
+    return getRequestHeaders() != null &&
+        getRequestHeaders().contains(
+            RequestHeadersConstants.MSG_VIEWER_OVERRIDE_SCHEMA_REGISTRY_CLUSTER_ID)
+        && getRequestHeaders().contains(
+            RequestHeadersConstants.MSG_VIEWER_OVERRIDE_SCHEMA_REGISTRY_CONNECTION_ID)
+        // And that the override SR is not bogus but actually exists
+        && getSchemaRegistryInfo() != null;
+  }
+
+  public Optional<Integer> maybeOverrideSchemaId() {
+    if (hasOverrideSR()) {
+      return Optional.of(consumeRequest.schemaId());
+    } else {
+      return Optional.empty();
+    }
   }
 }

@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package io.confluent.idesidecar.restapi;
+option java_package = "io.confluent.idesidecar.restapi.proto";
+
+message MyMessage {
+  string name = 1;
+  int32 age = 2;
+  bool is_active = 3;
+  string new_field = 4;
+}

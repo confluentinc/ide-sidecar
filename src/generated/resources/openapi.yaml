@@ -1118,6 +1118,9 @@ components:
           type: integer
         from_beginning:
           type: boolean
+        schema_id:
+          format: int32
+          type: integer
     SimpleConsumeMultiPartitionResponse:
       type: object
       properties:
@@ -1234,13 +1237,13 @@ components:
     HealthCheck:
       type: object
       properties:
-        data:
-          type: object
-          nullable: true
-        name:
-          type: string
         status:
           enum:
           - UP
           - DOWN
+          type: string
+        data:
+          type: object
+          nullable: true
+        name:
           type: string
