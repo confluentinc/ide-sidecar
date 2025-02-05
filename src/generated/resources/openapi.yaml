@@ -1229,8 +1229,8 @@ components:
       properties:
         status:
           enum:
-            - UP
-            - DOWN
+          - UP
+          - DOWN
           type: string
         checks:
           type: array

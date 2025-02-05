@@ -1632,10 +1632,10 @@
       "HealthResponse" : {
         "type" : "object",
         "properties" : {
-        "status" : {
-          "enum" : [ "UP", "DOWN" ],
-          "type" : "string"
-        },
+          "status" : {
+            "enum" : [ "UP", "DOWN" ],
+            "type" : "string"
+          },
           "checks" : {
             "type" : "array",
             "items" : {
@@ -1647,15 +1647,15 @@
       "HealthCheck" : {
         "type" : "object",
         "properties" : {
-          "status" : {
-            "enum" : [ "UP", "DOWN" ],
-            "type" : "string"
-          },
           "data" : {
             "type" : "object",
             "nullable" : true
           },
           "name" : {
+            "type" : "string"
+          },
+          "status" : {
+            "enum" : [ "UP", "DOWN" ],
             "type" : "string"
           }
         }
