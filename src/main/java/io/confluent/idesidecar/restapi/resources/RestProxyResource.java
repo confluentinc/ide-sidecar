@@ -35,7 +35,7 @@ public class RestProxyResource {
       .getValue("ide-sidecar.connections.ccloud.rbac-uri", String.class);
   static final MultiMap NO_HEADERS = MultiMap.caseInsensitiveMultiMap();
   static final Map<String, String> NO_PATH_PARAMS = Map.of();
-  ;
+
   @Inject
   @Named("clusterProxyProcessor")
   Processor<ClusterProxyContext, Future<ClusterProxyContext>> clusterProxyProcessor;
@@ -70,45 +70,14 @@ public class RestProxyResource {
       produces = MediaType.APPLICATION_JSON,
       consumes = MediaType.APPLICATION_JSON
   )
+
   @Blocking
   public void RBACProxyRoute(RoutingContext routingContext) {
     handleRBACProxy(routingContext, createRBACProxyContext(routingContext));
   }
 
-
-  private void process(RoutingContext routingContext,
-      Processor<ClusterProxyContext, Future<ClusterProxyContext>> processor,
-      ClusterProxyContext proxyContext) {
-    processor.process(proxyContext)
-        .onSuccess(context -> {
-          routingContext.response().setStatusCode(context.getProxyResponseStatusCode());
-          if (context.getProxyResponseHeaders() != null) {
-            routingContext.response().headers().addAll(context.getProxyResponseHeaders());
-          }
-          // Set content-length header to the length of the response body
-          // so that the client knows when the response is complete.
-          // Set only if transfer-encoding is not set, as it takes precedence.
-          if (context.getProxyResponseBody() != null) {
-            if (context.getProxyResponseHeaders().get(HttpHeaders.TRANSFER_ENCODING) == null) {
-              routingContext.response().putHeader(
-                  HttpHeaders.CONTENT_LENGTH,
-                  String.valueOf(context.getProxyResponseBody().getBytes().length)
-              );
-            }
-            routingContext.response().end(context.getProxyResponseBody());
-          } else {
-            routingContext.response().end();
-          }
-        }).onFailure(throwable -> {
-          var failure = ((ProcessorFailedException) throwable).getFailure();
-          routingContext.response().setStatusCode(Integer.parseInt(failure.status()));
-          routingContext.response()
-              .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
-          routingContext.response().send(failure.asJsonString());
-        });
-  }
-  private void process(RoutingContext routingContext,  Processor<ProxyContext, Future<ProxyContext>> processor,
-      ProxyContext proxyContext) {
+  private <T extends ProxyContext> void process(RoutingContext routingContext,
+      Processor<T, Future<T>> processor, T proxyContext) {
     processor.process(proxyContext)
         .onSuccess(context -> {
           routingContext.response().setStatusCode(context.getProxyResponseStatusCode());
@@ -135,19 +104,6 @@ public class RestProxyResource {
         });
   }
 
-  /*
-   DEV NOTES:
-   We create a ClusterProxyContext from the given RoutingContext. This makes it such that we don't
-   have to store the RoutingContext itself in the ClusterProxyContext, which would give it more
-   power and information than it needs. For example, a processor with access to the
-   RoutingContext would be able to send a response and end the request, which would break
-   assumptions made by other processors.
-   */
-
-  /**
-   * Create a ClusterProxyContext for Kafka Proxy. Note that we are using the cluster id from the
-   * path params, e.g, /kafka/v3/clusters/{clusterId}/topics/{topicName}
-   */
   private ClusterProxyContext createKafkaClusterContext(RoutingContext routingContext) {
     return new ClusterProxyContext(
         routingContext.request().uri(),
@@ -161,23 +117,6 @@ public class RestProxyResource {
     );
   }
 
-  private ProxyContext createProxyContext(RoutingContext routingContext) {
-    return new ProxyContext(
-        routingContext.request().uri(),
-        routingContext.request().headers(),
-        routingContext.request().method(),
-        routingContext.body().buffer(),
-        routingContext.pathParams(),
-        routingContext.request().getHeader(RequestHeadersConstants.CONNECTION_ID_HEADER)
-    );
-  }
-
-
-
-  /**
-   * Create a ClusterProxyContext for Schema Registry Proxy. Note that we are using the
-   * cluster id from the {@code x-cluster-id} header.
-   */
   private ClusterProxyContext createSRClusterContext(RoutingContext routingContext) {
     return new ClusterProxyContext(
         routingContext.request().uri(),
@@ -190,14 +129,15 @@ public class RestProxyResource {
         ClusterType.SCHEMA_REGISTRY
     );
   }
-  private ProxyContext createRBACProxyContext(RoutingContext routingContext){
-     return new ProxyContext(
-         RBAC_URI,
-         NO_HEADERS,
-         HttpMethod.PUT,
-         routingContext.body().buffer(),
-         NO_PATH_PARAMS,
-         routingContext.request().getHeader(RequestHeadersConstants.CONNECTION_ID_HEADER)
-     );
-  };
+
+  private ProxyContext createRBACProxyContext(RoutingContext routingContext) {
+    return new ProxyContext(
+        RBAC_URI,
+        NO_HEADERS,
+        HttpMethod.PUT,
+        routingContext.body().buffer(),
+        NO_PATH_PARAMS,
+        routingContext.request().getHeader(RequestHeadersConstants.CONNECTION_ID_HEADER)
+    );
+  }
 }

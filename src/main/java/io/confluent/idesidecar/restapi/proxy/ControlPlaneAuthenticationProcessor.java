@@ -12,17 +12,13 @@ import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpHeaders;
 import jakarta.enterprise.context.ApplicationScoped;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
- * Processor to check if the request is authenticated. Checks for existence of control plane.
+ * This processor adds required authentication headers to interact with Confluent Cloud control plane APIs.
  */
 @ApplicationScoped
 public class ControlPlaneAuthenticationProcessor extends
     Processor<ProxyContext, Future<ProxyContext>> {
-
-  private static final Logger logger = Logger.getLogger(ControlPlaneAuthenticationProcessor.class.getName());
 
   @Override
   public Future<ProxyContext> process(ProxyContext context) {
@@ -38,15 +34,13 @@ public class ControlPlaneAuthenticationProcessor extends
         }
         var headers = context.getProxyRequestHeaders() != null ? context.getProxyRequestHeaders() : MultiMap.caseInsensitiveMultiMap();
         headers.add(AUTHORIZATION, "Bearer %s".formatted(controlPlaneToken.token()));
-        headers.add(HttpHeaders.CONTENT_TYPE, "application/json");
         context.setProxyRequestHeaders(headers);
-
       }
       case LocalConnectionState localConnection -> {
         // Do nothing
       }
       case DirectConnectionState directConnection -> {
-        // TODO: DIRECT check auth status and fail if not connected/authenticated
+        // Do nothing
       }
       case PlatformConnectionState platformConnection -> {
         // Do nothing

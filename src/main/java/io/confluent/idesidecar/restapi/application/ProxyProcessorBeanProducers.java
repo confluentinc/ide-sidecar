@@ -69,7 +69,6 @@ public class ProxyProcessorBeanProducers {
         clusterProxyRequestProcessor,
         emptyProcessorClusterProxyContext
     );
-
   }
 
   @Produces
@@ -80,8 +79,8 @@ public class ProxyProcessorBeanProducers {
   ) {
     return Processor.chain(
         new ConnectionProcessor<>(connectionStateManager),
-        controlPlaneAuthenticationProcessor,
         rbacProxyProcessor,
+        controlPlaneAuthenticationProcessor,
         new ProxyRequestProcessor(webClientFactory, vertx),
         emptyProcessorProxyContext
     );

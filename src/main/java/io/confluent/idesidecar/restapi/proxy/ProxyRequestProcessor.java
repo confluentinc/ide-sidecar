@@ -25,13 +25,9 @@ public class ProxyRequestProcessor extends Processor<ProxyContext, Future<ProxyC
   public Future<ProxyContext> process(ProxyContext context) {
     final Logger logger = Logger.getLogger(ProxyRequestProcessor.class.getName());
 
-    return proxyHttpClient.send(context).compose(processedContext -> {
-
-      Buffer responseBody = processedContext.getProxyResponseBody();
-
-      context.setProxyResponseBody(responseBody);
-
-      return next().process(processedContext);
+    return proxyHttpClient.send(context).compose(
+        processedContext -> {
+          return next().process(processedContext);
     });
   }
 }
