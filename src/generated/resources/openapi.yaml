@@ -1239,13 +1239,13 @@ components:
     HealthCheck:
       type: object
       properties:
-        status:
-          enum:
-          - UP
-          - DOWN
-          type: string
         data:
           type: object
           nullable: true
         name:
+          type: string
+        status:
+          enum:
+          - UP
+          - DOWN
           type: string
