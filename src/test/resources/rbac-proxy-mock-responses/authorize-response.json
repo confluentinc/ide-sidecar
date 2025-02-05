@@ -1,0 +1,13 @@
+{
+  "status": "success",
+  "data": {
+    "authorized": true,
+    "resourceType": "Organization",
+    "resourceName": "organization",
+    "operation": "CreateEnvironment",
+    "scope": {
+      "clusters": {},
+      "path": ["organization=YOUR_ORG_ID"]
+    }
+  }
+}
