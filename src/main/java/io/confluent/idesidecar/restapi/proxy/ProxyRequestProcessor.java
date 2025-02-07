@@ -23,8 +23,6 @@ public class ProxyRequestProcessor extends Processor<ProxyContext, Future<ProxyC
 
   @Override
   public Future<ProxyContext> process(ProxyContext context) {
-    final Logger logger = Logger.getLogger(ProxyRequestProcessor.class.getName());
-
     return proxyHttpClient.send(context).compose(
         processedContext -> {
           return next().process(processedContext);

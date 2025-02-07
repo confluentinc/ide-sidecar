@@ -72,25 +72,21 @@ public class RestProxyResource {
   }
 
   public record RBACRequest(
-      @NotNull String userPrincipal,
-      @NotNull Action[] actions
+       String userPrincipal,
+       Action[] actions
   ) {
     public record Action(
-        @NotNull String resourceType,
-        @NotNull String resourceName,
-        @NotNull String operation,
-        @NotNull Scope scope
+         String resourceType,
+         String resourceName,
+         String operation,
+         Scope scope
     ) {
       public record Scope(
-          @NotNull Map<String, String> clusters,
-          @NotNull String[] path
+           Map<String, String> clusters,
+           String[] path
       ) {}
     }
   }
-
-  public record RBACResponse(
-      @NotNull String title
-  ) {}
 
   @Route(
       path = RBAC_RESOURCE_PATH,
@@ -98,7 +94,6 @@ public class RestProxyResource {
       produces = MediaType.APPLICATION_JSON,
       consumes = MediaType.APPLICATION_JSON
   )
-
   @Blocking
   @Operation(summary = "RBAC proxy route", description = "Proxy route for RBAC requests")
   @RequestBody(
@@ -110,20 +105,10 @@ public class RestProxyResource {
     @APIResponse(
         responseCode = "200",
         description = "Successful response",
-        content = @Content(schema = @Schema(implementation = RBACResponse.class))
+        content = @Content(schema = @Schema(implementation = String[].class))
     ),
-    @APIResponse(
-        responseCode = "401",
-        description = "Unauthorized",
-        content = @Content(schema = @Schema(implementation = RBACResponse.class))
-    ),
-    @APIResponse(
-        responseCode = "404",
-        description = "Not Found",
-        content = @Content(schema = @Schema(implementation = RBACResponse.class))
-    )
   })
-  public void RBACProxyRoute(RoutingContext routingContext) {
+  public void rbacProxyRoute(RoutingContext routingContext) {
     handleRBACProxy(routingContext, createRBACProxyContext(routingContext));
   }
 
@@ -136,6 +121,9 @@ public class RestProxyResource {
             routingContext.response().headers().addAll(context.getProxyResponseHeaders());
           }
           if (context.getProxyResponseBody() != null) {
+            // Set content-length header to the length of the response body
+            // so that the client knows when the response is complete.
+            // Set only if transfer-encoding is not set, as it takes precedence.
             if (context.getProxyResponseHeaders().get(HttpHeaders.TRANSFER_ENCODING) == null) {
               routingContext.response().putHeader(
                   HttpHeaders.CONTENT_LENGTH,
@@ -155,6 +143,19 @@ public class RestProxyResource {
         });
   }
 
+/*
+   DEV NOTES:
+   We create a ClusterProxyContext from the given RoutingContext. This makes it such that we don't
+   have to store the RoutingContext itself in the ClusterProxyContext, which would give it more
+   power and information than it needs. For example, a processor with access to the
+   RoutingContext would be able to send a response and end the request, which would break
+   assumptions made by other processors.
+   */
+
+  /**
+   * Create a ClusterProxyContext for Kafka Proxy. Note that we are using the cluster id from the
+   * path params, e.g, /kafka/v3/clusters/{clusterId}/topics/{topicName}
+   */
   private ClusterProxyContext createKafkaClusterContext(RoutingContext routingContext) {
     return new ClusterProxyContext(
         routingContext.request().uri(),
@@ -168,6 +169,10 @@ public class RestProxyResource {
     );
   }
 
+  /**
+   * Create a ClusterProxyContext for Schema Registry Proxy. Note that we are using the
+   * cluster id from the {@code x-cluster-id} header.
+   */
   private ClusterProxyContext createSRClusterContext(RoutingContext routingContext) {
     return new ClusterProxyContext(
         routingContext.request().uri(),
