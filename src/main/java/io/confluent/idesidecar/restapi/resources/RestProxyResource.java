@@ -3,32 +3,53 @@ package io.confluent.idesidecar.restapi.resources;
 import io.confluent.idesidecar.restapi.exceptions.ProcessorFailedException;
 import io.confluent.idesidecar.restapi.models.ClusterType;
 import io.confluent.idesidecar.restapi.processors.Processor;
+import io.confluent.idesidecar.restapi.proxy.ProxyContext;
 import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
 import io.confluent.idesidecar.restapi.util.RequestHeadersConstants;
 import io.quarkus.vertx.web.Route;
 import io.smallrye.common.annotation.Blocking;
+import io.swagger.v3.oas.annotations.Operation;
 import io.vertx.core.Future;
+import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpHeaders;
+import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.RoutingContext;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
+import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.core.MediaType;
+import java.util.Map;
+import org.eclipse.microprofile.config.ConfigProvider;
+import org.eclipse.microprofile.openapi.annotations.media.Content;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.parameters.RequestBody;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 
 /**
  * Resource that proxies requests to the Kafka REST and Schema Registry APIs.
  */
 @ApplicationScoped
-public class ClusterRestProxyResource {
+public class RestProxyResource {
 
   public static final String KAFKA_PROXY_REGEX = "/kafka/v3/clusters/(?<clusterId>[^\\/]+).*";
   private static final String CLUSTER_ID_PATH_PARAM = "clusterId";
-
   public static final String SCHEMA_REGISTRY_PROXY_REGEX = "(/schemas.*)|(/subjects.*)";
+  public static final String RBAC_RESOURCE_PATH = "/api/metadata/security/v2alpha1/authorize";
+  static final String RBAC_URI = ConfigProvider
+      .getConfig()
+      .getValue("ide-sidecar.connections.ccloud.rbac-uri", String.class);
+  static final MultiMap NO_HEADERS = MultiMap.caseInsensitiveMultiMap();
+  static final Map<String, String> NO_PATH_PARAMS = Map.of();
 
   @Inject
   @Named("clusterProxyProcessor")
   Processor<ClusterProxyContext, Future<ClusterProxyContext>> clusterProxyProcessor;
+
+  @Inject
+  @Named("RBACProxyProcessor")
+  Processor<ProxyContext, Future<ProxyContext>> rbacProxyProcessor;
 
   @Route(regex = KAFKA_PROXY_REGEX)
   @Blocking
@@ -43,7 +64,57 @@ public class ClusterRestProxyResource {
   }
 
   private void handleClusterProxy(RoutingContext routingContext, ClusterProxyContext proxyContext) {
-    clusterProxyProcessor.process(proxyContext)
+    process(routingContext, clusterProxyProcessor, proxyContext);
+  }
+
+  private void handleRBACProxy(RoutingContext routingContext, ProxyContext proxyContext) {
+    process(routingContext, rbacProxyProcessor, proxyContext);
+  }
+
+  public record RBACRequest(
+       String userPrincipal,
+       Action[] actions
+  ) {
+    public record Action(
+         String resourceType,
+         String resourceName,
+         String operation,
+         Scope scope
+    ) {
+      public record Scope(
+           Map<String, String> clusters,
+           String[] path
+      ) {}
+    }
+  }
+
+  @Route(
+      path = RBAC_RESOURCE_PATH,
+      methods = Route.HttpMethod.PUT,
+      produces = MediaType.APPLICATION_JSON,
+      consumes = MediaType.APPLICATION_JSON
+  )
+  @Blocking
+  @Operation(summary = "RBAC proxy route", description = "Proxy route for RBAC requests")
+  @RequestBody(
+      description = "RBAC request body",
+      required = true,
+      content = @Content(schema = @Schema(implementation = RBACRequest.class))
+  )
+  @APIResponses({
+    @APIResponse(
+        responseCode = "200",
+        description = "Successful response",
+        content = @Content(schema = @Schema(implementation = String[].class))
+    ),
+  })
+  public void rbacProxyRoute(RoutingContext routingContext) {
+    handleRBACProxy(routingContext, createRBACProxyContext(routingContext));
+  }
+
+  private <T extends ProxyContext> void process(RoutingContext routingContext,
+      Processor<T, Future<T>> processor, T proxyContext) {
+    processor.process(proxyContext)
         .onSuccess(context -> {
           routingContext.response().setStatusCode(context.getProxyResponseStatusCode());
           if (context.getProxyResponseHeaders() != null) {
@@ -72,8 +143,7 @@ public class ClusterRestProxyResource {
         });
   }
 
-
-  /*
+/*
    DEV NOTES:
    We create a ClusterProxyContext from the given RoutingContext. This makes it such that we don't
    have to store the RoutingContext itself in the ClusterProxyContext, which would give it more
@@ -116,4 +186,14 @@ public class ClusterRestProxyResource {
     );
   }
 
+  private ProxyContext createRBACProxyContext(RoutingContext routingContext) {
+    return new ProxyContext(
+        RBAC_URI,
+        NO_HEADERS,
+        HttpMethod.PUT,
+        routingContext.body().buffer(),
+        NO_PATH_PARAMS,
+        routingContext.request().getHeader(RequestHeadersConstants.CONNECTION_ID_HEADER)
+    );
+  }
 }
