@@ -22,7 +22,8 @@ public record SimpleConsumeMultiPartitionRequest(
     Long timestamp,
     @JsonProperty("fetch_max_bytes") Integer fetchMaxBytes,
     @JsonProperty("message_max_bytes") Integer messageMaxBytes,
-    @JsonProperty("from_beginning") Boolean fromBeginning
+    @JsonProperty("from_beginning") Boolean fromBeginning,
+    @JsonProperty("schema_id") Integer schemaId
 ) implements SimpleConsumeMultiPartitionRequestBuilder.With {
 
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();

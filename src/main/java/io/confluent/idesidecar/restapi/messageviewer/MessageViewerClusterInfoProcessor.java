@@ -1,19 +1,15 @@
 package io.confluent.idesidecar.restapi.messageviewer;
 
 import io.confluent.idesidecar.restapi.cache.ClusterCache;
-import io.confluent.idesidecar.restapi.clients.SchemaErrors;
-import io.confluent.idesidecar.restapi.connections.ConnectionState;
-import io.confluent.idesidecar.restapi.events.Lifecycle;
 import io.confluent.idesidecar.restapi.exceptions.ClusterNotFoundException;
 import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
 import io.confluent.idesidecar.restapi.exceptions.ProcessorFailedException;
+import io.confluent.idesidecar.restapi.models.graph.KafkaCluster;
 import io.confluent.idesidecar.restapi.processors.Processor;
 import io.confluent.idesidecar.restapi.util.RequestHeadersConstants;
 import io.quarkus.logging.Log;
 import io.vertx.core.Future;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.event.ObservesAsync;
-import jakarta.inject.Inject;
 
 /**
  * Retrieves information about the Kafka and Schema Registry clusters when processing a request
@@ -52,16 +48,7 @@ public class MessageViewerClusterInfoProcessor extends
       context.setKafkaClusterInfo(kafkaClusterInfo);
 
       // Get info about the schema registry for that Kafka cluster and store on the context
-      try {
-        var schemaRegistryInfo = clusterCache.getSchemaRegistryForKafkaCluster(
-            connectionId,
-            kafkaClusterInfo
-        );
-        context.setSchemaRegistryInfo(schemaRegistryInfo);
-      } catch (ClusterNotFoundException e) {
-        Log.debugf("Could not find schema registry for connection with ID=%s", connectionId);
-        context.setSchemaRegistryInfo(null);
-      }
+      setSchemaRegistryInfo(context, connectionId, kafkaClusterInfo);
 
       // Delegate to the next processor
       return next().process(context);
@@ -75,6 +62,41 @@ public class MessageViewerClusterInfoProcessor extends
               )
           )
       );
+    }
+  }
+
+  private void setSchemaRegistryInfo(
+      MessageViewerContext context, String connectionId, KafkaCluster kafkaClusterInfo
+  ) {
+    var maybeOverrideSRId = context.getRequestHeaders().get(
+        RequestHeadersConstants.MSG_VIEWER_OVERRIDE_SCHEMA_REGISTRY_CLUSTER_ID
+    );
+    var maybeOverrideSRConnId = context.getRequestHeaders().get(
+        RequestHeadersConstants.MSG_VIEWER_OVERRIDE_SCHEMA_REGISTRY_CONNECTION_ID
+    );
+    if (maybeOverrideSRId != null && maybeOverrideSRConnId != null) {
+      try {
+        var schemaRegistryInfo = clusterCache.getSchemaRegistry(
+            maybeOverrideSRConnId,
+            maybeOverrideSRId
+        );
+        context.setSchemaRegistryInfo(schemaRegistryInfo);
+      } catch (ClusterNotFoundException e) {
+        Log.debugf("Could not find override schema registry id %s for connection with ID=%s",
+            maybeOverrideSRId, maybeOverrideSRConnId
+        );
+      }
+    } else {
+      try {
+        var schemaRegistryInfo = clusterCache.getSchemaRegistryForKafkaCluster(
+            connectionId,
+            kafkaClusterInfo
+        );
+        context.setSchemaRegistryInfo(schemaRegistryInfo);
+      } catch (ClusterNotFoundException e) {
+        Log.debugf("Could not find schema registry for connection with ID=%s", connectionId);
+        context.setSchemaRegistryInfo(null);
+      }
     }
   }
 }
