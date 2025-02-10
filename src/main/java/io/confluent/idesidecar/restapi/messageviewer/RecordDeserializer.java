@@ -235,7 +235,21 @@ public class RecordDeserializer {
     if (result.isPresent()) {
       return result.get();
     }
-    int schemaId = getSchemaIdFromRawBytes(bytes);
+
+    int schemaId;
+    if (context.maybeOverrideSchemaId().isPresent()) {
+      schemaId = context.maybeOverrideSchemaId().get();
+      var schemaIdBytes = ByteBuffer.allocate(4)
+          // Just the schema ID
+          .putInt(schemaId)
+          .array();
+
+      // Set 4 bytes after the first to the schema ID
+      System.arraycopy(schemaIdBytes, 1, bytes, 0, 4);
+    } else {
+      schemaId = getSchemaIdFromRawBytes(bytes);
+    }
+
     String connectionId = context.getConnectionId();
     // Check if schema retrieval has failed recently
     var error = schemaErrors.readSchemaIdByConnectionId(
@@ -252,6 +266,24 @@ public class RecordDeserializer {
       );
     }
 
+    return handleDeserialize(
+        bytes,
+        schemaRegistryClient,
+        context,
+        isKey,
+        encoderOnFailure,
+        schemaId
+    );
+  }
+
+  private DecodedResult handleDeserialize(
+      byte[] bytes,
+      SchemaRegistryClient schemaRegistryClient,
+      MessageViewerContext context,
+      boolean isKey,
+      Optional<Function<byte[], byte[]>> encoderOnFailure,
+      int schemaId
+  ) {
     try {
       // Attempt to get the schema from the schema registry
       // and retry if the operation fails due to a retryable exception.
