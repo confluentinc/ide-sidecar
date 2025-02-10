@@ -1974,7 +1974,7 @@ public class ConnectionsResourceTest {
     }
   }
 
-  private static ValidatableResponse assertAuthStatus(String connectionId, String authStatus) {
+  protected static ValidatableResponse assertAuthStatus(String connectionId, String authStatus) {
     return given()
         .contentType(ContentType.JSON)
         .when().get("/gateway/v1/connections/{id}", connectionId)
