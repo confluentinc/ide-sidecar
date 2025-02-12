@@ -9,10 +9,10 @@ import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionSpecKafkaClusterConfigBuilder;
 import io.confluent.idesidecar.restapi.models.ConnectionSpecSchemaRegistryConfigBuilder;
 import io.confluent.idesidecar.restapi.util.cpdemo.CPServerContainer;
+import io.confluent.idesidecar.restapi.util.cpdemo.KraftContainer;
 import io.confluent.idesidecar.restapi.util.cpdemo.OpenldapContainer;
 import io.confluent.idesidecar.restapi.util.cpdemo.SchemaRegistryContainer;
 import io.confluent.idesidecar.restapi.util.cpdemo.ToolsContainer;
-import io.confluent.idesidecar.restapi.util.cpdemo.ZookeeperContainer;
 import io.confluent.idesidecar.restapi.credentials.Credentials;
 import io.quarkus.logging.Log;
 import java.io.File;
@@ -33,21 +33,20 @@ import org.testcontainers.lifecycle.Startables;
 import org.testcontainers.utility.TestcontainersConfiguration;
 
 /**
- * A {@link TestEnvironment} that starts a CP Demo environment with a two-node Kafka cluster,
- * Zookeeper, OpenLDAP, and Schema Registry.
+ * A {@link TestEnvironment} that starts a CP Demo environment with a one-node Kafka cluster,
+ * KRaft, OpenLDAP, and Schema Registry.
  * Modeled after https://github.com/confluentinc/cp-demo/blob/7.7.1-post/docker-compose.yml
  */
 public class CPDemoTestEnvironment implements TestEnvironment {
   private Network network;
   private ToolsContainer tools;
-  private ZookeeperContainer zookeeper;
+  private KraftContainer kraft;
   private OpenldapContainer ldap;
   private CPServerContainer kafka1;
-  private CPServerContainer kafka2;
   private SchemaRegistryContainer schemaRegistry;
 
   private static final List<String> CP_DEMO_CONTAINERS = List.of(
-      "tools", "zookeeper", "kafka1", "kafka2", "openldap", "schemaregistry"
+      "tools", "kraft", "kafka1", "openldap", "schemaregistry"
   );
 
   @Override
@@ -67,7 +66,7 @@ public class CPDemoTestEnvironment implements TestEnvironment {
     runScript("src/test/resources/cp-demo-scripts/setup.sh");
 
     network = createReusableNetwork("cp-demo");
-    // Check if zookeeper, kafka1, kafka2, ldap, schemaRegistry are already running
+    // Check if kraft, kafka1, ldap, schemaRegistry are already running
     Log.info("Starting Tools...");
     tools = new ToolsContainer(network);
     tools.start();
@@ -77,10 +76,10 @@ public class CPDemoTestEnvironment implements TestEnvironment {
       registerRootCA();
     }
 
-    Log.info("Starting Zookeeper...");
-    zookeeper = new ZookeeperContainer(network);
-    zookeeper.waitingFor(Wait.forHealthcheck());
-    zookeeper.start();
+    Log.info("Starting KRaft...");
+    kraft = new KraftContainer(network);
+    kraft.waitingFor(Wait.forHealthcheck());
+    kraft.start();
 
     Log.info("Starting OpenLDAP...");
     ldap = new OpenldapContainer(network);
@@ -104,28 +103,9 @@ public class CPDemoTestEnvironment implements TestEnvironment {
         "KAFKA_BROKER_RACK", "r1",
         "KAFKA_JMX_PORT", "9991"
     ));
-    kafka2 = new CPServerContainer(
-        network,
-        "kafka2",
-        8092,
-        9092,
-        10092,
-        11092,
-        12092,
-        12094,
-        13092,
-        14092,
-        15092
-    );
-    kafka2.withEnv(Map.of(
-        "KAFKA_BROKER_ID", "2",
-        "KAFKA_BROKER_RACK", "r2",
-        "KAFKA_JMX_PORT", "9992"
-    ));
 
-    // Must be started in parallel
-    Log.info("Starting Kafka brokers...");
-    Startables.deepStart(List.of(kafka1, kafka2)).join();
+    Log.info("Starting Kafka broker...");
+    Startables.deepStart(List.of(kafka1));
 
     // Register users for SASL/SCRAM
     registerScramUsers();
