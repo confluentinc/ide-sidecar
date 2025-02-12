@@ -51,13 +51,6 @@ public class KraftContainer extends GenericContainer<KraftContainer> {
 
   public Map<String, String> getKraftEnv() {
     var envs = new HashMap<String, String>();
-    envs.put("KAFKA_CFG_NODE_ID", "1");
-    envs.put("KAFKA_CFG_PROCESS_ROLES", "broker,controller");
-    envs.put("KAFKA_CFG_LISTENERS", "PLAINTEXT://:9092,CONTROLLER://:9093");
-    envs.put("KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP", "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT");
-    envs.put("KAFKA_CFG_CONTROLLER_QUORUM_VOTERS", "1@localhost:9093");
-    envs.put("KAFKA_CFG_CONTROLLER_LISTENER_NAMES", "CONTROLLER");
-    envs.put("KAFKA_CFG_INTER_BROKER_LISTENER_NAME", "PLAINTEXT");
     envs.put("KAFKA_SSL_KEYSTORE_LOCATION", "/etc/kafka/secrets/kafka.kraft.keystore.jks");
     envs.put("KAFKA_SSL_KEYSTORE_PASSWORD", "confluent");
     envs.put("KAFKA_SSL_KEYSTORE_TYPE", "PKCS12");
