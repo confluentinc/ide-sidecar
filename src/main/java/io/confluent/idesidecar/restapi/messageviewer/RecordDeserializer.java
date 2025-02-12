@@ -131,17 +131,20 @@ public class RecordDeserializer {
         var avroDeserializer = new KafkaAvroDeserializer(sr);
     ) {
       avroDeserializer.configure(SERDE_CONFIGS, isKey);
-      var avroRecord = (GenericData.Record) avroDeserializer.deserialize(topicName, bytes);
-      var writer = new GenericDatumWriter<>(
-          avroRecord.getSchema());
-      var encoder = EncoderFactory.get().binaryEncoder(outputStream, null);
-      writer.write(avroRecord, encoder);
-      encoder.flush();
-      var jacksonAvroSchema = new AvroSchema(avroRecord.getSchema());
-      return AVRO_OBJECT_MAPPER
-          .readerFor(ObjectNode.class)
-          .with(jacksonAvroSchema)
-          .readValue(outputStream.toByteArray());
+      var genericObject = avroDeserializer.deserialize(topicName, bytes);
+      if (genericObject instanceof GenericData.Record avroRecord) {
+        var writer = new GenericDatumWriter<>(avroRecord.getSchema());
+        var encoder = EncoderFactory.get().binaryEncoder(outputStream, null);
+        writer.write(avroRecord, encoder);
+        encoder.flush();
+        var jacksonAvroSchema = new AvroSchema(avroRecord.getSchema());
+        return AVRO_OBJECT_MAPPER
+            .readerFor(ObjectNode.class)
+            .with(jacksonAvroSchema)
+            .readValue(outputStream.toByteArray());
+      } else {
+        return OBJECT_MAPPER.valueToTree(genericObject);
+      }
     } catch (IOException e) {
       throw new RuntimeException("Failed to deserialize Avro-encoded bytes", e);
     }
