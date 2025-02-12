@@ -26,6 +26,7 @@ public class CPServerContainer extends GenericContainer<CPServerContainer> {
   private final Integer internalHostPort;
   private final Integer tokenHostPort;
   private final Integer scramPort;
+  private final Integer controllerPort;
 
   public CPServerContainer(
       String tag,
@@ -39,7 +40,8 @@ public class CPServerContainer extends GenericContainer<CPServerContainer> {
       Integer internalClearPort,
       Integer internalHostPort,
       Integer tokenHostPort,
-      Integer scramPort
+      Integer scramPort,
+      Integer controllerPort
   ) {
     super(DEFAULT_IMAGE + ":" + tag);
     this.tag = tag;
@@ -53,14 +55,16 @@ public class CPServerContainer extends GenericContainer<CPServerContainer> {
     this.internalHostPort = internalHostPort;
     this.tokenHostPort = tokenHostPort;
     this.scramPort = scramPort;
+    this.controllerPort = controllerPort;
 
     super.withNetwork(network);
     super.withNetworkAliases(containerName);
     super
-        .withEnv(kafkaZookeeperEnv())
+//        .withEnv(kafkaZookeeperEnv())
+        .withEnv(kraftEnv())
         .withEnv(listenersEnv(
             internalPort, tokenPort, sslPort, clearPort, internalClearPort, internalHostPort,
-            tokenHostPort, scramPort
+            tokenHostPort, scramPort, controllerPort
         ))
         .withEnv(sslEnv())
         .withEnv(confluentSchemaValidationEnv())
@@ -135,27 +139,56 @@ public class CPServerContainer extends GenericContainer<CPServerContainer> {
       Integer internalClearPort,
       Integer internalHostPort,
       Integer tokenHostPort,
-      Integer scramPort
+      Integer scramPort,
+      Integer controllerPort
   ) {
-    this(DEFAULT_CONFLUENT_DOCKER_TAG, network, containerName, mdsPort, internalPort, tokenPort,
-        sslPort, clearPort, internalClearPort, internalHostPort, tokenHostPort, scramPort);
+    this(
+        DEFAULT_CONFLUENT_DOCKER_TAG,
+        network,
+        containerName,
+        mdsPort,
+        internalPort,
+        tokenPort,
+        sslPort,
+        clearPort,
+        internalClearPort,
+        internalHostPort,
+        tokenHostPort,
+        scramPort,
+        controllerPort
+    );
   }
+//
+//  public Map<String, String> kafkaZookeeperEnv() {
+//    var env = new HashMap<String, String>();
+//    env.put("KAFKA_ZOOKEEPER_CONNECT", "zookeeper:2182");
+//    env.put("KAFKA_ZOOKEEPER_SSL_CLIENT_ENABLE", "true");
+//    env.put("KAFKA_ZOOKEEPER_SSL_CIPHER_SUITES", Constants.SSL_CIPHER_SUITES);
+//    env.put("KAFKA_ZOOKEEPER_CLIENT_CNXN_SOCKET", "org.apache.zookeeper.ClientCnxnSocketNetty");
+//    env.put("KAFKA_ZOOKEEPER_SSL_KEYSTORE_LOCATION",
+//        "/etc/kafka/secrets/kafka.%s.keystore.jks".formatted(this.containerName));
+//    env.put("KAFKA_ZOOKEEPER_SSL_KEYSTORE_PASSWORD", "confluent");
+//    env.put("KAFKA_ZOOKEEPER_SSL_KEYSTORE_TYPE", "PKCS12");
+//    env.put("KAFKA_ZOOKEEPER_SSL_TRUSTSTORE_LOCATION",
+//        "/etc/kafka/secrets/kafka.%s.truststore.jks".formatted(this.containerName));
+//    env.put("KAFKA_ZOOKEEPER_SSL_TRUSTSTORE_PASSWORD", "confluent");
+//    env.put("KAFKA_ZOOKEEPER_SSL_TRUSTSTORE_TYPE", "JKS");
+//    env.put("KAFKA_ZOOKEEPER_SET_ACL", "true");
+//    return env;
+//  }
 
-  public Map<String, String> kafkaZookeeperEnv() {
+
+  public Map<String, String> kraftEnv() {
+    // process.roles=broker,controller
+    // node.id=0
+    // controller.quorum.voters=0@containerName:internalPort
+    // controller.listener.names=INTERNAL
     var env = new HashMap<String, String>();
-    env.put("KAFKA_ZOOKEEPER_CONNECT", "zookeeper:2182");
-    env.put("KAFKA_ZOOKEEPER_SSL_CLIENT_ENABLE", "true");
-    env.put("KAFKA_ZOOKEEPER_SSL_CIPHER_SUITES", Constants.SSL_CIPHER_SUITES);
-    env.put("KAFKA_ZOOKEEPER_CLIENT_CNXN_SOCKET", "org.apache.zookeeper.ClientCnxnSocketNetty");
-    env.put("KAFKA_ZOOKEEPER_SSL_KEYSTORE_LOCATION",
-        "/etc/kafka/secrets/kafka.%s.keystore.jks".formatted(this.containerName));
-    env.put("KAFKA_ZOOKEEPER_SSL_KEYSTORE_PASSWORD", "confluent");
-    env.put("KAFKA_ZOOKEEPER_SSL_KEYSTORE_TYPE", "PKCS12");
-    env.put("KAFKA_ZOOKEEPER_SSL_TRUSTSTORE_LOCATION",
-        "/etc/kafka/secrets/kafka.%s.truststore.jks".formatted(this.containerName));
-    env.put("KAFKA_ZOOKEEPER_SSL_TRUSTSTORE_PASSWORD", "confluent");
-    env.put("KAFKA_ZOOKEEPER_SSL_TRUSTSTORE_TYPE", "JKS");
-    env.put("KAFKA_ZOOKEEPER_SET_ACL", "true");
+    env.put("KAFKA_PROCESS_ROLES", "broker,controller");
+    env.put("KAFKA_NODE_ID", "0");
+    env.put("KAFKA_CONTROLLER_QUORUM_VOTERS", "0@%s:%d".formatted(containerName, controllerPort));
+    env.put("KAFKA_CONTROLLER_LISTENER_NAMES", "CONTROLLER");
+    env.put("CLUSTER_ID", "blablablablabla");
     return env;
   }
 
@@ -167,17 +200,18 @@ public class CPServerContainer extends GenericContainer<CPServerContainer> {
       Integer internalClearPort,
       Integer internalHostPort,
       Integer tokenHostPort,
-      Integer scramPort
+      Integer scramPort,
+      Integer controllerPort
   ) {
     var env = new HashMap<String, String>();
     env.put(
         "KAFKA_LISTENER_SECURITY_PROTOCOL_MAP",
         "INTERNAL:SASL_PLAINTEXT,INTERNALHOST:SASL_PLAINTEXT,TOKEN:SASL_SSL,TOKENHOST:SASL_SSL,"
-            + "SSL:SSL,CLEAR:PLAINTEXT,INTERNALCLEAR:PLAINTEXT,SCRAMHOST:SASL_PLAINTEXT"
+            + "SSL:SSL,CLEAR:PLAINTEXT,INTERNALCLEAR:PLAINTEXT,SCRAMHOST:SASL_PLAINTEXT,CONTROLLER:PLAINTEXT"
     );
     env.put("KAFKA_INTER_BROKER_LISTENER_NAME", "INTERNAL");
     env.put("KAFKA_LISTENERS",
-        "INTERNAL://%s:%d,TOKEN://%s:%d,SSL://%s:%d,CLEAR://%s:%d,INTERNALCLEAR://%s:%d,INTERNALHOST://%s:%d,TOKENHOST://%s:%d,SCRAMHOST://%s:%d".formatted(
+        "INTERNAL://%s:%d,TOKEN://%s:%d,SSL://%s:%d,CLEAR://%s:%d,INTERNALCLEAR://%s:%d,INTERNALHOST://%s:%d,TOKENHOST://%s:%d,SCRAMHOST://%s:%d,CONTROLLER://%s:%d".formatted(
             containerName, internalPort,
             containerName, tokenPort,
             containerName, sslPort,
@@ -185,7 +219,8 @@ public class CPServerContainer extends GenericContainer<CPServerContainer> {
             containerName, internalClearPort,
             containerName, internalHostPort,
             containerName, tokenHostPort,
-            containerName, scramPort
+            containerName, scramPort,
+            containerName, controllerPort
         ));
     env.put("KAFKA_ADVERTISED_LISTENERS",
         "INTERNAL://%s:%d,TOKEN://%s:%d,SSL://%s:%d,CLEAR://%s:%d,INTERNALCLEAR://%s:%d,INTERNALHOST://%s:%d,TOKENHOST://%s:%d,SCRAMHOST://%s:%d".formatted(
@@ -298,6 +333,7 @@ public class CPServerContainer extends GenericContainer<CPServerContainer> {
     env.put("KAFKA_CONFLUENT_METADATA_SERVER_TOKEN_MAX_LIFETIME_MS", "3600000");
     env.put("KAFKA_CONFLUENT_METADATA_SERVER_TOKEN_SIGNATURE_ALGORITHM", "RS256");
     env.put("KAFKA_CONFLUENT_METADATA_SERVER_TOKEN_KEY_PATH", "/tmp/conf/keypair.pem");
+    env.put("KAFKA_CONFLUENT_METADATA_SERVER_KRAFT_CONTROLLER_ENABLED", "true");
     return env;
   }
 

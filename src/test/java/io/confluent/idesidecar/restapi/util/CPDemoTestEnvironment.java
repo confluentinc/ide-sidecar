@@ -47,7 +47,7 @@ public class CPDemoTestEnvironment implements TestEnvironment {
   private SchemaRegistryContainer schemaRegistry;
 
   private static final List<String> CP_DEMO_CONTAINERS = List.of(
-      "tools", "zookeeper", "kafka1", "kafka2", "openldap", "schemaregistry"
+      "tools", "kafka1", "kafka2", "openldap", "schemaregistry"
   );
 
   @Override
@@ -77,10 +77,10 @@ public class CPDemoTestEnvironment implements TestEnvironment {
       registerRootCA();
     }
 
-    Log.info("Starting Zookeeper...");
-    zookeeper = new ZookeeperContainer(network);
-    zookeeper.waitingFor(Wait.forHealthcheck());
-    zookeeper.start();
+//    Log.info("Starting Zookeeper...");
+//    zookeeper = new ZookeeperContainer(network);
+//    zookeeper.waitingFor(Wait.forHealthcheck());
+//    zookeeper.start();
 
     Log.info("Starting OpenLDAP...");
     ldap = new OpenldapContainer(network);
@@ -97,35 +97,36 @@ public class CPDemoTestEnvironment implements TestEnvironment {
         12093,
         13091,
         14091,
-        15091
+        15091,
+        16091
     );
-    kafka1.withEnv(Map.of(
-        "KAFKA_BROKER_ID", "1",
-        "KAFKA_BROKER_RACK", "r1",
-        "KAFKA_JMX_PORT", "9991"
-    ));
-    kafka2 = new CPServerContainer(
-        network,
-        "kafka2",
-        8092,
-        9092,
-        10092,
-        11092,
-        12092,
-        12094,
-        13092,
-        14092,
-        15092
-    );
-    kafka2.withEnv(Map.of(
-        "KAFKA_BROKER_ID", "2",
-        "KAFKA_BROKER_RACK", "r2",
-        "KAFKA_JMX_PORT", "9992"
-    ));
+//    kafka1.withEnv(Map.of(
+//        "KAFKA_BROKER_RACK", "r1",
+//        "KAFKA_JMX_PORT", "9991"
+//    ));
+//    kafka2 = new CPServerContainer(
+//        network,
+//        "kafka2",
+//        8092,
+//        9092,
+//        10092,
+//        11092,
+//        12092,
+//        12094,
+//        13092,
+//        14092,
+//        15092
+//    );
+//    kafka2.withEnv(Map.of(
+//        "KAFKA_BROKER_ID", "2",
+//        "KAFKA_BROKER_RACK", "r2",
+//        "KAFKA_JMX_PORT", "9992"
+//    ));
 
     // Must be started in parallel
     Log.info("Starting Kafka brokers...");
-    Startables.deepStart(List.of(kafka1, kafka2)).join();
+//    Startables.deepStart(List.of(kafka1, kafka2)).join();
+    Startables.deepStart(List.of(kafka1)).join();
 
     // Register users for SASL/SCRAM
     registerScramUsers();
