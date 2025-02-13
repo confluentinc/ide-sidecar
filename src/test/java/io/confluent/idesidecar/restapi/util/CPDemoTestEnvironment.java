@@ -12,7 +12,6 @@ import io.confluent.idesidecar.restapi.util.cpdemo.CPServerContainer;
 import io.confluent.idesidecar.restapi.util.cpdemo.OpenldapContainer;
 import io.confluent.idesidecar.restapi.util.cpdemo.SchemaRegistryContainer;
 import io.confluent.idesidecar.restapi.util.cpdemo.ToolsContainer;
-import io.confluent.idesidecar.restapi.util.cpdemo.ZookeeperContainer;
 import io.quarkus.logging.Log;
 import java.io.File;
 import java.io.IOException;
@@ -30,14 +29,13 @@ import org.testcontainers.lifecycle.Startables;
 import org.testcontainers.utility.TestcontainersConfiguration;
 
 /**
- * A {@link TestEnvironment} that starts a CP Demo environment with a two-node Kafka cluster,
- * Zookeeper, OpenLDAP, and Schema Registry.
+ * A {@link TestEnvironment} that starts a CP Demo environment with a single-node Kafka cluster
+ * (in KRaft mode), OpenLDAP, and Schema Registry.
  * Modeled after https://github.com/confluentinc/cp-demo/blob/7.7.1-post/docker-compose.yml
  */
 public class CPDemoTestEnvironment implements TestEnvironment {
   private Network network;
   private ToolsContainer tools;
-  private ZookeeperContainer zookeeper;
   private OpenldapContainer ldap;
   private CPServerContainer kafka1;
   private SchemaRegistryContainer schemaRegistry;
@@ -63,7 +61,6 @@ public class CPDemoTestEnvironment implements TestEnvironment {
     runScript("src/test/resources/cp-demo-scripts/setup.sh");
 
     network = createReusableNetwork("cp-demo");
-    // Check if zookeeper, kafka1, kafka2, ldap, schemaRegistry are already running
     Log.info("Starting Tools...");
     tools = new ToolsContainer(network);
     tools.start();
