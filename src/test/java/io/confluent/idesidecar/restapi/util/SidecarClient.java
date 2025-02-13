@@ -143,7 +143,7 @@ public class SidecarClient implements SidecarClientApi {
       setCurrentCluster(clusterId);
       var topics = listTopics();
       for (var topic : topics) {
-        if (!topic.startsWith("_") || !topic.startsWith("confluent")) {
+        if (!topic.startsWith("_") && !topic.startsWith("confluent")) {
           deleteTopic(topic);
         } else {
           Log.debugf("Skipping deletion of internal topic %s", topic);
