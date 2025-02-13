@@ -127,10 +127,13 @@ public class SidecarClient implements SidecarClientApi {
 
   public void deleteTopic(String topicName) {
     withCluster(currentKafkaClusterId, () -> {
-      givenDefault()
+      var res = givenDefault()
           .delete("%s/kafka/v3/clusters/{cluster_id}/topics/%s".formatted(sidecarHost, topicName))
-          .then()
-          .statusCode(204);
+          .then();
+
+      if (res.extract().statusCode() != 204) {
+        fail("Failed to delete topic %s: %s".formatted(topicName, res.extract().body().asString()));
+      }
     });
   }
 
@@ -140,7 +143,7 @@ public class SidecarClient implements SidecarClientApi {
       setCurrentCluster(clusterId);
       var topics = listTopics();
       for (var topic : topics) {
-        if (!topic.startsWith("_")) {
+        if (!topic.startsWith("_") || !topic.startsWith("confluent")) {
           deleteTopic(topic);
         } else {
           Log.debugf("Skipping deletion of internal topic %s", topic);
