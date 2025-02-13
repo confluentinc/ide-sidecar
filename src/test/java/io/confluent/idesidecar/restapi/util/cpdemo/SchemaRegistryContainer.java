@@ -84,7 +84,7 @@ public class SchemaRegistryContainer extends GenericContainer<SchemaRegistryCont
     envs.put("SCHEMA_REGISTRY_SCHEMA_REGISTRY_INTER_INSTANCE_PROTOCOL", "https");
     envs.put("SCHEMA_REGISTRY_LOG4J_ROOT_LOGLEVEL", "INFO");
     envs.put("SCHEMA_REGISTRY_KAFKASTORE_TOPIC", "_schemas");
-    envs.put("SCHEMA_REGISTRY_KAFKASTORE_TOPIC_REPLICATION_FACTOR", "2");
+    envs.put("SCHEMA_REGISTRY_KAFKASTORE_TOPIC_REPLICATION_FACTOR", "1");
     envs.put("SCHEMA_REGISTRY_SSL_CIPHER_SUITES", Constants.SSL_CIPHER_SUITES);
     envs.put("SCHEMA_REGISTRY_DEBUG", "false");
     envs.put("SCHEMA_REGISTRY_SCHEMA_REGISTRY_RESOURCE_EXTENSION_CLASS", "io.confluent.kafka.schemaregistry.security.SchemaRegistrySecurityResourceExtension,io.confluent.schema.exporter.SchemaExporterResourceExtension");
