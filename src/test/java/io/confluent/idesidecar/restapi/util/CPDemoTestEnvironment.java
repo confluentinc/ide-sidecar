@@ -28,7 +28,6 @@ import org.junit.runners.model.Statement;
 import org.junitpioneer.jupiter.SetEnvironmentVariable;
 import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.Network;
-import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.lifecycle.Startables;
 import org.testcontainers.utility.TestcontainersConfiguration;
 
@@ -47,7 +46,7 @@ public class CPDemoTestEnvironment implements TestEnvironment {
   private SchemaRegistryContainer schemaRegistry;
 
   private static final List<String> CP_DEMO_CONTAINERS = List.of(
-      "tools", "zookeeper", "kafka1", "kafka2", "openldap", "schemaregistry"
+      "tools", "kafka1", "kafka2", "openldap", "schemaregistry"
   );
 
   @Override
@@ -77,11 +76,6 @@ public class CPDemoTestEnvironment implements TestEnvironment {
       registerRootCA();
     }
 
-    Log.info("Starting Zookeeper...");
-    zookeeper = new ZookeeperContainer(network);
-    zookeeper.waitingFor(Wait.forHealthcheck());
-    zookeeper.start();
-
     Log.info("Starting OpenLDAP...");
     ldap = new OpenldapContainer(network);
     ldap.start();
@@ -89,6 +83,8 @@ public class CPDemoTestEnvironment implements TestEnvironment {
     kafka1 = new CPServerContainer(
         network,
         "kafka1",
+        // Node id
+        0,
         8091,
         9091,
         10091,
@@ -97,16 +93,15 @@ public class CPDemoTestEnvironment implements TestEnvironment {
         12093,
         13091,
         14091,
-        15091
+        15091,
+        16091
     );
-    kafka1.withEnv(Map.of(
-        "KAFKA_BROKER_ID", "1",
-        "KAFKA_BROKER_RACK", "r1",
-        "KAFKA_JMX_PORT", "9991"
-    ));
+
     kafka2 = new CPServerContainer(
         network,
         "kafka2",
+        // Node id
+        1,
         8092,
         9092,
         10092,
@@ -115,13 +110,19 @@ public class CPDemoTestEnvironment implements TestEnvironment {
         12094,
         13092,
         14092,
-        15092
+        15092,
+        16092
     );
-    kafka2.withEnv(Map.of(
-        "KAFKA_BROKER_ID", "2",
-        "KAFKA_BROKER_RACK", "r2",
-        "KAFKA_JMX_PORT", "9992"
-    ));
+
+    var quorumVoters = "0@kafka1:16091,1@kafka2:16092";
+    kafka1.addEnv(
+        "KAFKA_CONTROLLER_QUORUM_VOTERS",
+        quorumVoters
+    );
+    kafka2.addEnv(
+        "KAFKA_CONTROLLER_QUORUM_VOTERS",
+        quorumVoters
+    );
 
     // Must be started in parallel
     Log.info("Starting Kafka brokers...");
