@@ -14,8 +14,10 @@ import org.testcontainers.containers.wait.strategy.Wait;
 public class CPServerContainer extends GenericContainer<CPServerContainer> {
 
   private static final String DEFAULT_IMAGE = "confluentinc/cp-server";
+  private static final String CLUSTER_ID = "sidecar-cp-integration-test-cluster";
 
   private final String tag;
+  private final Integer nodeId;
   private final String containerName;
   private final Integer mdsPort;
   private final Integer internalPort;
@@ -32,6 +34,7 @@ public class CPServerContainer extends GenericContainer<CPServerContainer> {
       String tag,
       Network network,
       String containerName,
+      Integer nodeId,
       Integer mdsPort,
       Integer internalPort,
       Integer tokenPort,
@@ -46,6 +49,7 @@ public class CPServerContainer extends GenericContainer<CPServerContainer> {
     super(DEFAULT_IMAGE + ":" + tag);
     this.tag = tag;
     this.containerName = containerName;
+    this.nodeId = nodeId;
     this.mdsPort = mdsPort;
     this.internalPort = internalPort;
     this.tokenPort = tokenPort;
@@ -60,7 +64,6 @@ public class CPServerContainer extends GenericContainer<CPServerContainer> {
     super.withNetwork(network);
     super.withNetworkAliases(containerName);
     super
-//        .withEnv(kafkaZookeeperEnv())
         .withEnv(kraftEnv())
         .withEnv(listenersEnv(
             internalPort, tokenPort, sslPort, clearPort, internalClearPort, internalHostPort,
@@ -131,6 +134,7 @@ public class CPServerContainer extends GenericContainer<CPServerContainer> {
   public CPServerContainer(
       Network network,
       String containerName,
+      Integer nodeId,
       Integer mdsPort,
       Integer internalPort,
       Integer tokenPort,
@@ -146,6 +150,7 @@ public class CPServerContainer extends GenericContainer<CPServerContainer> {
         DEFAULT_CONFLUENT_DOCKER_TAG,
         network,
         containerName,
+        nodeId,
         mdsPort,
         internalPort,
         tokenPort,
@@ -158,37 +163,15 @@ public class CPServerContainer extends GenericContainer<CPServerContainer> {
         controllerPort
     );
   }
-//
-//  public Map<String, String> kafkaZookeeperEnv() {
-//    var env = new HashMap<String, String>();
-//    env.put("KAFKA_ZOOKEEPER_CONNECT", "zookeeper:2182");
-//    env.put("KAFKA_ZOOKEEPER_SSL_CLIENT_ENABLE", "true");
-//    env.put("KAFKA_ZOOKEEPER_SSL_CIPHER_SUITES", Constants.SSL_CIPHER_SUITES);
-//    env.put("KAFKA_ZOOKEEPER_CLIENT_CNXN_SOCKET", "org.apache.zookeeper.ClientCnxnSocketNetty");
-//    env.put("KAFKA_ZOOKEEPER_SSL_KEYSTORE_LOCATION",
-//        "/etc/kafka/secrets/kafka.%s.keystore.jks".formatted(this.containerName));
-//    env.put("KAFKA_ZOOKEEPER_SSL_KEYSTORE_PASSWORD", "confluent");
-//    env.put("KAFKA_ZOOKEEPER_SSL_KEYSTORE_TYPE", "PKCS12");
-//    env.put("KAFKA_ZOOKEEPER_SSL_TRUSTSTORE_LOCATION",
-//        "/etc/kafka/secrets/kafka.%s.truststore.jks".formatted(this.containerName));
-//    env.put("KAFKA_ZOOKEEPER_SSL_TRUSTSTORE_PASSWORD", "confluent");
-//    env.put("KAFKA_ZOOKEEPER_SSL_TRUSTSTORE_TYPE", "JKS");
-//    env.put("KAFKA_ZOOKEEPER_SET_ACL", "true");
-//    return env;
-//  }
-
 
   public Map<String, String> kraftEnv() {
-    // process.roles=broker,controller
-    // node.id=0
-    // controller.quorum.voters=0@containerName:internalPort
-    // controller.listener.names=INTERNAL
     var env = new HashMap<String, String>();
+    // This is known as "combined" mode. In combined mode, no two nodes can have
+    // the same ID, but a combined broker/controller node counts as a single node.
     env.put("KAFKA_PROCESS_ROLES", "broker,controller");
-    env.put("KAFKA_NODE_ID", "0");
-    env.put("KAFKA_CONTROLLER_QUORUM_VOTERS", "0@%s:%d".formatted(containerName, controllerPort));
+    env.put("KAFKA_NODE_ID", nodeId.toString());
     env.put("KAFKA_CONTROLLER_LISTENER_NAMES", "CONTROLLER");
-    env.put("CLUSTER_ID", "blablablablabla");
+    env.put("CLUSTER_ID", CLUSTER_ID);
     return env;
   }
 
@@ -393,7 +376,7 @@ public class CPServerContainer extends GenericContainer<CPServerContainer> {
     env.put("KAFKA_OPTS", "-Djava.security.auth.login.config=/etc/kafka/secrets/broker_jaas.conf");
     env.put("KAFKA_AUTHORIZER_CLASS_NAME",
         "io.confluent.kafka.security.authorizer.ConfluentServerAuthorizer");
-    env.put("KAFKA_CONFLUENT_AUTHORIZER_ACCESS_RULE_PROVIDERS", "CONFLUENT,ZK_ACL");
+    env.put("KAFKA_CONFLUENT_AUTHORIZER_ACCESS_RULE_PROVIDERS", "CONFLUENT,KRAFT_ACL");
     env.put("KAFKA_SUPER_USERS", "User:admin;User:mds;User:superUser;User:ANONYMOUS");
     env.put("KAFKA_LOG4J_LOGGERS", "kafka.authorizer.logger=INFO");
     env.put("KAFKA_LOG4J_ROOT_LOGLEVEL", "INFO");
@@ -418,6 +401,10 @@ public class CPServerContainer extends GenericContainer<CPServerContainer> {
 
   public String getContainerName() {
     return containerName;
+  }
+
+  public String getClusterId() {
+    return CLUSTER_ID;
   }
 
   public Integer getMdsPort() {

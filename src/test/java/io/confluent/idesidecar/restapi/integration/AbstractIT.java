@@ -102,7 +102,11 @@ public abstract class AbstractIT extends SidecarClient implements ITSuite {
   @AfterEach
   public void afterEach() {
     // Delete all the content in the test environment, so it doesn't leak into other tests
-    deleteAllContent();
+    try {
+      deleteAllContent();
+    } catch (Exception e) {
+      Log.errorf(e, "Error deleting content");
+    }
   }
 
   /**

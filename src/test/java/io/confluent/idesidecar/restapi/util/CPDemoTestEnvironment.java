@@ -28,7 +28,6 @@ import org.junit.runners.model.Statement;
 import org.junitpioneer.jupiter.SetEnvironmentVariable;
 import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.Network;
-import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.lifecycle.Startables;
 import org.testcontainers.utility.TestcontainersConfiguration;
 
@@ -77,11 +76,6 @@ public class CPDemoTestEnvironment implements TestEnvironment {
       registerRootCA();
     }
 
-//    Log.info("Starting Zookeeper...");
-//    zookeeper = new ZookeeperContainer(network);
-//    zookeeper.waitingFor(Wait.forHealthcheck());
-//    zookeeper.start();
-
     Log.info("Starting OpenLDAP...");
     ldap = new OpenldapContainer(network);
     ldap.start();
@@ -89,6 +83,8 @@ public class CPDemoTestEnvironment implements TestEnvironment {
     kafka1 = new CPServerContainer(
         network,
         "kafka1",
+        // Node id
+        0,
         8091,
         9091,
         10091,
@@ -100,33 +96,37 @@ public class CPDemoTestEnvironment implements TestEnvironment {
         15091,
         16091
     );
-//    kafka1.withEnv(Map.of(
-//        "KAFKA_BROKER_RACK", "r1",
-//        "KAFKA_JMX_PORT", "9991"
-//    ));
-//    kafka2 = new CPServerContainer(
-//        network,
-//        "kafka2",
-//        8092,
-//        9092,
-//        10092,
-//        11092,
-//        12092,
-//        12094,
-//        13092,
-//        14092,
-//        15092
-//    );
-//    kafka2.withEnv(Map.of(
-//        "KAFKA_BROKER_ID", "2",
-//        "KAFKA_BROKER_RACK", "r2",
-//        "KAFKA_JMX_PORT", "9992"
-//    ));
+
+    kafka2 = new CPServerContainer(
+        network,
+        "kafka2",
+        // Node id
+        1,
+        8092,
+        9092,
+        10092,
+        11092,
+        12092,
+        12094,
+        13092,
+        14092,
+        15092,
+        16092
+    );
+
+    var quorumVoters = "0@kafka1:16091,1@kafka2:16092";
+    kafka1.addEnv(
+        "KAFKA_CONTROLLER_QUORUM_VOTERS",
+        quorumVoters
+    );
+    kafka2.addEnv(
+        "KAFKA_CONTROLLER_QUORUM_VOTERS",
+        quorumVoters
+    );
 
     // Must be started in parallel
     Log.info("Starting Kafka brokers...");
-//    Startables.deepStart(List.of(kafka1, kafka2)).join();
-    Startables.deepStart(List.of(kafka1)).join();
+    Startables.deepStart(List.of(kafka1, kafka2)).join();
 
     // Register users for SASL/SCRAM
     registerScramUsers();
