@@ -74,37 +74,32 @@ blocks:
             - make release-ci
             - sem-context put release_version=$(cat .versions/ide-sidecar-version.txt)
 
-  - name: "Update third party notices PR"
-    dependencies: ["Release"]
-    run:
-      when: "branch =~ '.*' and change_in(['/pom.xml', '/NOTICE.txt'], {default_branch: 'main', branch_range: '$SEMAPHORE_GIT_COMMIT_RANGE', pipeline_file: 'ignore'})"
-    task:
-      prologue:
-        commands:
-          - sem-version java 21
-          - . vault-setup
-      jobs:
-        - name: "Update Third Party Notices PR"
-          commands:
-            # We don't want to update the third party notices when just the pom.xml version is bumped.
-            # Ugly, but it works.
-            # The commit message comes from the Make target "commit-release" in mk-files/semver.mk
-            - |
-              LATEST_COMMIT_MESSAGE=$(git log -1 --pretty=%B $SEMAPHORE_GIT_COMMIT_RANGE)
-              VERSION_BUMP_PATTERN="^chore: version bump"
-              if echo "$LATEST_COMMIT_MESSAGE" | grep -q "$VERSION_BUMP_PATTERN"; then
-                echo "Skipping third party notices update"
-              else
-                make update-third-party-notices-pr
-              fi
-
 after_pipeline:
   task:
     jobs:
       - name: Publish Test Results to Semaphore
         commands:
           - test-results gen-pipeline-report || echo "Could not publish pipeline test result report due to probably no test results to publish"
-
+      - name: "Update third party notices PR"
+        dependencies: ["Release"]
+        run:
+          when: "branch =~ '.*' and change_in(['/pom.xml', '/NOTICE.txt'], {default_branch: 'main', branch_range: '$SEMAPHORE_GIT_COMMIT_RANGE', pipeline_file: 'ignore'})"
+        prologue:
+          commands:
+            - sem-version java 21
+            - . vault-setup
+        commands:
+          - |
+            LATEST_COMMIT_MESSAGE=$(git log -1 --pretty=%B $SEMAPHORE_GIT_COMMIT_RANGE)
+            VERSION_BUMP_PATTERN="^chore: version bump"
+            if echo "$LATEST_COMMIT_MESSAGE" | grep -q "$VERSION_BUMP_PATTERN"; then
+              echo "Skipping third party notices update"
+            else
+              make update-third-party-notices-pr
+            fi
+                  # We don't want to update the third party notices when just the pom.xml version is bumped.
+                  # Ugly, but it works.
+                  # The commit message comes from the Make target "commit-release" in mk-files/semver.mk
 promotions:
   - name: "Multi Arch Builds and Upload to GitHub Releases"
     pipeline_file: multi-arch-builds-and-upload.yml
