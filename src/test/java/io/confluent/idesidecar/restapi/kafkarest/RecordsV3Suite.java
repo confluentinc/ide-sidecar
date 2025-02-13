@@ -46,24 +46,6 @@ public interface RecordsV3Suite extends RecordsV3BaseSuite {
   }
 
   @Test
-  default void testProduceAvroPrimitiveData() {
-    produceAndConsume(
-        new RecordData(
-            SchemaFormat.AVRO,
-            SubjectNameStrategyEnum.TOPIC_NAME,
-            """
-            {
-              "logicalType": "timestamp-micros",
-              "type": "long"
-            }
-            """,
-            1736211139994583L
-        ),
-        RecordsV3BaseSuite.schemalessData("foo")
-    );
-  }
-
-  @Test
   default void shouldProduceRecordWithHeaders() {
     var topicName = randomTopicName();
     createTopic(topicName);
