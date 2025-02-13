@@ -13,13 +13,11 @@ import io.confluent.idesidecar.restapi.util.cpdemo.OpenldapContainer;
 import io.confluent.idesidecar.restapi.util.cpdemo.SchemaRegistryContainer;
 import io.confluent.idesidecar.restapi.util.cpdemo.ToolsContainer;
 import io.confluent.idesidecar.restapi.util.cpdemo.ZookeeperContainer;
-import io.confluent.idesidecar.restapi.credentials.Credentials;
 import io.quarkus.logging.Log;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -42,11 +40,10 @@ public class CPDemoTestEnvironment implements TestEnvironment {
   private ZookeeperContainer zookeeper;
   private OpenldapContainer ldap;
   private CPServerContainer kafka1;
-  private CPServerContainer kafka2;
   private SchemaRegistryContainer schemaRegistry;
 
   private static final List<String> CP_DEMO_CONTAINERS = List.of(
-      "tools", "kafka1", "kafka2", "openldap", "schemaregistry"
+      "tools", "kafka1", "openldap", "schemaregistry"
   );
 
   @Override
@@ -97,36 +94,13 @@ public class CPDemoTestEnvironment implements TestEnvironment {
         16091
     );
 
-    kafka2 = new CPServerContainer(
-        network,
-        "kafka2",
-        // Node id
-        1,
-        8092,
-        9092,
-        10092,
-        11092,
-        12092,
-        12094,
-        13092,
-        14092,
-        15092,
-        16092
-    );
-
-    var quorumVoters = "0@kafka1:16091,1@kafka2:16092";
     kafka1.addEnv(
         "KAFKA_CONTROLLER_QUORUM_VOTERS",
-        quorumVoters
-    );
-    kafka2.addEnv(
-        "KAFKA_CONTROLLER_QUORUM_VOTERS",
-        quorumVoters
+        "0@kafka1:16091"
     );
 
-    // Must be started in parallel
-    Log.info("Starting Kafka brokers...");
-    Startables.deepStart(List.of(kafka1, kafka2)).join();
+    Log.info("Starting Kafka broker...");
+    Startables.deepStart(List.of(kafka1)).join();
 
     // Register users for SASL/SCRAM
     registerScramUsers();

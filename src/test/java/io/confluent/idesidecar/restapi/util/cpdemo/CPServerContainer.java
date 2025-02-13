@@ -300,7 +300,7 @@ public class CPServerContainer extends GenericContainer<CPServerContainer> {
 
   public Map<String, String> mdsEnv(Integer mdsPort) {
     var env = new HashMap<String, String>();
-    env.put("KAFKA_CONFLUENT_METADATA_TOPIC_REPLICATION_FACTOR", "2");
+    env.put("KAFKA_CONFLUENT_METADATA_TOPIC_REPLICATION_FACTOR", "1");
     env.put("KAFKA_CONFLUENT_METADATA_SERVER_AUTHENTICATION_METHOD", "BEARER");
     env.put("KAFKA_CONFLUENT_METADATA_SERVER_LISTENERS", "https://0.0.0.0:%d".formatted(mdsPort));
     env.put("KAFKA_CONFLUENT_METADATA_SERVER_ADVERTISED_LISTENERS",
@@ -381,16 +381,16 @@ public class CPServerContainer extends GenericContainer<CPServerContainer> {
     env.put("KAFKA_LOG4J_LOGGERS", "kafka.authorizer.logger=INFO");
     env.put("KAFKA_LOG4J_ROOT_LOGLEVEL", "INFO");
 
-    env.put("KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR", "2");
-    env.put("KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR", "2");
+    env.put("KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR", "1");
+    env.put("KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR", "1");
     env.put("KAFKA_CONFLUENT_SECURITY_EVENT_LOGGER_EXPORTER_KAFKA_TOPIC_REPLICAS", "2");
-    env.put("KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR", "2");
+    env.put("KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR", "1");
     env.put("KAFKA_TRANSACTION_STATE_LOG_MIN_ISR", "1");
-    env.put("KAFKA_CONFLUENT_BALANCER_TOPIC_REPLICATION_FACTOR", "2");
+    env.put("KAFKA_CONFLUENT_BALANCER_TOPIC_REPLICATION_FACTOR", "1");
     env.put("KAFKA_CONFLUENT_BALANCER_HEAL_BROKER_FAILURE_THRESHOLD_MS", "30000");
     env.put("KAFKA_DELETE_TOPIC_ENABLE", "true");
     env.put("KAFKA_AUTO_CREATE_TOPICS_ENABLE", "false");
-    env.put("KAFKA_DEFAULT_REPLICATION_FACTOR", "2");
+    env.put("KAFKA_DEFAULT_REPLICATION_FACTOR", "1");
 
     return env;
   }
