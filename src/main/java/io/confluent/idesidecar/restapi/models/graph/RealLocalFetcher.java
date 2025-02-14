@@ -155,15 +155,18 @@ public class RealLocalFetcher extends ConfluentLocalRestClient implements LocalF
   public String resolveSchemaRegistryUri(String connectionId) {
     var localSpec = connections.getConnectionSpec(connectionId);
 
-    String uri;
+    String uri = null;
     if (localSpec.schemaRegistryConfig() != null) {
       uri = localSpec.schemaRegistryConfig().uri();
     } else if (localSpec.localConfig() != null) {
       uri = localSpec.localConfig().schemaRegistryUri();
-    } else {
-      // Use the default SR URI when missing LocalConfig or SchemaRegistryConfig
-      uri = CONFLUENT_LOCAL_DEFAULT_SCHEMA_REGISTRY_URI;
     }
+
+    if (uri == null) {
+      // Use the default SR URI when missing LocalConfig or SchemaRegistryConfig
+      return CONFLUENT_LOCAL_DEFAULT_SCHEMA_REGISTRY_URI;
+    }
+
     if (uri.isBlank()) {
       // Blank URL means no SR
       return null;
