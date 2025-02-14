@@ -94,11 +94,11 @@ public class LocalIT {
       @Override
       public void setupConnection() {
         setupConnection(this, Optional.of(
-            ConnectionSpec.createLocal(
+            ConnectionSpec.createLocalWithSRConfig(
                 "local-connection-without-sr",
                 "Local connection without Schema Registry",
                 // Disable Schema Registry
-                new ConnectionSpec.LocalConfig("")
+                null
             )
         ));
       }
