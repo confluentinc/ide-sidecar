@@ -85,6 +85,6 @@ promotions:
     auto_promote:
       when: "result = 'passed' and branch =~ '.*'"
   - name: "Third Party Notices PR"
-    pipeline_file: third-party-notices-pr.yml
+    pipeline_file: third-party-notices.yml
     auto_promote:
       when: "branch =~ '.*' and change_in(['/pom.xml', '/NOTICE.txt'], {default_branch: 'main', branch_range: '$SEMAPHORE_GIT_COMMIT_RANGE', pipeline_file: 'ignore'})"
