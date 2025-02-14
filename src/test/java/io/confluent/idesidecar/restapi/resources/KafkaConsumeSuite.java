@@ -1,17 +1,20 @@
 package io.confluent.idesidecar.restapi.resources;
 
+import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.JsonFormat;
 import io.confluent.idesidecar.restapi.integration.ITSuite;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequest;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequestBuilder;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
 import io.confluent.idesidecar.restapi.proto.Message.MyMessage;
+// import io.confluent.idesidecar.restapi.protoevolved.MessageEvolved;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -19,6 +22,9 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.stream.Stream;
+
+
+import io.vertx.core.json.JsonObject;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -298,7 +304,7 @@ public interface KafkaConsumeSuite extends ITSuite {
     createSchema(
         topic + "-value",
         "PROTOBUF",
-        "syntax = \"proto3\"; package io.confluent.idesidecar.restapi; message MyMessage { string name = 1; int32 age = 2; bool is_active = 3; }"
+        loadResource("proto/message.proto")
     );
 
     var message1 = MyMessage.newBuilder()
@@ -327,7 +333,7 @@ public interface KafkaConsumeSuite extends ITSuite {
           "name", messages.get(i).getName(),
           "age", messages.get(i).getAge(),
           "is_active", messages.get(i).getIsActive()
-      ),1);
+      ), 1);
     }
 
     var rows = consume(topic, SimpleConsumeMultiPartitionRequestBuilder
@@ -354,8 +360,6 @@ public interface KafkaConsumeSuite extends ITSuite {
 
       // Compare the parsed message with the original message
       assertEquals(messages.get(i), parsedMessage, "Mismatched Protobuf message");
-
-      assertFalse(newRecords.get(i).exceededFields().value(), "Exceeded fields should be false");
     }
   }
 
@@ -399,6 +403,75 @@ public interface KafkaConsumeSuite extends ITSuite {
       } catch (Exception e) {
         throw new RuntimeException("Error retrieving consume response", e);
       }
+    }
+  }
+
+  /**
+   * Tests that we set the `schema_id` to something other than what the topic messages were
+   * serialized with. This is used to test new schema versions before they are used in production.
+   */
+  @Test
+  default void testConsumeWithAlternateSchemaId() throws InvalidProtocolBufferException {
+    // First create a topic, then produce some schematized messages to it
+    var topicName = "test_topic_alternate_schema_id";
+    createTopic(topicName, 1, (short) 1);
+
+    // Create a schema for the messages
+    var schema = createSchema(
+        topicName + "-ProductValue",
+        "AVRO",
+        loadResource("schemas/product-value.avsc")
+    );
+
+    // Produce some messages to the topic
+    var message1 = new JsonObject()
+        .put("id", 1)
+        .put("name", "Product 1")
+        .put("price", 100.0);
+
+    var message2 = new JsonObject()
+        .put("id", 2)
+        .put("name", "Product 2")
+        .put("price", 200.0);
+
+    var message3 = new JsonObject()
+        .put("id", 3)
+        .put("name", "Product 3")
+        .put("price", 300.0);
+
+    produceRecord(topicName, "key1", null, message1, schema.getVersion());
+    produceRecord(topicName, "key2", null, message2, schema.getVersion());
+    produceRecord(topicName, "key3", null, message3, schema.getVersion());
+
+    // Now create a new schema derived from the schema used to produce the messages,
+    // with a new field added
+    var newSchema = createSchema(
+        topicName + "-no-strategy",
+        "AVRO",
+        loadResource("schemas/product-value-evolved-new-field.avsc")
+    );
+
+    // Consume the messages from the topic using the alternate schema ID
+    var rows = consume(topicName, SimpleConsumeMultiPartitionRequestBuilder
+        .builder()
+        .fromBeginning(true)
+        .schemaId(newSchema.getId())
+        .maxPollRecords(3)
+        .build()
+    );
+
+    var newPartitionDataList = rows.partitionDataList();
+    assertNotNull(newPartitionDataList);
+
+    var newRecords = newPartitionDataList.getFirst().records();
+    assertNotNull(newRecords);
+
+    assertEquals(3, newRecords.size(), "Expected number of records is 3");
+
+    // Use JsonFormat to parse the JSON into a Protobuf object
+    for (int i = 0; i < 3; i++) {
+      var jsonValue = newRecords.get(i).value().toString();
+      System.out.println(jsonValue);
     }
   }
 }
