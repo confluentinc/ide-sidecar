@@ -9,6 +9,7 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.confluent.idesidecar.restapi.integration.ITSuite;
@@ -39,9 +40,9 @@ public interface LocalConnectionSuite extends ITSuite {
         .body("spec.id", equalTo(spec.id()))
         .body("spec.name", equalTo(spec.name()))
         .body("spec.type", equalTo(ConnectionType.LOCAL.name()))
-        .body("spec.local_config", notNullValue())
+        .body("spec.local_config", nullValue())
         .body("spec.kafka_cluster", nullValue())
-        .body("spec.schema_registry", nullValue())
+        .body("spec.schema_registry", notNullValue())
         .body("status.authentication.status", equalTo(Status.NO_TOKEN.name()))
         .body("status.kafka_cluster", nullValue())
         .body("status.schema_registry", nullValue())
@@ -67,9 +68,9 @@ public interface LocalConnectionSuite extends ITSuite {
         .body("spec.id", nullValue())
         .body("spec.name", equalTo(spec.name()))
         .body("spec.type", equalTo(ConnectionType.LOCAL.name()))
-        .body("spec.local_config", notNullValue())
+        .body("spec.local_config", nullValue())
         .body("spec.kafka_cluster", nullValue())
-        .body("spec.schema_registry", nullValue())
+        .body("spec.schema_registry", notNullValue())
         .body("status.authentication.status", equalTo(Status.NO_TOKEN.name()))
         .body("status.kafka_cluster", nullValue())
         .body("status.schema_registry", nullValue())
@@ -90,8 +91,9 @@ public interface LocalConnectionSuite extends ITSuite {
     assertEquals(connection.id(), connection.spec().id());
     assertNotNull(connection.spec());
     assertEquals(spec.name(), connection.spec().name());
-    assertNotNull(connection.spec().localConfig());
-    assertEquals(spec.localConfig().schemaRegistryUri(), connection.spec().localConfig().schemaRegistryUri());
+    assertNull(connection.spec().localConfig());
+    assertNotNull(connection.spec().schemaRegistryConfig());
+    assertEquals(spec.schemaRegistryConfig(), connection.spec().schemaRegistryConfig());
     assertNotNull(connection.status());
     assertNotNull(connection.status().authentication());
     assertEquals(Status.NO_TOKEN, connection.status().authentication().status());
@@ -110,11 +112,10 @@ public interface LocalConnectionSuite extends ITSuite {
         .body("spec.id", equalTo(connection.id()))
         .body("spec.name", equalTo(spec.name()))
         .body("spec.type", equalTo(ConnectionType.LOCAL.name()))
-        .body("spec.local_config", notNullValue())
-        .body("spec.local_config.schema-registry-uri", equalTo(spec.localConfig().schemaRegistryUri()))
+        .body("spec.local_config", nullValue())
         .body("spec.ccloud_config", nullValue())
         .body("spec.kafka_cluster", nullValue())
-        .body("spec.schema_registry", nullValue())
+        .body("spec.schema_registry", notNullValue())
         .body(
             "status.authentication.status",
             equalTo(Status.NO_TOKEN.name())
@@ -131,7 +132,7 @@ public interface LocalConnectionSuite extends ITSuite {
         .body("data.localConnections[0].schemaRegistry.uri", notNullValue());
 
     // Update the connection to remove the schema registry
-    var specNoSr = spec.withLocalConfig("");
+    var specNoSr = spec.withSchemaRegistryConfig(null);
 
     given()
         .when()
@@ -145,8 +146,7 @@ public interface LocalConnectionSuite extends ITSuite {
         .body("spec.id", equalTo(connection.id()))
         .body("spec.name", equalTo(spec.name()))
         .body("spec.type", equalTo(ConnectionType.LOCAL.name()))
-        .body("spec.local_config", notNullValue())
-        .body("spec.local_config.schema-registry-uri", equalTo(""))
+        .body("spec.local_config", nullValue())
         .body("spec.ccloud_config", nullValue())
         .body("spec.kafka_cluster", nullValue())
         .body("spec.schema_registry", nullValue())

@@ -76,13 +76,6 @@ public class RealLocalFetcher extends ConfluentLocalRestClient implements LocalF
           String.class
       );
 
-  static final String CONFLUENT_LOCAL_DEFAULT_SCHEMA_REGISTRY_URI = ConfigProvider
-      .getConfig()
-      .getValue(
-          "ide-sidecar.connections.confluent-local.default.schema-registry-uri",
-          String.class
-      );
-
   /**
    * The pattern to find {@code localhost:&lt;port>} where {@code &lt;port>} is 2 to 7 digits only.
    */
@@ -160,17 +153,13 @@ public class RealLocalFetcher extends ConfluentLocalRestClient implements LocalF
       uri = localSpec.schemaRegistryConfig().uri();
     } else if (localSpec.localConfig() != null) {
       uri = localSpec.localConfig().schemaRegistryUri();
+
+      // If the URI is blank, treat it as null
+      if (uri != null && uri.isBlank()) {
+        uri = null;
+      }
     }
 
-    if (uri == null) {
-      // Use the default SR URI when missing LocalConfig or SchemaRegistryConfig
-      return CONFLUENT_LOCAL_DEFAULT_SCHEMA_REGISTRY_URI;
-    }
-
-    if (uri.isBlank()) {
-      // Blank URL means no SR
-      return null;
-    }
     return uri;
   }
 
