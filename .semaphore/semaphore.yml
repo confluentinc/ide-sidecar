@@ -1,7 +1,5 @@
 # This file is managed by ServiceBot plugin - Semaphore. The content in this file is created using a common
-# template and configurations in service.yml.
-# Any modifications made to version, name, agent, and global_job_config will be overwritten by the generated
-# content in nightly runs. Code changes made to the remaining sections will not be affected.
+# template and configurations in service.yml. Code changes made to the remaining sections will not be affected.
 # For more information, please refer to the page:
 # https://confluentinc.atlassian.net/wiki/spaces/Foundations/pages/2871296194/Add+SemaphoreCI
 version: v1.0
@@ -74,30 +72,6 @@ blocks:
             - make release-ci
             - sem-context put release_version=$(cat .versions/ide-sidecar-version.txt)
 
-  - name: "Update third party notices PR"
-    dependencies: ["Release"]
-    run:
-      when: "branch =~ '.*' and change_in(['/pom.xml', '/NOTICE.txt'], {default_branch: 'main', branch_range: '$SEMAPHORE_GIT_COMMIT_RANGE', pipeline_file: 'ignore'})"
-    task:
-      prologue:
-        commands:
-          - sem-version java 21
-          - . vault-setup
-      jobs:
-        - name: "Update Third Party Notices PR"
-          commands:
-            # We don't want to update the third party notices when just the pom.xml version is bumped.
-            # Ugly, but it works.
-            # The commit message comes from the Make target "commit-release" in mk-files/semver.mk
-            - |
-              LATEST_COMMIT_MESSAGE=$(git log -1 --pretty=%B $SEMAPHORE_GIT_COMMIT_RANGE)
-              VERSION_BUMP_PATTERN="^chore: version bump"
-              if echo "$LATEST_COMMIT_MESSAGE" | grep -q "$VERSION_BUMP_PATTERN"; then
-                echo "Skipping third party notices update"
-              else
-                make update-third-party-notices-pr
-              fi
-
 after_pipeline:
   task:
     jobs:
@@ -110,3 +84,7 @@ promotions:
     pipeline_file: multi-arch-builds-and-upload.yml
     auto_promote:
       when: "result = 'passed' and branch =~ '.*'"
+  - name: "Third Party Notices PR"
+    pipeline_file: third-party-notices.yml
+    auto_promote:
+      when: "branch =~ '.*' and change_in(['/pom.xml', '/NOTICE.txt'], {default_branch: 'main', branch_range: '$SEMAPHORE_GIT_COMMIT_RANGE', pipeline_file: 'ignore'})"

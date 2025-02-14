@@ -26,7 +26,7 @@
   <properties>
     <!-- Always build file system layout for Docker images -->
     <docker.skip-build>false</docker.skip-build>
-    <!-- Never deploy to maven repository since make only builds CCloud Docker images -->
+    <!-- Never deploy to maven repository since make only builds Confluent Cloud Docker images -->
     <maven.deploy.skip>true</maven.deploy.skip>
     <compiler-plugin.version>3.12.1</compiler-plugin.version>
     <surefire-plugin.version>3.2.5</surefire-plugin.version>

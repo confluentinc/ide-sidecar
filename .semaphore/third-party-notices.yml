@@ -1,0 +1,33 @@
+version: v1.0
+name: third-party-notices
+agent:
+  machine:
+    type: s1-prod-ubuntu24-04-amd64-1
+
+execution_time_limit:
+  hours: 1
+
+blocks:
+  - name: "Update third party notices PR"
+    run:
+      when: "branch =~ '.*'"
+    task:
+      prologue:
+        commands:
+          - checkout
+          - sem-version java 21
+          - . vault-setup
+      jobs:
+        - name: "Update Third Party Notices PR"
+          commands:
+            # We don't want to update the third party notices when just the pom.xml version is bumped.
+            # Ugly, but it works.
+            # The commit message comes from the Make target "commit-release" in mk-files/semver.mk
+            - |
+              LATEST_COMMIT_MESSAGE=$(git log -1 --pretty=%B $SEMAPHORE_GIT_COMMIT_RANGE)
+              VERSION_BUMP_PATTERN="^chore: version bump"
+              if echo "$LATEST_COMMIT_MESSAGE" | grep -q "$VERSION_BUMP_PATTERN"; then
+                echo "Skipping third party notices update"
+              else
+                make update-third-party-notices-pr
+              fi
