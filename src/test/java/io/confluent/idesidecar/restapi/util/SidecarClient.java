@@ -402,6 +402,7 @@ public class SidecarClient implements SidecarClientApi {
         var kafkaClusterIsNullOrConnected = spec.kafkaClusterConfig() == null
             || connection.status().kafkaCluster().isConnected();
         var schemaRegistryIsNullOrConnected = spec.schemaRegistryConfig() == null
+            || connection.status().schemaRegistry() == null
             || connection.status().schemaRegistry().isConnected();
         return kafkaClusterIsNullOrConnected && schemaRegistryIsNullOrConnected;
       });

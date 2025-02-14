@@ -76,11 +76,15 @@ public class LocalTestEnvironment implements TestEnvironment {
 
   public Optional<ConnectionSpec> localConnectionSpec() {
     return Optional.of(
-        ConnectionSpec.createLocal(
+        ConnectionSpec.createLocalWithSRConfig(
             "local-connection",
             "Local",
-            new ConnectionSpec.LocalConfig(
-                schemaRegistry.endpoint()
+            new ConnectionSpec.SchemaRegistryConfig(
+                "local-schema-registry",
+                schemaRegistry.endpoint(),
+                null,
+                // Disable TLS
+                TLSConfigBuilder.builder().enabled(false).build()
             )
         )
     );
