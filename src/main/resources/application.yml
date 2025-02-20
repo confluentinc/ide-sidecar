@@ -53,6 +53,9 @@
       # Unset the store-schema-directory to avoid storing
       # OpenAPI schemas with the test port.
       store-schema-directory: ""
+    log:
+      console:
+        json: false
 
 "%dev":
   ide-sidecar:
@@ -63,6 +66,10 @@
       enabled: false
       # How often to check?
       interval-seconds: 60
+  quarkus:
+    log:
+      console:
+        json: false
 
 vscode:
   extension:
