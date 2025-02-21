@@ -258,7 +258,7 @@ quarkus:
     path: /openapi
     info-title: Confluent ide-sidecar API
     store-schema-directory: src/generated/resources/
-    info-version: 1.0.1
+    info-version: ${quarkus.application.version}
     info-description: API for the Confluent ide-sidecar, part of Confluent for VS Code
     info-terms-of-service: Your terms here
     info-contact-email: vscode@confluent.io

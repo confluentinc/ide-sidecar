@@ -62,6 +62,10 @@ mvn-package-native-sources-only:
 		-DskipTests \
 		-Dmaven.javadoc.skip=true
 
+.PHONY: mvn-generate-sidecar-openapi-spec
+mvn-generate-sidecar-openapi-spec:
+	$(MVN) compile quarkus:build $(MAVEN_SKIP_CHECKS)
+
 .PHONY: mvn-verify-native-executable
 mvn-verify-native-executable:
 	$(MVN) clean verify -Pnative
