@@ -34,6 +34,6 @@ endif
 regenerate-openapi-specs:
 # mainly to ensure the `info.version` is up to date with the bumped version
 ifeq ($(CI),true)
-	mvn generate-resources
+	$(MAKE) $(MAKE_ARGS) mvn-generate-sidecar-openapi-spec
 	git add src/generated/resources/openapi*
 endif
