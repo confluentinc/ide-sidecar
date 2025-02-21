@@ -36,5 +36,4 @@ ifeq ($(CI),true)
 	# regenerate OpenAPI specs to ensure the version is up to date
 	mvn generate-resources
 	git add src/generated/resources/openapi*
-	git commit -m "chore: regenerate OpenAPI spec files [ci skip]" || true
 endif
