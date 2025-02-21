@@ -32,9 +32,8 @@ endif
 
 .PHONY: regenerate-openapi-specs
 regenerate-openapi-specs:
+# mainly to ensure the `info.version` is up to date with the bumped version
 ifeq ($(CI),true)
-    # regenerate OpenAPI specs to ensure the version is up to date
-    mvn generate-resources
-    git add src/generated/resources/openapi*
-    git commit -m "chore: regenerate OpenAPI spec files [ci skip]" || true
+	mvn generate-resources
+	git add src/generated/resources/openapi*
 endif
