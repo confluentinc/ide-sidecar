@@ -38,9 +38,6 @@ blocks:
   - name: "Build JARs and Unit Test"
     dependencies: []
     task:
-      prologue:
-        commands:
-          - sem-version java 21
       epilogue:
         always:
           commands:
@@ -54,9 +51,6 @@ blocks:
   - name: "Build Native Executable and Test"
     dependencies: []
     task:
-      prologue:
-        commands:
-          - sem-version java 21
       jobs:
         - name: "Build Native Executable and Test"
           commands:
