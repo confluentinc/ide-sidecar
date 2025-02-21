@@ -1,4 +1,4 @@
-RELEASE_PRECOMMIT := mvn-set-bumped-version set-sidecar-bumped-version
+RELEASE_PRECOMMIT := mvn-set-bumped-version set-sidecar-bumped-version regenerate-openapi-specs
 
 .PHONY: release-ci
 release-ci:
@@ -28,4 +28,12 @@ endif
 create-gh-release:
 ifeq ($(CI),true)
 	gh release create $(BUMPED_VERSION) --generate-notes --latest --title "$(BUMPED_VERSION)"
+endif
+
+.PHONY: regenerate-openapi-specs
+regenerate-openapi-specs:
+# mainly to ensure the `info.version` is up to date with the bumped version
+ifeq ($(CI),true)
+	mvn generate-resources
+	git add src/generated/resources/openapi*
 endif
