@@ -1,0 +1,11 @@
+{
+  "type": "record",
+  "name": "ProductValue",
+  "fields": [
+    {"name": "id", "type": "int"},
+    {"name": "name", "type": "string"},
+    {"name": "price", "type": "double"},
+    {"name": "tags", "type": {"type": "array", "items": "string"}},
+    {"name": "new_field", "type": "string", "default": "default_value"}
+  ]
+}

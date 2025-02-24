@@ -1582,6 +1582,10 @@
           },
           "from_beginning" : {
             "type" : "boolean"
+          },
+          "schema_id" : {
+            "format" : "int32",
+            "type" : "integer"
           }
         }
       },
