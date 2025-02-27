@@ -1,11 +1,10 @@
-package io.confluent.idesidecar.restapi.messageviewer;
+package io.confluent.idesidecar.restapi.proxy;
 
-import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequest;
-import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.idesidecar.restapi.models.ClusterType;
 import io.confluent.idesidecar.restapi.models.graph.KafkaCluster;
 import io.confluent.idesidecar.restapi.models.graph.SchemaRegistry;
-import io.confluent.idesidecar.restapi.proxy.ProxyContext;
 import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
 import io.vertx.core.MultiMap;
 import io.vertx.core.buffer.Buffer;
@@ -16,19 +15,21 @@ import java.util.Optional;
 /**
  * Stores the context of a request of the message viewer API.
  */
-public class MessageViewerContext extends ClusterProxyContext {
+public class KafkaRestProxyContext<T, U> extends ClusterProxyContext {
   private final String topicName;
   private KafkaCluster kafkaClusterInfo;
   private SchemaRegistry schemaRegistryInfo;
-  private final SimpleConsumeMultiPartitionRequest consumeRequest;
+  private final T request;
 
-  private SimpleConsumeMultiPartitionResponse consumeResponse;
+  private U response;
 
-  public MessageViewerContext(
+  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
+  public KafkaRestProxyContext(
       String requestUri,
       MultiMap requestHeaders,
       HttpMethod requestMethod,
-      SimpleConsumeMultiPartitionRequest requestBody,
+      T requestBody,
       Map<String, String> requestPathParams,
       String connectionId,
       String clusterId,
@@ -40,7 +41,7 @@ public class MessageViewerContext extends ClusterProxyContext {
         requestMethod,
         Optional
             .ofNullable(requestBody)
-            .map(body -> Buffer.buffer(body.toJsonString()))
+            .map(body -> Buffer.buffer(toJsonString(requestBody)))
             .orElse(null),
         requestPathParams,
         connectionId,
@@ -48,7 +49,7 @@ public class MessageViewerContext extends ClusterProxyContext {
         ClusterType.KAFKA
     );
     this.topicName = topicName;
-    this.consumeRequest = requestBody;
+    this.request = requestBody;
   }
 
   public String getTopicName() {
@@ -71,16 +72,23 @@ public class MessageViewerContext extends ClusterProxyContext {
     return this.schemaRegistryInfo;
   }
 
-  public SimpleConsumeMultiPartitionResponse getConsumeResponse() {
-    return consumeResponse;
+  public U getResponse() {
+    return response;
   }
 
-  public void setConsumeResponse(
-      SimpleConsumeMultiPartitionResponse consumeResponse) {
-    this.consumeResponse = consumeResponse;
+  public void setResponse(U response) {
+    this.response = response;
   }
 
-  public SimpleConsumeMultiPartitionRequest getConsumeRequest() {
-    return this.consumeRequest;
+  public T getRequest() {
+    return this.request;
+  }
+
+  public static String toJsonString(Object object) {
+    try {
+      return OBJECT_MAPPER.writeValueAsString(object);
+    } catch (JsonProcessingException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

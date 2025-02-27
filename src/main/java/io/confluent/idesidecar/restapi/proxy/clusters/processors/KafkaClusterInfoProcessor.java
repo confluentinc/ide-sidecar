@@ -1,37 +1,40 @@
-package io.confluent.idesidecar.restapi.messageviewer;
+package io.confluent.idesidecar.restapi.proxy.clusters.processors;
 
 import io.confluent.idesidecar.restapi.cache.ClusterCache;
-import io.confluent.idesidecar.restapi.clients.SchemaErrors;
-import io.confluent.idesidecar.restapi.connections.ConnectionState;
-import io.confluent.idesidecar.restapi.events.Lifecycle;
 import io.confluent.idesidecar.restapi.exceptions.ClusterNotFoundException;
 import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
 import io.confluent.idesidecar.restapi.exceptions.ProcessorFailedException;
+import io.confluent.idesidecar.restapi.proxy.KafkaRestProxyContext;
+import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequest;
+import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
 import io.confluent.idesidecar.restapi.processors.Processor;
 import io.confluent.idesidecar.restapi.util.RequestHeadersConstants;
 import io.quarkus.logging.Log;
 import io.vertx.core.Future;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.event.ObservesAsync;
-import jakarta.inject.Inject;
 
 /**
- * Retrieves information about the Kafka and Schema Registry clusters when processing a request
- * for the message viewer API.
+ * Retrieves information about the Kafka and Schema Registry clusters when processing a request.
  */
 @ApplicationScoped
-public class MessageViewerClusterInfoProcessor extends
-    Processor<MessageViewerContext, Future<MessageViewerContext>> {
-
-
+public class KafkaClusterInfoProcessor extends
+    Processor<KafkaRestProxyContext
+        <SimpleConsumeMultiPartitionRequest, SimpleConsumeMultiPartitionResponse>,
+        Future<KafkaRestProxyContext
+            <SimpleConsumeMultiPartitionRequest, SimpleConsumeMultiPartitionResponse>
+            >
+        > {
   private final ClusterCache clusterCache;
 
-  public MessageViewerClusterInfoProcessor(ClusterCache cache) {
+  public KafkaClusterInfoProcessor(ClusterCache cache) {
     this.clusterCache = cache;
   }
 
   @Override
-  public Future<MessageViewerContext> process(MessageViewerContext context) {
+  public Future<KafkaRestProxyContext<SimpleConsumeMultiPartitionRequest,
+      SimpleConsumeMultiPartitionResponse>> process(
+      KafkaRestProxyContext<SimpleConsumeMultiPartitionRequest,
+          SimpleConsumeMultiPartitionResponse> context) {
     var clusterIdHeader = context.getRequestHeaders().get(
         RequestHeadersConstants.CLUSTER_ID_HEADER
     );

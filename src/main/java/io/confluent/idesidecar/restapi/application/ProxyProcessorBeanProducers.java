@@ -85,4 +85,22 @@ public class ProxyProcessorBeanProducers {
         emptyProcessorProxyContext
     );
   }
+//
+//  @Produces
+//  @Singleton
+//  @Named("ConfluentCloudProduceProcessor")
+//  public Processor<ClusterProxyContext, Future<ClusterProxyContext>> clusterProxyProcessor(
+//      KafkaClusterInfoProcessor clusterInfoProcessor,
+//      ClusterAuthenticationProcessor clusterAuthenticationProcessor,
+//      ConfluentCloudKafkaRestProduceProcessor confluentCloudKafkaRestProduceProcessor
+//  ) {
+//    return Processor.chain(
+//        connectionProcessorClusterProxyContext,
+//        clusterAuthenticationProcessor,
+//        clusterInfoProcessor,
+//        confluentCloudKafkaRestProduceProcessor,
+//        emptyProcessorClusterProxyContext
+//    );
+//  }
+
 }
