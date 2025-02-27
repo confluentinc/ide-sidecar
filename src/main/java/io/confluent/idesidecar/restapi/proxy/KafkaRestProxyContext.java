@@ -52,6 +52,33 @@ public class KafkaRestProxyContext<T, U> extends ClusterProxyContext {
     this.request = requestBody;
   }
 
+  /**
+   * Use this if the request is originated from within sidecar code and
+   * not being passed through as is from a client.
+   */
+  public KafkaRestProxyContext(
+      String connectionId,
+      String clusterId,
+      String topicName,
+      T requestBody
+  ) {
+    super(
+        null,
+        null,
+        null,
+        Optional
+            .ofNullable(requestBody)
+            .map(body -> Buffer.buffer(toJsonString(requestBody)))
+            .orElse(null),
+        null,
+        connectionId,
+        clusterId,
+        ClusterType.KAFKA
+    );
+    this.topicName = topicName;
+    this.request = requestBody;
+  }
+
   public String getTopicName() {
     return this.topicName;
   }

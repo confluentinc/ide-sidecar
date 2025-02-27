@@ -45,7 +45,7 @@ public class MessageViewerProcessorBeanProducers {
       > messageViewerCCloudProcessor() {
     return Processor.chain(
         new ConnectionProcessor<>(connectionManager),
-        new KafkaClusterInfoProcessor(clusterCache),
+        new KafkaClusterInfoProcessor<>(clusterCache),
         new ConsumeStrategyProcessor(
             nativeConsumeStrategy,
             confluentCloudConsumeStrategy

@@ -1,6 +1,9 @@
 package io.confluent.idesidecar.restapi.application;
 
+import io.confluent.idesidecar.restapi.cache.ClusterCache;
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
+import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequest;
+import io.confluent.idesidecar.restapi.kafkarest.model.ProduceResponse;
 import io.confluent.idesidecar.restapi.processors.Processor;
 import io.confluent.idesidecar.restapi.proxy.ClusterProxyRequestProcessor;
 import io.confluent.idesidecar.restapi.proxy.ConnectionProcessor;
@@ -14,6 +17,9 @@ import io.confluent.idesidecar.restapi.proxy.clusters.processors.ClusterAuthenti
 import io.confluent.idesidecar.restapi.proxy.clusters.processors.ClusterInfoProcessor;
 import io.confluent.idesidecar.restapi.proxy.clusters.processors.ClusterProxyProcessor;
 import io.confluent.idesidecar.restapi.proxy.clusters.processors.ClusterStrategyProcessor;
+import io.confluent.idesidecar.restapi.proxy.clusters.processors.ConfluentCloudKafkaRestProduceProcessor;
+import io.confluent.idesidecar.restapi.proxy.clusters.processors.KafkaClusterInfoProcessor;
+import io.confluent.idesidecar.restapi.proxy.KafkaRestProxyContext;
 import io.confluent.idesidecar.restapi.util.WebClientFactory;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
@@ -50,6 +56,9 @@ public class ProxyProcessorBeanProducers {
   @Inject
   ControlPlaneAuthenticationProcessor controlPlaneAuthenticationProcessor;
 
+  @Inject
+  ClusterCache clusterCache;
+
   @Produces
   @Singleton
   @Named("clusterProxyProcessor")
@@ -57,12 +66,11 @@ public class ProxyProcessorBeanProducers {
       ClusterProxyProcessor clusterProxyProcessor,
       ClusterStrategyProcessor clusterStrategyProcessor,
       ClusterInfoProcessor clusterInfoProcessor,
-      ClusterAuthenticationProcessor clusterAuthenticationProcessor,
       ClusterProxyRequestProcessor clusterProxyRequestProcessor
   ) {
     return Processor.chain(
         connectionProcessorClusterProxyContext,
-        clusterAuthenticationProcessor,
+        new ClusterAuthenticationProcessor<>(),
         clusterInfoProcessor,
         clusterStrategyProcessor,
         clusterProxyProcessor,
@@ -85,22 +93,20 @@ public class ProxyProcessorBeanProducers {
         emptyProcessorProxyContext
     );
   }
-//
-//  @Produces
-//  @Singleton
-//  @Named("ConfluentCloudProduceProcessor")
-//  public Processor<ClusterProxyContext, Future<ClusterProxyContext>> clusterProxyProcessor(
-//      KafkaClusterInfoProcessor clusterInfoProcessor,
-//      ClusterAuthenticationProcessor clusterAuthenticationProcessor,
-//      ConfluentCloudKafkaRestProduceProcessor confluentCloudKafkaRestProduceProcessor
-//  ) {
-//    return Processor.chain(
-//        connectionProcessorClusterProxyContext,
-//        clusterAuthenticationProcessor,
-//        clusterInfoProcessor,
-//        confluentCloudKafkaRestProduceProcessor,
-//        emptyProcessorClusterProxyContext
-//    );
-//  }
 
+  @Produces
+  @Singleton
+  @Named("ccloudProduceProcessor")
+  public Processor<KafkaRestProxyContext<ProduceRequest, ProduceResponse>,
+      Future<KafkaRestProxyContext<ProduceRequest, ProduceResponse>>> ccloudProduceProcessor(
+      ConfluentCloudKafkaRestProduceProcessor confluentCloudKafkaRestProduceProcessor
+  ) {
+    return Processor.chain(
+        new ConnectionProcessor<>(connectionStateManager),
+        new ClusterAuthenticationProcessor<>(),
+        new KafkaClusterInfoProcessor<>(clusterCache),
+        confluentCloudKafkaRestProduceProcessor,
+        new EmptyProcessor<>()
+    );
+  }
 }

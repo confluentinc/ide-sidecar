@@ -5,8 +5,6 @@ import io.confluent.idesidecar.restapi.exceptions.ClusterNotFoundException;
 import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
 import io.confluent.idesidecar.restapi.exceptions.ProcessorFailedException;
 import io.confluent.idesidecar.restapi.proxy.KafkaRestProxyContext;
-import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequest;
-import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
 import io.confluent.idesidecar.restapi.processors.Processor;
 import io.confluent.idesidecar.restapi.util.RequestHeadersConstants;
 import io.quarkus.logging.Log;
@@ -16,14 +14,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 /**
  * Retrieves information about the Kafka and Schema Registry clusters when processing a request.
  */
-@ApplicationScoped
-public class KafkaClusterInfoProcessor extends
-    Processor<KafkaRestProxyContext
-        <SimpleConsumeMultiPartitionRequest, SimpleConsumeMultiPartitionResponse>,
-        Future<KafkaRestProxyContext
-            <SimpleConsumeMultiPartitionRequest, SimpleConsumeMultiPartitionResponse>
-            >
-        > {
+public class KafkaClusterInfoProcessor<T, U> extends
+    Processor<KafkaRestProxyContext<T, U>, Future<KafkaRestProxyContext<T, U>>> {
   private final ClusterCache clusterCache;
 
   public KafkaClusterInfoProcessor(ClusterCache cache) {
@@ -31,10 +23,7 @@ public class KafkaClusterInfoProcessor extends
   }
 
   @Override
-  public Future<KafkaRestProxyContext<SimpleConsumeMultiPartitionRequest,
-      SimpleConsumeMultiPartitionResponse>> process(
-      KafkaRestProxyContext<SimpleConsumeMultiPartitionRequest,
-          SimpleConsumeMultiPartitionResponse> context) {
+  public Future<KafkaRestProxyContext<T, U>> process(KafkaRestProxyContext<T, U> context) {
     var clusterIdHeader = context.getRequestHeaders().get(
         RequestHeadersConstants.CLUSTER_ID_HEADER
     );

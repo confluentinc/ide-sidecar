@@ -21,7 +21,8 @@ public class NativeProduceRecord extends GenericProduceRecord {
 
 	@Override
 	protected Uni<ProduceContext> sendSerializedRecord(ProduceContext c) {
-		return fetchProducerClient(c)
+		return ensureTopicPartitionExists(c)
+				.chain(this::fetchProducerClient)
 				// ctx is just c but with the Producer instance set
 				.chain(ctx ->
 						MutinyUtil.uniStage(sendSerializedRecord(
@@ -50,6 +51,28 @@ public class NativeProduceRecord extends GenericProduceRecord {
 						.producer(producer)
 						.build()
 				);
+	}
+
+	/**
+	 * Check that the topic-partition exists. If partition id was not provided,
+	 * we simply pass through.
+	 *
+	 * @param c The context object.
+	 * @return A Uni that emits the context object after checking the partition. The context object
+	 * is left unchanged in all cases.
+	 */
+	private Uni<ProduceContext> ensureTopicPartitionExists(ProduceContext c) {
+		return topicManager
+				// First, check that the topic exists
+				.getKafkaTopic(c.clusterId(), c.topicName(), false)
+				// Then, check that the partition exists, if provided
+				.chain(ignored -> Optional
+						.ofNullable(c.produceRequest().getPartitionId())
+						.map(partitionId ->
+								partitionManager.getKafkaPartition(c.clusterId(), c.topicName(), partitionId)
+						)
+						.orElse(Uni.createFrom().nullItem()))
+				.onItem().transform(ignored -> c);
 	}
 
 	private CompletableFuture<RecordMetadata> sendSerializedRecord(

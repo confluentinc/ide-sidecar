@@ -39,7 +39,6 @@ public abstract class GenericProduceRecord {
 
 	public Uni<ProduceResponse> produce(String connectionId, String clusterId, String topicName, boolean dryRun, ProduceRequest produceRequest) {
 		var uptoDryRun = MutinyUtil.uniItem(ProduceContext.fromRequest(connectionId, clusterId, topicName, produceRequest))
-				.chain(this::ensureTopicPartitionExists)
 				.chain(this::ensureKeyOrValueDataExists)
 				.chain(this::fetchSchemaRegistryClient)
 				.chain(this::getSchemas)
@@ -74,27 +73,6 @@ public abstract class GenericProduceRecord {
 		return throwable;
 	}
 
-	/**
-	 * Check that the topic-partition exists. If partition id was not provided,
-	 * we simply pass through.
-	 *
-	 * @param c The context object.
-	 * @return A Uni that emits the context object after checking the partition. The context object
-	 * is left unchanged in all cases.
-	 */
-	private Uni<ProduceContext> ensureTopicPartitionExists(ProduceContext c) {
-		return topicManager
-				// First, check that the topic exists
-				.getKafkaTopic(c.clusterId(), c.topicName(), false)
-				// Then, check that the partition exists, if provided
-				.chain(ignored -> Optional
-						.ofNullable(c.produceRequest().getPartitionId())
-						.map(partitionId ->
-								partitionManager.getKafkaPartition(c.clusterId(), c.topicName(), partitionId)
-						)
-						.orElse(Uni.createFrom().nullItem()))
-				.onItem().transform(ignored -> c);
-	}
 
 	/**
 	 * Ensure that either key or value data is provided in the request. If neither is provided,
