@@ -1,5 +1,7 @@
 package io.confluent.idesidecar.restapi.kafkarest;
 
+import static io.confluent.idesidecar.restapi.util.MutinyUtil.uniItem;
+
 import io.confluent.idesidecar.restapi.clients.KafkaProducerClients;
 import io.confluent.idesidecar.restapi.clients.SchemaRegistryClients;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequest;
@@ -15,7 +17,6 @@ import jakarta.ws.rs.BadRequestException;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.header.Header;
 import org.apache.kafka.common.header.internals.RecordHeader;
-
 import java.util.Date;
 import java.util.Optional;
 import java.util.Set;
@@ -40,7 +41,7 @@ public abstract class GenericProduceRecord {
 		var uptoDryRun = MutinyUtil.uniItem(ProduceContext.fromRequest(connectionId, clusterId, topicName, produceRequest))
 				.chain(this::ensureTopicPartitionExists)
 				.chain(this::ensureKeyOrValueDataExists)
-				.chain(this::fetchClients)
+				.chain(this::fetchSchemaRegistryClient)
 				.chain(this::getSchemas)
 				.chain(this::serialize)
 				.onFailure(RuntimeException.class)
@@ -118,19 +119,14 @@ public abstract class GenericProduceRecord {
 	 * @param c The context object.
 	 * @return A Uni that emits the context object with the clients set.
 	 */
-	private Uni<ProduceContext> fetchClients(ProduceContext c) {
-		return MutinyUtil.combineUnis(
-						() -> schemaRegistryClients.getClientByKafkaClusterId(c.connectionId(), c.clusterId()),
-						() -> kafkaProducerClients.getClient(c.connectionId(), c.clusterId())
-				)
-				.asTuple()
-				// The getClient* methods may end up performing HTTP requests to fetch cluster information,
-				// so we run this on a worker pool of threads.
+	private Uni<ProduceContext> fetchSchemaRegistryClient(ProduceContext c) {
+		return uniItem(
+				() -> schemaRegistryClients.getClientByKafkaClusterId(c.connectionId(), c.clusterId())
+		)
 				.runSubscriptionOn(Infrastructure.getDefaultWorkerPool())
-				.map(tuple -> c
+				.map(client -> c
 						.with()
-						.srClient(tuple.getItem1())
-						.producer(tuple.getItem2())
+						.srClient(client)
 						.build()
 				);
 	}
