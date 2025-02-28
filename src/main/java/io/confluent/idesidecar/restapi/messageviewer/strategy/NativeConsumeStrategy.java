@@ -2,7 +2,8 @@ package io.confluent.idesidecar.restapi.messageviewer.strategy;
 
 import io.confluent.idesidecar.restapi.messageviewer.KafkaConsumerFactory;
 import io.confluent.idesidecar.restapi.clients.SchemaRegistryClients;
-import io.confluent.idesidecar.restapi.messageviewer.MessageViewerContext;
+import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequest;
+import io.confluent.idesidecar.restapi.proxy.KafkaRestProxyContext;
 import io.confluent.idesidecar.restapi.messageviewer.RecordDeserializer;
 import io.confluent.idesidecar.restapi.messageviewer.SimpleConsumer;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
@@ -31,12 +32,18 @@ public class NativeConsumeStrategy implements ConsumeStrategy {
   SchemaRegistryClients schemaRegistryClients;
 
   @Override
-  public Future<MessageViewerContext> execute(MessageViewerContext context) {
+  public Future<KafkaRestProxyContext
+      <SimpleConsumeMultiPartitionRequest, SimpleConsumeMultiPartitionResponse>>
+  execute(KafkaRestProxyContext
+              <SimpleConsumeMultiPartitionRequest, SimpleConsumeMultiPartitionResponse> context) {
     return vertx.executeBlocking(() -> consumeMessages(context));
   }
 
-  public MessageViewerContext consumeMessages(MessageViewerContext context) {
-    var request = context.getConsumeRequest();
+  public KafkaRestProxyContext
+      <SimpleConsumeMultiPartitionRequest, SimpleConsumeMultiPartitionResponse>
+  consumeMessages(KafkaRestProxyContext<SimpleConsumeMultiPartitionRequest,
+      SimpleConsumeMultiPartitionResponse> context) {
+    var request = context.getRequest();
     var topic = context.getTopicName();
     var schemaRegistryClient = Optional
         .ofNullable(context.getSchemaRegistryInfo())
@@ -57,7 +64,7 @@ public class NativeConsumeStrategy implements ConsumeStrategy {
           context
       );
       var consumedData = simpleConsumer.consume(topic, request);
-      context.setConsumeResponse(new SimpleConsumeMultiPartitionResponse(
+      context.setResponse(new SimpleConsumeMultiPartitionResponse(
           context.getClusterId(), topic, consumedData)
       );
     }
