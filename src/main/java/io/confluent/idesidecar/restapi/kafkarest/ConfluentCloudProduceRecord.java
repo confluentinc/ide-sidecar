@@ -33,8 +33,6 @@ public class ConfluentCloudProduceRecord extends GenericProduceRecord {
 
 	@Override
 	protected Uni<ProduceContext> sendSerializedRecord(ProduceContext c) {
-
-		// Construct a new ProduceRequest that's apprioriate
 		var produceRequest = new ProduceRequest();
 		produceRequest.setPartitionId(c.produceRequest().getPartitionId());
 		produceRequest.setHeaders(c.produceRequest().getHeaders());
@@ -52,7 +50,7 @@ public class ConfluentCloudProduceRecord extends GenericProduceRecord {
 			produceRequest.setKey(
 					ProduceRequestData
 							.builder()
-							// Deserialize the serialized JSON back into UTF-8
+							// Deserialize the serialized JSON
 							.data(deserializeJson(c.serializedKey().toByteArray(), true))
 							.type(JSON_TYPE)
 							.build()
@@ -72,7 +70,7 @@ public class ConfluentCloudProduceRecord extends GenericProduceRecord {
 			produceRequest.setValue(
 					ProduceRequestData
 							.builder()
-							// Deserialize the serialized JSON back into UTF-8
+							// Deserialize the serialized JSON
 							.data(deserializeJson(c.serializedValue().toByteArray(), false))
 							.type(JSON_TYPE)
 							.build()

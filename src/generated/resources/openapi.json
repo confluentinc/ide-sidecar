@@ -144,7 +144,7 @@
     },
     "/gateway/v1/clusters/{cluster_id}/topics/{topic_name}/records" : {
       "post" : {
-        "tags" : [ "Kafka Consume Resource" ],
+        "tags" : [ "Confluent Cloud Produce Records Resource" ],
         "parameters" : [ {
           "name" : "cluster_id",
           "in" : "path",
@@ -179,7 +179,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "type" : "object"
+                "$ref" : "#/components/schemas/ProduceRequest"
               }
             }
           }
@@ -190,7 +190,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "type" : "object"
+                  "$ref" : "#/components/schemas/ProduceResponse"
                 }
               }
             }
@@ -1040,6 +1040,11 @@
           }
         }
       },
+      "Date" : {
+        "format" : "date",
+        "type" : "string",
+        "example" : "2022-03-10"
+      },
       "Error" : {
         "description" : "Describes a particular error encountered while performing an operation.",
         "type" : "object",
@@ -1467,6 +1472,129 @@
           },
           "trust_all_certificates" : {
             "type" : "boolean"
+          }
+        }
+      },
+      "ProduceRequest" : {
+        "type" : "object",
+        "properties" : {
+          "partition_id" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "headers" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ProduceRequestHeader"
+            }
+          },
+          "key" : {
+            "$ref" : "#/components/schemas/ProduceRequestData"
+          },
+          "value" : {
+            "$ref" : "#/components/schemas/ProduceRequestData"
+          },
+          "timestamp" : {
+            "$ref" : "#/components/schemas/Date"
+          }
+        }
+      },
+      "ProduceRequestData" : {
+        "type" : "object",
+        "properties" : {
+          "type" : {
+            "type" : "string"
+          },
+          "subject" : {
+            "type" : "string"
+          },
+          "subject_name_strategy" : {
+            "type" : "string"
+          },
+          "schema_id" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "schema_version" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "schema" : {
+            "type" : "string"
+          },
+          "data" : { }
+        }
+      },
+      "ProduceRequestHeader" : {
+        "required" : [ "name" ],
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "value" : {
+            "format" : "binary",
+            "type" : "string"
+          }
+        }
+      },
+      "ProduceResponse" : {
+        "required" : [ "error_code" ],
+        "type" : "object",
+        "properties" : {
+          "error_code" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "cluster_id" : {
+            "type" : "string"
+          },
+          "topic_name" : {
+            "type" : "string"
+          },
+          "partition_id" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "offset" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "timestamp" : {
+            "$ref" : "#/components/schemas/Date"
+          },
+          "key" : {
+            "$ref" : "#/components/schemas/ProduceResponseData"
+          },
+          "value" : {
+            "$ref" : "#/components/schemas/ProduceResponseData"
+          }
+        }
+      },
+      "ProduceResponseData" : {
+        "required" : [ "size", "type" ],
+        "type" : "object",
+        "properties" : {
+          "size" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "type" : {
+            "type" : "string"
+          },
+          "subject" : {
+            "type" : "string"
+          },
+          "schema_id" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "schema_version" : {
+            "format" : "int32",
+            "type" : "integer"
           }
         }
       },

@@ -57,7 +57,7 @@ public class ConfluentCloudKafkaRestProduceProcessor extends Processor<
 				.compose(processedContext -> {
 					try {
 						ProduceResponse response = OBJECT_MAPPER.readValue(
-								processedContext.getProxyRequestBody().getBytes(),
+								processedContext.getProxyResponseBody().getBytes(),
 								ProduceResponse.class
 						);
 						context.setResponse(response);
@@ -66,9 +66,8 @@ public class ConfluentCloudKafkaRestProduceProcessor extends Processor<
 						throw new ProcessorFailedException(
 								context.failf(
 										context.getProxyResponseStatusCode(),
-										("Error parsing produce records response from Confluent Cloud Kafka REST: %s" +
-												", response body: %s")
-												.formatted(e.getMessage(), context.getProxyResponseBody())
+										"Failed to parse response from Confluent Cloud Kafka REST: %s"
+												.formatted(e.getMessage())
 								));
 					}
 				});

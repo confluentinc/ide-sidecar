@@ -57,9 +57,6 @@ public class KafkaConsumeResource {
           <SimpleConsumeMultiPartitionRequest, SimpleConsumeMultiPartitionResponse>>
       > messageViewerProcessor;
 
-  @Inject
-  ConfluentCloudProduceRecord ccloudProducer;
-
   @POST
   @Produces(MediaType.APPLICATION_JSON)
   @Parameter(
@@ -101,33 +98,6 @@ public class KafkaConsumeResource {
               .header(KAFKA_CONSUMED_BYTES_RESPONSE_HEADER, consumedBytes)
               .build();
         }).toCompletionStage());
-  }
-
-  @POST
-  @Produces(MediaType.APPLICATION_JSON)
-  @Parameter(
-      name = "x-connection-id",
-      description = "Connection ID",
-      required = true,
-      in = ParameterIn.HEADER,
-      schema = @Schema(type = SchemaType.STRING)
-  )
-  @Path("/clusters/{cluster_id}/topics/{topic_name}/records")
-  @Blocking
-  public Uni<ProduceResponse> produceRecord(
-      @Context RoutingContext routingContext,
-      @PathParam("cluster_id") String clusterId,
-      @PathParam("topic_name") String topicName,
-      @QueryParam("dry_run") @DefaultValue("false") boolean dryRun,
-      ProduceRequest produceRequest
-  ) {
-    return ccloudProducer.produce(
-        routingContext.request().getHeader(CONNECTION_ID_HEADER),
-        clusterId,
-        topicName,
-        dryRun,
-        produceRequest
-    );
   }
 
   /**
