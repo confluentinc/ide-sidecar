@@ -30,7 +30,7 @@ public record ProduceContext(
 		ByteString serializedValue,
 		RecordMetadata recordMetadata
 ) implements ProduceContextBuilder.With {
-	static ProduceContext fromRequest(
+	public static ProduceContext fromRequest(
 			String connectionId,
 			String clusterId,
 			String topicName,

@@ -3,6 +3,8 @@ package io.confluent.idesidecar.restapi.kafkarest;
 import static io.confluent.idesidecar.restapi.util.MutinyUtil.uniItem;
 
 import com.google.protobuf.ByteString;
+import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequest;
+import io.confluent.idesidecar.restapi.kafkarest.model.ProduceResponse;
 import io.confluent.idesidecar.restapi.util.MutinyUtil;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.infrastructure.Infrastructure;
@@ -18,6 +20,19 @@ import java.util.concurrent.CompletableFuture;
 
 @ApplicationScoped
 public class NativeProduceRecord extends GenericProduceRecord {
+
+	@Override
+	public Uni<ProduceResponse> produce(
+			String connectionId,
+			String clusterId,
+			String topicName,
+			boolean dryRun,
+			ProduceRequest produceRequest
+	) {
+		var produceContext = ProduceContext.fromRequest(connectionId, clusterId, topicName, produceRequest);
+		return ensureTopicPartitionExists(produceContext)
+				.chain(() -> super.produce(produceContext, dryRun));
+	}
 
 	@Override
 	protected Uni<ProduceContext> sendSerializedRecord(ProduceContext c) {

@@ -37,8 +37,21 @@ public abstract class GenericProduceRecord {
 	@Inject
 	TopicManager topicManager;
 
-	public Uni<ProduceResponse> produce(String connectionId, String clusterId, String topicName, boolean dryRun, ProduceRequest produceRequest) {
-		var uptoDryRun = MutinyUtil.uniItem(ProduceContext.fromRequest(connectionId, clusterId, topicName, produceRequest))
+	public Uni<ProduceResponse> produce(
+			String connectionId,
+			String clusterId,
+			String topicName,
+			boolean dryRun,
+			ProduceRequest produceRequest
+	) {
+		return produce(
+				ProduceContext.fromRequest(connectionId, clusterId, topicName, produceRequest),
+				dryRun
+		);
+	}
+
+	public Uni<ProduceResponse> produce(ProduceContext produceContext, boolean dryRun) {
+		var uptoDryRun = uniItem(produceContext)
 				.chain(this::ensureKeyOrValueDataExists)
 				.chain(this::fetchSchemaRegistryClient)
 				.chain(this::getSchemas)
