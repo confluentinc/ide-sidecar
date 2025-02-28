@@ -7,6 +7,7 @@ import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequestData;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceResponse;
 import io.confluent.idesidecar.restapi.processors.Processor;
 import io.confluent.idesidecar.restapi.proxy.KafkaRestProxyContext;
+import io.confluent.kafka.serializers.KafkaJsonDeserializer;
 import io.smallrye.mutiny.Uni;
 import io.vertx.core.Future;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -15,10 +16,11 @@ import jakarta.inject.Named;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.TopicPartition;
 import java.util.Base64;
+import java.util.Map;
 
 @ApplicationScoped
 public class ConfluentCloudProduceRecord extends GenericProduceRecord {
-	static final Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
+	private static final Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
 
 	// These are the types supported by Confluent Cloud Kafka REST
 	private static final String BINARY_TYPE = "BINARY";
@@ -42,7 +44,7 @@ public class ConfluentCloudProduceRecord extends GenericProduceRecord {
 			produceRequest.setKey(
 					ProduceRequestData
 							.builder()
-							.data(BASE64_ENCODER.encode(c.serializedKey().toByteArray()))
+							.data(BASE64_ENCODER.encodeToString(c.serializedKey().toByteArray()))
 							.type(BINARY_TYPE)
 							.build()
 			);
@@ -51,7 +53,7 @@ public class ConfluentCloudProduceRecord extends GenericProduceRecord {
 					ProduceRequestData
 							.builder()
 							// Deserialize the serialized JSON back into UTF-8
-							.data(c.serializedKey().toStringUtf8())
+							.data(deserializeJson(c.serializedKey().toByteArray(), true))
 							.type(JSON_TYPE)
 							.build()
 			);
@@ -62,7 +64,7 @@ public class ConfluentCloudProduceRecord extends GenericProduceRecord {
 			produceRequest.setValue(
 					ProduceRequestData
 							.builder()
-							.data(BASE64_ENCODER.encode(c.serializedValue().toByteArray()))
+							.data(BASE64_ENCODER.encodeToString(c.serializedValue().toByteArray()))
 							.type(BINARY_TYPE)
 							.build()
 			);
@@ -71,7 +73,7 @@ public class ConfluentCloudProduceRecord extends GenericProduceRecord {
 					ProduceRequestData
 							.builder()
 							// Deserialize the serialized JSON back into UTF-8
-							.data(c.serializedValue().toStringUtf8())
+							.data(deserializeJson(c.serializedValue().toByteArray(), false))
 							.type(JSON_TYPE)
 							.build()
 			);
@@ -101,5 +103,12 @@ public class ConfluentCloudProduceRecord extends GenericProduceRecord {
 				response.getKey().getSize().intValue(),
 				response.getValue().getSize().intValue()
 		);
+	}
+
+	private Object deserializeJson(byte[] serializedJsonBytes, boolean isKey) {
+		try (var kafkaJsonDeserializer = new KafkaJsonDeserializer<>()) {
+			kafkaJsonDeserializer.configure(Map.of(), isKey);
+			return kafkaJsonDeserializer.deserialize(null, serializedJsonBytes);
+		}
 	}
 }

@@ -1,6 +1,5 @@
 package io.confluent.idesidecar.restapi.proxy.clusters.processors;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.idesidecar.restapi.connections.CCloudConnectionState;
 import io.confluent.idesidecar.restapi.exceptions.ProcessorFailedException;
@@ -17,6 +16,7 @@ import io.vertx.core.http.HttpMethod;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.core.MediaType;
+import java.io.IOException;
 
 @ApplicationScoped
 public class ConfluentCloudKafkaRestProduceProcessor extends Processor<
@@ -36,7 +36,7 @@ public class ConfluentCloudKafkaRestProduceProcessor extends Processor<
 	) {
 		context.setProxyRequestMethod(HttpMethod.POST);
 		context.setProxyRequestAbsoluteUrl(
-				context.getClusterInfo().uri() + "/kafka/v3/clusters/%s/topics/%s/records".formatted(
+				context.getKafkaClusterInfo().uri() + "/kafka/v3/clusters/%s/topics/%s/records".formatted(
 						context.getClusterId(),
 						context.getTopicName()
 				)
@@ -57,17 +57,18 @@ public class ConfluentCloudKafkaRestProduceProcessor extends Processor<
 				.compose(processedContext -> {
 					try {
 						ProduceResponse response = OBJECT_MAPPER.readValue(
-								processedContext.getProxyRequestBody().toString(),
+								processedContext.getProxyRequestBody().getBytes(),
 								ProduceResponse.class
 						);
 						context.setResponse(response);
 						return Future.succeededFuture(context);
-					} catch (JsonProcessingException e) {
+					} catch (IOException e) {
 						throw new ProcessorFailedException(
 								context.failf(
 										context.getProxyResponseStatusCode(),
-										"Error parsing produce records response from Confluent Cloud Kafka REST: %s"
-												.formatted(context.getProxyResponseBody())
+										("Error parsing produce records response from Confluent Cloud Kafka REST: %s" +
+												", response body: %s")
+												.formatted(e.getMessage(), context.getProxyResponseBody())
 								));
 					}
 				});

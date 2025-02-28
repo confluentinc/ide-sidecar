@@ -9,7 +9,8 @@ import io.confluent.idesidecar.restapi.processors.Processor;
 import io.confluent.idesidecar.restapi.util.RequestHeadersConstants;
 import io.quarkus.logging.Log;
 import io.vertx.core.Future;
-import jakarta.enterprise.context.ApplicationScoped;
+import io.vertx.core.MultiMap;
+import java.util.Objects;
 
 /**
  * Retrieves information about the Kafka and Schema Registry clusters when processing a request.
@@ -24,9 +25,9 @@ public class KafkaClusterInfoProcessor<T, U> extends
 
   @Override
   public Future<KafkaRestProxyContext<T, U>> process(KafkaRestProxyContext<T, U> context) {
-    var clusterIdHeader = context.getRequestHeaders().get(
-        RequestHeadersConstants.CLUSTER_ID_HEADER
-    );
+    var clusterIdHeader = Objects
+        .requireNonNullElse(context.getRequestHeaders(), MultiMap.caseInsensitiveMultiMap())
+        .get(RequestHeadersConstants.CLUSTER_ID_HEADER);
     if (clusterIdHeader != null && !context.getClusterId().equals(clusterIdHeader)) {
       return Future.failedFuture(new ProcessorFailedException(
           context.fail(400, "Cluster ID in path and header do not match")
