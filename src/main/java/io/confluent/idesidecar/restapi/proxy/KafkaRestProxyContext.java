@@ -1,5 +1,6 @@
 package io.confluent.idesidecar.restapi.proxy;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.idesidecar.restapi.models.ClusterType;
@@ -24,6 +25,10 @@ public class KafkaRestProxyContext<T, U> extends ClusterProxyContext {
   private U response;
 
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
+  static {
+    OBJECT_MAPPER.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+  }
 
   public KafkaRestProxyContext(
       String requestUri,
