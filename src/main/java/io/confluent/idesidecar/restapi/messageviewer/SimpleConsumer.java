@@ -1,11 +1,13 @@
 package io.confluent.idesidecar.restapi.messageviewer;
 
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequest;
+import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.ExceededFields;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeData;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeRecord;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeRecordHeader;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.TimestampType;
+import io.confluent.idesidecar.restapi.proxy.KafkaRestProxyContext;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -36,14 +38,15 @@ public class SimpleConsumer {
   private final SchemaRegistryClient schemaRegistryClient;
   private final KafkaConsumer<byte[], byte[]> consumer;
   private final RecordDeserializer recordDeserializer;
-  private final MessageViewerContext context;
-
+  private final KafkaRestProxyContext
+      <SimpleConsumeMultiPartitionRequest, SimpleConsumeMultiPartitionResponse> context;
 
   public SimpleConsumer(
       KafkaConsumer<byte[], byte[]> consumer,
       SchemaRegistryClient sr,
       RecordDeserializer recordDeserializer,
-      MessageViewerContext context
+      KafkaRestProxyContext
+          <SimpleConsumeMultiPartitionRequest, SimpleConsumeMultiPartitionResponse> context
   ) {
     this.consumer = consumer;
     this.schemaRegistryClient = sr;
