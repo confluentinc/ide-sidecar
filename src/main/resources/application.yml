@@ -286,4 +286,9 @@ mp:
   openapi:
     scan:
       exclude:
-        packages: io.confluent.idesidecar.restapi.kafkarest
+        classes: >
+          io.confluent.idesidecar.restapi.kafkarest.ClusterV3ApiImpl,
+          io.confluent.idesidecar.restapi.kafkarest.TopicConfigV3ApiImpl,
+          io.confluent.idesidecar.restapi.kafkarest.PartitionV3ApiImpl,
+          io.confluent.idesidecar.restapi.kafkarest.RecordsV3ApiImpl,
+          io.confluent.idesidecar.restapi.kafkarest.TopicV3ApiImpl

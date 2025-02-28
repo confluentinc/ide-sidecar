@@ -105,6 +105,7 @@ public record CCloudKafkaCluster(
 
   public boolean matches(CCloudSearchCriteria criteria) {
     return criteria.name().test(name)
+        && criteria.resourceId().test(id)
         && criteria.environmentId().test(environment != null ? environment.id() : "")
         && criteria.provider().test(provider)
         && criteria.region().test(region);
