@@ -6,7 +6,7 @@ import io.confluent.idesidecar.restapi.clients.ClientConfigurator;
 import io.confluent.idesidecar.restapi.clients.SchemaErrors;
 import io.confluent.idesidecar.restapi.connections.ConnectionState;
 import io.confluent.idesidecar.restapi.connections.ConnectionStates;
-import io.confluent.idesidecar.restapi.messageviewer.MessageViewerContext;
+import io.confluent.idesidecar.restapi.proxy.KafkaRestProxyContext;
 import io.confluent.idesidecar.restapi.messageviewer.RecordDeserializer;
 import io.confluent.idesidecar.restapi.messageviewer.SimpleConsumer;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
@@ -65,7 +65,7 @@ public abstract class AbstractIT extends SidecarClient implements ITSuite {
 
   private static final String VALID_CONNECTION_ID = "c1";
 
-  private static MessageViewerContext messageViewerContext = new MessageViewerContext(
+  private static KafkaRestProxyContext kafkaRestProxyContext = new KafkaRestProxyContext(
       null,
       null,
       null,
@@ -164,7 +164,7 @@ public abstract class AbstractIT extends SidecarClient implements ITSuite {
           )
       );
     }
-    return new SimpleConsumer(consumer, srClient, deserializer, messageViewerContext);
+    return new SimpleConsumer(consumer, srClient, deserializer, kafkaRestProxyContext);
   }
 
   /**

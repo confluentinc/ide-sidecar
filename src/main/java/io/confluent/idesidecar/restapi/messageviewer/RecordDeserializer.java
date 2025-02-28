@@ -17,6 +17,7 @@ import com.google.protobuf.util.JsonFormat;
 import graphql.VisibleForTesting;
 import io.confluent.idesidecar.restapi.clients.SchemaErrors;
 import io.confluent.idesidecar.restapi.kafkarest.SchemaFormat;
+import io.confluent.idesidecar.restapi.proxy.KafkaRestProxyContext;
 import io.confluent.idesidecar.restapi.util.ConfigUtil;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
@@ -230,7 +231,7 @@ public class RecordDeserializer {
   public DecodedResult deserialize(
       byte[] bytes,
       SchemaRegistryClient schemaRegistryClient,
-      MessageViewerContext context,
+      KafkaRestProxyContext context,
       boolean isKey,
       Optional<Function<byte[], byte[]>> encoderOnFailure
   ) {
@@ -341,14 +342,14 @@ public class RecordDeserializer {
   public DecodedResult deserialize(
       byte[] bytes,
       SchemaRegistryClient schemaRegistryClient,
-      MessageViewerContext context,
+      KafkaRestProxyContext context,
       boolean isKey
   ) {
     return deserialize(bytes, schemaRegistryClient, context, isKey, Optional.empty());
   }
 
   private void cacheSchemaFetchError(
-      Throwable e, int schemaId, MessageViewerContext context
+      Throwable e, int schemaId, KafkaRestProxyContext context
   ) {
     var retryTime = Instant.now().plus(CACHE_FAILED_SCHEMA_ID_FETCH_DURATION);
     var timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
