@@ -22,7 +22,7 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
 @RegisterForReflection
 public class ApiSecret extends Redactable {
 
-  public static final int MAX_LENGTH = 64;
+  public static final int MAX_LENGTH = 1024;
 
   public ApiSecret(char[] raw) {
     super(raw);
@@ -45,7 +45,7 @@ public class ApiSecret extends Redactable {
       String path,
       String what
   ) {
-    if (longerThan(Password.MAX_LENGTH)) {
+    if (longerThan(ApiSecret.MAX_LENGTH)) {
       errors.add(
           Error.create()
                .withDetail("%s API secret may not be longer than %d characters", what, MAX_LENGTH)
