@@ -508,14 +508,14 @@ components:
           type: string
         api_secret:
           description: The API secret to use when connecting to the external service.
-          maxLength: 64
+          maxLength: 1024
           minLength: 1
           type: string
           allOf:
           - $ref: "#/components/schemas/ApiSecret"
     ApiSecret:
       description: A user-provided API secret that is always masked in responses
-      maxLength: 64
+      maxLength: 1024
       minLength: 1
       type: string
     AuthError:
@@ -562,7 +562,7 @@ components:
           type: string
         password:
           description: The password to use when connecting to the external service.
-          maxLength: 64
+          maxLength: 1024
           minLength: 1
           type: string
           allOf:
@@ -1047,7 +1047,7 @@ components:
           type: integer
     Password:
       description: A user-provided password that is always masked in responses
-      maxLength: 64
+      maxLength: 1024
       minLength: 1
       type: string
     Preferences:
@@ -1264,7 +1264,9 @@ components:
           description: The password to use when connecting to the external service.
           maxLength: 1024
           minLength: 1
-          type: object
+          type: string
+          allOf:
+          - $ref: "#/components/schemas/Password"
     SidecarAccessToken:
       type: object
       properties:
