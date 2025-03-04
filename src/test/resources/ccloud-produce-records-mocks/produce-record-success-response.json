@@ -1,0 +1,16 @@
+{
+  "error_code": 200,
+  "cluster_id": "lkc-xv0n5q",
+  "topic_name": "test-produce",
+  "partition_id": 0,
+  "offset": 2,
+  "timestamp": "2025-02-28T20:56:03.476Z",
+  "key": {
+    "type": "JSON",
+    "size": 4
+  },
+  "value": {
+    "type": "BINARY",
+    "size": 74
+  }
+}

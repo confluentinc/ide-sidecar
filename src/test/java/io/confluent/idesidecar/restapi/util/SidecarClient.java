@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import io.confluent.idesidecar.restapi.credentials.Password;
 import io.confluent.idesidecar.restapi.credentials.Redactable;
+import io.confluent.idesidecar.restapi.credentials.TLSConfigBuilder;
 import io.confluent.idesidecar.restapi.kafkarest.model.CreateTopicRequestData;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequest;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequestData;
@@ -321,15 +322,21 @@ public class SidecarClient implements SidecarClientApi {
 
   public Connection createLocalConnection(String schemaRegistryUri) {
     var connectionId = generateConnectionId();
-    LocalConfig localConfig = null;
+    ConnectionSpec.SchemaRegistryConfig schemaRegistryConfig = null;
     if (schemaRegistryUri != null) {
-      localConfig = new LocalConfig(schemaRegistryUri);
+      schemaRegistryConfig = new ConnectionSpec.SchemaRegistryConfig(
+          "schema-registry-%s".formatted(connectionId),
+          schemaRegistryUri,
+          null,
+          // Disable TLS
+          TLSConfigBuilder.builder().enabled(false).build()
+      );
     }
     return createConnection(
-        ConnectionSpec.createLocal(
+        ConnectionSpec.createLocalWithSRConfig(
             connectionId,
             connectionId,
-            localConfig
+            schemaRegistryConfig
         )
     );
   }
@@ -402,6 +409,7 @@ public class SidecarClient implements SidecarClientApi {
         var kafkaClusterIsNullOrConnected = spec.kafkaClusterConfig() == null
             || connection.status().kafkaCluster().isConnected();
         var schemaRegistryIsNullOrConnected = spec.schemaRegistryConfig() == null
+            || connection.status().schemaRegistry() == null
             || connection.status().schemaRegistry().isConnected();
         return kafkaClusterIsNullOrConnected && schemaRegistryIsNullOrConnected;
       });

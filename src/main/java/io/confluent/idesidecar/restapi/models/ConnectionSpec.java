@@ -95,6 +95,17 @@ public record ConnectionSpec(
         .build();
   }
 
+  public static ConnectionSpec createLocalWithSRConfig(
+      String id, String name, SchemaRegistryConfig schemaRegistryConfig
+  ) {
+    return ConnectionSpecBuilder.builder()
+        .id(id)
+        .name(name)
+        .type(LOCAL)
+        .schemaRegistryConfig(schemaRegistryConfig)
+        .build();
+  }
+
   public static ConnectionSpec createDirect(
       String id,
       String name,

@@ -53,6 +53,9 @@
       # Unset the store-schema-directory to avoid storing
       # OpenAPI schemas with the test port.
       store-schema-directory: ""
+    log:
+      console:
+        json: false
 
 "%dev":
   ide-sidecar:
@@ -63,6 +66,10 @@
       enabled: false
       # How often to check?
       interval-seconds: 60
+  quarkus:
+    log:
+      console:
+        json: false
 
 vscode:
   extension:
@@ -251,7 +258,7 @@ quarkus:
     path: /openapi
     info-title: Confluent ide-sidecar API
     store-schema-directory: src/generated/resources/
-    info-version: 1.0.1
+    info-version: ${quarkus.application.version}
     info-description: API for the Confluent ide-sidecar, part of Confluent for VS Code
     info-terms-of-service: Your terms here
     info-contact-email: vscode@confluent.io
@@ -279,4 +286,9 @@ mp:
   openapi:
     scan:
       exclude:
-        packages: io.confluent.idesidecar.restapi.kafkarest
+        classes: >
+          io.confluent.idesidecar.restapi.kafkarest.ClusterV3ApiImpl,
+          io.confluent.idesidecar.restapi.kafkarest.TopicConfigV3ApiImpl,
+          io.confluent.idesidecar.restapi.kafkarest.PartitionV3ApiImpl,
+          io.confluent.idesidecar.restapi.kafkarest.RecordsV3ApiImpl,
+          io.confluent.idesidecar.restapi.kafkarest.TopicV3ApiImpl
