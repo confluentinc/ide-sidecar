@@ -9,7 +9,7 @@
       "url" : "https://confluent.io/contact",
       "email" : "vscode@confluent.io"
     },
-    "version" : "0.163.0"
+    "version" : "0.164.0"
   },
   "servers" : [ {
     "url" : "http://127.0.0.1:26636",
@@ -1714,12 +1714,9 @@
           },
           "scram_password" : {
             "description" : "The password to use when connecting to the external service.",
-            "maxLength" : 64,
+            "maxLength" : 1024,
             "minLength" : 1,
-            "type" : "string",
-            "allOf" : [ {
-              "$ref" : "#/components/schemas/Password"
-            } ]
+            "type" : "object"
           }
         }
       },
@@ -1900,13 +1897,13 @@
       "HealthCheck" : {
         "type" : "object",
         "properties" : {
-          "data" : {
-            "type" : "object",
-            "nullable" : true
-          },
           "status" : {
             "enum" : [ "UP", "DOWN" ],
             "type" : "string"
+          },
+          "data" : {
+            "type" : "object",
+            "nullable" : true
           },
           "name" : {
             "type" : "string"
