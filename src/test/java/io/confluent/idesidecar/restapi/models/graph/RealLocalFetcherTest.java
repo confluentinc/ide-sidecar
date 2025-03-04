@@ -216,15 +216,6 @@ class RealLocalFetcherTest {
   }
 
   @Test
-  void shouldReturnDefaultSchemaRegistryUriWhenLocalConfigIsNull() throws CreateConnectionException {
-    var connectionSpec = ConnectionSpec.createLocal("2", "Local Connection", null);
-    manager.createConnectionState(connectionSpec);
-
-    String uri = localFetcher.resolveSchemaRegistryUri("2");
-    assertEquals("http://localhost:8081", uri);
-  }
-
-  @Test
   void shouldReturnNullWhenSchemaRegistryUriIsBlank() throws CreateConnectionException {
     var localConfig = new ConnectionSpec.LocalConfig("");
     var connectionSpec = ConnectionSpec.createLocal("3", "Local Connection", localConfig);
@@ -232,14 +223,5 @@ class RealLocalFetcherTest {
 
     String uri = localFetcher.resolveSchemaRegistryUri("3");
     assertNull(uri); // No Schema Registry
-  }
-
-  @Test
-  void shouldReturnDefaultSchemaRegistryUriWhenSchemaRegistryUriIsNull() throws CreateConnectionException {
-    var localConfig = new ConnectionSpec.LocalConfig(null);
-    var connectionSpec = ConnectionSpec.createLocal("4", "Local Connection", localConfig);
-    manager.createConnectionState(connectionSpec);
-    String uri = localFetcher.resolveSchemaRegistryUri("4");
-    assertEquals("http://localhost:8081", uri);
   }
 }

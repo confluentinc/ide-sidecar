@@ -52,9 +52,10 @@ public class ClusterProxyRequestProcessor extends
       case KAFKA -> proxyHttpClient.send(context);
       case SCHEMA_REGISTRY ->
           switch (context.getConnectionState().getType()) {
-            // For CCloud connections, use Proxy HTTP client
+            // For CCloud connections, use the ProxyHttpClient so that we get access to
+            // user-provided HTTP settings, like custom SSL certs
             case CCLOUD -> proxyHttpClient.send(context);
-            // For all other connections, use SR client
+            // For all other connections, use the REST service of the cached SR client
             case DIRECT, LOCAL, PLATFORM -> processSchemaRegistry(context);
           };
     };

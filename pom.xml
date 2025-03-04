@@ -11,7 +11,7 @@
 
   <groupId>io.confluent</groupId>
   <artifactId>ide-sidecar</artifactId>
-  <version>0.152.0</version>
+  <version>0.165.0</version>
   <packaging>jar</packaging>
   <name>IDE Sidecar</name>
   <description>Sidecar used by Confluent for VS Code.</description>
@@ -26,7 +26,7 @@
   <properties>
     <!-- Always build file system layout for Docker images -->
     <docker.skip-build>false</docker.skip-build>
-    <!-- Never deploy to maven repository since make only builds CCloud Docker images -->
+    <!-- Never deploy to maven repository since make only builds Confluent Cloud Docker images -->
     <maven.deploy.skip>true</maven.deploy.skip>
     <compiler-plugin.version>3.12.1</compiler-plugin.version>
     <surefire-plugin.version>3.2.5</surefire-plugin.version>
@@ -230,6 +230,10 @@
       <artifactId>quarkus-confluent-registry-avro</artifactId>
     </dependency>
     <!-- END: Quarkus extensions for Kafka and SR clients -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-logging-json</artifactId>
+    </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-junit5</artifactId>

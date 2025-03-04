@@ -1,0 +1,6 @@
+{
+  "subject": "test-produce-value",
+  "version": 3,
+  "id": 100003,
+  "schema": "{\"type\":\"record\",\"name\":\"Order\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"orderId\",\"type\":\"string\"},{\"name\":\"customerId\",\"type\":\"string\"},{\"name\":\"orderDate\",\"type\":\"string\"},{\"name\":\"totalAmount\",\"type\":\"double\"},{\"name\":\"items\",\"type\":{\"type\":\"array\",\"items\":{\"type\":\"record\",\"name\":\"OrderItem\",\"fields\":[{\"name\":\"productId\",\"type\":\"string\"},{\"name\":\"quantity\",\"type\":\"int\"},{\"name\":\"price\",\"type\":\"double\"}]}}}]}"
+}

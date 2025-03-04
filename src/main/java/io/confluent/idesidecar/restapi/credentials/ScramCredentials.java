@@ -42,7 +42,7 @@ public record ScramCredentials(
 
   private static final int SCRAM_USERNAME_MAX_LEN = 64;
 
-  private static final int SCRAM_PASSWORD_MAX_LEN= 64;
+  private static final int SCRAM_PASSWORD_MAX_LEN = 1024;
 
   public enum HashAlgorithm {
     SCRAM_SHA_256("SCRAM-SHA-256"),

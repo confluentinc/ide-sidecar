@@ -16,13 +16,13 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
 @Schema(
     description = "A user-provided password that is always masked in responses",
     type = SchemaType.STRING,
-    maxLength = ApiSecret.MAX_LENGTH,
+    maxLength = Password.MAX_LENGTH,
     minLength = 1
 )
 @RegisterForReflection
 public class Password extends Redactable {
 
-  public static final int MAX_LENGTH = 64;
+  public static final int MAX_LENGTH = 1024;
 
   public Password(char[] raw) {
     super(raw);
