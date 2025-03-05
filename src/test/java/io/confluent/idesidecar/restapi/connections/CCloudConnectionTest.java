@@ -1,5 +1,6 @@
 package io.confluent.idesidecar.restapi.connections;
 
+import static io.confluent.idesidecar.restapi.connections.CCloudConnectionState.INITIAL_STATUS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -70,6 +71,7 @@ public class CCloudConnectionTest {
         false,
         true,
         true,
+        false,
         false
     );
     connectionState.refreshStatus()
@@ -98,6 +100,7 @@ public class CCloudConnectionTest {
         true,
         false,
         true,
+        false,
         false
     );
     connectionState.refreshStatus()
@@ -126,6 +129,7 @@ public class CCloudConnectionTest {
         true,
         true,
         false,
+        false,
         false
     );
     connectionState.refreshStatus()
@@ -147,6 +151,36 @@ public class CCloudConnectionTest {
   }
 
   @Test
+  void refreshStatusShouldReturnInitialStatusIfEndOfLifetimeIsReached() throws Throwable {
+    var testContext = new VertxTestContext();
+    var connectionState = spyCCloudConnectionState(
+        true,
+        true,
+        true,
+        true,
+        false,
+        true
+    );
+
+    connectionState.refreshStatus()
+        .onComplete(
+            testContext.succeeding(status ->
+                testContext.verify(() -> {
+                  assertEquals(
+                      INITIAL_STATUS.ccloud(),
+                      status.ccloud()
+                  );
+                  testContext.completeNow();
+                })));
+
+    assertTrue(testContext.awaitCompletion(AWAIT_COMPLETION_TIMEOUT_SEC, TimeUnit.SECONDS));
+
+    if (testContext.failed()) {
+      throw testContext.causeOfFailure();
+    }
+  }
+
+  @Test
   void refreshStatusShouldReturnValidTokenIfAuthenticationSucceeds() throws Throwable {
     var testContext = new VertxTestContext();
     var connectionState = spyCCloudConnectionState(
@@ -154,6 +188,7 @@ public class CCloudConnectionTest {
         true,
         true,
         true,
+        false,
         false
     );
     connectionState.refreshStatus()
@@ -182,6 +217,7 @@ public class CCloudConnectionTest {
         true,
         true,
         true,
+        false,
         false
     );
     connectionState.refreshStatus()
@@ -210,7 +246,8 @@ public class CCloudConnectionTest {
         true,
         true,
         true,
-        true
+        true,
+        false
     );
     connectionState.refreshStatus()
         .onComplete(
@@ -247,7 +284,8 @@ public class CCloudConnectionTest {
       boolean withRefreshToken,
       boolean withControlPlaneToken,
       boolean withDataPlaneToken,
-      boolean withNonTransientError
+      boolean withNonTransientError,
+      boolean withReachedEndOfLifetime
   ) throws NoSuchFieldException, IllegalAccessException {
 
     var connectionState = spy(CCloudConnectionState.class);
@@ -270,6 +308,9 @@ public class CCloudConnectionTest {
     }
     if (withNonTransientError) {
       when(authContext.hasNonTransientError()).thenReturn(true);
+    }
+    if (withReachedEndOfLifetime) {
+      when(authContext.hasReachedEndOfLifetime()).thenReturn(true);
     }
 
     // Inject mocked CCloudOAuthContext into connection state via reflection
