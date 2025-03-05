@@ -3,4 +3,4 @@
 # Enable auto-env through setting sdkman_auto_env=true in ~/.sdkman/etc/config
 # See https://sdkman.io/usage#config
 
-java=21.0.2-graalce
+java=23.0.2-graalce
