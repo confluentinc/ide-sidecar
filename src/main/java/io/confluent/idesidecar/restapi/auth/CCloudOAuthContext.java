@@ -309,22 +309,14 @@ public class CCloudOAuthContext implements AuthContext {
   public boolean shouldAttemptTokenRefresh() {
     readLock.lock();
     try {
-      final var now = Instant.now();
-      var validRefreshToken =
-          // Do not attempt the token refresh if getEndOfLifetime() is null, i.e., we have
-          // not yet authenticated successfully
-          getEndOfLifetime() != null
-              // Do not attempt the token refresh if the absolute lifetime of the refresh token
-              // has been reached, in which case the user must re-authenticate with CCloud
-              && now.compareTo(getEndOfLifetime()) < 0;
-
       // Perform token refresh only if auth context will expire before next run of this job
+      var now = Instant.now();
       var expiresAt = expiresAt();
       var nextExecution = now.plus(CCloudOAuthConfig.TOKEN_REFRESH_INTERVAL_SECONDS);
       var atLeastOneTokenWillExpireBeforeNextRun = expiresAt.isPresent()
           && expiresAt.get().compareTo(nextExecution) < 0;
 
-      return validRefreshToken
+      return !hasReachedEndOfLifetime()
           && !hasNonTransientError()
           && atLeastOneTokenWillExpireBeforeNextRun;
     } finally {
@@ -346,6 +338,17 @@ public class CCloudOAuthContext implements AuthContext {
 
   public Instant getEndOfLifetime() {
     return tokens.get().endOfLifetime;
+  }
+
+  /**
+   * Checks if the refresh token has reached the end of its absolute lifetime and requires a
+   * re-authentication with Confluent Cloud.
+   *
+   * @return true if the end of the absolute lifetime is reached, false otherwise
+   */
+  public boolean hasReachedEndOfLifetime() {
+    var endOfLifetime = getEndOfLifetime();
+    return endOfLifetime != null && Instant.now().compareTo(endOfLifetime) >= 0;
   }
 
   public UserDetails getUser() {

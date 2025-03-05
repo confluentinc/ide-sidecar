@@ -113,6 +113,13 @@ public class CCloudConnectionState extends ConnectionState {
               )
               .build()
       );
+    } else if (oauthContext.hasReachedEndOfLifetime()) {
+      return Future.succeededFuture(
+          ConnectionStatusBuilder
+              .builder()
+              .ccloud(INITIAL_STATUS.ccloud())
+              .build()
+      );
     } else {
       return oauthContext
           .checkAuthenticationStatus()

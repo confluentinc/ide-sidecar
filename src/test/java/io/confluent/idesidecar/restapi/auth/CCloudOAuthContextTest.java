@@ -354,6 +354,35 @@ class CCloudOAuthContextTest {
   }
 
   @Test
+  void hasReachedEndOfLifetimeShouldReturnTrueIfEndOfLifetimeIsReached() {
+    var authContext = Mockito.spy(CCloudOAuthContext.class);
+    var endOfLifetime = Instant.now().minusSeconds(1);
+
+    Mockito.when(authContext.getEndOfLifetime()).thenReturn(endOfLifetime);
+
+    assertTrue(authContext.hasReachedEndOfLifetime());
+  }
+
+  @Test
+  void hasReachedEndOfLifetimeShouldReturnFalseIfEndOfLifetimeIsNotReached() {
+    var authContext = Mockito.spy(CCloudOAuthContext.class);
+    var endOfLifetime = Instant.now().plusSeconds(60);
+
+    Mockito.when(authContext.getEndOfLifetime()).thenReturn(endOfLifetime);
+
+    assertFalse(authContext.hasReachedEndOfLifetime());
+  }
+
+  @Test
+  void hasReachedEndOfLifetimeShouldReturnFalseIfEndOfLifetimeIsNull() {
+    var authContext = Mockito.spy(CCloudOAuthContext.class);
+
+    Mockito.when(authContext.getEndOfLifetime()).thenReturn(null);
+
+    assertFalse(authContext.hasReachedEndOfLifetime());
+  }
+
+  @Test
   // TODO: Figure out why this consistently fails on Windows
   @DisabledIfSystemProperty(named = "os.name", matches = ".*Windows.*")
   void shouldAttemptTokenRefreshShouldReturnTrueForConnectionsEligibleForATokenRefreshAttempt() {
