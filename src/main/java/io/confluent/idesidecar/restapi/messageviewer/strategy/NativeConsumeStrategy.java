@@ -1,5 +1,6 @@
 package io.confluent.idesidecar.restapi.messageviewer.strategy;
 
+import io.confluent.idesidecar.restapi.exceptions.ProcessorFailedException;
 import io.confluent.idesidecar.restapi.messageviewer.KafkaConsumerFactory;
 import io.confluent.idesidecar.restapi.clients.SchemaRegistryClients;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequest;
@@ -7,11 +8,15 @@ import io.confluent.idesidecar.restapi.proxy.KafkaRestProxyContext;
 import io.confluent.idesidecar.restapi.messageviewer.RecordDeserializer;
 import io.confluent.idesidecar.restapi.messageviewer.SimpleConsumer;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
+import io.quarkus.logging.Log;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.ws.rs.core.Response.Status;
 import java.util.Optional;
+import java.util.regex.Pattern;
+import org.apache.kafka.common.KafkaException;
 
 /**
  * Handles consuming from a Kafka topic for the message viewer API, using the
@@ -30,6 +35,11 @@ public class NativeConsumeStrategy implements ConsumeStrategy {
 
   @Inject
   SchemaRegistryClients schemaRegistryClients;
+
+  static final Pattern SNAPPY_CONSUME_FAILURE_PATTERN = Pattern.compile(
+      "Received exception when fetching the next record from snappy-\\d+\\. "
+      + "If needed, please seek past the record to continue consumption\\."
+  );
 
   @Override
   public Future<KafkaRestProxyContext
@@ -67,6 +77,22 @@ public class NativeConsumeStrategy implements ConsumeStrategy {
       context.setResponse(new SimpleConsumeMultiPartitionResponse(
           context.getClusterId(), topic, consumedData)
       );
+    } catch (KafkaException e) {
+      // Return an error if we tried consuming a record that was compressed with snappy
+      // Otherwise, re-throw the KafkaException
+      if (SNAPPY_CONSUME_FAILURE_PATTERN.matcher(e.getMessage()).matches()) {
+        Log.errorf("Failed to consume records from topic %s due to snappy compression.", topic);
+        throw new ProcessorFailedException(
+            context.failf(
+                Status.INTERNAL_SERVER_ERROR.getStatusCode(),
+                "At the moment, we don't support consuming records that were compressed with snappy. "
+                + "Please visit https://github.com/confluentinc/ide-sidecar/issues/304 to learn "
+                + "more."
+            )
+        );
+      } else {
+        throw new KafkaException(e.getMessage(), e.getCause());
+      }
     }
     return context;
   }
