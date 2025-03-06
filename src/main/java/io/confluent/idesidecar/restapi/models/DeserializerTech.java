@@ -39,4 +39,8 @@ public enum DeserializerTech {
       case SchemaFormat.PROTOBUF -> PROTOBUF;
     };
   }
+
+  public boolean isSchemaless() {
+    return this == RAW || this == PARSED_JSON;
+  }
 }

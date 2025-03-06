@@ -69,8 +69,8 @@ public record SimpleConsumeMultiPartitionResponse(
       @JsonProperty("headers") List<PartitionConsumeRecordHeader> headers,
       @JsonProperty("key") JsonNode key,
       @JsonProperty("value") JsonNode value,
-      @JsonProperty(value = "key_schema", required = true) SchemaDetails keySchema,
-      @JsonProperty(value = "value_schema", required = true) SchemaDetails valueSchema,
+      @JsonProperty("key_schema") SchemaDetails keySchema,
+      @JsonProperty("value_schema") SchemaDetails valueSchema,
       @JsonProperty("key_decoding_error") String keyDecodingError,
       @JsonProperty("value_decoding_error") String valueDecodingError,
       @JsonProperty("exceeded_fields") ExceededFields exceededFields

@@ -170,7 +170,7 @@ public interface RecordsV3BaseSuite extends ITSuite {
           key.schemaFormat().name(),
           key.rawSchema()
       );
-      key.withSchemaId(keySchema.getId());
+      key = key.withSchemaId(keySchema.getId());
     } else {
       keySchema = null;
     }
@@ -183,7 +183,7 @@ public interface RecordsV3BaseSuite extends ITSuite {
           value.schemaFormat().name(),
           value.rawSchema()
       );
-      value.withSchemaId(valueSchema.getId());
+      value = value.withSchemaId(valueSchema.getId());
     } else {
       valueSchema = null;
     }
@@ -269,9 +269,12 @@ public interface RecordsV3BaseSuite extends ITSuite {
     assertSame(records.getFirst().key(), key.data());
     assertSame(records.getFirst().value(), value.data());
 
-    // If there was a schema, assert the subject is the same
-    assertEquals(records.getFirst().keySchema().schemaId(), key.schemaId());
-    assertEquals(records.getFirst().valueSchema().schemaId(), value.schemaId());
+    if (key.hasSchema()) {
+      assertEquals(key.schemaId(), records.getFirst().keySchema().schemaId());
+    }
+    if (value.hasSchema()) {
+      assertEquals(value.schemaId(), records.getFirst().valueSchema().schemaId());
+    }
 
     // Assert headers are the same
     assertEquals(headers, convertResponseHeaders(records.getFirst().headers()));

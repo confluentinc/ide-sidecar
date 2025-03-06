@@ -1010,9 +1010,6 @@ components:
           items:
             $ref: "#/components/schemas/PartitionConsumeRecord"
     PartitionConsumeRecord:
-      required:
-      - key_schema
-      - value_schema
       type: object
       properties:
         partition_id:
