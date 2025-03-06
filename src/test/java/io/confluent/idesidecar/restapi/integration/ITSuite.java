@@ -2,9 +2,9 @@ package io.confluent.idesidecar.restapi.integration;
 
 import io.confluent.idesidecar.restapi.messageviewer.SimpleConsumer;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
-import io.confluent.idesidecar.restapi.util.SidecarClient;
 import io.confluent.idesidecar.restapi.util.SidecarClientApi;
 import io.confluent.idesidecar.restapi.util.TestEnvironment;
+import java.util.Map;
 
 /**
  * An interface that defines the test methods for a suite of functional tests to be run against
@@ -53,6 +53,8 @@ public interface ITSuite extends SidecarClientApi {
    * @return the consumer, never null
    */
   SimpleConsumer simpleConsumer();
+
+  Map<String, Object> kafkaClientConfig();
 
   /**
    * Hook that allows the integration test to set up the
