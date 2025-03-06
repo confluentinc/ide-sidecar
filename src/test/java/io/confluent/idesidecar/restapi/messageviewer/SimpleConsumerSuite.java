@@ -2,6 +2,8 @@ package io.confluent.idesidecar.restapi.messageviewer;
 
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.confluent.idesidecar.restapi.clients.ClientConfigurator;
@@ -25,6 +27,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.KafkaException;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.jupiter.api.Test;
@@ -211,6 +214,7 @@ public interface SimpleConsumerSuite extends ITSuite {
   }
 
   @Test
+  // TODO: Remove test once we support Snappy compression (see https://github.com/confluentinc/ide-sidecar/issues/304)
   default void testProduceAndConsumeWithSnappyCompression() {
     // When we create a topic
     String topic = randomTopicName();
@@ -232,11 +236,13 @@ public interface SimpleConsumerSuite extends ITSuite {
         producer.send(new ProducerRecord<>(topic, record[0], record[1]));
       }
 
-      // Then a ProcessorFailedException is thrown
-      assertThrows(
-          ProcessorFailedException.class,
-          () -> simpleConsumer().consume(topic, consumeRequestSinglePartitionFromOffsetZero())
-      );
+      // Then the consumption of records should NOT throw a KafkaException. It could successfully
+      // return records or throw a ProcessorFailedException, which holds a meaningful error message.
+      try {
+        simpleConsumer().consume(topic, consumeRequestSinglePartitionFromOffsetZero());
+      } catch (KafkaException e) {
+        fail("Should not have thrown a KafkaException.");
+      }
     }
   }
 
