@@ -24,6 +24,7 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
+import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -217,6 +218,8 @@ public interface SimpleConsumerSuite extends ITSuite {
 
     var config = kafkaClientConfig();
     config.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, compressionType);
+    config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+    config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
     try(var producer = new KafkaProducer<String, String>(config)) {
       // And write records to Kafka
       var records = new String[][]{
