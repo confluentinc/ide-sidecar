@@ -16,14 +16,9 @@ public record SchemaDetails(
             throw new IllegalArgumentException("Deserializer tech must be specified");
         }
 
-        if (schemaId != null && deserializerTech.isSchemaless()) {
+        if (schemaId == null && !deserializerTech.isSchemaless()) {
             throw new IllegalArgumentException(
-                "Schema ID and deserializer tech "
-                    + "cannot be specified for RAW or JSON deserialization"
-            );
-        } else if (schemaId == null && !deserializerTech.isSchemaless()) {
-            throw new IllegalArgumentException(
-                "Schema ID must be specified for AVRO, JSON, or PROTOBUF deserialization"
+                "Schema ID must be specified for AVRO, JSONSCHEMA, or PROTOBUF deserialization"
             );
         }
     }
