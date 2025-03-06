@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
+import io.confluent.idesidecar.restapi.models.SchemaDetails;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import java.util.List;
 
@@ -59,6 +60,8 @@ public record SimpleConsumeMultiPartitionResponse(
   @JsonInclude(JsonInclude.Include.NON_NULL)
   @RegisterForReflection
   public record PartitionConsumeRecord(
+      // TODO: Do a pass and set required = true for those fields we know will
+      //       always be present.
       @JsonProperty("partition_id") int partitionId,
       @JsonProperty("offset") long offset,
       @JsonProperty("timestamp") long timestamp,
@@ -66,32 +69,12 @@ public record SimpleConsumeMultiPartitionResponse(
       @JsonProperty("headers") List<PartitionConsumeRecordHeader> headers,
       @JsonProperty("key") JsonNode key,
       @JsonProperty("value") JsonNode value,
+      @JsonProperty("key_schema") SchemaDetails keySchema,
+      @JsonProperty("value_schema") SchemaDetails valueSchema,
       @JsonProperty("key_decoding_error") String keyDecodingError,
       @JsonProperty("value_decoding_error") String valueDecodingError,
       @JsonProperty("exceeded_fields") ExceededFields exceededFields
   ) {
-    // Initialize key and value decoding errors to null by default
-    public PartitionConsumeRecord(
-        int partitionId,
-        long offset,
-        long timestamp,
-        TimestampType timestampType,
-        List<PartitionConsumeRecordHeader> headers,
-        JsonNode key,
-        JsonNode value,
-        ExceededFields exceededFields
-    ) {
-      this(
-          partitionId,
-          offset,
-          timestamp,
-          timestampType,
-          headers, key, value,
-          null,
-          null,
-          exceededFields == null ? new ExceededFields(false, false) : exceededFields
-      );
-    }
   }
 
   /**
