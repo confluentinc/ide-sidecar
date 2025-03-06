@@ -1,11 +1,13 @@
 package io.confluent.idesidecar.restapi.messageviewer;
 
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
+import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.confluent.idesidecar.restapi.clients.ClientConfigurator;
 import io.confluent.idesidecar.restapi.clients.KafkaProducerClients;
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
+import io.confluent.idesidecar.restapi.exceptions.ProcessorFailedException;
 import io.confluent.idesidecar.restapi.integration.ITSuite;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequest;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequestBuilder;
@@ -208,6 +210,36 @@ public interface SimpleConsumerSuite extends ITSuite {
     }
   }
 
+  @Test
+  default void testProduceAndConsumeWithSnappyCompression() {
+    // When we create a topic
+    String topic = randomTopicName();
+    createTopic(topic);
+
+    var config = kafkaClientConfig();
+    // And configure Snappy compression
+    config.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, "snappy");
+    config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+    config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+    try(var producer = new KafkaProducer<String, String>(config)) {
+      // And write records to Kafka
+      var records = new String[][]{
+          {"key1", "value1"},
+          {"key2", "value2"},
+          {"key3", "value3"}
+      };
+      for (var record : records) {
+        producer.send(new ProducerRecord<>(topic, record[0], record[1]));
+      }
+
+      // Then a ProcessorFailedException is thrown
+      assertThrows(
+          ProcessorFailedException.class,
+          () -> simpleConsumer().consume(topic, consumeRequestSinglePartitionFromOffsetZero())
+      );
+    }
+  }
+
   @ParameterizedTest
   // TODO: Add "snappy" once we support it (see https://github.com/confluentinc/ide-sidecar/issues/304)
   @ValueSource(strings = {"gzip", "lz4", "zstd"})
@@ -217,6 +249,7 @@ public interface SimpleConsumerSuite extends ITSuite {
     createTopic(topic);
 
     var config = kafkaClientConfig();
+    // And configure compression
     config.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, compressionType);
     config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
     config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
