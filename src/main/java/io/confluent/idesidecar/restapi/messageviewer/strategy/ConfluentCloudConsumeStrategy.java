@@ -226,6 +226,8 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
               decodedHeaders,
               keyData.value(),
               valueData.value(),
+              keyData.schema(),
+              valueData.schema(),
               keyData.errorMessage(),
               valueData.errorMessage(),
               record.exceededFields()
