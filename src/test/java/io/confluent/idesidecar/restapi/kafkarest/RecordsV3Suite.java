@@ -74,7 +74,7 @@ public interface RecordsV3Suite extends RecordsV3BaseSuite {
 
     assertTopicHasRecord(
         RecordsV3BaseSuite.schemalessData("foo"),
-        new RecordData(null, null, null, "value"),
+        new RecordData(null, null, null, null, null, "value"),
         topicName,
         headers
     );
@@ -155,7 +155,7 @@ public interface RecordsV3Suite extends RecordsV3BaseSuite {
     assertTopicHasRecord(
         RecordsV3BaseSuite.schemalessData("foo"),
         new RecordData(
-            SchemaFormat.PROTOBUF, SubjectNameStrategyEnum.TOPIC_NAME, rawSchema, valueData
+            SchemaFormat.PROTOBUF, SubjectNameStrategyEnum.TOPIC_NAME, rawSchema, null, null, valueData
         ),
         topicName
     );
@@ -216,7 +216,7 @@ public interface RecordsV3Suite extends RecordsV3BaseSuite {
     assertTopicHasRecord(
         RecordsV3BaseSuite.schemalessData("foo"),
         new RecordData(
-            SchemaFormat.PROTOBUF, SubjectNameStrategyEnum.TOPIC_NAME, rawSchema, valueData
+            SchemaFormat.PROTOBUF, SubjectNameStrategyEnum.TOPIC_NAME, rawSchema, null, null, valueData
         ),
         topicName
     );
