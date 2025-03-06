@@ -292,7 +292,9 @@ public class RecordDeserializerTest {
         0, 100L, System.currentTimeMillis(),
         SimpleConsumeMultiPartitionResponse.TimestampType.CREATE_TIME,
         Collections.emptyList(),
-        keyNode, valueNode, "Key decoding failed", "Value decoding failed",
+        keyNode, valueNode,
+        null, null,
+        "Key decoding failed", "Value decoding failed",
         new SimpleConsumeMultiPartitionResponse.ExceededFields(false, false)
     );
 

@@ -1045,6 +1045,10 @@
         "type" : "string",
         "example" : "2022-03-10"
       },
+      "DeserializerTech" : {
+        "enum" : [ "AVRO", "JSONSCHEMA", "PROTOBUF", "PARSED_JSON", "RAW" ],
+        "type" : "string"
+      },
       "Error" : {
         "description" : "Describes a particular error encountered while performing an operation.",
         "type" : "object",
@@ -1393,6 +1397,12 @@
           "value" : {
             "$ref" : "#/components/schemas/JsonNode"
           },
+          "key_schema" : {
+            "$ref" : "#/components/schemas/SchemaDetails"
+          },
+          "value_schema" : {
+            "$ref" : "#/components/schemas/SchemaDetails"
+          },
           "key_decoding_error" : {
             "type" : "string"
           },
@@ -1609,6 +1619,18 @@
             "items" : {
               "$ref" : "#/components/schemas/Action"
             }
+          }
+        }
+      },
+      "SchemaDetails" : {
+        "type" : "object",
+        "properties" : {
+          "schema_id" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "deserializer_tech" : {
+            "$ref" : "#/components/schemas/DeserializerTech"
           }
         }
       },
