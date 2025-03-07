@@ -11,6 +11,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.TextNode;
 import io.confluent.idesidecar.restapi.clients.SchemaErrors;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
+import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.RecordMetadata;
+import io.confluent.idesidecar.restapi.models.DataFormat;
 import io.confluent.idesidecar.restapi.proxy.KafkaRestProxyContext;
 import io.confluent.kafka.schemaregistry.avro.AvroSchema;
 import io.confluent.kafka.schemaregistry.avro.AvroSchemaProvider;
@@ -258,17 +260,18 @@ public class RecordDeserializerTest {
 
   @ParameterizedTest
   @ValueSource(booleans = {true, false})
-  void parseJsonNodeShouldReturnStringIfByteArrayDoesNotStartWithMagicByte(boolean isKey) {
+  void parseJsonNodeShouldReturnBase64StringIfByteArrayDoesNotStartWithMagicByte(boolean isKey) {
     var rawString = "Team DTX";
     var byteArray = rawString.getBytes(StandardCharsets.UTF_8);
+
     var resp = recordDeserializer.deserialize(byteArray, null, context, isKey);
-    assertEquals(new TextNode(rawString), resp.value());
-    assertNull(resp.errorMessage());
+
+    assertEquals("Team DTX", resp.value().asText());
   }
 
   @ParameterizedTest
   @ValueSource(booleans = {true, false})
-  void parseJsonNodeShouldReturnStringIfParsingByteArrayWithMagicByteFails(boolean isKey) {
+  void parseJsonNodeShouldReturnBase64EncodedStringIfParsingByteArrayWithMagicByteFails(boolean isKey) {
     // Build byte array with magic byte as prefix
     var rawString = "{\"Team\" : \"DTX\"}";
     var byteArray = rawString.getBytes(StandardCharsets.UTF_8);
@@ -276,10 +279,13 @@ public class RecordDeserializerTest {
     byteArrayWithMagicByte[0] = RecordDeserializer.MAGIC_BYTE;
     System.arraycopy(byteArray, 0, byteArrayWithMagicByte, 1, byteArray.length);
 
-    // Expect parsing to fail, should return byte array as string
-    var magicByteAsString = new String(new byte[]{RecordDeserializer.MAGIC_BYTE}, StandardCharsets.UTF_8);
+    // Expect parsing to fail, should return byte array as base64-encoded string
     var resp = recordDeserializer.deserialize(byteArrayWithMagicByte, null, context, isKey);
-    assertEquals(new TextNode(magicByteAsString + rawString), resp.value());
+
+    // The \u0000 is the magic byte
+    assertEquals("\u0000{\"Team\" : \"DTX\"}", resp.value().asText());
+    assertEquals(DataFormat.UTF8_STRING, resp.metadata().dataFormat());
+    assertNull(resp.metadata().schemaId());
     assertEquals("The value references a schema but we can't find the schema registry", resp.errorMessage());
   }
 
@@ -292,7 +298,9 @@ public class RecordDeserializerTest {
         0, 100L, System.currentTimeMillis(),
         SimpleConsumeMultiPartitionResponse.TimestampType.CREATE_TIME,
         Collections.emptyList(),
-        keyNode, valueNode, "Key decoding failed", "Value decoding failed",
+        keyNode, valueNode,
+        new RecordMetadata(null, null),
+        "Key decoding failed", "Value decoding failed",
         new SimpleConsumeMultiPartitionResponse.ExceededFields(false, false)
     );
 

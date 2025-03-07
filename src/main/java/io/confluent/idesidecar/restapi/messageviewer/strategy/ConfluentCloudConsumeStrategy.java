@@ -9,6 +9,7 @@ import io.confluent.idesidecar.restapi.clients.SchemaRegistryClients;
 import io.confluent.idesidecar.restapi.connections.CCloudConnectionState;
 import io.confluent.idesidecar.restapi.exceptions.ProcessorFailedException;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequest;
+import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.RecordMetadata;
 import io.confluent.idesidecar.restapi.proxy.KafkaRestProxyContext;
 import io.confluent.idesidecar.restapi.messageviewer.RecordDeserializer;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
@@ -226,6 +227,10 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
               decodedHeaders,
               keyData.value(),
               valueData.value(),
+              new RecordMetadata(
+                  keyData.metadata(),
+                  valueData.metadata()
+              ),
               keyData.errorMessage(),
               valueData.errorMessage(),
               record.exceededFields()
