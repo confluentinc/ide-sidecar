@@ -3,7 +3,9 @@ package io.confluent.idesidecar.restapi.kafkarest;
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.equalTo;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -15,8 +17,12 @@ import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequestData;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequestHeader;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequestBuilder;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
+import io.confluent.idesidecar.restapi.models.DataFormat;
+import io.confluent.idesidecar.restapi.models.KeyOrValueMetadata;
+import io.confluent.idesidecar.restapi.util.ByteArrayJsonUtil;
 import io.confluent.kafka.schemaregistry.client.rest.entities.Schema;
 import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
@@ -37,15 +43,17 @@ public interface RecordsV3BaseSuite extends ITSuite {
       SchemaFormat schemaFormat,
       SubjectNameStrategyEnum subjectNameStrategy,
       String rawSchema,
+      String subject,
+      Integer schemaId,
       Object data
   ) {
 
     public RecordData(SchemaFormat schemaFormat, String rawSchema, Object data) {
-      this(schemaFormat, null, rawSchema, data);
+      this(schemaFormat, null, rawSchema, null, null, data);
     }
 
     RecordData withSubjectNameStrategy(SubjectNameStrategyEnum subjectNameStrategy) {
-      return new RecordData(schemaFormat, subjectNameStrategy, rawSchema, data);
+      return new RecordData(schemaFormat, subjectNameStrategy, rawSchema, null, null, data);
     }
 
     @Override
@@ -56,6 +64,14 @@ public interface RecordsV3BaseSuite extends ITSuite {
 
     public boolean hasSchema() {
       return schemaFormat != null && rawSchema != null && subjectNameStrategy != null;
+    }
+
+    public RecordData withSubject(String subject) {
+      return new RecordData(schemaFormat, subjectNameStrategy, rawSchema, subject, schemaId, data);
+    }
+
+    public RecordData withSchemaId(Integer schemaId) {
+      return new RecordData(schemaFormat, subjectNameStrategy, rawSchema, subject, schemaId, data);
     }
   }
 
@@ -127,8 +143,15 @@ public interface RecordsV3BaseSuite extends ITSuite {
       schemalessData(123.45),
       schemalessData(true),
       schemalessData(List.of("hello", "world")),
-      schemalessData(Collections.singletonMap("hello", "world"))
+      schemalessData(Collections.singletonMap("hello", "world")),
+      schemalessData(randomBytes())
   );
+
+  private static byte[] randomBytes() {
+    byte[] bytes = new byte[100];
+    new SecureRandom().nextBytes(bytes);
+    return bytes;
+  }
 
   default String getSubjectName(
       String topicName,
@@ -151,31 +174,30 @@ public interface RecordsV3BaseSuite extends ITSuite {
     createTopic(topicName);
 
     Schema keySchema, valueSchema;
-    String keySubject, valueSubject;
 
     // Create key schema if not null
     if (key.hasSchema()) {
-      keySubject = getSubjectName(topicName, key.subjectNameStrategy(), true);
+      key = key.withSubject(getSubjectName(topicName, key.subjectNameStrategy(), true));
       keySchema = createSchema(
-          keySubject,
+          key.subject(),
           key.schemaFormat().name(),
           key.rawSchema()
       );
+      key = key.withSchemaId(keySchema.getId());
     } else {
-      keySubject = null;
       keySchema = null;
     }
 
     // Create value schema if not null
     if (value.hasSchema()) {
-      valueSubject = getSubjectName(topicName, value.subjectNameStrategy(), false);
+      value = value.withSubject(getSubjectName(topicName, value.subjectNameStrategy(), false));
       valueSchema = createSchema(
-          valueSubject,
+          value.subject(),
           value.schemaFormat().name(),
           value.rawSchema()
       );
+      value = value.withSchemaId(valueSchema.getId());
     } else {
-      valueSubject = null;
       valueSchema = null;
     }
 
@@ -188,7 +210,7 @@ public interface RecordsV3BaseSuite extends ITSuite {
                 .builder()
                 .schemaVersion(Optional.ofNullable(keySchema).map(Schema::getVersion).orElse(null))
                 .data(key.data())
-                .subject(keySubject)
+                .subject(key.subject())
                 .subjectNameStrategy(
                     Optional.ofNullable(key.subjectNameStrategy).map(Enum::toString).orElse(null)
                 )
@@ -199,7 +221,7 @@ public interface RecordsV3BaseSuite extends ITSuite {
                 .builder()
                 .schemaVersion(Optional.ofNullable(valueSchema).map(Schema::getVersion).orElse(null))
                 .data(value.data())
-                .subject(valueSubject)
+                .subject(value.subject())
                 .subjectNameStrategy(
                     Optional.ofNullable(value.subjectNameStrategy).map(Enum::toString).orElse(null)
                 )
@@ -257,11 +279,43 @@ public interface RecordsV3BaseSuite extends ITSuite {
 
     assertEquals(1, records.size());
 
-    assertSame(records.getFirst().key(), key.data());
-    assertSame(records.getFirst().value(), value.data());
+    assertKeyOrValue(
+        key,
+        records.getFirst().key(),
+        records.getFirst().metadata().keyMetadata());
+    assertKeyOrValue(
+        value,
+        records.getFirst().value(),
+        records.getFirst().metadata().valueMetadata()
+    );
 
     // Assert headers are the same
     assertEquals(headers, convertResponseHeaders(records.getFirst().headers()));
+  }
+
+  private void assertKeyOrValue(
+      RecordData expectedKeyOrValue,
+      JsonNode actualKeyOrValue,
+      KeyOrValueMetadata metadata
+  ) {
+    if (expectedKeyOrValue.hasSchema()) {
+      assertEquals(expectedKeyOrValue.schemaId(), metadata.schemaId());
+      assertSame(expectedKeyOrValue.data(), actualKeyOrValue);
+    } else if (expectedKeyOrValue.data() == null) {
+      assertNull(metadata);
+    } else if (expectedKeyOrValue.data() instanceof byte[]) {
+      assertNull(metadata.schemaId());
+      assertEquals(DataFormat.RAW_BYTES, metadata.dataFormat());
+
+      assertArrayEquals(
+          (byte[]) expectedKeyOrValue.data(),
+          ByteArrayJsonUtil.asBytes(actualKeyOrValue)
+      );
+    } else {
+      assertNull(metadata.schemaId());
+      assertEquals(DataFormat.JSON, metadata.dataFormat());
+      assertSame(expectedKeyOrValue.data(), actualKeyOrValue);
+    }
   }
 
   private static Set<ProduceRequestHeader> convertResponseHeaders(
@@ -279,7 +333,7 @@ public interface RecordsV3BaseSuite extends ITSuite {
         .collect(Collectors.toSet());
   }
 
-  default void assertSame(JsonNode actual, Object expected) {
+  default void assertSame(Object expected, JsonNode actual) {
     if (expected != null) {
       var parsedKey = OBJECT_MAPPER.convertValue(
           expected,
