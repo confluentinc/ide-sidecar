@@ -279,36 +279,36 @@ public interface RecordsV3BaseSuite extends ITSuite {
     assertEquals(1, records.size());
 
     if (key.hasSchema()) {
-      assertEquals(key.schemaId(), records.getFirst().keyMetadata().schemaId());
+      assertEquals(key.schemaId(), records.getFirst().metadata().keyMetadata().schemaId());
       assertSame(records.getFirst().key(), key.data());
     } else if (key.data() instanceof byte[]) {
-      assertNull(records.getFirst().keyMetadata().schemaId());
-      assertEquals(DataFormat.RAW_BYTES, records.getFirst().keyMetadata().dataFormat());
+      assertNull(records.getFirst().metadata().keyMetadata().schemaId());
+      assertEquals(DataFormat.RAW_BYTES, records.getFirst().metadata().keyMetadata().dataFormat());
 
       assertArrayEquals(
           (byte[]) key.data(),
           ByteArrayJsonUtil.asBytes(records.getFirst().key())
       );
     } else {
-      assertNull(records.getFirst().keyMetadata().schemaId());
-      assertEquals(DataFormat.JSON, records.getFirst().keyMetadata().dataFormat());
+      assertNull(records.getFirst().metadata().keyMetadata().schemaId());
+      assertEquals(DataFormat.JSON, records.getFirst().metadata().keyMetadata().dataFormat());
       assertSame(records.getFirst().key(), key.data());
     }
 
     if (value.hasSchema()) {
-      assertEquals(value.schemaId(), records.getFirst().valueMetadata().schemaId());
+      assertEquals(value.schemaId(), records.getFirst().metadata().valueMetadata().schemaId());
       assertSame(records.getFirst().value(), value.data());
     } else if (value.data() instanceof byte[]) {
-      assertNull(records.getFirst().valueMetadata().schemaId());
-      assertEquals(DataFormat.RAW_BYTES, records.getFirst().valueMetadata().dataFormat());
+      assertNull(records.getFirst().metadata().valueMetadata().schemaId());
+      assertEquals(DataFormat.RAW_BYTES, records.getFirst().metadata().valueMetadata().dataFormat());
 
       assertArrayEquals(
           (byte[]) value.data(),
           ByteArrayJsonUtil.asBytes(records.getFirst().value())
       );
     } else {
-      assertNull(records.getFirst().valueMetadata().schemaId());
-      assertEquals(DataFormat.JSON, records.getFirst().valueMetadata().dataFormat());
+      assertNull(records.getFirst().metadata().valueMetadata().schemaId());
+      assertEquals(DataFormat.JSON, records.getFirst().metadata().valueMetadata().dataFormat());
       assertSame(records.getFirst().value(), value.data());
     }
 

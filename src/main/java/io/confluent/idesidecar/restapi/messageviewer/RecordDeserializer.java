@@ -100,7 +100,7 @@ public class RecordDeserializer {
   public record DecodedResult(
       JsonNode value,
       String errorMessage,
-      KeyOrValueMetadata schema
+      KeyOrValueMetadata metadata
   ) implements RecordDeserializerDecodedResultBuilder.With {
 
     /**
@@ -298,7 +298,7 @@ public class RecordDeserializer {
       return RecordDeserializerDecodedResultBuilder
           .builder()
           .value(deserializedJsonNode)
-          .schema(new KeyOrValueMetadata(schemaId, DataFormat.fromSchemaFormat(schemaType)))
+          .metadata(new KeyOrValueMetadata(schemaId, DataFormat.fromSchemaFormat(schemaType)))
           .build();
     } catch (Exception e) {
       var exc = unwrap(e);

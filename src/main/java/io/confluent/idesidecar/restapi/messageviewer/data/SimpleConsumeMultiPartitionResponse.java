@@ -42,6 +42,14 @@ public record SimpleConsumeMultiPartitionResponse(
       @JsonProperty("value") boolean value
   ) {}
 
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  @RegisterForReflection
+  public record RecordMetadata(
+      @JsonProperty("key_metadata") KeyOrValueMetadata keyMetadata,
+      @JsonProperty("value_metadata") KeyOrValueMetadata valueMetadata
+  ) {
+  }
+
   /**
    * Represents a single record consumed from a partition.
    *
@@ -69,8 +77,7 @@ public record SimpleConsumeMultiPartitionResponse(
       @JsonProperty("headers") List<PartitionConsumeRecordHeader> headers,
       @JsonProperty("key") JsonNode key,
       @JsonProperty("value") JsonNode value,
-      @JsonProperty("key_metadata") KeyOrValueMetadata keyMetadata,
-      @JsonProperty("value_metadata") KeyOrValueMetadata valueMetadata,
+      @JsonProperty("metadata") RecordMetadata metadata,
       @JsonProperty("key_decoding_error") String keyDecodingError,
       @JsonProperty("value_decoding_error") String valueDecodingError,
       @JsonProperty("exceeded_fields") ExceededFields exceededFields

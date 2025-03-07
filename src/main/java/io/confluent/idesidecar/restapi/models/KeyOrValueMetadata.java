@@ -13,7 +13,7 @@ public record KeyOrValueMetadata(
 
     public KeyOrValueMetadata {
         if (dataFormat == null) {
-            throw new IllegalArgumentException("Deserializer tech must be specified");
+            throw new IllegalArgumentException("Data format must be specified");
         }
 
         if (schemaId == null && !dataFormat.isSchemaless()) {

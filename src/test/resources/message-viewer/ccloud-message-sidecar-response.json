@@ -15,11 +15,13 @@
             "name": "Ravi",
             "id": 18
           },
-          "key_metadata": {
-            "data_format": "JSON"
-          },
-          "value_metadata": {
-            "data_format": "JSON"
+          "metadata": {
+            "key_metadata": {
+              "data_format": "JSON"
+            },
+            "value_metadata": {
+              "data_format": "JSON"
+            }
           },
           "timestamp_type": "CREATE_TIME",
           "headers": [],
@@ -43,11 +45,13 @@
             "name": "another-name",
             "id": 20
           },
-          "key_metadata": {
-            "data_format": "JSON"
-          },
-          "value_metadata": {
-            "data_format": "JSON"
+          "metadata": {
+            "key_metadata": {
+              "data_format": "JSON"
+            },
+            "value_metadata": {
+              "data_format": "JSON"
+            }
           },
           "timestamp_type": "CREATE_TIME",
           "headers": [],

@@ -739,7 +739,7 @@ components:
             $ref: "#/components/schemas/Connection"
     DataFormat:
       description: |
-        The deserializer technology used to interpret the bytes of a Kafka message.
+        The data format that represents the bytes of a Kafka message.
 
         * AVRO: Apache Avro schema format.
         * JSONSCHEMA: JSON schema format.
@@ -1055,10 +1055,8 @@ components:
           $ref: "#/components/schemas/JsonNode"
         value:
           $ref: "#/components/schemas/JsonNode"
-        key_metadata:
-          $ref: "#/components/schemas/KeyOrValueMetadata"
-        value_metadata:
-          $ref: "#/components/schemas/KeyOrValueMetadata"
+        metadata:
+          $ref: "#/components/schemas/RecordMetadata"
         key_decoding_error:
           type: string
         value_decoding_error:
@@ -1215,6 +1213,13 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Action"
+    RecordMetadata:
+      type: object
+      properties:
+        key_metadata:
+          $ref: "#/components/schemas/KeyOrValueMetadata"
+        value_metadata:
+          $ref: "#/components/schemas/KeyOrValueMetadata"
     SchemaRegistryConfig:
       description: Schema Registry configuration.
       required:

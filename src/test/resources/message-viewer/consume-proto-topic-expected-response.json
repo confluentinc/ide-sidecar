@@ -37,12 +37,14 @@
               "zipcode": "37964"
             }
           },
-          "key_metadata": {
-            "data_format": "JSON"
-          },
-          "value_metadata": {
-            "schema_id": 100003,
-            "data_format": "PROTOBUF"
+          "metadata": {
+            "key_metadata": {
+              "data_format": "JSON"
+            },
+            "value_metadata": {
+              "schema_id": 100003,
+              "data_format": "PROTOBUF"
+            }
           }
         }
       ]

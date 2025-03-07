@@ -65,11 +65,11 @@ public interface SimpleConsumerSuite extends ITSuite {
       assertEquals(values.get(i), record.value().get("value").asText(), "Value should match");
 
       // Value schema details should match
-      assertEquals(valueSchema.getId(), record.valueMetadata().schemaId());
-      assertEquals(DataFormat.AVRO, record.valueMetadata().dataFormat());
+      assertEquals(valueSchema.getId(), record.metadata().valueMetadata().schemaId());
+      assertEquals(DataFormat.AVRO, record.metadata().valueMetadata().dataFormat());
 
-      assertNull(record.keyMetadata().schemaId());
-      assertEquals(DataFormat.JSON, record.keyMetadata().dataFormat());
+      assertNull(record.metadata().keyMetadata().schemaId());
+      assertEquals(DataFormat.JSON, record.metadata().keyMetadata().dataFormat());
     }
   }
 
@@ -137,11 +137,11 @@ public interface SimpleConsumerSuite extends ITSuite {
       assertEquals(originalMessage.getIsActive(), record.value().get("is_active").asBoolean(), "IsActive should match");
 
       // Value schema details should match
-      assertEquals(valueSchema.getId(), record.valueMetadata().schemaId());
-      assertEquals(DataFormat.PROTOBUF, record.valueMetadata().dataFormat());
+      assertEquals(valueSchema.getId(), record.metadata().valueMetadata().schemaId());
+      assertEquals(DataFormat.PROTOBUF, record.metadata().valueMetadata().dataFormat());
 
-      assertNull(record.keyMetadata().schemaId());
-      assertEquals(DataFormat.JSON, record.keyMetadata().dataFormat());
+      assertNull(record.metadata().keyMetadata().schemaId());
+      assertEquals(DataFormat.JSON, record.metadata().keyMetadata().dataFormat());
     }
   }
 
@@ -180,11 +180,11 @@ public interface SimpleConsumerSuite extends ITSuite {
       assertEquals(sentJson.name(), record.value().get("name").asText(), "Name should match");
       assertEquals(sentJson.email(), record.value().get("email").asText(), "Email should match");
 
-      assertNull(record.keyMetadata().schemaId());
-      assertEquals(DataFormat.JSON, record.keyMetadata().dataFormat());
+      assertNull(record.metadata().keyMetadata().schemaId());
+      assertEquals(DataFormat.JSON, record.metadata().keyMetadata().dataFormat());
 
-      assertNull(record.valueMetadata().schemaId());
-      assertEquals(DataFormat.JSON, record.valueMetadata().dataFormat());
+      assertNull(record.metadata().valueMetadata().schemaId());
+      assertEquals(DataFormat.JSON, record.metadata().valueMetadata().dataFormat());
     }
   }
 
@@ -217,11 +217,11 @@ public interface SimpleConsumerSuite extends ITSuite {
       assertEquals(records[i][0], key, "Key should match");
       assertEquals(records[i][1], value, "Value should match");
 
-      assertNull(record.keyMetadata().schemaId());
-      assertEquals(DataFormat.JSON, record.keyMetadata().dataFormat());
+      assertNull(record.metadata().keyMetadata().schemaId());
+      assertEquals(DataFormat.JSON, record.metadata().keyMetadata().dataFormat());
 
-      assertNull(record.valueMetadata().schemaId());
-      assertEquals(DataFormat.JSON, record.valueMetadata().dataFormat());
+      assertNull(record.metadata().valueMetadata().schemaId());
+      assertEquals(DataFormat.JSON, record.metadata().valueMetadata().dataFormat());
     }
   }
 

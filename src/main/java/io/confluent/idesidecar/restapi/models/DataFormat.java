@@ -5,8 +5,8 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 @Schema(
     description = """
-    The deserializer technology used to interpret the bytes of a Kafka message.
-    
+    The data format that represents the bytes of a Kafka message.
+
     * AVRO: Apache Avro schema format.
     * JSONSCHEMA: JSON schema format.
     * PROTOBUF: Google Protocol Buffers schema format.

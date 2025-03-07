@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.TextNode;
 import io.confluent.idesidecar.restapi.clients.SchemaErrors;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
+import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.RecordMetadata;
 import io.confluent.idesidecar.restapi.models.DataFormat;
 import io.confluent.idesidecar.restapi.proxy.KafkaRestProxyContext;
 import io.confluent.kafka.schemaregistry.avro.AvroSchema;
@@ -270,8 +271,8 @@ public class RecordDeserializerTest {
     var expected = objectMapper.createObjectNode();
     expected.put("__raw__", Base64.getEncoder().encodeToString(byteArray));
     assertEquals(expected, resp.value());
-    assertEquals(DataFormat.RAW_BYTES, resp.schema().dataFormat());
-    assertNull(resp.schema().schemaId());
+    assertEquals(DataFormat.RAW_BYTES, resp.metadata().dataFormat());
+    assertNull(resp.metadata().schemaId());
     assertNull(resp.errorMessage());
 
     // Next, base64 decoding the value should give us the original bytes
@@ -299,8 +300,8 @@ public class RecordDeserializerTest {
     var expected = objectMapper.createObjectNode();
     expected.put("__raw__", Base64.getEncoder().encodeToString(byteArrayWithMagicByte));
     assertEquals(expected, resp.value());
-    assertEquals(DataFormat.RAW_BYTES, resp.schema().dataFormat());
-    assertNull(resp.schema().schemaId());
+    assertEquals(DataFormat.RAW_BYTES, resp.metadata().dataFormat());
+    assertNull(resp.metadata().schemaId());
     assertEquals("The value references a schema but we can't find the schema registry", resp.errorMessage());
 
     // Next, base64 decoding the value should give us the original bytes
@@ -318,7 +319,7 @@ public class RecordDeserializerTest {
         SimpleConsumeMultiPartitionResponse.TimestampType.CREATE_TIME,
         Collections.emptyList(),
         keyNode, valueNode,
-        null, null,
+        new RecordMetadata(null, null),
         "Key decoding failed", "Value decoding failed",
         new SimpleConsumeMultiPartitionResponse.ExceededFields(false, false)
     );

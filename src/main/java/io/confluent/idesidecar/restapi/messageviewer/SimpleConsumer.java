@@ -7,6 +7,7 @@ import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPart
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeData;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeRecord;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeRecordHeader;
+import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.RecordMetadata;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.TimestampType;
 import io.confluent.idesidecar.restapi.proxy.KafkaRestProxyContext;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
@@ -332,8 +333,10 @@ public class SimpleConsumer {
         headers,
         keyResult.map(DecodedResult::value).orElse(null),
         valueResult.map(DecodedResult::value).orElse(null),
-        keyResult.map(DecodedResult::schema).orElse(null),
-        valueResult.map(DecodedResult::schema).orElse(null),
+        new RecordMetadata(
+            keyResult.map(DecodedResult::metadata).orElse(null),
+            valueResult.map(DecodedResult::metadata).orElse(null)
+        ),
         keyResult.map(DecodedResult::errorMessage).orElse(null),
         valueResult.map(DecodedResult::errorMessage).orElse(null),
         new ExceededFields(keyExceeded, valueExceeded)
