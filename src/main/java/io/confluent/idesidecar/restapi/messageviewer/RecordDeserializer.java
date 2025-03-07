@@ -17,7 +17,12 @@ import com.google.protobuf.util.JsonFormat;
 import graphql.VisibleForTesting;
 import io.confluent.idesidecar.restapi.clients.SchemaErrors;
 import io.confluent.idesidecar.restapi.kafkarest.SchemaFormat;
+import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequest;
+import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
+import io.confluent.idesidecar.restapi.models.DeserializerTech;
+import io.confluent.idesidecar.restapi.models.SchemaDetails;
 import io.confluent.idesidecar.restapi.proxy.KafkaRestProxyContext;
+import io.confluent.idesidecar.restapi.util.ByteArrayJsonUtil;
 import io.confluent.idesidecar.restapi.util.ConfigUtil;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
@@ -39,7 +44,6 @@ import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.net.UnknownServiceException;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -93,8 +97,21 @@ public class RecordDeserializer {
   }
 
   @RecordBuilder
-  public record DecodedResult(JsonNode value, String errorMessage)
-      implements RecordDeserializerDecodedResultBuilder.With {
+  public record DecodedResult(
+      JsonNode value,
+      String errorMessage,
+      SchemaDetails schema
+  ) implements RecordDeserializerDecodedResultBuilder.With {
+
+    /**
+     * Creates a new DecodedResult with the given value and error message, for when there are no
+     * schema details.
+     * @param value The decoded value
+     * @param errorMessage The error message, null if there is no error
+     */
+    public DecodedResult(JsonNode value, String errorMessage) {
+      this(value, errorMessage, null);
+    }
   }
 
 
@@ -231,7 +248,8 @@ public class RecordDeserializer {
   public DecodedResult deserialize(
       byte[] bytes,
       SchemaRegistryClient schemaRegistryClient,
-      KafkaRestProxyContext context,
+      KafkaRestProxyContext
+          <SimpleConsumeMultiPartitionRequest, SimpleConsumeMultiPartitionResponse> context,
       boolean isKey,
       Optional<Function<byte[], byte[]>> encoderOnFailure
   ) {
@@ -251,7 +269,7 @@ public class RecordDeserializer {
       return new DecodedResult(
           // If the schema fetch failed, we can't decode the data, so we just return the raw bytes.
           // We apply the encoderOnFailure function to the bytes before returning them.
-          onFailure(encoderOnFailure, bytes),
+          onFailure(encoderOnFailure, bytes).data,
           error.message()
       );
     }
@@ -272,14 +290,15 @@ public class RecordDeserializer {
 
       var schemaType = SchemaFormat.fromSchemaType(parsedSchema.schemaType());
       var topicName = context.getTopicName();
-      var deserializedData = switch (schemaType) {
+      var deserializedJsonNode = switch (schemaType) {
         case AVRO -> handleAvro(bytes, topicName, schemaRegistryClient, isKey);
         case PROTOBUF -> handleProtobuf(bytes, topicName, schemaRegistryClient, isKey);
         case JSON -> handleJson(bytes, topicName, schemaRegistryClient, isKey);
       };
       return RecordDeserializerDecodedResultBuilder
           .builder()
-          .value(deserializedData)
+          .value(deserializedJsonNode)
+          .schema(new SchemaDetails(schemaId, DeserializerTech.fromSchemaFormat(schemaType)))
           .build();
     } catch (Exception e) {
       var exc = unwrap(e);
@@ -289,7 +308,12 @@ public class RecordDeserializer {
         //            bombarding the Schema Registry servers with requests for every
         //            consumed message when we encounter a schema fetch error.
         cacheSchemaFetchError(exc, schemaId, context);
-        return new DecodedResult(onFailure(encoderOnFailure, bytes), e.getMessage());
+        var wrappedJson = onFailure(encoderOnFailure, bytes);
+        return new DecodedResult(
+            wrappedJson.data(),
+            e.getMessage(),
+            new SchemaDetails(schemaId, wrappedJson.deserializerTech())
+        );
       } else if (
           exc instanceof SerializationException
               || exc instanceof IOException
@@ -298,7 +322,12 @@ public class RecordDeserializer {
         // but rather a deserialization error, scoped to the specific message.
         Log.errorf(e, "Failed to deserialize record. " +
             "Returning raw encoded base64 data instead.");
-        return new DecodedResult(onFailure(encoderOnFailure, bytes), e.getMessage());
+        var wrappedJson = onFailure(encoderOnFailure, bytes);
+        return new DecodedResult(
+            wrappedJson.data(),
+            e.getMessage(),
+            new SchemaDetails(schemaId, wrappedJson.deserializerTech())
+        );
       }
       // If we reach this point, we have an unexpected exception, so we rethrow it.
       throw new RuntimeException("Failed to deserialize record", e);
@@ -342,14 +371,16 @@ public class RecordDeserializer {
   public DecodedResult deserialize(
       byte[] bytes,
       SchemaRegistryClient schemaRegistryClient,
-      KafkaRestProxyContext context,
+      KafkaRestProxyContext
+          <SimpleConsumeMultiPartitionRequest, SimpleConsumeMultiPartitionResponse> context,
       boolean isKey
   ) {
     return deserialize(bytes, schemaRegistryClient, context, isKey, Optional.empty());
   }
 
   private void cacheSchemaFetchError(
-      Throwable e, int schemaId, KafkaRestProxyContext context
+      Throwable e, int schemaId, KafkaRestProxyContext
+          <SimpleConsumeMultiPartitionRequest, SimpleConsumeMultiPartitionResponse> context
   ) {
     var retryTime = Instant.now().plus(CACHE_FAILED_SCHEMA_ID_FETCH_DURATION);
     var timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
@@ -389,24 +420,44 @@ public class RecordDeserializer {
   ) {
     // If the byte array is null or empty, we return a NullNode or an empty string, respectively.
     if (bytes == null) {
-      return Optional.of(new DecodedResult(NullNode.getInstance(), null));
+      return Optional.of(new DecodedResult(
+          NullNode.getInstance(),
+          null,
+          new SchemaDetails(null, DeserializerTech.PARSED_JSON)
+      ));
     }
     if (bytes.length == 0) {
-      return Optional.of(new DecodedResult(new TextNode(""), null));
+      return Optional.of(new DecodedResult(
+          new TextNode(""),
+          null,
+          new SchemaDetails(null, DeserializerTech.PARSED_JSON)
+      ));
     }
 
     // If the first byte is not the magic byte, we try to parse the data as a JSON object
     // or fall back to a string if parsing fails. Simple enough.
     if (bytes[0] != MAGIC_BYTE) {
-      return Optional.of(new DecodedResult(safeReadTree(bytes), null));
+      var wrappedJson = safeRead(bytes);
+      return Optional.of(
+          new DecodedResult(
+              wrappedJson.data(),
+              null,
+              new SchemaDetails(null, wrappedJson.deserializerTech())
+          )
+      );
     }
 
     // If the first byte is the magic byte, but we weren't provided a schema registry client,
     // we can't decode the data, so we just return the raw bytes.
     if (schemaRegistryClient == null) {
+      var wrappedJson = safeRead(bytes);
       return Optional.of(new DecodedResult(
-          safeReadTree(bytes),
-          "The value references a schema but we can't find the schema registry"
+          wrappedJson.data(),
+          "The value references a schema but we can't find the schema registry",
+          new SchemaDetails(
+              null,
+              wrappedJson.deserializerTech()
+          )
       ));
     }
 
@@ -414,23 +465,32 @@ public class RecordDeserializer {
     return Optional.empty();
   }
 
+  record WrappedJson(
+      JsonNode data,
+      DeserializerTech deserializerTech
+  ) {
+  }
+
   /**
    * Try to read the byte array as a valid JSON value (object, array, string, number, boolean),
-   * falling back to a string if it fails.
+   * or encode it as a base64 string if it's not valid JSON (which means it's arbitrary bytes).
    * @param bytes The byte array to read
    * @return      A JsonNode representing the byte array as a JSON object, or a TextNode
    */
-  private static JsonNode safeReadTree(byte[] bytes) {
+  private static WrappedJson safeRead(byte[] bytes) {
     try {
-      return OBJECT_MAPPER.readTree(bytes);
+      return new WrappedJson(
+          OBJECT_MAPPER.readTree(bytes),
+          DeserializerTech.PARSED_JSON
+      );
     } catch (IOException e) {
-      return TextNode.valueOf(new String(bytes, StandardCharsets.UTF_8));
+      return new WrappedJson(ByteArrayJsonUtil.asJsonNode(bytes), DeserializerTech.RAW);
     }
   }
 
-  private static JsonNode onFailure(
+  private static WrappedJson onFailure(
       Optional<Function<byte[], byte[]>> encoderOnFailure, byte[] bytes
   ) {
-    return safeReadTree(encoderOnFailure.orElse(Function.identity()).apply(bytes));
+    return safeRead(encoderOnFailure.orElse(Function.identity()).apply(bytes));
   }
 }
