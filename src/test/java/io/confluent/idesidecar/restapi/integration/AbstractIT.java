@@ -79,7 +79,8 @@ public abstract class AbstractIT extends SidecarClient implements ITSuite {
       ConnectionSpec spec,
       KafkaCluster kafkaCluster,
       SchemaRegistry srCluster,
-      SimpleConsumer consumer
+      SimpleConsumer consumer,
+      Map<String, Object> kafkaClientConfig
   ) {
     void useBy(SidecarClient client) {
       client.useConnection(spec.id());
@@ -114,6 +115,18 @@ public abstract class AbstractIT extends SidecarClient implements ITSuite {
   @Override
   public SimpleConsumer simpleConsumer() {
     return current.consumer();
+  }
+
+
+  /**
+   * Get the Kafka client configuration for the current connection. The configuration can be used
+   * to instantiate a new Kafka consumer or producer client.
+   *
+   * @return the Kafka client configuration properties
+   */
+  @Override
+  public Map<String, Object> kafkaClientConfig() {
+    return current.kafkaClientConfig();
   }
 
   /**
@@ -364,7 +377,20 @@ public abstract class AbstractIT extends SidecarClient implements ITSuite {
       var simpleConsumer = createSimpleConsumer(connection);
 
       Log.debugf("End: Setting up %s connection", connectionSpec.type());
-      return new ScopedConnection(spec, kafkaCluster, srCluster, simpleConsumer);
+      return new ScopedConnection(
+          spec,
+          kafkaCluster,
+          srCluster,
+          simpleConsumer,
+          ClientConfigurator.getKafkaClientConfig(
+              connection,
+              kafkaCluster.bootstrapServers(),
+              srCluster != null ? srCluster.uri() : null,
+              false,
+              null,
+              Map.of()
+          )
+      );
     });
     current.useBy(this);
   }
