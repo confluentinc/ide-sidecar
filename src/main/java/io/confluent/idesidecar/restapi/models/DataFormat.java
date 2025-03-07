@@ -10,7 +10,7 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
     * AVRO: Apache Avro schema format.
     * JSONSCHEMA: JSON schema format.
     * PROTOBUF: Google Protocol Buffers schema format.
-    * PARSED_JSON:
+    * JSON:
         Bytes parsed as JSON.
         The bytes did not contain a magic byte specifying a schema id, and the raw bytes
         were successfully parsed into a JSON value.
@@ -22,17 +22,17 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
         (meaning the schema id was present in the magic bytes, but our classes could not interpret the rest of the bytes.)
     """
 )
-public enum DeserializerTech {
+public enum DataFormat {
   AVRO,
   JSONSCHEMA,
   PROTOBUF,
-  PARSED_JSON,
+  JSON,
   RAW_BYTES;
 
   /**
-   * Get the DeserializerTech for the given schema format.
+   * Get the {@link DataFormat} for the given schema format.
    */
-  public static DeserializerTech fromSchemaFormat(SchemaFormat format) {
+  public static DataFormat fromSchemaFormat(SchemaFormat format) {
     return switch (format) {
       case SchemaFormat.AVRO -> AVRO;
       case SchemaFormat.JSON -> JSONSCHEMA;
@@ -41,6 +41,6 @@ public enum DeserializerTech {
   }
 
   public boolean isSchemaless() {
-    return this == RAW_BYTES || this == PARSED_JSON;
+    return this == RAW_BYTES || this == JSON;
   }
 }

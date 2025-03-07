@@ -19,8 +19,8 @@ import io.confluent.idesidecar.restapi.clients.SchemaErrors;
 import io.confluent.idesidecar.restapi.kafkarest.SchemaFormat;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequest;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
-import io.confluent.idesidecar.restapi.models.DeserializerTech;
-import io.confluent.idesidecar.restapi.models.SchemaDetails;
+import io.confluent.idesidecar.restapi.models.DataFormat;
+import io.confluent.idesidecar.restapi.models.KeyOrValueMetadata;
 import io.confluent.idesidecar.restapi.proxy.KafkaRestProxyContext;
 import io.confluent.idesidecar.restapi.util.ByteArrayJsonUtil;
 import io.confluent.idesidecar.restapi.util.ConfigUtil;
@@ -100,7 +100,7 @@ public class RecordDeserializer {
   public record DecodedResult(
       JsonNode value,
       String errorMessage,
-      SchemaDetails schema
+      KeyOrValueMetadata schema
   ) implements RecordDeserializerDecodedResultBuilder.With {
 
     /**
@@ -298,7 +298,7 @@ public class RecordDeserializer {
       return RecordDeserializerDecodedResultBuilder
           .builder()
           .value(deserializedJsonNode)
-          .schema(new SchemaDetails(schemaId, DeserializerTech.fromSchemaFormat(schemaType)))
+          .schema(new KeyOrValueMetadata(schemaId, DataFormat.fromSchemaFormat(schemaType)))
           .build();
     } catch (Exception e) {
       var exc = unwrap(e);
@@ -312,7 +312,7 @@ public class RecordDeserializer {
         return new DecodedResult(
             wrappedJson.data(),
             e.getMessage(),
-            new SchemaDetails(schemaId, wrappedJson.deserializerTech())
+            new KeyOrValueMetadata(schemaId, wrappedJson.dataFormat())
         );
       } else if (
           exc instanceof SerializationException
@@ -326,7 +326,7 @@ public class RecordDeserializer {
         return new DecodedResult(
             wrappedJson.data(),
             e.getMessage(),
-            new SchemaDetails(schemaId, wrappedJson.deserializerTech())
+            new KeyOrValueMetadata(schemaId, wrappedJson.dataFormat())
         );
       }
       // If we reach this point, we have an unexpected exception, so we rethrow it.
@@ -423,26 +423,26 @@ public class RecordDeserializer {
       return Optional.of(new DecodedResult(
           NullNode.getInstance(),
           null,
-          new SchemaDetails(null, DeserializerTech.PARSED_JSON)
+          null
       ));
     }
     if (bytes.length == 0) {
       return Optional.of(new DecodedResult(
           new TextNode(""),
           null,
-          new SchemaDetails(null, DeserializerTech.PARSED_JSON)
+          null
       ));
     }
 
     // If the first byte is not the magic byte, we try to parse the data as a JSON object
-    // or fall back to a string if parsing fails. Simple enough.
+    // or fall back to returning the raw bytes if parsing fails. Simple enough.
     if (bytes[0] != MAGIC_BYTE) {
       var wrappedJson = safeRead(bytes);
       return Optional.of(
           new DecodedResult(
               wrappedJson.data(),
               null,
-              new SchemaDetails(null, wrappedJson.deserializerTech())
+              new KeyOrValueMetadata(null, wrappedJson.dataFormat())
           )
       );
     }
@@ -454,9 +454,9 @@ public class RecordDeserializer {
       return Optional.of(new DecodedResult(
           wrappedJson.data(),
           "The value references a schema but we can't find the schema registry",
-          new SchemaDetails(
+          new KeyOrValueMetadata(
               null,
-              wrappedJson.deserializerTech()
+              wrappedJson.dataFormat()
           )
       ));
     }
@@ -467,7 +467,7 @@ public class RecordDeserializer {
 
   record WrappedJson(
       JsonNode data,
-      DeserializerTech deserializerTech
+      DataFormat dataFormat
   ) {
   }
 
@@ -481,10 +481,10 @@ public class RecordDeserializer {
     try {
       return new WrappedJson(
           OBJECT_MAPPER.readTree(bytes),
-          DeserializerTech.PARSED_JSON
+          DataFormat.JSON
       );
     } catch (IOException e) {
-      return new WrappedJson(ByteArrayJsonUtil.asJsonNode(bytes), DeserializerTech.RAW_BYTES);
+      return new WrappedJson(ByteArrayJsonUtil.asJsonNode(bytes), DataFormat.RAW_BYTES);
     }
   }
 

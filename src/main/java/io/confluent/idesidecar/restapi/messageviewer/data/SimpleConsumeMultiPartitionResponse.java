@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
-import io.confluent.idesidecar.restapi.models.SchemaDetails;
+import io.confluent.idesidecar.restapi.models.KeyOrValueMetadata;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import java.util.List;
 
@@ -69,8 +69,8 @@ public record SimpleConsumeMultiPartitionResponse(
       @JsonProperty("headers") List<PartitionConsumeRecordHeader> headers,
       @JsonProperty("key") JsonNode key,
       @JsonProperty("value") JsonNode value,
-      @JsonProperty("key_schema") SchemaDetails keySchema,
-      @JsonProperty("value_schema") SchemaDetails valueSchema,
+      @JsonProperty("key_metadata") KeyOrValueMetadata keyMetadata,
+      @JsonProperty("value_metadata") KeyOrValueMetadata valueMetadata,
       @JsonProperty("key_decoding_error") String keyDecodingError,
       @JsonProperty("value_decoding_error") String valueDecodingError,
       @JsonProperty("exceeded_fields") ExceededFields exceededFields

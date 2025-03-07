@@ -17,14 +17,13 @@ import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequestData;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequestHeader;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequestBuilder;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
-import io.confluent.idesidecar.restapi.models.DeserializerTech;
+import io.confluent.idesidecar.restapi.models.DataFormat;
 import io.confluent.idesidecar.restapi.util.ByteArrayJsonUtil;
 import io.confluent.kafka.schemaregistry.client.rest.entities.Schema;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -280,36 +279,36 @@ public interface RecordsV3BaseSuite extends ITSuite {
     assertEquals(1, records.size());
 
     if (key.hasSchema()) {
-      assertEquals(key.schemaId(), records.getFirst().keySchema().schemaId());
+      assertEquals(key.schemaId(), records.getFirst().keyMetadata().schemaId());
       assertSame(records.getFirst().key(), key.data());
     } else if (key.data() instanceof byte[]) {
-      assertNull(records.getFirst().keySchema().schemaId());
-      assertEquals(DeserializerTech.RAW_BYTES, records.getFirst().keySchema().deserializerTech());
+      assertNull(records.getFirst().keyMetadata().schemaId());
+      assertEquals(DataFormat.RAW_BYTES, records.getFirst().keyMetadata().dataFormat());
 
       assertArrayEquals(
           (byte[]) key.data(),
           ByteArrayJsonUtil.asBytes(records.getFirst().key())
       );
     } else {
-      assertNull(records.getFirst().keySchema().schemaId());
-      assertEquals(DeserializerTech.PARSED_JSON, records.getFirst().keySchema().deserializerTech());
+      assertNull(records.getFirst().keyMetadata().schemaId());
+      assertEquals(DataFormat.JSON, records.getFirst().keyMetadata().dataFormat());
       assertSame(records.getFirst().key(), key.data());
     }
 
     if (value.hasSchema()) {
-      assertEquals(value.schemaId(), records.getFirst().valueSchema().schemaId());
+      assertEquals(value.schemaId(), records.getFirst().valueMetadata().schemaId());
       assertSame(records.getFirst().value(), value.data());
     } else if (value.data() instanceof byte[]) {
-      assertNull(records.getFirst().valueSchema().schemaId());
-      assertEquals(DeserializerTech.RAW_BYTES, records.getFirst().valueSchema().deserializerTech());
+      assertNull(records.getFirst().valueMetadata().schemaId());
+      assertEquals(DataFormat.RAW_BYTES, records.getFirst().valueMetadata().dataFormat());
 
       assertArrayEquals(
           (byte[]) value.data(),
           ByteArrayJsonUtil.asBytes(records.getFirst().value())
       );
     } else {
-      assertNull(records.getFirst().valueSchema().schemaId());
-      assertEquals(DeserializerTech.PARSED_JSON, records.getFirst().valueSchema().deserializerTech());
+      assertNull(records.getFirst().valueMetadata().schemaId());
+      assertEquals(DataFormat.JSON, records.getFirst().valueMetadata().dataFormat());
       assertSame(records.getFirst().value(), value.data());
     }
 

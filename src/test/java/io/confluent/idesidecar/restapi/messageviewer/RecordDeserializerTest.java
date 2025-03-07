@@ -11,7 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.TextNode;
 import io.confluent.idesidecar.restapi.clients.SchemaErrors;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
-import io.confluent.idesidecar.restapi.models.DeserializerTech;
+import io.confluent.idesidecar.restapi.models.DataFormat;
 import io.confluent.idesidecar.restapi.proxy.KafkaRestProxyContext;
 import io.confluent.kafka.schemaregistry.avro.AvroSchema;
 import io.confluent.kafka.schemaregistry.avro.AvroSchemaProvider;
@@ -270,7 +270,7 @@ public class RecordDeserializerTest {
     var expected = objectMapper.createObjectNode();
     expected.put("__raw__", Base64.getEncoder().encodeToString(byteArray));
     assertEquals(expected, resp.value());
-    assertEquals(DeserializerTech.RAW_BYTES, resp.schema().deserializerTech());
+    assertEquals(DataFormat.RAW_BYTES, resp.schema().dataFormat());
     assertNull(resp.schema().schemaId());
     assertNull(resp.errorMessage());
 
@@ -299,7 +299,7 @@ public class RecordDeserializerTest {
     var expected = objectMapper.createObjectNode();
     expected.put("__raw__", Base64.getEncoder().encodeToString(byteArrayWithMagicByte));
     assertEquals(expected, resp.value());
-    assertEquals(DeserializerTech.RAW_BYTES, resp.schema().deserializerTech());
+    assertEquals(DataFormat.RAW_BYTES, resp.schema().dataFormat());
     assertNull(resp.schema().schemaId());
     assertEquals("The value references a schema but we can't find the schema registry", resp.errorMessage());
 

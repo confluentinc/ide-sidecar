@@ -26,8 +26,8 @@
             }
           ],
           "key": 522116,
-          "key_schema": {
-            "deserializer_tech":"PARSED_JSON"
+          "key_metadata": {
+            "data_format":"JSON"
           },
           "value": {
             "ordertime": 1498829451646,
@@ -40,9 +40,9 @@
               "zipcode": 39532
             }
           },
-          "value_schema": {
+          "value_metadata": {
             "schema_id": 100002,
-            "deserializer_tech": "AVRO"
+            "data_format": "AVRO"
           }
         },
         {
@@ -65,8 +65,8 @@
             }
           ],
           "key": 522131,
-          "key_schema": {
-            "deserializer_tech": "PARSED_JSON"
+          "key_metadata": {
+            "data_format": "JSON"
           },
           "value": {
             "ordertime": 1512323498915,
@@ -79,9 +79,9 @@
               "zipcode": 60476
             }
           },
-          "value_schema": {
+          "value_metadata": {
             "schema_id": 100002,
-            "deserializer_tech": "AVRO"
+            "data_format": "AVRO"
           }
         }
       ]

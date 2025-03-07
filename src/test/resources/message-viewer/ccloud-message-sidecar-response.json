@@ -15,11 +15,11 @@
             "name": "Ravi",
             "id": 18
           },
-          "key_schema": {
-            "deserializer_tech": "PARSED_JSON"
+          "key_metadata": {
+            "data_format": "JSON"
           },
-          "value_schema": {
-            "deserializer_tech": "PARSED_JSON"
+          "value_metadata": {
+            "data_format": "JSON"
           },
           "timestamp_type": "CREATE_TIME",
           "headers": [],
@@ -43,11 +43,11 @@
             "name": "another-name",
             "id": 20
           },
-          "key_schema": {
-            "deserializer_tech": "PARSED_JSON"
+          "key_metadata": {
+            "data_format": "JSON"
           },
-          "value_schema": {
-            "deserializer_tech": "PARSED_JSON"
+          "value_metadata": {
+            "data_format": "JSON"
           },
           "timestamp_type": "CREATE_TIME",
           "headers": [],

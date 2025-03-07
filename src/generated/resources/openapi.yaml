@@ -737,18 +737,14 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Connection"
-    Date:
-      format: date
-      type: string
-      example: 2022-03-10
-    DeserializerTech:
+    DataFormat:
       description: |
         The deserializer technology used to interpret the bytes of a Kafka message.
 
         * AVRO: Apache Avro schema format.
         * JSONSCHEMA: JSON schema format.
         * PROTOBUF: Google Protocol Buffers schema format.
-        * PARSED_JSON:
+        * JSON:
             Bytes parsed as JSON.
             The bytes did not contain a magic byte specifying a schema id, and the raw bytes
             were successfully parsed into a JSON value.
@@ -762,9 +758,13 @@ components:
       - AVRO
       - JSONSCHEMA
       - PROTOBUF
-      - PARSED_JSON
+      - JSON
       - RAW_BYTES
       type: string
+    Date:
+      format: date
+      type: string
+      example: 2022-03-10
     Error:
       description: Describes a particular error encountered while performing an operation.
       type: object
@@ -926,6 +926,14 @@ components:
           type: object
           allOf:
           - $ref: "#/components/schemas/AuthErrors"
+    KeyOrValueMetadata:
+      type: object
+      properties:
+        schema_id:
+          format: int32
+          type: integer
+        data_format:
+          $ref: "#/components/schemas/DataFormat"
     KeyStore:
       required:
       - path
@@ -1047,10 +1055,10 @@ components:
           $ref: "#/components/schemas/JsonNode"
         value:
           $ref: "#/components/schemas/JsonNode"
-        key_schema:
-          $ref: "#/components/schemas/SchemaDetails"
-        value_schema:
-          $ref: "#/components/schemas/SchemaDetails"
+        key_metadata:
+          $ref: "#/components/schemas/KeyOrValueMetadata"
+        value_metadata:
+          $ref: "#/components/schemas/KeyOrValueMetadata"
         key_decoding_error:
           type: string
         value_decoding_error:
@@ -1207,14 +1215,6 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Action"
-    SchemaDetails:
-      type: object
-      properties:
-        schema_id:
-          format: int32
-          type: integer
-        deserializer_tech:
-          $ref: "#/components/schemas/DeserializerTech"
     SchemaRegistryConfig:
       description: Schema Registry configuration.
       required:
@@ -1450,8 +1450,6 @@ components:
     HealthCheck:
       type: object
       properties:
-        name:
-          type: string
         data:
           type: object
           nullable: true
@@ -1459,4 +1457,6 @@ components:
           enum:
           - UP
           - DOWN
+          type: string
+        name:
           type: string

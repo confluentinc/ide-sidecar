@@ -9,7 +9,7 @@ import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPart
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequestBuilder;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeData;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeRecord;
-import io.confluent.idesidecar.restapi.models.DeserializerTech;
+import io.confluent.idesidecar.restapi.models.DataFormat;
 import io.confluent.idesidecar.restapi.proto.Message.MyMessage;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -65,11 +65,11 @@ public interface SimpleConsumerSuite extends ITSuite {
       assertEquals(values.get(i), record.value().get("value").asText(), "Value should match");
 
       // Value schema details should match
-      assertEquals(valueSchema.getId(), record.valueSchema().schemaId());
-      assertEquals(DeserializerTech.AVRO, record.valueSchema().deserializerTech());
+      assertEquals(valueSchema.getId(), record.valueMetadata().schemaId());
+      assertEquals(DataFormat.AVRO, record.valueMetadata().dataFormat());
 
-      assertNull(record.keySchema().schemaId());
-      assertEquals(DeserializerTech.PARSED_JSON, record.keySchema().deserializerTech());
+      assertNull(record.keyMetadata().schemaId());
+      assertEquals(DataFormat.JSON, record.keyMetadata().dataFormat());
     }
   }
 
@@ -137,11 +137,11 @@ public interface SimpleConsumerSuite extends ITSuite {
       assertEquals(originalMessage.getIsActive(), record.value().get("is_active").asBoolean(), "IsActive should match");
 
       // Value schema details should match
-      assertEquals(valueSchema.getId(), record.valueSchema().schemaId());
-      assertEquals(DeserializerTech.PROTOBUF, record.valueSchema().deserializerTech());
+      assertEquals(valueSchema.getId(), record.valueMetadata().schemaId());
+      assertEquals(DataFormat.PROTOBUF, record.valueMetadata().dataFormat());
 
-      assertNull(record.keySchema().schemaId());
-      assertEquals(DeserializerTech.PARSED_JSON, record.keySchema().deserializerTech());
+      assertNull(record.keyMetadata().schemaId());
+      assertEquals(DataFormat.JSON, record.keyMetadata().dataFormat());
     }
   }
 
@@ -180,11 +180,11 @@ public interface SimpleConsumerSuite extends ITSuite {
       assertEquals(sentJson.name(), record.value().get("name").asText(), "Name should match");
       assertEquals(sentJson.email(), record.value().get("email").asText(), "Email should match");
 
-      assertNull(record.keySchema().schemaId());
-      assertEquals(DeserializerTech.PARSED_JSON, record.keySchema().deserializerTech());
+      assertNull(record.keyMetadata().schemaId());
+      assertEquals(DataFormat.JSON, record.keyMetadata().dataFormat());
 
-      assertNull(record.valueSchema().schemaId());
-      assertEquals(DeserializerTech.PARSED_JSON, record.valueSchema().deserializerTech());
+      assertNull(record.valueMetadata().schemaId());
+      assertEquals(DataFormat.JSON, record.valueMetadata().dataFormat());
     }
   }
 
@@ -217,11 +217,11 @@ public interface SimpleConsumerSuite extends ITSuite {
       assertEquals(records[i][0], key, "Key should match");
       assertEquals(records[i][1], value, "Value should match");
 
-      assertNull(record.keySchema().schemaId());
-      assertEquals(DeserializerTech.PARSED_JSON, record.keySchema().deserializerTech());
+      assertNull(record.keyMetadata().schemaId());
+      assertEquals(DataFormat.JSON, record.keyMetadata().dataFormat());
 
-      assertNull(record.valueSchema().schemaId());
-      assertEquals(DeserializerTech.PARSED_JSON, record.valueSchema().deserializerTech());
+      assertNull(record.valueMetadata().schemaId());
+      assertEquals(DataFormat.JSON, record.valueMetadata().dataFormat());
     }
   }
 
