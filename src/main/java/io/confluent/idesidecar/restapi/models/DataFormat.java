@@ -14,6 +14,8 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
         Bytes parsed as JSON.
         The bytes did not contain a magic byte specifying a schema id, and the raw bytes
         were successfully parsed into a JSON value.
+    * UTF8_STRING:
+        Bytes parsed as a UTF-8 string (meaning the bytes were not parsed as valid JSON).
     * RAW_BYTES:
         Raw bytes. These are the scenarios where it would be used:
         - Arbitrary bytes that are NOT written/read using an implementation of Kafka serializer/deserializer.
@@ -27,6 +29,7 @@ public enum DataFormat {
   JSONSCHEMA,
   PROTOBUF,
   JSON,
+  UTF8_STRING,
   RAW_BYTES;
 
   /**
@@ -41,6 +44,6 @@ public enum DataFormat {
   }
 
   public boolean isSchemaless() {
-    return this == RAW_BYTES || this == JSON;
+    return this == RAW_BYTES || this == JSON || this == UTF8_STRING;
   }
 }

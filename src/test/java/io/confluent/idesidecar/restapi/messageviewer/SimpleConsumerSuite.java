@@ -1,16 +1,10 @@
 package io.confluent.idesidecar.restapi.messageviewer;
 
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
-import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.fail;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
-import io.confluent.idesidecar.restapi.clients.ClientConfigurator;
-import io.confluent.idesidecar.restapi.clients.KafkaProducerClients;
-import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
-import io.confluent.idesidecar.restapi.exceptions.ProcessorFailedException;
 import io.confluent.idesidecar.restapi.integration.ITSuite;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequest;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequestBuilder;
@@ -23,13 +17,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.KafkaException;
-import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -311,8 +302,8 @@ public interface SimpleConsumerSuite extends ITSuite {
         String key = record.key().asText();
         String value = record.value().asText();
 
-        assertEquals(DataFormat.JSON, record.metadata().keyMetadata().dataFormat());
-        assertEquals(DataFormat.JSON, record.metadata().valueMetadata().dataFormat());
+        assertEquals(DataFormat.UTF8_STRING, record.metadata().keyMetadata().dataFormat());
+        assertEquals(DataFormat.UTF8_STRING, record.metadata().valueMetadata().dataFormat());
 
         assertEquals(records[i][0], key, "Key should match");
         assertEquals(records[i][1], value, "Value should match");

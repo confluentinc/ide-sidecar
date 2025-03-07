@@ -504,7 +504,7 @@ public class RecordDeserializer {
     try {
       return new WrappedJson(
           TextNode.valueOf(ByteArrayJsonUtil.asUTF8String(bytes)),
-          DataFormat.JSON
+          DataFormat.UTF8_STRING
       );
     } catch (CharacterCodingException ex) {
       // The bytes are not valid JSON or UTF-8, so we encode them as a base64 string.
