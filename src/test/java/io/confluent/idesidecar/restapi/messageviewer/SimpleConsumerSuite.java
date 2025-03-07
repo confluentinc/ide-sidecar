@@ -1,9 +1,16 @@
 package io.confluent.idesidecar.restapi.messageviewer;
 
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
+import io.confluent.idesidecar.restapi.clients.ClientConfigurator;
+import io.confluent.idesidecar.restapi.clients.KafkaProducerClients;
+import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
+import io.confluent.idesidecar.restapi.exceptions.ProcessorFailedException;
 import io.confluent.idesidecar.restapi.integration.ITSuite;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequest;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequestBuilder;
@@ -16,7 +23,17 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.KafkaException;
+import org.apache.kafka.common.serialization.ByteArrayDeserializer;
+import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public interface SimpleConsumerSuite extends ITSuite {
 
@@ -222,6 +239,81 @@ public interface SimpleConsumerSuite extends ITSuite {
 
       assertNull(record.metadata().valueMetadata().schemaId());
       assertEquals(DataFormat.JSON, record.metadata().valueMetadata().dataFormat());
+    }
+  }
+
+  @Test
+  // TODO: Remove test once we support Snappy compression (see https://github.com/confluentinc/ide-sidecar/issues/304)
+  default void testProduceAndConsumeWithSnappyCompression() {
+    // When we create a topic
+    String topic = randomTopicName();
+    createTopic(topic);
+
+    var config = kafkaClientConfig();
+    // And configure Snappy compression
+    config.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, "snappy");
+    config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+    config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+    try(var producer = new KafkaProducer<String, String>(config)) {
+      // And write records to Kafka
+      var records = new String[][]{
+          {"key1", "value1"},
+          {"key2", "value2"},
+          {"key3", "value3"}
+      };
+      for (var record : records) {
+        producer.send(new ProducerRecord<>(topic, record[0], record[1]));
+      }
+
+      // Then the consumption of records should NOT throw a KafkaException. It could successfully
+      // return records or throw a ProcessorFailedException, which holds a meaningful error message.
+      try {
+        simpleConsumer().consume(topic, consumeRequestSinglePartitionFromOffsetZero());
+      } catch (KafkaException e) {
+        fail("Should not have thrown a KafkaException.");
+      }
+    }
+  }
+
+  @ParameterizedTest
+  // TODO: Add "snappy" once we support it (see https://github.com/confluentinc/ide-sidecar/issues/304)
+  @ValueSource(strings = {"gzip", "lz4", "zstd"})
+  default void testProduceAndConsumeWithCompression(String compressionType) {
+    // When we create a topic
+    String topic = randomTopicName();
+    createTopic(topic);
+
+    var config = kafkaClientConfig();
+    // And configure compression
+    config.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, compressionType);
+    config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+    config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+    try(var producer = new KafkaProducer<String, String>(config)) {
+      // And write records to Kafka
+      var records = new String[][]{
+          {"key1", "value1"},
+          {"key2", "value2"},
+          {"key3", "value3"}
+      };
+      for (var record : records) {
+        producer.send(new ProducerRecord<>(topic, record[0], record[1]));
+      }
+
+      // Then we can consume the same records
+      var response = simpleConsumer().consume(topic, consumeRequestSinglePartitionFromOffsetZero());
+
+      assertEquals(1, response.size(), "Should have data for 1 partition");
+      PartitionConsumeData partitionData = response.getFirst();
+      assertEquals(3, partitionData.records().size(), "Should have 3 records");
+
+      for (int i = 0; i < 3; i++) {
+        PartitionConsumeRecord record = partitionData.records().get(i);
+        String key = record.key().asText();
+        String value = record.value().asText();
+
+        assertEquals(records[i][0], key, "Key should match");
+        assertEquals(records[i][1], value, "Value should match");
+      }
     }
   }
 
