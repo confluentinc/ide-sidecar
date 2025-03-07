@@ -484,7 +484,7 @@ public class RecordDeserializer {
           DeserializerTech.PARSED_JSON
       );
     } catch (IOException e) {
-      return new WrappedJson(ByteArrayJsonUtil.asJsonNode(bytes), DeserializerTech.RAW);
+      return new WrappedJson(ByteArrayJsonUtil.asJsonNode(bytes), DeserializerTech.RAW_BYTES);
     }
   }
 

@@ -752,7 +752,7 @@ components:
             Bytes parsed as JSON.
             The bytes did not contain a magic byte specifying a schema id, and the raw bytes
             were successfully parsed into a JSON value.
-        * RAW:
+        * RAW_BYTES:
             Raw bytes. These are the scenarios where it would be used:
             - Arbitrary bytes that are NOT written/read using an implementation of Kafka serializer/deserializer.
             And further, we tried to but could not interpret these bytes as a JSON value.
@@ -763,7 +763,7 @@ components:
       - JSONSCHEMA
       - PROTOBUF
       - PARSED_JSON
-      - RAW
+      - RAW_BYTES
       type: string
     Error:
       description: Describes a particular error encountered while performing an operation.

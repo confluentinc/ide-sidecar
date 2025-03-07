@@ -283,7 +283,7 @@ public interface RecordsV3BaseSuite extends ITSuite {
       assertSame(records.getFirst().key(), key.data());
     } else if (key.data() instanceof byte[]) {
       assertNull(records.getFirst().keySchema().schemaId());
-      assertEquals(DeserializerTech.RAW, records.getFirst().keySchema().deserializerTech());
+      assertEquals(DeserializerTech.RAW_BYTES, records.getFirst().keySchema().deserializerTech());
 
       assertArrayEquals(
           (byte[]) key.data(),
@@ -300,7 +300,7 @@ public interface RecordsV3BaseSuite extends ITSuite {
       assertSame(records.getFirst().value(), value.data());
     } else if (value.data() instanceof byte[]) {
       assertNull(records.getFirst().valueSchema().schemaId());
-      assertEquals(DeserializerTech.RAW, records.getFirst().valueSchema().deserializerTech());
+      assertEquals(DeserializerTech.RAW_BYTES, records.getFirst().valueSchema().deserializerTech());
 
       assertArrayEquals(
           (byte[]) value.data(),

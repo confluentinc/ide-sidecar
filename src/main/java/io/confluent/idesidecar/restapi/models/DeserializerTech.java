@@ -14,7 +14,7 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
         Bytes parsed as JSON.
         The bytes did not contain a magic byte specifying a schema id, and the raw bytes
         were successfully parsed into a JSON value.
-    * RAW:
+    * RAW_BYTES:
         Raw bytes. These are the scenarios where it would be used:
         - Arbitrary bytes that are NOT written/read using an implementation of Kafka serializer/deserializer.
         And further, we tried to but could not interpret these bytes as a JSON value.
@@ -27,7 +27,7 @@ public enum DeserializerTech {
   JSONSCHEMA,
   PROTOBUF,
   PARSED_JSON,
-  RAW;
+  RAW_BYTES;
 
   /**
    * Get the DeserializerTech for the given schema format.
@@ -41,6 +41,6 @@ public enum DeserializerTech {
   }
 
   public boolean isSchemaless() {
-    return this == RAW || this == PARSED_JSON;
+    return this == RAW_BYTES || this == PARSED_JSON;
   }
 }

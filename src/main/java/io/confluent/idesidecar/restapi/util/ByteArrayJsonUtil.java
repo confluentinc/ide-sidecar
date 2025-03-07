@@ -9,7 +9,7 @@ import java.util.Base64;
  * Modeled after how Confluent Cloud Kafka REST API encodes byte arrays in JSON using
  * a single field named "__raw__" with a base64-encoded value.
  */
-public class ByteArrayJsonUtil {
+public final class ByteArrayJsonUtil {
   public static final String RAW_FIELD = "__raw__";
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
