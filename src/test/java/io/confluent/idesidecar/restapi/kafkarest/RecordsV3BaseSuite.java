@@ -3,7 +3,9 @@ package io.confluent.idesidecar.restapi.kafkarest;
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.equalTo;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -15,10 +17,13 @@ import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequestData;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequestHeader;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequestBuilder;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
+import io.confluent.idesidecar.restapi.models.DeserializerTech;
 import io.confluent.kafka.schemaregistry.client.rest.entities.Schema;
 import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -137,8 +142,15 @@ public interface RecordsV3BaseSuite extends ITSuite {
       schemalessData(123.45),
       schemalessData(true),
       schemalessData(List.of("hello", "world")),
-      schemalessData(Collections.singletonMap("hello", "world"))
+      schemalessData(Collections.singletonMap("hello", "world")),
+      schemalessData(randomBytes())
   );
+
+  private static byte[] randomBytes() {
+    byte[] bytes = new byte[100];
+    new SecureRandom().nextBytes(bytes);
+    return bytes;
+  }
 
   default String getSubjectName(
       String topicName,
@@ -266,14 +278,38 @@ public interface RecordsV3BaseSuite extends ITSuite {
 
     assertEquals(1, records.size());
 
-    assertSame(records.getFirst().key(), key.data());
-    assertSame(records.getFirst().value(), value.data());
-
     if (key.hasSchema()) {
       assertEquals(key.schemaId(), records.getFirst().keySchema().schemaId());
+      assertSame(records.getFirst().key(), key.data());
+    } else if (key.data() instanceof byte[]) {
+      assertNull(records.getFirst().keySchema().schemaId());
+      assertEquals(DeserializerTech.RAW, records.getFirst().keySchema().deserializerTech());
+
+      assertArrayEquals(
+          (byte[]) key.data(),
+          Base64.getDecoder().decode(records.getFirst().key().get("__raw__").asText())
+      );
+    } else {
+      assertNull(records.getFirst().keySchema().schemaId());
+      assertEquals(DeserializerTech.PARSED_JSON, records.getFirst().keySchema().deserializerTech());
+      assertSame(records.getFirst().key(), key.data());
     }
+
     if (value.hasSchema()) {
       assertEquals(value.schemaId(), records.getFirst().valueSchema().schemaId());
+      assertSame(records.getFirst().value(), value.data());
+    } else if (value.data() instanceof byte[]) {
+      assertNull(records.getFirst().valueSchema().schemaId());
+      assertEquals(DeserializerTech.RAW, records.getFirst().valueSchema().deserializerTech());
+
+      assertArrayEquals(
+          (byte[]) value.data(),
+          Base64.getDecoder().decode(records.getFirst().value().get("__raw__").asText())
+      );
+    } else {
+      assertNull(records.getFirst().valueSchema().schemaId());
+      assertEquals(DeserializerTech.PARSED_JSON, records.getFirst().valueSchema().deserializerTech());
+      assertSame(records.getFirst().value(), value.data());
     }
 
     // Assert headers are the same
