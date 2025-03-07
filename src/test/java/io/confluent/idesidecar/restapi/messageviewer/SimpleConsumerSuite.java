@@ -311,6 +311,9 @@ public interface SimpleConsumerSuite extends ITSuite {
         String key = record.key().asText();
         String value = record.value().asText();
 
+        assertEquals(DataFormat.JSON, record.metadata().keyMetadata().dataFormat());
+        assertEquals(DataFormat.JSON, record.metadata().valueMetadata().dataFormat());
+
         assertEquals(records[i][0], key, "Key should match");
         assertEquals(records[i][1], value, "Value should match");
       }
