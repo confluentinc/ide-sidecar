@@ -264,23 +264,9 @@ public class RecordDeserializerTest {
     var rawString = "Team DTX";
     var byteArray = rawString.getBytes(StandardCharsets.UTF_8);
 
-    // If these bytes were deserialized
     var resp = recordDeserializer.deserialize(byteArray, null, context, isKey);
 
-    // We should get back {"__raw__": "<base64-encoded-string>"}
-    var expected = objectMapper.createObjectNode();
-    expected.put("__raw__", Base64.getEncoder().encodeToString(byteArray));
-    assertEquals(expected, resp.value());
-    assertEquals(DataFormat.RAW_BYTES, resp.metadata().dataFormat());
-    assertNull(resp.metadata().schemaId());
-    assertNull(resp.errorMessage());
-
-    // Next, base64 decoding the value should give us the original bytes
-    var decoded = Base64.getDecoder().decode(resp.value().get("__raw__").asText());
-    assertArrayEquals(byteArray, decoded);
-
-    // Interpreting as UTF-8 string should give us the original string
-    assertEquals(rawString, new String(decoded, StandardCharsets.UTF_8));
+    assertEquals("Team DTX", resp.value().asText());
   }
 
   @ParameterizedTest
@@ -296,17 +282,11 @@ public class RecordDeserializerTest {
     // Expect parsing to fail, should return byte array as base64-encoded string
     var resp = recordDeserializer.deserialize(byteArrayWithMagicByte, null, context, isKey);
 
-    // We should get back {"__raw__": "<base64-encoded-string>"}
-    var expected = objectMapper.createObjectNode();
-    expected.put("__raw__", Base64.getEncoder().encodeToString(byteArrayWithMagicByte));
-    assertEquals(expected, resp.value());
-    assertEquals(DataFormat.RAW_BYTES, resp.metadata().dataFormat());
+    // The \u0000 is the magic byte
+    assertEquals("\u0000{\"Team\" : \"DTX\"}", resp.value().asText());
+    assertEquals(DataFormat.UTF8_STRING, resp.metadata().dataFormat());
     assertNull(resp.metadata().schemaId());
     assertEquals("The value references a schema but we can't find the schema registry", resp.errorMessage());
-
-    // Next, base64 decoding the value should give us the original bytes
-    var decoded = Base64.getDecoder().decode(resp.value().get("__raw__").asText());
-    assertArrayEquals(byteArrayWithMagicByte, decoded);
   }
 
   @Test
