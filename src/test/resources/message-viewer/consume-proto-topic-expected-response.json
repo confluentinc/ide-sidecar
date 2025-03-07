@@ -37,6 +37,9 @@
               "zipcode": "37964"
             }
           },
+          "key_schema": {
+            "deserializer_tech": "PARSED_JSON"
+          },
           "value_schema": {
             "schema_id": 100003,
             "deserializer_tech": "PROTOBUF"

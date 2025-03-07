@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.TextNode;
 import io.confluent.idesidecar.restapi.clients.SchemaErrors;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
+import io.confluent.idesidecar.restapi.models.DeserializerTech;
 import io.confluent.idesidecar.restapi.proxy.KafkaRestProxyContext;
 import io.confluent.kafka.schemaregistry.avro.AvroSchema;
 import io.confluent.kafka.schemaregistry.avro.AvroSchemaProvider;
@@ -258,17 +259,32 @@ public class RecordDeserializerTest {
 
   @ParameterizedTest
   @ValueSource(booleans = {true, false})
-  void parseJsonNodeShouldReturnStringIfByteArrayDoesNotStartWithMagicByte(boolean isKey) {
+  void parseJsonNodeShouldReturnBase64StringIfByteArrayDoesNotStartWithMagicByte(boolean isKey) {
     var rawString = "Team DTX";
     var byteArray = rawString.getBytes(StandardCharsets.UTF_8);
+
+    // If these bytes were deserialized
     var resp = recordDeserializer.deserialize(byteArray, null, context, isKey);
-    assertEquals(new TextNode(rawString), resp.value());
+
+    // We should get back {"__raw__": "<base64-encoded-string>"}
+    var expected = objectMapper.createObjectNode();
+    expected.put("__raw__", Base64.getEncoder().encodeToString(byteArray));
+    assertEquals(expected, resp.value());
+    assertEquals(DeserializerTech.RAW_BYTES, resp.schema().deserializerTech());
+    assertNull(resp.schema().schemaId());
     assertNull(resp.errorMessage());
+
+    // Next, base64 decoding the value should give us the original bytes
+    var decoded = Base64.getDecoder().decode(resp.value().get("__raw__").asText());
+    assertArrayEquals(byteArray, decoded);
+
+    // Interpreting as UTF-8 string should give us the original string
+    assertEquals(rawString, new String(decoded, StandardCharsets.UTF_8));
   }
 
   @ParameterizedTest
   @ValueSource(booleans = {true, false})
-  void parseJsonNodeShouldReturnStringIfParsingByteArrayWithMagicByteFails(boolean isKey) {
+  void parseJsonNodeShouldReturnBase64EncodedStringIfParsingByteArrayWithMagicByteFails(boolean isKey) {
     // Build byte array with magic byte as prefix
     var rawString = "{\"Team\" : \"DTX\"}";
     var byteArray = rawString.getBytes(StandardCharsets.UTF_8);
@@ -276,11 +292,20 @@ public class RecordDeserializerTest {
     byteArrayWithMagicByte[0] = RecordDeserializer.MAGIC_BYTE;
     System.arraycopy(byteArray, 0, byteArrayWithMagicByte, 1, byteArray.length);
 
-    // Expect parsing to fail, should return byte array as string
-    var magicByteAsString = new String(new byte[]{RecordDeserializer.MAGIC_BYTE}, StandardCharsets.UTF_8);
+    // Expect parsing to fail, should return byte array as base64-encoded string
     var resp = recordDeserializer.deserialize(byteArrayWithMagicByte, null, context, isKey);
-    assertEquals(new TextNode(magicByteAsString + rawString), resp.value());
+
+    // We should get back {"__raw__": "<base64-encoded-string>"}
+    var expected = objectMapper.createObjectNode();
+    expected.put("__raw__", Base64.getEncoder().encodeToString(byteArrayWithMagicByte));
+    assertEquals(expected, resp.value());
+    assertEquals(DeserializerTech.RAW_BYTES, resp.schema().deserializerTech());
+    assertNull(resp.schema().schemaId());
     assertEquals("The value references a schema but we can't find the schema registry", resp.errorMessage());
+
+    // Next, base64 decoding the value should give us the original bytes
+    var decoded = Base64.getDecoder().decode(resp.value().get("__raw__").asText());
+    assertArrayEquals(byteArrayWithMagicByte, decoded);
   }
 
   @Test

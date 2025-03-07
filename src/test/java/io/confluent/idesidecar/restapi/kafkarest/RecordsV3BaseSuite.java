@@ -18,6 +18,7 @@ import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequestHeader;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequestBuilder;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
 import io.confluent.idesidecar.restapi.models.DeserializerTech;
+import io.confluent.idesidecar.restapi.util.ByteArrayJsonUtil;
 import io.confluent.kafka.schemaregistry.client.rest.entities.Schema;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
@@ -287,7 +288,7 @@ public interface RecordsV3BaseSuite extends ITSuite {
 
       assertArrayEquals(
           (byte[]) key.data(),
-          Base64.getDecoder().decode(records.getFirst().key().get("__raw__").asText())
+          ByteArrayJsonUtil.asBytes(records.getFirst().key())
       );
     } else {
       assertNull(records.getFirst().keySchema().schemaId());
@@ -304,7 +305,7 @@ public interface RecordsV3BaseSuite extends ITSuite {
 
       assertArrayEquals(
           (byte[]) value.data(),
-          Base64.getDecoder().decode(records.getFirst().value().get("__raw__").asText())
+          ByteArrayJsonUtil.asBytes(records.getFirst().value())
       );
     } else {
       assertNull(records.getFirst().valueSchema().schemaId());
