@@ -26,6 +26,9 @@
             }
           ],
           "key": 522116,
+          "key_metadata": {
+            "data_format":"JSON"
+          },
           "value": {
             "ordertime": 1498829451646,
             "orderid": 522116,
@@ -36,6 +39,10 @@
               "state": "State_",
               "zipcode": 39532
             }
+          },
+          "value_metadata": {
+            "schema_id": 100002,
+            "data_format": "AVRO"
           }
         },
         {
@@ -58,6 +65,9 @@
             }
           ],
           "key": 522131,
+          "key_metadata": {
+            "data_format": "JSON"
+          },
           "value": {
             "ordertime": 1512323498915,
             "orderid": 522131,
@@ -68,6 +78,10 @@
               "state": "State_77",
               "zipcode": 60476
             }
+          },
+          "value_metadata": {
+            "schema_id": 100002,
+            "data_format": "AVRO"
           }
         }
       ]

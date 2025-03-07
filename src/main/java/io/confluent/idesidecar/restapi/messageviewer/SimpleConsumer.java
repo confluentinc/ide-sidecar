@@ -1,5 +1,6 @@
 package io.confluent.idesidecar.restapi.messageviewer;
 
+import io.confluent.idesidecar.restapi.messageviewer.RecordDeserializer.DecodedResult;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequest;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.ExceededFields;
@@ -306,7 +307,7 @@ public class SimpleConsumer {
     boolean valueExceeded = consumerRecord.value() != null
         && consumerRecord.value().length > messageMaxBytes;
 
-    Optional<RecordDeserializer.DecodedResult> keyResult = keyExceeded
+    Optional<DecodedResult> keyResult = keyExceeded
         ? Optional.empty() : Optional
         .of(recordDeserializer.deserialize(
             consumerRecord.key(),
@@ -314,7 +315,7 @@ public class SimpleConsumer {
             context,
             true)
         );
-    Optional<RecordDeserializer.DecodedResult> valueResult = valueExceeded
+    Optional<DecodedResult> valueResult = valueExceeded
         ? Optional.empty() : Optional
         .of(recordDeserializer.deserialize(
             consumerRecord.value(),
@@ -329,10 +330,12 @@ public class SimpleConsumer {
         consumerRecord.timestamp(),
         TimestampType.valueOf(consumerRecord.timestampType().name()),
         headers,
-        keyResult.map(RecordDeserializer.DecodedResult::value).orElse(null),
-        valueResult.map(RecordDeserializer.DecodedResult::value).orElse(null),
-        keyResult.map(RecordDeserializer.DecodedResult::errorMessage).orElse(null),
-        valueResult.map(RecordDeserializer.DecodedResult::errorMessage).orElse(null),
+        keyResult.map(DecodedResult::value).orElse(null),
+        valueResult.map(DecodedResult::value).orElse(null),
+        keyResult.map(DecodedResult::schema).orElse(null),
+        valueResult.map(DecodedResult::schema).orElse(null),
+        keyResult.map(DecodedResult::errorMessage).orElse(null),
+        valueResult.map(DecodedResult::errorMessage).orElse(null),
         new ExceededFields(keyExceeded, valueExceeded)
     );
   }
