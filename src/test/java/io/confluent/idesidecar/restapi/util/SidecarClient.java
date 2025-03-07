@@ -17,6 +17,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
@@ -33,7 +34,6 @@ import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPart
 import io.confluent.idesidecar.restapi.models.Connection;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
-import io.confluent.idesidecar.restapi.models.ConnectionSpec.LocalConfig;
 import io.confluent.idesidecar.restapi.models.ConnectionsList;
 import io.confluent.kafka.schemaregistry.client.rest.entities.Schema;
 import io.confluent.kafka.schemaregistry.client.rest.entities.SchemaReference;
@@ -45,6 +45,7 @@ import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
 import java.io.IOException;
 import java.time.Duration;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -602,7 +603,7 @@ public class SidecarClient implements SidecarClientApi {
   ) {
     return fromCluster(currentKafkaClusterId, () ->
         givenDefault()
-            .body(request)
+            .body(convertByteArraysToRawJSON(request))
             .queryParam("dry_run", dryRun)
             .post("/kafka/v3/clusters/{cluster_id}/topics/%s/records".formatted(topicName))
             .then()
@@ -616,7 +617,7 @@ public class SidecarClient implements SidecarClientApi {
       Object value,
       Integer valueSchemaVersion,
       Set<ProduceRequestHeader> headers) {
-    return ProduceRequest
+    return convertByteArraysToRawJSON(ProduceRequest
         .builder()
         .partitionId(partitionId)
         .headers(headers.stream().toList())
@@ -634,7 +635,27 @@ public class SidecarClient implements SidecarClientApi {
                 .data(value)
                 .build()
         )
-        .build();
+        .build());
+  }
+
+  private ProduceRequest convertByteArraysToRawJSON(ProduceRequest request) {
+    if (request.getKey().getData() instanceof byte[]) {
+      request.setKey(
+          request.getKey().data(ByteArrayJsonUtil.asJsonNode(
+              (byte[]) request.getKey().getData())
+          )
+      );
+    }
+
+    if (request.getValue().getData() instanceof byte[]) {
+      request.setValue(
+          request.getValue().data(ByteArrayJsonUtil.asJsonNode(
+              (byte[]) request.getValue().getData())
+          )
+      );
+    }
+
+    return request;
   }
 
   public SimpleConsumeMultiPartitionResponse consume(

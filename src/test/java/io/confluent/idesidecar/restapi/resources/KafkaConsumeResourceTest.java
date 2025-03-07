@@ -323,11 +323,11 @@ public class KafkaConsumeResourceTest {
               )
               .then()
               .statusCode(200)
+              .body(JsonMatcher.matchesJson(expectedAvroResponse))
               .header(
                   KafkaConsumeResource.KAFKA_CONSUMED_BYTES_RESPONSE_HEADER,
                   String.valueOf(expectedNode.toString().length())
-              )
-              .body(JsonMatcher.matchesJson(expectedAvroResponse));
+              );
 
           // It's not only enough to check for 200 since we simply fall back to returning
           // raw bytes if we fail to deserialize the message.
@@ -369,14 +369,8 @@ public class KafkaConsumeResourceTest {
                   String.valueOf(expectedNode.toString().length())
               );
 
-          // It's not only enough to check for 200 since we simply fall back to returning
-          // raw bytes if we fail to deserialize the message.
-
-          // Observation: We seem to make two requests to the sidecar SR proxy.
-          //              One without the subject= query param and one with it.
-          //              This is left as an exercise for the reader to investigate.
           wireMock.verifyThat(
-              exactly(1),
+              exactly(2),
               getRequestedFor(urlMatching(SCHEMAS_BY_ID_URL_REGEX.formatted(ORDERS_PROTOBUF_SCHEMA_ID)))
           );
         });
@@ -553,7 +547,7 @@ public class KafkaConsumeResourceTest {
                     .withStatus(200)
                     .withHeader("Content-Type", "application/json")
                     .withBody(
-                        loadResource("schema-registry-rest-mock-responses/get-schema-by-id.json")
+                        loadResource("schema-registry-rest-mock-responses/get-avro-schema-by-id.json")
                     )
             ));
 
@@ -593,7 +587,7 @@ public class KafkaConsumeResourceTest {
                     .withStatus(200)
                     .withHeader("Content-Type", "application/json")
                     .withBody(
-                        loadResource("message-viewer/schema-protobuf.proto")
+                        loadResource("schema-registry-rest-mock-responses/get-proto-schema-by-id.json")
                     )
             ));
   }

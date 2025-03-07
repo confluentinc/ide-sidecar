@@ -36,6 +36,15 @@
               "state": "State_",
               "zipcode": 39532
             }
+          },
+          "metadata": {
+            "key_metadata": {
+              "data_format":"JSON"
+            },
+            "value_metadata": {
+              "schema_id": 100002,
+              "data_format": "AVRO"
+            }
           }
         },
         {
@@ -67,6 +76,15 @@
               "city": "City_59",
               "state": "State_77",
               "zipcode": 60476
+            }
+          },
+          "metadata": {
+            "key_metadata": {
+              "data_format": "JSON"
+            },
+            "value_metadata": {
+              "schema_id": 100002,
+              "data_format": "AVRO"
             }
           }
         }
