@@ -15,6 +15,12 @@
             "name": "Ravi",
             "id": 18
           },
+          "key_schema": {
+            "deserializer_tech": "PARSED_JSON"
+          },
+          "value_schema": {
+            "deserializer_tech": "PARSED_JSON"
+          },
           "timestamp_type": "CREATE_TIME",
           "headers": [],
           "exceeded_fields": {
@@ -36,6 +42,12 @@
           "value": {
             "name": "another-name",
             "id": 20
+          },
+          "key_schema": {
+            "deserializer_tech": "PARSED_JSON"
+          },
+          "value_schema": {
+            "deserializer_tech": "PARSED_JSON"
           },
           "timestamp_type": "CREATE_TIME",
           "headers": [],

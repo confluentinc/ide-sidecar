@@ -1,1 +1,51 @@
-{"cluster_id":"lkc-stgcj76rd8","topic_name":"orders_proto","partition_data_list":[{"partition_id":0,"next_offset":87498,"records":[{"partition_id":0,"offset":87489,"timestamp":1718991244031,"timestamp_type":"CREATE_TIME","headers":[{"key":"task.generation","value":"0"},{"key":"task.id","value":"0"},{"key":"current.iteration","value":"522233"}],"key":522233,"value":"AAABhqMACM6Dq5SbLBD57x8aBkl0ZW1fMyGvInPlMg0hQCoVCgVDaXR5XxIIU3RhdGVfNzcYzKgC","value_decoding_error":"com.fasterxml.jackson.core.JsonParseException: Unrecognized token 'syntax': was expecting (JSON String, Number (or 'NaN'/'+INF'/'-INF'), Array, Object or token 'null', 'true' or 'false')\n at [Source: REDACTED (`StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION` disabled); line: 1, column: 8]"}]}]}
+{
+  "cluster_id": "lkc-stgcj76rd8",
+  "topic_name": "orders_proto",
+  "partition_data_list": [
+    {
+      "partition_id": 0,
+      "next_offset": 87498,
+      "records": [
+        {
+          "partition_id": 0,
+          "offset": 87489,
+          "timestamp": 1718991244031,
+          "timestamp_type": "CREATE_TIME",
+          "headers": [
+            {
+              "key": "task.generation",
+              "value": "0"
+            },
+            {
+              "key": "task.id",
+              "value": "0"
+            },
+            {
+              "key": "current.iteration",
+              "value": "522233"
+            }
+          ],
+          "key": 522233,
+          "value": {
+            "ordertime": "1519118893518",
+            "orderid": 522233,
+            "itemid": "Item_3",
+            "orderunits": 8.525778932861924,
+            "address": {
+              "city": "City_",
+              "state": "State_77",
+              "zipcode": "37964"
+            }
+          },
+          "key_schema": {
+            "deserializer_tech": "PARSED_JSON"
+          },
+          "value_schema": {
+            "schema_id": 100003,
+            "deserializer_tech": "PROTOBUF"
+          }
+        }
+      ]
+    }
+  ]
+}
