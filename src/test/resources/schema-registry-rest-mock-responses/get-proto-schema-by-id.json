@@ -1,0 +1,1 @@
+{"schemaType": "PROTOBUF","schema":"syntax = \"proto3\";\npackage ksql;\n\nmessage orders {\n  int64 ordertime = 1;\n  int32 orderid = 2;\n  string itemid = 3;\n  double orderunits = 4;\n  addressMessage address = 5;\n\n  message addressMessage {\n    string city = 1;\n    string state = 2;\n    int64 zipcode = 3;\n  }\n}\n"}
