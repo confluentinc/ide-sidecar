@@ -2,6 +2,9 @@ package io.confluent.idesidecar.restapi.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
 /**
@@ -12,6 +15,7 @@ import java.util.Base64;
 public final class ByteArrayJsonUtil {
   public static final String RAW_FIELD = "__raw__";
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+  private static final CharsetDecoder UTF8_DECODER = StandardCharsets.UTF_8.newDecoder();
 
   public static byte[] asBytes(JsonNode node) {
     if (smellsLikeBytes(node)) {
@@ -38,6 +42,16 @@ public final class ByteArrayJsonUtil {
     var node = OBJECT_MAPPER.createObjectNode();
     node.put(RAW_FIELD, Base64.getEncoder().encodeToString(bytes));
     return node;
+  }
+
+  /**
+   * Use the UTF-8 decoder to convert the given bytes to a string.
+   * @param bytes The bytes to convert.
+   * @return The string representation of the bytes.
+   * @throws CharacterCodingException if the bytes are not valid UTF-8
+   */
+  public static String asUTF8String(byte[] bytes) throws CharacterCodingException {
+    return UTF8_DECODER.decode(java.nio.ByteBuffer.wrap(bytes)).toString();
   }
 
   private ByteArrayJsonUtil() {

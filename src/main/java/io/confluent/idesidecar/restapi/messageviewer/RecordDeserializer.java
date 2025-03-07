@@ -44,6 +44,7 @@ import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.net.UnknownServiceException;
 import java.nio.ByteBuffer;
+import java.nio.charset.CharacterCodingException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -472,10 +473,14 @@ public class RecordDeserializer {
   }
 
   /**
-   * Try to read the byte array as a valid JSON value (object, array, string, number, boolean),
-   * or encode it as a base64 string if it's not valid JSON (which means it's arbitrary bytes).
-   * @param bytes The byte array to read
-   * @return      A JsonNode representing the byte array as a JSON object, or a TextNode
+   * Interpret the bytes safely. This is the order in which we try to interpret the bytes:
+   * 1. Try to read the bytes as a JSON value (object, array, string, number, boolean, or null).
+   * 2. If the bytes are not valid JSON, try to read them as a UTF-8 string.
+   * 3. If the bytes are not valid UTF-8, encode them as a base64 string in a JSON object with
+   *    a single field named "__raw__".
+   * @param bytes The byte array to interpret.
+   * @return A {@link WrappedJson} object containing the interpreted data
+   *         and whether it's JSON or raw bytes.
    */
   private static WrappedJson safeRead(byte[] bytes) {
     try {
@@ -484,6 +489,25 @@ public class RecordDeserializer {
           DataFormat.JSON
       );
     } catch (IOException e) {
+      return handleNonJsonBytes(bytes);
+    }
+  }
+
+  /**
+   * Try to read the byte array as a valid UTF-8 string, or
+   * encode it as a base64 string if it's not valid UTF-8.
+   * @param bytes The non-JSON byte array to interpret.
+   * @return A WrappedJson object containing the interpreted data
+   *         and whether it's JSON or raw bytes.
+   */
+  private static WrappedJson handleNonJsonBytes(byte[] bytes) {
+    try {
+      return new WrappedJson(
+          TextNode.valueOf(ByteArrayJsonUtil.asUTF8String(bytes)),
+          DataFormat.JSON
+      );
+    } catch (CharacterCodingException ex) {
+      // The bytes are not valid JSON or UTF-8, so we encode them as a base64 string.
       return new WrappedJson(ByteArrayJsonUtil.asJsonNode(bytes), DataFormat.RAW_BYTES);
     }
   }
