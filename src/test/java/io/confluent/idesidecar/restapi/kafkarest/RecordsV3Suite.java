@@ -138,8 +138,9 @@ public interface RecordsV3Suite extends RecordsV3BaseSuite {
           string foo = 1;
         }
         """;
+    var subjectName = getSubjectName(topicName, SubjectNameStrategyEnum.TOPIC_NAME, false);
     var valueSchema = createSchema(
-        getSubjectName(topicName, SubjectNameStrategyEnum.TOPIC_NAME, false),
+        subjectName,
         SchemaFormat.PROTOBUF.name(),
         rawSchema
     );
@@ -155,7 +156,12 @@ public interface RecordsV3Suite extends RecordsV3BaseSuite {
     assertTopicHasRecord(
         RecordsV3BaseSuite.schemalessData("foo"),
         new RecordData(
-            SchemaFormat.PROTOBUF, SubjectNameStrategyEnum.TOPIC_NAME, rawSchema, null, null, valueData
+            SchemaFormat.PROTOBUF,
+            SubjectNameStrategyEnum.TOPIC_NAME,
+            rawSchema,
+            subjectName,
+            valueSchema.getId(),
+            valueData
         ),
         topicName
     );
@@ -189,9 +195,9 @@ public interface RecordsV3Suite extends RecordsV3BaseSuite {
           google.protobuf.Any payload = 2;
         }
         """;
-
+    var subjectName = getSubjectName(topicName, SubjectNameStrategyEnum.TOPIC_NAME, false);
     var valueSchema = createSchema(
-        getSubjectName(topicName, SubjectNameStrategyEnum.TOPIC_NAME, false),
+        subjectName,
         SchemaFormat.PROTOBUF.name(),
         rawSchema,
         List.of(
@@ -216,7 +222,12 @@ public interface RecordsV3Suite extends RecordsV3BaseSuite {
     assertTopicHasRecord(
         RecordsV3BaseSuite.schemalessData("foo"),
         new RecordData(
-            SchemaFormat.PROTOBUF, SubjectNameStrategyEnum.TOPIC_NAME, rawSchema, null, null, valueData
+            SchemaFormat.PROTOBUF,
+            SubjectNameStrategyEnum.TOPIC_NAME,
+            rawSchema,
+            subjectName,
+            valueSchema.getId(),
+            valueData
         ),
         topicName
     );
