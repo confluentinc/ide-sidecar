@@ -36,6 +36,10 @@
               "state": "State_",
               "zipcode": 39532
             }
+          },
+          "value_schema": {
+            "schema_id": 100002,
+            "deserializer_tech": "AVRO"
           }
         },
         {
@@ -68,6 +72,10 @@
               "state": "State_77",
               "zipcode": 60476
             }
+          },
+          "value_schema": {
+            "schema_id": 100002,
+            "deserializer_tech": "AVRO"
           }
         }
       ]
