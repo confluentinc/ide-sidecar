@@ -18,6 +18,7 @@ import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequestHeader;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequestBuilder;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
 import io.confluent.idesidecar.restapi.models.DataFormat;
+import io.confluent.idesidecar.restapi.models.KeyOrValueMetadata;
 import io.confluent.idesidecar.restapi.util.ByteArrayJsonUtil;
 import io.confluent.kafka.schemaregistry.client.rest.entities.Schema;
 import java.nio.charset.StandardCharsets;
@@ -278,42 +279,43 @@ public interface RecordsV3BaseSuite extends ITSuite {
 
     assertEquals(1, records.size());
 
-    if (key.hasSchema()) {
-      assertEquals(key.schemaId(), records.getFirst().metadata().keyMetadata().schemaId());
-      assertSame(records.getFirst().key(), key.data());
-    } else if (key.data() instanceof byte[]) {
-      assertNull(records.getFirst().metadata().keyMetadata().schemaId());
-      assertEquals(DataFormat.RAW_BYTES, records.getFirst().metadata().keyMetadata().dataFormat());
-
-      assertArrayEquals(
-          (byte[]) key.data(),
-          ByteArrayJsonUtil.asBytes(records.getFirst().key())
-      );
-    } else {
-      assertNull(records.getFirst().metadata().keyMetadata().schemaId());
-      assertEquals(DataFormat.JSON, records.getFirst().metadata().keyMetadata().dataFormat());
-      assertSame(records.getFirst().key(), key.data());
-    }
-
-    if (value.hasSchema()) {
-      assertEquals(value.schemaId(), records.getFirst().metadata().valueMetadata().schemaId());
-      assertSame(records.getFirst().value(), value.data());
-    } else if (value.data() instanceof byte[]) {
-      assertNull(records.getFirst().metadata().valueMetadata().schemaId());
-      assertEquals(DataFormat.RAW_BYTES, records.getFirst().metadata().valueMetadata().dataFormat());
-
-      assertArrayEquals(
-          (byte[]) value.data(),
-          ByteArrayJsonUtil.asBytes(records.getFirst().value())
-      );
-    } else {
-      assertNull(records.getFirst().metadata().valueMetadata().schemaId());
-      assertEquals(DataFormat.JSON, records.getFirst().metadata().valueMetadata().dataFormat());
-      assertSame(records.getFirst().value(), value.data());
-    }
+    assertKeyOrValue(
+        key,
+        records.getFirst().key(),
+        records.getFirst().metadata().keyMetadata());
+    assertKeyOrValue(
+        value,
+        records.getFirst().value(),
+        records.getFirst().metadata().valueMetadata()
+    );
 
     // Assert headers are the same
     assertEquals(headers, convertResponseHeaders(records.getFirst().headers()));
+  }
+
+  private void assertKeyOrValue(
+      RecordData expectedKeyOrValue,
+      JsonNode actualKeyOrValue,
+      KeyOrValueMetadata metadata
+  ) {
+    if (expectedKeyOrValue.hasSchema()) {
+      assertEquals(expectedKeyOrValue.schemaId(), metadata.schemaId());
+      assertSame(expectedKeyOrValue.data(), actualKeyOrValue);
+    } else if (expectedKeyOrValue.data() == null) {
+      assertNull(metadata);
+    } else if (expectedKeyOrValue.data() instanceof byte[]) {
+      assertNull(metadata.schemaId());
+      assertEquals(DataFormat.RAW_BYTES, metadata.dataFormat());
+
+      assertArrayEquals(
+          (byte[]) expectedKeyOrValue.data(),
+          ByteArrayJsonUtil.asBytes(actualKeyOrValue)
+      );
+    } else {
+      assertNull(metadata.schemaId());
+      assertEquals(DataFormat.JSON, metadata.dataFormat());
+      assertSame(expectedKeyOrValue.data(), actualKeyOrValue);
+    }
   }
 
   private static Set<ProduceRequestHeader> convertResponseHeaders(
@@ -331,7 +333,7 @@ public interface RecordsV3BaseSuite extends ITSuite {
         .collect(Collectors.toSet());
   }
 
-  default void assertSame(JsonNode actual, Object expected) {
+  default void assertSame(Object expected, JsonNode actual) {
     if (expected != null) {
       var parsedKey = OBJECT_MAPPER.convertValue(
           expected,
