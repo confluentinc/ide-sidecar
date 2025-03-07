@@ -188,5 +188,9 @@ public class SchemaManager {
       Integer schemaVersion,
       ParsedSchema parsedSchema
   ) {
+
+    public SchemaFormat type() {
+      return SchemaFormat.fromSchemaType(parsedSchema.schemaType());
+    }
   }
 }
