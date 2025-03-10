@@ -12,7 +12,7 @@ import org.eclipse.microprofile.config.ConfigProvider;
 @ApplicationScoped
 public final class VsCodeExtensionUtil {
 
-  static final String CCLOUD_OAUTH_VSCODE_EXTENSION_URI = ConfigProvider.getConfig()
+  public static final String CCLOUD_OAUTH_VSCODE_EXTENSION_URI = ConfigProvider.getConfig()
       .getOptionalValue("ide-sidecar.connections.ccloud.oauth.vscode-extension-uri", String.class)
       .orElse("vscode://confluentinc.vscode-confluent/authCallback");
 

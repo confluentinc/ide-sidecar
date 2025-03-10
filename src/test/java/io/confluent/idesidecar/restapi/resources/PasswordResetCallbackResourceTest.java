@@ -4,6 +4,7 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.Matchers.not;
 import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
+import io.confluent.idesidecar.restapi.util.VsCodeExtensionUtil;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 import org.junit.jupiter.api.Test;
@@ -23,7 +24,7 @@ public class PasswordResetCallbackResourceTest {
         .then()
         .statusCode(200)
         .body(containsString("Reset Password Complete"))
-        .body(containsString(OAuthCallbackResource.CCLOUD_OAUTH_VSCODE_EXTENSION_URI))
+        .body(containsString(VsCodeExtensionUtil.CCLOUD_OAUTH_VSCODE_EXTENSION_URI))
         .body(containsString("?success=false&reset_password=true"));
   }
 
@@ -38,7 +39,7 @@ public class PasswordResetCallbackResourceTest {
         .then()
         .statusCode(200)
         .body(not(containsString("Reset Password Complete")))
-        .body(containsString(OAuthCallbackResource.CCLOUD_OAUTH_VSCODE_EXTENSION_URI))
+        .body(containsString(VsCodeExtensionUtil.CCLOUD_OAUTH_VSCODE_EXTENSION_URI))
         .body(not(containsString("?success=false&reset_password=true")));
   }
 
@@ -52,7 +53,7 @@ public class PasswordResetCallbackResourceTest {
         .then()
         .statusCode(200)
         .body(not(containsString("Reset Password Complete")))
-        .body(containsString(OAuthCallbackResource.CCLOUD_OAUTH_VSCODE_EXTENSION_URI))
+        .body(containsString(VsCodeExtensionUtil.CCLOUD_OAUTH_VSCODE_EXTENSION_URI))
         .body(not(containsString("?success=false&reset_password=true")));
   }
 
@@ -66,7 +67,7 @@ public class PasswordResetCallbackResourceTest {
         .then()
         .statusCode(200)
         .body(not(containsString("Reset Password Complete")))
-        .body(containsString(OAuthCallbackResource.CCLOUD_OAUTH_VSCODE_EXTENSION_URI))
+        .body(containsString(VsCodeExtensionUtil.CCLOUD_OAUTH_VSCODE_EXTENSION_URI))
         .body(not(containsString("?success=false&reset_password=true")));
   }
 
@@ -80,7 +81,7 @@ public class PasswordResetCallbackResourceTest {
         .then()
         .statusCode(200)
         .body(not(containsString("Reset Password Complete")))
-        .body(containsString(OAuthCallbackResource.CCLOUD_OAUTH_VSCODE_EXTENSION_URI))
+        .body(containsString(VsCodeExtensionUtil.CCLOUD_OAUTH_VSCODE_EXTENSION_URI))
         .body(not(containsString("?success=false&reset_password=true")));
   }
 }

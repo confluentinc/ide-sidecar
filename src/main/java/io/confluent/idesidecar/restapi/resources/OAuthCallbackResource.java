@@ -33,13 +33,6 @@ public class OAuthCallbackResource {
       .getOptionalValue("ide-sidecar.connections.ccloud.resources.homepage-uri", String.class)
       .orElse("https://confluent.cloud");
 
-  // upon rendering the callback HTML, the user will be redirected to either their locally-running
-  // VS Code instance (where the extension is installed, and the auth flow was initiated) or the
-  // VS Code extension marketplace page for the extension.
-  static final String CCLOUD_OAUTH_VSCODE_EXTENSION_URI = ConfigProvider.getConfig()
-      .getOptionalValue("ide-sidecar.connections.ccloud.oauth.vscode-extension-uri", String.class)
-      .orElse("https://marketplace.visualstudio.com/items?itemName=confluentinc.vscode-confluent");
-
   static final String TLS_HANDSHAKE_ERROR_MESSAGE =
       "Failed to perform the SSL/TLS handshake. Consider configuring custom certificates in the "
       + "extension settings of Confluent for VS Code if you are behind a firewall that performs "
