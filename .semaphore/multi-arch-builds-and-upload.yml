@@ -10,10 +10,7 @@ execution_time_limit:
 global_job_config:
   prologue:
     commands:
-      - checkout
-      - make ci-bin-sem-cache-restore
-      - make docker-login-ci
-      - make load-cached-docker-images
+
   epilogue:
     always:
       commands:
@@ -31,7 +28,7 @@ blocks:
         machine:
           type: s1-prod-macos-13-5-amd64
       prologue:
-        commands_file: build_native_executable_prologue.sh
+        commands_file: build_native_executable_prologue_macos_linux.sh
       env_vars:
         - name: OS
           value: macos
@@ -44,7 +41,7 @@ blocks:
             - make ci-sign-notarize-macos-executable
       epilogue:
         on_pass:
-          commands_file: build_native_executable_epilogue.sh
+          commands_file: build_native_executable_epilogue_macos_linux.sh
 
   - name: "Build Native Executable (MacOS ARM64)"
     dependencies: []
@@ -55,7 +52,7 @@ blocks:
         machine:
           type: s1-prod-macos-13-5-arm64
       prologue:
-        commands_file: build_native_executable_prologue.sh
+        commands_file: build_native_executable_prologue_macos_linux.sh
       env_vars:
         - name: OS
           value: macos
@@ -68,7 +65,7 @@ blocks:
             - make ci-sign-notarize-macos-executable
       epilogue:
         on_pass:
-          commands_file: build_native_executable_epilogue.sh
+          commands_file: build_native_executable_epilogue_macos_linux.sh
 
   - name: "Build Native Executable (Linux AMD64)"
     dependencies: []
@@ -79,7 +76,7 @@ blocks:
         machine:
           type: s1-prod-ubuntu24-04-amd64-2
       prologue:
-        commands_file: build_native_executable_prologue.sh
+        commands_file: build_native_executable_prologue_macos_linux.sh
       env_vars:
         - name: OS
           value: linux
@@ -91,7 +88,7 @@ blocks:
             - make mvn-package-native
       epilogue:
         on_pass:
-          commands_file: build_native_executable_epilogue.sh
+          commands_file: build_native_executable_epilogue_macos_linux.sh
 
   - name: "Build Native Executable (Linux ARM64)"
     dependencies: []
@@ -102,7 +99,7 @@ blocks:
         machine:
           type: s1-prod-ubuntu24-04-arm64-2
       prologue:
-        commands_file: build_native_executable_prologue.sh
+        commands_file: build_native_executable_prologue_macos_linux.sh
       env_vars:
         - name: OS
           value: linux
@@ -114,7 +111,7 @@ blocks:
             - make mvn-package-native
       epilogue:
         on_pass:
-          commands_file: build_native_executable_epilogue.sh
+          commands_file: build_native_executable_epilogue_macos_linux.sh
 
   - name: "Build Native Executable (Windows x64)"
     dependencies: [ ]
