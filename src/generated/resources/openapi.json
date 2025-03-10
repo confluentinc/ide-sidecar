@@ -20,6 +20,42 @@
     "description" : "Feature flags"
   } ],
   "paths" : {
+    "/" : {
+      "get" : {
+        "tags" : [ "Password Reset Callback Resource" ],
+        "parameters" : [ {
+          "name" : "email",
+          "in" : "query",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "message",
+          "in" : "query",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "success",
+          "in" : "query",
+          "schema" : {
+            "type" : "boolean"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "text/html" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/login/realm" : {
       "get" : {
         "tags" : [ "Login Realm Resource" ],
