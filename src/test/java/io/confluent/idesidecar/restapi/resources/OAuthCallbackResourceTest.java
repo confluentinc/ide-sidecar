@@ -16,6 +16,7 @@ import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
 import io.confluent.idesidecar.restapi.models.ConnectionStatus.ConnectedState;
 import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
 import io.confluent.idesidecar.restapi.util.CCloudTestUtil;
+import io.confluent.idesidecar.restapi.util.VsCodeExtensionUtil;
 import io.quarkiverse.wiremock.devservice.ConnectWireMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
@@ -68,7 +69,7 @@ public class OAuthCallbackResourceTest {
         .then()
         .statusCode(200)
         .body(containsString("Authentication Complete"))
-        .body(containsString(OAuthCallbackResource.CCLOUD_OAUTH_VSCODE_EXTENSION_URI));
+        .body(containsString(VsCodeExtensionUtil.CCLOUD_OAUTH_VSCODE_EXTENSION_URI));
 
     // CCloud connection should hold valid control plane token and have no errors
     verifyStateAndErrorsOfConfluentCloudConnection(
@@ -99,7 +100,7 @@ public class OAuthCallbackResourceTest {
         .then()
         .statusCode(200)
         .body(containsString("Authentication Complete"))
-        .body(not(containsString(OAuthCallbackResource.CCLOUD_OAUTH_VSCODE_EXTENSION_URI)))
+        .body(not(containsString(VsCodeExtensionUtil.CCLOUD_OAUTH_VSCODE_EXTENSION_URI)))
         .body(containsString(customRedirectUri));
 
     // CCloud connection should hold valid control plane token and have no errors
