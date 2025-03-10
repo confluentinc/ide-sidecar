@@ -71,8 +71,8 @@ update-third-party-notices-pr:
 .PHONY: upload-artifacts-to-github-release
 upload-artifacts-to-github-release:
 # Upload the native executables to the GitHub release
-	for os_arch in macos-amd64 macos-arm64 linux-amd64 linux-arm64; do \
-		executable=$$(find $$EXECUTABLES_DIR -name "*-$$os_arch"); \
+	for os_arch in macos-amd64 macos-arm64 linux-amd64 linux-arm64 windows-x64; do \
+		executable=$$(find $$EXECUTABLES_DIR -name "*-$$os_arch*"); \
 		gh release upload $(IDE_SIDECAR_VERSION) $$executable --clobber; \
 	done; \
 # Upload the third party notices to the GitHub release
