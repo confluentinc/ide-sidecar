@@ -4,6 +4,7 @@ import io.confluent.idesidecar.restapi.connections.CCloudConnectionState;
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
 import io.confluent.idesidecar.restapi.exceptions.CCloudAuthenticationFailedException;
 import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
+import io.confluent.idesidecar.restapi.util.VsCodeExtensionUtil;
 import io.quarkus.logging.Log;
 import io.quarkus.qute.Location;
 import io.quarkus.qute.Template;
@@ -32,13 +33,6 @@ public class OAuthCallbackResource {
       .getOptionalValue("ide-sidecar.connections.ccloud.resources.homepage-uri", String.class)
       .orElse("https://confluent.cloud");
 
-  // upon rendering the callback HTML, the user will be redirected to either their locally-running
-  // VS Code instance (where the extension is installed, and the auth flow was initiated) or the
-  // VS Code extension marketplace page for the extension.
-  static final String CCLOUD_OAUTH_VSCODE_EXTENSION_URI = ConfigProvider.getConfig()
-      .getOptionalValue("ide-sidecar.connections.ccloud.oauth.vscode-extension-uri", String.class)
-      .orElse("https://marketplace.visualstudio.com/items?itemName=confluentinc.vscode-confluent");
-
   static final String TLS_HANDSHAKE_ERROR_MESSAGE =
       "Failed to perform the SSL/TLS handshake. Consider configuring custom certificates in the "
       + "extension settings of Confluent for VS Code if you are behind a firewall that performs "
@@ -46,6 +40,9 @@ public class OAuthCallbackResource {
 
   @Inject
   ConnectionStateManager mgr;
+
+  @Inject
+  VsCodeExtensionUtil vsCodeExtensionUtil;
 
   @Inject
   Template callback;
@@ -63,7 +60,7 @@ public class OAuthCallbackResource {
     try {
       var connectionState = mgr.getConnectionStateByInternalId(oauthState);
       if (connectionState instanceof CCloudConnectionState cCloudConnectionState) {
-        var redirectUri = getRedirectUri(cCloudConnectionState);
+        var redirectUri = vsCodeExtensionUtil.getRedirectUri(cCloudConnectionState);
 
         var response = cCloudConnectionState
             .getOauthContext()
@@ -112,27 +109,6 @@ public class OAuthCallbackResource {
               renderFailure(failure).toCompletionStage()
           );
     }
-  }
-
-  /**
-   * Returns the URI that the callback page should redirect to for a specific CCloud connection.
-   * Attempts to read the URI from the connection's spec. If null, returns the URI set via the
-   * application config <code>ide-sidecar.connections.ccloud.oauth.vscode-extension-uri</code>.
-   *
-   * @param connection the CCloud connection
-   * @return the URI
-   */
-  private String getRedirectUri(CCloudConnectionState connection) {
-    var connectionSpec = connection.getSpec();
-
-    if (connectionSpec != null) {
-      var ccloudConfig = connectionSpec.ccloudConfig();
-      if (ccloudConfig != null && ccloudConfig.ideAuthCallbackUri() != null) {
-        return ccloudConfig.ideAuthCallbackUri();
-      }
-    }
-
-    return CCLOUD_OAUTH_VSCODE_EXTENSION_URI;
   }
 
   private Future<String> renderFailure(Throwable error) {
