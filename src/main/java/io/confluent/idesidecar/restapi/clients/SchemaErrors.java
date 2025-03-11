@@ -16,8 +16,7 @@ import org.eclipse.microprofile.config.ConfigProvider;
  * cache to store and retrieve schema errors based on connection and schema IDs.
  *
  * <p>This class is application-scoped and observes connection lifecycle events to manage the
- * cache.
- * It provides methods to read, write, and clear schema errors for specific connections.
+ * cache. It provides methods to read, write, and clear schema errors for specific connections.
  *
  * <p>Configuration properties:
  * <ul>

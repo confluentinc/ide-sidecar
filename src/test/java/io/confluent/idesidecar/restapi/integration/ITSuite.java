@@ -11,10 +11,9 @@ import java.util.Map;
  * <i>current test environment</i> and a <i>current connection</i> in the running sidecar instance.
  *
  * <p>The {@link SidecarClientApi} provides the basic methods to interact with the sidecar REST
- * API.
- * The {@link #environment()} method provides access to the current test environment, which can be
- * used to directly access the Kafka cluster, Schema Registry, and any other resources in the system
- * under test.
+ * API. The {@link #environment()} method provides access to the current test environment, which can
+ * be used to directly access the Kafka cluster, Schema Registry, and any other resources in the
+ * system under test.
  *
  * <p>Integration tests will define subclasses of {@link AbstractIT} that implement one or more
  * interfaces that extend this {@link ITSuite} interface, to run those tests against the the

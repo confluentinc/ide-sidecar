@@ -18,9 +18,8 @@ import jakarta.enterprise.util.AnnotationLiteral;
  * {@link Event} channel dictates the kind of events that can be emitted.
  *
  * <p>Event <i>consumers</i> use the {@link jakarta.enterprise.event.Observes} annotation on
- * methods
- * that are to consume events fired by producers. Each consumer method handles a specific kind of
- * event.
+ * methods that are to consume events fired by producers. Each consumer method handles a specific
+ * kind of event.
  *
  * <p>This event mechanism decouples producers and consumers: a producer can emit events without
  * regard for which if any components will consume them, while consumers can consume events without

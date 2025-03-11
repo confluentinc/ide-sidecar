@@ -153,7 +153,8 @@ public abstract class ConnectionState {
     // If the status has changed, notify the listener
     if (!updated.equals(original)) {
       Log.infof(
-          "Updated status for connection ID=%s. Original spec: %s, Updated spec: %s, Last updated: %s",
+          "Updated status for connection ID=%s. Original spec: %s, "
+              + "Updated spec: %s, Last updated: %s",
           spec.id(),
           original,
           updated,
