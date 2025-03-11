@@ -26,7 +26,7 @@ public record ScramCredentials(
         maxLength = SCRAM_USERNAME_MAX_LEN,
         minLength = 1
     )
-    @JsonProperty(value="scram_username")
+    @JsonProperty(value = "scram_username")
     @NotNull
     String username,
 
@@ -35,7 +35,7 @@ public record ScramCredentials(
         maxLength = SCRAM_PASSWORD_MAX_LEN,
         minLength = 1
     )
-    @JsonProperty(value="scram_password")
+    @JsonProperty(value = "scram_password")
     @NotNull
     Password password
 ) implements Credentials {

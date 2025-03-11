@@ -163,7 +163,7 @@ class CCloudSearchCriteriaTest {
   protected void assertPredicateWhenContainsString(
       Function<CCloudSearchCriteria, Predicate<String>> getter,
       Function<String, CCloudSearchCriteria> setter,
-      String...substrings
+      String... substrings
   ) {
     for (String substring : substrings) {
       CCloudSearchCriteria newCriteria = setter.apply(substring);

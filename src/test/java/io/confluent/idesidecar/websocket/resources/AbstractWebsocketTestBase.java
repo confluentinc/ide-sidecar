@@ -66,7 +66,7 @@ abstract class AbstractWebsocketTestBase implements WebsocketClients {
    *
    * @param sayHello Whether to send a HELLO message after connecting.
    * @return A ConnectedWorkspace instance representing the connection.
-   * */
+   */
   ConnectedWorkspace connectWorkspace(boolean sayHello) {
     return connectWorkspace(sayHello, sayHello);
   }
@@ -75,11 +75,11 @@ abstract class AbstractWebsocketTestBase implements WebsocketClients {
    * Connect a new mock workspace process to the websocket endpoint.
    *
    * @param sayHello                     Whether to send a HELLO message after connecting.
-   * @param consumeInitialWorkspaceCount Whether to wait for the initial
-   *                                     WORKSPACE_COUNT_CHANGED response to the HELLO.
-   *                                     (Only meaningful when sayHello is true.)
+   * @param consumeInitialWorkspaceCount Whether to wait for the initial WORKSPACE_COUNT_CHANGED
+   *                                     response to the HELLO. (Only meaningful when sayHello is
+   *                                     true.)
    * @return A ConnectedWorkspace instance representing the connection.
-   * */
+   */
   ConnectedWorkspace connectWorkspace(boolean sayHello, boolean consumeInitialWorkspaceCount) {
     // Create a workspace process
     var mockWorkspaceProcess = new MockWorkspaceProcess();
@@ -89,25 +89,27 @@ abstract class AbstractWebsocketTestBase implements WebsocketClients {
         mockWorkspaceProcess.pid,
         sayHello,
         consumeInitialWorkspaceCount
-    );}
+    );
+  }
 
   /**
    * Connect the specified mock workspace process to the websocket endpoint.
    *
-   * @param workspacePid                The ID of the workspace process that is connecting.
+   * @param workspacePid                 The ID of the workspace process that is connecting.
    * @param sayHello                     Whether to send a HELLO message after connecting.
-   * @param consumeInitialWorkspaceCount Whether to wait for the initial
-   *                                     WORKSPACE_COUNT_CHANGED response to the HELLO.
-   *                                     (Only meaningful when sayHello is true.)
+   * @param consumeInitialWorkspaceCount Whether to wait for the initial WORKSPACE_COUNT_CHANGED
+   *                                     response to the HELLO. (Only meaningful when sayHello is
+   *                                     true.)
    * @return A ConnectedWorkspace instance representing the connection.
-   * */
+   */
   ConnectedWorkspace connectWorkspace(
       WorkspacePid workspacePid,
       boolean sayHello,
       boolean consumeInitialWorkspaceCount
   ) {
     if (consumeInitialWorkspaceCount && !sayHello) {
-      throw new IllegalArgumentException("consumeInitialWorkspaceCount only makes sense when sayHello is true.");
+      throw new IllegalArgumentException(
+          "consumeInitialWorkspaceCount only makes sense when sayHello is true.");
     }
 
     // Make it smell as if the handshake has happened.

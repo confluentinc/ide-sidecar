@@ -10,14 +10,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.idesidecar.restapi.application.KnownWorkspacesBean;
 import io.confluent.idesidecar.restapi.application.KnownWorkspacesBean.WorkspacePid;
 import io.confluent.idesidecar.restapi.application.SidecarAccessTokenBean;
-import io.confluent.idesidecar.restapi.testutil.MockWorkspaceProcess;
 import io.confluent.idesidecar.websocket.messages.HelloBody;
 import io.confluent.idesidecar.websocket.messages.Message;
 import io.confluent.idesidecar.websocket.messages.MessageHeaders;
 import io.confluent.idesidecar.websocket.messages.MessageType;
 import io.quarkus.logging.Log;
-import io.quarkus.test.common.http.TestHTTPResource;
-import jakarta.inject.Inject;
 import jakarta.websocket.ClientEndpoint;
 import jakarta.websocket.ClientEndpointConfig;
 import jakarta.websocket.ContainerProvider;
@@ -35,7 +32,6 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
-import org.junit.jupiter.api.BeforeEach;
 
 /**
  * Interface that provides functionality for establishing and using websocket connections.
@@ -43,8 +39,9 @@ import org.junit.jupiter.api.BeforeEach;
 public interface WebsocketClients {
 
   /**
-   * A websocket client message handler that stores messages received into a LinkedBlockingDeque<Message> on
-   * behalf of a test. The test can then interact with LinkedBlockingDeque<Message> messages.
+   * A websocket client message handler that stores messages received into a
+   * LinkedBlockingDeque<Message> on behalf of a test. The test can then interact with
+   * LinkedBlockingDeque<Message> messages.
    */
   class TestWebsocketClientMessageHandler implements MessageHandler.Whole<String> {
 
@@ -101,11 +98,10 @@ public interface WebsocketClients {
   class TestWebsocketClientConfigurator extends ClientEndpointConfig.Configurator {
 
     /**
-     * The access token to embed in the ws connect GET route hit.
-     * Will be assigned once the handshake is done. Must be static
-     * because we don't have control over when the instances of
+     * The access token to embed in the ws connect GET route hit. Will be assigned once the
+     * handshake is done. Must be static because we don't have control over when the instances of
      * this class are created, sigh.
-     * */
+     */
     private static String accessToken = "";
 
     public static void setAccessToken(String token) {
@@ -126,25 +122,22 @@ public interface WebsocketClients {
   }
 
   /**
-   * A websocket client that connects to the websocket endpoint.
-   * I can't find a way to control the construction of this class when needing to use
-   * the TestWebsocketClientConfigurator, so the real work assisting the test
-   * is being done by the TestWebsocketClientMessageHandler instances thar are
-   * correlated with each of these clients.
+   * A websocket client that connects to the websocket endpoint. I can't find a way to control the
+   * construction of this class when needing to use the TestWebsocketClientConfigurator, so the real
+   * work assisting the test is being done by the TestWebsocketClientMessageHandler instances thar
+   * are correlated with each of these clients.
    */
   @ClientEndpoint(configurator = TestWebsocketClientConfigurator.class)
-  class TestWebsocketClient{
+  class TestWebsocketClient {
+
   }
 
   /**
-   * Finally, a convenience bundle of the above:
-   * 1. a reference to the @Injected ObjectMapper,
-   * 2. a mock workspace process,
-   * 3. its websocket session,
-   * 4. The message handler that will store messages received by the client,
-   * See {@link #connectWorkspace}
+   * Finally, a convenience bundle of the above: 1. a reference to the @Injected ObjectMapper, 2. a
+   * mock workspace process, 3. its websocket session, 4. The message handler that will store
+   * messages received by the client, See {@link #connectWorkspace}
    */
-  record ConnectedWorkspace (
+  record ConnectedWorkspace(
       ObjectMapper mapper,
       WorkspacePid workspacePid,
       Session session,
@@ -156,10 +149,10 @@ public interface WebsocketClients {
     }
 
     /**
-     * Send a HELLO message to the websocket endpoint. Do not wait for a response.
-     * Caller can provide an alternate pid to hello with if so desired, for either
-     * the pid spelled in general message header, or in the body of the hello.
-     * Defaults to the pid of the mock workspace process.
+     * Send a HELLO message to the websocket endpoint. Do not wait for a response. Caller can
+     * provide an alternate pid to hello with if so desired, for either the pid spelled in general
+     * message header, or in the body of the hello. Defaults to the pid of the mock workspace
+     * process.
      *
      * @return this object for chaining
      */
@@ -176,9 +169,10 @@ public interface WebsocketClients {
 
     /**
      * Send an encoded message to the websocket endpoint.
+     *
      * @return this object for chaining
      */
-    public ConnectedWorkspace send(Message message)  {
+    public ConnectedWorkspace send(Message message) {
       try {
         session.getAsyncRemote().sendText(mapper.writeValueAsString(message)).get();
         Log.info("Test client sent message: " + message);
@@ -190,9 +184,10 @@ public interface WebsocketClients {
 
     /**
      * Send an arbitrary string message to the websocket endpoint.
+     *
      * @return this object for chaining
      */
-    public ConnectedWorkspace send(String message)  {
+    public ConnectedWorkspace send(String message) {
       try {
         session.getAsyncRemote().sendText(message).get();
       } catch (ExecutionException | InterruptedException e) {
@@ -252,6 +247,7 @@ public interface WebsocketClients {
 
     /**
      * Bounded wait for the websocket to become closed.
+     *
      * @return this object for chaining
      * @throws RuntimeException if the websocket does not close within the given time.
      */
@@ -320,12 +316,13 @@ public interface WebsocketClients {
    *
    * @param uri                            the URI of the websocket endpoint
    * @param authToken                      the auth token to use for the connection
-   * @param workspaceProcess               the ID of the workspace client process that is connecting
+   * @param workspaceProcess               the ID of the workspace client process that is
+   *                                       connecting
    * @param sayHello                       true if the workspace should send a HELLO message after
    *                                       connecting
    * @param maxTimeToWaitForWorkspaceCount the maximum time to wait for the initial
-   *                                       WORKSPACE_COUNT_CHANGED event after the HELLO;
-   *                                       may be null if not waiting for this event
+   *                                       WORKSPACE_COUNT_CHANGED event after the HELLO; may be
+   *                                       null if not waiting for this event
    * @return A ConnectedWorkspace instance representing the connection.
    */
   default ConnectedWorkspace connectWorkspace(
@@ -339,14 +336,15 @@ public interface WebsocketClients {
   ) {
 
     if (maxTimeToWaitForWorkspaceCount != null && !sayHello) {
-      throw new IllegalArgumentException("maxTimeToWaitForWorkspaceCount only makes sense when saying hello.");
+      throw new IllegalArgumentException(
+          "maxTimeToWaitForWorkspaceCount only makes sense when saying hello.");
     }
 
     Log.infof("Connecting websocket at %s", uri);
     Session session = null;
     try {
       session = ContainerProvider.getWebSocketContainer()
-                                 .connectToServer(TestWebsocketClient.class, uri);
+          .connectToServer(TestWebsocketClient.class, uri);
     } catch (DeploymentException | IOException e) {
       fail("Failed to connect to websocket endpoint: " + e.getMessage());
     }
@@ -360,10 +358,11 @@ public interface WebsocketClients {
     if (sayHello) {
       workspace = workspace.sayHello();
 
-      if(maxTimeToWaitForWorkspaceCount != null) {
+      if (maxTimeToWaitForWorkspaceCount != null) {
         // Block until we get the initial WORKSPACE_COUNT_CHANGED message, the expected
         // response to the HELLO message.
-        workspace.waitForMessageOfType(MessageType.WORKSPACE_COUNT_CHANGED, maxTimeToWaitForWorkspaceCount);
+        workspace.waitForMessageOfType(MessageType.WORKSPACE_COUNT_CHANGED,
+            maxTimeToWaitForWorkspaceCount);
       }
     }
 
@@ -379,8 +378,9 @@ public interface WebsocketClients {
   }
 
   /**
-   * Get at the knownWorkspacesBean's knownWorkspacePIDs field through cheating reflection
-   * (That functionality not needed by any external business methods.)
+   * Get at the knownWorkspacesBean's knownWorkspacePIDs field through cheating reflection (That
+   * functionality not needed by any external business methods.)
+   *
    * @param knownWorkspacesBean the KnownWorkspacesBean bean to get the field from
    */
   static Set<WorkspacePid> getKnownWorkspacePidsFromBean(KnownWorkspacesBean knownWorkspacesBean) {
@@ -403,7 +403,8 @@ public interface WebsocketClients {
    * @param pids                the workspace process IDs to add
    * @see #resetKnownWorkspacesBean(KnownWorkspacesBean)
    */
-  static void expectKnownWorkspacePids(KnownWorkspacesBean knownWorkspacesBean, WorkspacePid... pids) {
+  static void expectKnownWorkspacePids(KnownWorkspacesBean knownWorkspacesBean,
+      WorkspacePid... pids) {
     stream(pids)
         .forEach(pid ->
             getKnownWorkspacePidsFromBean(knownWorkspacesBean).add(pid)
@@ -417,7 +418,8 @@ public interface WebsocketClients {
    */
   static void resetKnownWorkspacesBean(KnownWorkspacesBean knownWorkspacesBean) {
     try {
-      Field allowNoWorkspacesField = knownWorkspacesBean.getClass().getDeclaredField("allowNoWorkspaces");
+      Field allowNoWorkspacesField = knownWorkspacesBean.getClass()
+          .getDeclaredField("allowNoWorkspaces");
       allowNoWorkspacesField.setAccessible(true);
       allowNoWorkspacesField.set(knownWorkspacesBean, true);
     } catch (NoSuchFieldException | IllegalAccessException e) {
@@ -432,7 +434,7 @@ public interface WebsocketClients {
    *
    * @param accessTokenBean the bean to set the token in
    * @param value           The value to set the access token to.
-   * @see #resetAccessTokenBean(SidecarAccessTokenBean) 
+   * @see #resetAccessTokenBean(SidecarAccessTokenBean)
    */
   static void setAuthToken(SidecarAccessTokenBean accessTokenBean, String value) {
     try {
@@ -446,8 +448,9 @@ public interface WebsocketClients {
 
   /**
    * Utility to reset the access token in the SidecarAccessTokenBean.
+   *
    * @param accessTokenBean the bean to reset
-   * @see #setAuthToken(SidecarAccessTokenBean, String) 
+   * @see #setAuthToken(SidecarAccessTokenBean, String)
    */
   static void resetAccessTokenBean(SidecarAccessTokenBean accessTokenBean) {
     setAuthToken(accessTokenBean, null);

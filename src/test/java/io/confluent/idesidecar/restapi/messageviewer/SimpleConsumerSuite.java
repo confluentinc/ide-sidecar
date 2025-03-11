@@ -140,9 +140,11 @@ public interface SimpleConsumerSuite extends ITSuite {
     for (int i = 0; i < 3; i++) {
       PartitionConsumeRecord record = partitionData.records().get(i);
       MyMessage originalMessage = messages.get(i);
-      assertEquals(originalMessage.getName(), record.value().get("name").asText(), "Name should match");
+      assertEquals(originalMessage.getName(), record.value().get("name").asText(),
+          "Name should match");
       assertEquals(originalMessage.getAge(), record.value().get("age").asInt(), "Age should match");
-      assertEquals(originalMessage.getIsActive(), record.value().get("is_active").asBoolean(), "IsActive should match");
+      assertEquals(originalMessage.getIsActive(), record.value().get("is_active").asBoolean(),
+          "IsActive should match");
 
       // Value schema details should match
       assertEquals(valueSchema.getId(), record.metadata().valueMetadata().schemaId());
@@ -160,6 +162,7 @@ public interface SimpleConsumerSuite extends ITSuite {
     createTopic(topic);
 
     record Person(int id, String name, String email) {
+
     }
 
     // And write records to Kafka
@@ -245,7 +248,7 @@ public interface SimpleConsumerSuite extends ITSuite {
     config.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, "snappy");
     config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
     config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-    try(var producer = new KafkaProducer<String, String>(config)) {
+    try (var producer = new KafkaProducer<String, String>(config)) {
       // And write records to Kafka
       var records = new String[][]{
           {"key1", "value1"},
@@ -279,7 +282,7 @@ public interface SimpleConsumerSuite extends ITSuite {
     config.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, compressionType);
     config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
     config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-    try(var producer = new KafkaProducer<String, String>(config)) {
+    try (var producer = new KafkaProducer<String, String>(config)) {
       // And write records to Kafka
       var records = new String[][]{
           {"key1", "value1"},

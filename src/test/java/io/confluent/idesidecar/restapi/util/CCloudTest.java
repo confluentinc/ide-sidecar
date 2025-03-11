@@ -1,6 +1,7 @@
 package io.confluent.idesidecar.restapi.util;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import io.confluent.idesidecar.restapi.util.CCloud.CloudProvider;
 import io.confluent.idesidecar.restapi.util.CCloud.CloudProviderRegion;
@@ -53,7 +54,9 @@ class CCloudTest {
           String expectedBootstrapServers,
           String lsrcId,
           String expectedSchemaRegistryUri
-      ) {}
+      ) {
+
+      }
 
       var inputs = List.of(
           new TestCase(
@@ -104,8 +107,10 @@ class CCloudTest {
               "Testing: " + input.displayName,
               () -> {
                 // Construct a KafkaEndpoint object from the input
-                var network = Optional.ofNullable(input.networkId != null ? new NetworkId(input.networkId) : null);
-                var routing = Optional.ofNullable(input.routing != null ? Routing.parse(input.routing) : null);
+                var network = Optional.ofNullable(
+                    input.networkId != null ? new NetworkId(input.networkId) : null);
+                var routing = Optional.ofNullable(
+                    input.routing != null ? Routing.parse(input.routing) : null);
                 var endpoint = new CCloud.KafkaEndpoint(
                     KafkaClusterIdentifier.parse(input.clusterId).orElseThrow(),
                     network,
@@ -126,8 +131,10 @@ class CCloudTest {
                   var srEndpoint = endpoint.getSchemaRegistryEndpoint(new LsrcId(input.lsrcId));
                   assertEquals(input.expectedSchemaRegistryUri, srEndpoint.getUri().toString());
 
-                  var srEndpoint2 = CCloud.SchemaRegistryEndpoint.fromUri(srEndpoint.getUri().toString());
-                  assertEquals(input.expectedSchemaRegistryUri, srEndpoint2.orElseThrow().getUri().toString());
+                  var srEndpoint2 = CCloud.SchemaRegistryEndpoint.fromUri(
+                      srEndpoint.getUri().toString());
+                  assertEquals(input.expectedSchemaRegistryUri,
+                      srEndpoint2.orElseThrow().getUri().toString());
                 }
               })
           );

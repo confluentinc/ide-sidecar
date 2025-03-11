@@ -34,7 +34,8 @@ public interface DirectConnectionSuite extends ITSuite {
   default void shouldTestDirectConnection() {
     // Not all environments support direct connections
     var spec = environment().directConnectionSpec().orElse(null);
-    assertNotNull(spec, "Expected environment %s has direct connection spec".formatted(environment().name()));
+    assertNotNull(spec,
+        "Expected environment %s has direct connection spec".formatted(environment().name()));
 
     // Test the connection and mark it as the one we'll use
     var rsps = testConnectionWithResponse(spec)
@@ -75,7 +76,6 @@ public interface DirectConnectionSuite extends ITSuite {
           .body("status.schema_registry", nullValue())
           .extract().body().as(Connection.class);
 
-
       // Now without the Kafka cluster
       testConnectionWithResponse(spec.withKafkaCluster(null))
           .statusCode(200)
@@ -101,7 +101,8 @@ public interface DirectConnectionSuite extends ITSuite {
   default void shouldTestDirectConnectionWithoutId() {
     // Not all environments support direct connections
     var spec = environment().directConnectionSpec().orElse(null);
-    assertNotNull(spec, "Expected environment %s has direct connection spec".formatted(environment().name()));
+    assertNotNull(spec,
+        "Expected environment %s has direct connection spec".formatted(environment().name()));
 
     // Test the connection with a spec that has no ID
     testConnectionWithResponse(spec.withId(null))
@@ -124,7 +125,8 @@ public interface DirectConnectionSuite extends ITSuite {
   default void shouldCreateAndListAndGetAndDeleteDirectConnection() {
     // Not all environments support direct connections
     var spec = environment().directConnectionSpec().orElse(null);
-    assertNotNull(spec, "Expected environment %s has direct connection spec".formatted(environment().name()));
+    assertNotNull(spec,
+        "Expected environment %s has direct connection spec".formatted(environment().name()));
 
     // Create the connection and mark it as the one we'll use
     var connection = createConnection(spec);
@@ -192,7 +194,8 @@ public interface DirectConnectionSuite extends ITSuite {
         .body("spec.type", equalTo(ConnectionType.DIRECT.name()))
         .body("spec.local_config", nullValue())
         .body("spec.ccloud_config", nullValue())
-        .body("spec.kafka_cluster.bootstrap_servers", equalTo(spec.kafkaClusterConfig().bootstrapServers()))
+        .body("spec.kafka_cluster.bootstrap_servers",
+            equalTo(spec.kafkaClusterConfig().bootstrapServers()))
         .extract().body().as(Connection.class);
 
     if (startedWithKafka) {
@@ -213,7 +216,8 @@ public interface DirectConnectionSuite extends ITSuite {
           .body("data.directConnections[0].name", equalTo(spec.name()))
           .body("data.directConnections[0].type", equalTo("DIRECT"))
           .body("data.directConnections[0].kafkaCluster.id", notNullValue())
-          .body("data.directConnections[0].kafkaCluster.bootstrapServers", equalTo(spec.kafkaClusterConfig().bootstrapServers()));
+          .body("data.directConnections[0].kafkaCluster.bootstrapServers",
+              equalTo(spec.kafkaClusterConfig().bootstrapServers()));
     }
     if (startedWithSr) {
       submitDirectConnectionsGraphQL()
@@ -221,7 +225,8 @@ public interface DirectConnectionSuite extends ITSuite {
           .body("data.directConnections[0].name", equalTo(spec.name()))
           .body("data.directConnections[0].type", equalTo("DIRECT"))
           .body("data.directConnections[0].schemaRegistry.id", notNullValue())
-          .body("data.directConnections[0].schemaRegistry.uri", equalTo(spec.schemaRegistryConfig().uri()));
+          .body("data.directConnections[0].schemaRegistry.uri",
+              equalTo(spec.schemaRegistryConfig().uri()));
     }
 
     if (startedWithSr && startedWithKafka) {
@@ -242,7 +247,8 @@ public interface DirectConnectionSuite extends ITSuite {
           .body("spec.type", equalTo(ConnectionType.DIRECT.name()))
           .body("spec.local_config", nullValue())
           .body("spec.ccloud_config", nullValue())
-          .body("spec.kafka_cluster.bootstrap_servers", equalTo(specNoSr.kafkaClusterConfig().bootstrapServers()))
+          .body("spec.kafka_cluster.bootstrap_servers",
+              equalTo(specNoSr.kafkaClusterConfig().bootstrapServers()))
           .body("spec.schema_registry", nullValue())
           .extract().body().as(Connection.class);
 
@@ -293,7 +299,8 @@ public interface DirectConnectionSuite extends ITSuite {
         .body("errors", hasSize(1))
         .body("errors[0].code", equalTo("None"))
         .body("errors[0].title", equalTo("Not Found"))
-        .body("errors[0].detail", equalTo("Connection %s is not found.".formatted(connection.id())));
+        .body("errors[0].detail",
+            equalTo("Connection %s is not found.".formatted(connection.id())));
 
     // Query for resources does not find our connection
     assertFalse(
@@ -304,7 +311,8 @@ public interface DirectConnectionSuite extends ITSuite {
   @Test
   default void shouldTransitionToInitialStatusOnConnectionUpdate() throws JsonProcessingException {
     var correctSpec = environment().directConnectionSpec().orElse(null);
-    assertNotNull(correctSpec, "Expected environment %s has direct connection spec".formatted(environment().name()));
+    assertNotNull(correctSpec,
+        "Expected environment %s has direct connection spec".formatted(environment().name()));
 
     correctSpec = correctSpec.withId("direct-connection-update");
 
@@ -348,11 +356,11 @@ public interface DirectConnectionSuite extends ITSuite {
     // Now wait until the status changes to SUCCESS
     await().atMost(Duration.ofSeconds(10)).untilAsserted(() ->
         given()
-          .when()
-          .get("/gateway/v1/connections/{id}", connection.id())
-          .then()
-          .statusCode(200)
-          .body("status.kafka_cluster.state", equalTo(ConnectedState.SUCCESS.name()))
+            .when()
+            .get("/gateway/v1/connections/{id}", connection.id())
+            .then()
+            .statusCode(200)
+            .body("status.kafka_cluster.state", equalTo(ConnectedState.SUCCESS.name()))
     );
 
     // Update the connection with incorrect Kafka cluster credentials

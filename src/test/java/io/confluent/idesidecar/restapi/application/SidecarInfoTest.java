@@ -3,7 +3,6 @@ package io.confluent.idesidecar.restapi.application;
 import static io.confluent.idesidecar.restapi.application.SidecarInfo.OS_ARCH_KEY;
 import static io.confluent.idesidecar.restapi.application.SidecarInfo.OS_NAME_KEY;
 import static io.confluent.idesidecar.restapi.application.SidecarInfo.OS_VERSION_KEY;
-import static io.confluent.idesidecar.restapi.application.SidecarInfo.SIDECAR_VERSION;
 import static io.confluent.idesidecar.restapi.application.SidecarInfo.VSCODE_EXTENSION_VERSION_KEY;
 import static io.confluent.idesidecar.restapi.application.SidecarInfo.VSCODE_VERSION_KEY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -35,6 +34,7 @@ public class SidecarInfoTest {
       String vscodeVersionPrefix,
       String userAgent
   ) {
+
     Map<String, String> asProperties() {
       // Construct the "system" properties from the input
       Map<String, String> props = new HashMap<>();
@@ -144,7 +144,7 @@ public class SidecarInfoTest {
             new SidecarInfo.VsCode("20.1.2", "1.2.3"),
             "v",
             "Confluent-for-VSCode/v1.2.3 (https://confluent.io; support@confluent.io) sidecar/v%s (windows/x86_64)")
-,
+        ,
         new TestInputs(
             "Windows 10 info without VS Code",
             "Windows 10",
@@ -205,7 +205,7 @@ public class SidecarInfoTest {
             new SidecarInfo.VsCode("20.1.2", "1.2.3"),
             "v",
             "Confluent-for-VSCode/v1.2.3 (https://confluent.io; support@confluent.io) sidecar/v%s (unix/sparc)")
-,
+        ,
         new TestInputs(
             "Solaris info with VS Code and version prefix",
             "Solaris 4",
@@ -233,7 +233,8 @@ public class SidecarInfoTest {
               if (input.vscode != null) {
                 assertTrue(sidecar.vsCode().isPresent());
                 assertEquals(input.vscode.version(), sidecar.vsCode().get().version());
-                assertEquals(input.vscode.extensionVersion(), sidecar.vsCode().get().extensionVersion());
+                assertEquals(input.vscode.extensionVersion(),
+                    sidecar.vsCode().get().extensionVersion());
               } else {
                 assertFalse(sidecar.vsCode().isPresent());
               }
@@ -287,7 +288,8 @@ public class SidecarInfoTest {
       // And there is a non-other type
       assertNotNull(sidecar.osType());
       assertNotEquals(OperatingSystemType.Other, sidecar.osType());
-      Log.infof("Current OS info: type=%s, name='%s', version='%s'", sidecar.osType(), sidecar.osName(), sidecar.osVersion());
+      Log.infof("Current OS info: type=%s, name='%s', version='%s'", sidecar.osType(),
+          sidecar.osName(), sidecar.osVersion());
     } finally {
       // Unset the system properties we just set
       if (existingVscodeVersion == null) {

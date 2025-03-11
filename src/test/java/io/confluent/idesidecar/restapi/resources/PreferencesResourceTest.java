@@ -28,6 +28,7 @@ import org.junit.jupiter.api.TestMethodOrder;
 @TestHTTPEndpoint(PreferencesResource.class)
 @TestMethodOrder(OrderAnnotation.class)
 public class PreferencesResourceTest {
+
   @Inject
   WebClientFactory webClientFactory;
 
@@ -62,14 +63,14 @@ public class PreferencesResourceTest {
         .when()
         .body(
             """
-            {
-              "api_version": "gateway/v1",
-              "kind": "Preferences",
-              "spec": {
-                "trust_all_certificates": true
-              }
-            }
-            """
+                {
+                  "api_version": "gateway/v1",
+                  "kind": "Preferences",
+                  "spec": {
+                    "trust_all_certificates": true
+                  }
+                }
+                """
         )
         .header("Content-Type", "application/json")
         .put()
@@ -97,15 +98,15 @@ public class PreferencesResourceTest {
         .when()
         .body(
             """
-            {
-              "api_version": "gateway/v1",
-              "kind": "Preferences",
-              "spec": {
-                "trust_all_certificates": true,
-                "tls_pem_paths": ["%s"]
-              }
-            }
-            """.formatted(certPath)
+                {
+                  "api_version": "gateway/v1",
+                  "kind": "Preferences",
+                  "spec": {
+                    "trust_all_certificates": true,
+                    "tls_pem_paths": ["%s"]
+                  }
+                }
+                """.formatted(certPath)
         )
         .header("Content-Type", "application/json")
         .put()
@@ -153,15 +154,15 @@ public class PreferencesResourceTest {
         .when()
         .body(
             """
-            {
-              "api_version": "gateway/v1",
-              "kind": "Preferences",
-              "spec": {
-                "tls_pem_paths": null,
-                "trust_all_certificates": null
-              }
-            }
-            """
+                {
+                  "api_version": "gateway/v1",
+                  "kind": "Preferences",
+                  "spec": {
+                    "tls_pem_paths": null,
+                    "trust_all_certificates": null
+                  }
+                }
+                """
         )
         .header("Content-Type", "application/json")
         .put()
@@ -182,14 +183,14 @@ public class PreferencesResourceTest {
         .when()
         .body(
             """
-            {
-              "api_version": "gateway/v1",
-              "kind": "Preferences",
-              "spec": {
-                "tls_pem_paths": ["cert-does-not-exist.pem"]
-              }
-            }
-            """
+                {
+                  "api_version": "gateway/v1",
+                  "kind": "Preferences",
+                  "spec": {
+                    "tls_pem_paths": ["cert-does-not-exist.pem"]
+                  }
+                }
+                """
         )
         .header("Content-Type", "application/json")
         .put()
@@ -212,9 +213,10 @@ public class PreferencesResourceTest {
 
   /**
    * Get the certificates trusted by the provided web client.
+   *
    * @param webClient The web client.
    * @return The list of certs trusted by the web client; empty list, if the web client does not
-   *         trust any custom cert.
+   * trust any custom cert.
    */
   List<String> getTrustedCertsOfWebClient(WebClient webClient) {
     try {
@@ -235,6 +237,7 @@ public class PreferencesResourceTest {
 
   /**
    * Returns the full path of the cert with the given name in the test/resources folder.
+   *
    * @param certName Name of the cert
    * @return Full path to cert file.
    */

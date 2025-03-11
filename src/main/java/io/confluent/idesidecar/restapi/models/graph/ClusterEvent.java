@@ -16,9 +16,9 @@ import jakarta.enterprise.util.AnnotationLiteral;
  * @param cluster        the cluster information
  */
 public record ClusterEvent(
-      String connectionId,
-      ConnectionType connectionType,
-      Cluster cluster
+    String connectionId,
+    ConnectionType connectionType,
+    Cluster cluster
 ) {
 
   public static <ClusterT extends Cluster> ClusterT onLoad(

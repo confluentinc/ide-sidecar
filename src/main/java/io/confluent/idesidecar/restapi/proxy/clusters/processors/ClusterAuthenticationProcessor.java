@@ -8,13 +8,13 @@ import io.confluent.idesidecar.restapi.exceptions.ProcessorFailedException;
 import io.confluent.idesidecar.restapi.processors.Processor;
 import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
 import io.vertx.core.Future;
-import jakarta.enterprise.context.ApplicationScoped;
 
 /**
  * Processor to check if the cluster request is authenticated. Checks for existence of data plane
  * token in case of Confluent Cloud clusters.
  */
-public class ClusterAuthenticationProcessor<T extends ClusterProxyContext> extends Processor<T, Future<T>> {
+public class ClusterAuthenticationProcessor<T extends ClusterProxyContext> extends
+    Processor<T, Future<T>> {
 
   @Override
   public Future<T> process(T context) {

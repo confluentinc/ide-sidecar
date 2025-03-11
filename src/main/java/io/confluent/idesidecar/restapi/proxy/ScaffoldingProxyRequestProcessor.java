@@ -8,8 +8,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 /**
- * Processor that ships the request to the target server and updates the context with the
- * response.
+ * Processor that ships the request to the target server and updates the context with the response.
  */
 @ApplicationScoped
 public class ScaffoldingProxyRequestProcessor extends

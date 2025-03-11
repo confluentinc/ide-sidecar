@@ -3,12 +3,12 @@ package io.confluent.idesidecar.restapi.kafkarest;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.containsString;
 
-import org.junit.jupiter.api.Test;
-import org.junitpioneer.jupiter.cartesian.ArgumentSets;
-import org.junitpioneer.jupiter.cartesian.CartesianTest;
 import java.time.Duration;
 import java.util.Map;
 import java.util.Set;
+import org.junit.jupiter.api.Test;
+import org.junitpioneer.jupiter.cartesian.ArgumentSets;
+import org.junitpioneer.jupiter.cartesian.CartesianTest;
 
 public interface RecordsV3WithoutSRSuite extends RecordsV3BaseSuite {
 
@@ -31,7 +31,8 @@ public interface RecordsV3WithoutSRSuite extends RecordsV3BaseSuite {
                 Set.of()
             )
                 .statusCode(400)
-                .body("message", containsString("This connection does not have an associated Schema Registry."))
+                .body("message",
+                    containsString("This connection does not have an associated Schema Registry."))
         );
   }
 

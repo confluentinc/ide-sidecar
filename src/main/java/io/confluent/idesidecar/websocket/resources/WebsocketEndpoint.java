@@ -1,8 +1,6 @@
 package io.confluent.idesidecar.websocket.resources;
 
-import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.json.JsonMapper;
 import graphql.VisibleForTesting;
 import io.confluent.idesidecar.restapi.application.KnownWorkspacesBean;
 import io.confluent.idesidecar.restapi.application.KnownWorkspacesBean.WorkspacePid;
@@ -18,9 +16,9 @@ import io.quarkus.scheduler.Scheduled.ConcurrentExecution;
 import io.smallrye.common.constraint.Nullable;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
+import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
-import jakarta.inject.Inject;
 import jakarta.validation.constraints.NotNull;
 import jakarta.websocket.OnClose;
 import jakarta.websocket.OnError;
@@ -49,11 +47,15 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 @Singleton
 public class WebsocketEndpoint {
 
-  /** How often to check for inactive sessions to purge. */
+  /**
+   * How often to check for inactive sessions to purge.
+   */
   @ConfigProperty(name = "ide-sidecar.websockets.purge-interval-seconds")
   Provider<Integer> purgeIntervalSeconds;
 
-  /** How long to allow inactive sessions to linger before purging them. */
+  /**
+   * How long to allow inactive sessions to linger before purging them.
+   */
   @ConfigProperty(name = "ide-sidecar.websockets.initial-grace-seconds", defaultValue = "30")
   Provider<Integer> initialGraceSeconds;
 
@@ -64,26 +66,35 @@ public class WebsocketEndpoint {
   @Inject
   ObjectMapper mapper;
 
-  /** Typesafe wrapper for a websocket session id (string). */
-  public static record SessionKey(String sessionId) {
+  /**
+   * Typesafe wrapper for a websocket session id (string).
+   */
+  public record SessionKey(String sessionId) {
+
     @Override
     public String toString() {
       return sessionId;
     }
   }
 
-  /** Wrapper for a websocket session, with additional state tracking. */
+  /**
+   * Wrapper for a websocket session, with additional state tracking.
+   */
   static class WorkspaceWebsocketSession {
+
     private final ObjectMapper mapper;
     private final SessionKey key;
     private final Session session;
     private final Instant createdAt;
 
-    /** Will be null if session has not sent HELLO_WORKSPACE message carrying its process id. */
+    /**
+     * Will be null if session has not sent HELLO_WORKSPACE message carrying its process id.
+     */
     @Nullable
     private final WorkspacePid workspacePid;
 
-    WorkspaceWebsocketSession(ObjectMapper mapper, Session session, WorkspacePid workspacePid, Instant createdAt) {
+    WorkspaceWebsocketSession(ObjectMapper mapper, Session session, WorkspacePid workspacePid,
+        Instant createdAt) {
       this.mapper = mapper;
       this.session = session;
       this.key = new SessionKey(session.getId());
@@ -93,14 +104,16 @@ public class WebsocketEndpoint {
     }
 
     /**
-     * Return a new workspace session instance which knows its workspace pid, and thereby
-     * is 'active'.
+     * Return a new workspace session instance which knows its workspace pid, and thereby is
+     * 'active'.
      */
     public WorkspaceWebsocketSession buildActive(WorkspacePid workspacePid) {
       return new WorkspaceWebsocketSession(this.mapper, this.session, workspacePid, this.createdAt);
     }
 
-    /** The websocket session id in SessionKey wrapping, used as the key in the sessions map. */
+    /**
+     * The websocket session id in SessionKey wrapping, used as the key in the sessions map.
+     */
     public SessionKey key() {
       return key;
     }
@@ -118,8 +131,8 @@ public class WebsocketEndpoint {
     }
 
     /**
-     * Has this session sent a proper HELLO_WORKSPACE message and should be considered active
-     * for sending and receiving other messages?
+     * Has this session sent a proper HELLO_WORKSPACE message and should be considered active for
+     * sending and receiving other messages?
      */
     public boolean isActive() {
       return workspacePid != null;
@@ -130,8 +143,8 @@ public class WebsocketEndpoint {
     }
 
     /**
-     * Send the text message with the given message ID, and return a {@link Uni} that returns
-     * the message ID when the message is sent.
+     * Send the text message with the given message ID, and return a {@link Uni} that returns the
+     * message ID when the message is sent.
      *
      * @param messageText
      * @param messageId
@@ -167,8 +180,8 @@ public class WebsocketEndpoint {
   // Done with WorkspaceWebsocketSession definition, on to WorkspaceWebsocketSession proper.
 
   /**
-   * Map of all workspace sessions (valid or not), keyed by the websocket
-   * session id wrapped as SessionKey.
+   * Map of all workspace sessions (valid or not), keyed by the websocket session id wrapped as
+   * SessionKey.
    */
   final Map<SessionKey, WorkspaceWebsocketSession> sessions = new ConcurrentHashMap<>();
 
@@ -206,8 +219,8 @@ public class WebsocketEndpoint {
       String sessionsAdjective
   ) throws IllegalArgumentException {
     var activeWorkspaceSessions = sessions.values().stream()
-                                          .filter(filter)
-                                          .toList();
+        .filter(filter)
+        .toList();
 
     if (activeWorkspaceSessions.isEmpty()) {
       Log.debugf("No %s workspaces to broadcast message to.", sessionsAdjective);
@@ -245,7 +258,7 @@ public class WebsocketEndpoint {
    * @param sessionsAdjective the adjective to describe the sessions in the log message.
    * @throws IOException              if there is an error serializing the message to JSON.
    * @throws IllegalArgumentException if the headers of the message are not valid for broadcasting.
-   * */
+   */
   public Multi<String> broadcast(
       String jsonMessage,
       String messageId,
@@ -254,8 +267,8 @@ public class WebsocketEndpoint {
   ) {
 
     var activeWorkspaceSessions = sessions.values().stream()
-                                          .filter(filter)
-                                          .toList();
+        .filter(filter)
+        .toList();
 
     if (activeWorkspaceSessions.isEmpty()) {
       Log.debugf("No %s workspaces to broadcast message to.", sessionsAdjective);
@@ -277,12 +290,12 @@ public class WebsocketEndpoint {
    * Handler for new websocket sessions.
    *
    * <p>When a new websocket session is opened, the workspace process id should be passed as a
-   * request parameter. If it is not, the session is closed. If the workspace id is not known to
-   * the sidecar {@link KnownWorkspacesBean}, the session is closed. Otherwise, a new
+   * request parameter. If it is not, the session is closed. If the workspace id is not known to the
+   * sidecar {@link KnownWorkspacesBean}, the session is closed. Otherwise, a new
    * {@link WorkspaceSession} object is created and stored in the sessions map, and the updated
    * current connection count is broadcast to all workspace connections (inclusive).
    *
-   * @param session      the session that was opened
+   * @param session the session that was opened
    * @throws IOException if there is an error opening the session, or closing the session if the
    *                     workspace id is invalid or not provided.
    */
@@ -301,8 +314,9 @@ public class WebsocketEndpoint {
   }
 
   /**
-   * Handle an incoming message from a websocket session. Called by the websocket server
-   * when a message is received.
+   * Handle an incoming message from a websocket session. Called by the websocket server when a
+   * message is received.
+   *
    * @param messageString The message as a JSON string, which will be parsed as a
    *                      {@link io.confluent.idesidecar.websocket.messages.Message} object
    * @param senderSession The websocket session that sent the message.
@@ -350,23 +364,24 @@ public class WebsocketEndpoint {
     broadcast(
         messageString,
         m.id(),
-        wws -> wws.session().isOpen() && wws.isActive() && !wws.workspacePid().equals(workspaceSession.workspacePid()),
+        wws -> wws.session().isOpen() && wws.isActive() && !wws.workspacePid()
+            .equals(workspaceSession.workspacePid()),
         "other"
     );
   }
 
   /**
-   * Handle the first message from a workspace session,
-   * which should be a HELLO_WORKSPACE message.
-   *
-   * If it is a valid HELLO_WORKSPACE message, the workspace is authorized and added to the
-   * sessions map, and the new workspace count is broadcast to all workspaces (inclusive).
-   * Otherwise an error message is sent to the session and it is closed.
+   * Handle the first message from a workspace session, which should be a HELLO_WORKSPACE message.
+   * <p>
+   * If it is a valid HELLO_WORKSPACE message, the workspace is authorized and added to the sessions
+   * map, and the new workspace count is broadcast to all workspaces (inclusive). Otherwise an error
+   * message is sent to the session and it is closed.
    *
    * @param workspaceSession the session that sent the message.
-   * @param messageString the JSON string message.
+   * @param messageString    the JSON string message.
    */
-  private void handleHelloMessage(WorkspaceWebsocketSession workspaceSession, String messageString) {
+  private void handleHelloMessage(WorkspaceWebsocketSession workspaceSession,
+      String messageString) {
 
     // deserializeMessage() will close the connection if the message is invalid and
     // not a HELLO_WORKSPACE message
@@ -409,13 +424,13 @@ public class WebsocketEndpoint {
         .toList();
 
     if (!withSamePid.isEmpty()) {
-        sendErrorAndCloseSession(
-            workspaceSession,
-            message.headers().id(),
-            "Workspace id %s already connected. Closing session.",
-            workspacePid
-        );
-        return;
+      sendErrorAndCloseSession(
+          workspaceSession,
+          message.headers().id(),
+          "Workspace id %s already connected. Closing session.",
+          workspacePid
+      );
+      return;
     }
 
     // All good! Upgrade the session in the map to an active workspace session.
@@ -423,7 +438,8 @@ public class WebsocketEndpoint {
         workspaceSession.key(),
         workspaceSession.buildActive(workspacePid)
     );
-    Log.infof("Session %s HELLO as pid %s authorized and marked active.", workspaceSession.key(), workspacePid);
+    Log.infof("Session %s HELLO as pid %s authorized and marked active.", workspaceSession.key(),
+        workspacePid);
 
     // Announce to all  workspaces (inclusive) that the active workspace count has changed.
     broadcastWorkspacesChanged();
@@ -460,10 +476,10 @@ public class WebsocketEndpoint {
   }
 
   /**
-   * Send a message to all workspaces that the count of authorized workspaces has changed.
-   * Used whenever a workspace is added or removed.
+   * Send a message to all workspaces that the count of authorized workspaces has changed. Used
+   * whenever a workspace is added or removed.
    */
-  private void broadcastWorkspacesChanged()  {
+  private void broadcastWorkspacesChanged() {
     // changedWorkspace was either just added or removed. Inform all workspaces about the
     // new connected/authorized workspace count.
 
@@ -482,11 +498,14 @@ public class WebsocketEndpoint {
     broadcast(message);
   }
 
-  /** Has purgeInactiveSessions logged the first time? */
-  boolean purgeLogged = false;
   /**
-   * Purge any sessions that have lingered too long
-   * in the initial state without saying hello (""not active" sessions).
+   * Has purgeInactiveSessions logged the first time?
+   */
+  boolean purgeLogged = false;
+
+  /**
+   * Purge any sessions that have lingered too long in the initial state without saying hello (""not
+   * active" sessions).
    */
   @Scheduled(
       every = "${ide-sidecar.websockets.purge-interval-seconds}s",
@@ -497,7 +516,8 @@ public class WebsocketEndpoint {
     // Only log the first time to not to be too spammy.
     if (!purgeLogged) {
       Log.infof("Checking for overdue inactive websocket sessions to purge every %ds,"
-          + " max allowed initial connection duration %ds.", purgeIntervalSeconds.get(), maxAllowedSeconds);
+              + " max allowed initial connection duration %ds.", purgeIntervalSeconds.get(),
+          maxAllowedSeconds);
       purgeLogged = true;
     }
 
@@ -505,19 +525,20 @@ public class WebsocketEndpoint {
     var now = Instant.now();
 
     var toPurge = sessions.values().stream()
-        .filter(wws -> !wws.isActive() && Duration.between(wws.createdAt(), now).toSeconds() > maxAllowedSeconds)
+        .filter(wws -> !wws.isActive()
+            && Duration.between(wws.createdAt(), now).toSeconds() > maxAllowedSeconds)
         .collect(Collectors.toList());
 
     // Purge any identified sessions.
-    if(!toPurge.isEmpty()) {
+    if (!toPurge.isEmpty()) {
       Log.infof("Purging %d inactive session(s) that have lingered too long.", toPurge.size());
       toPurge.forEach(wws -> {
         sendErrorAndCloseSession(
-              wws,
-              null,
-              "Inactive session %s lingered too long. Closing.",
-              wws.key()
-          );
+            wws,
+            null,
+            "Inactive session %s lingered too long. Closing.",
+            wws.key()
+        );
       });
     }
   }
@@ -526,13 +547,14 @@ public class WebsocketEndpoint {
       WorkspaceWebsocketSession workspaceSession,
       String originalMessageId,
       String message,
-      Object...messageParams
+      Object... messageParams
   ) {
     sendErrorAndCloseSession(workspaceSession.session(), originalMessageId, message, messageParams);
   }
 
   /**
    * Send an PROTOCOL_ERROR message to a websocket session, then close the session.
+   *
    * @param session the session to send the error message to.
    * @param message the error message to send.
    */
@@ -540,7 +562,7 @@ public class WebsocketEndpoint {
       Session session,
       String originalMessageId,
       String message,
-      Object...messageParams
+      Object... messageParams
   ) {
     // Remove the session from session map if it exists. It really should exist.
     // otherwise onOpen is broken.
@@ -559,7 +581,7 @@ public class WebsocketEndpoint {
       );
       // Do not convert to getBasicRemote(), for some reason breaks tests.
       session.getAsyncRemote()
-             .sendText(mapper.writeValueAsString(errorMessage)).get();
+          .sendText(mapper.writeValueAsString(errorMessage)).get();
     } catch (IOException | InterruptedException | ExecutionException e) {
       Log.errorf(
           e,
@@ -587,6 +609,7 @@ public class WebsocketEndpoint {
 
   /**
    * Validate that the headers are suitable for a broadcast sidecar -> all workspaces message.
+   *
    * @param outboundMessage the message intended to be sent.
    * @return the validated headers of the message.
    * @throws IllegalArgumentException if the headers are not suitable for broadcasting.
@@ -608,10 +631,10 @@ public class WebsocketEndpoint {
   }
 
   /**
-   * Deserialize a message from a JSON string, and optionally validate that
-   * it is of the expected type and body payload.
-   * If the message is invalid, an error message is sent to the session, the session is closed, and
-   * null is returned.
+   * Deserialize a message from a JSON string, and optionally validate that it is of the expected
+   * type and body payload. If the message is invalid, an error message is sent to the session, the
+   * session is closed, and null is returned.
+   *
    * @param workspaceSession the session that sent the message.
    * @param messageString    the JSON string message.
    * @param expectedType     the expected message type.
@@ -671,10 +694,9 @@ public class WebsocketEndpoint {
   }
 
   /**
-   * Validate originator message header vs expected value.
-   * If invalid, will send an error message to the session, remove it from sessions map,
-   * and close the session, then return false.
-   * If valid, will return true
+   * Validate originator message header vs expected value. If invalid, will send an error message to
+   * the session, remove it from sessions map, and close the session, then return false. If valid,
+   * will return true
    *
    * @param message the message to validate.
    */
@@ -698,7 +720,7 @@ public class WebsocketEndpoint {
       return false;
     }
 
-    if (! claimedWorkspacePid.equals(expectedWorkspacePid.id())) {
+    if (!claimedWorkspacePid.equals(expectedWorkspacePid.id())) {
       sendErrorAndCloseSession(
           session,
           message.headers().id(),

@@ -3,8 +3,12 @@ package io.confluent.idesidecar.restapi.util;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import com.github.dockerjava.api.model.Container;
-import io.confluent.idesidecar.restapi.credentials.*;
+import io.confluent.idesidecar.restapi.credentials.BasicCredentials;
+import io.confluent.idesidecar.restapi.credentials.Password;
+import io.confluent.idesidecar.restapi.credentials.ScramCredentials;
 import io.confluent.idesidecar.restapi.credentials.ScramCredentials.HashAlgorithm;
+import io.confluent.idesidecar.restapi.credentials.TLSConfig;
+import io.confluent.idesidecar.restapi.credentials.TLSConfigBuilder;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionSpecKafkaClusterConfigBuilder;
 import io.confluent.idesidecar.restapi.models.ConnectionSpecSchemaRegistryConfigBuilder;
@@ -29,11 +33,12 @@ import org.testcontainers.lifecycle.Startables;
 import org.testcontainers.utility.TestcontainersConfiguration;
 
 /**
- * A {@link TestEnvironment} that starts a CP Demo environment with a single-node Kafka cluster
- * (in KRaft mode), OpenLDAP, and Schema Registry.
- * Modeled after https://github.com/confluentinc/cp-demo/blob/7.7.1-post/docker-compose.yml
+ * A {@link TestEnvironment} that starts a CP Demo environment with a single-node Kafka cluster (in
+ * KRaft mode), OpenLDAP, and Schema Registry. Modeled after
+ * https://github.com/confluentinc/cp-demo/blob/7.7.1-post/docker-compose.yml
  */
 public class CPDemoTestEnvironment implements TestEnvironment {
+
   private Network network;
   private ToolsContainer tools;
   private OpenldapContainer ldap;
@@ -115,8 +120,8 @@ public class CPDemoTestEnvironment implements TestEnvironment {
 
   /**
    * We don't stop the containers after tests are run. This is used to stop the containers manually
-   * from the {@link #main(String[])} method. Refer to the Make target
-   * {@code make cp-demo-stop} for stopping the cp-demo containers.
+   * from the {@link #main(String[])} method. Refer to the Make target {@code make cp-demo-stop} for
+   * stopping the cp-demo containers.
    */
   @Override
   public void shutdown() {
@@ -313,19 +318,19 @@ public class CPDemoTestEnvironment implements TestEnvironment {
                 )
                 .build(),
             ConnectionSpecSchemaRegistryConfigBuilder
-              .builder()
-              .id("local-sr-cp-demo")
-              .uri("https://localhost:8085")
-              .credentials(
-                  new BasicCredentials(
-                      "superUser",
-                      new Password("superUser".toCharArray())
-                  )
-              )
-              .tlsConfig(new TLSConfig(
-                  schemaRegistryTrustStoreLocation, password
-              ))
-              .build()
+                .builder()
+                .id("local-sr-cp-demo")
+                .uri("https://localhost:8085")
+                .credentials(
+                    new BasicCredentials(
+                        "superUser",
+                        new Password("superUser".toCharArray())
+                    )
+                )
+                .tlsConfig(new TLSConfig(
+                    schemaRegistryTrustStoreLocation, password
+                ))
+                .build()
         )
     );
   }
@@ -389,7 +394,8 @@ public class CPDemoTestEnvironment implements TestEnvironment {
   }
 
   /**
-   * Taken from https://github.com/testcontainers/testcontainers-java/issues/3081#issuecomment-1553064952
+   * Taken from
+   * https://github.com/testcontainers/testcontainers-java/issues/3081#issuecomment-1553064952
    */
   public static Network createReusableNetwork(String name) {
     if (!TestcontainersConfiguration.getInstance().environmentSupportsReuse()) {

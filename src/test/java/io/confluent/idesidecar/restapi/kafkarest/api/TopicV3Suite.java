@@ -17,20 +17,21 @@ public interface TopicV3Suite extends ITSuite {
     // Get topic should contain the topic name
     await().atMost(Duration.ofSeconds(10)).untilAsserted(() ->
         givenDefault()
-          .get("/internal/kafka/v3/clusters/{cluster_id}/topics/test-topic-1")
-          .then()
-          .statusCode(200)
-          .body("topic_name", equalTo("test-topic-1"))
+            .get("/internal/kafka/v3/clusters/{cluster_id}/topics/test-topic-1")
+            .then()
+            .statusCode(200)
+            .body("topic_name", equalTo("test-topic-1"))
     );
 
     // List topics should contain the topic name
     await().atMost(Duration.ofSeconds(10)).untilAsserted(() ->
         givenDefault()
-          .get("/internal/kafka/v3/clusters/{cluster_id}/topics")
-          .then()
-          .statusCode(200)
-          // Could be at any index
-          .body("data.find { it.topic_name == 'test-topic-1' }.topic_name", equalTo("test-topic-1"))
+            .get("/internal/kafka/v3/clusters/{cluster_id}/topics")
+            .then()
+            .statusCode(200)
+            // Could be at any index
+            .body("data.find { it.topic_name == 'test-topic-1' }.topic_name",
+                equalTo("test-topic-1"))
     );
   }
 

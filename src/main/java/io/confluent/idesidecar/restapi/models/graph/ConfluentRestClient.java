@@ -25,8 +25,8 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * A class that provides a common interface for interacting with APIs that follow
- * the Confluent API conventions.
+ * A class that provides a common interface for interacting with APIs that follow the Confluent API
+ * conventions.
  */
 @RegisterForReflection
 public abstract class ConfluentRestClient {
@@ -43,14 +43,13 @@ public abstract class ConfluentRestClient {
   UriUtil uriUtil;
 
   /**
-   * The state used for requesting paginated responses. The first state should just be the
-   * original request URL, with the URL of the next page determining whether there are
-   * additional pages.
+   * The state used for requesting paginated responses. The first state should just be the original
+   * request URL, with the URL of the next page determining whether there are additional pages.
    *
    * <p>Note that Confluent APIs may return empty pages even if there are additional pages
-   * remaining. This is because RBAC permissions might filter out all the resources on a page,
-   * even though there still may be additional pages of resources.
-   * Only the {@code metadata.next} field dictates whether there is another page.
+   * remaining. This is because RBAC permissions might filter out all the resources on a page, even
+   * though there still may be additional pages of resources. Only the {@code metadata.next} field
+   * dictates whether there is another page.
    */
   @RegisterForReflection
   protected static class PaginationState {
@@ -78,8 +77,8 @@ public abstract class ConfluentRestClient {
     }
 
     /**
-     * Create a new page of results with the given items. The resulting page may have fewer
-     * items than supplied, if the item limit has been exceeded.
+     * Create a new page of results with the given items. The resulting page may have fewer items
+     * than supplied, if the item limit has been exceeded.
      *
      * @param items       the items on the page
      * @param nextPageUrl the URL of the next page, or null if there is no next page
@@ -175,6 +174,7 @@ public abstract class ConfluentRestClient {
       int pagesRemaining,
       int itemsRemaining
   ) {
+
     public boolean hasNextPage() {
       return nextPage && pagesRemaining > 0 && itemsRemaining > 0;
     }
@@ -182,6 +182,7 @@ public abstract class ConfluentRestClient {
 
   /**
    * A parser for a list of (paginated) Confluent API resources.
+   *
    * @param <T> the type of items on the page
    */
   protected interface ListParser<T> {
@@ -198,6 +199,7 @@ public abstract class ConfluentRestClient {
 
   /**
    * A parser for a list of (paginated) Confluent API resources.
+   *
    * @param <T> the type of items on the page
    */
   protected interface ItemParser<T> {
@@ -205,7 +207,7 @@ public abstract class ConfluentRestClient {
     /**
      * Parse the given JSON response payload into a page of Confluent API resources.
      *
-     * @param url   the URL that was used to get the JSON response; may not be null
+     * @param url  the URL that was used to get the JSON response; may not be null
      * @param json the JSON page; may not be null
      * @return the parsed item
      */
@@ -213,12 +215,13 @@ public abstract class ConfluentRestClient {
   }
 
   protected record LastRequest(String url, String json) {
+
   }
 
   /**
-   * Get the Confluent API resources starting with the given URL.
-   * If the response is paginated, this stream will continue to get additional pages as
-   * needed until there are no more results or the supplied limits are reached.
+   * Get the Confluent API resources starting with the given URL. If the response is paginated, this
+   * stream will continue to get additional pages as needed until there are no more results or the
+   * supplied limits are reached.
    *
    * @param headers        the headers to use for the request
    * @param firstUrl       the URL of the first page of Confluent API resources
@@ -302,9 +305,9 @@ public abstract class ConfluentRestClient {
    * @param json     the JSON response payload containing a page of resources
    * @param state    the pagination state of the requests, used to create new pages
    * @param listType the record type of the list response
-   * @param <T> the type of list response object
-   * @param <R> the type of the final representations returned on the page
-   * @param <I> the type of items in the list response object
+   * @param <T>      the type of list response object
+   * @param <R>      the type of the final representations returned on the page
+   * @param <I>      the type of items in the list response object
    * @return the page of results
    */
   protected <T extends ListResponse<I, R>, R, I extends ListItem<R>> PageOfResults<R> parseList(
@@ -349,14 +352,14 @@ public abstract class ConfluentRestClient {
   }
 
   /**
-   * Try to parse the JSON payload as an {@link ErrorResponse} and construct an exception
-   * that the caller should throw.
+   * Try to parse the JSON payload as an {@link ErrorResponse} and construct an exception that the
+   * caller should throw.
    *
-   * @param url           the URL from which the JSON contents were obtained,
-   *                      for inclusion in the error message
+   * @param url           the URL from which the JSON contents were obtained, for inclusion in the
+   *                      error message
    * @param json          the JSON contents to parse
-   * @param originalError the original error that should be returned if the supplied JSON
-   *                      cannot be parsed as an {@link ErrorResponse}
+   * @param originalError the original error that should be returned if the supplied JSON cannot be
+   *                      parsed as an {@link ErrorResponse}
    * @return the exception to throw
    */
   protected ResourceFetchingException parseErrorOrFail(
@@ -408,6 +411,7 @@ public abstract class ConfluentRestClient {
   }
 
   public interface ListItem<T> {
+
     T toRepresentation();
   }
 
@@ -421,5 +425,6 @@ public abstract class ConfluentRestClient {
       @JsonProperty(value = "next") String nextPage,
       @JsonProperty(value = "total_size") int totalSize
   ) {
+
   }
 }

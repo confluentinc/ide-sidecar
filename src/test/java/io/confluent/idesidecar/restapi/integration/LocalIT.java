@@ -67,6 +67,7 @@ public class LocalIT {
     @TestProfile(NoAccessFilterProfile.class)
     @Nested
     class RecordTests extends AbstractIT implements RecordsV3Suite, RecordsV3DryRunSuite {
+
       @Override
       public TestEnvironment environment() {
         return TEST_ENVIRONMENT;
@@ -197,6 +198,7 @@ public class LocalIT {
 
   @Nested
   class DirectConnectionWithoutCredentialsTests {
+
     /**
      * All tests that create connections with this scope will reuse the same connection.
      */

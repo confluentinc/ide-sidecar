@@ -20,15 +20,16 @@ import org.junit.jupiter.api.Test;
 public class ConnectionStateTest {
 
   /**
-   * We use a concrete implementation of {@link ConnectionState} to test the real implementations
-   * of non-abstract methods. Since the tests cover methods that call to the listener, we need to
+   * We use a concrete implementation of {@link ConnectionState} to test the real implementations of
+   * non-abstract methods. Since the tests cover methods that call to the listener, we need to
    * initialize the object properly, which requires an abstract class.
    *
    * <p>Unfortunately, using {@code mock(ConnectionState.class, Answers.CALLS_REAL_METHODS)} does
-   * not work since Mockito does not call the constructor/initializer, which is necessary to set
-   * the listener.
+   * not work since Mockito does not call the constructor/initializer, which is necessary to set the
+   * listener.
    */
   private static class TestableConnectionState extends ConnectionState {
+
     public TestableConnectionState(ConnectionSpec spec, StateChangedListener listener) {
       super(spec, listener);
     }

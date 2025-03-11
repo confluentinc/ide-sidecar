@@ -6,6 +6,7 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 
 public class OpenldapContainer extends GenericContainer<OpenldapContainer> {
+
   private static final String DEFAULT_IMAGE = "osixia/openldap";
   private static final String DEFAULT_TAG = "1.3.0";
   private static final String CONTAINER_NAME = "openldap";

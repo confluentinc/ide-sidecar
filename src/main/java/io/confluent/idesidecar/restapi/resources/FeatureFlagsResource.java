@@ -23,8 +23,8 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
  *
  * <p>Currently, the only endpoint is to evaluate a specific feature flag as defined in
  * LaunchDarkly projects for the currently-defined <i>context</i>, which includes a randomly
- * generated {@link java.util.UUID} (constant throughout the life of this process) and,
- * when authenticated into Confluent Cloud, the ID of the authenticated CCloud user.
+ * generated {@link java.util.UUID} (constant throughout the life of this process) and, when
+ * authenticated into Confluent Cloud, the ID of the authenticated CCloud user.
  */
 @Path(FeatureFlagsResource.API_RESOURCE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
@@ -42,8 +42,8 @@ public class FeatureFlagsResource {
    * @param id the identifier of the flag
    * @return the value for the flag as most recently evaluated
    * @throws FlagNotFoundException if there is no flag with the given identifier, resulting in a
-   *                               {@link ExceptionMappers#mapFlagNotFoundException
-   *                               404 Not Found error}.
+   *                               {@link ExceptionMappers#mapFlagNotFoundException 404 Not Found
+   *                               error}.
    */
   @GET
   @Path("{id}/value")

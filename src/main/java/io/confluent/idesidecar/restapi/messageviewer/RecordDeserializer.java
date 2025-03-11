@@ -107,7 +107,8 @@ public class RecordDeserializer {
     /**
      * Creates a new DecodedResult with the given value and error message, for when there are no
      * schema details.
-     * @param value The decoded value
+     *
+     * @param value        The decoded value
      * @param errorMessage The error message, null if there is no error
      */
     public DecodedResult(JsonNode value, String errorMessage) {
@@ -147,7 +148,7 @@ public class RecordDeserializer {
   ) {
     try (
         var outputStream = new ByteArrayOutputStream();
-        var avroDeserializer = new KafkaAvroDeserializer(sr);
+        var avroDeserializer = new KafkaAvroDeserializer(sr)
     ) {
       avroDeserializer.configure(SERDE_CONFIGS, isKey);
       var genericObject = avroDeserializer.deserialize(topicName, bytes);
@@ -226,25 +227,22 @@ public class RecordDeserializer {
   }
 
   /**
-   * Parses a byte array into a JsonNode, handling various data formats:
-   * 1. Schema Registry encoded data, supported formats: protobuf, avro, & JsonSchema.
-   * 2. Plain string data
-   * If the byte array is Schema Registry encoded (starts with the MAGIC_BYTE),
-   * it is decoded and deserialized using the provided SchemaRegistryClient.
-   * Otherwise, it is treated as a plain string and wrapped in a TextNode.
+   * Parses a byte array into a JsonNode, handling various data formats: 1. Schema Registry encoded
+   * data, supported formats: protobuf, avro, & JsonSchema. 2. Plain string data If the byte array
+   * is Schema Registry encoded (starts with the MAGIC_BYTE), it is decoded and deserialized using
+   * the provided SchemaRegistryClient. Otherwise, it is treated as a plain string and wrapped in a
+   * TextNode.
    *
    * @param bytes                The byte array to parse
-   * @param schemaRegistryClient The SchemaRegistryClient used for deserialization of
-   *                             Schema Registry encoded data
+   * @param schemaRegistryClient The SchemaRegistryClient used for deserialization of Schema
+   *                             Registry encoded data
    * @param context              The message viewer context.
    * @param isKey                Whether the data is a key or value
    * @param encoderOnFailure     A function to apply to the byte array if deserialization fails.
-   * @return A DecodedResult containing either:
-   *         - A JsonNode representing the decoded and deserialized data (for Schema Registry
-   *           encoded data)
-   *         - A TextNode containing the original string representation of the byte array (
-   *           for other cases)
-   *         The DecodedResult also includes any error message encountered during processing
+   * @return A DecodedResult containing either: - A JsonNode representing the decoded and
+   * deserialized data (for Schema Registry encoded data) - A TextNode containing the original
+   * string representation of the byte array ( for other cases) The DecodedResult also includes any
+   * error message encountered during processing
    */
   public DecodedResult deserialize(
       byte[] bytes,
@@ -341,7 +339,7 @@ public class RecordDeserializer {
         isNetworkRelatedException(exc) ||
             (exc instanceof RestClientException
                 && isRestClientExceptionRetryable((RestClientException) exc)
-    ));
+            ));
   }
 
   private boolean isNetworkRelatedException(Throwable throwable) {
@@ -408,11 +406,12 @@ public class RecordDeserializer {
   }
 
   /**
-   * Handles the trivial cases of deserialization: null, empty, or non-Schema Registry encoded data.
+   * Handles the trivial cases of deserialization: null, empty, or non-Schema Registry encoded
+   * data.
    *
    * @param bytes                The byte array to parse
-   * @param schemaRegistryClient The SchemaRegistryClient used for deserialization of
-   *                             Schema Registry encoded data
+   * @param schemaRegistryClient The SchemaRegistryClient used for deserialization of Schema
+   *                             Registry encoded data
    * @return An Optional containing a DecodedResult if the base cases are met, or empty otherwise
    */
   private static Optional<DecodedResult> maybeTrivialCase(
@@ -470,17 +469,18 @@ public class RecordDeserializer {
       JsonNode data,
       DataFormat dataFormat
   ) {
+
   }
 
   /**
-   * Interpret the bytes safely. This is the order in which we try to interpret the bytes:
-   * 1. Try to read the bytes as a JSON value (object, array, string, number, boolean, or null).
-   * 2. If the bytes are not valid JSON, try to read them as a UTF-8 string.
-   * 3. If the bytes are not valid UTF-8, encode them as a base64 string in a JSON object with
-   *    a single field named "__raw__".
+   * Interpret the bytes safely. This is the order in which we try to interpret the bytes: 1. Try to
+   * read the bytes as a JSON value (object, array, string, number, boolean, or null). 2. If the
+   * bytes are not valid JSON, try to read them as a UTF-8 string. 3. If the bytes are not valid
+   * UTF-8, encode them as a base64 string in a JSON object with a single field named "__raw__".
+   *
    * @param bytes The byte array to interpret.
-   * @return A {@link WrappedJson} object containing the interpreted data
-   *         and whether it's JSON or raw bytes.
+   * @return A {@link WrappedJson} object containing the interpreted data and whether it's JSON or
+   * raw bytes.
    */
   private static WrappedJson safeRead(byte[] bytes) {
     try {
@@ -494,11 +494,12 @@ public class RecordDeserializer {
   }
 
   /**
-   * Try to read the byte array as a valid UTF-8 string, or
-   * encode it as a base64 string if it's not valid UTF-8.
+   * Try to read the byte array as a valid UTF-8 string, or encode it as a base64 string if it's not
+   * valid UTF-8.
+   *
    * @param bytes The non-JSON byte array to interpret.
-   * @return A WrappedJson object containing the interpreted data
-   *         and whether it's JSON or raw bytes.
+   * @return A WrappedJson object containing the interpreted data and whether it's JSON or raw
+   * bytes.
    */
   private static WrappedJson handleNonJsonBytes(byte[] bytes) {
     try {
