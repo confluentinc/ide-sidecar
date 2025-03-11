@@ -13,6 +13,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 @QuarkusTest
 class ConfluentLocalKafkaClusterStrategyTest {
+
   private static final int TEST_PORT = ConfigProvider.getConfig()
       .getValue("quarkus.http.test-port", Integer.class);
 

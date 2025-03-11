@@ -6,7 +6,6 @@ import io.confluent.idesidecar.restapi.models.ConnectionSpecKafkaClusterConfigBu
 import io.confluent.idesidecar.restapi.models.ConnectionSpecSchemaRegistryConfigBuilder;
 import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
 import io.quarkus.test.junit.TestProfile;
-
 import java.util.Optional;
 
 /**

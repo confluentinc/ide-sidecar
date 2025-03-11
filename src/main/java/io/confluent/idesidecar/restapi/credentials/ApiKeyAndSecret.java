@@ -9,7 +9,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
@@ -22,7 +21,7 @@ public record ApiKeyAndSecret(
         maxLength = KEY_MAX_LEN,
         minLength = 1
     )
-    @JsonProperty(value="api_key")
+    @JsonProperty(value = "api_key")
     @NotNull
     String key,
 
@@ -31,7 +30,7 @@ public record ApiKeyAndSecret(
         maxLength = ApiSecret.MAX_LENGTH,
         minLength = 1
     )
-    @JsonProperty(value="api_secret")
+    @JsonProperty(value = "api_secret")
     @NotNull
     ApiSecret secret
 ) implements Credentials {
@@ -44,7 +43,7 @@ public record ApiKeyAndSecret(
   @Override
   public Type type() {
     return Type.API_KEY_AND_SECRET;
-}
+  }
 
   @Override
   public Optional<Map<String, String>> kafkaClientProperties(
@@ -91,21 +90,21 @@ public record ApiKeyAndSecret(
     if (key == null || key.isBlank()) {
       errors.add(
           Error.create()
-               .withDetail("%s key is required and may not be blank", what)
-               .withSource("%s.key", path)
+              .withDetail("%s key is required and may not be blank", what)
+              .withSource("%s.key", path)
       );
     } else if (key.length() > KEY_MAX_LEN) {
       errors.add(
           Error.create()
-               .withDetail("%s key may not be longer than %d characters", what, KEY_MAX_LEN)
-               .withSource("%s.key", path)
+              .withDetail("%s key may not be longer than %d characters", what, KEY_MAX_LEN)
+              .withSource("%s.key", path)
       );
     }
     if (secret == null || secret.isEmpty()) {
       errors.add(
           Error.create()
-               .withDetail("%s secret is required", what)
-               .withSource("%s.secret", path)
+              .withDetail("%s secret is required", what)
+              .withSource("%s.secret", path)
       );
     } else {
       secret.validate(errors, path, what);

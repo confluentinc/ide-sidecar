@@ -7,8 +7,8 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
 import javax.validation.constraints.NotNull;
 
 /**
- * Sent by the sidecar to workspaces when a connection is created, when existing connections
- * are updated or their status changed, or when a connection is deleted.
+ * Sent by the sidecar to workspaces when a connection is created, when existing connections are
+ * updated or their status changed, or when a connection is deleted.
  */
 @RegisterForReflection
 public record ConnectionEventBody(

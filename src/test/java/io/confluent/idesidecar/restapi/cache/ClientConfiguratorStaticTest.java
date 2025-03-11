@@ -19,9 +19,9 @@ import io.confluent.idesidecar.restapi.credentials.Password;
 import io.confluent.idesidecar.restapi.credentials.ScramCredentials;
 import io.confluent.idesidecar.restapi.credentials.ScramCredentialsBuilder;
 import io.confluent.idesidecar.restapi.credentials.TLSConfig;
-import io.confluent.idesidecar.restapi.credentials.TLSConfigBuilder;
 import io.confluent.idesidecar.restapi.credentials.TLSConfig.KeyStore;
 import io.confluent.idesidecar.restapi.credentials.TLSConfig.TrustStore;
+import io.confluent.idesidecar.restapi.credentials.TLSConfigBuilder;
 import io.confluent.idesidecar.restapi.models.graph.KafkaCluster;
 import io.confluent.idesidecar.restapi.models.graph.SchemaRegistry;
 import io.confluent.idesidecar.restapi.util.CCloud;
@@ -140,10 +140,14 @@ class ClientConfiguratorStaticTest {
       .verifyHostname(false)
       .build();
 
-  @Mock ConnectionState connection;
-  @Mock KafkaCluster kafka;
-  @Mock SchemaRegistry schemaRegistry;
-  @Mock SchemaRegistry ccloudSchemaRegistry;
+  @Mock
+  ConnectionState connection;
+  @Mock
+  KafkaCluster kafka;
+  @Mock
+  SchemaRegistry schemaRegistry;
+  @Mock
+  SchemaRegistry ccloudSchemaRegistry;
 
   @BeforeEach
   void beforeEach() {
@@ -162,7 +166,8 @@ class ClientConfiguratorStaticTest {
     ccloudSchemaRegistry = mock(SchemaRegistry.class);
     when(ccloudSchemaRegistry.id()).thenReturn(SCHEMA_REGISTRY_LSRC_ID);
     when(ccloudSchemaRegistry.uri()).thenReturn(SCHEMA_REGISTRY_CCLOUD_URL);
-    when(ccloudSchemaRegistry.logicalId()).thenReturn(Optional.of(new CCloud.LsrcId(SCHEMA_REGISTRY_LSRC_ID)));
+    when(ccloudSchemaRegistry.logicalId()).thenReturn(
+        Optional.of(new CCloud.LsrcId(SCHEMA_REGISTRY_LSRC_ID)));
   }
 
   @TestFactory
@@ -175,7 +180,9 @@ class ClientConfiguratorStaticTest {
         boolean redact,
         Duration timeout,
         String expectedKafkaConfig
-    ) {}
+    ) {
+
+    }
 
     var inputs = Stream.of(
         new TestInput(
@@ -250,7 +257,9 @@ class ClientConfiguratorStaticTest {
         Duration timeout,
         String expectedKafkaConfig,
         String expectedSchemaRegistryConfig
-    ) {}
+    ) {
+
+    }
     var inputs = Stream.of(
         new TestInput(
             "No credentials",
@@ -661,7 +670,7 @@ class ClientConfiguratorStaticTest {
                 ssl.truststore.location=%s
                 ssl.truststore.password=%s
                 """.formatted(
-                    OAUTH_CLIENT_ID, OAUTH_SECRET, MTLS_TRUSTSTORE_PATH, MTLS_TRUSTSTORE_PASSWORD),
+                OAUTH_CLIENT_ID, OAUTH_SECRET, MTLS_TRUSTSTORE_PATH, MTLS_TRUSTSTORE_PASSWORD),
             """
                 schema.registry.url=http://localhost:8081
                 bearer.auth.credentials.source=OAUTHBEARER
@@ -671,7 +680,7 @@ class ClientConfiguratorStaticTest {
                 ssl.truststore.location=%s
                 ssl.truststore.password=%s
                 """.formatted(
-                    OAUTH_CLIENT_ID, OAUTH_SECRET, MTLS_TRUSTSTORE_PATH, MTLS_TRUSTSTORE_PASSWORD)
+                OAUTH_CLIENT_ID, OAUTH_SECRET, MTLS_TRUSTSTORE_PATH, MTLS_TRUSTSTORE_PASSWORD)
         ),
         new TestInput(
             "With OAuth with scopes for Kafka and SR",
@@ -764,7 +773,8 @@ class ClientConfiguratorStaticTest {
               if (input.schemaRegistry != null) {
                 assertNotNull(input.expectedSchemaRegistryConfig);
                 // The Schema Registry config should match
-                var expectedSchemaRegistryConfig = loadProperties(input.expectedSchemaRegistryConfig);
+                var expectedSchemaRegistryConfig = loadProperties(
+                    input.expectedSchemaRegistryConfig);
                 var srConfig = ClientConfigurator.getSchemaRegistryClientConfig(
                     connection,
                     input.schemaRegistry.uri(),
@@ -774,12 +784,13 @@ class ClientConfiguratorStaticTest {
                 assertMapsEquals(
                     expectedSchemaRegistryConfig,
                     srConfig,
-                    "Expected Schema Registry config to match for '%s' test case".formatted(input.displayName)
+                    "Expected Schema Registry config to match for '%s' test case".formatted(
+                        input.displayName)
                 );
 
                 // And the kafka config with SR matches
                 var expectedKafkaConfigWithSr = new HashMap<>(expectedKafkaConfig);
-                expectedSchemaRegistryConfig.forEach((k,v) -> {
+                expectedSchemaRegistryConfig.forEach((k, v) -> {
                   var prefix = k.startsWith("schema.registry.") ? "" : "schema.registry.";
                   expectedKafkaConfigWithSr.put(prefix + k, v);
                 });
@@ -794,7 +805,8 @@ class ClientConfiguratorStaticTest {
                 assertMapsEquals(
                     expectedKafkaConfigWithSr,
                     kafkaConfigWithSr,
-                    "Expected Kafka config with SR to match for '%s' test case".formatted(input.displayName)
+                    "Expected Kafka config with SR to match for '%s' test case".formatted(
+                        input.displayName)
                 );
               }
             }
@@ -847,8 +859,11 @@ class ClientConfiguratorStaticTest {
     expected.forEach((k, v) -> {
       var actualValue = actual.get(k);
       assertNotNull(actualValue, "%s: expected key '%s' to be present".formatted(message, k));
-      assertEquals(v.toString(), actualValue.toString(), "%s: expected value for key '%s' to match '%s' but was '%s'".formatted(message, k, v, actualValue));
+      assertEquals(v.toString(), actualValue.toString(),
+          "%s: expected value for key '%s' to match '%s' but was '%s'".formatted(message, k, v,
+              actualValue));
     });
-    assertEquals(expected.size(), actual.size(), "%s: expected %d entries but found %d".formatted(message, expected.size(), actual.size()));
+    assertEquals(expected.size(), actual.size(),
+        "%s: expected %d entries but found %d".formatted(message, expected.size(), actual.size()));
   }
 }

@@ -3,6 +3,7 @@ package io.confluent.idesidecar.restapi.util.cpdemo;
 import org.eclipse.microprofile.config.ConfigProvider;
 
 public class Constants {
+
   private Constants() {
   }
 

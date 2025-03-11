@@ -17,19 +17,22 @@ public record MessageHeaders(
     @NotNull @JsonProperty("originator") String originator,
     @NotNull @JsonProperty("message_id") String id
 ) {
-    public static final String SIDECAR_ORIGINATOR = "sidecar";
 
-    /** Constructor for outbound messages. */
-    public MessageHeaders(MessageType messageType) {
-        this(messageType, SIDECAR_ORIGINATOR);
-    }
+  public static final String SIDECAR_ORIGINATOR = "sidecar";
 
-    public MessageHeaders(MessageType messageType, String originator) {
-        this(messageType, originator, UUID.randomUUID().toString());
-    }
+  /**
+   * Constructor for outbound messages.
+   */
+  public MessageHeaders(MessageType messageType) {
+    this(messageType, SIDECAR_ORIGINATOR);
+  }
 
-    @JsonIgnore
-    public boolean originatedBySidecar() {
-        return SIDECAR_ORIGINATOR.equals(originator);
-    }
+  public MessageHeaders(MessageType messageType, String originator) {
+    this(messageType, originator, UUID.randomUUID().toString());
+  }
+
+  @JsonIgnore
+  public boolean originatedBySidecar() {
+    return SIDECAR_ORIGINATOR.equals(originator);
+  }
 }

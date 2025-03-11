@@ -6,6 +6,7 @@ import io.smallrye.graphql.api.DefaultNonNull;
 @RegisterForReflection
 @DefaultNonNull
 public interface Cluster {
+
   String id();
 
   String uri();

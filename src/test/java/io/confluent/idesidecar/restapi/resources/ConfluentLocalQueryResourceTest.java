@@ -48,7 +48,8 @@ public class ConfluentLocalQueryResourceTest extends ConfluentQueryResourceTestB
     );
     // Expect get-advertised-listeners for each broker
     for (int brokerId = 1; brokerId <= 2; ++brokerId) {
-      var filename = "confluent-local-resources-mock-responses/list-adv-listener-config-broker-%d.json".formatted(brokerId);
+      var filename = "confluent-local-resources-mock-responses/list-adv-listener-config-broker-%d.json".formatted(
+          brokerId);
       expectSuccessfulGetLocalAdvertisedListenersConfig(clusterId, brokerId, filename);
     }
 
@@ -172,7 +173,8 @@ public class ConfluentLocalQueryResourceTest extends ConfluentQueryResourceTestB
     );
 
     // Expect get-advertised-listeners for first broker
-    var filename = "confluent-local-resources-mock-responses/list-adv-listener-config-broker-%d.json".formatted(1);
+    var filename = "confluent-local-resources-mock-responses/list-adv-listener-config-broker-%d.json".formatted(
+        1);
     expectSuccessfulGetLocalAdvertisedListenersConfig(clusterId, 1, filename);
 
     // Expect failed get-advertised-listeners for second broker

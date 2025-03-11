@@ -6,10 +6,10 @@ import io.confluent.idesidecar.restapi.clients.ClientConfigurator;
 import io.confluent.idesidecar.restapi.clients.SchemaErrors;
 import io.confluent.idesidecar.restapi.connections.ConnectionState;
 import io.confluent.idesidecar.restapi.connections.ConnectionStates;
-import io.confluent.idesidecar.restapi.proxy.KafkaRestProxyContext;
 import io.confluent.idesidecar.restapi.messageviewer.RecordDeserializer;
 import io.confluent.idesidecar.restapi.messageviewer.SimpleConsumer;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
+import io.confluent.idesidecar.restapi.proxy.KafkaRestProxyContext;
 import io.confluent.idesidecar.restapi.util.LocalTestEnvironment;
 import io.confluent.idesidecar.restapi.util.RequestHeadersConstants;
 import io.confluent.idesidecar.restapi.util.SidecarClient;
@@ -27,25 +27,25 @@ import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.junit.jupiter.api.AfterEach;
 
 /**
- * Abstract base class for integration tests that require a {@link TestEnvironment} and use
- * a sidecar client to interact with the Sidecar REST API.
+ * Abstract base class for integration tests that require a {@link TestEnvironment} and use a
+ * sidecar client to interact with the Sidecar REST API.
  *
  * <h2>Sharing the {@link TestEnvironment}</h2>
  * <p>All subclasses of this class will share the same {@link LocalTestEnvironment} instance,
- * which is started before any tests are run and stopped after all tests have run.
- * Starting the test environment's containers takes 5-10 seconds, so doing it once
+ * which is started before any tests are run and stopped after all tests have run. Starting the test
+ * environment's containers takes 5-10 seconds, so doing it once
  * <i>for all integration tests</i> (that extend this class) helps the tests run faster.
  *
  * <h2>Sharing or not sharing connections</h2>
  * <p>Subclasses are expected to set up the sidecar connection(s) that they want their test
- * methods to use. Creating a connection may take several seconds, depending upon the effort
- * require to validate the connection and determine the status. This class provides a flexible
- * way for subclasses to control how connections are created and reused.
+ * methods to use. Creating a connection may take several seconds, depending upon the effort require
+ * to validate the connection and determine the status. This class provides a flexible way for
+ * subclasses to control how connections are created and reused.
  *
  * <p>Most subclasses will reuse the same connection for all tests. Reusing the same connection in
  * multiple tests reduces the setup time for each test, as only the first test will need to create
- * the connection. (The sidecar will be terminated after all tests in the test class are run,
- * so deleting the connection is not necessary.)
+ * the connection. (The sidecar will be terminated after all tests in the test class are run, so
+ * deleting the connection is not necessary.)
  *
  * <p>Most of the {@link AbstractIT} concrete subclasses are defined so that all the tests will
  * run against the same connection. Each test class should call the
@@ -55,17 +55,17 @@ import org.junit.jupiter.api.AfterEach;
  * {@link TestEnvironment#directConnectionSpec()}.
  *
  * <p>Other tests may want to use a different connection for each test. If the test class is
- * testing the Connections API, then the test class may want each <i>test method</i> to create
- * its own connection(s) via the {@link #setupConnection(String, ConnectionSpec)} methods,
- * verify the result of the creation, and when neceesary delete the connection.
- * The {@code @AfterEach} method should still call {@link #deleteAllConnections()} to clean up all
- * connections that remain at the end of each test, giving a clean slate to the next test method.
+ * testing the Connections API, then the test class may want each <i>test method</i> to create its
+ * own connection(s) via the {@link #setupConnection(String, ConnectionSpec)} methods, verify the
+ * result of the creation, and when neceesary delete the connection. The {@code @AfterEach} method
+ * should still call {@link #deleteAllConnections()} to clean up all connections that remain at the
+ * end of each test, giving a clean slate to the next test method.
  */
 public abstract class AbstractIT extends SidecarClient implements ITSuite {
 
   private static final String VALID_CONNECTION_ID = "c1";
 
-  private static KafkaRestProxyContext kafkaRestProxyContext = new KafkaRestProxyContext(
+  private static final KafkaRestProxyContext kafkaRestProxyContext = new KafkaRestProxyContext(
       null,
       null,
       null,
@@ -82,6 +82,7 @@ public abstract class AbstractIT extends SidecarClient implements ITSuite {
       SimpleConsumer consumer,
       Map<String, Object> kafkaClientConfig
   ) {
+
     void useBy(SidecarClient client) {
       client.useConnection(spec.id());
       client.useClusters(kafkaCluster, srCluster);
@@ -107,8 +108,8 @@ public abstract class AbstractIT extends SidecarClient implements ITSuite {
   }
 
   /**
-   * Get a {@link SimpleConsumer} that can be used to consume records from a Kafka topic,
-   * using the current connection.
+   * Get a {@link SimpleConsumer} that can be used to consume records from a Kafka topic, using the
+   * current connection.
    *
    * @return the consumer
    */
@@ -119,8 +120,8 @@ public abstract class AbstractIT extends SidecarClient implements ITSuite {
 
 
   /**
-   * Get the Kafka client configuration for the current connection. The configuration can be used
-   * to instantiate a new Kafka consumer or producer client.
+   * Get the Kafka client configuration for the current connection. The configuration can be used to
+   * instantiate a new Kafka consumer or producer client.
    *
    * @return the Kafka client configuration properties
    */
@@ -132,7 +133,7 @@ public abstract class AbstractIT extends SidecarClient implements ITSuite {
   /**
    * Create a {@link SimpleConsumer} that can be used to consume records from a Kafka topic.
    *
-   * @param connection  the connection to use
+   * @param connection the connection to use
    * @return the consumer
    */
   protected SimpleConsumer createSimpleConsumer(
@@ -185,16 +186,16 @@ public abstract class AbstractIT extends SidecarClient implements ITSuite {
    * {@code @BeforeEach} method to set up the connection the test methods will use.
    *
    * <p>Each unique test scope will reuse the same connection, and most subclasses will
-   * use the same test scope for all tests. In those cases, using the name of the subclass
-   * is an easy way for tests to share the same scope.
+   * use the same test scope for all tests. In those cases, using the name of the subclass is an
+   * easy way for tests to share the same scope.
    *
    * <p>Other test classes may need new/different connections for each test may want to use a
    * different test scope for each test. In those cases,
    * {@link #setupConnection(String, ConnectionSpec)} may be a better choice.
    *
    * @param testClassInstance      the test class
-   * @param connectionSpecSupplier the supplier specification for the connection, which is
-   *                               typically a reference to a method on {@link TestEnvironment}
+   * @param connectionSpecSupplier the supplier specification for the connection, which is typically
+   *                               a reference to a method on {@link TestEnvironment}
    * @param <T>                    the type of {@link AbstractIT} subclass
    * @see #setupConnection(String, ConnectionSpec)
    * @see #setupConnection(AbstractIT, Optional)
@@ -213,16 +214,16 @@ public abstract class AbstractIT extends SidecarClient implements ITSuite {
    * {@code @BeforeEach} method to set up the connection the test methods will use.
    *
    * <p>Each unique test scope will reuse the same connection, and most subclasses will
-   * use the same test scope for all tests. In those cases, using the name of the subclass
-   * is an easy way for tests to share the same scope.
+   * use the same test scope for all tests. In those cases, using the name of the subclass is an
+   * easy way for tests to share the same scope.
    *
    * <p>Other test classes may need new/different connections for each test may want to use a
    * different test scope for each test. In those cases,
    * {@link #setupConnection(String, ConnectionSpec)} may be a better choice.
    *
    * @param testClassInstance the test class
-   * @param connectionSpec    the specification for the connection, which is typically obtained
-   *                          from the {@link TestEnvironment}
+   * @param connectionSpec    the specification for the connection, which is typically obtained from
+   *                          the {@link TestEnvironment}
    * @param <T>               the type of {@link AbstractIT} subclass
    * @see #setupConnection(String, ConnectionSpec)
    * @see #setupConnection(AbstractIT, Function)
@@ -241,16 +242,16 @@ public abstract class AbstractIT extends SidecarClient implements ITSuite {
    * {@code @BeforeEach} method to set up the connection the test methods will use.
    *
    * <p>Each unique test scope will reuse the same connection, and most subclasses will
-   * use the same test scope for all tests. In those cases, using the name of the subclass
-   * is an easy way for tests to share the same scope.
+   * use the same test scope for all tests. In those cases, using the name of the subclass is an
+   * easy way for tests to share the same scope.
    *
    * <p>Other test classes may need new/different connections for each test may want to use a
    * different test scope for each test. In those cases,
    * {@link #setupConnection(String, ConnectionSpec)} may be a better choice.
    *
    * @param testClass              the test class
-   * @param connectionSpecSupplier the supplier specification for the connection, which is
-   *                               typically a reference to a method on {@link TestEnvironment}
+   * @param connectionSpecSupplier the supplier specification for the connection, which is typically
+   *                               a reference to a method on {@link TestEnvironment}
    * @param <T>                    the type of {@link AbstractIT} subclass
    * @see #setupConnection(String, ConnectionSpec)
    * @see TestEnvironment#localConnectionSpec()
@@ -260,7 +261,8 @@ public abstract class AbstractIT extends SidecarClient implements ITSuite {
       Class<T> testClass,
       Function<TestEnvironment, Optional<ConnectionSpec>> connectionSpecSupplier
   ) {
-    setupConnection(testClass.getSimpleName(), connectionSpecSupplier.apply(environment()).orElseThrow());
+    setupConnection(testClass.getSimpleName(),
+        connectionSpecSupplier.apply(environment()).orElseThrow());
   }
 
   /**
@@ -268,16 +270,16 @@ public abstract class AbstractIT extends SidecarClient implements ITSuite {
    * {@code @BeforeEach} method to set up the connection the test methods will use.
    *
    * <p>Each unique test scope will reuse the same connection, and most subclasses will
-   * use the same test scope for all tests. In those cases, using the name of the subclass
-   * is an easy way for tests to share the same scope.
+   * use the same test scope for all tests. In those cases, using the name of the subclass is an
+   * easy way for tests to share the same scope.
    *
    * <p>Other test classes may need new/different connections for each test may want to use a
    * different test scope for each test. In those cases,
    * {@link #setupConnection(String, ConnectionSpec)} may be a better choice.
    *
    * @param testClass      the test class
-   * @param connectionSpec the specification for the connection, which is typically obtained
-   *                       from the {@link TestEnvironment}
+   * @param connectionSpec the specification for the connection, which is typically obtained from
+   *                       the {@link TestEnvironment}
    * @param <T>            the type of {@link AbstractIT} subclass
    * @see #setupConnection(String, ConnectionSpec)
    * @see TestEnvironment#localConnectionSpec()
@@ -296,16 +298,16 @@ public abstract class AbstractIT extends SidecarClient implements ITSuite {
    * {@code @BeforeEach} method to set up the connection the test methods will use.
    *
    * <p>Each unique test scope will reuse the same connection, and most subclasses will
-   * use the same test scope for all tests. In those cases, using the name of the subclass
-   * is an easy way for tests to share the same scope, and
-   * {@link #setupConnection(Class, Optional)} may be an easier way to do this.
+   * use the same test scope for all tests. In those cases, using the name of the subclass is an
+   * easy way for tests to share the same scope, and {@link #setupConnection(Class, Optional)} may
+   * be an easier way to do this.
    *
    * <p>Other test classes may need new/different connections for each test may want to use a
    * different test scope for each test. In those cases, this method may be a better choice.
    *
    * @param testScope      the test scope
-   * @param connectionSpec the specification for the connection, which is typically obtained
-   *                       from the {@link TestEnvironment}
+   * @param connectionSpec the specification for the connection, which is typically obtained from
+   *                       the {@link TestEnvironment}
    * @see #setupConnection(String, ConnectionSpec)
    */
   protected void setupConnection(
@@ -320,16 +322,16 @@ public abstract class AbstractIT extends SidecarClient implements ITSuite {
    * {@code @BeforeEach} method to set up the connection the test methods will use.
    *
    * <p>Each unique test scope will reuse the same connection, and most subclasses will
-   * use the same test scope for all tests. In those cases, using the name of the subclass
-   * is an easy way for tests to share the same scope, and
-   * {@link #setupConnection(Class, Optional)} may be an easier way to do this.
+   * use the same test scope for all tests. In those cases, using the name of the subclass is an
+   * easy way for tests to share the same scope, and {@link #setupConnection(Class, Optional)} may
+   * be an easier way to do this.
    *
    * <p>Other test classes may need new/different connections for each test may want to use a
    * different test scope for each test. In those cases, this method may be a better choice.
    *
    * @param testScope              the test scope
-   * @param connectionSpecSupplier the supplier specification for the connection, which is
-   *                               typically a reference to a method on {@link TestEnvironment}
+   * @param connectionSpecSupplier the supplier specification for the connection, which is typically
+   *                               a reference to a method on {@link TestEnvironment}
    * @see #setupConnection(String, ConnectionSpec)
    */
   protected void setupConnection(
@@ -344,16 +346,16 @@ public abstract class AbstractIT extends SidecarClient implements ITSuite {
    * {@code @BeforeEach} method to set up the connection the test methods will use.
    *
    * <p>Each unique test scope will reuse the same connection, and most subclasses will
-   * use the same test scope for all tests. In those cases, using the name of the subclass
-   * is an easy way for tests to share the same scope, and
-   * {@link #setupConnection(Class, Optional)} may be an easier way to do this.
+   * use the same test scope for all tests. In those cases, using the name of the subclass is an
+   * easy way for tests to share the same scope, and {@link #setupConnection(Class, Optional)} may
+   * be an easier way to do this.
    *
    * <p>Other test classes may need new/different connections for each test may want to use a
    * different test scope for each test. In those cases, this method may be a better choice.
    *
    * @param testScope      the test scope
-   * @param connectionSpec the specification for the connection, which is typically obtained
-   *                       from the {@link TestEnvironment}
+   * @param connectionSpec the specification for the connection, which is typically obtained from
+   *                       the {@link TestEnvironment}
    * @see #setupConnection(String, ConnectionSpec)
    */
   protected void setupConnection(String testScope, ConnectionSpec connectionSpec) {
@@ -362,8 +364,8 @@ public abstract class AbstractIT extends SidecarClient implements ITSuite {
 
       // Append the scope to the name of the connection
       var spec = connectionSpec;
-      spec = spec.withName( "%s (%s)".formatted(spec.name(), testScope));
-      spec = spec.withId( "%s-%s".formatted(spec.id(), testScope));
+      spec = spec.withName("%s (%s)".formatted(spec.name(), testScope));
+      spec = spec.withId("%s-%s".formatted(spec.id(), testScope));
 
       // Create the connection we'll use
       createConnection(spec);

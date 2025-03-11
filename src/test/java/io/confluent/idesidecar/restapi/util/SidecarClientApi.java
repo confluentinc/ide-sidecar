@@ -26,9 +26,11 @@ import java.util.function.Supplier;
 public interface SidecarClientApi {
 
   record SchemaRegistry(String connectionId, String id, String uri) {
+
   }
 
   record KafkaCluster(String connectionId, String id, String bootstrapServers) {
+
   }
 
   String sidecarHost();
@@ -206,7 +208,7 @@ public interface SidecarClientApi {
 
   ValidatableResponse submitLocalConnectionsGraphQL();
 
-  ValidatableResponse submitDirectConnectionsGraphQL() ;
+  ValidatableResponse submitDirectConnectionsGraphQL();
 
   ValidatableResponse submitCCloudConnectionsGraphQL();
 

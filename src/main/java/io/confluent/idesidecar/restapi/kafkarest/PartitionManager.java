@@ -6,6 +6,7 @@ import org.apache.kafka.common.TopicPartitionInfo;
 
 
 public interface PartitionManager {
+
   Uni<TopicPartitionInfo> getKafkaPartition(
       String clusterId, String topicName, Integer partitionId
   );

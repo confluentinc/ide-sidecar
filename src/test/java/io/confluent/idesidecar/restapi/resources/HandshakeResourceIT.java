@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 @QuarkusIntegrationTest
 @Tag("io.confluent.common.utils.IntegrationTest")
 public class HandshakeResourceIT {
+
   @Test
   void shouldBeAbleToPerformHandshake() {
     // Should return access token when called for the first time

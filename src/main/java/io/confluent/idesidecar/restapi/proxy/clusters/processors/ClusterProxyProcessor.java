@@ -63,36 +63,35 @@ public class ClusterProxyProcessor extends
         // the keystore options to be set. This is a TODO item for the future.
         // (https://github.com/confluentinc/ide-sidecar/issues/235)
       }
-      case SCHEMA_REGISTRY ->
-        connectionState
-            .getSchemaRegistryTLSConfig()
-            .ifPresent(
-                tlsConfig -> {
-                  var options = webClientFactory.getDefaultWebClientOptions();
-                  if (tlsConfig.truststore() != null) {
-                    var trustStore = tlsConfig.truststore();
-                    var trustStoreOptions = new JksOptions()
-                        .setPath(trustStore.path())
-                        .setPassword(trustStore.password().asString(false));
+      case SCHEMA_REGISTRY -> connectionState
+          .getSchemaRegistryTLSConfig()
+          .ifPresent(
+              tlsConfig -> {
+                var options = webClientFactory.getDefaultWebClientOptions();
+                if (tlsConfig.truststore() != null) {
+                  var trustStore = tlsConfig.truststore();
+                  var trustStoreOptions = new JksOptions()
+                      .setPath(trustStore.path())
+                      .setPassword(trustStore.password().asString(false));
 
-                    options.setTrustStoreOptions(trustStoreOptions);
+                  options.setTrustStoreOptions(trustStoreOptions);
+                }
+
+                if (tlsConfig.keystore() != null) {
+                  var keyStore = tlsConfig.keystore();
+                  var keystoreOptions = new JksOptions()
+                      .setPath(keyStore.path())
+                      .setPassword(keyStore.password().asString(false));
+
+                  if (keyStore.keyPassword() != null) {
+                    keystoreOptions.setAliasPassword(keyStore.keyPassword().asString(false));
                   }
 
-                  if (tlsConfig.keystore() != null) {
-                    var keyStore = tlsConfig.keystore();
-                    var keystoreOptions = new JksOptions()
-                        .setPath(keyStore.path())
-                        .setPassword(keyStore.password().asString(false));
+                  options.setKeyStoreOptions(keystoreOptions);
+                }
 
-                    if (keyStore.keyPassword() != null) {
-                      keystoreOptions.setAliasPassword(keyStore.keyPassword().asString(false));
-                    }
-
-                    options.setKeyStoreOptions(keystoreOptions);
-                  }
-
-                  context.setWebClientOptions(options);
-                });
+                context.setWebClientOptions(options);
+              });
     }
 
     return next().process(context).map(

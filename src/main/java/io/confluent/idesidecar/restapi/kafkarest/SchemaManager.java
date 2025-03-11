@@ -16,11 +16,12 @@ import java.util.stream.Stream;
 
 @ApplicationScoped
 public class SchemaManager {
+
   public static final List<SchemaProvider> SCHEMA_PROVIDERS = Collections.unmodifiableList(
       Arrays.asList(
-        SchemaFormat.AVRO.schemaProvider(),
-        SchemaFormat.PROTOBUF.schemaProvider(),
-        SchemaFormat.JSON.schemaProvider()
+          SchemaFormat.AVRO.schemaProvider(),
+          SchemaFormat.PROTOBUF.schemaProvider(),
+          SchemaFormat.JSON.schemaProvider()
       )
   );
 
@@ -69,15 +70,17 @@ public class SchemaManager {
 
   private static void ensureSchemaRegistryClientExists(SchemaRegistryClient schemaRegistryClient) {
     if (schemaRegistryClient == null) {
-      throw new BadRequestException("This connection does not have an associated Schema Registry. " +
-          "Either define a Schema Registry for this connection or try again without specifying " +
-          "schema details: schema version, subject or subject name strategy.");
+      throw new BadRequestException(
+          "This connection does not have an associated Schema Registry. " +
+              "Either define a Schema Registry for this connection or try again without specifying "
+              +
+              "schema details: schema version, subject or subject name strategy.");
     }
   }
 
   /**
-   * Check if the ProduceRequestData contains a non-null schemaVersion and all other
-   * schema related fields are null.
+   * Check if the ProduceRequestData contains a non-null schemaVersion and all other schema related
+   * fields are null.
    */
   private static boolean onlySchemaVersion(ProduceRequestData produceRequestData) {
     // Only schemaVersion must be set
@@ -147,9 +150,9 @@ public class SchemaManager {
   ) {
     var strategy = SubjectNameStrategyEnum.parse(subjectNameStrategy);
     if (strategy.isEmpty()) {
-        throw new BadRequestException(
-            "Invalid subject name strategy: %s".formatted(subjectNameStrategy)
-        );
+      throw new BadRequestException(
+          "Invalid subject name strategy: %s".formatted(subjectNameStrategy)
+      );
     }
 
     var schema = schemaRegistryClient.getByVersion(

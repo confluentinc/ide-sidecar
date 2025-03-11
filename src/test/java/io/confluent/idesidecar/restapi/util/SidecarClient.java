@@ -17,7 +17,6 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
@@ -45,7 +44,6 @@ import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
 import java.io.IOException;
 import java.time.Duration;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -78,8 +76,8 @@ public class SidecarClient implements SidecarClientApi {
   private String currentClusterId;
   private String currentKafkaClusterId;
   private String currentSchemaClusterId;
-  private Set<KafkaCluster> usedKafkaClusters = new HashSet<>();
-  private Set<SchemaRegistry> usedSchemaRegistries = new HashSet<>();
+  private final Set<KafkaCluster> usedKafkaClusters = new HashSet<>();
+  private final Set<SchemaRegistry> usedSchemaRegistries = new HashSet<>();
 
   static {
     // Used to serialize Password objects into their raw value
@@ -112,7 +110,8 @@ public class SidecarClient implements SidecarClientApi {
           .then().extract().response();
 
       if (resp.statusCode() != 200) {
-        fail("Failed to create topic: Status: %d, message: %s".formatted(resp.statusCode(), resp.body().asString()));
+        fail("Failed to create topic: Status: %d, message: %s".formatted(resp.statusCode(),
+            resp.body().asString()));
       }
     });
   }
@@ -165,7 +164,7 @@ public class SidecarClient implements SidecarClientApi {
           .stream()
           .filter(not(t -> t.get("topic_name").startsWith("_"))) // ignore internal topics
           .map(t -> t.get("topic_name")).collect(Collectors.toSet());
-      });
+    });
   }
 
   public Set<String> listSubjects(String srClusterId) {
@@ -434,8 +433,8 @@ public class SidecarClient implements SidecarClientApi {
   public Connection createLocalConnectionTo(TestEnvironment env, String scope) {
     var spec = env.localConnectionSpec().orElseThrow();
     // Append the scope to the name of the connection
-    spec = spec.withName( "%s (%s)".formatted(spec.name(), scope));
-    spec = spec.withId( "%s-%s".formatted(spec.id(), scope));
+    spec = spec.withName("%s (%s)".formatted(spec.name(), scope));
+    spec = spec.withId("%s-%s".formatted(spec.id(), scope));
     return createConnection(spec);
   }
 
@@ -446,8 +445,8 @@ public class SidecarClient implements SidecarClientApi {
   public Connection createDirectConnectionTo(TestEnvironment env, String scope) {
     var spec = env.directConnectionSpec().orElseThrow();
     // Append the scope to the name of the connection
-    spec = spec.withName( "%s (%s)".formatted(spec.name(), scope));
-    spec = spec.withId( "%s-%s".formatted(spec.id(), scope));
+    spec = spec.withName("%s (%s)".formatted(spec.name(), scope));
+    spec = spec.withId("%s-%s".formatted(spec.id(), scope));
     return createConnection(spec);
   }
 
@@ -684,7 +683,7 @@ public class SidecarClient implements SidecarClientApi {
    * Produce plain old String key/value records to a topic
    */
   public void produceStringRecords(String topicName, String[][] records) {
-    for (var record: records) {
+    for (var record : records) {
       produceRecord(
           topicName,
           record[0],
@@ -699,42 +698,42 @@ public class SidecarClient implements SidecarClientApi {
       String subject, String schemaType, String schema, List<SchemaReference> references
   ) {
     return fromCluster(currentSchemaClusterId, () -> {
-          var versionRequest = new HashMap<String, Object>(Map.of(
-              "schemaType", schemaType,
-              "schema", schema
-          ));
+      var versionRequest = new HashMap<String, Object>(Map.of(
+          "schemaType", schemaType,
+          "schema", schema
+      ));
 
-          if (references != null) {
-            versionRequest.put("references", references);
-          }
+      if (references != null) {
+        versionRequest.put("references", references);
+      }
 
-          var createSchemaVersionResp = givenConnectionId()
-            .headers(
-                "Content-Type", "application/json",
-                "X-cluster-id", currentSchemaClusterId
-            )
-            .body(versionRequest)
-            .post("/subjects/%s/versions".formatted(subject))
-            .then().extract().response();
+      var createSchemaVersionResp = givenConnectionId()
+          .headers(
+              "Content-Type", "application/json",
+              "X-cluster-id", currentSchemaClusterId
+          )
+          .body(versionRequest)
+          .post("/subjects/%s/versions".formatted(subject))
+          .then().extract().response();
 
-        if (createSchemaVersionResp.statusCode() != 200) {
-          fail("Failed to create schema: %s".formatted(createSchemaVersionResp.body().asString()));
-        } else {
-          assertEquals(200, createSchemaVersionResp.statusCode());
-        }
+      if (createSchemaVersionResp.statusCode() != 200) {
+        fail("Failed to create schema: %s".formatted(createSchemaVersionResp.body().asString()));
+      } else {
+        assertEquals(200, createSchemaVersionResp.statusCode());
+      }
 
       await()
-           .pollDelay(Duration.ofMillis(20))
-           .pollInterval(Duration.ofMillis(10))
-           .atMost(Duration.ofMillis(250))
-           .until(()->getLatestSchemaVersion(subject, currentSchemaClusterId) != null);
+          .pollDelay(Duration.ofMillis(20))
+          .pollInterval(Duration.ofMillis(10))
+          .atMost(Duration.ofMillis(250))
+          .until(() -> getLatestSchemaVersion(subject, currentSchemaClusterId) != null);
 
-        return getLatestSchemaVersion(subject, currentSchemaClusterId);
+      return getLatestSchemaVersion(subject, currentSchemaClusterId);
     });
   }
 
   public Schema createSchema(String subject, String schemaType, String schema) {
-      return createSchema(subject, schemaType, schema, null);
+    return createSchema(subject, schemaType, schema, null);
   }
 
   public Schema getLatestSchemaVersion(String subject, String srClusterId) {

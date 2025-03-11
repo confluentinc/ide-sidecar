@@ -19,6 +19,7 @@ import java.util.Map;
  */
 public interface SchemaRegistryClient extends
     io.confluent.kafka.schemaregistry.client.SchemaRegistryClient {
+
   <T> T httpRequest(
       String path,
       String method,

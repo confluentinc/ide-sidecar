@@ -14,8 +14,8 @@ import picocli.CommandLine.Option;
 /**
  * The main application that is run by Quarkus, with the ability to parse and use command line
  * arguments. For example, this allows a user to run the sidecar ask for usage (with {@code -h} or
- * {@code --help}) or version information (with {@code -v} or {@code --version}).
- * Options are case sensitive.
+ * {@code --help}) or version information (with {@code -v} or {@code --version}). Options are case
+ * sensitive.
  */
 @QuarkusMain
 public class Main {
@@ -63,8 +63,8 @@ public class Main {
       .orElse(UNSET_VERSION);
 
   /**
-   * The {@link #execute(String[], PrintStream, Runnable)} encapsulates most of the
-   * command line processing logic and is easily testable.
+   * The {@link #execute(String[], PrintStream, Runnable)} encapsulates most of the command line
+   * processing logic and is easily testable.
    */
   public static void main(String... args) {
     try {
@@ -76,19 +76,19 @@ public class Main {
   }
 
   /**
-   * Parse the supplied arguments, and run the supplied executable if applicable.
-   * Some arguments, such as getting the application version or usage help, will cause
-   * the application to exit quickly rather than running the executable.
+   * Parse the supplied arguments, and run the supplied executable if applicable. Some arguments,
+   * such as getting the application version or usage help, will cause the application to exit
+   * quickly rather than running the executable.
    *
    * <p>This method exists to encapsulate most of the command line processing logic and is
-   * designed to be easily testable. The {@link ExecutionOutcome} type is used by this method
-   * to return the outcome of this logic, so that tests can verify the inputs resulted in the
-   * expected output.
+   * designed to be easily testable. The {@link ExecutionOutcome} type is used by this method to
+   * return the outcome of this logic, so that tests can verify the inputs resulted in the expected
+   * output.
    *
    * @param args       the options and parameters supplied on the command line
    * @param output     the print stream to use for output
-   * @param executable the application function to run if the arguments are valid and do not
-   *                   call for exiting immediately
+   * @param executable the application function to run if the arguments are valid and do not call
+   *                   for exiting immediately
    * @return the outcome
    * @throws CommandLineException if there is an error parsing the command line
    */
@@ -141,8 +141,9 @@ public class Main {
    * Get the version of the application.
    */
   static class ManifestVersionProvider implements IVersionProvider {
+
     public String[] getVersion() {
-      return new String[] { "${COMMAND-FULL-NAME} version %s".formatted(VERSION)};
+      return new String[]{"${COMMAND-FULL-NAME} version %s".formatted(VERSION)};
     }
   }
 

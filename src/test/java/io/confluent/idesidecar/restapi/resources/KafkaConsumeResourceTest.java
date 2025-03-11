@@ -50,6 +50,7 @@ import org.junit.jupiter.api.Test;
 @ConnectWireMock
 @TestProfile(NoAccessFilterProfile.class)
 public class KafkaConsumeResourceTest {
+
   @Inject
   ConnectionStateManager connectionStateManager;
 
@@ -177,7 +178,8 @@ public class KafkaConsumeResourceTest {
               .statusCode(404)
               .contentType(MediaType.APPLICATION_JSON)
               .body("title", containsString(
-                  "Kafka Cluster %s not found in connection %s".formatted(KAFKA_CLUSTER_ID, CONNECTION_ID)
+                  "Kafka Cluster %s not found in connection %s".formatted(KAFKA_CLUSTER_ID,
+                      CONNECTION_ID)
               ));
         });
   }
@@ -289,7 +291,8 @@ public class KafkaConsumeResourceTest {
           actualResponse.statusCode(200);
 
           var actualResponseBody = actualResponse.extract().asString();
-          var expectedResponseBody = loadResource("message-viewer/ccloud-message-sidecar-response.json");
+          var expectedResponseBody = loadResource(
+              "message-viewer/ccloud-message-sidecar-response.json");
           JsonObject expectedJson = new JsonObject(expectedResponseBody);
           JsonObject actualJson = new JsonObject(actualResponseBody);
 
@@ -304,7 +307,8 @@ public class KafkaConsumeResourceTest {
 
   @Test
   void testConsumeRecordsAvroSchemaTopic() throws JsonProcessingException {
-    var expectedAvroResponse = loadResource("message-viewer/consume-avro-topic-expected-response.json");
+    var expectedAvroResponse = loadResource(
+        "message-viewer/consume-avro-topic-expected-response.json");
     ObjectMapper objectMapper = new ObjectMapper();
     JsonNode expectedNode = objectMapper.readTree(expectedAvroResponse);
 
@@ -344,7 +348,8 @@ public class KafkaConsumeResourceTest {
 
   @Test
   void testConsumeRecordsProtoSchemaTopic() throws JsonProcessingException {
-    var expectedProtoResponse = loadResource("message-viewer/consume-proto-topic-expected-response.json");
+    var expectedProtoResponse = loadResource(
+        "message-viewer/consume-proto-topic-expected-response.json");
     ObjectMapper objectMapper = new ObjectMapper();
     JsonNode expectedNode = objectMapper.readTree(expectedProtoResponse);
 
@@ -371,15 +376,16 @@ public class KafkaConsumeResourceTest {
 
           wireMock.verifyThat(
               exactly(2),
-              getRequestedFor(urlMatching(SCHEMAS_BY_ID_URL_REGEX.formatted(ORDERS_PROTOBUF_SCHEMA_ID)))
+              getRequestedFor(
+                  urlMatching(SCHEMAS_BY_ID_URL_REGEX.formatted(ORDERS_PROTOBUF_SCHEMA_ID)))
           );
         });
   }
 
 
   /**
-   * If we don't get sent a request body, we should still be able to consume records. We check
-   * for this and send "{}" as the request body to CCloud.
+   * If we don't get sent a request body, we should still be able to consume records. We check for
+   * this and send "{}" as the request body to CCloud.
    */
   @Test
   void testConsumeRecordsWithEmptyRequestBody() {
@@ -421,7 +427,8 @@ public class KafkaConsumeResourceTest {
           wireMock.verifyThat(
               exactly(1),
               postRequestedFor(urlEqualTo(
-                  CCLOUD_SIMPLE_CONSUME_API_PATH.formatted(KAFKA_CLUSTER_ID, SCHEMA_LESS_TOPIC_NAME))
+                  CCLOUD_SIMPLE_CONSUME_API_PATH.formatted(KAFKA_CLUSTER_ID,
+                      SCHEMA_LESS_TOPIC_NAME))
               ).withRequestBody(equalToJson("{\"from_beginning\": true,\"max_poll_records\":5}"))
           );
         });
@@ -547,7 +554,8 @@ public class KafkaConsumeResourceTest {
                     .withStatus(200)
                     .withHeader("Content-Type", "application/json")
                     .withBody(
-                        loadResource("schema-registry-rest-mock-responses/get-avro-schema-by-id.json")
+                        loadResource(
+                            "schema-registry-rest-mock-responses/get-avro-schema-by-id.json")
                     )
             ));
 
@@ -587,7 +595,8 @@ public class KafkaConsumeResourceTest {
                     .withStatus(200)
                     .withHeader("Content-Type", "application/json")
                     .withBody(
-                        loadResource("schema-registry-rest-mock-responses/get-proto-schema-by-id.json")
+                        loadResource(
+                            "schema-registry-rest-mock-responses/get-proto-schema-by-id.json")
                     )
             ));
   }

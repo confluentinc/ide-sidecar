@@ -66,7 +66,7 @@ public class ConnectionsList extends BaseList<Connection> {
     }
     ConnectionsList that = (ConnectionsList) o;
     return Objects.equals(metadata, that.metadata)
-           && Objects.equals(data, that.data);
+        && Objects.equals(data, that.data);
   }
 
   @Override

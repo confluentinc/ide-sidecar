@@ -7,6 +7,7 @@ import io.confluent.idesidecar.restapi.integration.ITSuite;
 import org.junit.jupiter.api.Test;
 
 public interface ClusterV3Suite extends ITSuite {
+
   @Test
   default void shouldListKafkaClusters() {
     assertNotNull(getClusterId());

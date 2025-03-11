@@ -26,8 +26,8 @@ public class RecordsV3ApiImpl {
   NativeProduceRecord nativeProducer;
 
   @POST
-  @Consumes({ "application/json" })
-  @Produces({ "application/json", "text/html" })
+  @Consumes({"application/json"})
+  @Produces({"application/json", "text/html"})
   public Uni<ProduceResponse> produceRecord(
       @HeaderParam(CONNECTION_ID_HEADER) String connectionId,
       @PathParam("cluster_id") String clusterId,

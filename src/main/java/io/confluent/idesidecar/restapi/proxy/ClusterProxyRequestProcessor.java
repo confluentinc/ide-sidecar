@@ -16,21 +16,21 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.json.Json;
 import jakarta.ws.rs.core.Response;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
  * Generic processor that ships the request to the target server and updates the context with the
  * response.
- *
  */
 @ApplicationScoped
 public class ClusterProxyRequestProcessor extends
     Processor<ClusterProxyContext, Future<ClusterProxyContext>> {
+
   @Inject
   SchemaRegistryClients clients;
 
@@ -50,14 +50,13 @@ public class ClusterProxyRequestProcessor extends
       // If Kafka, send the request to the Kafka REST server
       // using a generic HTTP client
       case KAFKA -> proxyHttpClient.send(context);
-      case SCHEMA_REGISTRY ->
-          switch (context.getConnectionState().getType()) {
-            // For CCloud connections, use the ProxyHttpClient so that we get access to
-            // user-provided HTTP settings, like custom SSL certs
-            case CCLOUD -> proxyHttpClient.send(context);
-            // For all other connections, use the REST service of the cached SR client
-            case DIRECT, LOCAL, PLATFORM -> processSchemaRegistry(context);
-          };
+      case SCHEMA_REGISTRY -> switch (context.getConnectionState().getType()) {
+        // For CCloud connections, use the ProxyHttpClient so that we get access to
+        // user-provided HTTP settings, like custom SSL certs
+        case CCLOUD -> proxyHttpClient.send(context);
+        // For all other connections, use the REST service of the cached SR client
+        case DIRECT, LOCAL, PLATFORM -> processSchemaRegistry(context);
+      };
     };
 
     return clusterOp.compose(

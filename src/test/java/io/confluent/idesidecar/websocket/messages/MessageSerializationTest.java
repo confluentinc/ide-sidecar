@@ -16,8 +16,8 @@ public class MessageSerializationTest {
    * Test deserializing sample messages from resource files.
    *
    * <p>Proves that the messages deserialize properly into the expected types and body classes.
-   * Also verifies that all MessageType enum members are covered by the test cases to
-   * force developers to add test cases for new message types.
+   * Also verifies that all MessageType enum members are covered by the test cases to force
+   * developers to add test cases for new message types.
    */
   @Test
   public void testSerdeResourceMessageFiles() {
@@ -27,6 +27,7 @@ public class MessageSerializationTest {
         MessageType expectedMessageType,
         Class<? extends MessageBody> expectedBodyType
     ) {
+
     }
 
     var inputs = List.of(

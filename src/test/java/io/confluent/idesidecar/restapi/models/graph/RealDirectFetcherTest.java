@@ -6,8 +6,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import io.confluent.idesidecar.restapi.clients.SchemaRegistryClient;
 import io.confluent.idesidecar.restapi.cache.MockSchemaRegistryClient;
+import io.confluent.idesidecar.restapi.clients.SchemaRegistryClient;
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
 import io.confluent.idesidecar.restapi.connections.DirectConnectionState;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
@@ -249,7 +249,8 @@ public class RealDirectFetcherTest {
         }
 
         @Override
-        protected SchemaRegistryClient createSchemaRegistryClient(ConnectionSpec.SchemaRegistryConfig config) {
+        protected SchemaRegistryClient createSchemaRegistryClient(
+            ConnectionSpec.SchemaRegistryConfig config) {
           throw new RuntimeException("Failed to create Schema Registry client");
         }
       };
@@ -265,7 +266,8 @@ public class RealDirectFetcherTest {
     }
 
     @Test
-    void shouldFailToFetchSchemaRegistryWhenSrClientFailsToReturnsAllSubjects() throws IOException, RestClientException {
+    void shouldFailToFetchSchemaRegistryWhenSrClientFailsToReturnsAllSubjects()
+        throws IOException, RestClientException {
       // When we have an SR client that returns the SR cluster's mode
       var mockSrClient = mock(SchemaRegistryClient.class);
       when(mockSrClient.getSchemaTypes()).thenThrow(
@@ -280,7 +282,8 @@ public class RealDirectFetcherTest {
         }
 
         @Override
-        protected SchemaRegistryClient createSchemaRegistryClient(ConnectionSpec.SchemaRegistryConfig config) {
+        protected SchemaRegistryClient createSchemaRegistryClient(
+            ConnectionSpec.SchemaRegistryConfig config) {
           return mockSrClient;
         }
       };
@@ -296,7 +299,8 @@ public class RealDirectFetcherTest {
     }
 
     @Test
-    void shouldFetchSchemaRegistryWhenConnectedAndSrClientReturnsMode() throws IOException, RestClientException {
+    void shouldFetchSchemaRegistryWhenConnectedAndSrClientReturnsMode()
+        throws IOException, RestClientException {
       // When we have an SR client that returns the SR cluster's mode
       var mockSrClient = new MockSchemaRegistryClient();
       mockSrClient.setMode("READWRITE");
@@ -309,7 +313,8 @@ public class RealDirectFetcherTest {
         }
 
         @Override
-        protected SchemaRegistryClient createSchemaRegistryClient(ConnectionSpec.SchemaRegistryConfig config) {
+        protected SchemaRegistryClient createSchemaRegistryClient(
+            ConnectionSpec.SchemaRegistryConfig config) {
           return mockSrClient;
         }
       };

@@ -8,11 +8,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
 /**
- * Utility class for encoding and decoding byte arrays as JSON objects.
- * Modeled after how Confluent Cloud Kafka REST API encodes byte arrays in JSON using
- * a single field named "__raw__" with a base64-encoded value.
+ * Utility class for encoding and decoding byte arrays as JSON objects. Modeled after how Confluent
+ * Cloud Kafka REST API encodes byte arrays in JSON using a single field named "__raw__" with a
+ * base64-encoded value.
  */
 public final class ByteArrayJsonUtil {
+
   public static final String RAW_FIELD = "__raw__";
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
   private static final CharsetDecoder UTF8_DECODER = StandardCharsets.UTF_8.newDecoder();
@@ -29,8 +30,9 @@ public final class ByteArrayJsonUtil {
   }
 
   /**
-   * Returns true if the given JSON node looks like a byte array encoded as a JSON object.
-   * Meaning it is an object with a single field named {@code __raw__}.
+   * Returns true if the given JSON node looks like a byte array encoded as a JSON object. Meaning
+   * it is an object with a single field named {@code __raw__}.
+   *
    * @param node The JSON node to check.
    * @return true if the node looks like a byte array.
    */
@@ -46,6 +48,7 @@ public final class ByteArrayJsonUtil {
 
   /**
    * Use the UTF-8 decoder to convert the given bytes to a string.
+   *
    * @param bytes The bytes to convert.
    * @return The string representation of the bytes.
    * @throws CharacterCodingException if the bytes are not valid UTF-8
