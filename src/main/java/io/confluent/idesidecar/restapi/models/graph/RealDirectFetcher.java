@@ -8,14 +8,11 @@ import io.confluent.idesidecar.restapi.connections.DirectConnectionState;
 import io.confluent.idesidecar.restapi.events.ClusterKind;
 import io.confluent.idesidecar.restapi.events.Lifecycle;
 import io.confluent.idesidecar.restapi.events.ServiceKind;
-import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
-import io.confluent.idesidecar.restapi.models.ClusterType;
 import io.confluent.idesidecar.restapi.models.Connection;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 import io.quarkus.logging.Log;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import io.smallrye.mutiny.Uni;
-import io.vertx.core.MultiMap;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
@@ -30,8 +27,8 @@ import org.apache.kafka.clients.admin.AdminClient;
  *
  * <p>This fetcher makes use of
  * <a href="https://quarkus.io/guides/cdi#events-and-observers">CDI events</a>
- * so that other components can observe changes in the loaded {@link Cluster} instances.
- * Each event has the following {@link Lifecycle} qualifier:
+ * so that other components can observe changes in the loaded {@link Cluster} instances. Each event
+ * has the following {@link Lifecycle} qualifier:
  * <ul>
  *   <li>{@link Lifecycle.Updated}</li>
  * </ul>
@@ -144,20 +141,21 @@ public class RealDirectFetcher extends ConfluentRestClient implements DirectFetc
     if (state instanceof DirectConnectionState directState) {
       if (!directState.isSchemaRegistryConnected()) {
         // Either there is no Schema Registry configured or it is not connected, so return no info
-        Log.debugf("Skipping connection '%s' since Schema Registry is not connected.", connectionId);
+        Log.debugf("Skipping connection '%s' since Schema Registry is not connected.",
+            connectionId);
         return Uni.createFrom().nullItem();
       }
       // Use the SR client to obtain the cluster ID
       return directState.withSchemaRegistryClient(
           srClient -> getSchemaRegistry(directState, srClient),
           error -> {
-              Log.infof(
-                  "Unable to connect to the Schema Registry at %s for connection '%s'",
-                  state.getSpec().schemaRegistryConfig().uri(),
-                  connectionId,
-                  error
-              );
-              return Uni.createFrom().<DirectSchemaRegistry>nullItem();
+            Log.infof(
+                "Unable to connect to the Schema Registry at %s for connection '%s'",
+                state.getSpec().schemaRegistryConfig().uri(),
+                connectionId,
+                error
+            );
+            return Uni.createFrom().<DirectSchemaRegistry>nullItem();
           }
       ).orElseGet(
           // There was no Schema Registry configured, so return no info

@@ -10,7 +10,6 @@ import io.confluent.idesidecar.restapi.events.ClusterKind;
 import io.confluent.idesidecar.restapi.events.Lifecycle;
 import io.confluent.idesidecar.restapi.events.ServiceKind;
 import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
-import io.confluent.idesidecar.restapi.models.ClusterType;
 import io.confluent.idesidecar.restapi.models.Connection;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
 import io.confluent.idesidecar.restapi.util.Crn;
@@ -25,13 +24,12 @@ import org.eclipse.microprofile.config.ConfigProvider;
 
 /**
  * A {@link CCloudFetcher} that uses the {@link ConnectionStateManager} to find CCloud
- * {@link Connection}s and the CCloud UI to find
- * CCloud resources.
+ * {@link Connection}s and the CCloud UI to find CCloud resources.
  *
  * <p>This fetcher makes use of
  * <a href="https://quarkus.io/guides/cdi#events-and-observers">CDI events</a>
- * so that other components can observe changes in the loaded {@link Cluster} instances.
- * Each event has the following {@link Lifecycle} qualifier:
+ * so that other components can observe changes in the loaded {@link Cluster} instances. Each event
+ * has the following {@link Lifecycle} qualifier:
  * <ul>
  *   <li>{@link Lifecycle.Updated}</li>
  * </ul>
@@ -76,9 +74,9 @@ public class RealCCloudFetcher extends ConfluentCloudRestClient implements CClou
   @Override
   public Multi<CCloudConnection> getConnections() {
     return Multi.createFrom().iterable(connectionStateManager
-        .getConnectionStates()
-        .stream()
-        .filter(connection -> ConnectionType.CCLOUD.equals(connection.getType())).toList())
+            .getConnectionStates()
+            .stream()
+            .filter(connection -> ConnectionType.CCLOUD.equals(connection.getType())).toList())
         .map(connection -> new CCloudConnection(
             connection.getSpec().id(), connection.getSpec().name()));
   }
@@ -246,6 +244,7 @@ public class RealCCloudFetcher extends ConfluentCloudRestClient implements CClou
       ListMetadata metadata,
       @JsonProperty(value = "data", required = true) List<OrganizationResponse> data
   ) implements ListResponse<OrganizationResponse, CCloudOrganization> {
+
   }
 
   @RegisterForReflection
@@ -258,6 +257,7 @@ public class RealCCloudFetcher extends ConfluentCloudRestClient implements CClou
       @JsonProperty(value = "display_name") String displayName,
       @JsonProperty(value = "jit_enabled") Boolean jitEnabled
   ) implements ListItem<CCloudOrganization> {
+
     @Override
     public CCloudOrganization toRepresentation() {
       return new CCloudOrganization(
@@ -276,6 +276,7 @@ public class RealCCloudFetcher extends ConfluentCloudRestClient implements CClou
       ListMetadata metadata,
       @JsonProperty(value = "data", required = true) List<EnvironmentResponse> data
   ) implements ListResponse<EnvironmentResponse, CCloudEnvironment> {
+
   }
 
   @RegisterForReflection
@@ -289,6 +290,7 @@ public class RealCCloudFetcher extends ConfluentCloudRestClient implements CClou
       @JsonProperty(value = "jit_enabled") Boolean jitEnabled,
       @JsonProperty(value = "stream_governance_config") GovernanceConfig governance
   ) implements ListItem<CCloudEnvironment> {
+
     @Override
     public CCloudEnvironment toRepresentation() {
       return new CCloudEnvironment(
@@ -316,6 +318,7 @@ public class RealCCloudFetcher extends ConfluentCloudRestClient implements CClou
   private record GovernanceConfig(
       @JsonProperty(value = "package") String packageName
   ) {
+
   }
 
   @RegisterForReflection
@@ -326,6 +329,7 @@ public class RealCCloudFetcher extends ConfluentCloudRestClient implements CClou
       ListMetadata metadata,
       @JsonProperty(value = "data", required = true) List<KafkaClusterResponse> data
   ) implements ListResponse<KafkaClusterResponse, CCloudKafkaCluster> {
+
   }
 
   @RegisterForReflection
@@ -384,6 +388,7 @@ public class RealCCloudFetcher extends ConfluentCloudRestClient implements CClou
       NetworkReference network,
       KafkaClusterByok byok
   ) {
+
     public CCloudReference environmentReference() {
       return environment == null ? null : new CCloudReference(environment.id, null);
     }
@@ -395,6 +400,7 @@ public class RealCCloudFetcher extends ConfluentCloudRestClient implements CClou
       String phase,
       Integer cku
   ) {
+
   }
 
   @RegisterForReflection
@@ -405,6 +411,7 @@ public class RealCCloudFetcher extends ConfluentCloudRestClient implements CClou
       String related,
       @JsonProperty(value = "resource_name") String resourceName
   ) {
+
   }
 
   @RegisterForReflection
@@ -415,6 +422,7 @@ public class RealCCloudFetcher extends ConfluentCloudRestClient implements CClou
       String related,
       @JsonProperty(value = "resource_name") String resourceName
   ) {
+
   }
 
   @RegisterForReflection
@@ -424,6 +432,7 @@ public class RealCCloudFetcher extends ConfluentCloudRestClient implements CClou
       String related,
       @JsonProperty(value = "resource_name") String resourceName
   ) {
+
   }
 
   @RegisterForReflection
@@ -434,6 +443,7 @@ public class RealCCloudFetcher extends ConfluentCloudRestClient implements CClou
       ListMetadata metadata,
       @JsonProperty(value = "data", required = true) List<SchemaRegistryResponse> data
   ) implements ListResponse<SchemaRegistryResponse, CCloudSchemaRegistry> {
+
   }
 
   @RegisterForReflection
@@ -482,6 +492,7 @@ public class RealCCloudFetcher extends ConfluentCloudRestClient implements CClou
       String region,
       @JsonProperty(value = "package") String governancePackage
   ) {
+
     public CCloudReference environmentReference() {
       return environment == null ? null : new CCloudReference(environment.id, null);
     }

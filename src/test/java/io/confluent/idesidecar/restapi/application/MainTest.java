@@ -33,7 +33,7 @@ class MainTest {
   @Test
   void shouldIncludeVersionNumberInVersionInfo() {
     assertParseAndNotExecute(VERSION_INFO, "-v");
-    var text  = output.toString();
+    var text = output.toString();
     assertTrue(text.contains("ide-sidecar"));
     assertTrue(text.contains("version"));
     assertTrue(text.contains(Main.VERSION));
@@ -82,15 +82,15 @@ class MainTest {
     assertParseAndExecute(EXECUTING);
   }
 
-  protected void assertParseAndNotExecute(ExecutionOutcome expected, String...args) {
+  protected void assertParseAndNotExecute(ExecutionOutcome expected, String... args) {
     assertExecute(expected, false, args);
   }
 
-  protected void assertParseAndExecute(ExecutionOutcome expected, String...args) {
+  protected void assertParseAndExecute(ExecutionOutcome expected, String... args) {
     assertExecute(expected, true, args);
   }
 
-  protected void assertExecute(ExecutionOutcome expected, boolean shouldRun, String...args) {
+  protected void assertExecute(ExecutionOutcome expected, boolean shouldRun, String... args) {
     output = new ByteArrayOutputStream();
     AtomicBoolean executed = new AtomicBoolean();
     try {

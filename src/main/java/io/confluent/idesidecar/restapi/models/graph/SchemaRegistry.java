@@ -9,7 +9,9 @@ import java.util.Optional;
 @RegisterForReflection
 @DefaultNonNull
 public interface SchemaRegistry extends Cluster {
-  @NotNull String uri();
+
+  @NotNull
+  String uri();
 
   default Optional<CCloud.LsrcId> logicalId() {
     return CCloud.SchemaRegistryIdentifier

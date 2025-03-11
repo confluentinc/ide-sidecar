@@ -9,6 +9,7 @@ import io.confluent.idesidecar.restapi.proxy.ClusterProxyRequestProcessor;
 import io.confluent.idesidecar.restapi.proxy.ConnectionProcessor;
 import io.confluent.idesidecar.restapi.proxy.ControlPlaneAuthenticationProcessor;
 import io.confluent.idesidecar.restapi.proxy.EmptyProcessor;
+import io.confluent.idesidecar.restapi.proxy.KafkaRestProxyContext;
 import io.confluent.idesidecar.restapi.proxy.ProxyContext;
 import io.confluent.idesidecar.restapi.proxy.ProxyRequestProcessor;
 import io.confluent.idesidecar.restapi.proxy.RBACProxyProcessor;
@@ -19,7 +20,6 @@ import io.confluent.idesidecar.restapi.proxy.clusters.processors.ClusterProxyPro
 import io.confluent.idesidecar.restapi.proxy.clusters.processors.ClusterStrategyProcessor;
 import io.confluent.idesidecar.restapi.proxy.clusters.processors.ConfluentCloudKafkaRestProduceProcessor;
 import io.confluent.idesidecar.restapi.proxy.clusters.processors.KafkaClusterInfoProcessor;
-import io.confluent.idesidecar.restapi.proxy.KafkaRestProxyContext;
 import io.confluent.idesidecar.restapi.util.WebClientFactory;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;

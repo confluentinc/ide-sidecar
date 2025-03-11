@@ -17,7 +17,6 @@ import io.vertx.ext.web.RoutingContext;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.core.MediaType;
 import java.util.Map;
 import org.eclipse.microprofile.config.ConfigProvider;
@@ -72,19 +71,23 @@ public class RestProxyResource {
   }
 
   public record RBACRequest(
-       String userPrincipal,
-       Action[] actions
+      String userPrincipal,
+      Action[] actions
   ) {
+
     public record Action(
-         String resourceType,
-         String resourceName,
-         String operation,
-         Scope scope
+        String resourceType,
+        String resourceName,
+        String operation,
+        Scope scope
     ) {
+
       public record Scope(
-           Map<String, String> clusters,
-           String[] path
-      ) {}
+          Map<String, String> clusters,
+          String[] path
+      ) {
+
+      }
     }
   }
 
@@ -102,11 +105,11 @@ public class RestProxyResource {
       content = @Content(schema = @Schema(implementation = RBACRequest.class))
   )
   @APIResponses({
-    @APIResponse(
-        responseCode = "200",
-        description = "Successful response",
-        content = @Content(schema = @Schema(implementation = String[].class))
-    ),
+      @APIResponse(
+          responseCode = "200",
+          description = "Successful response",
+          content = @Content(schema = @Schema(implementation = String[].class))
+      ),
   })
   public void rbacProxyRoute(RoutingContext routingContext) {
     handleRBACProxy(routingContext, createRBACProxyContext(routingContext));
@@ -170,8 +173,8 @@ public class RestProxyResource {
   }
 
   /**
-   * Create a ClusterProxyContext for Schema Registry Proxy. Note that we are using the
-   * cluster id from the {@code x-cluster-id} header.
+   * Create a ClusterProxyContext for Schema Registry Proxy. Note that we are using the cluster id
+   * from the {@code x-cluster-id} header.
    */
   private ClusterProxyContext createSRClusterContext(RoutingContext routingContext) {
     return new ClusterProxyContext(

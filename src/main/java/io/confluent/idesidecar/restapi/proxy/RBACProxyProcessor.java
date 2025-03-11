@@ -14,7 +14,8 @@ public class RBACProxyProcessor extends Processor<ProxyContext, Future<ProxyCont
 
   @Override
   public Future<ProxyContext> process(ProxyContext context) {
-    var headers = context.getProxyRequestHeaders() != null ? context.getProxyRequestHeaders() : MultiMap.caseInsensitiveMultiMap();
+    var headers = context.getProxyRequestHeaders() != null ? context.getProxyRequestHeaders()
+        : MultiMap.caseInsensitiveMultiMap();
     headers.add(HttpHeaders.CONTENT_TYPE, "application/json");
     context.setProxyRequestAbsoluteUrl(context.getRequestUri());
     context.setProxyRequestHeaders(headers);

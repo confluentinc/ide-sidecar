@@ -11,15 +11,15 @@ public record KeyOrValueMetadata(
     DataFormat dataFormat
 ) {
 
-    public KeyOrValueMetadata {
-        if (dataFormat == null) {
-            throw new IllegalArgumentException("Data format must be specified");
-        }
-
-        if (schemaId == null && !dataFormat.isSchemaless()) {
-            throw new IllegalArgumentException(
-                "Schema ID must be specified for AVRO, JSONSCHEMA, or PROTOBUF deserialization"
-            );
-        }
+  public KeyOrValueMetadata {
+    if (dataFormat == null) {
+      throw new IllegalArgumentException("Data format must be specified");
     }
+
+    if (schemaId == null && !dataFormat.isSchemaless()) {
+      throw new IllegalArgumentException(
+          "Schema ID must be specified for AVRO, JSONSCHEMA, or PROTOBUF deserialization"
+      );
+    }
+  }
 }

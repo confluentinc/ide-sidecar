@@ -8,13 +8,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.idesidecar.restapi.clients.SchemaRegistryClients;
 import io.confluent.idesidecar.restapi.connections.CCloudConnectionState;
 import io.confluent.idesidecar.restapi.exceptions.ProcessorFailedException;
-import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequest;
-import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.RecordMetadata;
-import io.confluent.idesidecar.restapi.proxy.KafkaRestProxyContext;
 import io.confluent.idesidecar.restapi.messageviewer.RecordDeserializer;
+import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequest;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeData;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeRecord;
+import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.RecordMetadata;
+import io.confluent.idesidecar.restapi.proxy.KafkaRestProxyContext;
 import io.confluent.idesidecar.restapi.proxy.ProxyHttpClient;
 import io.confluent.idesidecar.restapi.util.WebClientFactory;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
@@ -38,6 +38,7 @@ import java.util.Optional;
  */
 @ApplicationScoped
 public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
+
   static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
   static final Base64.Decoder BASE64_DECODER = Base64.getDecoder();
   static final Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
@@ -56,8 +57,8 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
 
   public Future<KafkaRestProxyContext
       <SimpleConsumeMultiPartitionRequest, SimpleConsumeMultiPartitionResponse>> execute(
-          KafkaRestProxyContext
-              <SimpleConsumeMultiPartitionRequest, SimpleConsumeMultiPartitionResponse> context) {
+      KafkaRestProxyContext
+          <SimpleConsumeMultiPartitionRequest, SimpleConsumeMultiPartitionResponse> context) {
     context.setProxyRequestMethod(HttpMethod.POST);
     context.setProxyRequestAbsoluteUrl(constructCCloudURL(context));
     var connectionState = (CCloudConnectionState) context.getConnectionState();
@@ -79,7 +80,7 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
         .compose(processedCtx -> vertx
             .createSharedWorkerExecutor("consume-worker")
             .executeBlocking(() -> postProcess(processedCtx))
-    );
+        );
   }
 
   /**
@@ -121,14 +122,14 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
       LOGGER.error("Error parsing the messages from ccloud : \n message ='"
           + rawTopicRowsResponse + "' \n Error: '" + e.getMessage() + "'");
       throw new ProcessorFailedException(
-              context.failf(
-                  500,
-                  "We tried to consume records from the topic=\"%s\" (cluster_id=\"%s\") but "
+          context.failf(
+              500,
+              "We tried to consume records from the topic=\"%s\" (cluster_id=\"%s\") but "
                   + "observed the following error: %s.",
-                  context.getTopicName(),
-                  context.getClusterId(),
-                  rawTopicRowsResponse)
-          );
+              context.getTopicName(),
+              context.getClusterId(),
+              rawTopicRowsResponse)
+      );
     }
   }
 

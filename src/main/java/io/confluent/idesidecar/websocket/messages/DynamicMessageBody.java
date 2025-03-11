@@ -9,9 +9,10 @@ import java.util.Map;
 /**
  * Arbitrary message body, used when deserializing messages with unknown structure, namely for
  * messages not intended to be interpreted by sidecar.
- * */
+ */
 @RegisterForReflection
 public class DynamicMessageBody implements MessageBody {
+
   private final Map<String, Object> properties = new LinkedHashMap<>(); // retain order
 
   public DynamicMessageBody() {

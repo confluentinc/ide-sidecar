@@ -13,13 +13,14 @@ import io.vertx.core.Future;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import org.apache.kafka.clients.producer.RecordMetadata;
-import org.apache.kafka.common.TopicPartition;
 import java.util.Base64;
 import java.util.Map;
+import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.TopicPartition;
 
 @ApplicationScoped
 public class ConfluentCloudProduceRecord extends GenericProduceRecord {
+
   private static final Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
 
   // These are the types supported by Confluent Cloud Kafka REST
@@ -85,9 +86,9 @@ public class ConfluentCloudProduceRecord extends GenericProduceRecord {
             produceRequest
         )).toCompletionStage()
     ).map(kafkaRestProxyContext -> c
-          .with()
-          .recordMetadata(convertToRecordMetadata(kafkaRestProxyContext.getResponse()))
-          .build()
+        .with()
+        .recordMetadata(convertToRecordMetadata(kafkaRestProxyContext.getResponse()))
+        .build()
     );
   }
 

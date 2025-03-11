@@ -20,11 +20,12 @@ import java.util.Map;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
- * Create an ApplicationScoped bean to cache SchemaRegistryClient instances
- * by connection ID and schema registry client ID.
+ * Create an ApplicationScoped bean to cache SchemaRegistryClient instances by connection ID and
+ * schema registry client ID.
  */
 @ApplicationScoped
 public class SchemaRegistryClients extends Clients<SchemaRegistryClient> {
+
   private static final int SR_CACHE_SIZE = 10;
 
   @Inject
@@ -43,9 +44,8 @@ public class SchemaRegistryClients extends Clients<SchemaRegistryClient> {
   SidecarAccessTokenBean accessTokenBean;
 
   /**
-   * Get a SchemaRegistryClient for the given connection ID and cluster ID. We rely on the
-   * sidecar's Schema Registry proxy routes to forward the request to the correct Schema Registry
-   * instance.
+   * Get a SchemaRegistryClient for the given connection ID and cluster ID. We rely on the sidecar's
+   * Schema Registry proxy routes to forward the request to the correct Schema Registry instance.
    */
   public SchemaRegistryClient getClient(String connectionId, String clusterId) {
     return getClient(

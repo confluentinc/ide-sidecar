@@ -56,7 +56,8 @@ public class LocalTestEnvironment implements TestEnvironment {
         .withExposedPorts(8081)
         .withNetworkAliases("schema-registry")
         .dependsOn(kafkaWithRestProxy)
-        .waitingFor(Wait.forHttp("/subjects").forStatusCode(200).withStartupTimeout(Duration.ofMinutes(2)));
+        .waitingFor(
+            Wait.forHttp("/subjects").forStatusCode(200).withStartupTimeout(Duration.ofMinutes(2)));
   }
 
   protected void startContainers() {

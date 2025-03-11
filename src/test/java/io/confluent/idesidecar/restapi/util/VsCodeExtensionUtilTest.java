@@ -1,7 +1,8 @@
 package io.confluent.idesidecar.restapi.util;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import io.confluent.idesidecar.restapi.connections.CCloudConnectionState;
-import io.confluent.idesidecar.restapi.connections.ConnectionState;
 import io.confluent.idesidecar.restapi.connections.ConnectionStates;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.CCloudConfig;
@@ -9,10 +10,9 @@ import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 @QuarkusTest
 public class VsCodeExtensionUtilTest {
+
   @Inject
   VsCodeExtensionUtil vsCodeExtensionUtil;
 

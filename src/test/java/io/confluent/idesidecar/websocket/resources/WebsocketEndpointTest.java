@@ -32,7 +32,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 /**
- * Tests over workspaces connecting to /ws as websocket clients, access filtering, and message handling.
+ * Tests over workspaces connecting to /ws as websocket clients, access filtering, and message
+ * handling.
  */
 @QuarkusTest
 public class WebsocketEndpointTest extends AbstractWebsocketTestBase {
@@ -44,18 +45,15 @@ public class WebsocketEndpointTest extends AbstractWebsocketTestBase {
 
 
   /**
-   * Test websocket lifecycle using two mock workspace processes.
-   * 1. Have each make websocket connections to the endpoint and send a hello message.
-   * 2. Have each expect a WORKSPACE_COUNT_CHANGED message with the expected count (1, 2).
-   * 3. Have the first one expect a subsequent WORKSPACE_COUNT_CHANGED message with the expected new
-   *    count (2)
-   * 4. Have first one send a message that should be broadcast to all workspaces.
-   * 5. Have the second one expect to receive that message.
-   * 6. Have the first one disconnect.
-   * 7. Have the second one expect a WORKSPACE_COUNT_CHANGED message with the expected new count (1).
-   * 8. Have the second one send a message that should be broadcast to all workspaces, will not be
-   *    received by anyone.
-   * 9. Have the second one disconnect.
+   * Test websocket lifecycle using two mock workspace processes. 1. Have each make websocket
+   * connections to the endpoint and send a hello message. 2. Have each expect a
+   * WORKSPACE_COUNT_CHANGED message with the expected count (1, 2). 3. Have the first one expect a
+   * subsequent WORKSPACE_COUNT_CHANGED message with the expected new count (2) 4. Have first one
+   * send a message that should be broadcast to all workspaces. 5. Have the second one expect to
+   * receive that message. 6. Have the first one disconnect. 7. Have the second one expect a
+   * WORKSPACE_COUNT_CHANGED message with the expected new count (1). 8. Have the second one send a
+   * message that should be broadcast to all workspaces, will not be received by anyone. 9. Have the
+   * second one disconnect.
    */
   @Test
   public void testWebsocketLifecycle() {
@@ -79,7 +77,8 @@ public class WebsocketEndpointTest extends AbstractWebsocketTestBase {
 
     // Have the first workspace send a message that should be broadcast to all workspaces.
     var broadcastMessage = new Message(
-        new MessageHeaders(MessageType.UNKNOWN, firstWorkspace.processIdString(), "broadcast-message-id"),
+        new MessageHeaders(MessageType.UNKNOWN, firstWorkspace.processIdString(),
+            "broadcast-message-id"),
         new DynamicMessageBody(Map.of("foonly", 3))
     );
 
@@ -100,7 +99,8 @@ public class WebsocketEndpointTest extends AbstractWebsocketTestBase {
     // Have the second workspace send a message that should be broadcast to all workspaces, but
     // no one is there to receive it.
     broadcastMessage = new Message(
-        new MessageHeaders(MessageType.UNKNOWN, secondWorkspace.processIdString(), "broadcast-message-id-2"),
+        new MessageHeaders(MessageType.UNKNOWN, secondWorkspace.processIdString(),
+            "broadcast-message-id-2"),
         new DynamicMessageBody(Map.of("foonly", 3))
     );
 
@@ -161,8 +161,10 @@ public class WebsocketEndpointTest extends AbstractWebsocketTestBase {
   }
 
 
-  /** Test bad deserialize handling within WebsocketEndpoint::onMessage() -> handleHelloMessage() -> deserializeMessage()
-   * and deserializeMessage() cannot deserialize non-json. */
+  /**
+   * Test bad deserialize handling within WebsocketEndpoint::onMessage() -> handleHelloMessage() ->
+   * deserializeMessage() and deserializeMessage() cannot deserialize non-json.
+   */
   @ParameterizedTest
   @ValueSource(booleans = {true, false})
   public void testSendingInvalidMessageStructureClosesSession(boolean sayHelloFirst) {
@@ -181,7 +183,9 @@ public class WebsocketEndpointTest extends AbstractWebsocketTestBase {
     connectedWorkspace.waitForClose(10000);
   }
 
-  /** Test sending a random message as the first message instead of a WORKSPACE_HELLO message. */
+  /**
+   * Test sending a random message as the first message instead of a WORKSPACE_HELLO message.
+   */
   @Test
   public void testSendingRandomMessageFirstClosesSession() {
     // Given a workspace connected happy websocket ...
@@ -189,7 +193,8 @@ public class WebsocketEndpointTest extends AbstractWebsocketTestBase {
 
     // When the workspace sends a random message as the first message ...
     var message = new Message(
-        new MessageHeaders(MessageType.UNKNOWN, connectedWorkspace.processIdString(), "message-id-here"),
+        new MessageHeaders(MessageType.UNKNOWN, connectedWorkspace.processIdString(),
+            "message-id-here"),
         new DynamicMessageBody(Map.of("foonly", 3))
     );
     connectedWorkspace.send(message);
@@ -224,7 +229,9 @@ public class WebsocketEndpointTest extends AbstractWebsocketTestBase {
     var errorMessage = connectedWorkspace.waitForMessageOfType(MessageType.PROTOCOL_ERROR, 1000);
     var errorString = ((ProtocolErrorBody) errorMessage.body()).error();
 
-    var expectedPrefix = String.format("Workspace %s sent message with incorrect originator value: 1234. Removing and closing session", connectedWorkspace.workspacePid());
+    var expectedPrefix = String.format(
+        "Workspace %s sent message with incorrect originator value: 1234. Removing and closing session",
+        connectedWorkspace.workspacePid());
     assertTrue(
         errorString.startsWith(expectedPrefix)
     );
@@ -269,14 +276,16 @@ public class WebsocketEndpointTest extends AbstractWebsocketTestBase {
 
     // Load a CCloud connection update with java.time.Instant instances in the body, proving
     // that websocket-land is using the same well-configured ObjectMapper as the rest of the Quarkus application.
-    var message = loadResourceAsObject("websocket-messages/ccloud-connection-connected.json", Message.class);
+    var message = loadResourceAsObject("websocket-messages/ccloud-connection-connected.json",
+        Message.class);
 
     // Send it out from sidecar to all connected workspaces, including the one we just connected.
     // Should be serialized properly.
     websocketEndpoint.broadcast(message);
 
     // wait for the message to be received by the workspace.
-    var recievedMessage = connectedWorkspace.waitForMessageOfType(MessageType.CONNECTION_EVENT, 1000);
+    var recievedMessage = connectedWorkspace.waitForMessageOfType(MessageType.CONNECTION_EVENT,
+        1000);
     var receivedBody = (ConnectionEventBody) recievedMessage.body();
 
     // assert that body.connection.status.authentication.requires_authentication_at round-tripped as a java.time.Instant
@@ -285,8 +294,8 @@ public class WebsocketEndpointTest extends AbstractWebsocketTestBase {
   }
 
   /**
-   * Test some error cases within WebsocketEndpoint::onMessage() when the originator header value
-   * is wrong given the sending workspace session.
+   * Test some error cases within WebsocketEndpoint::onMessage() when the originator header value is
+   * wrong given the sending workspace session.
    */
   @ValueSource(strings = {
       "not-a-valid-pid",
@@ -319,8 +328,10 @@ public class WebsocketEndpointTest extends AbstractWebsocketTestBase {
   @Test
   public void testOnMessageHandlingUnknownSession() {
 
-    Log.infof("Test: testOnMessageHandlingUnknownSession, websocketEndpoint: %s", websocketEndpoint);
-    Log.infof("Test: testOnMessageHandlingUnknownSession, websocketEndpoint sessions: %s", System.identityHashCode(websocketEndpoint.sessions));
+    Log.infof("Test: testOnMessageHandlingUnknownSession, websocketEndpoint: %s",
+        websocketEndpoint);
+    Log.infof("Test: testOnMessageHandlingUnknownSession, websocketEndpoint sessions: %s",
+        System.identityHashCode(websocketEndpoint.sessions));
 
     // Test the case where a message is received from a session that is not known to the sidecar.
     // (which should be impossible, but we should handle it gracefully.)
@@ -337,7 +348,8 @@ public class WebsocketEndpointTest extends AbstractWebsocketTestBase {
     // Now send a message from the workspace, should hit the first error block
     // in onMessage();
     var message = new Message(
-        new MessageHeaders(MessageType.UNKNOWN, connectedWorkspace.processIdString(), "message-id-here"),
+        new MessageHeaders(MessageType.UNKNOWN, connectedWorkspace.processIdString(),
+            "message-id-here"),
         new DynamicMessageBody(Map.of("foonly", 3))
     );
 
@@ -363,7 +375,8 @@ public class WebsocketEndpointTest extends AbstractWebsocketTestBase {
 
     // When the workspace sends a message that should be broadcast to all other workspaces ...
     var message = new Message(
-        new MessageHeaders(MessageType.UNKNOWN, connectedWorkspace.processIdString(), "message-id-here"),
+        new MessageHeaders(MessageType.UNKNOWN, connectedWorkspace.processIdString(),
+            "message-id-here"),
         new DynamicMessageBody(Map.of("foonly", 3))
     );
     connectedWorkspace.send(message);
@@ -396,7 +409,7 @@ public class WebsocketEndpointTest extends AbstractWebsocketTestBase {
     );
 
     assertThrows(IllegalArgumentException.class, () ->
-      WebsocketEndpoint.validateHeadersForSidecarBroadcast(message2)
+        WebsocketEndpoint.validateHeadersForSidecarBroadcast(message2)
     );
   }
 
@@ -407,13 +420,15 @@ public class WebsocketEndpointTest extends AbstractWebsocketTestBase {
 
     // Send wrong body type for the HELLO message.
     Message message = new Message(
-        new MessageHeaders(MessageType.WORKSPACE_HELLO, connectedWorkspace.processIdString(), "message-id-here"),
+        new MessageHeaders(MessageType.WORKSPACE_HELLO, connectedWorkspace.processIdString(),
+            "message-id-here"),
         new DynamicMessageBody(Map.of("foonly", 3))
     );
     connectedWorkspace.send(message);
 
     // then should receive an error message
-    Message errorMessage = connectedWorkspace.waitForMessageOfType(MessageType.PROTOCOL_ERROR, 1000);
+    Message errorMessage = connectedWorkspace.waitForMessageOfType(MessageType.PROTOCOL_ERROR,
+        1000);
     var errorString = ((ProtocolErrorBody) errorMessage.body()).error();
     assertEquals(
         "Expected HelloBody message body, got DynamicMessageBody. Closing session.",
@@ -430,7 +445,8 @@ public class WebsocketEndpointTest extends AbstractWebsocketTestBase {
     // Gets coverage over sendErrorAndCloseSession() error paths.
     ConnectedWorkspace connectedWorkspace = connectWorkspace(false, false);
     var badHelloMessage = new Message(
-        new MessageHeaders(MessageType.WORKSPACE_HELLO, connectedWorkspace.processIdString(), "message-id-here"),
+        new MessageHeaders(MessageType.WORKSPACE_HELLO, connectedWorkspace.processIdString(),
+            "message-id-here"),
         new DynamicMessageBody(Map.of("foonly", 3))
     );
 
@@ -465,7 +481,8 @@ public class WebsocketEndpointTest extends AbstractWebsocketTestBase {
     // 'duplicate workspace pid' and the session should be closed.
     var errorMessage = connectedWorkspace2.waitForMessageOfType(MessageType.PROTOCOL_ERROR, 1000);
     var errorBody = (ProtocolErrorBody) errorMessage.body();
-    var expected = "Workspace id %s already connected. Closing session.".formatted(firstWorkspacePid);
+    var expected = "Workspace id %s already connected. Closing session.".formatted(
+        firstWorkspacePid);
     assertEquals(expected, errorBody.error());
 
     // Should then be closed server-side.
@@ -517,7 +534,6 @@ public class WebsocketEndpointTest extends AbstractWebsocketTestBase {
 
     // Given a workspace connected happy websocket ...
     ConnectedWorkspace connectedWorkspace = connectWorkspace(true, true);
-
 
     // Calling again should leave the session alone.
     websocketEndpoint.purgeInactiveSessions();

@@ -50,9 +50,9 @@ public class PasswordResetCallbackResource {
           .createFrom()
           .item(
               resetPasswordTemplate
-                .data("email", email)
-                .data("vscode_redirect_uri", redirectUri)
-                .render()
+                  .data("email", email)
+                  .data("vscode_redirect_uri", redirectUri)
+                  .render()
           );
     } else {
       return Uni

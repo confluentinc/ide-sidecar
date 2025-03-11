@@ -26,7 +26,8 @@ public interface LocalConnectionSuite extends ITSuite {
   default void shouldTestLocalConnection() {
     // Not all environments support local connections
     var spec = environment().localConnectionSpec().orElse(null);
-    assertNotNull(spec, "Expected environment %s has local connection spec".formatted(environment().name()));
+    assertNotNull(spec,
+        "Expected environment %s has local connection spec".formatted(environment().name()));
 
     // Test the connection and mark it as the one we'll use
     testConnectionWithResponse(spec)
@@ -54,7 +55,8 @@ public interface LocalConnectionSuite extends ITSuite {
   default void shouldTestLocalConnectionWithoutId() {
     // Not all environments support local connections
     var spec = environment().localConnectionSpec().orElse(null);
-    assertNotNull(spec, "Expected environment %s has local connection spec".formatted(environment().name()));
+    assertNotNull(spec,
+        "Expected environment %s has local connection spec".formatted(environment().name()));
 
     // Test the connection with a spec that has no ID
     testConnectionWithResponse(spec.withId(null))
@@ -81,7 +83,8 @@ public interface LocalConnectionSuite extends ITSuite {
   default void shouldCreateAndListAndGetAndDeleteLocalConnection() {
     // Not all environments support local connections
     var spec = environment().localConnectionSpec().orElse(null);
-    assertNotNull(spec, "Expected environment %s has local connection spec".formatted(environment().name()));
+    assertNotNull(spec,
+        "Expected environment %s has local connection spec".formatted(environment().name()));
 
     // Create the connection and mark it as the one we'll use
     var connection = createConnection(spec);

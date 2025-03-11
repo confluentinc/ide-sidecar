@@ -7,7 +7,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
@@ -39,7 +38,7 @@ public record BasicCredentials(
   @Override
   public Type type() {
     return Type.BASIC;
-}
+  }
 
   @Override
   public Optional<Map<String, String>> kafkaClientProperties(
@@ -86,21 +85,22 @@ public record BasicCredentials(
     if (username == null || username.isBlank()) {
       errors.add(
           Error.create()
-               .withDetail("%s username is required and may not be blank", what)
-               .withSource("%s.username".formatted(path))
+              .withDetail("%s username is required and may not be blank", what)
+              .withSource("%s.username".formatted(path))
       );
     } else if (username.length() > USERNAME_MAX_LEN) {
       errors.add(
           Error.create()
-               .withDetail("%s username may not be longer than %d characters", what, USERNAME_MAX_LEN)
-               .withSource("%s.username", path)
+              .withDetail("%s username may not be longer than %d characters", what,
+                  USERNAME_MAX_LEN)
+              .withSource("%s.username", path)
       );
     }
     if (password == null || password.isEmpty()) {
       errors.add(
           Error.create()
-               .withDetail("%s password is required", what)
-               .withSource("%s.password", path)
+              .withDetail("%s password is required", what)
+              .withSource("%s.password", path)
       );
     } else {
       password.validate(errors, path, what);

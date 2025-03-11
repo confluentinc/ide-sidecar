@@ -30,6 +30,7 @@ public interface Credentials {
       boolean redact,
       TLSConfig tlsConfig
   ) implements CredentialsKafkaConnectionOptionsBuilder.With {
+
   }
 
   @RecordBuilder
@@ -37,6 +38,7 @@ public interface Credentials {
       boolean redact,
       TLSConfig tlsConfig
   ) implements CredentialsSchemaRegistryConnectionOptionsBuilder.With {
+
   }
 
   enum Type {
@@ -101,7 +103,7 @@ public interface Credentials {
    *
    * @param options the connection options
    * @return the authentication-related Kafka client properties, or empty if these credentials
-   *         cannot be used with Kafka clients
+   * cannot be used with Kafka clients
    */
   @JsonIgnore
   default Optional<Map<String, String>> kafkaClientProperties(
@@ -114,8 +116,8 @@ public interface Credentials {
    * Get the Schema Registry client authentication-related properties for this credentials object.
    *
    * @param options the connection options
-   * @return the authentication-related SR client properties, or empty if these credentials
-   *         cannot be used with SR clients
+   * @return the authentication-related SR client properties, or empty if these credentials cannot
+   * be used with SR clients
    */
   @JsonIgnore
   default Optional<Map<String, String>> schemaRegistryClientProperties(

@@ -27,8 +27,8 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Encapsulates logic to serialize data based on the schema type. Defaults to JSON serialization
- * if no schema is provided.
+ * Encapsulates logic to serialize data based on the schema type. Defaults to JSON serialization if
+ * no schema is provided.
  */
 @ApplicationScoped
 public class RecordSerializer {
@@ -59,8 +59,10 @@ public class RecordSerializer {
     return switch (SchemaFormat.fromSchemaType(parsedSchema.schemaType())) {
       case AVRO -> serializeAvro(
           client, parsedSchema, serdeConfigs, topicName, jsonNode, isKey);
-      case JSON -> serializeJsonSchema(client, parsedSchema, serdeConfigs, topicName, jsonNode, isKey);
-      case PROTOBUF -> serializeProtobuf(client, parsedSchema, serdeConfigs, topicName, jsonNode, isKey);
+      case JSON ->
+          serializeJsonSchema(client, parsedSchema, serdeConfigs, topicName, jsonNode, isKey);
+      case PROTOBUF ->
+          serializeProtobuf(client, parsedSchema, serdeConfigs, topicName, jsonNode, isKey);
     };
   }
 
@@ -128,10 +130,12 @@ public class RecordSerializer {
   /**
    * Cute, eh? This is a functional interface that allows us to pass a supplier that throws a
    * checked exception.
+   *
    * @param <T> The type of the object to be supplied.
    */
   @FunctionalInterface
   public interface ThrowingSupplier<T, E extends Exception> {
+
     T get() throws E;
   }
 
@@ -145,10 +149,9 @@ public class RecordSerializer {
   }
 
   /**
-   * First serialize the schemaless data as JSON using UTF-8 encoding.
-   * If the data is a single field named {@code __raw__}, the value
-   * of that field is assumed to be a base64-encoded byte array and is decoded and returned as a
-   * {@link ByteString}.
+   * First serialize the schemaless data as JSON using UTF-8 encoding. If the data is a single field
+   * named {@code __raw__}, the value of that field is assumed to be a base64-encoded byte array and
+   * is decoded and returned as a {@link ByteString}.
    */
   private ByteString serializeSchemalessData(
       String topicName,

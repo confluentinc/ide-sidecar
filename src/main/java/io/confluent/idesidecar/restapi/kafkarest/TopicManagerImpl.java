@@ -25,6 +25,7 @@ import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
  */
 @RequestScoped
 public class TopicManagerImpl implements TopicManager {
+
   @Inject
   AdminClients adminClients;
 
@@ -53,20 +54,20 @@ public class TopicManagerImpl implements TopicManager {
                         .orElse(1).shortValue())
                 )).all().toCompletionStage()))
         .chain(v -> getKafkaTopic(
-            clusterId,
-            createTopicRequestData.getTopicName(),
-            false
+                clusterId,
+                createTopicRequestData.getTopicName(),
+                false
             )
-            // The topic may not be immediately available after creation, so we retry a few times
-            // This is also recommended in the Javadoc for UnknownTopicOrPartitionException
-            // "This exception is retryable because the topic or partition might
-            // subsequently be created."
-            .onFailure(UnknownTopicOrPartitionException.class)
-            .retry()
-            // Exponential backoff with a max of 3 retries
-            // Initial delay of 150ms, max delay of 1s
-            .withBackOff(Duration.ofMillis(150), Duration.ofMillis(1000))
-            .atMost(3)
+                // The topic may not be immediately available after creation, so we retry a few times
+                // This is also recommended in the Javadoc for UnknownTopicOrPartitionException
+                // "This exception is retryable because the topic or partition might
+                // subsequently be created."
+                .onFailure(UnknownTopicOrPartitionException.class)
+                .retry()
+                // Exponential backoff with a max of 3 retries
+                // Initial delay of 150ms, max delay of 1s
+                .withBackOff(Duration.ofMillis(150), Duration.ofMillis(1000))
+                .atMost(3)
         );
   }
 

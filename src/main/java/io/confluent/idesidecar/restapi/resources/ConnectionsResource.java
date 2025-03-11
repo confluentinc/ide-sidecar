@@ -1,5 +1,9 @@
 package io.confluent.idesidecar.restapi.resources;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.fge.jsonpatch.JsonPatchException;
+import com.github.fge.jsonpatch.mergepatch.JsonMergePatch;
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
 import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
 import io.confluent.idesidecar.restapi.exceptions.CreateConnectionException;
@@ -8,10 +12,6 @@ import io.confluent.idesidecar.restapi.models.Connection;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionsList;
 import io.quarkus.logging.Log;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.fge.jsonpatch.JsonPatchException;
-import com.github.fge.jsonpatch.mergepatch.JsonMergePatch;
 import io.smallrye.common.annotation.Blocking;
 import io.smallrye.mutiny.Uni;
 import jakarta.inject.Inject;
@@ -35,11 +35,11 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 
 /**
- * API endpoints for managing Sidecar connections. We use the {@link Blocking} annotation
- * to run the endpoints on the Quarkus worker thread pool instead of the event loop threads (also
- * called I/O threads). This is because we call the blocking method
- * {@link io.confluent.idesidecar.restapi.auth.CCloudOAuthContext#checkAuthenticationStatus} in
- * some of the endpoints.
+ * API endpoints for managing Sidecar connections. We use the {@link Blocking} annotation to run the
+ * endpoints on the Quarkus worker thread pool instead of the event loop threads (also called I/O
+ * threads). This is because we call the blocking method
+ * {@link io.confluent.idesidecar.restapi.auth.CCloudOAuthContext#checkAuthenticationStatus} in some
+ * of the endpoints.
  */
 @Path(ConnectionsResource.API_RESOURCE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
@@ -71,7 +71,7 @@ public class ConnectionsResource {
       @Schema(
           description =
               "Whether to validate the connection spec and determine the connection status "
-              + "without creating the connection",
+                  + "without creating the connection",
           defaultValue = "false"
       )
       @QueryParam("dry_run")
@@ -111,34 +111,34 @@ public class ConnectionsResource {
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
   @APIResponses(value = {
-    @APIResponse(
-        responseCode = "200",
-        description = "Connection updated",
-        content = {
-          @Content(mediaType = "application/json",
-              schema = @Schema(implementation = Connection.class))
-        }),
-    @APIResponse(
-        responseCode = "404",
-        description = "Connection not found",
-        content = {
-            @Content(mediaType = "application/json",
-                schema = @Schema(implementation = Failure.class))
-        }),
-    @APIResponse(
-        responseCode = "401",
-        description = "Could not authenticate",
-        content = {
-            @Content(mediaType = "application/json",
-                schema = @Schema(implementation = Failure.class))
-        }),
-    @APIResponse(
-        responseCode = "400",
-        description = "Invalid input",
-        content = {
-            @Content(mediaType = "application/json",
-                schema = @Schema(implementation = Failure.class))
-        }),
+      @APIResponse(
+          responseCode = "200",
+          description = "Connection updated",
+          content = {
+              @Content(mediaType = "application/json",
+                  schema = @Schema(implementation = Connection.class))
+          }),
+      @APIResponse(
+          responseCode = "404",
+          description = "Connection not found",
+          content = {
+              @Content(mediaType = "application/json",
+                  schema = @Schema(implementation = Failure.class))
+          }),
+      @APIResponse(
+          responseCode = "401",
+          description = "Could not authenticate",
+          content = {
+              @Content(mediaType = "application/json",
+                  schema = @Schema(implementation = Failure.class))
+          }),
+      @APIResponse(
+          responseCode = "400",
+          description = "Invalid input",
+          content = {
+              @Content(mediaType = "application/json",
+                  schema = @Schema(implementation = Failure.class))
+          }),
   })
   public Uni<Connection> updateConnection(@PathParam("id") String id, ConnectionSpec spec) {
     return connectionStateManager

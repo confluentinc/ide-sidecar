@@ -28,12 +28,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
- * Base suite interface containing common methods for testing the
- * Records V3 API.
+ * Base suite interface containing common methods for testing the Records V3 API.
  */
 public interface RecordsV3BaseSuite extends ITSuite {
 
@@ -115,6 +114,7 @@ public interface RecordsV3BaseSuite extends ITSuite {
 
   /**
    * Generate cartesian product of all schema formats and subject name strategies.
+   *
    * @param isKey whether the schema is for a key or value. This changes the schema name.
    * @return the list of all possible schema data
    */
@@ -219,7 +219,8 @@ public interface RecordsV3BaseSuite extends ITSuite {
         .value(
             ProduceRequestData
                 .builder()
-                .schemaVersion(Optional.ofNullable(valueSchema).map(Schema::getVersion).orElse(null))
+                .schemaVersion(
+                    Optional.ofNullable(valueSchema).map(Schema::getVersion).orElse(null))
                 .data(value.data())
                 .subject(value.subject())
                 .subjectNameStrategy(
