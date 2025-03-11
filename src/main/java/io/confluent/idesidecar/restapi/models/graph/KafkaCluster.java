@@ -7,5 +7,7 @@ import io.smallrye.graphql.api.DefaultNonNull;
 @RegisterForReflection
 @DefaultNonNull
 public interface KafkaCluster extends Cluster {
-  @NotNull String bootstrapServers();
+
+  @NotNull
+  String bootstrapServers();
 }

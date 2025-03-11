@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class SimpleMockSchemaRegistryClient extends MockSchemaRegistryClient {
+
   private final Map<String, Map<ParsedSchema, Integer>> schemaCache;
   private final Map<Integer, ParsedSchema> idCache;
   private final AtomicInteger idCounter;

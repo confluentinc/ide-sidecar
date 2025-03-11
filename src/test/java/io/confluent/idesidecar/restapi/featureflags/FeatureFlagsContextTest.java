@@ -150,7 +150,8 @@ class FeatureFlagsContextTest extends BaseFeatureFlagsTest implements FeatureFla
     assertEquals(OS_NAME, deviceContext.getValue("os.name").stringValue());
     assertEquals(OS_VERSION, deviceContext.getValue("os.version").stringValue());
     assertEquals(OS_TYPE.name(), deviceContext.getValue("os.type").stringValue());
-    assertEquals(VS_CODE.extensionVersion(), deviceContext.getValue("vscode.extension.version").stringValue());
+    assertEquals(VS_CODE.extensionVersion(),
+        deviceContext.getValue("vscode.extension.version").stringValue());
     assertEquals(VS_CODE.version(), deviceContext.getValue("vscode.version").stringValue());
     assertEquals(SIDECAR_VERSION, deviceContext.getValue("sidecar.version").stringValue());
     assertAttributeNames(
@@ -193,7 +194,7 @@ class FeatureFlagsContextTest extends BaseFeatureFlagsTest implements FeatureFla
 
   }
 
-  void assertAttributeNames(LDContext context, String...attributeNames) {
+  void assertAttributeNames(LDContext context, String... attributeNames) {
     var existingNames = StreamSupport.stream(
         context.getCustomAttributeNames().spliterator(),
         false

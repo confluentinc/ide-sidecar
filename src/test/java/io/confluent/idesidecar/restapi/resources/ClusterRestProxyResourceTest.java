@@ -5,7 +5,6 @@ import static io.confluent.idesidecar.restapi.cache.ClusterCacheExpectations.exp
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.asJson;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.emptyString;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -203,8 +202,8 @@ class ClusterRestProxyResourceTest {
     // Get the data plane token directly from the connection manager
     var dataPlaneToken =
         ((CCloudConnectionState) connectionStateManager.getConnectionState(CONNECTION_ID))
-        .getOauthContext()
-        .getDataPlaneToken();
+            .getOauthContext()
+            .getDataPlaneToken();
 
     // Given we have a fake CCloud Kafka REST server endpoint for list topics
     wireMock.register(
@@ -274,8 +273,8 @@ class ClusterRestProxyResourceTest {
     // Get the data plane token directly from the connection manager
     var dataPlaneToken =
         ((CCloudConnectionState) connectionStateManager.getConnectionState(CONNECTION_ID))
-        .getOauthContext()
-        .getDataPlaneToken();
+            .getOauthContext()
+            .getDataPlaneToken();
 
     // Given we have a fake CCloud Schema Registry server endpoint for list schemas
     wireMock.register(
@@ -313,7 +312,7 @@ class ClusterRestProxyResourceTest {
             "x-cluster-id", srClusterId,
             // Assert that any headers sent to the proxy are passed through
             // to the target server
-             "x-non-sidecar-specific-header", "dummy"
+            "x-non-sidecar-specific-header", "dummy"
         ))
         .get("/schemas")
         .then();

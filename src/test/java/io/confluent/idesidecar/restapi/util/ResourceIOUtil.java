@@ -3,7 +3,6 @@ package io.confluent.idesidecar.restapi.util;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -18,7 +17,7 @@ import wiremock.com.github.jknack.handlebars.internal.Files;
 
 public class ResourceIOUtil {
 
-  private static ObjectMapper MAPPER = createObjectMapper();
+  private static final ObjectMapper MAPPER = createObjectMapper();
 
   private static ObjectMapper createObjectMapper() {
     ObjectMapper mapper = new ObjectMapper();
@@ -43,10 +42,10 @@ public class ResourceIOUtil {
   public static byte[] loadResourceAsBytes(String resourcePath) {
     try {
       return Objects.requireNonNull(
-              Thread.currentThread()
-                    .getContextClassLoader()
-                    .getResourceAsStream(resourcePath)
-          ).readAllBytes();
+          Thread.currentThread()
+              .getContextClassLoader()
+              .getResourceAsStream(resourcePath)
+      ).readAllBytes();
     } catch (IOException e) {
       fail("Error loading resource file " + resourcePath, e);
       return null;
@@ -144,7 +143,7 @@ public class ResourceIOUtil {
   /**
    * Construct a GraphQL request payload for a {@code POST} query request.
    *
-   * @param query     the GraphQL query string
+   * @param query the GraphQL query string
    * @return the request payload; never null
    */
   public static String asGraphQLRequest(String query) {
@@ -216,10 +215,10 @@ public class ResourceIOUtil {
       assertEquals(expected.toString(), deserialized.toString());
       assertNotEquals("not the same", deserialized);
       assertNotEquals(deserialized, null);
-      assertTrue(expected.equals(expected)); // always use 'equals' method
+      assertEquals(expected, expected); // always use 'equals' method
       if (expected instanceof Comparable<?> comparableExpected) {
-        assertEquals(0, ((Comparable<T>)expected).compareTo(expected));
-        assertEquals(0, ((Comparable<T>)expected).compareTo(expected));
+        assertEquals(0, ((Comparable<T>) expected).compareTo(expected));
+        assertEquals(0, ((Comparable<T>) expected).compareTo(expected));
       }
     } catch (IOException e) {
       fail("Error serializing and deserializing " + expected, e);

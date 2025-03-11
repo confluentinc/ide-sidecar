@@ -9,8 +9,8 @@ import org.junit.jupiter.api.Test;
 public class MessageTypeTest {
 
   /**
-   * For each message type, check that the corresponding body class is
-   * unique and not null, otherwise someone forgot to add a mapping (or added a duplicate).
+   * For each message type, check that the corresponding body class is unique and not null,
+   * otherwise someone forgot to add a mapping (or added a duplicate).
    */
   @Test
   public void testBodyClass() {

@@ -4,13 +4,13 @@ import static io.confluent.idesidecar.restapi.util.RequestHeadersConstants.TARGE
 
 import io.confluent.idesidecar.restapi.auth.AuthErrors;
 import io.confluent.idesidecar.restapi.auth.CCloudOAuthContext;
-import io.confluent.idesidecar.restapi.models.ConnectionSpec;
-import io.confluent.idesidecar.restapi.models.ConnectionStatus;
-import io.confluent.idesidecar.restapi.models.ConnectionStatusBuilder;
 import io.confluent.idesidecar.restapi.models.ConnectionMetadata;
+import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
+import io.confluent.idesidecar.restapi.models.ConnectionStatus;
 import io.confluent.idesidecar.restapi.models.ConnectionStatus.CCloudStatus;
 import io.confluent.idesidecar.restapi.models.ConnectionStatus.ConnectedState;
+import io.confluent.idesidecar.restapi.models.ConnectionStatusBuilder;
 import io.confluent.idesidecar.restapi.resources.ConnectionsResource;
 import io.quarkus.logging.Log;
 import io.smallrye.common.constraint.NotNull;
@@ -174,8 +174,8 @@ public class CCloudConnectionState extends ConnectionState {
 
   /**
    * Return the {@link CCloudOAuthContext}'s OAuth state parameter as internal id so that the
-   * callback endpoint, available at <code>/gateway/v1/callback-vscode-docs</code>, can use
-   * the state parameter to look up the {@link CCloudConnectionState}.
+   * callback endpoint, available at <code>/gateway/v1/callback-vscode-docs</code>, can use the
+   * state parameter to look up the {@link CCloudConnectionState}.
    *
    * @return the oauthContext's state parameter
    */

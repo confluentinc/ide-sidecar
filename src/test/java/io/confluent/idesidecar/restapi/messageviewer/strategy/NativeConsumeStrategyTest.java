@@ -8,11 +8,12 @@ import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPart
 import io.confluent.idesidecar.restapi.proxy.KafkaRestProxyContext;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
 import org.apache.kafka.common.KafkaException;
+import org.junit.jupiter.api.Test;
 
 @QuarkusTest
 public class NativeConsumeStrategyTest {
+
   @Inject
   NativeConsumeStrategy nativeConsumeStrategy;
 

@@ -6,8 +6,8 @@ import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import io.confluent.idesidecar.restapi.cache.ClusterCache;
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
-import io.confluent.idesidecar.restapi.util.UriUtil;
 import io.confluent.idesidecar.restapi.util.CCloudTestUtil;
+import io.confluent.idesidecar.restapi.util.UriUtil;
 import io.quarkiverse.wiremock.devservice.WireMockConfigKey;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -74,7 +74,8 @@ public abstract class ConfluentQueryResourceTestBase {
     );
     // Expect get-advertised-listeners for each broker
     for (int brokerId = 1; brokerId <= 2; ++brokerId) {
-      var filename = "confluent-local-resources-mock-responses/list-adv-listener-config-broker-%d.json".formatted(brokerId);
+      var filename = "confluent-local-resources-mock-responses/list-adv-listener-config-broker-%d.json".formatted(
+          brokerId);
       expectSuccessfulGetLocalAdvertisedListenersConfig(clusterId, brokerId, filename);
     }
   }
@@ -143,7 +144,8 @@ public abstract class ConfluentQueryResourceTestBase {
     expectSuccessfulGet(confluentLocalBrokersUri.formatted(clusterId), resourceFilename);
   }
 
-  void expectSuccessfulGetLocalAdvertisedListenersConfig(String clusterId, int brokerId, String resourceFilename) {
+  void expectSuccessfulGetLocalAdvertisedListenersConfig(String clusterId, int brokerId,
+      String resourceFilename) {
     expectSuccessfulGet(
         confluentLocalBrokerAdvertisedListenerConfigUri.formatted(clusterId, brokerId),
         resourceFilename

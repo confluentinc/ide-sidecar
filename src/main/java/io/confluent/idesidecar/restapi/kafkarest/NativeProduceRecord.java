@@ -9,14 +9,14 @@ import io.confluent.idesidecar.restapi.util.MutinyUtil;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.infrastructure.Infrastructure;
 import jakarta.enterprise.context.ApplicationScoped;
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.clients.producer.RecordMetadata;
-import org.apache.kafka.common.header.Header;
 import java.time.Instant;
 import java.util.Date;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.header.Header;
 
 @ApplicationScoped
 public class NativeProduceRecord extends GenericProduceRecord {
@@ -29,7 +29,8 @@ public class NativeProduceRecord extends GenericProduceRecord {
       boolean dryRun,
       ProduceRequest produceRequest
   ) {
-    var produceContext = ProduceContext.fromRequest(connectionId, clusterId, topicName, produceRequest);
+    var produceContext = ProduceContext.fromRequest(connectionId, clusterId, topicName,
+        produceRequest);
     return ensureTopicPartitionExists(produceContext)
         .chain(() -> super.produce(produceContext, dryRun));
   }
@@ -46,12 +47,13 @@ public class NativeProduceRecord extends GenericProduceRecord {
                 ctx.produceRequest().getPartitionId(),
                 ctx.produceRequest().getTimestamp(),
                 Optional.ofNullable(ctx.serializedKey()).map(ByteString::toByteArray).orElse(null),
-                Optional.ofNullable(ctx.serializedValue()).map(ByteString::toByteArray).orElse(null),
+                Optional.ofNullable(ctx.serializedValue()).map(ByteString::toByteArray)
+                    .orElse(null),
                 getRecordHeaders(ctx.produceRequest())
             )).map(recordMetadata -> c
-                    .with()
-                    .recordMetadata(recordMetadata)
-                    .build()
+                .with()
+                .recordMetadata(recordMetadata)
+                .build()
             )
         );
   }
@@ -69,12 +71,12 @@ public class NativeProduceRecord extends GenericProduceRecord {
   }
 
   /**
-   * Check that the topic-partition exists. If partition id was not provided,
-   * we simply pass through.
+   * Check that the topic-partition exists. If partition id was not provided, we simply pass
+   * through.
    *
    * @param c The context object.
-   * @return A Uni that emits the context object after checking the partition. The context object
-   * is left unchanged in all cases.
+   * @return A Uni that emits the context object after checking the partition. The context object is
+   * left unchanged in all cases.
    */
   private Uni<ProduceContext> ensureTopicPartitionExists(ProduceContext c) {
     return topicManager

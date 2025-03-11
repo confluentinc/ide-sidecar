@@ -7,4 +7,7 @@
 <suppressions>
   <!-- Copyright in the license file is sufficient. The copyright header is not required in every source file -->
   <suppress checks="RegexpHeader" files=".*" />
+  <suppress checks="MissingJavadocType" files=".*" />
+  <suppress checks="MissingJavadocMethod" files=".*" />
+  <suppress checks="SummaryJavadoc" files=".*" />
 </suppressions>

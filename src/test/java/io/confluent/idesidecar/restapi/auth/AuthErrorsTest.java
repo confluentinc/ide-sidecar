@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.confluent.idesidecar.restapi.auth.AuthErrors.AuthError;
 import io.quarkus.test.junit.QuarkusTest;
-import java.time.Instant;
 import org.junit.jupiter.api.Test;
 
 @QuarkusTest

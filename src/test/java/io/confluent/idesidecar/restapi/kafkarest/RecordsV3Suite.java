@@ -19,6 +19,7 @@ public interface RecordsV3Suite extends RecordsV3BaseSuite {
 
   /**
    * Valid keys and values inputs used for producing and consuming data.
+   *
    * @return the sets of keys and sets of values
    */
   static ArgumentSets validKeysAndValues() {
@@ -128,7 +129,7 @@ public interface RecordsV3Suite extends RecordsV3BaseSuite {
     var rawSchema = """
         syntax = "proto3";
         package com.example;
-
+        
         import "google/protobuf/any.proto";
         message Product {
           int32 id = 1;
@@ -187,7 +188,7 @@ public interface RecordsV3Suite extends RecordsV3BaseSuite {
     var rawSchema = """
         syntax = "proto3";
         package com.example;
-
+        
         import "com.example.Other";
         import "google/protobuf/any.proto";
         message Product {

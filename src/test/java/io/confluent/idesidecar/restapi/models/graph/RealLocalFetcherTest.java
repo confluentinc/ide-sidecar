@@ -4,7 +4,11 @@ import static io.confluent.idesidecar.restapi.models.graph.RealLocalFetcher.CONF
 import static io.confluent.idesidecar.restapi.models.graph.RealLocalFetcher.CONFLUENT_LOCAL_KAFKAREST_HOSTNAME;
 import static io.confluent.idesidecar.restapi.models.graph.RealLocalFetcher.CONFLUENT_LOCAL_KAFKAREST_URI;
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
 import io.confluent.idesidecar.restapi.exceptions.CreateConnectionException;
@@ -86,7 +90,8 @@ class RealLocalFetcherTest {
     var config = localFetcher.parseConfigResponse(URL, json);
     assertEquals(CLUSTER_ID, config.clusterId());
     assertEquals("1", config.brokerId());
-    assertEquals("PLAINTEXT://confluent-local-broker-1:50003,PLAINTEXT_HOST://localhost:50002", config.value());
+    assertEquals("PLAINTEXT://confluent-local-broker-1:50003,PLAINTEXT_HOST://localhost:50002",
+        config.value());
   }
 
   @Test
@@ -174,7 +179,8 @@ class RealLocalFetcherTest {
     );
   }
 
-  void assertLocalClusterBootstrapServersMatches(String expectedAddresses, String...actualAddresses) {
+  void assertLocalClusterBootstrapServersMatches(String expectedAddresses,
+      String... actualAddresses) {
     List<KafkaBrokerConfigResponse> configs = new ArrayList<>();
     for (String address : actualAddresses) {
       configs.add(configResponse(address));
@@ -190,7 +196,7 @@ class RealLocalFetcherTest {
     assertEquals(expected, actual);
   }
 
-  void assertExtractLocalhostAddresses(String input, String...expectedAddresses) {
+  void assertExtractLocalhostAddresses(String input, String... expectedAddresses) {
     var addresses = RealLocalFetcher.extractLocalAddresses(input);
     assertEquals(Arrays.asList(expectedAddresses), addresses);
   }

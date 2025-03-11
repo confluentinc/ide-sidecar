@@ -103,7 +103,8 @@ class ConnectionEventsTest extends AbstractWebsocketTestBase {
     session.assertNoMessagesAfter(TIMEOUT);
   }
 
-  void assertEventReceived(ConnectedWorkspace session, Action action, ConnectionState expectedState) {
+  void assertEventReceived(ConnectedWorkspace session, Action action,
+      ConnectionState expectedState) {
     var message = session.waitForMessageOfType(MessageType.CONNECTION_EVENT, TIMEOUT);
     var body = message.body();
     assertNotNull(body);

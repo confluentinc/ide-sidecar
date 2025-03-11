@@ -17,6 +17,7 @@ import java.util.Optional;
  * Stores the context of a request of the message viewer API.
  */
 public class KafkaRestProxyContext<T, U> extends ClusterProxyContext {
+
   private final String topicName;
   private KafkaCluster kafkaClusterInfo;
   private SchemaRegistry schemaRegistryInfo;
@@ -58,8 +59,8 @@ public class KafkaRestProxyContext<T, U> extends ClusterProxyContext {
   }
 
   /**
-   * Use this if the request is originated from within sidecar code and
-   * not being passed through as is from a client.
+   * Use this if the request is originated from within sidecar code and not being passed through as
+   * is from a client.
    */
   public KafkaRestProxyContext(
       String connectionId,

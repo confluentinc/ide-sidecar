@@ -3,7 +3,6 @@ package io.confluent.idesidecar.restapi.auth;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.time.Instant;
 
 /**
  * This record holds auth-related errors for a {@link AuthContext}.

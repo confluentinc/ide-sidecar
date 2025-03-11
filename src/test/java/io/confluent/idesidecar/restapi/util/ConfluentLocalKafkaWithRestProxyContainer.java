@@ -6,13 +6,13 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.utility.DockerImageName;
 
 /**
- * A Testcontainers-based implementation of a local Confluent environment,
- * providing a single-node Kafka cluster with a REST Proxy.
- * This container is based on the {@code confluentinc/confluent-local} Docker image.
+ * A Testcontainers-based implementation of a local Confluent environment, providing a single-node
+ * Kafka cluster with a REST Proxy. This container is based on the
+ * {@code confluentinc/confluent-local} Docker image.
  *
  * <p>
- * This container is designed for integration testing of Kafka-based applications,
- * offering a lightweight, self-contained environment that includes:
+ * This container is designed for integration testing of Kafka-based applications, offering a
+ * lightweight, self-contained environment that includes:
  * <ul>
  *   <li>A single-node Kafka broker</li>
  *   <li>Kafka REST Proxy</li>
@@ -64,6 +64,7 @@ import org.testcontainers.utility.DockerImageName;
 public class ConfluentLocalKafkaWithRestProxyContainer
     extends GenericContainer<ConfluentLocalKafkaWithRestProxyContainer>
     implements AutoCloseable {
+
   private static final int KAFKA_PORT_HOST = 30092;
   private static final int KAFKA_PORT_CONTAINER = 9092;
   private static final String DEFAULT_IMAGE = "confluentinc/confluent-local:7.6.0";

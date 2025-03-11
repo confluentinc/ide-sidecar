@@ -3,9 +3,9 @@ package io.confluent.idesidecar.restapi.connections;
 import static io.confluent.idesidecar.restapi.util.ExceptionUtil.unwrap;
 
 import io.confluent.idesidecar.restapi.auth.AuthErrors;
-import io.confluent.idesidecar.restapi.clients.SidecarSchemaRegistryClient;
 import io.confluent.idesidecar.restapi.clients.ClientConfigurator;
 import io.confluent.idesidecar.restapi.clients.SchemaRegistryClient;
+import io.confluent.idesidecar.restapi.clients.SidecarSchemaRegistryClient;
 import io.confluent.idesidecar.restapi.credentials.Credentials;
 import io.confluent.idesidecar.restapi.credentials.TLSConfig;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
@@ -104,16 +104,16 @@ public class DirectConnectionState extends ConnectionState {
   @Override
   public Optional<Credentials> getKafkaCredentials() {
     Credentials credentials = spec.kafkaClusterConfig() != null
-                              ? spec.kafkaClusterConfig().credentials()
-                              : null;
+        ? spec.kafkaClusterConfig().credentials()
+        : null;
     return Optional.ofNullable(credentials);
   }
 
   @Override
   public Optional<Credentials> getSchemaRegistryCredentials() {
     Credentials credentials = spec.schemaRegistryConfig() != null
-                              ? spec.schemaRegistryConfig().credentials()
-                              : null;
+        ? spec.schemaRegistryConfig().credentials()
+        : null;
     return Optional.ofNullable(credentials);
   }
 
@@ -137,9 +137,9 @@ public class DirectConnectionState extends ConnectionState {
     if (spec.schemaRegistryConfig() != null) {
       return Optional.of(
           spec.schemaRegistryConfig().tlsConfig() != null
-          ? spec.schemaRegistryConfig().tlsConfig()
-          // Use the default TLS configuration if none is provided
-          : new TLSConfig()
+              ? spec.schemaRegistryConfig().tlsConfig()
+              // Use the default TLS configuration if none is provided
+              : new TLSConfig()
       );
     }
 
@@ -188,7 +188,7 @@ public class DirectConnectionState extends ConnectionState {
           );
           if (cause instanceof ConfigException) {
             message = ("Unable to reach the Kafka cluster at %s. "
-                       + "Check the bootstrap server addresses."
+                + "Check the bootstrap server addresses."
             ).formatted(
                 spec.kafkaClusterConfig().bootstrapServers()
             );
@@ -210,8 +210,8 @@ public class DirectConnectionState extends ConnectionState {
         }
     ).orElseGet(
         () -> {
-            // There is no Kafka cluster configuration, so return a null Kafka status
-            return Future.succeededFuture(null);
+          // There is no Kafka cluster configuration, so return a null Kafka status
+          return Future.succeededFuture(null);
         }
     );
   }
@@ -255,19 +255,20 @@ public class DirectConnectionState extends ConnectionState {
   }
 
   public interface ClientOperation<ClientT, T> {
+
     T apply(ClientT client) throws Exception;
   }
 
   /**
-   * If there is a Kafka cluster configuration, then execute the given operation with
-   * an {@link AdminClient}. The operation can handle exceptions, or it can handle all exceptions
+   * If there is a Kafka cluster configuration, then execute the given operation with an
+   * {@link AdminClient}. The operation can handle exceptions, or it can handle all exceptions
    * through the supplied error handler.
    *
    * @param operation    the function to execute with the AdminClient
-   * @param errorHandler the function that will be called if the client cannot be created or if
-   *                     the operation threw an exception
-   * @return the result of the operation, or empty if the operation was not called because
-   *         there is no Kafka cluster configuration
+   * @param errorHandler the function that will be called if the client cannot be created or if the
+   *                     operation threw an exception
+   * @return the result of the operation, or empty if the operation was not called because there is
+   * no Kafka cluster configuration
    */
   public <T> Optional<T> withAdminClient(
       ClientOperation<AdminClient, T> operation,
@@ -322,15 +323,15 @@ public class DirectConnectionState extends ConnectionState {
   }
 
   /**
-   * If there is a Schema Registry configuration, then execute the given operation with
-   * an {@link SchemaRegistryClient}. The operation can handle exceptions, or it can handle all exceptions
-   * through the supplied error handler.
+   * If there is a Schema Registry configuration, then execute the given operation with an
+   * {@link SchemaRegistryClient}. The operation can handle exceptions, or it can handle all
+   * exceptions through the supplied error handler.
    *
    * @param operation    the function to execute with the AdminClient
-   * @param errorHandler the function that will be called if the client cannot be created or if
-   *                     the operation threw an exception
-   * @return the result of the operation, or empty if the operation was not called because
-   *         there is no Schema Registry configuration
+   * @param errorHandler the function that will be called if the client cannot be created or if the
+   *                     operation threw an exception
+   * @return the result of the operation, or empty if the operation was not called because there is
+   * no Schema Registry configuration
    */
   public <T> Optional<T> withSchemaRegistryClient(
       ClientOperation<SchemaRegistryClient, T> operation,

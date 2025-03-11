@@ -10,7 +10,7 @@ public class Predicates {
    * predicate is null.
    *
    * @param value the predicate
-   * @param <T> the type of value for the predicate
+   * @param <T>   the type of value for the predicate
    * @return the predicate if not null, or an always-true predicate
    */
   public static <T> Predicate<T> orTrue(Predicate<T> value) {
@@ -23,7 +23,7 @@ public class Predicates {
    *
    * @param first  the first predicate to evaluate
    * @param second the second predicate to evaluate
-   * @param <T> the type of predicate parameter
+   * @param <T>    the type of predicate parameter
    * @return the new predicate function
    */
   public static <T> Predicate<T> or(
@@ -34,13 +34,13 @@ public class Predicates {
   }
 
   /**
-   * Utility method that returns a predicate function that evaluates to true if any of the
-   * supplied predicates evaluates to true.
+   * Utility method that returns a predicate function that evaluates to true if any of the supplied
+   * predicates evaluates to true.
    *
    * @param first  the first predicate to evaluate
    * @param second the second predicate to evaluate
-   * @param third the third predicate to evaluate
-   * @param <T> the type of predicate parameter
+   * @param third  the third predicate to evaluate
+   * @param <T>    the type of predicate parameter
    * @return the new predicate function
    */
   public static <T> Predicate<T> or(

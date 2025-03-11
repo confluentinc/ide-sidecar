@@ -63,6 +63,7 @@ public interface RecordsV3ErrorsSuite extends RecordsV3BaseSuite {
 
   /**
    * Inputs for test cases for when the key and value schema versions are not found.
+   *
    * @return the Arguments for the test cases
    */
   static Stream<Arguments> keyAndValueSchemaVersions() {
@@ -139,6 +140,7 @@ public interface RecordsV3ErrorsSuite extends RecordsV3BaseSuite {
 
   /**
    * Inputs for test cases for when the schema is not compatible with the data.
+   *
    * @return the ArgumentSets with the combinations of schema formats and bad data
    */
   static ArgumentSets badData() {
@@ -211,6 +213,7 @@ public interface RecordsV3ErrorsSuite extends RecordsV3BaseSuite {
 
   /**
    * Inputs for test cases for when the (Protobuf) schema is not compatible with the data.
+   *
    * @return the arguments for the test cases
    */
   static Stream<Arguments> invalidProtobufData() {

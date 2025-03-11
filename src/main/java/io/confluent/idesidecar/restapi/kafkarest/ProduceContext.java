@@ -4,10 +4,9 @@ import com.google.protobuf.ByteString;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequest;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.soabase.recordbuilder.core.RecordBuilder;
+import java.util.Optional;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.RecordMetadata;
-
-import java.util.Optional;
 
 /**
  * Context object for the produce record operation. This object is used to pass around the various

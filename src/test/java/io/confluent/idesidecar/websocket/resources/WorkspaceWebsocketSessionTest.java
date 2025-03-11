@@ -29,7 +29,8 @@ public class WorkspaceWebsocketSessionTest {
     // inactive / not yet pid known session
     Instant now = Instant.now();
     var mockSession = getMockSession();
-    WorkspaceWebsocketSession session = new WorkspaceWebsocketSession(this.mapper, mockSession, null, now);
+    WorkspaceWebsocketSession session = new WorkspaceWebsocketSession(this.mapper, mockSession,
+        null, now);
     Assertions.assertFalse(session.isActive());
     // inactive session should report "unknown" for its pid string
     assertEquals("unknown", session.workspacePidString());

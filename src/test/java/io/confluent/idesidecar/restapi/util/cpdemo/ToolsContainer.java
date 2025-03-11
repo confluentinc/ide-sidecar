@@ -8,6 +8,7 @@ import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
 
 public class ToolsContainer extends GenericContainer<ToolsContainer> {
+
   private static final String DEFAULT_IMAGE = "cnfldemos/tools";
   private static final String DEFAULT_TAG = "0.3";
   private static final String CONTAINER_NAME = "tools";

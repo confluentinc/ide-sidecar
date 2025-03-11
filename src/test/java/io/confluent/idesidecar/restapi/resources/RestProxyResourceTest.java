@@ -73,7 +73,8 @@ class RestProxyResourceTest {
         .contentType(MediaType.APPLICATION_JSON)
         .accept(MediaType.APPLICATION_JSON)
         .header("X-Debug", "true")
-        .body("{\"userPrincipal\":\"User:YOUR_USER_ID\",\"actions\":[{\"resourceType\":\"Organization\",\"resourceName\":\"organization\",\"operation\":\"CreateEnvironment\",\"scope\":{\"clusters\":{},\"path\":[\"organization=YOUR_ORG_ID\"]}}]}")
+        .body(
+            "{\"userPrincipal\":\"User:YOUR_USER_ID\",\"actions\":[{\"resourceType\":\"Organization\",\"resourceName\":\"organization\",\"operation\":\"CreateEnvironment\",\"scope\":{\"clusters\":{},\"path\":[\"organization=YOUR_ORG_ID\"]}}]}")
         .when()
         .put(path)
         .then()
@@ -89,7 +90,8 @@ class RestProxyResourceTest {
         .contentType(MediaType.APPLICATION_JSON)
         .accept(MediaType.APPLICATION_JSON)
         .header("x-connection-id", CONNECTION_ID)
-        .body("{\"userPrincipal\":\"User:YOUR_USER_ID\",\"actions\":[{\"resourceType\":\"Organization\",\"resourceName\":\"organization\",\"operation\":\"CreateEnvironment\",\"scope\":{\"clusters\":{},\"path\":[\"organization=YOUR_ORG_ID\"]}}]}")
+        .body(
+            "{\"userPrincipal\":\"User:YOUR_USER_ID\",\"actions\":[{\"resourceType\":\"Organization\",\"resourceName\":\"organization\",\"operation\":\"CreateEnvironment\",\"scope\":{\"clusters\":{},\"path\":[\"organization=YOUR_ORG_ID\"]}}]}")
         .when()
         .put(path)
         .then()
@@ -139,7 +141,8 @@ class RestProxyResourceTest {
         .accept(MediaType.APPLICATION_JSON)
         .headers(Map.of("x-connection-id", connectionId))
         .header("Authorization", "Bearer " + controlPlaneToken.token()) // Ensure the header is set
-        .body("{\"userPrincipal\":\"User:YOUR_USER_ID\",\"actions\":[{\"resourceType\":\"Organization\",\"resourceName\":\"organization\",\"operation\":\"CreateEnvironment\",\"scope\":{\"clusters\":{},\"path\":[\"organization=YOUR_ORG_ID\"]}}]}")
+        .body(
+            "{\"userPrincipal\":\"User:YOUR_USER_ID\",\"actions\":[{\"resourceType\":\"Organization\",\"resourceName\":\"organization\",\"operation\":\"CreateEnvironment\",\"scope\":{\"clusters\":{},\"path\":[\"organization=YOUR_ORG_ID\"]}}]}")
         .when()
         .put(path)
         .then();
@@ -185,7 +188,8 @@ class RestProxyResourceTest {
         .contentType(MediaType.APPLICATION_JSON)
         .accept(MediaType.APPLICATION_JSON)
         .headers(Map.of("x-connection-id", connectionId))
-        .body("{\"userPrincipal\":\"User:YOUR_USER_ID\",\"actions\":[{\"resourceType\":\"Organization\",\"resourceName\":\"organization\",\"operation\":\"CreateEnvironment\",\"scope\":{\"clusters\":{},\"path\":[\"organization=YOUR_ORG_ID\"]}}]}")
+        .body(
+            "{\"userPrincipal\":\"User:YOUR_USER_ID\",\"actions\":[{\"resourceType\":\"Organization\",\"resourceName\":\"organization\",\"operation\":\"CreateEnvironment\",\"scope\":{\"clusters\":{},\"path\":[\"organization=YOUR_ORG_ID\"]}}]}")
         .when()
         .put(path)
         .then();

@@ -14,13 +14,13 @@ import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.infrastructure.Infrastructure;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
-import org.apache.kafka.clients.producer.RecordMetadata;
-import org.apache.kafka.common.header.Header;
-import org.apache.kafka.common.header.internals.RecordHeader;
 import java.util.Date;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.header.Header;
+import org.apache.kafka.common.header.internals.RecordHeader;
 
 public abstract class GenericProduceRecord {
 
@@ -92,8 +92,8 @@ public abstract class GenericProduceRecord {
 
 
   /**
-   * Ensure that either key or value data is provided in the request. If neither is provided,
-   * throw a 400.
+   * Ensure that either key or value data is provided in the request. If neither is provided, throw
+   * a 400.
    *
    * @param c The context object.
    * @return A Uni that emits the context object if key or value data is provided.
@@ -127,8 +127,8 @@ public abstract class GenericProduceRecord {
   }
 
   /**
-   * Use {@link SchemaManager#getSchema} to fetch schema information that may be provided
-   * for the key and/or value data.
+   * Use {@link SchemaManager#getSchema} to fetch schema information that may be provided for the
+   * key and/or value data.
    *
    * @param c The context object.
    * @return A Uni that emits the context object with key/value schema set (can be empty).
@@ -161,9 +161,9 @@ public abstract class GenericProduceRecord {
   }
 
   /**
-   * Use the {@link RecordSerializer#serialize} to serialize the key and value data
-   * based on optionally provided schema information. If the computed schema is null,
-   * we use the {@link KafkaJsonSerializer} to serialize the data.
+   * Use the {@link RecordSerializer#serialize} to serialize the key and value data based on
+   * optionally provided schema information. If the computed schema is null, we use the
+   * {@link KafkaJsonSerializer} to serialize the data.
    *
    * @param c The context object.
    * @return A Uni that emits the context object with the serialized key and value set.

@@ -34,10 +34,10 @@ public class SidecarSchemaRegistryClient
   }
 
   public <T> T httpRequest(String path,
-                           String method,
-                           byte[] requestBodyData,
-                           Map<String, String> requestProperties,
-                           TypeReference<T> responseFormat)
+      String method,
+      byte[] requestBodyData,
+      Map<String, String> requestProperties,
+      TypeReference<T> responseFormat)
       throws IOException, RestClientException {
     return restService.httpRequest(
         path,

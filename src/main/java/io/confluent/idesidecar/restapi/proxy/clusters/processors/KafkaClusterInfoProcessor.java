@@ -4,8 +4,8 @@ import io.confluent.idesidecar.restapi.cache.ClusterCache;
 import io.confluent.idesidecar.restapi.exceptions.ClusterNotFoundException;
 import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
 import io.confluent.idesidecar.restapi.exceptions.ProcessorFailedException;
-import io.confluent.idesidecar.restapi.proxy.KafkaRestProxyContext;
 import io.confluent.idesidecar.restapi.processors.Processor;
+import io.confluent.idesidecar.restapi.proxy.KafkaRestProxyContext;
 import io.confluent.idesidecar.restapi.util.RequestHeadersConstants;
 import io.quarkus.logging.Log;
 import io.vertx.core.Future;
@@ -17,6 +17,7 @@ import java.util.Objects;
  */
 public class KafkaClusterInfoProcessor<T, U> extends
     Processor<KafkaRestProxyContext<T, U>, Future<KafkaRestProxyContext<T, U>>> {
+
   private final ClusterCache clusterCache;
 
   public KafkaClusterInfoProcessor(ClusterCache cache) {

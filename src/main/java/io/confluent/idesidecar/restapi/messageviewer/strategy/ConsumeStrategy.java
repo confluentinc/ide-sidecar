@@ -9,8 +9,9 @@ import io.vertx.core.Future;
  * Defines common methods of consume strategies for the message viewer API.
  */
 public interface ConsumeStrategy {
+
   Future<KafkaRestProxyContext
       <SimpleConsumeMultiPartitionRequest, SimpleConsumeMultiPartitionResponse>>
   execute(KafkaRestProxyContext
-              <SimpleConsumeMultiPartitionRequest, SimpleConsumeMultiPartitionResponse> context);
+      <SimpleConsumeMultiPartitionRequest, SimpleConsumeMultiPartitionResponse> context);
 }

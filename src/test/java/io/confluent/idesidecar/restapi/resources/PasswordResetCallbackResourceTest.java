@@ -3,6 +3,7 @@ package io.confluent.idesidecar.restapi.resources;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.Matchers.not;
+
 import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
 import io.confluent.idesidecar.restapi.util.VsCodeExtensionUtil;
 import io.quarkus.test.junit.QuarkusTest;

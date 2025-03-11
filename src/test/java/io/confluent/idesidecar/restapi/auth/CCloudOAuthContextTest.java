@@ -128,7 +128,7 @@ class CCloudOAuthContextTest {
                 testContext.verify(() -> {
                   assertEquals(
                       "Retrieving the control plane token failed for the following reason: "
-                      + "{\"code\":401,\"message\":\"Unauthorized\"}",
+                          + "{\"code\":401,\"message\":\"Unauthorized\"}",
                       failure.getMessage());
                   assertEquals(
                       "io.confluent.idesidecar.restapi.exceptions."
@@ -170,7 +170,7 @@ class CCloudOAuthContextTest {
                 testContext.verify(() -> {
                   assertEquals(
                       "Could not parse the response from Confluent Cloud when exchanging "
-                      + "the ID token for the control plane token.",
+                          + "the ID token for the control plane token.",
                       failure.getMessage());
                   assertEquals(
                       "io.confluent.idesidecar.restapi.exceptions."
@@ -212,7 +212,7 @@ class CCloudOAuthContextTest {
                 testContext.verify(() -> {
                   assertEquals(
                       "Could not parse the response from Confluent Cloud when retrieving "
-                      + "the ID token.",
+                          + "the ID token.",
                       failure.getMessage());
                   assertEquals(
                       "io.confluent.idesidecar.restapi.exceptions."
@@ -254,8 +254,8 @@ class CCloudOAuthContextTest {
                 testContext.verify(() -> {
                   assertEquals(
                       "Retrieving the data plane token for the account "
-                      + "ssprenger+test@confluent.io failed: "
-                      + "{\"code\":401,\"message\":\"Unauthorized\"}",
+                          + "ssprenger+test@confluent.io failed: "
+                          + "{\"code\":401,\"message\":\"Unauthorized\"}",
                       failure.getMessage());
                   assertEquals(
                       "io.confluent.idesidecar.restapi.exceptions."
@@ -297,8 +297,8 @@ class CCloudOAuthContextTest {
                 testContext.verify(() -> {
                   assertEquals(
                       "Could not parse the response from Confluent Cloud when exchanging"
-                      + " the control plane token of the account ssprenger+test@confluent.io for"
-                      + " the data plane token.",
+                          + " the control plane token of the account ssprenger+test@confluent.io for"
+                          + " the data plane token.",
                       failure.getMessage());
                   assertEquals(
                       "io.confluent.idesidecar.restapi.exceptions."
@@ -330,9 +330,9 @@ class CCloudOAuthContextTest {
 
     // refresh token has already expired
     Mockito.when(authContext.expiresAt())
-           .thenReturn(Optional.of(Instant.now().minusSeconds(5)));
+        .thenReturn(Optional.of(Instant.now().minusSeconds(5)));
     Mockito.when(authContext.getEndOfLifetime())
-           .thenReturn(Instant.now().minusSeconds(5));
+        .thenReturn(Instant.now().minusSeconds(5));
 
     assertFalse(authContext.shouldAttemptTokenRefresh());
   }
@@ -467,8 +467,8 @@ class CCloudOAuthContextTest {
                 testContext.verify(() -> {
                   assertEquals(
                       "Cannot verify authentication status because no control plane token is "
-                      + "available. It's likely that this connection has not yet completed the "
-                      + "authentication with CCloud.",
+                          + "available. It's likely that this connection has not yet completed the "
+                          + "authentication with CCloud.",
                       failure.getMessage());
                   assertEquals(
                       "io.confluent.idesidecar.restapi.exceptions."
@@ -508,7 +508,7 @@ class CCloudOAuthContextTest {
                 testContext.verify(() -> {
                   assertEquals(
                       "Could not parse the response from Confluent Cloud when verifying the "
-                      + "authentication status of this connection.",
+                          + "authentication status of this connection.",
                       failure.getMessage());
                   assertEquals(
                       "io.confluent.idesidecar.restapi.exceptions."

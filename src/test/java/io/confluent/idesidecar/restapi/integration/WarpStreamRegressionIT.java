@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Tag;
  * Regression tests to be run against a local WarpStream container.
  */
 public class WarpStreamRegressionIT {
+
   private static final WarpStreamTestEnvironment TEST_ENVIRONMENT = new WarpStreamTestEnvironment(
       // This is a WarpStream version that is known to return `null` as part of the
       // `DescribeCluster.controller()` response. The sidecar's Internal Kafka REST
