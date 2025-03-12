@@ -2,8 +2,19 @@ package io.confluent.idesidecar.restapi.messageviewer;
 
 import static io.confluent.idesidecar.restapi.messageviewer.RecordDeserializer.getSchemaIdFromRawBytes;
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.Mockito.anyInt;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -11,6 +22,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.TextNode;
 import io.confluent.idesidecar.restapi.clients.SchemaErrors;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
+import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.RecordMetadata;
+import io.confluent.idesidecar.restapi.models.DataFormat;
+import io.confluent.idesidecar.restapi.proxy.KafkaRestProxyContext;
 import io.confluent.kafka.schemaregistry.avro.AvroSchema;
 import io.confluent.kafka.schemaregistry.avro.AvroSchemaProvider;
 import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
@@ -28,9 +42,16 @@ import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.net.UnknownServiceException;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.Collections;
+import java.util.Optional;
 import java.util.stream.Stream;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -38,6 +59,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 @QuarkusTest
 public class RecordDeserializerTest {
+
   @Inject
   RecordDeserializer recordDeserializer;
   @Inject
@@ -49,15 +71,15 @@ public class RecordDeserializerTest {
   private static final String CONNECTION_1_ID = "c1";
 
   /**
-   * Data containing valid schema ID of 10008, and nothing else.
-   * 00000000 00000000 00100111 00011000
+   * Data containing valid schema ID of 10008, and nothing else. 00000000 00000000 00100111
+   * 00011000
    */
   private static final byte[] VALID_SCHEMA_ID_BYTES = new byte[]{0, 0, 0, 39, 24};
   private static final String SAMPLE_TOPIC_NAME = "test-subject";
 
   private SchemaRegistryClient schemaRegistryClient;
 
-  MessageViewerContext context = new MessageViewerContext(
+  KafkaRestProxyContext context = new KafkaRestProxyContext(
       null,
       null,
       null,
@@ -124,11 +146,13 @@ public class RecordDeserializerTest {
     );
     assertNotNull(record);
     // Asserts for the top-level fields
-    assertEquals(1518951552659L, record.value().get("ordertime").asLong(), "ordertime does not match");
+    assertEquals(1518951552659L, record.value().get("ordertime").asLong(),
+        "ordertime does not match");
     assertNull(record.errorMessage());
     assertEquals(3, record.value().get("orderid").asInt(), "orderid does not match");
     assertEquals("Item_86", record.value().get("itemid").asText(), "itemid does not match");
-    assertEquals(8.651492932024759, record.value().get("orderunits").asDouble(), "orderunits does not match");
+    assertEquals(8.651492932024759, record.value().get("orderunits").asDouble(),
+        "orderunits does not match");
 
     // Asserts for the nested 'address' object
     var addressNode = record.value().get("address");
@@ -162,7 +186,8 @@ public class RecordDeserializerTest {
   }
 
   @Test
-  public void testDecodeAndDeserializeProtobuf_ValidBase64() throws IOException, RestClientException {
+  public void testDecodeAndDeserializeProtobuf_ValidBase64()
+      throws IOException, RestClientException {
     var schemaStr = loadResource("message-viewer/schema-protobuf.proto");
     var parsedSchema = new ProtobufSchema(schemaStr);
     var smsrc = (SimpleMockSchemaRegistryClient) schemaRegistryClient;
@@ -180,10 +205,12 @@ public class RecordDeserializerTest {
     );
     assertNotNull(record);
     // Asserts for the top-level fields
-    assertEquals("1516663762964", record.value().get("ordertime").asText(), "ordertime does not match");
+    assertEquals("1516663762964", record.value().get("ordertime").asText(),
+        "ordertime does not match");
     assertEquals(522239, record.value().get("orderid").asInt(), "orderid does not match");
     assertEquals("Item_3", record.value().get("itemid").asText(), "itemid does not match");
-    assertEquals(5.10471887276063, record.value().get("orderunits").asDouble(), "orderunits does not match");
+    assertEquals(5.10471887276063, record.value().get("orderunits").asDouble(),
+        "orderunits does not match");
 
     // Asserts for the nested 'address' object
     var addressNode = record.value().get("address");
@@ -213,10 +240,12 @@ public class RecordDeserializerTest {
     assertNotNull(record);
 
     // Asserts for the top-level fields
-    assertEquals(1517970126869L, record.value().get("ordertime").asLong(), "ordertime does not match");
+    assertEquals(1517970126869L, record.value().get("ordertime").asLong(),
+        "ordertime does not match");
     assertEquals(114, record.value().get("orderid").asInt(), "orderid does not match");
     assertEquals("Item_7", record.value().get("itemid").asText(), "itemid does not match");
-    assertEquals(8.701786628112965, record.value().get("orderunits").asDouble(), "orderunits does not match");
+    assertEquals(8.701786628112965, record.value().get("orderunits").asDouble(),
+        "orderunits does not match");
 
     // Asserts for the nested 'address' object
     var addressNode = record.value().get("address");
@@ -235,7 +264,8 @@ public class RecordDeserializerTest {
   @Test
   public void testGetSchemaIdFromRawBytes_InvalidBytes() {
     assertThrows(IllegalArgumentException.class, () -> getSchemaIdFromRawBytes(null));
-    assertThrows(IllegalArgumentException.class, () -> getSchemaIdFromRawBytes(new byte[]{0, 1, 2}));
+    assertThrows(IllegalArgumentException.class,
+        () -> getSchemaIdFromRawBytes(new byte[]{0, 1, 2}));
   }
 
   @ParameterizedTest
@@ -257,17 +287,19 @@ public class RecordDeserializerTest {
 
   @ParameterizedTest
   @ValueSource(booleans = {true, false})
-  void parseJsonNodeShouldReturnStringIfByteArrayDoesNotStartWithMagicByte(boolean isKey) {
+  void parseJsonNodeShouldReturnBase64StringIfByteArrayDoesNotStartWithMagicByte(boolean isKey) {
     var rawString = "Team DTX";
     var byteArray = rawString.getBytes(StandardCharsets.UTF_8);
+
     var resp = recordDeserializer.deserialize(byteArray, null, context, isKey);
-    assertEquals(new TextNode(rawString), resp.value());
-    assertNull(resp.errorMessage());
+
+    assertEquals("Team DTX", resp.value().asText());
   }
 
   @ParameterizedTest
   @ValueSource(booleans = {true, false})
-  void parseJsonNodeShouldReturnStringIfParsingByteArrayWithMagicByteFails(boolean isKey) {
+  void parseJsonNodeShouldReturnBase64EncodedStringIfParsingByteArrayWithMagicByteFails(
+      boolean isKey) {
     // Build byte array with magic byte as prefix
     var rawString = "{\"Team\" : \"DTX\"}";
     var byteArray = rawString.getBytes(StandardCharsets.UTF_8);
@@ -275,15 +307,20 @@ public class RecordDeserializerTest {
     byteArrayWithMagicByte[0] = RecordDeserializer.MAGIC_BYTE;
     System.arraycopy(byteArray, 0, byteArrayWithMagicByte, 1, byteArray.length);
 
-    // Expect parsing to fail, should return byte array as string
-    var magicByteAsString = new String(new byte[]{RecordDeserializer.MAGIC_BYTE}, StandardCharsets.UTF_8);
+    // Expect parsing to fail, should return byte array as base64-encoded string
     var resp = recordDeserializer.deserialize(byteArrayWithMagicByte, null, context, isKey);
-    assertEquals(new TextNode(magicByteAsString + rawString), resp.value());
-    assertEquals("The value references a schema but we can't find the schema registry", resp.errorMessage());
+
+    // The \u0000 is the magic byte
+    assertEquals("\u0000{\"Team\" : \"DTX\"}", resp.value().asText());
+    assertEquals(DataFormat.UTF8_STRING, resp.metadata().dataFormat());
+    assertNull(resp.metadata().schemaId());
+    assertEquals("The value references a schema but we can't find the schema registry",
+        resp.errorMessage());
   }
 
   @Test
-  public void testKeyDecodingErrorAndValueDecodingErrorAreSerializedWhenNotNull() throws JsonProcessingException {
+  public void testKeyDecodingErrorAndValueDecodingErrorAreSerializedWhenNotNull()
+      throws JsonProcessingException {
     // Given
     JsonNode keyNode = objectMapper.nullNode();
     JsonNode valueNode = objectMapper.nullNode();
@@ -291,7 +328,9 @@ public class RecordDeserializerTest {
         0, 100L, System.currentTimeMillis(),
         SimpleConsumeMultiPartitionResponse.TimestampType.CREATE_TIME,
         Collections.emptyList(),
-        keyNode, valueNode, "Key decoding failed", "Value decoding failed",
+        keyNode, valueNode,
+        new RecordMetadata(null, null),
+        "Key decoding failed", "Value decoding failed",
         new SimpleConsumeMultiPartitionResponse.ExceededFields(false, false)
     );
 
@@ -299,8 +338,10 @@ public class RecordDeserializerTest {
     String serializedRecord = objectMapper.writeValueAsString(record);
 
     // Then
-    assertTrue(serializedRecord.contains("key_decoding_error"), "keyDecodingError should be present in the serialized JSON");
-    assertTrue(serializedRecord.contains("value_decoding_error"), "valueDecodingError should be present in the serialized JSON");
+    assertTrue(serializedRecord.contains("key_decoding_error"),
+        "keyDecodingError should be present in the serialized JSON");
+    assertTrue(serializedRecord.contains("value_decoding_error"),
+        "valueDecodingError should be present in the serialized JSON");
   }
 
   private static Stream<Arguments> testSchemaFetchFailuresAreCached() {
@@ -361,6 +402,7 @@ public class RecordDeserializerTest {
         int expectedTries,
         Boolean isKey
     ) {
+
       static TestCase nonRetryable(int statusCode) {
         // Expect only 1 try when the status code is non-retryable
         return new TestCase(statusCode, 3, 1, null);
@@ -389,20 +431,20 @@ public class RecordDeserializerTest {
     }
 
     return Stream.of(
-        // Test cases for non-retryable status codes
-        TestCase.nonRetryable(400),
-        TestCase.nonRetryable(401),
-        TestCase.nonRetryable(404),
-        TestCase.nonRetryable(405),
-        TestCase.nonRetryable(500),
-        TestCase.nonRetryable(501),
-        // Test cases for retryable status codes
-        TestCase.retryable(408),
-        TestCase.retryable(429),
-        TestCase.retryable(502),
-        TestCase.retryable(503),
-        TestCase.retryable(504)
-    )
+            // Test cases for non-retryable status codes
+            TestCase.nonRetryable(400),
+            TestCase.nonRetryable(401),
+            TestCase.nonRetryable(404),
+            TestCase.nonRetryable(405),
+            TestCase.nonRetryable(500),
+            TestCase.nonRetryable(501),
+            // Test cases for retryable status codes
+            TestCase.retryable(408),
+            TestCase.retryable(429),
+            TestCase.retryable(502),
+            TestCase.retryable(503),
+            TestCase.retryable(504)
+        )
         .flatMap(tc -> Stream.of(tc.withIsKey(true), tc.withIsKey(false)))
         .map(input -> DynamicTest.dynamicTest(String.valueOf(input), () -> {
           var mockedSRClient = mock(CachedSchemaRegistryClient.class);
@@ -422,12 +464,12 @@ public class RecordDeserializerTest {
   public Stream<DynamicTest>
   testDeserializeRetriesAndCachesSchemaFetchFailuresUponNetworkErrors() {
     return Stream.of(
-        // Test a bunch of exceptions that are considered network errors (all extend IOException)
-        ConnectException.class,
-        SocketTimeoutException.class,
-        UnknownHostException.class,
-        UnknownServiceException.class
-    )
+            // Test a bunch of exceptions that are considered network errors (all extend IOException)
+            ConnectException.class,
+            SocketTimeoutException.class,
+            UnknownHostException.class,
+            UnknownServiceException.class
+        )
         .map(input -> DynamicTest.dynamicTest(String.valueOf(input), () -> {
           var mockedSRClient = mock(CachedSchemaRegistryClient.class);
           when(mockedSRClient.getSchemaById(anyInt()))
@@ -491,11 +533,11 @@ public class RecordDeserializerTest {
   @TestFactory
   public Stream<DynamicTest> testDeserializeWithUnexpectedExceptionsIsActuallyThrown() {
     return Stream.of(
-        IllegalArgumentException.class,
-        IllegalStateException.class,
-        NullPointerException.class,
-        ArrayIndexOutOfBoundsException.class
-    )
+            IllegalArgumentException.class,
+            IllegalStateException.class,
+            NullPointerException.class,
+            ArrayIndexOutOfBoundsException.class
+        )
         .map(input -> DynamicTest.dynamicTest(String.valueOf(input), () -> {
           var mockedSRClient = mock(CachedSchemaRegistryClient.class);
           when(mockedSRClient.getSchemaById(anyInt()))
@@ -515,7 +557,8 @@ public class RecordDeserializerTest {
             } catch (RuntimeException e) {
               assertInstanceOf(input, e.getCause());
             } catch (Exception e) {
-              fail("Should have thrown a RuntimeException, not %s".formatted(e.getClass().getSimpleName()));
+              fail("Should have thrown a RuntimeException, not %s".formatted(
+                  e.getClass().getSimpleName()));
             }
           }
 

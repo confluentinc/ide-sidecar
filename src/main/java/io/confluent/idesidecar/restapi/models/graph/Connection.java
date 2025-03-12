@@ -5,8 +5,8 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
 import io.smallrye.graphql.api.DefaultNonNull;
 
 /**
- * A GraphQL object representing a {@link io.confluent.idesidecar.restapi.models.Connection}.
- * A subtype is used for each kind of connection, and all fields are immutable.
+ * A GraphQL object representing a {@link io.confluent.idesidecar.restapi.models.Connection}. A
+ * subtype is used for each kind of connection, and all fields are immutable.
  */
 @RegisterForReflection
 @DefaultNonNull
@@ -32,6 +32,7 @@ public abstract class Connection {
 
   /**
    * The type of connection, which corresponds to a specific subtype of this class.
+   *
    * @return the type; never null
    */
   public ConnectionType getType() {

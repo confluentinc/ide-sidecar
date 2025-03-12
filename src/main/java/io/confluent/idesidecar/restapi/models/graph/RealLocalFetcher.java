@@ -29,8 +29,8 @@ import org.eclipse.microprofile.config.ConfigProvider;
  *
  * <p>This fetcher makes use of
  * <a href="https://quarkus.io/guides/cdi#events-and-observers">CDI events</a>
- * so that other components can observe changes in the loaded {@link Cluster} instances.
- * Each event has the following {@link Lifecycle} qualifier:
+ * so that other components can observe changes in the loaded {@link Cluster} instances. Each event
+ * has the following {@link Lifecycle} qualifier:
  * <ul>
  *   <li>{@link Lifecycle.Updated}</li>
  * </ul>
@@ -73,13 +73,6 @@ public class RealLocalFetcher extends ConfluentLocalRestClient implements LocalF
       .getConfig()
       .getValue(
           "ide-sidecar.connections.confluent-local.resources.broker-adv-listeners-config-uri",
-          String.class
-      );
-
-  static final String CONFLUENT_LOCAL_DEFAULT_SCHEMA_REGISTRY_URI = ConfigProvider
-      .getConfig()
-      .getValue(
-          "ide-sidecar.connections.confluent-local.default.schema-registry-uri",
           String.class
       );
 
@@ -153,16 +146,20 @@ public class RealLocalFetcher extends ConfluentLocalRestClient implements LocalF
   }
 
   public String resolveSchemaRegistryUri(String connectionId) {
-    var localConfig = connections.getConnectionSpec(connectionId).localConfig();
-    if (localConfig == null || localConfig.schemaRegistryUri() == null) {
-      // Use the default SR URI when missing LocalConfig or missing SR URI in that config
-      return CONFLUENT_LOCAL_DEFAULT_SCHEMA_REGISTRY_URI;
+    var localSpec = connections.getConnectionSpec(connectionId);
+
+    String uri = null;
+    if (localSpec.schemaRegistryConfig() != null) {
+      uri = localSpec.schemaRegistryConfig().uri();
+    } else if (localSpec.localConfig() != null) {
+      uri = localSpec.localConfig().schemaRegistryUri();
+
+      // If the URI is blank, treat it as null
+      if (uri != null && uri.isBlank()) {
+        uri = null;
+      }
     }
-    var uri = localConfig.schemaRegistryUri();
-    if (uri.isBlank()) {
-      // Blank URL means no SR
-      return null;
-    }
+
     return uri;
   }
 
@@ -251,6 +248,7 @@ public class RealLocalFetcher extends ConfluentLocalRestClient implements LocalF
       ListMetadata metadata,
       @JsonProperty(required = true) List<KafkaClusterResponse> data
   ) implements ListResponse<KafkaClusterResponse, ConfluentLocalKafkaCluster> {
+
   }
 
   @RegisterForReflection
@@ -285,6 +283,7 @@ public class RealLocalFetcher extends ConfluentLocalRestClient implements LocalF
   record KafkaClusterRelated(
       String related
   ) {
+
   }
 
   @RegisterForReflection
@@ -294,6 +293,7 @@ public class RealLocalFetcher extends ConfluentLocalRestClient implements LocalF
       ListMetadata metadata,
       @JsonProperty(required = true) List<KafkaBrokerResponse> data
   ) implements ListResponse<KafkaBrokerResponse, KafkaBrokerResponse> {
+
   }
 
   @RegisterForReflection
@@ -343,5 +343,6 @@ public class RealLocalFetcher extends ConfluentLocalRestClient implements LocalF
   protected record SchemaRegistryConfigResponse(
       @JsonProperty(value = "compatibilityLevel", required = true) String compatibilityLevel
   ) {
+
   }
 }

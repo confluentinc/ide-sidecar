@@ -25,9 +25,10 @@ import org.junitpioneer.jupiter.SetSystemProperty;
 public class ConfluentPlatformIT {
 
   /**
-   * Use the <a href="https://testcontainers.com/guides/testcontainers-container-lifecycle/#_using_singleton_containers">Singleton Container</a>
-   * pattern to ensure that the test environment is only started once, no matter how many
-   * test classes extend this class. Testcontainers will assure that this is initialized once,
+   * Use the <a
+   * href="https://testcontainers.com/guides/testcontainers-container-lifecycle/#_using_singleton_containers">Singleton
+   * Container</a> pattern to ensure that the test environment is only started once, no matter how
+   * many test classes extend this class. Testcontainers will assure that this is initialized once,
    * and stop the containers using the Ryuk container after all the tests have run.
    */
   private static final CPDemoTestEnvironment TEST_ENVIRONMENT = new CPDemoTestEnvironment();
@@ -55,6 +56,7 @@ public class ConfluentPlatformIT {
 
   @Nested
   class DirectWithBasicAuthConnectionTests {
+
     @QuarkusIntegrationTest
     @Tag("io.confluent.common.utils.IntegrationTest")
     @TestProfile(NoAccessFilterProfile.class)
@@ -77,6 +79,7 @@ public class ConfluentPlatformIT {
 
   @Nested
   class DirectWithSaslScramConnectionTests {
+
     @QuarkusIntegrationTest
     @Tag("io.confluent.common.utils.IntegrationTest")
     @TestProfile(NoAccessFilterProfile.class)

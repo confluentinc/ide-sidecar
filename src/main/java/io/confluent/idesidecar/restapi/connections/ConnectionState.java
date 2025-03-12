@@ -34,21 +34,24 @@ public abstract class ConnectionState {
     /**
      * A listener instance that does nothing.
      */
-    StateChangedListener NO_OP = new StateChangedListener() {};
+    StateChangedListener NO_OP = new StateChangedListener() {
+    };
 
     /**
      * Signal that the supplied connection state has switched to connected.
      *
      * @param state the connection state that has changed
      */
-    default void connected(ConnectionState state) {}
+    default void connected(ConnectionState state) {
+    }
 
     /**
      * Signal that the supplied connection state has switched to disconnected.
      *
      * @param state the connection state that has changed
      */
-    default void disconnected(ConnectionState state) {}
+    default void disconnected(ConnectionState state) {
+    }
   }
 
   protected ConnectionSpec spec;
@@ -57,8 +60,8 @@ public abstract class ConnectionState {
 
   /**
    * The instant at which the cached status was last updated. This is used to prevent stale status
-   * updates from being applied by the scheduled refresh task
-   * (in {@link RefreshConnectionStatuses}).
+   * updates from being applied by the scheduled refresh task (in
+   * {@link RefreshConnectionStatuses}).
    */
   private final AtomicReference<Instant> lastUpdated = new AtomicReference<>(
       Instant.now()
@@ -107,8 +110,9 @@ public abstract class ConnectionState {
   }
 
   /**
-   * Attempt to {@link #doRefreshStatus() refresh the connection status and
-   * update the {@link #getStatus() cached results}.
+   * Attempt to
+   * {@link #doRefreshStatus() refresh the connection status and update the {@link #getStatus()
+   * cached results}.
    *
    * <p>This method always calls {@link #doRefreshStatus()} and then on success updates
    * the {@link #getStatus() cached connection status}. If we see that the status has been updated
@@ -149,7 +153,8 @@ public abstract class ConnectionState {
     // If the status has changed, notify the listener
     if (!updated.equals(original)) {
       Log.infof(
-          "Updated status for connection ID=%s. Original spec: %s, Updated spec: %s, Last updated: %s",
+          "Updated status for connection ID=%s. Original spec: %s, "
+              + "Updated spec: %s, Last updated: %s",
           spec.id(),
           original,
           updated,
@@ -165,8 +170,8 @@ public abstract class ConnectionState {
 
   /**
    * Refresh the connection status. By default, this simply returns a completed future with the
-   * {@link #getInitialStatus() initial status}. Subclasses should override this method to
-   * implement the actual connection status refresh logic.
+   * {@link #getInitialStatus() initial status}. Subclasses should override this method to implement
+   * the actual connection status refresh logic.
    *
    * @return the future that will complete with the updated connection status
    * @see #refreshStatus()
@@ -246,8 +251,8 @@ public abstract class ConnectionState {
   }
 
   /**
-   * HTTP auth headers provided by the {@link ConnectionState}
-   * to use for Schema Registry API requests.
+   * HTTP auth headers provided by the {@link ConnectionState} to use for Schema Registry API
+   * requests.
    */
   public MultiMap getSchemaRegistryAuthenticationHeaders(String clusterId) {
     return MultiMap.caseInsensitiveMultiMap();
@@ -256,8 +261,8 @@ public abstract class ConnectionState {
   /**
    * Get the {@link Credentials} for the Kafka cluster with the supplied ID.
    *
-   * @return the credentials or empty if the cluster ID is not known or
-   *         the cluster requires no credentials
+   * @return the credentials or empty if the cluster ID is not known or the cluster requires no
+   * credentials
    */
   public Optional<Credentials> getKafkaCredentials() {
     return Optional.empty();
@@ -266,8 +271,8 @@ public abstract class ConnectionState {
   /**
    * Get the {@link Credentials} for the Schema Registry with the supplied ID.
    *
-   * @return the credentials or empty if the cluster ID is not known or
-   *         the cluster requires no credentials
+   * @return the credentials or empty if the cluster ID is not known or the cluster requires no
+   * credentials
    */
   public Optional<Credentials> getSchemaRegistryCredentials() {
     return Optional.empty();

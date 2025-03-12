@@ -12,11 +12,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.eclipse.microprofile.config.ConfigProvider;
 
 /**
- * The SchemaErrors class manages schema error caching for different connections.
- * It uses Caffeine cache to store and retrieve schema errors based on connection and schema IDs.
+ * The SchemaErrors class manages schema error caching for different connections. It uses Caffeine
+ * cache to store and retrieve schema errors based on connection and schema IDs.
  *
- * <p>This class is application-scoped and observes connection lifecycle events to manage the cache.
- * It provides methods to read, write, and clear schema errors for specific connections.
+ * <p>This class is application-scoped and observes connection lifecycle events to manage the
+ * cache. It provides methods to read, write, and clear schema errors for specific connections.
  *
  * <p>Configuration properties:
  * <ul>
@@ -123,7 +123,8 @@ public class SchemaErrors {
    *
    * @param connection The connection state.
    */
-  public void onConnectionChange(@ObservesAsync @Lifecycle.Deleted @Lifecycle.Created @Lifecycle.Updated ConnectionState connection) {
+  public void onConnectionChange(
+      @ObservesAsync @Lifecycle.Deleted @Lifecycle.Created @Lifecycle.Updated ConnectionState connection) {
     var cId = new ConnectionId(connection.getId());
     cacheOfCaches.remove(cId);
   }

@@ -22,8 +22,7 @@ import java.util.stream.Collectors;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 /**
- * The SSL/TLS configuration object.
- * Usage modes:
+ * The SSL/TLS configuration object. Usage modes:
  * <ul>
  *   <li>Default SSL settings without truststore or keystore: set {@link #enabled} to {@code true}
  *   and leave other fields unset</li>
@@ -33,14 +32,14 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
  *   <li>Disable hostname verification: set {@link #verifyHostname} to {@code false} to disable
  *   server certificate hostname verification</li>
  *   <li>SSL Disabled: set {@link #enabled} to {@code false} to disable SSL</li>
- *</ul>
+ * </ul>
  */
 @Schema(description = "SSL configuration")
 @RecordBuilder
 public record TLSConfig(
     @Schema(
         description = "Whether to verify the server certificate hostname."
-        + " Defaults to true if not set.",
+            + " Defaults to true if not set.",
         defaultValue = DEFAULT_VERIFY_HOSTNAME_VALUE
     )
     @JsonProperty(value = "verify_hostname")
@@ -66,7 +65,7 @@ public record TLSConfig(
 
     @Schema(
         description = "The key store configuration that will identify and authenticate "
-        + "the client to the server, required for mutual TLS (mTLS)",
+            + "the client to the server, required for mutual TLS (mTLS)",
         nullable = true
     )
     @JsonProperty(value = "keystore")
@@ -248,6 +247,7 @@ public record TLSConfig(
      * A custom deserializer to handle the store type literals that cannot be parsed.
      */
     public static class Deserializer extends JsonDeserializer<StoreType> {
+
       @Override
       public StoreType deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
         try {
@@ -260,6 +260,7 @@ public record TLSConfig(
 
     /**
      * Get the list of allowed values for this enum, without hidden values.
+     *
      * @return the non-hidden allowed values as a comma-separated string
      */
     public static String allowedValues() {

@@ -71,8 +71,8 @@ update-third-party-notices-pr:
 .PHONY: upload-artifacts-to-github-release
 upload-artifacts-to-github-release:
 # Upload the native executables to the GitHub release
-	for os_arch in macos-amd64 macos-arm64 linux-amd64 linux-arm64; do \
-		executable=$$(find $$EXECUTABLES_DIR -name "*-$$os_arch"); \
+	for os_arch in macos-amd64 macos-arm64 linux-amd64 linux-arm64 windows-x64; do \
+		executable=$$(find $$EXECUTABLES_DIR -name "*-$$os_arch*"); \
 		gh release upload $(IDE_SIDECAR_VERSION) $$executable --clobber; \
 	done; \
 # Upload the third party notices to the GitHub release
@@ -120,8 +120,8 @@ OSIXIA_OPENLDAP_DOCKER_TAG = 1.3.0
 CNFLDEMOS_TOOLS_DOCKER_TAG = 0.3
 
 # Key for storing docker images in Semaphore CI cache
-SEMAPHORE_CP_ZOOKEEPER_DOCKER := ide-sidecar-docker-cp-zookeeper-$(CONFLUENT_DOCKER_TAG)
 SEMAPHORE_CP_SERVER_DOCKER := ide-sidecar-docker-cp-server-$(CONFLUENT_DOCKER_TAG)
+SEMAPHORE_CP_SCHEMA_REGISTRY_DOCKER := ide-sidecar-docker-cp-schema-registry-$(CONFLUENT_DOCKER_TAG)
 SEMAPHORE_OPENLDAP_DOCKER := ide-sidecar-docker-openldap-$(OSIXIA_OPENLDAP_DOCKER_TAG)
 SEMAPHORE_CNFLDEMOS_TOOLS_DOCKER := ide-sidecar-docker-cnfldemos-tools-$(CNFLDEMOS_TOOLS_DOCKER_TAG)
 SEMAPHORE_CONFLUENT_LOCAL_DOCKER := ide-sidecar-docker-confluent-local-$(CONFLUENT_LOCAL_DOCKER_TAG)
@@ -129,17 +129,17 @@ SEMAPHORE_CONFLUENT_LOCAL_DOCKER := ide-sidecar-docker-confluent-local-$(CONFLUE
 ## Cache docker images in Semaphore cache.
 .PHONY: cache-docker-images
 cache-docker-images:
-	cache has_key $(SEMAPHORE_CP_ZOOKEEPER_DOCKER) || (\
-		docker pull confluentinc/cp-zookeeper:$(CONFLUENT_DOCKER_TAG) && \
-		docker save confluentinc/cp-zookeeper:$(CONFLUENT_DOCKER_TAG) | gzip > cp-zookeeper.tgz && \
-		cache store $(SEMAPHORE_CP_ZOOKEEPER_DOCKER) cp-zookeeper.tgz && \
-		rm -rf cp-zookeeper.tgz)
-
 	cache has_key $(SEMAPHORE_CP_SERVER_DOCKER) || (\
 		docker pull confluentinc/cp-server:$(CONFLUENT_DOCKER_TAG) && \
 		docker save confluentinc/cp-server:$(CONFLUENT_DOCKER_TAG) | gzip > cp-server.tgz && \
 		cache store $(SEMAPHORE_CP_SERVER_DOCKER) cp-server.tgz && \
 		rm -rf cp-server.tgz)
+
+	cache has_key $(SEMAPHORE_CP_SCHEMA_REGISTRY_DOCKER) || (\
+		docker pull confluentinc/cp-schema-registry:$(CONFLUENT_DOCKER_TAG) && \
+		docker save confluentinc/cp-schema-registry:$(CONFLUENT_DOCKER_TAG) | gzip > cp-schema-registry.tgz && \
+		cache store $(SEMAPHORE_CP_SCHEMA_REGISTRY_DOCKER) cp-schema-registry.tgz && \
+		rm -rf cp-schema-registry.tgz)
 
 	cache has_key $(SEMAPHORE_OPENLDAP_DOCKER) || (\
 		docker pull osixia/openldap:$(OSIXIA_OPENLDAP_DOCKER_TAG) && \
@@ -161,11 +161,11 @@ cache-docker-images:
 
 .PHONY: load-cached-docker-images
 load-cached-docker-images:
-	cache restore $(SEMAPHORE_CP_ZOOKEEPER_DOCKER)
-	[ -f cp-zookeeper.tgz ] && docker load -i cp-zookeeper.tgz && rm -rf cp-zookeeper.tgz || true
-
 	cache restore $(SEMAPHORE_CP_SERVER_DOCKER)
 	[ -f cp-server.tgz ] && docker load -i cp-server.tgz && rm -rf cp-server.tgz || true
+
+	cache restore $(SEMAPHORE_CP_SCHEMA_REGISTRY_DOCKER)
+	[ -f cp-schema-registry.tgz ] && docker load -i cp-schema-registry.tgz && rm -rf cp-schema-registry.tgz || true
 
 	cache restore $(SEMAPHORE_OPENLDAP_DOCKER)
 	[ -f openldap.tgz ] && docker load -i openldap.tgz && rm -rf openldap.tgz || true

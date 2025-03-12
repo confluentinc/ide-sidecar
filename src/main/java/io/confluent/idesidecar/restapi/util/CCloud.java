@@ -17,6 +17,7 @@ public class CCloud {
     INTERNAL("internal");
 
     private final String value;
+
     Routing(String value) {
       this.value = value;
     }
@@ -47,6 +48,7 @@ public class CCloud {
 
     /**
      * Get the {@link URI} for the Kafka REST endpoint.
+     *
      * @return the URI
      */
     public URI getUri() {
@@ -66,6 +68,7 @@ public class CCloud {
 
     /**
      * Get the bootstrap servers for the Kafka cluster.
+     *
      * @return the bootstrap servers
      */
     public String getBootstrapServers() {
@@ -84,8 +87,9 @@ public class CCloud {
     }
 
     /**
-     * Get the SchemaRegistryEndpoint given by the {@link LsrcId Schema Registry ID} and the
-     * Kafka cluster endpoint.
+     * Get the SchemaRegistryEndpoint given by the {@link LsrcId Schema Registry ID} and the Kafka
+     * cluster endpoint.
+     *
      * @param lsrcId the Schema Registry ID
      * @return the endpoint
      */
@@ -95,11 +99,11 @@ public class CCloud {
 
     static final Pattern CCLOUD_BOOTSTRAP_SERVER_PATTERN = Pattern.compile(
         "(((pkc|lkc)-([a-z0-9]+))" // group 2: ID for the pkc or lkc
-        + "([-.]([a-z0-9.]+))?" // group 6: network ID or dom slug
-        + "\\.([a-z0-9-]+)" // group 7: region
-        + "\\.([a-z0-9-]+)" // group 8: cloud provider
-        + "\\.(([a-z0-9-]+)\\.)?" // group 10: routing
-        + "((confluent|devel.cpdev|stag.cpdev)\\.cloud)):9092" // group 11: hostname
+            + "([-.]([a-z0-9.]+))?" // group 6: network ID or dom slug
+            + "\\.([a-z0-9-]+)" // group 7: region
+            + "\\.([a-z0-9-]+)" // group 8: cloud provider
+            + "\\.(([a-z0-9-]+)\\.)?" // group 10: routing
+            + "((confluent|devel.cpdev|stag.cpdev)\\.cloud)):9092" // group 11: hostname
     );
 
     public static Optional<KafkaEndpoint> fromKafkaBootstrap(String bootstrapServers) {
@@ -130,21 +134,22 @@ public class CCloud {
       CloudProvider cloudProvider,
       String domain
   ) {
+
     public URI getUri() {
-      var builder = new StringBuilder("https://").append(clusterId);
-      builder.append(".").append(region);
-      builder.append(".").append(cloudProvider);
-      builder.append(".").append(domain);
-      builder.append(":443");
-      return URI.create(builder.toString());
+      String builder = "https://" + clusterId
+          + "." + region
+          + "." + cloudProvider
+          + "." + domain
+          + ":443";
+      return URI.create(builder);
     }
 
     static final Pattern CCLOUD_SR_URI_PATTERN = Pattern.compile(
         "https://(([lp]src-([a-z0-9]+))" // group 2: SR ID
-        + "\\.([a-z0-9-]+)" // group 4: region
-        + "\\.([a-z0-9-]+)" // group 5: cloud provider
-        + "\\.(([a-z0-9-]+)\\.)?" // group 7: routing
-        + "((confluent|devel.cpdev|stag.cpdev)\\.cloud)):443" // group 8: hostname
+            + "\\.([a-z0-9-]+)" // group 4: region
+            + "\\.([a-z0-9-]+)" // group 5: cloud provider
+            + "\\.(([a-z0-9-]+)\\.)?" // group 7: routing
+            + "((confluent|devel.cpdev|stag.cpdev)\\.cloud)):443" // group 8: hostname
     );
 
     public static Optional<SchemaRegistryEndpoint> fromUri(String bootstrapServers) {
@@ -169,10 +174,12 @@ public class CCloud {
   }
 
   public interface Identifier {
+
     String toString();
   }
 
   public interface ClusterIdentifier extends Identifier {
+
   }
 
   public interface KafkaClusterIdentifier extends ClusterIdentifier {

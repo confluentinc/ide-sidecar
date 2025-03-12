@@ -58,7 +58,7 @@ public class ObjectMetadata {
     }
     ObjectMetadata that = (ObjectMetadata) o;
     return Objects.equals(resourceName, that.resourceName)
-           && Objects.equals(self, that.self);
+        && Objects.equals(self, that.self);
   }
 
   @Override

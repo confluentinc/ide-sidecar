@@ -2,24 +2,10 @@ version: v1.0
 name: multi-arch-builds-and-upload
 agent:
   machine:
-    type: s1-prod-ubuntu20-04-amd64-1
+    type: s1-prod-ubuntu24-04-amd64-1
 
 execution_time_limit:
   hours: 1
-
-global_job_config:
-  prologue:
-    commands:
-      - checkout
-      - make ci-bin-sem-cache-restore
-      - make docker-login-ci
-      - make load-cached-docker-images
-  epilogue:
-    always:
-      commands:
-        - make store-test-results-to-semaphore
-        - make ci-bin-sem-cache-store
-        - make cache-docker-images
 
 blocks:
   - name: "Build Native Executable (MacOS AMD64)"
@@ -31,7 +17,7 @@ blocks:
         machine:
           type: s1-prod-macos-13-5-amd64
       prologue:
-        commands_file: build_native_executable_prologue.sh
+        commands_file: build_native_executable_prologue_macos_linux.sh
       env_vars:
         - name: OS
           value: macos
@@ -44,7 +30,7 @@ blocks:
             - make ci-sign-notarize-macos-executable
       epilogue:
         on_pass:
-          commands_file: build_native_executable_epilogue.sh
+          commands_file: build_native_executable_epilogue_macos_linux.sh
 
   - name: "Build Native Executable (MacOS ARM64)"
     dependencies: []
@@ -55,7 +41,7 @@ blocks:
         machine:
           type: s1-prod-macos-13-5-arm64
       prologue:
-        commands_file: build_native_executable_prologue.sh
+        commands_file: build_native_executable_prologue_macos_linux.sh
       env_vars:
         - name: OS
           value: macos
@@ -68,7 +54,7 @@ blocks:
             - make ci-sign-notarize-macos-executable
       epilogue:
         on_pass:
-          commands_file: build_native_executable_epilogue.sh
+          commands_file: build_native_executable_epilogue_macos_linux.sh
 
   - name: "Build Native Executable (Linux AMD64)"
     dependencies: []
@@ -77,9 +63,9 @@ blocks:
     task:
       agent:
         machine:
-          type: s1-prod-ubuntu20-04-amd64-2
+          type: s1-prod-ubuntu24-04-amd64-2
       prologue:
-        commands_file: build_native_executable_prologue.sh
+        commands_file: build_native_executable_prologue_macos_linux.sh
       env_vars:
         - name: OS
           value: linux
@@ -91,7 +77,7 @@ blocks:
             - make mvn-package-native
       epilogue:
         on_pass:
-          commands_file: build_native_executable_epilogue.sh
+          commands_file: build_native_executable_epilogue_macos_linux.sh
 
   - name: "Build Native Executable (Linux ARM64)"
     dependencies: []
@@ -100,9 +86,9 @@ blocks:
     task:
       agent:
         machine:
-          type: s1-prod-ubuntu20-04-arm64-2
+          type: s1-prod-ubuntu24-04-arm64-2
       prologue:
-        commands_file: build_native_executable_prologue.sh
+        commands_file: build_native_executable_prologue_macos_linux.sh
       env_vars:
         - name: OS
           value: linux
@@ -114,7 +100,84 @@ blocks:
             - make mvn-package-native
       epilogue:
         on_pass:
-          commands_file: build_native_executable_epilogue.sh
+          commands_file: build_native_executable_epilogue_macos_linux.sh
+
+  - name: "Build Native Executable (Windows x64)"
+    dependencies: [ ]
+    run:
+      when: "branch =~ '.*'"
+    task:
+      agent:
+        machine:
+          type: s1-prod-windows
+      prologue:
+        commands:
+          - checkout
+          - git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'
+          - git fetch --all --tags
+          - |
+            git checkout "$(sem-context get release_version)"
+          - $Env:PATH += ";C:\Program Files (x86)\Windows Kits\10\bin\10.0.19041.0\x64"
+          - $Env:PATH += ";C:\Program Files\Git\bin"
+          # Restore caches for GraalVM and Chocolatey
+          - cache restore graal_download_zip
+          - cache restore choco_temp_dir
+          # Login to Vault
+          - $Env:VAULT_ADDR = "https://vault.cireops.gcp.internal.confluent.cloud"
+          - vault login -no-print token=$(vault write -field=token "auth/semaphore_self_hosted/login" role="default" jwt="$Env:SEMAPHORE_OIDC_TOKEN")
+          # Fetch Azure certificate from Vault and create the PFX file
+          - vault kv get -field=azure_certificate v1/ci/kv/cli/release > certificate_base64.txt
+          - certutil -decode certificate_base64.txt certificate.pfx
+          # Install GraalVM
+          - |
+            if (-not (Test-Path graalvm-community-jdk-21.0.2_windows-x64_bin.zip)) {
+              Invoke-WebRequest -OutFile graalvm-community-jdk-21.0.2_windows-x64_bin.zip -Uri https://github.com/graalvm/graalvm-ce-builds/releases/download/jdk-21.0.2/graalvm-community-jdk-21.0.2_windows-x64_bin.zip
+            }
+          - expand-archive -path .\graalvm-community-jdk-21.0.2_windows-x64_bin.zip -destinationpath C:\semaphore-agent\graalvm
+          - $Env:JAVA_HOME = "C:\semaphore-agent\graalvm\graalvm-community-openjdk-21.0.2+13.1"
+          - $Env:PATH += ";C:\semaphore-agent\graalvm\graalvm-community-openjdk-21.0.2+13.1\bin"
+          # Install VS 2022 build tools and VC++ tools, required by GraalVM native-image build
+          - choco install visualstudio2022buildtools -y --package-parameters "--locale en-US --path install=C:\VS 2022 BT --path shared=C:\VS 2022 Shared --path cache=C:\VS 2022 Cache"
+          - choco install visualstudio2022-workload-vctools -y
+          # Install GitHub CLI for uploading the native executable to the GitHub release
+          - choco install gh -y
+          - $Env:PATH += ";C:\Program Files\GitHub CLI\"
+          # Usage of GH cli in automation (when "CI" is set) requires us to set the GH_TOKEN environment variable.
+          - gh --version
+          # This ensures native-image.cmd is able to find the local installation
+          # of VC++ tools and VS Build Tools.
+          - |
+            $filePath = "$Env:JAVA_HOME\bin\native-image.cmd"
+            $prependText = "call `"C:\VS 2022 BT\VC\Auxiliary\Build\vcvars64.bat`"`r`n"
+            $fileContent = Get-Content -Raw -Path $filePath
+            $newContent = $prependText + $fileContent
+            Set-Content -Path $filePath -Value $newContent
+            Write-Host "Prepended the native-image.cmd file with the Visual Studio 2022 Community Edition vcvars64.bat path."
+          - cache restore windows_maven_cache
+      env_vars:
+        - name: OS
+          value: "windows"
+        - name: ARCH
+          value: "x64"
+      jobs:
+        - name: "Build Native Executable (Windows x64)"
+          commands:
+            # Builds native executable for Windows x64
+            # TODO: Temporarily disable running tests while we investigate why they fail randomly
+            - make mvn-package-native-no-tests
+            # Push signed executable to GH release and Semaphore
+            - |
+              $executable = Get-ChildItem -Recurse ".\target\" -Filter "*-runner.exe" | Select-Object -ExpandProperty FullName
+              $executable_with_os_arch = $executable -replace "-runner", "-runner-$($Env:OS)-$($Env:ARCH)"
+              Rename-Item -Path $executable -NewName (Split-Path -Leaf $executable_with_os_arch)
+              Write-Host "Signing executable $executable_with_os_arch";
+              signtool sign /debug /v /f certificate.pfx "$executable_with_os_arch";
+              try {artifact push workflow $executable_with_os_arch --destination "native-executables/$(Split-Path -Leaf $executable_with_os_arch)"} catch {Write-Host "Artifact push failed"}
+      epilogue:
+        commands:
+          - cache store graal_download_zip graalvm-community-jdk-21.0.2_windows-x64_bin.zip
+          - cache store choco_temp_dir "$Env:USERPROFILE\AppData\Local\Temp\chocolatey"
+          - cache store windows_maven_cache "$Env:USERPROFILE\.m2\repository"
 
   - name: "Upload native executables to GitHub Releases"
     run:
@@ -124,6 +187,7 @@ blocks:
       - "Build Native Executable (MacOS ARM64)"
       - "Build Native Executable (Linux AMD64)"
       - "Build Native Executable (Linux ARM64)"
+      - "Build Native Executable (Windows x64)"
     task:
       prologue:
         commands:
@@ -143,9 +207,3 @@ after_pipeline:
       - name: Publish Test Results to Semaphore
         commands:
           - test-results gen-pipeline-report || echo "Could not publish pipeline test result report due to probably no test results to publish"
-
-promotions:
-  - name: "Windows Build Test Release"
-    pipeline_file: windows.yml
-    auto_promote:
-      when: "result = 'passed' and branch =~ '.*'"

@@ -1,14 +1,14 @@
 package io.confluent.idesidecar.restapi.resources;
 
 import static io.confluent.idesidecar.restapi.util.MutinyUtil.uniStage;
+import static io.confluent.idesidecar.restapi.util.RequestHeadersConstants.CONNECTION_ID_HEADER;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.confluent.idesidecar.restapi.messageviewer.MessageViewerContext;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequest;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
 import io.confluent.idesidecar.restapi.processors.Processor;
-import io.confluent.idesidecar.restapi.util.RequestHeadersConstants;
+import io.confluent.idesidecar.restapi.proxy.KafkaRestProxyContext;
 import io.quarkus.logging.Log;
 import io.smallrye.common.annotation.Blocking;
 import io.smallrye.mutiny.Uni;
@@ -46,7 +46,11 @@ public class KafkaConsumeResource {
 
   @Inject
   @Named("messageViewerProcessor")
-  Processor<MessageViewerContext, Future<MessageViewerContext>> messageViewerProcessor;
+  Processor<KafkaRestProxyContext
+      <SimpleConsumeMultiPartitionRequest, SimpleConsumeMultiPartitionResponse>,
+      Future<KafkaRestProxyContext
+          <SimpleConsumeMultiPartitionRequest, SimpleConsumeMultiPartitionResponse>>
+      > messageViewerProcessor;
 
   @POST
   @Produces(MediaType.APPLICATION_JSON)
@@ -70,7 +74,7 @@ public class KafkaConsumeResource {
         .process(createMessageViewerContext(routingContext, clusterId, topicName, requestBody))
         .map(messageViewerContext -> {
           // Extract the number of bytes of the response body
-          SimpleConsumeMultiPartitionResponse response = messageViewerContext.getConsumeResponse();
+          var response = messageViewerContext.getResponse();
           ObjectMapper objectMapper = new ObjectMapper();
           String jsonResponse;
           try {
@@ -85,7 +89,7 @@ public class KafkaConsumeResource {
           // Kafka-Multi-Partition-Consume-Bytes
           return Response
               .ok()
-              .entity(messageViewerContext.getConsumeResponse())
+              .entity(messageViewerContext.getResponse())
               .header(KAFKA_CONSUMED_BYTES_RESPONSE_HEADER, consumedBytes)
               .build();
         }).toCompletionStage());
@@ -94,19 +98,21 @@ public class KafkaConsumeResource {
   /**
    * Create a MessageViewerContext from the given parameters.
    */
-  public static MessageViewerContext createMessageViewerContext(
+  public static KafkaRestProxyContext
+      <SimpleConsumeMultiPartitionRequest, SimpleConsumeMultiPartitionResponse>
+  createMessageViewerContext(
       RoutingContext routingContext,
       String clusterId,
       String topicName,
       SimpleConsumeMultiPartitionRequest requestBody
   ) {
-    return new MessageViewerContext(
+    return new KafkaRestProxyContext<>(
         routingContext.request().uri(),
         routingContext.request().headers(),
         routingContext.request().method(),
         requestBody,
         routingContext.pathParams(),
-        routingContext.request().getHeader(RequestHeadersConstants.CONNECTION_ID_HEADER),
+        routingContext.request().getHeader(CONNECTION_ID_HEADER),
         clusterId,
         topicName
     );

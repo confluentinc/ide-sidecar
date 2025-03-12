@@ -62,7 +62,8 @@ class ResourceFetchingExceptionTest {
         ACTION
     );
     assertEquals(
-        ACTION + " failed with 5 error(s): title, (HTTP 404) Not found, (HTTP 403) Forbidden, (HTTP 402), (HTTP 401) Unauthorized",
+        ACTION
+            + " failed with 5 error(s): title, (HTTP 404) Not found, (HTTP 403) Forbidden, (HTTP 402), (HTTP 401) Unauthorized",
         exception.getMessage()
     );
   }
@@ -81,7 +82,8 @@ class ResourceFetchingExceptionTest {
         ACTION
     );
     assertEquals(
-        ACTION + " failed with 4 error(s): (HTTP 404) Not found, (HTTP 403) Forbidden, (HTTP 402), (HTTP 401) Unauthorized",
+        ACTION
+            + " failed with 4 error(s): (HTTP 404) Not found, (HTTP 403) Forbidden, (HTTP 402), (HTTP 401) Unauthorized",
         exception.getMessage()
     );
   }

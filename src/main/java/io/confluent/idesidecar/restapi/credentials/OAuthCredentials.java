@@ -15,7 +15,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
@@ -23,53 +22,53 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
 @RecordBuilder
 public record OAuthCredentials(
 
-  @Schema(description = "The URL of the OAuth 2.0 identity provider's token endpoint.")
-  @JsonProperty(value = "tokens_url")
-  @Size(max = TOKENS_URL_MAX_LEN)
-  @NotNull
-  String tokensUrl,
+    @Schema(description = "The URL of the OAuth 2.0 identity provider's token endpoint.")
+    @JsonProperty(value = "tokens_url")
+    @Size(max = TOKENS_URL_MAX_LEN)
+    @NotNull
+    String tokensUrl,
 
-  @Schema(description = "The public identifier for the application as registered with the "
-                        + "OAuth 2.0 identity provider.")
-  @JsonProperty(value = "client_id")
-  @Size(min = 1, max = CLIENT_ID_MAX_LEN)
-  @NotNull
-  String clientId,
+    @Schema(description = "The public identifier for the application as registered with the "
+        + "OAuth 2.0 identity provider.")
+    @JsonProperty(value = "client_id")
+    @Size(min = 1, max = CLIENT_ID_MAX_LEN)
+    @NotNull
+    String clientId,
 
-  @Schema(description = "The client secret known only to the application and the "
-                        + "OAuth 2.0 identity provider.")
-  @JsonProperty(value = "client_secret")
-  @Size(max = CLIENT_SECRET_MAX_LEN)
-  @Null
-  Password clientSecret,
+    @Schema(description = "The client secret known only to the application and the "
+        + "OAuth 2.0 identity provider.")
+    @JsonProperty(value = "client_secret")
+    @Size(max = CLIENT_SECRET_MAX_LEN)
+    @Null
+    Password clientSecret,
 
-  @Schema(description = "The scope to use. The scope is optional and required only when your "
-                        + "identity provider doesn't have a default scope or your groups claim is "
-                        + "linked to a scope path to use when connecting to the external service.")
-  @JsonProperty(value = "scope")
-  @Size(max = SCOPE_MAX_LEN)
-  @Null
-  String scope,
+    @Schema(description = "The scope to use. The scope is optional and required only when your "
+        + "identity provider doesn't have a default scope or your groups claim is "
+        + "linked to a scope path to use when connecting to the external service.")
+    @JsonProperty(value = "scope")
+    @Size(max = SCOPE_MAX_LEN)
+    @Null
+    String scope,
 
-  @Schema(description = "The timeout in milliseconds when connecting to your identity provider.")
-  @JsonProperty(value = "connect_timeout_millis")
-  @Min(0)
-  @Null
-  Integer connectTimeoutMillis,
+    @Schema(description = "The timeout in milliseconds when connecting to your identity provider.")
+    @JsonProperty(value = "connect_timeout_millis")
+    @Min(0)
+    @Null
+    Integer connectTimeoutMillis,
 
-  @Schema(description = "Additional property that can be added in the request header to identify "
-      + "the logical cluster ID to connect to. For example, this may be a Confluent Cloud " +
-      "Kafka or Schema Registry cluster ID.")
-  @JsonProperty(value = "ccloud_logical_cluster_id")
-  @Null
-  String ccloudLogicalClusterId,
+    @Schema(description = "Additional property that can be added in the request header to identify "
+        + "the logical cluster ID to connect to. For example, this may be a Confluent Cloud " +
+        "Kafka or Schema Registry cluster ID.")
+    @JsonProperty(value = "ccloud_logical_cluster_id")
+    @Null
+    String ccloudLogicalClusterId,
 
-  @Schema(description = "Additional property that can be added in the request header to identify "
-                        + "the principal ID for authorization. For example, this may be"
-                        + " a Confluent Cloud identity pool ID.")
-  @JsonProperty(value = "ccloud_identity_pool_id")
-  @Null
-  String ccloudIdentityPoolId
+    @Schema(description = "Additional property that can be added in the request header to identify "
+        + "the principal ID for authorization. For example, this may be"
+        + " a Confluent Cloud identity pool ID.")
+    @JsonProperty(value = "ccloud_identity_pool_id")
+    @Null
+    String ccloudIdentityPoolId
 ) implements Credentials {
 
   private static final int TOKENS_URL_MAX_LEN = 256;
@@ -179,18 +178,18 @@ public record OAuthCredentials(
     if (tokensUrl == null || tokensUrl.isBlank()) {
       errors.add(
           Error.create()
-               .withDetail("%s OAuth tokens URL is required and may not be blank", what)
-               .withSource("%s.tokens_url", path)
+              .withDetail("%s OAuth tokens URL is required and may not be blank", what)
+              .withSource("%s.tokens_url", path)
       );
     } else if (tokensUrl.length() > TOKENS_URL_MAX_LEN) {
       errors.add(
           Error.create()
-               .withDetail(
-                   "%s OAuth tokens URL must be at most %d characters",
-                   what,
-                   TOKENS_URL_MAX_LEN
-               )
-               .withSource("%s.tokens_url", path)
+              .withDetail(
+                  "%s OAuth tokens URL must be at most %d characters",
+                  what,
+                  TOKENS_URL_MAX_LEN
+              )
+              .withSource("%s.tokens_url", path)
       );
     } else {
       try {
@@ -198,61 +197,61 @@ public record OAuthCredentials(
       } catch (URISyntaxException | MalformedURLException e) {
         errors.add(
             Error.create()
-                 .withDetail("%s OAuth tokens URL is not a valid URL", what)
-                 .withSource("%s.tokens_url", path)
+                .withDetail("%s OAuth tokens URL is not a valid URL", what)
+                .withSource("%s.tokens_url", path)
         );
       }
     }
     if (clientId == null || clientId.isBlank()) {
       errors.add(
           Error.create()
-               .withDetail("%s OAuth client ID is required and may not be blank", what)
-               .withSource("%s.client_id", path)
+              .withDetail("%s OAuth client ID is required and may not be blank", what)
+              .withSource("%s.client_id", path)
       );
     } else if (clientId.length() > CLIENT_ID_MAX_LEN) {
       errors.add(
           Error.create()
-               .withDetail(
-                   "%s OAuth client ID may not be longer than %d characters",
-                   what,
-                   CLIENT_ID_MAX_LEN
-               )
-               .withSource("%s.client_id", path)
+              .withDetail(
+                  "%s OAuth client ID may not be longer than %d characters",
+                  what,
+                  CLIENT_ID_MAX_LEN
+              )
+              .withSource("%s.client_id", path)
       );
     }
     if (clientSecret == null) {
       errors.add(
           Error.create()
-               .withDetail("%s OAuth client secret is required", what)
-               .withSource("%s.client_secret", path)
+              .withDetail("%s OAuth client secret is required", what)
+              .withSource("%s.client_secret", path)
       );
     } else if (clientSecret.longerThan(CLIENT_SECRET_MAX_LEN)) {
       errors.add(
           Error.create()
-               .withDetail(
-                   "%s OAuth client secret may not be longer than %d characters",
-                   what,
-                   CLIENT_SECRET_MAX_LEN
-               )
-               .withSource("%s.client_secret", path)
+              .withDetail(
+                  "%s OAuth client secret may not be longer than %d characters",
+                  what,
+                  CLIENT_SECRET_MAX_LEN
+              )
+              .withSource("%s.client_secret", path)
       );
     }
     if (scope != null && scope.length() > SCOPE_MAX_LEN) {
       errors.add(
           Error.create()
-               .withDetail(
-                   "%s OAuth scope may not be longer than %d characters",
-                   what,
-                   SCOPE_MAX_LEN
-               )
-               .withSource("%s.scope", path)
+              .withDetail(
+                  "%s OAuth scope may not be longer than %d characters",
+                  what,
+                  SCOPE_MAX_LEN
+              )
+              .withSource("%s.scope", path)
       );
     }
     if (connectTimeoutMillis != null && connectTimeoutMillis < 0) {
       errors.add(
           Error.create()
-               .withDetail("%s connect timeout in milliseconds must be positive", what)
-               .withSource("%s.connect_timeout_millis", path)
+              .withDetail("%s connect timeout in milliseconds must be positive", what)
+              .withSource("%s.connect_timeout_millis", path)
       );
     }
   }

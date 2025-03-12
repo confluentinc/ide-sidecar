@@ -26,10 +26,10 @@ public record CCloudOrganization(
       return this;
     }
     return new CCloudOrganization(
-      id,
-      name,
-      id.equals(details.resourceId()),
-      connectionId
+        id,
+        name,
+        id.equals(details.resourceId()),
+        connectionId
     );
   }
 }

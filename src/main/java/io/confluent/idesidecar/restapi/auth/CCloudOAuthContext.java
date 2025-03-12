@@ -99,10 +99,11 @@ public class CCloudOAuthContext implements AuthContext {
    *       resolve the hostname before sending the request.
    *   </li>
    * </ul>
+   *
    * @return Succeeded future holding the boolean value true if the token is valid. Succeeded future
-   *         holding the boolean value false if the token is not valid. Failed future holding the
-   *         cause of the failure if any error occurred while interacting with the CCloud API, e.g.,
-   *         the CCloud API returned invalid JSON.
+   * holding the boolean value false if the token is not valid. Failed future holding the cause of
+   * the failure if any error occurred while interacting with the CCloud API, e.g., the CCloud API
+   * returned invalid JSON.
    */
   @Override
   public Future<Boolean> checkAuthenticationStatus() {
@@ -113,7 +114,7 @@ public class CCloudOAuthContext implements AuthContext {
       if (isTokenMissing(controlPlaneToken)) {
         var errorMessage =
             "Cannot verify authentication status because no control plane token is available. It's "
-            + "likely that this connection has not yet completed the authentication with CCloud.";
+                + "likely that this connection has not yet completed the authentication with CCloud.";
         tokens.updateAndGet(oldTokens ->
             oldTokens.withErrors(
                 oldTokens.errors.withAuthStatusCheck(errorMessage)));
@@ -141,7 +142,7 @@ public class CCloudOAuthContext implements AuthContext {
             } catch (JsonProcessingException e) {
               throw new CCloudAuthenticationFailedException(
                   "Could not parse the response from Confluent Cloud when verifying the "
-                  + "authentication status of this connection.", e);
+                      + "authentication status of this connection.", e);
             }
           })
           .onSuccess(result ->
@@ -183,11 +184,11 @@ public class CCloudOAuthContext implements AuthContext {
    * a data plane token. When exchanging the refresh for the ID token, we implicitly invalidate the
    * existing refresh token but get and persist a new one.
    *
-   * @param organizationId The CCloud organization ID to use for the token exchange, if null,
-   *                      CCloud will provide tokens for the default organization.
+   * @param organizationId The CCloud organization ID to use for the token exchange, if null, CCloud
+   *                       will provide tokens for the default organization.
    * @return If successful, a succeeded future holding this auth context with up-to-date refresh,
-   *         control plane, and data plane tokens. If not successful, a failed future holding the
-   *         cause of the failure.
+   * control plane, and data plane tokens. If not successful, a failed future holding the cause of
+   * the failure.
    */
   @Override
   public Future<AuthContext> refresh(String organizationId) {
@@ -260,8 +261,8 @@ public class CCloudOAuthContext implements AuthContext {
    * @param authorizationCode    The authorization code passed from Confluent Cloud
    * @param ccloudOrganizationId The Confluent Cloud organization id
    * @return If successful, a succeeded future holding this auth context with up-to-date refresh,
-   *         control plane, and data plane tokens. If not successful, a failed future holding the
-   *         cause of the failure.
+   * control plane, and data plane tokens. If not successful, a failed future holding the cause of
+   * the failure.
    */
   public Future<CCloudOAuthContext> createTokensFromAuthorizationCode(
       String authorizationCode,
@@ -309,22 +310,14 @@ public class CCloudOAuthContext implements AuthContext {
   public boolean shouldAttemptTokenRefresh() {
     readLock.lock();
     try {
-      final var now = Instant.now();
-      var validRefreshToken =
-          // Do not attempt the token refresh if getEndOfLifetime() is null, i.e., we have
-          // not yet authenticated successfully
-          getEndOfLifetime() != null
-              // Do not attempt the token refresh if the absolute lifetime of the refresh token
-              // has been reached, in which case the user must re-authenticate with CCloud
-              && now.compareTo(getEndOfLifetime()) < 0;
-
       // Perform token refresh only if auth context will expire before next run of this job
+      var now = Instant.now();
       var expiresAt = expiresAt();
       var nextExecution = now.plus(CCloudOAuthConfig.TOKEN_REFRESH_INTERVAL_SECONDS);
       var atLeastOneTokenWillExpireBeforeNextRun = expiresAt.isPresent()
           && expiresAt.get().compareTo(nextExecution) < 0;
 
-      return validRefreshToken
+      return !hasReachedEndOfLifetime()
           && !hasNonTransientError()
           && atLeastOneTokenWillExpireBeforeNextRun;
     } finally {
@@ -346,6 +339,17 @@ public class CCloudOAuthContext implements AuthContext {
 
   public Instant getEndOfLifetime() {
     return tokens.get().endOfLifetime;
+  }
+
+  /**
+   * Checks if the refresh token has reached the end of its absolute lifetime and requires a
+   * re-authentication with Confluent Cloud.
+   *
+   * @return true if the end of the absolute lifetime is reached, false otherwise
+   */
+  public boolean hasReachedEndOfLifetime() {
+    var endOfLifetime = getEndOfLifetime();
+    return endOfLifetime != null && Instant.now().compareTo(endOfLifetime) >= 0;
   }
 
   public UserDetails getUser() {
@@ -470,8 +474,8 @@ public class CCloudOAuthContext implements AuthContext {
    *                                token
    * @param ccloudOrganizationId    The CCloud organization ID to use for the token exchange
    * @return If successful, a succeeded future holding this auth context with up-to-date refresh,
-   *         control plane, and data plane tokens. If not successful, a failed future holding the
-   *         cause of the failure.
+   * control plane, and data plane tokens. If not successful, a failed future holding the cause of
+   * the failure.
    */
   private Future<AuthContext> processTokenExchangeResponse(
       IdTokenExchangeResponse idTokenExchangeResponse,
@@ -550,7 +554,7 @@ public class CCloudOAuthContext implements AuthContext {
           } catch (JsonProcessingException e) {
             throw new CCloudAuthenticationFailedException(
                 "Could not parse the response from Confluent Cloud when exchanging the ID token for"
-                + " the control plane token.", e);
+                    + " the control plane token.", e);
           }
         });
   }
@@ -570,7 +574,7 @@ public class CCloudOAuthContext implements AuthContext {
             throw new CCloudAuthenticationFailedException(
                 String.format(
                     "Could not parse the response from Confluent Cloud when exchanging the control "
-                    + "plane token of the account %s for the data plane token.",
+                        + "plane token of the account %s for the data plane token.",
                     getUserEmail()),
                 exception);
           }
@@ -620,6 +624,7 @@ public class CCloudOAuthContext implements AuthContext {
       AuthErrors errors,
       Integer failedTokenRefreshAttempts
   ) {
+
     Tokens() {
       this(
           null,
@@ -741,7 +746,7 @@ public class CCloudOAuthContext implements AuthContext {
     Tokens withFailedTokenRefreshAttempt(Throwable error) {
       boolean isTransient =
           failedTokenRefreshAttempts < CCloudOAuthConfig.MAX_TOKEN_REFRESH_ATTEMPTS
-          && !error.getMessage().contains("Unknown or invalid refresh token.");
+              && !error.getMessage().contains("Unknown or invalid refresh token.");
       return new Tokens(
           refreshToken,
           controlPlaneToken,
@@ -769,6 +774,7 @@ public class CCloudOAuthContext implements AuthContext {
       @JsonProperty(value = "social_connection") String socialConnection,
       @JsonProperty(value = "auth_type") String authType
   ) {
+
     public CCloud.UserId getId() {
       return resourceId != null ? new CCloud.UserId(resourceId) : null;
     }
@@ -810,6 +816,7 @@ public class CCloudOAuthContext implements AuthContext {
       String name,
       SsoDetails sso
   ) {
+
     public CCloud.OrganizationId getId() {
       return resourceId != null ? new CCloud.OrganizationId(resourceId) : null;
     }
@@ -856,6 +863,7 @@ public class CCloudOAuthContext implements AuthContext {
       @JsonProperty(value = "id_token", required = true) String idToken,
       @JsonProperty("org_resource_id") String orgResourceId
   ) {
+
     String toJsonString() {
       JsonObject jsonObject = new JsonObject();
       jsonObject.put("id_token", idToken);

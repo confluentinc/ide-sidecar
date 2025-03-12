@@ -26,7 +26,7 @@ public record ScramCredentials(
         maxLength = SCRAM_USERNAME_MAX_LEN,
         minLength = 1
     )
-    @JsonProperty(value="scram_username")
+    @JsonProperty(value = "scram_username")
     @NotNull
     String username,
 
@@ -35,14 +35,14 @@ public record ScramCredentials(
         maxLength = SCRAM_PASSWORD_MAX_LEN,
         minLength = 1
     )
-    @JsonProperty(value="scram_password")
+    @JsonProperty(value = "scram_password")
     @NotNull
     Password password
 ) implements Credentials {
 
   private static final int SCRAM_USERNAME_MAX_LEN = 64;
 
-  private static final int SCRAM_PASSWORD_MAX_LEN= 64;
+  private static final int SCRAM_PASSWORD_MAX_LEN = 1024;
 
   public enum HashAlgorithm {
     SCRAM_SHA_256("SCRAM-SHA-256"),

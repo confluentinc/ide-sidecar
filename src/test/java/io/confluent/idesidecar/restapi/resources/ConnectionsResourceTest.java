@@ -39,17 +39,19 @@ import io.confluent.idesidecar.restapi.models.ConnectionStatus.Authentication.St
 import io.confluent.idesidecar.restapi.models.ConnectionStatus.ConnectedState;
 import io.confluent.idesidecar.restapi.models.ConnectionsList;
 import io.confluent.idesidecar.restapi.models.ObjectMetadata;
-import io.confluent.idesidecar.restapi.util.CCloudTestUtil.AccessToken;
-import io.confluent.idesidecar.restapi.util.UuidFactory;
 import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
 import io.confluent.idesidecar.restapi.testutil.QueryResourceUtil;
 import io.confluent.idesidecar.restapi.util.CCloudTestUtil;
+import io.confluent.idesidecar.restapi.util.CCloudTestUtil.AccessToken;
+import io.confluent.idesidecar.restapi.util.UuidFactory;
 import io.quarkiverse.wiremock.devservice.ConnectWireMock;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.common.http.TestHTTPEndpoint;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
+import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
+import io.restassured.parsing.Parser;
 import io.restassured.response.ValidatableResponse;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.junit5.VertxTestContext.ExecutionBlock;
@@ -69,8 +71,6 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.mockito.Mockito;
-import io.restassured.RestAssured;
-import io.restassured.parsing.Parser;
 
 @QuarkusTest
 @ConnectWireMock
@@ -260,7 +260,8 @@ public class ConnectionsResourceTest {
           .body("kind", equalTo("Connection"))
           .body("metadata.self", startsWith("http://localhost:26637/gateway/v1/connections/"))
           .body("metadata.resource_name", nullValue())
-          .body("metadata.sign_in_uri", startsWith("https://login.confluent.io/oauth/authorize?response_type=code&code_challenge_method="))
+          .body("metadata.sign_in_uri", startsWith(
+              "https://login.confluent.io/oauth/authorize?response_type=code&code_challenge_method="))
           .body("id", equalTo(requestSpec.id()))
           .body("spec.id", equalTo(requestSpec.id()))
           .body("spec.name", equalTo(requestSpec.name()))
@@ -284,7 +285,7 @@ public class ConnectionsResourceTest {
   @Test
   @TestHTTPEndpoint(ConnectionsResource.class)
   void getConnection_withoutToken_shouldReturnWithStatus() {
-    List<ConnectionSpec> specs = Arrays.asList(
+    List<ConnectionSpec> specs = List.of(
         new ConnectionSpec("c-1", "Connection 1", ConnectionType.CCLOUD)
     );
 
@@ -493,7 +494,8 @@ public class ConnectionsResourceTest {
         null
     );
     var connectionSpec = connectionStateManager.getConnectionSpec("c1");
-    var testUpdatesConnectionType = payload.type() != null && !connectionSpec.type().equals(payload.type());
+    var testUpdatesConnectionType =
+        payload.type() != null && !connectionSpec.type().equals(payload.type());
 
     var testContext = new VertxTestContext();
     refreshConnectionStatusAndThen(connectionId, testContext, () -> {
@@ -627,7 +629,8 @@ public class ConnectionsResourceTest {
         .statusCode(400);
     assertResponseMatches(
         response,
-        createError().withSource("name").withDetail("Connection name is required and may not be blank")
+        createError().withSource("name")
+            .withDetail("Connection name is required and may not be blank")
     );
   }
 
@@ -696,7 +699,8 @@ public class ConnectionsResourceTest {
         .statusCode(400);
     assertResponseMatches(
         response,
-        createError().withSource("ccloud_config").withDetail("CCloud configuration is not allowed when type is LOCAL")
+        createError().withSource("ccloud_config")
+            .withDetail("CCloud configuration is not allowed when type is LOCAL")
     );
 
     // Assert that the connection spec is unchanged
@@ -720,7 +724,8 @@ public class ConnectionsResourceTest {
     // Update org to Test Org and expect the current org to be updated
     accessTokens = updateCCloudConfig(
         accessTokens,
-        connectionSpec.withCCloudConfig(new CCloudConfig("d6fc52f8-ae8a-405c-9692-e997965b730dc", null)),
+        connectionSpec.withCCloudConfig(
+            new CCloudConfig("d6fc52f8-ae8a-405c-9692-e997965b730dc", null)),
         "Test Org"
     );
 
@@ -732,7 +737,8 @@ public class ConnectionsResourceTest {
     // Update org to Staging Org and expect the current org to be updated
     accessTokens = updateCCloudConfig(
         accessTokens,
-        connectionSpec.withCCloudConfig(new CCloudConfig("1a507773-d2cb-4055-917e-ffb205f3c433", null)),
+        connectionSpec.withCCloudConfig(
+            new CCloudConfig("1a507773-d2cb-4055-917e-ffb205f3c433", null)),
         "Staging Org"
     );
 
@@ -743,7 +749,8 @@ public class ConnectionsResourceTest {
 
     updateCCloudConfig(
         accessTokens,
-        connectionSpec.withCCloudConfig(new CCloudConfig("23b1185e-d874-4f61-81d6-c9c61aa8969c", null)),
+        connectionSpec.withCCloudConfig(
+            new CCloudConfig("23b1185e-d874-4f61-81d6-c9c61aa8969c", null)),
         "Development Org"
     );
 
@@ -806,7 +813,8 @@ public class ConnectionsResourceTest {
     refreshConnectionStatusAndThen(connectionId, testContext, () -> {
       given()
           .contentType(ContentType.JSON)
-          .body(connectionSpec.withCCloudConfig(new CCloudConfig("d6fc52f8-ae8a-405c-9692-e997965b730dc", null)))
+          .body(connectionSpec.withCCloudConfig(
+              new CCloudConfig("d6fc52f8-ae8a-405c-9692-e997965b730dc", null)))
           .when().put("/gateway/v1/connections/{id}", connectionSpec.id())
           .then()
           .statusCode(400)
@@ -955,66 +963,68 @@ public class ConnectionsResourceTest {
         String displayName,
         String specJson,
         Error... expectedErrors
-    ) {}
+    ) {
+
+    }
     var inputs = List.of(
         new TestInput(
             "Direct spec is valid with name and Kafka w/ scram credentials for 512 and no Schema Registry",
             """
-            {
-              "name": "Some connection name",
-              "type": "DIRECT",
-              "kafka_cluster": {
-                "bootstrap_servers": "localhost:9092",
-                "credentials": {
-                  "hash_algorithm": "SCRAM_SHA_512",
-                  "scram_username": "user",
-                  "scram_password": "pass"
-                },
-                "ssl": { "enabled": true }
-              }
-            }
-            """
+                {
+                  "name": "Some connection name",
+                  "type": "DIRECT",
+                  "kafka_cluster": {
+                    "bootstrap_servers": "localhost:9092",
+                    "credentials": {
+                      "hash_algorithm": "SCRAM_SHA_512",
+                      "scram_username": "user",
+                      "scram_password": "pass"
+                    },
+                    "ssl": { "enabled": true }
+                  }
+                }
+                """
         ),
         new TestInput(
             "Direct spec is valid with name and Kafka w/ scram credentials for 256 and no Schema Registry",
             """
-            {
-              "name": "Some connection name",
-              "type": "DIRECT",
-              "kafka_cluster": {
-                "bootstrap_servers": "localhost:9092",
-                "credentials": {
-                  "hash_algorithm": "SCRAM_SHA_256",
-                  "scram_username": "user",
-                  "scram_password": "pass"
-                },
-                "ssl": { "enabled": true }
-              }
-            }
-            """
+                {
+                  "name": "Some connection name",
+                  "type": "DIRECT",
+                  "kafka_cluster": {
+                    "bootstrap_servers": "localhost:9092",
+                    "credentials": {
+                      "hash_algorithm": "SCRAM_SHA_256",
+                      "scram_username": "user",
+                      "scram_password": "pass"
+                    },
+                    "ssl": { "enabled": true }
+                  }
+                }
+                """
         ),
         new TestInput(
             "Direct spec is invalid with name and Kafka w/ scram credentials for 256 without username",
             """
-                {
-                    "name": "string",
-                    "type": "DIRECT",
-                    "kafka_cluster": {
-                        "bootstrap_servers": "localhost:9092",
-                        "credentials": {
-                            "hash_algorithm": "SCRAM_SHA_256",
-                            "scram_password" : "pass"
-                         
+                    {
+                        "name": "string",
+                        "type": "DIRECT",
+                        "kafka_cluster": {
+                            "bootstrap_servers": "localhost:9092",
+                            "credentials": {
+                                "hash_algorithm": "SCRAM_SHA_256",
+                                "scram_password" : "pass"
+                
+                            },
+                            "ssl": {
+                                "enabled": true
+                            }
                         },
                         "ssl": {
                             "enabled": true
                         }
-                    },
-                    "ssl": {
-                        "enabled": true
                     }
-                }
-            """,
+                """,
             createError()
                 .withSource("kafka_cluster.credentials.scram_username")
                 .withDetail("Kafka cluster Username is required and may not be blank")
@@ -1022,126 +1032,127 @@ public class ConnectionsResourceTest {
         new TestInput(
             "Direct spec is invalid with name and Kafka w/ scram credentials for 256 without hash algorithm and no Schema Registry",
             """
-                {
-                    "name": "string",
-                    "type": "DIRECT",
-                    "kafka_cluster": {
-                        "bootstrap_servers": "localhost:9092",
-                        "credentials": {
-                            "scram_password" : "pass",
-                            "scram_username" : "user"
+                    {
+                        "name": "string",
+                        "type": "DIRECT",
+                        "kafka_cluster": {
+                            "bootstrap_servers": "localhost:9092",
+                            "credentials": {
+                                "scram_password" : "pass",
+                                "scram_username" : "user"
+                            },
+                            "ssl": {
+                                "enabled": true
+                            }
                         },
                         "ssl": {
                             "enabled": true
                         }
-                    },
-                    "ssl": {
-                        "enabled": true
                     }
-                }
-            """,
+                """,
             createError()
                 .withSource("kafka_cluster.credentials.hash_algorithm")
-                .withDetail("Kafka cluster Hash algorithm is required, may not be blank, and must be one of the supported algorithms (SCRAM_SHA_256 or SCRAM_SHA_512)")
+                .withDetail(
+                    "Kafka cluster Hash algorithm is required, may not be blank, and must be one of the supported algorithms (SCRAM_SHA_256 or SCRAM_SHA_512)")
         ),
         // Local connections
         new TestInput(
             "Local spec is valid with name but no config",
             """
-            {
-              "name": "Some connection name",
-              "type": "LOCAL"
-            }
-            """
+                {
+                  "name": "Some connection name",
+                  "type": "LOCAL"
+                }
+                """
         ),
         new TestInput(
             "Local spec is valid with empty local config",
             """
-            {
-              "name": "Connection 1",
-              "type": "LOCAL",
-              "local_config": {
-              }
-            }
-            """
+                {
+                  "name": "Connection 1",
+                  "type": "LOCAL",
+                  "local_config": {
+                  }
+                }
+                """
         ),
         new TestInput(
             "Local spec is valid with valid Schema Registry URI",
             """
-            {
-              "name": "Connection 1",
-              "type": "LOCAL",
-              "local_config": {
-                "schema-registry-uri": "http://localhost:8081"
-              }
-            }
-            """
+                {
+                  "name": "Connection 1",
+                  "type": "LOCAL",
+                  "local_config": {
+                    "schema-registry-uri": "http://localhost:8081"
+                  }
+                }
+                """
         ),
         new TestInput(
             "Local spec is valid with new Schema Registry config but without credentials",
             """
-            {
-              "name": "Connection 1",
-              "type": "LOCAL",
-              "schema_registry": {
-                "uri": "http://localhost:8081"
-              }
-            }
-            """
+                {
+                  "name": "Connection 1",
+                  "type": "LOCAL",
+                  "schema_registry": {
+                    "uri": "http://localhost:8081"
+                  }
+                }
+                """
         ),
         new TestInput(
             "Local spec is valid with new Schema Registry config and null credentials",
             """
-            {
-              "name": "Connection 1",
-              "type": "LOCAL",
-              "schema_registry": {
-                "uri": "http://localhost:8081",
-                "credentials": null
-              }
-            }
-            """
+                {
+                  "name": "Connection 1",
+                  "type": "LOCAL",
+                  "schema_registry": {
+                    "uri": "http://localhost:8081",
+                    "credentials": null
+                  }
+                }
+                """
         ),
         new TestInput(
             "Local spec is valid with new Schema Registry config including basic credentials",
             """
-            {
-              "name": "Connection 1",
-              "type": "LOCAL",
-              "schema_registry": {
-                "uri": "http://localhost:8081",
-                "credentials": {
-                  "username": "user",
-                  "password": "pass"
+                {
+                  "name": "Connection 1",
+                  "type": "LOCAL",
+                  "schema_registry": {
+                    "uri": "http://localhost:8081",
+                    "credentials": {
+                      "username": "user",
+                      "password": "pass"
+                    }
+                  }
                 }
-              }
-            }
-            """
+                """
         ),
         new TestInput(
             "Local spec is valid with new Schema Registry config including API key and secret credentials",
             """
-            {
-              "name": "Connection 1",
-              "type": "LOCAL",
-              "schema_registry": {
-                "uri": "http://localhost:8081",
-                "credentials": {
-                  "api_key": "my-api-key",
-                  "api_secret": "my-api-secret"
+                {
+                  "name": "Connection 1",
+                  "type": "LOCAL",
+                  "schema_registry": {
+                    "uri": "http://localhost:8081",
+                    "credentials": {
+                      "api_key": "my-api-key",
+                      "api_secret": "my-api-secret"
+                    }
+                  }
                 }
-              }
-            }
-            """
+                """
         ),
         new TestInput(
             "Local spec is invalid without name",
             """
-            {
-              "type": "LOCAL",
-              "local_config": {}
-            }
-            """,
+                {
+                  "type": "LOCAL",
+                  "local_config": {}
+                }
+                """,
             createError()
                 .withSource("name")
                 .withDetail("Connection name is required and may not be blank")
@@ -1149,12 +1160,12 @@ public class ConnectionsResourceTest {
         new TestInput(
             "Local spec is invalid with blank name",
             """
-            {
-              "name": "  ",
-              "type": "LOCAL",
-              "local_config": {}
-            }
-            """,
+                {
+                  "name": "  ",
+                  "type": "LOCAL",
+                  "local_config": {}
+                }
+                """,
             createError()
                 .withSource("name")
                 .withDetail("Connection name is required and may not be blank")
@@ -1162,29 +1173,30 @@ public class ConnectionsResourceTest {
         new TestInput(
             "Local spec is invalid with blank Schema Registry URI (old config)",
             """
-            {
-              "name": "Connection 1",
-              "type": "LOCAL",
-              "local_config": {
-                "schema-registry-uri": "  "
-              }
-            }
-            """,
+                {
+                  "name": "Connection 1",
+                  "type": "LOCAL",
+                  "local_config": {
+                    "schema-registry-uri": "  "
+                  }
+                }
+                """,
             createError()
                 .withSource("local_config.schema-registry-uri")
-                .withDetail("Schema Registry URI may be null (use default local SR) or empty (do not use SR), but may not have only whitespace")
+                .withDetail(
+                    "Schema Registry URI may be null (use default local SR) or empty (do not use SR), but may not have only whitespace")
         ),
         new TestInput(
             "Local spec is invalid with null Schema Registry URI (new config)",
             """
-            {
-              "name": "Connection 1",
-              "type": "LOCAL",
-              "schema_registry": {
-                "uri": null
-              }
-            }
-            """,
+                {
+                  "name": "Connection 1",
+                  "type": "LOCAL",
+                  "schema_registry": {
+                    "uri": null
+                  }
+                }
+                """,
             createError()
                 .withSource("schema_registry.uri")
                 .withDetail("Schema Registry URI is required and may not be blank")
@@ -1194,14 +1206,14 @@ public class ConnectionsResourceTest {
             // If the URI is null, then we assume the user wants to use SR at the default local port
             "Local spec is invalid with blank Schema Registry URI (new config)",
             """
-            {
-              "name": "Connection 1",
-              "type": "LOCAL",
-              "schema_registry": {
-                "uri": "   "
-              }
-            }
-            """,
+                {
+                  "name": "Connection 1",
+                  "type": "LOCAL",
+                  "schema_registry": {
+                    "uri": "   "
+                  }
+                }
+                """,
             createError()
                 .withSource("schema_registry.uri")
                 .withDetail("Schema Registry URI is required and may not be blank")
@@ -1209,14 +1221,14 @@ public class ConnectionsResourceTest {
         new TestInput(
             "Local spec is invalid with null Schema Registry URI",
             """
-            {
-              "name": "Connection 1",
-              "type": "LOCAL",
-              "schema_registry": {
-                "uri": null
-              }
-            }
-            """,
+                {
+                  "name": "Connection 1",
+                  "type": "LOCAL",
+                  "schema_registry": {
+                    "uri": null
+                  }
+                }
+                """,
             createError()
                 .withSource("schema_registry.uri")
                 .withDetail("Schema Registry URI is required and may not be blank")
@@ -1224,17 +1236,17 @@ public class ConnectionsResourceTest {
         new TestInput(
             "Local spec is invalid with both local config and Schema Registry",
             """
-            {
-              "name": "Connection 1",
-              "type": "LOCAL",
-              "local_config": {
-                "schema-registry-uri": "http://localhost:8081"
-              },
-              "schema_registry": {
-                "uri": "http://localhost:8081"
-              }
-            }
-            """,
+                {
+                  "name": "Connection 1",
+                  "type": "LOCAL",
+                  "local_config": {
+                    "schema-registry-uri": "http://localhost:8081"
+                  },
+                  "schema_registry": {
+                    "uri": "http://localhost:8081"
+                  }
+                }
+                """,
             createError()
                 .withSource("local_config.schema-registry-uri")
                 .withDetail("Local config cannot be used with schema_registry configuration")
@@ -1242,17 +1254,17 @@ public class ConnectionsResourceTest {
         new TestInput(
             "Local spec is invalid with new Schema Registry config and incomplete basic credentials",
             """
-            {
-              "name": "Connection 1",
-              "type": "LOCAL",
-              "schema_registry": {
-                "uri": "http://localhost:8081",
-                "credentials": {
-                  "username": "user"
+                {
+                  "name": "Connection 1",
+                  "type": "LOCAL",
+                  "schema_registry": {
+                    "uri": "http://localhost:8081",
+                    "credentials": {
+                      "username": "user"
+                    }
+                  }
                 }
-              }
-            }
-            """,
+                """,
             createError()
                 .withSource("schema_registry.credentials.password")
                 .withDetail("Schema Registry password is required")
@@ -1260,14 +1272,14 @@ public class ConnectionsResourceTest {
         new TestInput(
             "Local spec is invalid with malformed Schema Registry URI (old config)",
             """
-            {
-              "name": "Connection 1",
-              "type": "LOCAL",
-              "local_config": {
-                "schema-registry-uri": "this-is-not a valid URI"
-              }
-            }
-            """,
+                {
+                  "name": "Connection 1",
+                  "type": "LOCAL",
+                  "local_config": {
+                    "schema-registry-uri": "this-is-not a valid URI"
+                  }
+                }
+                """,
             createError()
                 .withSource("local_config.schema-registry-uri")
                 .withDetail("Schema Registry URI is not a valid URI")
@@ -1275,14 +1287,14 @@ public class ConnectionsResourceTest {
         new TestInput(
             "Local spec is invalid with malformed Schema Registry URI (new config)",
             """
-            {
-              "name": "Connection 1",
-              "type": "LOCAL",
-              "schema_registry": {
-                "uri": "this-is-not a valid URI"
-              }
-            }
-            """,
+                {
+                  "name": "Connection 1",
+                  "type": "LOCAL",
+                  "schema_registry": {
+                    "uri": "this-is-not a valid URI"
+                  }
+                }
+                """,
             createError()
                 .withSource("schema_registry.uri")
                 .withDetail("Schema Registry URI is not a valid URI")
@@ -1290,14 +1302,14 @@ public class ConnectionsResourceTest {
         new TestInput(
             "Local spec is invalid with file Schema Registry URI (old config)",
             """
-            {
-              "name": "Connection 1",
-              "type": "LOCAL",
-              "local_config": {
-                "schema-registry-uri": "file://path/to/non/existent/file.txt"
-              }
-            }
-            """,
+                {
+                  "name": "Connection 1",
+                  "type": "LOCAL",
+                  "local_config": {
+                    "schema-registry-uri": "file://path/to/non/existent/file.txt"
+                  }
+                }
+                """,
             createError()
                 .withSource("local_config.schema-registry-uri")
                 .withDetail("Schema Registry URI must use 'http' or 'https'")
@@ -1305,14 +1317,14 @@ public class ConnectionsResourceTest {
         new TestInput(
             "Local spec is invalid with file Schema Registry URI (new config)",
             """
-            {
-              "name": "Connection 1",
-              "type": "LOCAL",
-              "schema_registry": {
-                "uri": "file://path/to/non/existent/file.txt"
-              }
-            }
-            """,
+                {
+                  "name": "Connection 1",
+                  "type": "LOCAL",
+                  "schema_registry": {
+                    "uri": "file://path/to/non/existent/file.txt"
+                  }
+                }
+                """,
             createError()
                 .withSource("schema_registry.uri")
                 .withDetail("Schema Registry URI must use 'http' or 'https'")
@@ -1320,14 +1332,14 @@ public class ConnectionsResourceTest {
         new TestInput(
             "Local spec is invalid with CCloud spec",
             """
-            {
-              "name": "Connection 1",
-              "type": "LOCAL",
-              "ccloud_config": {
-                "organization_id": "this-wont-work"
-              }
-            }
-            """,
+                {
+                  "name": "Connection 1",
+                  "type": "LOCAL",
+                  "ccloud_config": {
+                    "organization_id": "this-wont-work"
+                  }
+                }
+                """,
             createError()
                 .withSource("ccloud_config")
                 .withDetail("CCloud configuration is not allowed when type is LOCAL")
@@ -1335,13 +1347,13 @@ public class ConnectionsResourceTest {
         new TestInput(
             "Local spec is invalid with Kafka spec",
             """
-            {
-              "name": "Connection 1",
-              "type": "LOCAL",
-              "kafka_cluster": {
-              }
-            }
-            """,
+                {
+                  "name": "Connection 1",
+                  "type": "LOCAL",
+                  "kafka_cluster": {
+                  }
+                }
+                """,
             createError()
                 .withSource("kafka_cluster")
                 .withDetail("Kafka cluster configuration is not allowed when type is LOCAL")
@@ -1350,58 +1362,58 @@ public class ConnectionsResourceTest {
         new TestInput(
             "CCloud spec is valid with name and no config",
             """
-            {
-              "name": "Some connection name",
-              "type": "CCLOUD"
-            }
-            """
+                {
+                  "name": "Some connection name",
+                  "type": "CCLOUD"
+                }
+                """
         ),
         new TestInput(
             "CCloud spec is valid with name and CCloud config w/ null organization",
             """
-            {
-              "name": "Some connection name",
-              "type": "CCLOUD",
-              "ccloud_config": {
-                "organization_id": null
-              }
-            }
-            """
+                {
+                  "name": "Some connection name",
+                  "type": "CCLOUD",
+                  "ccloud_config": {
+                    "organization_id": null
+                  }
+                }
+                """
         ),
         new TestInput(
             "CCloud spec is valid with name and CCloud config w/ blank organization",
             """
-            {
-              "name": "Some connection name",
-              "type": "CCLOUD",
-              "ccloud_config": {
-                "organization_id": ""
-              }
-            }
-            """
+                {
+                  "name": "Some connection name",
+                  "type": "CCLOUD",
+                  "ccloud_config": {
+                    "organization_id": ""
+                  }
+                }
+                """
         ),
         new TestInput(
             "CCloud spec is valid with name and CCloud config w/ organization",
             """
-            {
-              "name": "Some connection name",
-              "type": "CCLOUD",
-              "ccloud_config": {
-                "organization_id": "12345"
-              }
-            }
-            """
+                {
+                  "name": "Some connection name",
+                  "type": "CCLOUD",
+                  "ccloud_config": {
+                    "organization_id": "12345"
+                  }
+                }
+                """
         ),
         new TestInput(
             "CCloud spec is invalid without name",
             """
-            {
-              "type": "CCLOUD",
-              "ccloud_config": {
-                "organization_id": "12345"
-              }
-            }
-            """,
+                {
+                  "type": "CCLOUD",
+                  "ccloud_config": {
+                    "organization_id": "12345"
+                  }
+                }
+                """,
             createError()
                 .withSource("name")
                 .withDetail("Connection name is required and may not be blank")
@@ -1409,14 +1421,14 @@ public class ConnectionsResourceTest {
         new TestInput(
             "CCloud spec is invalid with blank name",
             """
-            {
-              "name": "  ",
-              "type": "CCLOUD",
-              "ccloud_config": {
-                "organization_id": "12345"
-              }
-            }
-            """,
+                {
+                  "name": "  ",
+                  "type": "CCLOUD",
+                  "ccloud_config": {
+                    "organization_id": "12345"
+                  }
+                }
+                """,
             createError()
                 .withSource("name")
                 .withDetail("Connection name is required and may not be blank")
@@ -1424,13 +1436,13 @@ public class ConnectionsResourceTest {
         new TestInput(
             "CCloud spec is invalid with local config",
             """
-            {
-              "name": "Connection 1",
-              "type": "CCLOUD",
-              "local_config": {
-              }
-            }
-            """,
+                {
+                  "name": "Connection 1",
+                  "type": "CCLOUD",
+                  "local_config": {
+                  }
+                }
+                """,
             createError()
                 .withSource("local_config")
                 .withDetail("Local configuration is not allowed when type is CCLOUD")
@@ -1438,13 +1450,13 @@ public class ConnectionsResourceTest {
         new TestInput(
             "CCloud spec is invalid with Kafka spec",
             """
-            {
-              "name": "Connection 1",
-              "type": "CCLOUD",
-              "kafka_cluster": {
-              }
-            }
-            """,
+                {
+                  "name": "Connection 1",
+                  "type": "CCLOUD",
+                  "kafka_cluster": {
+                  }
+                }
+                """,
             createError()
                 .withSource("kafka_cluster")
                 .withDetail("Kafka cluster configuration is not allowed when type is CCLOUD")
@@ -1452,198 +1464,198 @@ public class ConnectionsResourceTest {
         new TestInput(
             "CCloud spec is invalid with Schema Registry spec",
             """
-            {
-              "name": "Connection 1",
-              "type": "CCLOUD",
-              "schema_registry": {
-              }
-            }
-            """,
+                {
+                  "name": "Connection 1",
+                  "type": "CCLOUD",
+                  "schema_registry": {
+                  }
+                }
+                """,
             createError()
                 .withSource("schema_registry")
-                .withDetail( "Schema Registry configuration is not allowed when type is CCLOUD")
+                .withDetail("Schema Registry configuration is not allowed when type is CCLOUD")
         ),
         // Direct connections
         new TestInput(
             "Direct spec is valid with name and no config",
             """
-            {
-              "name": "Some connection name",
-              "type": "DIRECT"
-            }
-            """
+                {
+                  "name": "Some connection name",
+                  "type": "DIRECT"
+                }
+                """
         ),
         new TestInput(
             "Direct spec is valid with name and Kafka and no Schema Registry",
             """
-            {
-              "name": "Some connection name",
-              "type": "DIRECT",
-              "kafka_cluster": {
-                "bootstrap_servers": "localhost:9092",
-                "ssl": { "enabled": true }
-              }
-            }
-            """
+                {
+                  "name": "Some connection name",
+                  "type": "DIRECT",
+                  "kafka_cluster": {
+                    "bootstrap_servers": "localhost:9092",
+                    "ssl": { "enabled": true }
+                  }
+                }
+                """
         ),
         new TestInput(
             "Direct spec is valid with name and Kafka w/ basic credentials and no Schema Registry",
             """
-            {
-              "name": "Some connection name",
-              "type": "DIRECT",
-              "kafka_cluster": {
-                "bootstrap_servers": "localhost:9092",
-                "credentials": {
-                  "username": "user",
-                  "password": "pass"
-                },
-                "ssl": { "enabled": true }
-              }
-            }
-            """
+                {
+                  "name": "Some connection name",
+                  "type": "DIRECT",
+                  "kafka_cluster": {
+                    "bootstrap_servers": "localhost:9092",
+                    "credentials": {
+                      "username": "user",
+                      "password": "pass"
+                    },
+                    "ssl": { "enabled": true }
+                  }
+                }
+                """
         ),
         new TestInput(
             "Direct spec is valid with name and Schema Registry and no Kafka",
             """
-            {
-              "name": "Some connection name",
-              "type": "DIRECT",
-              "schema_registry": {
-                "uri": "http://localhost:8081",
-                "ssl": { "enabled": true }
-              }
-            }
-            """
+                {
+                  "name": "Some connection name",
+                  "type": "DIRECT",
+                  "schema_registry": {
+                    "uri": "http://localhost:8081",
+                    "ssl": { "enabled": true }
+                  }
+                }
+                """
         ),
         new TestInput(
             "Direct spec is valid with name and Kafka and Schema Registry",
             """
-            {
-              "name": "Some connection name",
-              "type": "DIRECT",
-              "kafka_cluster": {
-                "bootstrap_servers": "localhost:9092"
-              },
-              "schema_registry": {
-                "uri": "http://localhost:8081",
-                "ssl": { "enabled": true }
-              }
-            }
-            """
+                {
+                  "name": "Some connection name",
+                  "type": "DIRECT",
+                  "kafka_cluster": {
+                    "bootstrap_servers": "localhost:9092"
+                  },
+                  "schema_registry": {
+                    "uri": "http://localhost:8081",
+                    "ssl": { "enabled": true }
+                  }
+                }
+                """
         ),
         new TestInput(
             "Direct spec is valid with Kafka and verify server certificate hostname",
             """
-            {
-              "name": "Some connection name",
-              "type": "DIRECT",
-              "kafka_cluster": {
-                "bootstrap_servers": "localhost:9092",
-                "ssl": { "enabled": true, "verify_hostname": true}
-              }
-            }
-            """
+                {
+                  "name": "Some connection name",
+                  "type": "DIRECT",
+                  "kafka_cluster": {
+                    "bootstrap_servers": "localhost:9092",
+                    "ssl": { "enabled": true, "verify_hostname": true}
+                  }
+                }
+                """
         ),
         new TestInput(
             "Direct spec is valid with Kafka and don't verify server certificate hostname",
             """
-            {
-              "name": "Some connection name",
-              "type": "DIRECT",
-              "kafka_cluster": {
-                "bootstrap_servers": "localhost:9092",
-                "ssl": { "enabled": true, "verify_hostname": false}
-              }
-            }
-            """
+                {
+                  "name": "Some connection name",
+                  "type": "DIRECT",
+                  "kafka_cluster": {
+                    "bootstrap_servers": "localhost:9092",
+                    "ssl": { "enabled": true, "verify_hostname": false}
+                  }
+                }
+                """
         ),
         new TestInput(
             "Direct spec is valid with Kafka and SR over TLS",
             """
-            {
-              "name": "Some connection name",
-              "type": "DIRECT",
-              "kafka_cluster": {
-                "bootstrap_servers": "localhost:9092",
-                "ssl": {
-                  "enabled": true,
-                  "truststore": {
-                    "path": "/path/to/truststore.jks",
-                    "password": "truststore-password"
+                {
+                  "name": "Some connection name",
+                  "type": "DIRECT",
+                  "kafka_cluster": {
+                    "bootstrap_servers": "localhost:9092",
+                    "ssl": {
+                      "enabled": true,
+                      "truststore": {
+                        "path": "/path/to/truststore.jks",
+                        "password": "truststore-password"
+                      }
+                    }
+                  },
+                  "schema_registry": {
+                    "uri": "https://localhost:8081"
                   }
                 }
-              },
-              "schema_registry": {
-                "uri": "https://localhost:8081"
-              }
-            }
-            """
+                """
         ),
         new TestInput(
             "Direct spec is valid over SSL with truststore path only",
             """
-            {
-              "name": "Connection 1",
-              "type": "DIRECT",
-              "kafka_cluster": {
-                "bootstrap_servers": "localhost:9092",
-                "ssl": {
-                  "truststore": {
-                    "path": "/path/to/truststore.jks"
+                {
+                  "name": "Connection 1",
+                  "type": "DIRECT",
+                  "kafka_cluster": {
+                    "bootstrap_servers": "localhost:9092",
+                    "ssl": {
+                      "truststore": {
+                        "path": "/path/to/truststore.jks"
+                      }
+                    }
                   }
                 }
-              }
-            }
-            """
+                """
         ),
         new TestInput(
             "Direct spec is valid with Kafka and SR over mutual TLS",
             """
-            {
-              "name": "Some connection name",
-              "type": "DIRECT",
-              "kafka_cluster": {
-                "bootstrap_servers": "localhost:9092",
-                "ssl": {
-                  "truststore": {
-                    "path": "/path/to/truststore.jks",
-                    "password": "truststore-password"
+                {
+                  "name": "Some connection name",
+                  "type": "DIRECT",
+                  "kafka_cluster": {
+                    "bootstrap_servers": "localhost:9092",
+                    "ssl": {
+                      "truststore": {
+                        "path": "/path/to/truststore.jks",
+                        "password": "truststore-password"
+                      },
+                      "keystore": {
+                        "path": "/path/to/keystore.jks",
+                        "password": "keystore-password",
+                        "key_password": "key-password"
+                      }
+                    }
                   },
-                  "keystore": {
-                    "path": "/path/to/keystore.jks",
-                    "password": "keystore-password",
-                    "key_password": "key-password"
+                  "schema_registry": {
+                    "uri": "https://localhost:8081",
+                    "ssl": {
+                      "truststore": {
+                        "path": "/path/to/truststore.jks",
+                        "password": "truststore-password"
+                      },
+                      "keystore": {
+                        "path": "/path/to/keystore.jks",
+                        "password": "keystore-password",
+                        "key_password": "key-password"
+                      }
+                    }
                   }
                 }
-              },
-              "schema_registry": {
-                "uri": "https://localhost:8081",
-                "ssl": {
-                  "truststore": {
-                    "path": "/path/to/truststore.jks",
-                    "password": "truststore-password"
-                  },
-                  "keystore": {
-                    "path": "/path/to/keystore.jks",
-                    "password": "keystore-password",
-                    "key_password": "key-password"
-                  }
-                }
-              }
-            }
-            """
+                """
         ),
         new TestInput(
             "Direct spec is invalid without name",
             """
-            {
-              "type": "DIRECT",
-              "kafka_cluster": {
-                "bootstrap_servers": null
-              }
-            }
-            """,
+                {
+                  "type": "DIRECT",
+                  "kafka_cluster": {
+                    "bootstrap_servers": null
+                  }
+                }
+                """,
             createError()
                 .withSource("name")
                 .withDetail("Connection name is required and may not be blank"),
@@ -1654,14 +1666,14 @@ public class ConnectionsResourceTest {
         new TestInput(
             "Direct spec is invalid with blank name",
             """
-            {
-              "name": "  ",
-              "type": "DIRECT",
-              "kafka_cluster": {
-                "bootstrap_servers": null
-              }
-            }
-            """,
+                {
+                  "name": "  ",
+                  "type": "DIRECT",
+                  "kafka_cluster": {
+                    "bootstrap_servers": null
+                  }
+                }
+                """,
             createError()
                 .withSource("name")
                 .withDetail("Connection name is required and may not be blank"),
@@ -1672,13 +1684,13 @@ public class ConnectionsResourceTest {
         new TestInput(
             "Direct spec is invalid with local config",
             """
-            {
-              "name": "Connection 1",
-              "type": "DIRECT",
-              "local_config": {
-              }
-            }
-            """,
+                {
+                  "name": "Connection 1",
+                  "type": "DIRECT",
+                  "local_config": {
+                  }
+                }
+                """,
             createError()
                 .withSource("local_config")
                 .withDetail("Local configuration is not allowed when type is DIRECT")
@@ -1686,14 +1698,14 @@ public class ConnectionsResourceTest {
         new TestInput(
             "Direct spec is invalid with Kafka spec",
             """
-            {
-              "name": "Connection 1",
-              "type": "DIRECT",
-              "ccloud_config": {
-                "organization_id": ""
-              }
-            }
-            """,
+                {
+                  "name": "Connection 1",
+                  "type": "DIRECT",
+                  "ccloud_config": {
+                    "organization_id": ""
+                  }
+                }
+                """,
             createError()
                 .withSource("ccloud_config")
                 .withDetail("CCloud configuration is not allowed when type is DIRECT")
@@ -1701,19 +1713,19 @@ public class ConnectionsResourceTest {
         new TestInput(
             "Direct spec is invalid with SSL without truststore path",
             """
-            {
-              "name": "Connection 1",
-              "type": "DIRECT",
-              "kafka_cluster": {
-                "bootstrap_servers": "localhost:9092",
-                "ssl": {
-                  "truststore": {
-                    "password": "truststore-password"
+                {
+                  "name": "Connection 1",
+                  "type": "DIRECT",
+                  "kafka_cluster": {
+                    "bootstrap_servers": "localhost:9092",
+                    "ssl": {
+                      "truststore": {
+                        "password": "truststore-password"
+                      }
+                    }
                   }
                 }
-              }
-            }
-            """,
+                """,
             createError()
                 .withSource("kafka_cluster.ssl.truststore.path")
                 .withDetail("Kafka cluster truststore path is required and may not be blank")
@@ -1721,43 +1733,43 @@ public class ConnectionsResourceTest {
         new TestInput(
             "Direct spec is valid with SSL having keystore only",
             """
-            {
-              "name": "Connection 1",
-              "type": "DIRECT",
-              "kafka_cluster": {
-                "bootstrap_servers": "localhost:9092",
-                "ssl": {
-                  "keystore": {
-                    "path": "/path/to/keystore.jks",
-                    "password": "keystore-password",
-                    "key_password": "key-password"
+                {
+                  "name": "Connection 1",
+                  "type": "DIRECT",
+                  "kafka_cluster": {
+                    "bootstrap_servers": "localhost:9092",
+                    "ssl": {
+                      "keystore": {
+                        "path": "/path/to/keystore.jks",
+                        "password": "keystore-password",
+                        "key_password": "key-password"
+                      }
+                    }
                   }
                 }
-              }
-            }
-            """
+                """
         ),
         new TestInput(
             "Direct spec is invalid with SSL keystore not having path",
             """
-            {
-              "name": "Connection 1",
-              "type": "DIRECT",
-              "kafka_cluster": {
-                "bootstrap_servers": "localhost:9092",
-                "ssl": {
-                  "truststore": {
-                    "path": "/path/to/truststore.jks",
-                    "password": "truststore-password"
-                  },
-                  "keystore": {
-                    "password": "keystore-password",
-                    "key_password": "key-password"
+                {
+                  "name": "Connection 1",
+                  "type": "DIRECT",
+                  "kafka_cluster": {
+                    "bootstrap_servers": "localhost:9092",
+                    "ssl": {
+                      "truststore": {
+                        "path": "/path/to/truststore.jks",
+                        "password": "truststore-password"
+                      },
+                      "keystore": {
+                        "password": "keystore-password",
+                        "key_password": "key-password"
+                      }
+                    }
                   }
                 }
-              }
-            }
-            """,
+                """,
             createError()
                 .withSource("kafka_cluster.ssl.keystore.path")
                 .withDetail("Kafka cluster keystore path is required and may not be blank")
@@ -1836,20 +1848,20 @@ public class ConnectionsResourceTest {
         new TestInput(
             "Local spec is invalid with Kafka spec, SR spec, and CCloud spec",
             """
-            {
-              "name": "Connection 1",
-              "type": "LOCAL",
-              "ccloud_config": {
-                "organization_id": ""
-              },
-              "kafka_cluster": {
-                "bootstrap_servers": null
-              },
-              "schema_registry": {
-                "uri": null
-              }
-            }
-            """,
+                {
+                  "name": "Connection 1",
+                  "type": "LOCAL",
+                  "ccloud_config": {
+                    "organization_id": ""
+                  },
+                  "kafka_cluster": {
+                    "bootstrap_servers": null
+                  },
+                  "schema_registry": {
+                    "uri": null
+                  }
+                }
+                """,
             createError()
                 .withSource("ccloud_config")
                 .withDetail("CCloud configuration is not allowed when type is LOCAL"),
@@ -1905,7 +1917,9 @@ public class ConnectionsResourceTest {
         ConnectionSpec initialSpec,
         ConnectionSpec updatedSpec,
         Error... expectedErrors
-    ) {}
+    ) {
+
+    }
     final ConnectionSpec validLocalSpec = ConnectionSpec.createLocal("c1", "Connection 1", null);
     var inputs = List.of(
         // Local configs
@@ -1967,20 +1981,23 @@ public class ConnectionsResourceTest {
             "Updated of local config is invalid without name",
             validLocalSpec,
             validLocalSpec.withName(null),
-            createError().withSource("name").withDetail("Connection name is required and may not be blank")
+            createError().withSource("name")
+                .withDetail("Connection name is required and may not be blank")
         ),
         new TestInput(
             "Updated of local config is invalid with blank name",
             validLocalSpec,
             validLocalSpec.withName("  "),
-            createError().withSource("name").withDetail("Connection name is required and may not be blank")
+            createError().withSource("name")
+                .withDetail("Connection name is required and may not be blank")
         ),
         new TestInput(
             "Updated of local config is invalid with both local and CCloud config",
             validLocalSpec,
             validLocalSpec
                 .withCCloudConfig(new CCloudConfig("12345", null)),
-            createError().withSource("ccloud_config").withDetail("CCloud configuration is not allowed when type is LOCAL")
+            createError().withSource("ccloud_config")
+                .withDetail("CCloud configuration is not allowed when type is LOCAL")
         ),
         new TestInput(
             "Updated of local config is invalid with CCloud config",
@@ -1988,7 +2005,8 @@ public class ConnectionsResourceTest {
             validLocalSpec
                 .withoutLocalConfig()
                 .withCCloudConfig(new CCloudConfig("12345", null)),
-            createError().withSource("ccloud_config").withDetail("CCloud configuration is not allowed when type is LOCAL")
+            createError().withSource("ccloud_config")
+                .withDetail("CCloud configuration is not allowed when type is LOCAL")
         )
     );
     return inputs
@@ -2005,7 +2023,8 @@ public class ConnectionsResourceTest {
               var createdSpec = ccloudTestUtil.createConnection(input.initialSpec());
 
               // Assert that the connection spec can be read
-              assertEquals(createdSpec, connectionStateManager.getConnectionSpec(input.initialSpec.id()));
+              assertEquals(createdSpec,
+                  connectionStateManager.getConnectionSpec(input.initialSpec.id()));
 
               // Attempt to update the connection with the invalid spec
               var response = given()
@@ -2018,16 +2037,18 @@ public class ConnectionsResourceTest {
               var success = assertResponseMatches(response, input.expectedErrors);
               if (success) {
                 // The connection spec should have changed
-                assertEquals(input.updatedSpec, connectionStateManager.getConnectionSpec(input.initialSpec.id()));
+                assertEquals(input.updatedSpec,
+                    connectionStateManager.getConnectionSpec(input.initialSpec.id()));
               } else {
                 // The connection spec should not have changed
-                assertEquals(input.initialSpec, connectionStateManager.getConnectionSpec(input.initialSpec.id()));
+                assertEquals(input.initialSpec,
+                    connectionStateManager.getConnectionSpec(input.initialSpec.id()));
               }
             }
         ));
   }
 
-  boolean assertResponseMatches(ValidatableResponse response, Error...expectedErrors) {
+  boolean assertResponseMatches(ValidatableResponse response, Error... expectedErrors) {
     if (expectedErrors.length == 0) {
       response.statusCode(200);
       response.body("status", is(notNullValue()));
@@ -2043,7 +2064,7 @@ public class ConnectionsResourceTest {
     }
   }
 
-  private static ValidatableResponse assertAuthStatus(String connectionId, String authStatus) {
+  protected static ValidatableResponse assertAuthStatus(String connectionId, String authStatus) {
     return given()
         .contentType(ContentType.JSON)
         .when().get("/gateway/v1/connections/{id}", connectionId)
@@ -2323,10 +2344,10 @@ public class ConnectionsResourceTest {
    * the test <code>fail()</code> if the {@link VertxTestContext} has failed.
    *
    * @param connectionId The ID of the connection
-   * @param testContext The {@link VertxTestContext} instance used for executing the
-   *                    {@link ExecutionBlock}
-   * @param block The {@link ExecutionBlock} that should be executed after completing the status
-   *              refresh
+   * @param testContext  The {@link VertxTestContext} instance used for executing the
+   *                     {@link ExecutionBlock}
+   * @param block        The {@link ExecutionBlock} that should be executed after completing the
+   *                     status refresh
    */
   void refreshConnectionStatusAndThen(
       String connectionId,

@@ -19,6 +19,7 @@ public interface RecordsV3Suite extends RecordsV3BaseSuite {
 
   /**
    * Valid keys and values inputs used for producing and consuming data.
+   *
    * @return the sets of keys and sets of values
    */
   static ArgumentSets validKeysAndValues() {
@@ -74,7 +75,7 @@ public interface RecordsV3Suite extends RecordsV3BaseSuite {
 
     assertTopicHasRecord(
         RecordsV3BaseSuite.schemalessData("foo"),
-        new RecordData(null, null, null, "value"),
+        new RecordData(null, null, null, null, null, "value"),
         topicName,
         headers
     );
@@ -128,7 +129,7 @@ public interface RecordsV3Suite extends RecordsV3BaseSuite {
     var rawSchema = """
         syntax = "proto3";
         package com.example;
-
+        
         import "google/protobuf/any.proto";
         message Product {
           int32 id = 1;
@@ -138,8 +139,9 @@ public interface RecordsV3Suite extends RecordsV3BaseSuite {
           string foo = 1;
         }
         """;
+    var subjectName = getSubjectName(topicName, SubjectNameStrategyEnum.TOPIC_NAME, false);
     var valueSchema = createSchema(
-        getSubjectName(topicName, SubjectNameStrategyEnum.TOPIC_NAME, false),
+        subjectName,
         SchemaFormat.PROTOBUF.name(),
         rawSchema
     );
@@ -155,7 +157,12 @@ public interface RecordsV3Suite extends RecordsV3BaseSuite {
     assertTopicHasRecord(
         RecordsV3BaseSuite.schemalessData("foo"),
         new RecordData(
-            SchemaFormat.PROTOBUF, SubjectNameStrategyEnum.TOPIC_NAME, rawSchema, valueData
+            SchemaFormat.PROTOBUF,
+            SubjectNameStrategyEnum.TOPIC_NAME,
+            rawSchema,
+            subjectName,
+            valueSchema.getId(),
+            valueData
         ),
         topicName
     );
@@ -181,7 +188,7 @@ public interface RecordsV3Suite extends RecordsV3BaseSuite {
     var rawSchema = """
         syntax = "proto3";
         package com.example;
-
+        
         import "com.example.Other";
         import "google/protobuf/any.proto";
         message Product {
@@ -189,9 +196,9 @@ public interface RecordsV3Suite extends RecordsV3BaseSuite {
           google.protobuf.Any payload = 2;
         }
         """;
-
+    var subjectName = getSubjectName(topicName, SubjectNameStrategyEnum.TOPIC_NAME, false);
     var valueSchema = createSchema(
-        getSubjectName(topicName, SubjectNameStrategyEnum.TOPIC_NAME, false),
+        subjectName,
         SchemaFormat.PROTOBUF.name(),
         rawSchema,
         List.of(
@@ -216,7 +223,12 @@ public interface RecordsV3Suite extends RecordsV3BaseSuite {
     assertTopicHasRecord(
         RecordsV3BaseSuite.schemalessData("foo"),
         new RecordData(
-            SchemaFormat.PROTOBUF, SubjectNameStrategyEnum.TOPIC_NAME, rawSchema, valueData
+            SchemaFormat.PROTOBUF,
+            SubjectNameStrategyEnum.TOPIC_NAME,
+            rawSchema,
+            subjectName,
+            valueSchema.getId(),
+            valueData
         ),
         topicName
     );

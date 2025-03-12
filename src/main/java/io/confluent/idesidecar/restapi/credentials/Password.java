@@ -9,28 +9,28 @@ import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 /**
- * A user-provided credential or secret, which must be masked when printed, logged, or
- * returned in an API response.
+ * A user-provided credential or secret, which must be masked when printed, logged, or returned in
+ * an API response.
  */
 @JsonDeserialize(using = Password.Deserializer.class)
 @Schema(
     description = "A user-provided password that is always masked in responses",
     type = SchemaType.STRING,
-    maxLength = ApiSecret.MAX_LENGTH,
+    maxLength = Password.MAX_LENGTH,
     minLength = 1
 )
 @RegisterForReflection
 public class Password extends Redactable {
 
-  public static final int MAX_LENGTH = 64;
+  public static final int MAX_LENGTH = 1024;
 
   public Password(char[] raw) {
     super(raw);
   }
 
   /**
-   * The deserializer that parses as a character array rather than as a string,
-   * preventing the secret from being stored in memory as a string.
+   * The deserializer that parses as a character array rather than as a string, preventing the
+   * secret from being stored in memory as a string.
    */
   public static class Deserializer extends BaseDeserializer<Password> {
 
@@ -48,8 +48,8 @@ public class Password extends Redactable {
     if (longerThan(Password.MAX_LENGTH)) {
       errors.add(
           Error.create()
-               .withDetail("%s password may not be longer than %d characters", what, MAX_LENGTH)
-               .withSource("%s.password", path)
+              .withDetail("%s password may not be longer than %d characters", what, MAX_LENGTH)
+              .withSource("%s.password", path)
       );
     }
   }

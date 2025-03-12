@@ -10,9 +10,6 @@ import io.vertx.core.MultiMap;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.net.JksOptions;
-import io.vertx.core.net.KeyStoreOptions;
-import io.vertx.core.net.KeyStoreOptionsBase;
-
 import java.util.Map;
 
 /**

@@ -6,8 +6,8 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
 import javax.validation.constraints.NotNull;
 
 /**
- * A message either sent or received through websockets to/from IDE workspaces.
- * Two primary parts, headers and body. The body's structure will vary according to the message messageType.
+ * A message either sent or received through websockets to/from IDE workspaces. Two primary parts,
+ * headers and body. The body's structure will vary according to the message messageType.
  *
  * @see MessageHeaders
  * @see MessageBody

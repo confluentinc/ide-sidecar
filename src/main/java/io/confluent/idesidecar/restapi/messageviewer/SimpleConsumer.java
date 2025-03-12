@@ -1,11 +1,15 @@
 package io.confluent.idesidecar.restapi.messageviewer;
 
+import io.confluent.idesidecar.restapi.messageviewer.RecordDeserializer.DecodedResult;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequest;
+import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.ExceededFields;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeData;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeRecord;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeRecordHeader;
+import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.RecordMetadata;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.TimestampType;
+import io.confluent.idesidecar.restapi.proxy.KafkaRestProxyContext;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -28,6 +32,7 @@ import org.apache.kafka.common.TopicPartition;
  * Implements consuming records from Kafka topics for the message viewer API.
  */
 public class SimpleConsumer {
+
   private static final Duration POLL_TIMEOUT = Duration.ofSeconds(1);
   private static final int MAX_POLLS = 5;
   private static final int MAX_POLL_RECORDS_LIMIT = 2_000;
@@ -36,14 +41,15 @@ public class SimpleConsumer {
   private final SchemaRegistryClient schemaRegistryClient;
   private final KafkaConsumer<byte[], byte[]> consumer;
   private final RecordDeserializer recordDeserializer;
-  private final MessageViewerContext context;
-
+  private final KafkaRestProxyContext
+      <SimpleConsumeMultiPartitionRequest, SimpleConsumeMultiPartitionResponse> context;
 
   public SimpleConsumer(
       KafkaConsumer<byte[], byte[]> consumer,
       SchemaRegistryClient sr,
       RecordDeserializer recordDeserializer,
-      MessageViewerContext context
+      KafkaRestProxyContext
+          <SimpleConsumeMultiPartitionRequest, SimpleConsumeMultiPartitionResponse> context
   ) {
     this.consumer = consumer;
     this.schemaRegistryClient = sr;
@@ -86,8 +92,8 @@ public class SimpleConsumer {
       var polls = 0;
       var responseSize = 0;
       while (partitionRecordsMap.size() < partitions.size()
-             && polls++ < MAX_POLLS
-             && responseSize <= MAX_RESPONSE_BYTES) {
+          && polls++ < MAX_POLLS
+          && responseSize <= MAX_RESPONSE_BYTES) {
         var partitionRecords = consumer.poll(POLL_TIMEOUT);
         for (var partition : partitions) {
           var kafkaRecords = partitionRecords.records(partition);
@@ -205,8 +211,8 @@ public class SimpleConsumer {
           .stream()
           .collect(
               Collectors.toMap(
-                entry -> entry.getKey().partition(),
-                Entry::getValue
+                  entry -> entry.getKey().partition(),
+                  Entry::getValue
               )
           );
     }
@@ -303,7 +309,7 @@ public class SimpleConsumer {
     boolean valueExceeded = consumerRecord.value() != null
         && consumerRecord.value().length > messageMaxBytes;
 
-    Optional<RecordDeserializer.DecodedResult> keyResult = keyExceeded
+    Optional<DecodedResult> keyResult = keyExceeded
         ? Optional.empty() : Optional
         .of(recordDeserializer.deserialize(
             consumerRecord.key(),
@@ -311,7 +317,7 @@ public class SimpleConsumer {
             context,
             true)
         );
-    Optional<RecordDeserializer.DecodedResult> valueResult = valueExceeded
+    Optional<DecodedResult> valueResult = valueExceeded
         ? Optional.empty() : Optional
         .of(recordDeserializer.deserialize(
             consumerRecord.value(),
@@ -326,10 +332,14 @@ public class SimpleConsumer {
         consumerRecord.timestamp(),
         TimestampType.valueOf(consumerRecord.timestampType().name()),
         headers,
-        keyResult.map(RecordDeserializer.DecodedResult::value).orElse(null),
-        valueResult.map(RecordDeserializer.DecodedResult::value).orElse(null),
-        keyResult.map(RecordDeserializer.DecodedResult::errorMessage).orElse(null),
-        valueResult.map(RecordDeserializer.DecodedResult::errorMessage).orElse(null),
+        keyResult.map(DecodedResult::value).orElse(null),
+        valueResult.map(DecodedResult::value).orElse(null),
+        new RecordMetadata(
+            keyResult.map(DecodedResult::metadata).orElse(null),
+            valueResult.map(DecodedResult::metadata).orElse(null)
+        ),
+        keyResult.map(DecodedResult::errorMessage).orElse(null),
+        valueResult.map(DecodedResult::errorMessage).orElse(null),
         new ExceededFields(keyExceeded, valueExceeded)
     );
   }

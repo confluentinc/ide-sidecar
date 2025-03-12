@@ -8,11 +8,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.idesidecar.restapi.clients.SchemaRegistryClients;
 import io.confluent.idesidecar.restapi.connections.CCloudConnectionState;
 import io.confluent.idesidecar.restapi.exceptions.ProcessorFailedException;
-import io.confluent.idesidecar.restapi.messageviewer.MessageViewerContext;
 import io.confluent.idesidecar.restapi.messageviewer.RecordDeserializer;
+import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequest;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeData;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeRecord;
+import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.RecordMetadata;
+import io.confluent.idesidecar.restapi.proxy.KafkaRestProxyContext;
 import io.confluent.idesidecar.restapi.proxy.ProxyHttpClient;
 import io.confluent.idesidecar.restapi.util.WebClientFactory;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
@@ -36,6 +38,7 @@ import java.util.Optional;
  */
 @ApplicationScoped
 public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
+
   static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
   static final Base64.Decoder BASE64_DECODER = Base64.getDecoder();
   static final Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
@@ -52,7 +55,10 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
   @Inject
   Vertx vertx;
 
-  public Future<MessageViewerContext> execute(MessageViewerContext context) {
+  public Future<KafkaRestProxyContext
+      <SimpleConsumeMultiPartitionRequest, SimpleConsumeMultiPartitionResponse>> execute(
+      KafkaRestProxyContext
+          <SimpleConsumeMultiPartitionRequest, SimpleConsumeMultiPartitionResponse> context) {
     context.setProxyRequestMethod(HttpMethod.POST);
     context.setProxyRequestAbsoluteUrl(constructCCloudURL(context));
     var connectionState = (CCloudConnectionState) context.getConnectionState();
@@ -66,14 +72,15 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
     } else {
       context.setProxyRequestBody(Buffer.buffer("{}"));
     }
-    ProxyHttpClient<MessageViewerContext> proxyHttpClient = new ProxyHttpClient<>(
-        webClientFactory, vertx
-    );
-    return proxyHttpClient.send(context).compose(processedCtx ->
-        vertx
+    var proxyHttpClient = new ProxyHttpClient<KafkaRestProxyContext
+        <SimpleConsumeMultiPartitionRequest, SimpleConsumeMultiPartitionResponse>
+        >(webClientFactory, vertx);
+    return proxyHttpClient
+        .send(context)
+        .compose(processedCtx -> vertx
             .createSharedWorkerExecutor("consume-worker")
             .executeBlocking(() -> postProcess(processedCtx))
-    );
+        );
   }
 
   /**
@@ -82,7 +89,10 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
    * @param context The MessageViewerContext to process.
    * @return A Future containing the processed MessageViewerContext.
    */
-  public MessageViewerContext postProcess(MessageViewerContext context) {
+  public KafkaRestProxyContext
+      <SimpleConsumeMultiPartitionRequest, SimpleConsumeMultiPartitionResponse> postProcess(
+      KafkaRestProxyContext
+          <SimpleConsumeMultiPartitionRequest, SimpleConsumeMultiPartitionResponse> context) {
     if (context.getProxyResponseStatusCode() >= 300) {
       Log.errorf(
           "Error fetching the messages from ccloud: %s",
@@ -106,20 +116,20 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
           SimpleConsumeMultiPartitionResponse.class
       );
       var processedPartitionResponse = decodeSchemaEncodedValues(context, data);
-      context.setConsumeResponse(processedPartitionResponse);
+      context.setResponse(processedPartitionResponse);
       return context;
     } catch (JsonProcessingException e) {
       LOGGER.error("Error parsing the messages from ccloud : \n message ='"
           + rawTopicRowsResponse + "' \n Error: '" + e.getMessage() + "'");
       throw new ProcessorFailedException(
-              context.failf(
-                  500,
-                  "We tried to consume records from the topic=\"%s\" (cluster_id=\"%s\") but "
+          context.failf(
+              500,
+              "We tried to consume records from the topic=\"%s\" (cluster_id=\"%s\") but "
                   + "observed the following error: %s.",
-                  context.getTopicName(),
-                  context.getClusterId(),
-                  rawTopicRowsResponse)
-          );
+              context.getTopicName(),
+              context.getClusterId(),
+              rawTopicRowsResponse)
+      );
     }
   }
 
@@ -129,14 +139,17 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
    * @param context The MessageViewerContext.
    * @return A Future containing the processed MessageViewerContext.
    */
-  private MessageViewerContext handleEmptyOrNullResponseFromCCloud(
-      MessageViewerContext context
+  private KafkaRestProxyContext
+      <SimpleConsumeMultiPartitionRequest, SimpleConsumeMultiPartitionResponse>
+  handleEmptyOrNullResponseFromCCloud(
+      KafkaRestProxyContext
+          <SimpleConsumeMultiPartitionRequest, SimpleConsumeMultiPartitionResponse> context
   ) {
     var data = new SimpleConsumeMultiPartitionResponse(
         context.getClusterId(),
         context.getTopicName(),
         new ArrayList<>());
-    context.setConsumeResponse(data);
+    context.setResponse(data);
     return context;
   }
 
@@ -147,7 +160,8 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
    * @param rawResponse The MultiPartitionConsumeResponse to decode.
    */
   private SimpleConsumeMultiPartitionResponse decodeSchemaEncodedValues(
-      MessageViewerContext context,
+      KafkaRestProxyContext
+          <SimpleConsumeMultiPartitionRequest, SimpleConsumeMultiPartitionResponse> context,
       SimpleConsumeMultiPartitionResponse rawResponse
   ) {
     var schemaRegistry = context.getSchemaRegistryInfo();
@@ -183,7 +197,8 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
    */
   private PartitionConsumeData processPartition(
       PartitionConsumeData partitionConsumeData,
-      MessageViewerContext context,
+      KafkaRestProxyContext
+          <SimpleConsumeMultiPartitionRequest, SimpleConsumeMultiPartitionResponse> context,
       SchemaRegistryClient schemaRegistryClient
   ) {
 
@@ -213,6 +228,10 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
               decodedHeaders,
               keyData.value(),
               valueData.value(),
+              new RecordMetadata(
+                  keyData.metadata(),
+                  valueData.metadata()
+              ),
               keyData.errorMessage(),
               valueData.errorMessage(),
               record.exceededFields()
@@ -273,7 +292,8 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
   private RecordDeserializer.DecodedResult deserialize(
       JsonNode data,
       SchemaRegistryClient schemaRegistryClient,
-      MessageViewerContext context,
+      KafkaRestProxyContext
+          <SimpleConsumeMultiPartitionRequest, SimpleConsumeMultiPartitionResponse> context,
       boolean isKey
   ) {
     if (data.has("__raw__")) {
@@ -309,7 +329,9 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
    * @param ctx MessageViewerContext.
    * @return the constructed URL
    */
-  protected String constructCCloudURL(MessageViewerContext ctx) {
+  protected String constructCCloudURL(
+      KafkaRestProxyContext
+          <SimpleConsumeMultiPartitionRequest, SimpleConsumeMultiPartitionResponse> ctx) {
     // Replace with the actual URL after graphQL code is merged.
     final String hostName = ctx.getKafkaClusterInfo().uri();
     return hostName

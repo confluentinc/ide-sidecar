@@ -13,6 +13,7 @@
           exchange-uri: http://localhost:${quarkus.wiremock.devservices.port}/api/access_tokens
         oauth:
           login-realm-uri: http://localhost:${quarkus.wiremock.devservices.port}/api/login/realm
+        rbac-uri: http://localhost:${quarkus.wiremock.devservices.port}/api/metadata/security/v2alpha1/authorize
         resources:
           org-list-uri: http://localhost:${quarkus.wiremock.devservices.port}/api/org/v2/organizations
           env-list-uri: http://localhost:${quarkus.wiremock.devservices.port}/api/org/v2/environments
@@ -52,6 +53,9 @@
       # Unset the store-schema-directory to avoid storing
       # OpenAPI schemas with the test port.
       store-schema-directory: ""
+    log:
+      console:
+        json: false
 
 "%dev":
   ide-sidecar:
@@ -62,6 +66,10 @@
       enabled: false
       # How often to check?
       interval-seconds: 60
+  quarkus:
+    log:
+      console:
+        json: false
 
 vscode:
   extension:
@@ -95,6 +103,7 @@ ide-sidecar:
         # URI redirect to tell the VS Code extension if the auth flow completed successfully or not
         vscode-extension-uri: vscode://confluentinc.vscode-confluent/authCallback
         scope: email openid offline_access
+      rbac-uri: https://confluent.cloud/api/metadata/security/v2alpha1/authorize
       refresh-status-interval-seconds: 5
       refresh-token:
         absolute-lifetime-seconds: 28800
@@ -138,6 +147,7 @@ ide-sidecar:
       # Following needed by oauth
       - /api/login/realm
       - /gateway/v1/callback-vscode-docs
+      - /
       # And finally, the handshake route itself.
       - /gateway/v1/handshake
   grim-reaper:
@@ -238,7 +248,7 @@ quarkus:
   native:
     additional-build-args: --initialize-at-run-time=io.confluent.idesidecar.restapi.auth.CCloudOAuthConfig\,io.confluent.idesidecar.restapi.auth.CCloudOAuthContext\,io.confluent.ide.sidecar.restapi.util.WebClientFactory\,org.apache.kafka.common.security.authenticator.SaslClientAuthenticator\,org.apache.avro.file.DataFileWriter\,io.confluent.kafka.schemaregistry.avro.AvroSchemaUtils\,com.github.luben.zstd
     resources:
-      includes: templates/callback.html,templates/callback_failure.html,static/templates.zip,feature-flag-defaults.json
+      includes: templates/callback.html,templates/callback_failure.html,templates/default.html,templates/reset_password.html,feature-flag-defaults.json
   smallrye-health:
     root-path: /gateway/v1/health
     openapi:
@@ -249,7 +259,7 @@ quarkus:
     path: /openapi
     info-title: Confluent ide-sidecar API
     store-schema-directory: src/generated/resources/
-    info-version: 1.0.1
+    info-version: ${quarkus.application.version}
     info-description: API for the Confluent ide-sidecar, part of Confluent for VS Code
     info-terms-of-service: Your terms here
     info-contact-email: vscode@confluent.io
@@ -277,4 +287,9 @@ mp:
   openapi:
     scan:
       exclude:
-        packages: io.confluent.idesidecar.restapi.kafkarest
+        classes: >
+          io.confluent.idesidecar.restapi.kafkarest.ClusterV3ApiImpl,
+          io.confluent.idesidecar.restapi.kafkarest.TopicConfigV3ApiImpl,
+          io.confluent.idesidecar.restapi.kafkarest.PartitionV3ApiImpl,
+          io.confluent.idesidecar.restapi.kafkarest.RecordsV3ApiImpl,
+          io.confluent.idesidecar.restapi.kafkarest.TopicV3ApiImpl

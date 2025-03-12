@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import io.confluent.idesidecar.restapi.credentials.Password;
 import io.confluent.idesidecar.restapi.credentials.Redactable;
+import io.confluent.idesidecar.restapi.credentials.TLSConfigBuilder;
 import io.confluent.idesidecar.restapi.kafkarest.model.CreateTopicRequestData;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequest;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequestData;
@@ -32,7 +33,6 @@ import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPart
 import io.confluent.idesidecar.restapi.models.Connection;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
-import io.confluent.idesidecar.restapi.models.ConnectionSpec.LocalConfig;
 import io.confluent.idesidecar.restapi.models.ConnectionsList;
 import io.confluent.kafka.schemaregistry.client.rest.entities.Schema;
 import io.confluent.kafka.schemaregistry.client.rest.entities.SchemaReference;
@@ -76,8 +76,8 @@ public class SidecarClient implements SidecarClientApi {
   private String currentClusterId;
   private String currentKafkaClusterId;
   private String currentSchemaClusterId;
-  private Set<KafkaCluster> usedKafkaClusters = new HashSet<>();
-  private Set<SchemaRegistry> usedSchemaRegistries = new HashSet<>();
+  private final Set<KafkaCluster> usedKafkaClusters = new HashSet<>();
+  private final Set<SchemaRegistry> usedSchemaRegistries = new HashSet<>();
 
   static {
     // Used to serialize Password objects into their raw value
@@ -110,7 +110,8 @@ public class SidecarClient implements SidecarClientApi {
           .then().extract().response();
 
       if (resp.statusCode() != 200) {
-        fail("Failed to create topic: Status: %d, message: %s".formatted(resp.statusCode(), resp.body().asString()));
+        fail("Failed to create topic: Status: %d, message: %s".formatted(resp.statusCode(),
+            resp.body().asString()));
       }
     });
   }
@@ -127,10 +128,13 @@ public class SidecarClient implements SidecarClientApi {
 
   public void deleteTopic(String topicName) {
     withCluster(currentKafkaClusterId, () -> {
-      givenDefault()
+      var res = givenDefault()
           .delete("%s/kafka/v3/clusters/{cluster_id}/topics/%s".formatted(sidecarHost, topicName))
-          .then()
-          .statusCode(204);
+          .then();
+
+      if (res.extract().statusCode() != 204) {
+        fail("Failed to delete topic %s: %s".formatted(topicName, res.extract().body().asString()));
+      }
     });
   }
 
@@ -140,7 +144,7 @@ public class SidecarClient implements SidecarClientApi {
       setCurrentCluster(clusterId);
       var topics = listTopics();
       for (var topic : topics) {
-        if (!topic.startsWith("_")) {
+        if (!topic.startsWith("_") && !topic.startsWith("confluent")) {
           deleteTopic(topic);
         } else {
           Log.debugf("Skipping deletion of internal topic %s", topic);
@@ -160,7 +164,7 @@ public class SidecarClient implements SidecarClientApi {
           .stream()
           .filter(not(t -> t.get("topic_name").startsWith("_"))) // ignore internal topics
           .map(t -> t.get("topic_name")).collect(Collectors.toSet());
-      });
+    });
   }
 
   public Set<String> listSubjects(String srClusterId) {
@@ -318,15 +322,21 @@ public class SidecarClient implements SidecarClientApi {
 
   public Connection createLocalConnection(String schemaRegistryUri) {
     var connectionId = generateConnectionId();
-    LocalConfig localConfig = null;
+    ConnectionSpec.SchemaRegistryConfig schemaRegistryConfig = null;
     if (schemaRegistryUri != null) {
-      localConfig = new LocalConfig(schemaRegistryUri);
+      schemaRegistryConfig = new ConnectionSpec.SchemaRegistryConfig(
+          "schema-registry-%s".formatted(connectionId),
+          schemaRegistryUri,
+          null,
+          // Disable TLS
+          TLSConfigBuilder.builder().enabled(false).build()
+      );
     }
     return createConnection(
-        ConnectionSpec.createLocal(
+        ConnectionSpec.createLocalWithSRConfig(
             connectionId,
             connectionId,
-            localConfig
+            schemaRegistryConfig
         )
     );
   }
@@ -399,6 +409,7 @@ public class SidecarClient implements SidecarClientApi {
         var kafkaClusterIsNullOrConnected = spec.kafkaClusterConfig() == null
             || connection.status().kafkaCluster().isConnected();
         var schemaRegistryIsNullOrConnected = spec.schemaRegistryConfig() == null
+            || connection.status().schemaRegistry() == null
             || connection.status().schemaRegistry().isConnected();
         return kafkaClusterIsNullOrConnected && schemaRegistryIsNullOrConnected;
       });
@@ -422,8 +433,8 @@ public class SidecarClient implements SidecarClientApi {
   public Connection createLocalConnectionTo(TestEnvironment env, String scope) {
     var spec = env.localConnectionSpec().orElseThrow();
     // Append the scope to the name of the connection
-    spec = spec.withName( "%s (%s)".formatted(spec.name(), scope));
-    spec = spec.withId( "%s-%s".formatted(spec.id(), scope));
+    spec = spec.withName("%s (%s)".formatted(spec.name(), scope));
+    spec = spec.withId("%s-%s".formatted(spec.id(), scope));
     return createConnection(spec);
   }
 
@@ -434,8 +445,8 @@ public class SidecarClient implements SidecarClientApi {
   public Connection createDirectConnectionTo(TestEnvironment env, String scope) {
     var spec = env.directConnectionSpec().orElseThrow();
     // Append the scope to the name of the connection
-    spec = spec.withName( "%s (%s)".formatted(spec.name(), scope));
-    spec = spec.withId( "%s-%s".formatted(spec.id(), scope));
+    spec = spec.withName("%s (%s)".formatted(spec.name(), scope));
+    spec = spec.withId("%s-%s".formatted(spec.id(), scope));
     return createConnection(spec);
   }
 
@@ -591,7 +602,7 @@ public class SidecarClient implements SidecarClientApi {
   ) {
     return fromCluster(currentKafkaClusterId, () ->
         givenDefault()
-            .body(request)
+            .body(convertByteArraysToRawJSON(request))
             .queryParam("dry_run", dryRun)
             .post("/kafka/v3/clusters/{cluster_id}/topics/%s/records".formatted(topicName))
             .then()
@@ -605,7 +616,7 @@ public class SidecarClient implements SidecarClientApi {
       Object value,
       Integer valueSchemaVersion,
       Set<ProduceRequestHeader> headers) {
-    return ProduceRequest
+    return convertByteArraysToRawJSON(ProduceRequest
         .builder()
         .partitionId(partitionId)
         .headers(headers.stream().toList())
@@ -623,7 +634,27 @@ public class SidecarClient implements SidecarClientApi {
                 .data(value)
                 .build()
         )
-        .build();
+        .build());
+  }
+
+  private ProduceRequest convertByteArraysToRawJSON(ProduceRequest request) {
+    if (request.getKey().getData() instanceof byte[]) {
+      request.setKey(
+          request.getKey().data(ByteArrayJsonUtil.asJsonNode(
+              (byte[]) request.getKey().getData())
+          )
+      );
+    }
+
+    if (request.getValue().getData() instanceof byte[]) {
+      request.setValue(
+          request.getValue().data(ByteArrayJsonUtil.asJsonNode(
+              (byte[]) request.getValue().getData())
+          )
+      );
+    }
+
+    return request;
   }
 
   public SimpleConsumeMultiPartitionResponse consume(
@@ -652,7 +683,7 @@ public class SidecarClient implements SidecarClientApi {
    * Produce plain old String key/value records to a topic
    */
   public void produceStringRecords(String topicName, String[][] records) {
-    for (var record: records) {
+    for (var record : records) {
       produceRecord(
           topicName,
           record[0],
@@ -667,42 +698,42 @@ public class SidecarClient implements SidecarClientApi {
       String subject, String schemaType, String schema, List<SchemaReference> references
   ) {
     return fromCluster(currentSchemaClusterId, () -> {
-          var versionRequest = new HashMap<String, Object>(Map.of(
-              "schemaType", schemaType,
-              "schema", schema
-          ));
+      var versionRequest = new HashMap<String, Object>(Map.of(
+          "schemaType", schemaType,
+          "schema", schema
+      ));
 
-          if (references != null) {
-            versionRequest.put("references", references);
-          }
+      if (references != null) {
+        versionRequest.put("references", references);
+      }
 
-          var createSchemaVersionResp = givenConnectionId()
-            .headers(
-                "Content-Type", "application/json",
-                "X-cluster-id", currentSchemaClusterId
-            )
-            .body(versionRequest)
-            .post("/subjects/%s/versions".formatted(subject))
-            .then().extract().response();
+      var createSchemaVersionResp = givenConnectionId()
+          .headers(
+              "Content-Type", "application/json",
+              "X-cluster-id", currentSchemaClusterId
+          )
+          .body(versionRequest)
+          .post("/subjects/%s/versions".formatted(subject))
+          .then().extract().response();
 
-        if (createSchemaVersionResp.statusCode() != 200) {
-          fail("Failed to create schema: %s".formatted(createSchemaVersionResp.body().asString()));
-        } else {
-          assertEquals(200, createSchemaVersionResp.statusCode());
-        }
+      if (createSchemaVersionResp.statusCode() != 200) {
+        fail("Failed to create schema: %s".formatted(createSchemaVersionResp.body().asString()));
+      } else {
+        assertEquals(200, createSchemaVersionResp.statusCode());
+      }
 
       await()
-           .pollDelay(Duration.ofMillis(20))
-           .pollInterval(Duration.ofMillis(10))
-           .atMost(Duration.ofMillis(250))
-           .until(()->getLatestSchemaVersion(subject, currentSchemaClusterId) != null);
+          .pollDelay(Duration.ofMillis(20))
+          .pollInterval(Duration.ofMillis(10))
+          .atMost(Duration.ofMillis(250))
+          .until(() -> getLatestSchemaVersion(subject, currentSchemaClusterId) != null);
 
-        return getLatestSchemaVersion(subject, currentSchemaClusterId);
+      return getLatestSchemaVersion(subject, currentSchemaClusterId);
     });
   }
 
   public Schema createSchema(String subject, String schemaType, String schema) {
-      return createSchema(subject, schemaType, schema, null);
+    return createSchema(subject, schemaType, schema, null);
   }
 
   public Schema getLatestSchemaVersion(String subject, String srClusterId) {

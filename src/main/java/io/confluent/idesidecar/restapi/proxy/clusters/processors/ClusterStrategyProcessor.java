@@ -7,10 +7,10 @@ import io.confluent.idesidecar.restapi.processors.Processor;
 import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
 import io.confluent.idesidecar.restapi.proxy.clusters.strategy.ClusterStrategy;
 import io.confluent.idesidecar.restapi.proxy.clusters.strategy.ConfluentCloudKafkaClusterStrategy;
-import io.confluent.idesidecar.restapi.proxy.clusters.strategy.SchemaRegistryClusterStrategy;
 import io.confluent.idesidecar.restapi.proxy.clusters.strategy.ConfluentLocalKafkaClusterStrategy;
 import io.confluent.idesidecar.restapi.proxy.clusters.strategy.ConfluentLocalSchemaRegistryClusterStrategy;
 import io.confluent.idesidecar.restapi.proxy.clusters.strategy.DirectKafkaClusterStrategy;
+import io.confluent.idesidecar.restapi.proxy.clusters.strategy.SchemaRegistryClusterStrategy;
 import io.vertx.core.Future;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -22,6 +22,7 @@ import jakarta.inject.Inject;
 @ApplicationScoped
 public class ClusterStrategyProcessor extends
     Processor<ClusterProxyContext, Future<ClusterProxyContext>> {
+
   @Inject
   ConfluentCloudKafkaClusterStrategy confluentCloudKafkaClusterStrategy;
 
@@ -55,7 +56,7 @@ public class ClusterStrategyProcessor extends
 
   public ClusterStrategy chooseStrategy(
       ClusterType clusterType, ConnectionType connectionType) {
-    return switch(clusterType) {
+    return switch (clusterType) {
       case KAFKA -> switch (connectionType) {
         case CCLOUD -> confluentCloudKafkaClusterStrategy;
         case LOCAL -> confluentLocalKafkaClusterStrategy;

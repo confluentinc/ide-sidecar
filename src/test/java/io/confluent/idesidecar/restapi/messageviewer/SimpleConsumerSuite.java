@@ -1,21 +1,30 @@
 package io.confluent.idesidecar.restapi.messageviewer;
 
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
+import static org.junit.Assert.fail;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import io.confluent.idesidecar.restapi.integration.ITSuite;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequest;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequestBuilder;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeData;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeRecord;
+import io.confluent.idesidecar.restapi.models.DataFormat;
 import io.confluent.idesidecar.restapi.proto.Message.MyMessage;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.KafkaException;
+import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public interface SimpleConsumerSuite extends ITSuite {
 
@@ -29,11 +38,12 @@ public interface SimpleConsumerSuite extends ITSuite {
     createTopic(topic);
 
     // and register a schema
-    var valueSchemaVersion = createSchema(
+    var valueSchema = createSchema(
         "%s-value".formatted(topic),
         "AVRO",
         loadResource("avro/myavromessage.avsc")
-    ).getVersion();
+    );
+    var valueSchemaVersion = valueSchema.getVersion();
 
     var ids = Arrays.asList("12345", "12346", "12347");
     var values = Arrays.asList("Test Value 1", "Test Value 2", "Test Value 3");
@@ -61,6 +71,13 @@ public interface SimpleConsumerSuite extends ITSuite {
       PartitionConsumeRecord record = partitionData.records().get(i);
       assertEquals(ids.get(i), record.value().get("id").asText(), "ID should match");
       assertEquals(values.get(i), record.value().get("value").asText(), "Value should match");
+
+      // Value schema details should match
+      assertEquals(valueSchema.getId(), record.metadata().valueMetadata().schemaId());
+      assertEquals(DataFormat.AVRO, record.metadata().valueMetadata().dataFormat());
+
+      assertNull(record.metadata().keyMetadata().schemaId());
+      assertEquals(DataFormat.JSON, record.metadata().keyMetadata().dataFormat());
     }
   }
 
@@ -71,11 +88,12 @@ public interface SimpleConsumerSuite extends ITSuite {
     createTopic(topic);
 
     // And register a schema
-    var valueSchemaVersion = createSchema(
+    var valueSchema = createSchema(
         "%s-value".formatted(topic),
         "PROTOBUF",
         loadResource("proto/message.proto")
-    ).getVersion();
+    );
+    var valueSchemaVersion = valueSchema.getVersion();
 
     // Then we can create records
     MyMessage message1 = MyMessage.newBuilder()
@@ -122,9 +140,18 @@ public interface SimpleConsumerSuite extends ITSuite {
     for (int i = 0; i < 3; i++) {
       PartitionConsumeRecord record = partitionData.records().get(i);
       MyMessage originalMessage = messages.get(i);
-      assertEquals(originalMessage.getName(), record.value().get("name").asText(), "Name should match");
+      assertEquals(originalMessage.getName(), record.value().get("name").asText(),
+          "Name should match");
       assertEquals(originalMessage.getAge(), record.value().get("age").asInt(), "Age should match");
-      assertEquals(originalMessage.getIsActive(), record.value().get("is_active").asBoolean(), "IsActive should match");
+      assertEquals(originalMessage.getIsActive(), record.value().get("is_active").asBoolean(),
+          "IsActive should match");
+
+      // Value schema details should match
+      assertEquals(valueSchema.getId(), record.metadata().valueMetadata().schemaId());
+      assertEquals(DataFormat.PROTOBUF, record.metadata().valueMetadata().dataFormat());
+
+      assertNull(record.metadata().keyMetadata().schemaId());
+      assertEquals(DataFormat.JSON, record.metadata().keyMetadata().dataFormat());
     }
   }
 
@@ -135,6 +162,7 @@ public interface SimpleConsumerSuite extends ITSuite {
     createTopic(topic);
 
     record Person(int id, String name, String email) {
+
     }
 
     // And write records to Kafka
@@ -162,6 +190,12 @@ public interface SimpleConsumerSuite extends ITSuite {
       assertEquals(sentJson.id(), record.value().get("id").asInt(), "ID should match");
       assertEquals(sentJson.name(), record.value().get("name").asText(), "Name should match");
       assertEquals(sentJson.email(), record.value().get("email").asText(), "Email should match");
+
+      assertNull(record.metadata().keyMetadata().schemaId());
+      assertEquals(DataFormat.JSON, record.metadata().keyMetadata().dataFormat());
+
+      assertNull(record.metadata().valueMetadata().schemaId());
+      assertEquals(DataFormat.JSON, record.metadata().valueMetadata().dataFormat());
     }
   }
 
@@ -193,6 +227,90 @@ public interface SimpleConsumerSuite extends ITSuite {
 
       assertEquals(records[i][0], key, "Key should match");
       assertEquals(records[i][1], value, "Value should match");
+
+      assertNull(record.metadata().keyMetadata().schemaId());
+      assertEquals(DataFormat.JSON, record.metadata().keyMetadata().dataFormat());
+
+      assertNull(record.metadata().valueMetadata().schemaId());
+      assertEquals(DataFormat.JSON, record.metadata().valueMetadata().dataFormat());
+    }
+  }
+
+  @Test
+  // TODO: Remove test once we support Snappy compression (see https://github.com/confluentinc/ide-sidecar/issues/304)
+  default void testProduceAndConsumeWithSnappyCompression() {
+    // When we create a topic
+    String topic = randomTopicName();
+    createTopic(topic);
+
+    var config = kafkaClientConfig();
+    // And configure Snappy compression
+    config.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, "snappy");
+    config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+    config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+    try (var producer = new KafkaProducer<String, String>(config)) {
+      // And write records to Kafka
+      var records = new String[][]{
+          {"key1", "value1"},
+          {"key2", "value2"},
+          {"key3", "value3"}
+      };
+      for (var record : records) {
+        producer.send(new ProducerRecord<>(topic, record[0], record[1]));
+      }
+
+      // Then the consumption of records should NOT throw a KafkaException. It could successfully
+      // return records or throw a ProcessorFailedException, which holds a meaningful error message.
+      try {
+        simpleConsumer().consume(topic, consumeRequestSinglePartitionFromOffsetZero());
+      } catch (KafkaException e) {
+        fail("Should not have thrown a KafkaException.");
+      }
+    }
+  }
+
+  @ParameterizedTest
+  // TODO: Add "snappy" once we support it (see https://github.com/confluentinc/ide-sidecar/issues/304)
+  @ValueSource(strings = {"gzip", "lz4", "zstd"})
+  default void testProduceAndConsumeWithCompression(String compressionType) {
+    // When we create a topic
+    String topic = randomTopicName();
+    createTopic(topic);
+
+    var config = kafkaClientConfig();
+    // And configure compression
+    config.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, compressionType);
+    config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+    config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+    try (var producer = new KafkaProducer<String, String>(config)) {
+      // And write records to Kafka
+      var records = new String[][]{
+          {"key1", "value1"},
+          {"key2", "value2"},
+          {"key3", "value3"}
+      };
+      for (var record : records) {
+        producer.send(new ProducerRecord<>(topic, record[0], record[1]));
+      }
+
+      // Then we can consume the same records
+      var response = simpleConsumer().consume(topic, consumeRequestSinglePartitionFromOffsetZero());
+
+      assertEquals(1, response.size(), "Should have data for 1 partition");
+      PartitionConsumeData partitionData = response.getFirst();
+      assertEquals(3, partitionData.records().size(), "Should have 3 records");
+
+      for (int i = 0; i < 3; i++) {
+        PartitionConsumeRecord record = partitionData.records().get(i);
+        String key = record.key().asText();
+        String value = record.value().asText();
+
+        assertEquals(DataFormat.UTF8_STRING, record.metadata().keyMetadata().dataFormat());
+        assertEquals(DataFormat.UTF8_STRING, record.metadata().valueMetadata().dataFormat());
+
+        assertEquals(records[i][0], key, "Key should match");
+        assertEquals(records[i][1], value, "Value should match");
+      }
     }
   }
 

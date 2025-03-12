@@ -3,8 +3,12 @@ package io.confluent.idesidecar.restapi.util;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import com.github.dockerjava.api.model.Container;
-import io.confluent.idesidecar.restapi.credentials.*;
+import io.confluent.idesidecar.restapi.credentials.BasicCredentials;
+import io.confluent.idesidecar.restapi.credentials.Password;
+import io.confluent.idesidecar.restapi.credentials.ScramCredentials;
 import io.confluent.idesidecar.restapi.credentials.ScramCredentials.HashAlgorithm;
+import io.confluent.idesidecar.restapi.credentials.TLSConfig;
+import io.confluent.idesidecar.restapi.credentials.TLSConfigBuilder;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionSpecKafkaClusterConfigBuilder;
 import io.confluent.idesidecar.restapi.models.ConnectionSpecSchemaRegistryConfigBuilder;
@@ -12,14 +16,11 @@ import io.confluent.idesidecar.restapi.util.cpdemo.CPServerContainer;
 import io.confluent.idesidecar.restapi.util.cpdemo.OpenldapContainer;
 import io.confluent.idesidecar.restapi.util.cpdemo.SchemaRegistryContainer;
 import io.confluent.idesidecar.restapi.util.cpdemo.ToolsContainer;
-import io.confluent.idesidecar.restapi.util.cpdemo.ZookeeperContainer;
-import io.confluent.idesidecar.restapi.credentials.Credentials;
 import io.quarkus.logging.Log;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -28,26 +29,24 @@ import org.junit.runners.model.Statement;
 import org.junitpioneer.jupiter.SetEnvironmentVariable;
 import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.Network;
-import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.lifecycle.Startables;
 import org.testcontainers.utility.TestcontainersConfiguration;
 
 /**
- * A {@link TestEnvironment} that starts a CP Demo environment with a two-node Kafka cluster,
- * Zookeeper, OpenLDAP, and Schema Registry.
- * Modeled after https://github.com/confluentinc/cp-demo/blob/7.7.1-post/docker-compose.yml
+ * A {@link TestEnvironment} that starts a CP Demo environment with a single-node Kafka cluster (in
+ * KRaft mode), OpenLDAP, and Schema Registry. Modeled after
+ * https://github.com/confluentinc/cp-demo/blob/7.7.1-post/docker-compose.yml
  */
 public class CPDemoTestEnvironment implements TestEnvironment {
+
   private Network network;
   private ToolsContainer tools;
-  private ZookeeperContainer zookeeper;
   private OpenldapContainer ldap;
   private CPServerContainer kafka1;
-  private CPServerContainer kafka2;
   private SchemaRegistryContainer schemaRegistry;
 
   private static final List<String> CP_DEMO_CONTAINERS = List.of(
-      "tools", "zookeeper", "kafka1", "kafka2", "openldap", "schemaregistry"
+      "tools", "kafka1", "openldap", "schemaregistry"
   );
 
   @Override
@@ -67,7 +66,6 @@ public class CPDemoTestEnvironment implements TestEnvironment {
     runScript("src/test/resources/cp-demo-scripts/setup.sh");
 
     network = createReusableNetwork("cp-demo");
-    // Check if zookeeper, kafka1, kafka2, ldap, schemaRegistry are already running
     Log.info("Starting Tools...");
     tools = new ToolsContainer(network);
     tools.start();
@@ -77,11 +75,6 @@ public class CPDemoTestEnvironment implements TestEnvironment {
       registerRootCA();
     }
 
-    Log.info("Starting Zookeeper...");
-    zookeeper = new ZookeeperContainer(network);
-    zookeeper.waitingFor(Wait.forHealthcheck());
-    zookeeper.start();
-
     Log.info("Starting OpenLDAP...");
     ldap = new OpenldapContainer(network);
     ldap.start();
@@ -89,6 +82,8 @@ public class CPDemoTestEnvironment implements TestEnvironment {
     kafka1 = new CPServerContainer(
         network,
         "kafka1",
+        // Node id
+        0,
         8091,
         9091,
         10091,
@@ -97,35 +92,17 @@ public class CPDemoTestEnvironment implements TestEnvironment {
         12093,
         13091,
         14091,
-        15091
+        15091,
+        16091
     );
-    kafka1.withEnv(Map.of(
-        "KAFKA_BROKER_ID", "1",
-        "KAFKA_BROKER_RACK", "r1",
-        "KAFKA_JMX_PORT", "9991"
-    ));
-    kafka2 = new CPServerContainer(
-        network,
-        "kafka2",
-        8092,
-        9092,
-        10092,
-        11092,
-        12092,
-        12094,
-        13092,
-        14092,
-        15092
-    );
-    kafka2.withEnv(Map.of(
-        "KAFKA_BROKER_ID", "2",
-        "KAFKA_BROKER_RACK", "r2",
-        "KAFKA_JMX_PORT", "9992"
-    ));
 
-    // Must be started in parallel
-    Log.info("Starting Kafka brokers...");
-    Startables.deepStart(List.of(kafka1, kafka2)).join();
+    kafka1.addEnv(
+        "KAFKA_CONTROLLER_QUORUM_VOTERS",
+        "0@kafka1:16091"
+    );
+
+    Log.info("Starting Kafka broker...");
+    Startables.deepStart(List.of(kafka1)).join();
 
     // Register users for SASL/SCRAM
     registerScramUsers();
@@ -143,8 +120,8 @@ public class CPDemoTestEnvironment implements TestEnvironment {
 
   /**
    * We don't stop the containers after tests are run. This is used to stop the containers manually
-   * from the {@link #main(String[])} method. Refer to the Make target
-   * {@code make cp-demo-stop} for stopping the cp-demo containers.
+   * from the {@link #main(String[])} method. Refer to the Make target {@code make cp-demo-stop} for
+   * stopping the cp-demo containers.
    */
   @Override
   public void shutdown() {
@@ -341,19 +318,19 @@ public class CPDemoTestEnvironment implements TestEnvironment {
                 )
                 .build(),
             ConnectionSpecSchemaRegistryConfigBuilder
-              .builder()
-              .id("local-sr-cp-demo")
-              .uri("https://localhost:8085")
-              .credentials(
-                  new BasicCredentials(
-                      "superUser",
-                      new Password("superUser".toCharArray())
-                  )
-              )
-              .tlsConfig(new TLSConfig(
-                  schemaRegistryTrustStoreLocation, password
-              ))
-              .build()
+                .builder()
+                .id("local-sr-cp-demo")
+                .uri("https://localhost:8085")
+                .credentials(
+                    new BasicCredentials(
+                        "superUser",
+                        new Password("superUser".toCharArray())
+                    )
+                )
+                .tlsConfig(new TLSConfig(
+                    schemaRegistryTrustStoreLocation, password
+                ))
+                .build()
         )
     );
   }
@@ -417,7 +394,8 @@ public class CPDemoTestEnvironment implements TestEnvironment {
   }
 
   /**
-   * Taken from https://github.com/testcontainers/testcontainers-java/issues/3081#issuecomment-1553064952
+   * Taken from
+   * https://github.com/testcontainers/testcontainers-java/issues/3081#issuecomment-1553064952
    */
   public static Network createReusableNetwork(String name) {
     if (!TestcontainersConfiguration.getInstance().environmentSupportsReuse()) {

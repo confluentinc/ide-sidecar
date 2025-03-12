@@ -8,7 +8,7 @@ info:
     name: Confluent for VS Code Support
     url: https://confluent.io/contact
     email: vscode@confluent.io
-  version: 1.0.1
+  version: 0.172.0
 servers:
 - url: http://127.0.0.1:26636
   description: Auto generated value
@@ -16,6 +16,30 @@ tags:
 - name: Feature Flags
   description: Feature flags
 paths:
+  /:
+    get:
+      tags:
+      - Password Reset Callback Resource
+      parameters:
+      - name: email
+        in: query
+        schema:
+          type: string
+      - name: message
+        in: query
+        schema:
+          type: string
+      - name: success
+        in: query
+        schema:
+          type: boolean
+      responses:
+        "200":
+          description: OK
+          content:
+            text/html:
+              schema:
+                type: string
   /api/login/realm:
     get:
       tags:
@@ -25,6 +49,24 @@ paths:
           description: OK
           content:
             application/json: {}
+  /api/metadata/security/v2alpha1/authorize:
+    put:
+      requestBody:
+        description: RBAC request body
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RBACRequest"
+        required: true
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
   /gateway/v1/callback-vscode-docs:
     get:
       tags:
@@ -78,6 +120,44 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SimpleConsumeMultiPartitionResponse"
+  /gateway/v1/clusters/{cluster_id}/topics/{topic_name}/records:
+    post:
+      tags:
+      - Confluent Cloud Produce Records Resource
+      parameters:
+      - name: cluster_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: topic_name
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: dry_run
+        in: query
+        schema:
+          default: false
+          type: boolean
+      - name: x-connection-id
+        in: header
+        description: Connection ID
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProduceRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProduceResponse"
   /gateway/v1/connections:
     get:
       tags:
@@ -427,6 +507,17 @@ paths:
                 $ref: "#/components/schemas/HealthResponse"
 components:
   schemas:
+    Action:
+      type: object
+      properties:
+        resourceType:
+          type: string
+        resourceName:
+          type: string
+        operation:
+          type: string
+        scope:
+          $ref: "#/components/schemas/Scope"
     ApiKeyAndSecret:
       description: API key and secret authentication credentials
       required:
@@ -441,14 +532,14 @@ components:
           type: string
         api_secret:
           description: The API secret to use when connecting to the external service.
-          maxLength: 64
+          maxLength: 1024
           minLength: 1
           type: string
           allOf:
           - $ref: "#/components/schemas/ApiSecret"
     ApiSecret:
       description: A user-provided API secret that is always masked in responses
-      maxLength: 64
+      maxLength: 1024
       minLength: 1
       type: string
     AuthError:
@@ -495,7 +586,7 @@ components:
           type: string
         password:
           description: The password to use when connecting to the external service.
-          maxLength: 64
+          maxLength: 1024
           minLength: 1
           type: string
           allOf:
@@ -670,6 +761,37 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Connection"
+    DataFormat:
+      description: |
+        The data format that represents the bytes of a Kafka message.
+
+        * AVRO: Apache Avro schema format.
+        * JSONSCHEMA: JSON schema format.
+        * PROTOBUF: Google Protocol Buffers schema format.
+        * JSON:
+            Bytes parsed as JSON.
+            The bytes did not contain a magic byte specifying a schema id, and the raw bytes
+            were successfully parsed into a JSON value.
+        * UTF8_STRING:
+            Bytes parsed as a UTF-8 string (meaning the bytes were not parsed as valid JSON).
+        * RAW_BYTES:
+            Raw bytes. These are the scenarios where it would be used:
+            - Arbitrary bytes that are NOT written/read using an implementation of Kafka serializer/deserializer.
+            And further, we tried to but could not interpret these bytes as a JSON value.
+            - The Kafka serializer/deserializer known to sidecar failed to parse the schematized bytes
+            (meaning the schema id was present in the magic bytes, but our classes could not interpret the rest of the bytes.)
+      enum:
+      - AVRO
+      - JSONSCHEMA
+      - PROTOBUF
+      - JSON
+      - UTF8_STRING
+      - RAW_BYTES
+      type: string
+    Date:
+      format: date
+      type: string
+      example: 2022-03-10
     Error:
       description: Describes a particular error encountered while performing an operation.
       type: object
@@ -831,6 +953,14 @@ components:
           type: object
           allOf:
           - $ref: "#/components/schemas/AuthErrors"
+    KeyOrValueMetadata:
+      type: object
+      properties:
+        schema_id:
+          format: int32
+          type: integer
+        data_format:
+          $ref: "#/components/schemas/DataFormat"
     KeyStore:
       required:
       - path
@@ -952,6 +1082,8 @@ components:
           $ref: "#/components/schemas/JsonNode"
         value:
           $ref: "#/components/schemas/JsonNode"
+        metadata:
+          $ref: "#/components/schemas/RecordMetadata"
         key_decoding_error:
           type: string
         value_decoding_error:
@@ -976,7 +1108,7 @@ components:
           type: integer
     Password:
       description: A user-provided password that is always masked in responses
-      maxLength: 64
+      maxLength: 1024
       minLength: 1
       type: string
     Preferences:
@@ -1010,6 +1142,111 @@ components:
             type: string
         trust_all_certificates:
           type: boolean
+    ProduceRequest:
+      type: object
+      properties:
+        partition_id:
+          format: int32
+          type: integer
+        headers:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProduceRequestHeader"
+        key:
+          $ref: "#/components/schemas/ProduceRequestData"
+        value:
+          $ref: "#/components/schemas/ProduceRequestData"
+        timestamp:
+          $ref: "#/components/schemas/Date"
+    ProduceRequestData:
+      type: object
+      properties:
+        type:
+          type: string
+        subject:
+          type: string
+        subject_name_strategy:
+          type: string
+        schema_id:
+          format: int32
+          type: integer
+        schema_version:
+          format: int32
+          type: integer
+        schema:
+          type: string
+        data: {}
+    ProduceRequestHeader:
+      required:
+      - name
+      type: object
+      properties:
+        name:
+          type: string
+        value:
+          format: binary
+          type: string
+    ProduceResponse:
+      required:
+      - error_code
+      type: object
+      properties:
+        error_code:
+          format: int32
+          type: integer
+        message:
+          type: string
+        cluster_id:
+          type: string
+        topic_name:
+          type: string
+        partition_id:
+          format: int32
+          type: integer
+        offset:
+          format: int64
+          type: integer
+        timestamp:
+          $ref: "#/components/schemas/Date"
+        key:
+          $ref: "#/components/schemas/ProduceResponseData"
+        value:
+          $ref: "#/components/schemas/ProduceResponseData"
+    ProduceResponseData:
+      required:
+      - size
+      - type
+      type: object
+      properties:
+        size:
+          format: int64
+          type: integer
+        type:
+          type: string
+        subject:
+          type: string
+        schema_id:
+          format: int32
+          type: integer
+        schema_version:
+          format: int32
+          type: integer
+    RBACRequest:
+      type: object
+      properties:
+        userPrincipal:
+          type: string
+        actions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Action"
+    RecordMetadata:
+      type: object
+      properties:
+        key_metadata:
+          $ref: "#/components/schemas/KeyOrValueMetadata"
+        value_metadata:
+          $ref: "#/components/schemas/KeyOrValueMetadata"
     SchemaRegistryConfig:
       description: Schema Registry configuration.
       required:
@@ -1062,6 +1299,17 @@ components:
           type: object
           allOf:
           - $ref: "#/components/schemas/AuthErrors"
+    Scope:
+      type: object
+      properties:
+        clusters:
+          type: object
+          additionalProperties:
+            type: string
+        path:
+          type: array
+          items:
+            type: string
     ScramCredentials:
       description: Scram authentication credentials
       required:
@@ -1082,7 +1330,7 @@ components:
           type: string
         scram_password:
           description: The password to use when connecting to the external service.
-          maxLength: 64
+          maxLength: 1024
           minLength: 1
           type: string
           allOf:
@@ -1222,23 +1470,23 @@ components:
     HealthResponse:
       type: object
       properties:
+        checks:
+          type: array
+          items:
+            $ref: "#/components/schemas/HealthCheck"
         status:
           enum:
           - UP
           - DOWN
           type: string
-        checks:
-          type: array
-          items:
-            $ref: "#/components/schemas/HealthCheck"
     HealthCheck:
       type: object
       properties:
+        name:
+          type: string
         data:
           type: object
           nullable: true
-        name:
-          type: string
         status:
           enum:
           - UP

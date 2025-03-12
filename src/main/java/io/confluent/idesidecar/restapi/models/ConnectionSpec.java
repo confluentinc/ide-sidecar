@@ -8,7 +8,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.confluent.idesidecar.restapi.credentials.*;
+import io.confluent.idesidecar.restapi.credentials.ApiKeyAndSecret;
+import io.confluent.idesidecar.restapi.credentials.BasicCredentials;
+import io.confluent.idesidecar.restapi.credentials.Credentials;
+import io.confluent.idesidecar.restapi.credentials.OAuthCredentials;
+import io.confluent.idesidecar.restapi.credentials.ScramCredentials;
+import io.confluent.idesidecar.restapi.credentials.TLSConfig;
 import io.confluent.idesidecar.restapi.exceptions.Failure;
 import io.confluent.idesidecar.restapi.exceptions.Failure.Error;
 import io.confluent.idesidecar.restapi.util.CCloud.KafkaEndpoint;
@@ -51,7 +56,7 @@ public record ConnectionSpec(
     LocalConfig localConfig,
 
     @Schema(description = "The details for connecting to a CCloud, Confluent Platform, or "
-                          + "Apache Kafka cluster.")
+        + "Apache Kafka cluster.")
     @JsonProperty(KAFKA_CLUSTER_CONFIG_FIELD_NAME)
     KafkaClusterConfig kafkaClusterConfig,
 
@@ -69,7 +74,7 @@ public record ConnectionSpec(
     @Schema(description = "Connection type when using Confluent Local.")
     LOCAL,
     @Schema(description = "Connection type when using Confluent Platform to connect "
-                          + "to clusters registered with MDS.")
+        + "to clusters registered with MDS.")
     PLATFORM,
     @Schema(description = "Connection type when using Confluent Cloud and its available resources.")
     CCLOUD,
@@ -92,6 +97,17 @@ public record ConnectionSpec(
         .name(name)
         .type(LOCAL)
         .localConfig(localConfig != null ? localConfig : new LocalConfig(null))
+        .build();
+  }
+
+  public static ConnectionSpec createLocalWithSRConfig(
+      String id, String name, SchemaRegistryConfig schemaRegistryConfig
+  ) {
+    return ConnectionSpecBuilder.builder()
+        .id(id)
+        .name(name)
+        .type(LOCAL)
+        .schemaRegistryConfig(schemaRegistryConfig)
         .build();
   }
 
@@ -140,8 +156,8 @@ public record ConnectionSpec(
   }
 
   /**
-   * Convenience method to return a new ConnectionSpec with the provided
-   * Confluent Local configuration using an optional SR URI.
+   * Convenience method to return a new ConnectionSpec with the provided Confluent Local
+   * configuration using an optional SR URI.
    *
    * @param srUri the URI of the local Schema Registry, or null if not used
    */
@@ -190,8 +206,8 @@ public record ConnectionSpec(
   }
 
   /**
-   * Convenience method to return a new ConnectionSpec with the provided
-   * Kafka Cluster configuration.
+   * Convenience method to return a new ConnectionSpec with the provided Kafka Cluster
+   * configuration.
    *
    * @param kafkaClusterConfig the Kafka cluster configuration; may be null
    */
@@ -208,8 +224,8 @@ public record ConnectionSpec(
   }
 
   /**
-   * Convenience method to return a new ConnectionSpec with the provided
-   * Schema Registry configuration.
+   * Convenience method to return a new ConnectionSpec with the provided Schema Registry
+   * configuration.
    *
    * @param schemaRegistryConfig the Schema Registry configuration; may be null
    */
@@ -233,23 +249,24 @@ public record ConnectionSpec(
   public record CCloudConfig(
       @Schema(
           description = "The identifier of the CCloud organization to use. "
-                        + "The user's default organization is used when absent."
+              + "The user's default organization is used when absent."
       )
       @JsonProperty(value = "organization_id")
       @Size(min = 36, max = 36)
       String organizationId,
       @Schema(
           description = "The URI that users will be redirected to after successfully completing "
-          + "the authentication flow with Confluent Cloud."
+              + "the authentication flow with Confluent Cloud."
       )
       @JsonProperty(value = "ide_auth_callback_uri")
       @Size(min = 10, max = 200)
       String ideAuthCallbackUri
   ) {
+
   }
 
   @Schema(description = "Configuration when using Confluent Local and "
-                        + "optionally a local Schema Registry.")
+      + "optionally a local Schema Registry.")
   public record LocalConfig(
       @Schema(description = "The URL of the Schema Registry running locally.")
       @JsonProperty(value = "schema-registry-uri")
@@ -270,11 +287,11 @@ public record ConnectionSpec(
           // It has non-zero whitespace only, so this is invalid
           errors.add(
               Error.create()
-                   .withDetail(
-                       "Schema Registry URI may be null (use default local SR) or empty "
-                       + "(do not use SR), but may not have only whitespace"
-                   )
-                   .withSource("%s.schema-registry-uri", path)
+                  .withDetail(
+                      "Schema Registry URI may be null (use default local SR) or empty "
+                          + "(do not use SR), but may not have only whitespace"
+                  )
+                  .withSource("%s.schema-registry-uri", path)
           );
         } else {
           // The URI is not blank or empty, so check if it's a valid URI
@@ -284,15 +301,15 @@ public record ConnectionSpec(
             if (!"https".equals(scheme) && !"http".equals(scheme)) {
               errors.add(
                   Error.create()
-                       .withDetail("Schema Registry URI must use 'http' or 'https'")
-                       .withSource("%s.schema-registry-uri", path)
+                      .withDetail("Schema Registry URI must use 'http' or 'https'")
+                      .withSource("%s.schema-registry-uri", path)
               );
             }
           } catch (URISyntaxException e) {
             errors.add(
                 Error.create()
-                     .withDetail("Schema Registry URI is not a valid URI")
-                     .withSource("%s.schema-registry-uri", path)
+                    .withDetail("Schema Registry URI is not a valid URI")
+                    .withSource("%s.schema-registry-uri", path)
             );
           }
         }
@@ -305,7 +322,7 @@ public record ConnectionSpec(
   @RecordBuilder
   public record KafkaClusterConfig(
       @Schema(description = "A list of host/port pairs to use for establishing the "
-                            + "initial connection to the Kafka cluster.")
+          + "initial connection to the Kafka cluster.")
       @JsonProperty(value = "bootstrap_servers")
       @Size(min = 1, max = BOOTSTRAP_SERVERS_MAX_LEN)
       @NotNull
@@ -357,17 +374,17 @@ public record ConnectionSpec(
       if (bootstrapServers == null || bootstrapServers.isBlank()) {
         errors.add(
             Error.create()
-                 .withDetail("%s bootstrap_servers is required and may not be blank", what)
-                 .withSource("%s.bootstrap_servers", path)
+                .withDetail("%s bootstrap_servers is required and may not be blank", what)
+                .withSource("%s.bootstrap_servers", path)
         );
       } else if (bootstrapServers.length() > BOOTSTRAP_SERVERS_MAX_LEN) {
         errors.add(
             Error.create()
-                 .withDetail(
-                     "%s bootstrap_servers must be at most %d characters",
-                     what, BOOTSTRAP_SERVERS_MAX_LEN
-                 )
-                 .withSource("%s.bootstrap_servers", path)
+                .withDetail(
+                    "%s bootstrap_servers must be at most %d characters",
+                    what, BOOTSTRAP_SERVERS_MAX_LEN
+                )
+                .withSource("%s.bootstrap_servers", path)
         );
       }
       if (credentials != null) {
@@ -393,7 +410,7 @@ public record ConnectionSpec(
 
       @Schema(
           description = "The credentials for the Schema Registry, or null if "
-                        + "no authentication is required",
+              + "no authentication is required",
           // prevent Credentials from showing up in the generated OpenAPI spec here
           implementation = Object.class,
           oneOf = {
@@ -432,21 +449,21 @@ public record ConnectionSpec(
       if (id != null && id.length() > 64) {
         errors.add(
             Error.create()
-                 .withDetail("%s cluster ID may not be longer than %d characters", what, 64)
-                 .withSource("%s.id", path)
+                .withDetail("%s cluster ID may not be longer than %d characters", what, 64)
+                .withSource("%s.id", path)
         );
       }
       if (uri == null || uri.isBlank()) {
         errors.add(
             Failure.Error.create()
-                         .withDetail("%s URI is required and may not be blank", what)
-                         .withSource("%s.uri", path)
+                .withDetail("%s URI is required and may not be blank", what)
+                .withSource("%s.uri", path)
         );
       } else if (uri.length() > URI_MAX_LEN) {
         errors.add(
             Failure.Error.create()
-                         .withDetail("%s URI must be at most %d characters", what, URI_MAX_LEN)
-                         .withSource("%s.uri", path)
+                .withDetail("%s URI must be at most %d characters", what, URI_MAX_LEN)
+                .withSource("%s.uri", path)
         );
       } else {
         // Check if the URI is valid
@@ -456,15 +473,15 @@ public record ConnectionSpec(
           if (!"https".equals(scheme) && !"http".equals(scheme)) {
             errors.add(
                 Error.create()
-                     .withDetail("%s URI must use 'http' or 'https'", what)
-                     .withSource("%s.uri", path)
+                    .withDetail("%s URI must use 'http' or 'https'", what)
+                    .withSource("%s.uri", path)
             );
           }
         } catch (URISyntaxException e) {
           errors.add(
               Failure.Error.create()
-                           .withDetail("%s URI is not a valid URI", what)
-                           .withSource("%s.uri", path)
+                  .withDetail("%s URI is not a valid URI", what)
+                  .withSource("%s.uri", path)
           );
         }
       }
@@ -475,16 +492,15 @@ public record ConnectionSpec(
   }
 
   /**
-   * Validate that this ConnectionSpec is structurally valid.
-   * The spec may still have missing or incomplete fields, but it should be structurally sound.
+   * Validate that this ConnectionSpec is structurally valid. The spec may still have missing or
+   * incomplete fields, but it should be structurally sound.
    */
   public List<Error> validate() {
     return validateUpdate(this);
   }
 
   /**
-   * Validate that the provided ConnectionSpec is a valid update from
-   * the current ConnectionSpec.
+   * Validate that the provided ConnectionSpec is a valid update from the current ConnectionSpec.
    * The spec may still have missing or incomplete fields, but it should be structurally sound.
    */
   @SuppressWarnings({
@@ -620,24 +636,24 @@ public record ConnectionSpec(
   void checkAllowedWhen(List<Error> errors, String path, String what, String when) {
     errors.add(
         Error.create()
-             .withDetail("%s is not allowed when %s".formatted(what, when))
-             .withSource(path)
+            .withDetail("%s is not allowed when %s".formatted(what, when))
+            .withSource(path)
     );
   }
 
   void checkRequired(List<Error> errors, String path, String what) {
     errors.add(
         Error.create()
-             .withDetail("%s is required and may not be blank".formatted(what))
-             .withSource(path)
+            .withDetail("%s is required and may not be blank".formatted(what))
+            .withSource(path)
     );
   }
 
   void checkImmutable(List<Error> errors, String path, String what) {
     errors.add(
         Error.create()
-             .withDetail("%s may not be changed".formatted(what))
-             .withSource(path)
+            .withDetail("%s may not be changed".formatted(what))
+            .withSource(path)
     );
   }
 }

@@ -56,7 +56,8 @@ public class LocalTestEnvironment implements TestEnvironment {
         .withExposedPorts(8081)
         .withNetworkAliases("schema-registry")
         .dependsOn(kafkaWithRestProxy)
-        .waitingFor(Wait.forHttp("/subjects").forStatusCode(200).withStartupTimeout(Duration.ofMinutes(2)));
+        .waitingFor(
+            Wait.forHttp("/subjects").forStatusCode(200).withStartupTimeout(Duration.ofMinutes(2)));
   }
 
   protected void startContainers() {
@@ -76,11 +77,15 @@ public class LocalTestEnvironment implements TestEnvironment {
 
   public Optional<ConnectionSpec> localConnectionSpec() {
     return Optional.of(
-        ConnectionSpec.createLocal(
+        ConnectionSpec.createLocalWithSRConfig(
             "local-connection",
             "Local",
-            new ConnectionSpec.LocalConfig(
-                schemaRegistry.endpoint()
+            new ConnectionSpec.SchemaRegistryConfig(
+                "local-schema-registry",
+                schemaRegistry.endpoint(),
+                null,
+                // Disable TLS
+                TLSConfigBuilder.builder().enabled(false).build()
             )
         )
     );

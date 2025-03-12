@@ -9,8 +9,8 @@ import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 /**
- * A user-provided API secret, which must be masked when printed, logged, or
- * returned in an API response.
+ * A user-provided API secret, which must be masked when printed, logged, or returned in an API
+ * response.
  */
 @JsonDeserialize(using = ApiSecret.Deserializer.class)
 @Schema(
@@ -22,15 +22,15 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
 @RegisterForReflection
 public class ApiSecret extends Redactable {
 
-  public static final int MAX_LENGTH = 64;
+  public static final int MAX_LENGTH = 1024;
 
   public ApiSecret(char[] raw) {
     super(raw);
   }
 
   /**
-   * The deserializer that parses as a character array rather than as a string,
-   * preventing the secret from being stored in memory as a string.
+   * The deserializer that parses as a character array rather than as a string, preventing the
+   * secret from being stored in memory as a string.
    */
   public static class Deserializer extends BaseDeserializer<ApiSecret> {
 
@@ -45,11 +45,11 @@ public class ApiSecret extends Redactable {
       String path,
       String what
   ) {
-    if (longerThan(Password.MAX_LENGTH)) {
+    if (longerThan(ApiSecret.MAX_LENGTH)) {
       errors.add(
           Error.create()
-               .withDetail("%s API secret may not be longer than %d characters", what, MAX_LENGTH)
-               .withSource("%s.password", path)
+              .withDetail("%s API secret may not be longer than %d characters", what, MAX_LENGTH)
+              .withSource("%s.password", path)
       );
     }
   }
