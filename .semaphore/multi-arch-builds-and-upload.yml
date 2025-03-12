@@ -10,8 +10,6 @@ execution_time_limit:
 blocks:
   - name: "Build Native Executable (MacOS AMD64)"
     dependencies: []
-    run:
-      when: "branch =~ '.*'"
     task:
       agent:
         machine:
@@ -34,8 +32,6 @@ blocks:
 
   - name: "Build Native Executable (MacOS ARM64)"
     dependencies: []
-    run:
-      when: "branch =~ '.*'"
     task:
       agent:
         machine:
@@ -58,8 +54,6 @@ blocks:
 
   - name: "Build Native Executable (Linux AMD64)"
     dependencies: []
-    run:
-      when: "branch =~ '.*'"
     task:
       agent:
         machine:
@@ -81,8 +75,6 @@ blocks:
 
   - name: "Build Native Executable (Linux ARM64)"
     dependencies: []
-    run:
-      when: "branch =~ '.*'"
     task:
       agent:
         machine:
@@ -104,8 +96,6 @@ blocks:
 
   - name: "Build Native Executable (Windows x64)"
     dependencies: [ ]
-    run:
-      when: "branch =~ '.*'"
     task:
       agent:
         machine:
