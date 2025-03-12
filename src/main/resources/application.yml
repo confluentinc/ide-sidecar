@@ -238,9 +238,9 @@ quarkus:
       "io.confluent.kafka.serializers":
         level: ERROR
       "io.qua.hib.val.deployment":
-        level: OFF
+        level: INFO
       "io.qua.dep.ste.ReflectiveHierarchyStep":
-        level: OFF
+        level: INFO
   http:
     host: 127.0.0.1
     port: 26636
