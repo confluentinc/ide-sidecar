@@ -14,6 +14,8 @@ import io.confluent.idesidecar.restapi.credentials.BasicCredentials;
 import io.confluent.idesidecar.restapi.credentials.Credentials;
 import io.confluent.idesidecar.restapi.credentials.Credentials.KafkaConnectionOptions;
 import io.confluent.idesidecar.restapi.credentials.Credentials.SchemaRegistryConnectionOptions;
+import io.confluent.idesidecar.restapi.credentials.KerberosCredentials;
+import io.confluent.idesidecar.restapi.credentials.KerberosCredentialsBuilder;
 import io.confluent.idesidecar.restapi.credentials.OAuthCredentials;
 import io.confluent.idesidecar.restapi.credentials.Password;
 import io.confluent.idesidecar.restapi.credentials.ScramCredentials;
@@ -138,6 +140,19 @@ class ClientConfiguratorStaticTest {
       // TLS is enabled but hostname verification is disabled
       .enabled(true)
       .verifyHostname(false)
+      .build();
+
+  static final KerberosCredentials KERBEROS_CREDENTIALS = KerberosCredentialsBuilder
+      .builder()
+      .principal("alice@EXAMPLE.com")
+      .keytabPath("/etc/security/keytabs/alice.keytab")
+      .build();
+
+  static final KerberosCredentials KERBEROS_CREDENTIALS_WITH_SERVICE_NAME = KerberosCredentialsBuilder
+      .builder()
+      .principal("alice@EXAMPLE.com")
+      .keytabPath("/etc/security/keytabs/alice.keytab")
+      .serviceName("foobar")
       .build();
 
   @Mock
@@ -736,6 +751,43 @@ class ClientConfiguratorStaticTest {
                 bearer.auth.client.secret=%s
                 ssl.endpoint.identification.algorithm=
                 """.formatted(OAUTH_CLIENT_ID, OAUTH_SECRET)
+        ),
+        new TestInput(
+            "With Kerberos for Kafka over SSL, no SR",
+            kafka,
+            KERBEROS_CREDENTIALS,
+            null,
+            null,
+            DEFAULT_TLS_CONFIG,
+            null,
+            false,
+            null,
+            """
+                bootstrap.servers=localhost:9092
+                security.protocol=SASL_SSL
+                sasl.mechanism=GSSAPI
+                sasl.jaas.config=com.sun.security.auth.module.Krb5LoginModule required useKeyTab=true doNotPrompt=true useTicketCache=false keyTab="/etc/security/keytabs/alice.keytab" principal="alice@EXAMPLE.com";
+                """,
+            null
+        ),
+        new TestInput(
+            "With Kerberos for Kafka over SSL with a custom broker service name, no SR",
+            kafka,
+            KERBEROS_CREDENTIALS_WITH_SERVICE_NAME,
+            null,
+            null,
+            DEFAULT_TLS_CONFIG,
+            null,
+            false,
+            null,
+            """
+                bootstrap.servers=localhost:9092
+                security.protocol=SASL_SSL
+                sasl.mechanism=GSSAPI
+                sasl.jaas.config=com.sun.security.auth.module.Krb5LoginModule required useKeyTab=true doNotPrompt=true useTicketCache=false keyTab="/etc/security/keytabs/alice.keytab" principal="alice@EXAMPLE.com";
+                sasl.kerberos.service.name=foobar
+                """,
+            null
         )
     );
     return inputs
