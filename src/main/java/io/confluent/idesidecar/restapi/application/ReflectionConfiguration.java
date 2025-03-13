@@ -110,7 +110,6 @@ import org.apache.kafka.common.serialization.ByteArrayDeserializer;
         // Kerberos classes
         KerberosClientCallbackHandler.class,
         KerberosError.class,
-        KerberosLogin.class,
         KerberosName.class,
         KerberosShortNamer.class,
         BadFormatString.class,
