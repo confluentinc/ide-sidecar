@@ -286,10 +286,10 @@ public class DirectConnectionState extends ConnectionState {
       );
     } catch (Throwable e) {
       Log.debugf(
+          e,
           "Failed to connect to the Kafka cluster at %s: %s",
           kafkaClusterConfig.bootstrapServers(),
-          e.getMessage(),
-          e
+          e.getMessage()
       );
       return Optional.ofNullable(
           errorHandler.apply(e)
@@ -300,10 +300,10 @@ public class DirectConnectionState extends ConnectionState {
           adminClient.close(TIMEOUT);
         } catch (Throwable e) {
           Log.errorf(
+              e,
               "Error closing the client to the Kafka cluster at %s: %s",
               kafkaClusterConfig.bootstrapServers(),
-              e.getMessage(),
-              e
+              e.getMessage()
           );
         }
       }
