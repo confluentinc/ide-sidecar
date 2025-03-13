@@ -40,7 +40,13 @@ import org.apache.kafka.clients.consumer.CooperativeStickyAssignor;
 import org.apache.kafka.clients.consumer.RangeAssignor;
 import org.apache.kafka.common.security.auth.AuthenticateCallbackHandler;
 import org.apache.kafka.common.security.authenticator.SaslClientCallbackHandler;
+import org.apache.kafka.common.security.kerberos.BadFormatString;
 import org.apache.kafka.common.security.kerberos.KerberosClientCallbackHandler;
+import org.apache.kafka.common.security.kerberos.KerberosError;
+import org.apache.kafka.common.security.kerberos.KerberosLogin;
+import org.apache.kafka.common.security.kerberos.KerberosName;
+import org.apache.kafka.common.security.kerberos.KerberosShortNamer;
+import org.apache.kafka.common.security.kerberos.NoMatchingRule;
 import org.apache.kafka.common.security.oauthbearer.OAuthBearerExtensionsValidatorCallback;
 import org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginCallbackHandler;
 import org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule;
@@ -96,12 +102,19 @@ import org.apache.kafka.common.serialization.ByteArrayDeserializer;
         OAuthBearerExtensionsValidatorCallback.class,
         OAuthBearerValidatorCallback.class,
         OAuthBearerTokenCallback.class,
-        KerberosClientCallbackHandler.class,
         OAuthBearerSaslClientCallbackHandler.class,
         OAuthBearerUnsecuredValidatorCallbackHandler.class,
         OAuthBearerUnsecuredLoginCallbackHandler.class,
         SaslClientCallbackHandler.class,
         ScramServerCallbackHandler.class,
+        // Kerberos classes
+        KerberosClientCallbackHandler.class,
+        KerberosError.class,
+        KerberosLogin.class,
+        KerberosName.class,
+        KerberosShortNamer.class,
+        BadFormatString.class,
+        NoMatchingRule.class,
         // Schema Registry client classes that are not registered in
         // https://github.com/quarkusio/quarkus/blob/3.16.3/extensions/schema-registry/confluent/common/deployment/src/main/java/io/quarkus/confluent/registry/common/ConfluentRegistryClientProcessor.java
         DefaultReferenceSubjectNameStrategy.class,

@@ -59,7 +59,6 @@ public record KerberosCredentials(
         "sasl.jaas.config",
         ("%s required " +
             "useKeyTab=true " +
-            "debug=true " +
             "doNotPrompt=true " +
             "useTicketCache=false " +
             "keyTab=\"%s\" " +
