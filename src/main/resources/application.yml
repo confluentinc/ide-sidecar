@@ -232,11 +232,11 @@ quarkus:
     min-level: DEBUG
     category:
       "org.apache.kafka.clients":
-        level: ERROR
+        level: DEBUG
       "org.apache.kafka.common":
-        level: ERROR
+        level: DEBUG
       "io.confluent.kafka.serializers":
-        level: ERROR
+        level: DEBUG
     level: DEBUG
   http:
     host: 127.0.0.1
