@@ -111,6 +111,7 @@ import org.apache.kafka.common.serialization.ByteArrayDeserializer;
         KerberosClientCallbackHandler.class,
         KerberosError.class,
         KerberosName.class,
+        KerberosLogin.class,
         KerberosShortNamer.class,
         BadFormatString.class,
         NoMatchingRule.class,
