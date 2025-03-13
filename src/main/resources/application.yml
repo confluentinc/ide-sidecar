@@ -282,6 +282,9 @@ quarkus:
     # Disable file caching in Vert.X since the native executable includes the path of the tmp dir
     # of the machine where the native image was built.
     caching: false
+  kerberos:
+    devservices:
+      enabled: false
 
 # Hide the /internal/kafka route from the OpenAPI spec
 mp:
