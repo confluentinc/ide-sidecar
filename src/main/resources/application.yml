@@ -246,7 +246,7 @@ quarkus:
   jackson:
     fail-on-unknown-properties: true
   native:
-    additional-build-args: --initialize-at-run-time=io.confluent.idesidecar.restapi.auth.CCloudOAuthConfig\,io.confluent.idesidecar.restapi.auth.CCloudOAuthContext\,io.confluent.ide.sidecar.restapi.util.WebClientFactory\,org.apache.kafka.common.security.authenticator.SaslClientAuthenticator\,org.apache.avro.file.DataFileWriter\,io.confluent.kafka.schemaregistry.avro.AvroSchemaUtils\,com.github.luben.zstd
+    additional-build-args: --initialize-at-run-time=io.confluent.idesidecar.restapi.auth.CCloudOAuthConfig\,io.confluent.idesidecar.restapi.auth.CCloudOAuthContext\,io.confluent.ide.sidecar.restapi.util.WebClientFactory\,org.apache.kafka.common.security.authenticator.SaslClientAuthenticator\,org.apache.avro.file.DataFileWriter\,io.confluent.kafka.schemaregistry.avro.AvroSchemaUtils\,com.github.luben.zstd -H:AdditionalSecurityProviders=sun.security.jgss.SunProvider
     resources:
       includes: templates/callback.html,templates/callback_failure.html,templates/default.html,templates/reset_password.html,feature-flag-defaults.json
   smallrye-health:
@@ -281,6 +281,9 @@ quarkus:
     # Disable file caching in Vert.X since the native executable includes the path of the tmp dir
     # of the machine where the native image was built.
     caching: false
+  kerberos:
+    devservices:
+      enabled: false
 
 # Hide the /internal/kafka route from the OpenAPI spec
 mp:
