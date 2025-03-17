@@ -13,6 +13,7 @@ import io.confluent.idesidecar.restapi.resources.ConnectionsResource;
 import io.quarkus.logging.Log;
 import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
+import org.eclipse.microprofile.config.ConfigProvider;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
@@ -57,6 +58,9 @@ public abstract class ConnectionState {
   protected ConnectionSpec spec;
 
   private final AtomicReference<ConnectionStatus> cachedStatus = new AtomicReference<>();
+
+  private static final boolean BROADCAST_UNCHANGED_UPDATES = ConfigProvider.getConfig()
+      .getValue("ide-sidecar.websockets.broadcast-unchanged-updates", Boolean.class);
 
   /**
    * The instant at which the cached status was last updated. This is used to prevent stale status
@@ -150,21 +154,33 @@ public abstract class ConnectionState {
     this.cachedStatus.set(updated);
     this.lastUpdated.set(Instant.now());
 
-    // If the status has changed, notify the listener
-    if (!updated.equals(original)) {
+    // Broadcast the update only if:
+    // 1. The status has changed
+    // 2. The status has not changed and the broadcast flag is set to true
+    if (!original.equals(updated) || BROADCAST_UNCHANGED_UPDATES) {
+      broadcastUpdate(original, updated);
+    } else {
       Log.infof(
-          "Updated status for connection ID=%s. Original spec: %s, "
-              + "Updated spec: %s, Last updated: %s",
+          "Ignoring unchanged connection status update for %s: %s",
           spec.id(),
-          original,
-          updated,
-          lastUpdated.get()
+          updated
       );
-      if (updated.isConnected()) {
-        listener.connected(this);
-      } else {
-        listener.disconnected(this);
-      }
+    }
+  }
+
+  private void broadcastUpdate(ConnectionStatus original, ConnectionStatus updated) {
+    Log.infof(
+        "Updated status for connection ID=%s. Original spec: %s, "
+            + "Updated spec: %s, Last updated: %s",
+        spec.id(),
+        original,
+        updated,
+        lastUpdated.get()
+    );
+    if (updated.isConnected()) {
+      listener.connected(this);
+    } else {
+      listener.disconnected(this);
     }
   }
 
