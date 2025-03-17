@@ -59,7 +59,7 @@ public abstract class ConnectionState {
 
   private final AtomicReference<ConnectionStatus> cachedStatus = new AtomicReference<>();
 
-  private static final Boolean BROADCAST_UNCHANGED_UPDATES = ConfigProvider.getConfig()
+  private static final boolean BROADCAST_UNCHANGED_UPDATES = ConfigProvider.getConfig()
       .getValue("ide-sidecar.websockets.broadcast-unchanged-updates", Boolean.class);
 
   /**
