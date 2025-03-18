@@ -156,6 +156,8 @@ ide-sidecar:
     # How often to check?
     interval-seconds: 60
   websockets:
+    # Should sidecar broadcast connection statuses even if they haven't changed?
+    broadcast-unchanged-updates: true
     # How long do we allow a connection to be established w/o it saying HELLO?
     initial-grace-seconds: 60
     # ... and how often do we check?
