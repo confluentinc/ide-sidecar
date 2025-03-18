@@ -160,7 +160,7 @@ public abstract class ConnectionState {
     if (!original.equals(updated) || BROADCAST_UNCHANGED_UPDATES) {
       broadcastUpdate(original, updated);
     } else {
-      Log.infof(
+      Log.debugf(
           "Ignoring unchanged connection status update for %s: %s",
           spec.id(),
           updated
@@ -169,7 +169,7 @@ public abstract class ConnectionState {
   }
 
   private void broadcastUpdate(ConnectionStatus original, ConnectionStatus updated) {
-    Log.infof(
+    Log.debugf(
         "Updated status for connection ID=%s. Original spec: %s, "
             + "Updated spec: %s, Last updated: %s",
         spec.id(),
