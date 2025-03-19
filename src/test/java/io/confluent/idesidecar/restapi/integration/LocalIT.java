@@ -2,6 +2,7 @@ package io.confluent.idesidecar.restapi.integration;
 
 import io.confluent.idesidecar.restapi.integration.connection.DirectConnectionSuite;
 import io.confluent.idesidecar.restapi.integration.connection.LocalConnectionSuite;
+import io.confluent.idesidecar.restapi.kafkarest.AvroLogicalTypesSuite;
 import io.confluent.idesidecar.restapi.kafkarest.RecordsV3DryRunSuite;
 import io.confluent.idesidecar.restapi.kafkarest.RecordsV3ErrorsSuite;
 import io.confluent.idesidecar.restapi.kafkarest.RecordsV3Suite;
@@ -164,6 +165,24 @@ public class LocalIT {
     @TestProfile(NoAccessFilterProfile.class)
     @Nested
     class ClustersTests extends AbstractIT implements ClusterV3Suite {
+
+      @Override
+      public TestEnvironment environment() {
+        return TEST_ENVIRONMENT;
+      }
+
+      @BeforeEach
+      @Override
+      public void setupConnection() {
+        setupConnection(this, TestEnvironment::localConnectionSpec);
+      }
+    }
+
+    @QuarkusIntegrationTest
+    @Tag("io.confluent.common.utils.IntegrationTest")
+    @TestProfile(NoAccessFilterProfile.class)
+    @Nested
+    class AvroLogicalTypesTest extends AbstractIT implements AvroLogicalTypesSuite {
 
       @Override
       public TestEnvironment environment() {
