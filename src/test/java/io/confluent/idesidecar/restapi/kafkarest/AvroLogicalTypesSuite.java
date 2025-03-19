@@ -49,7 +49,7 @@ public interface AvroLogicalTypesSuite extends RecordsV3BaseSuite {
     );
   }
 
-  @ParameterizedTest(name = "shouldDeserializeAvroLogicalTypes: {1}")
+  @ParameterizedTest(name = "shouldSerializeAndDeserializeAvroLogicalTypes: {1}")
   @MethodSource("avroLogicalTypeSchemas")
   default void shouldSerializeAndDeserializeAvroLogicalTypes(
       String keySchema, String logicalType, Object sampleData) throws IOException {
