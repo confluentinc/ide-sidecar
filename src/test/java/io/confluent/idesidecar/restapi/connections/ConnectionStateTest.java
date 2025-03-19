@@ -16,7 +16,6 @@ import io.confluent.idesidecar.restapi.models.ConnectionStatus.ConnectedState;
 import io.vertx.core.Future;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junitpioneer.jupiter.SetSystemProperty;
 
 public class ConnectionStateTest {
 
@@ -94,7 +93,6 @@ public class ConnectionStateTest {
   }
 
   @Test
-  @SetSystemProperty(key = "ide-sidecar.websockets.broadcast-unchanged-updates", value = "false")
   void shouldNotNotifyListenerWithNoChangeInStatus() {
     // When the refresh is computed, and the status does not change
     when(connection.doRefreshStatus()).thenReturn(
@@ -105,21 +103,6 @@ public class ConnectionStateTest {
     // Then the listener should never be notified
     verifyNoInteractions(listener);
   }
-
-  @Test
-  @SetSystemProperty(key = "ide-sidecar.websockets.broadcast-unchanged-updates", value = "true")
-  void shouldNotifyListenerWithNoChangeInStatusWithFlagSet() {
-    // When the refresh is computed, and the status does not change
-    when(connection.doRefreshStatus()).thenReturn(
-        succeededFuture(ATTEMPTING_STATUS) // same as initial status
-    );
-    callAndWaitFor(connection.refreshStatus());
-
-    // Then the listener should be notified once of the connection and nothing else
-    verify(listener, times(1)).disconnected(connection);
-    verifyNoMoreInteractions(listener);
-  }
-
 
   @Test
   void shouldUseNoOpListenerWithNoChangeInStatus() {
