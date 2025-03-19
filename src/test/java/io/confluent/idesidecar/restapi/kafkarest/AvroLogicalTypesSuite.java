@@ -1,12 +1,20 @@
 package io.confluent.idesidecar.restapi.kafkarest;
 
+import io.confluent.idesidecar.restapi.avro.RecordWithDecimalLogicalType;
+import io.confluent.idesidecar.restapi.util.ByteArrayJsonUtil;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.util.UUID;
 import java.util.stream.Stream;
+
+import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
 
 public interface AvroLogicalTypesSuite extends RecordsV3BaseSuite {
   String UUID_LOGICAL_TYPE_SCHEMA = "{ \"type\": \"string\", \"logicalType\": \"uuid\" }";
@@ -41,19 +49,9 @@ public interface AvroLogicalTypesSuite extends RecordsV3BaseSuite {
     );
   }
 
-  /**
-   * TODO: All but Decimal logical type have been tested. The Decimal logical type is
-   *       a wrapper of the Avro bytes type, which will require lots of byte manipulation
-   *       We need to prefix with magic byte and (schema id & 0xF) and send the bytes
-   *       as a base64 encoded string.
-   * @param keySchema
-   * @param logicalType
-   * @param sampleData
-   * @throws IOException
-   */
   @ParameterizedTest(name = "shouldDeserializeAvroLogicalTypes: {1}")
   @MethodSource("avroLogicalTypeSchemas")
-  default void shouldDeserializeAvroLogicalTypes(
+  default void shouldSerializeAndDeserializeAvroLogicalTypes(
       String keySchema, String logicalType, Object sampleData) throws IOException {
     var topicName = randomTopicName();
     createTopic(topicName);
@@ -148,5 +146,107 @@ public interface AvroLogicalTypesSuite extends RecordsV3BaseSuite {
         ),
         topicName
     );
+  }
+
+  @Test
+  @Disabled("There's something either wrong with the way the bytes "
+      + "are sent or the way they are deserialized. "
+      + "Left as an exercise for our future selves.")
+  default void shouldSerializeAndDeserializeDecimalAvroLogicalType() throws IOException {
+    var topicName = randomTopicName();
+    createTopic(topicName);
+
+    // A decimal logical type annotates Avro bytes or fixed types.
+    // The byte array must contain the two's-complement representation of the unscaled
+    // integer value in big-endian byte order.
+    // The scale is fixed, and is specified using an attribute.
+    var keySchema = """
+        {
+          "type": "bytes",
+          "logicalType": "decimal",
+          "precision": 5,
+          "scale": 2
+        }
+        """;
+
+    var keySubjectName = getSubjectName(topicName, SubjectNameStrategyEnum.TOPIC_NAME, true);
+    var createdKeySchema = createSchema(
+        keySubjectName,
+        SchemaFormat.AVRO.name(),
+        keySchema
+    );
+
+    var valueSchema = loadResource("avro/record-with-decimal-logical-type.avsc");
+
+    var valueSubjectName = getSubjectName(topicName, SubjectNameStrategyEnum.TOPIC_NAME, false);
+    var createdValueSchema = createSchema(
+        valueSubjectName,
+        SchemaFormat.AVRO.name(),
+        valueSchema
+    );
+
+    var recordBytes = RecordWithDecimalLogicalType
+        .newBuilder()
+        .setDecimalField(BigDecimal.valueOf(123456, 2))
+        .build()
+        .toByteBuffer()
+        .array();
+
+    var valueSchemaIdBytes = ByteBuffer
+        .allocate(4)
+        .putInt(createdValueSchema.getId() & 0xF)
+        .array();
+
+    var valueDataBytes = new byte[1 + recordBytes.length + valueSchemaIdBytes.length];
+    valueDataBytes[0] = 0; // Magic byte
+    System.arraycopy(valueSchemaIdBytes, 0, valueDataBytes, 1, valueSchemaIdBytes.length);
+    System.arraycopy(recordBytes, 0, valueDataBytes, 1 + valueSchemaIdBytes.length, recordBytes.length);
+
+    // Base64 encodes the bytes and places it in a JSON object,
+    // {"__raw__": "base64-encoded-bytes"}
+    var valueDataJson = ByteArrayJsonUtil.asJsonNode(valueDataBytes);
+
+    // 12345 * 10^-2 = 123.45
+    var sampleDecimalBytes = convertBigDecimalToBytes(12345, 2);
+    var keySchemaIdBytes = ByteBuffer
+        .allocate(4)
+        .putInt(createdKeySchema.getId() & 0xF)
+        .array();
+
+    var keyDataBytes = new byte[1 + sampleDecimalBytes.length + keySchemaIdBytes.length];
+    keyDataBytes[0] = 0; // Magic byte
+    System.arraycopy(keySchemaIdBytes, 0, keyDataBytes, 1, keySchemaIdBytes.length);
+    System.arraycopy(sampleDecimalBytes, 0, keyDataBytes, 1 + keySchemaIdBytes.length, sampleDecimalBytes.length);
+
+    var keyDataJson = ByteArrayJsonUtil.asJsonNode(keyDataBytes);
+
+    var key = RecordsV3BaseSuite.schemalessData("foo");
+    produceRecord(
+        topicName,
+        keyDataJson,
+        createdKeySchema.getVersion(),
+        valueDataJson,
+        createdValueSchema.getVersion()
+    );
+
+    assertTopicHasRecord(
+        key,
+        new RecordData(
+            SchemaFormat.PROTOBUF,
+            SubjectNameStrategyEnum.TOPIC_NAME,
+            valueSchema,
+            valueSubjectName,
+            createdValueSchema.getId(),
+            valueDataJson
+        ),
+        topicName
+    );
+  }
+
+  static byte[] convertBigDecimalToBytes(long value, int scale) {
+    return BigDecimal
+        .valueOf(value, scale)
+        .unscaledValue()
+        .toByteArray();
   }
 }
