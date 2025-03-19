@@ -1,5 +1,6 @@
 package io.confluent.idesidecar.restapi.kafkarest;
 
+import static io.confluent.idesidecar.restapi.util.ExceptionUtil.unwrapWithCombinedMessage;
 import static io.confluent.idesidecar.restapi.util.MutinyUtil.uniItem;
 
 import io.confluent.idesidecar.restapi.clients.KafkaProducerClients;
@@ -7,14 +8,17 @@ import io.confluent.idesidecar.restapi.clients.SchemaRegistryClients;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequest;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceResponse;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceResponseData;
+import io.confluent.idesidecar.restapi.util.ExceptionUtil;
 import io.confluent.idesidecar.restapi.util.MutinyUtil;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 import io.confluent.kafka.serializers.KafkaJsonSerializer;
+import io.smallrye.mutiny.CompositeException;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.infrastructure.Infrastructure;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -184,12 +188,35 @@ public abstract class GenericProduceRecord {
                 c.produceRequest().getValue().getData(),
                 false
             ))
+        // If several failures have been collected,
+        // a CompositeException is fired wrapping the different failures.
+        .collectFailures()
         .with((key, value) -> c
             .with()
             .serializedKey(key)
             .serializedValue(value)
             .build()
-        );
+        )
+        .onFailure()
+        .recoverWithUni(t -> {
+          if (t instanceof CompositeException e) {
+            return Uni.createFrom().failure(new BadRequestException(
+                "Both key and value serialization unexpectedly failed: %s".formatted(
+                    e
+                        .getCauses()
+                        .stream()
+                        .map(ExceptionUtil::unwrapWithCombinedMessage)
+                        .map(Throwable::getMessage)
+                        .collect(Collectors.joining(", "))
+                ), e)
+            );
+          } else {
+            var rootCause = unwrapWithCombinedMessage(t);
+            return Uni.createFrom().failure(
+                new BadRequestException(rootCause.getMessage(), rootCause)
+            );
+          }
+        });
   }
 
   protected abstract Uni<ProduceContext> sendSerializedRecord(ProduceContext c);

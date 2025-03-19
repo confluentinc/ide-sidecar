@@ -358,14 +358,20 @@ public interface RecordsV3ErrorsSuite extends RecordsV3BaseSuite {
                     )
                     .build()
             )
-                .statusCode(404)
+                .statusCode(400)
                 .body("message", equalTo(
                     // The KafkaJsonSchemaSerializer tries to look up the subject
                     // by the record name but fails to find "ProductKey" which is the
                     // "title" of the JSON schema. Nothing gets past the serializer!
-                    "Subject 'ProductKey' not found.; error code: 40401")
+                    "Unexpected error occurred while trying to serialize key: "
+                        + "Error retrieving JSON schema: "
+                        + "{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"title\":\"ProductKey\",\"properties\":{\"id\":{\"type\":\"integer\"},\"name\":{\"type\":\"string\"},\"price\":{\"type\":\"number\"},\"tags\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}}},\"required\":[\"id\",\"name\",\"price\"]} caused by: java.lang.Throwable: Error retrieving JSON schema: {\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"title\":\"ProductKey\",\"properties\":{\"id\":{\"type\":\"integer\"},\"name\":{\"type\":\"string\"},\"price\":{\"type\":\"number\"},\"tags\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}}},\"required\":[\"id\",\"name\",\"price\"]} "
+                        + "caused by: io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException: "
+                        + "Subject 'ProductKey' not found.; error code: 40401"
+                    )
                 )
-                .body("error_code", equalTo(40401))
+                // Doesn't correspond to what's in the error message, but it's the best we can do
+                .body("error_code", equalTo(400))
         );
   }
 }

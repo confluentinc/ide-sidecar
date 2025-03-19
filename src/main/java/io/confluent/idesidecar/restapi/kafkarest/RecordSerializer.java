@@ -8,16 +8,14 @@ import com.google.protobuf.util.JsonFormat;
 import io.confluent.idesidecar.restapi.clients.ClientConfigurator;
 import io.confluent.idesidecar.restapi.util.ByteArrayJsonUtil;
 import io.confluent.kafka.schemaregistry.ParsedSchema;
-import io.confluent.kafka.schemaregistry.avro.AvroSchema;
-import io.confluent.kafka.schemaregistry.avro.AvroSchemaUtils;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.json.JsonSchema;
 import io.confluent.kafka.schemaregistry.json.JsonSchemaUtils;
 import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchema;
-import io.confluent.kafka.serializers.KafkaAvroSerializer;
 import io.confluent.kafka.serializers.KafkaJsonSerializer;
 import io.confluent.kafka.serializers.json.KafkaJsonSchemaSerializer;
 import io.confluent.kafka.serializers.protobuf.KafkaProtobufSerializer;
+import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
@@ -50,35 +48,38 @@ public class RecordSerializer {
       return null;
     }
 
-    var serdeConfigs = clientConfigurator.getSerdeConfigs(schema, isKey);
-    if (schema.isEmpty()) {
-      return serializeSchemalessData(topicName, serdeConfigs, data, isKey);
-    }
-    var jsonNode = objectMapper.valueToTree(data);
-    var parsedSchema = schema.get().parsedSchema();
-    return switch (SchemaFormat.fromSchemaType(parsedSchema.schemaType())) {
-      case AVRO -> serializeAvro(
-          client, parsedSchema, serdeConfigs, topicName, jsonNode, isKey);
-      case JSON ->
-          serializeJsonSchema(client, parsedSchema, serdeConfigs, topicName, jsonNode, isKey);
-      case PROTOBUF ->
-          serializeProtobuf(client, parsedSchema, serdeConfigs, topicName, jsonNode, isKey);
-    };
-  }
+    try {
+      var serdeConfigs = clientConfigurator.getSerdeConfigs(schema, isKey);
+      if (schema.isEmpty()) {
+        return serializeSchemalessData(topicName, serdeConfigs, data, isKey);
+      }
+      var jsonNode = objectMapper.valueToTree(data);
 
-  private ByteString serializeAvro(
-      SchemaRegistryClient client,
-      ParsedSchema parsedSchema,
-      Map<String, String> configs,
-      String topicName,
-      JsonNode data,
-      boolean isKey
-  ) {
-    try (var avroSerializer = new KafkaAvroSerializer(client)) {
-      avroSerializer.configure(configs, isKey);
-      var schema = (AvroSchema) parsedSchema;
-      var record = wrappedToObject(() -> AvroSchemaUtils.toObject(data, schema));
-      return ByteString.copyFrom(avroSerializer.serialize(topicName, record));
+      // If we were sent bytes, we should just use them as-is.
+      if (ByteArrayJsonUtil.smellsLikeBytes(jsonNode)) {
+        return ByteString.copyFrom(ByteArrayJsonUtil.asBytes(jsonNode));
+      }
+
+      var parsedSchema = schema.get().parsedSchema();
+      return switch (SchemaFormat.fromSchemaType(parsedSchema.schemaType())) {
+        case AVRO -> AvroRecordSerializer.serialize(
+            client, parsedSchema, serdeConfigs, topicName, jsonNode, isKey);
+        case JSON ->
+            serializeJsonSchema(client, parsedSchema, serdeConfigs, topicName, jsonNode, isKey);
+        case PROTOBUF ->
+            serializeProtobuf(client, parsedSchema, serdeConfigs, topicName, jsonNode, isKey);
+      };
+    } catch (RuntimeException e) {
+      // Wrap the exception with key/value information in the exception message.
+      var what = isKey ? "key" : "value";
+      Log.errorf(e,
+          "Failed to serialize %s while producing message to topic %s", what, topicName
+      );
+      throw new RuntimeException(
+          "Unexpected error occurred while trying to serialize %s : %s"
+              .formatted(what, e.getMessage()),
+          e
+      );
     }
   }
 
@@ -139,7 +140,7 @@ public class RecordSerializer {
     T get() throws E;
   }
 
-  private Object wrappedToObject(ThrowingSupplier<Object, IOException> toObjectSupplier) {
+  public static Object wrappedToObject(ThrowingSupplier<Object, IOException> toObjectSupplier) {
     try {
       return toObjectSupplier.get();
     } catch (Exception e) {
