@@ -111,7 +111,12 @@ public interface RecordsV3DryRunSuite extends RecordsV3BaseSuite {
         .statusCode(400)
         .body(
             "message",
-            equalTo("Failed to parse data: #/id: expected type: Integer, found: String")
+            equalTo(
+                "Failed to serialize key when producing message to topic %s: ".formatted(topicName)
+                + "Failed to parse data: #/id: expected type: Integer, found: String "
+                    + "caused by: Failed to parse data: #/id: expected type: Integer, found: String "
+                    + "caused by: #/id: expected type: Integer, found: String"
+            )
         );
 
     assertTopicHasNoRecords(topicName);
