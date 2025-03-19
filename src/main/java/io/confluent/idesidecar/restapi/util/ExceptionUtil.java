@@ -24,7 +24,9 @@ public final class ExceptionUtil {
   public static Throwable unwrapWithCombinedMessage(Throwable t) {
     if (t.getCause() != null) {
       return new Throwable(
-          t.getMessage() + " caused by: " + unwrapWithCombinedMessage(t.getCause()),
+          t.getMessage()
+              + " caused by: "
+              + unwrapWithCombinedMessage(t.getCause()).getMessage(),
           t.getCause()
       );
     }

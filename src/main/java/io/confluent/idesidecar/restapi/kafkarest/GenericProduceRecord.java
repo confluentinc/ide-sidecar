@@ -18,7 +18,6 @@ import io.smallrye.mutiny.infrastructure.Infrastructure;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
 import java.util.Date;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -65,7 +64,7 @@ public abstract class GenericProduceRecord {
         .chain(this::getSchemas)
         .chain(this::serialize)
         .onFailure(RuntimeException.class)
-        .transform(this::unwrapRootCause);
+        .transform(this::lookForRestClientException);
 
     if (dryRun) {
       return uptoDryRun
@@ -81,12 +80,12 @@ public abstract class GenericProduceRecord {
       return uptoDryRun
           .chain(this::sendSerializedRecord)
           .onFailure(RuntimeException.class)
-          .transform(this::unwrapRootCause)
+          .transform(this::lookForRestClientException)
           .map(this::toProduceResponse);
     }
   }
 
-  private Throwable unwrapRootCause(Throwable throwable) {
+  private Throwable lookForRestClientException(Throwable throwable) {
     if (throwable.getCause() instanceof RestClientException) {
       return throwable.getCause();
     }
@@ -201,7 +200,7 @@ public abstract class GenericProduceRecord {
         .recoverWithUni(t -> {
           if (t instanceof CompositeException e) {
             return Uni.createFrom().failure(new BadRequestException(
-                "Both key and value serialization unexpectedly failed: %s".formatted(
+                "Failed to serialize both key and value: %s".formatted(
                     e
                         .getCauses()
                         .stream()

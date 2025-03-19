@@ -73,11 +73,11 @@ public class RecordSerializer {
       // Wrap the exception with key/value information in the exception message.
       var what = isKey ? "key" : "value";
       Log.errorf(e,
-          "Failed to serialize %s while producing message to topic %s", what, topicName
+          "Failed to serialize %s when producing message to topic %s", what, topicName
       );
       throw new RuntimeException(
-          "Unexpected error occurred while trying to serialize %s: %s"
-              .formatted(what, e.getMessage()),
+          "Failed to serialize %s when producing message to topic %s: %s"
+              .formatted(what, topicName, e.getMessage()),
           e
       );
     }
