@@ -1,0 +1,17 @@
+{
+  "type": "record",
+  "name": "RecordWithDecimalLogicalType",
+  "namespace": "io.confluent.idesidecar.restapi.avro",
+  "fields": [
+    {
+      "name": "decimalField",
+      "type": {
+        "type": "bytes",
+        "logicalType": "decimal",
+        "precision": 6,
+        "scale": 2
+      }
+    }
+  ],
+  "javaPackage": "io.confluent.idesidecar.restapi.avro"
+}
