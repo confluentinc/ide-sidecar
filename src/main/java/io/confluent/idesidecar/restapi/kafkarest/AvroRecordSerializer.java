@@ -25,7 +25,13 @@ import java.util.Map;
 
 import static io.confluent.idesidecar.restapi.kafkarest.RecordSerializer.wrappedToObject;
 
-public class AvroRecordSerializer {
+/**
+ * Encapsulates logic to serialize Avro data. Has special handling for Avro logical types.
+ */
+public final class AvroRecordSerializer {
+
+  private AvroRecordSerializer() {
+  }
 
   static GenericData GENERIC_DATA = new GenericData();
 
@@ -66,8 +72,9 @@ public class AvroRecordSerializer {
   }
 
   /**
-   * Converts logical types to a {@link NonRecordContainer} type.
-   * @param avroData
+   * Converts logical types to a {@link NonRecordContainer} type. We wrap the existing
+   * {@link Conversion} implementations into a new {@link NonRecordContainerConversion} so that
+   * the {@link AvroSchemaUtils#getSchema} plays nicely with logical types.
    */
   public static void addLogicalTypeConversion(GenericData avroData) {
     // Reference: https://github.com/confluentinc/schema-registry/blob/5e3310e918e358a831555df0052d2db01771708b/client/src/main/java/io/confluent/kafka/schemaregistry/avro/AvroSchemaUtils.java#L168-L182
@@ -100,6 +107,15 @@ public class AvroRecordSerializer {
     );
   }
 
+  /**
+   * A {@link Conversion} implementation that wraps another {@link Conversion} implementation.
+   * The methods to convert into a {@link NonRecordContainer} type are NOT delegated to the parent,
+   * but instead the value passed is used as-is, see {@link #fromLong} for example. Whereas, the
+   * methods to convert from a {@link NonRecordContainer} type are delegated to the parent, see
+   * {@link #toLong} for example.
+   * @param <U>
+   * @param <T>
+   */
   static class NonRecordContainerConversion<U, T extends Conversion<U>>
           extends Conversion<NonRecordContainer> {
     final T parent;
