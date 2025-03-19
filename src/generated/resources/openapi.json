@@ -9,7 +9,7 @@
       "url" : "https://confluent.io/contact",
       "email" : "vscode@confluent.io"
     },
-    "version" : "0.180.0"
+    "version" : "0.181.0"
   },
   "servers" : [ {
     "url" : "http://127.0.0.1:26636",
@@ -1989,9 +1989,6 @@
       "HealthCheck" : {
         "type" : "object",
         "properties" : {
-          "name" : {
-            "type" : "string"
-          },
           "status" : {
             "enum" : [ "UP", "DOWN" ],
             "type" : "string"
@@ -1999,6 +1996,9 @@
           "data" : {
             "type" : "object",
             "nullable" : true
+          },
+          "name" : {
+            "type" : "string"
           }
         }
       }
