@@ -1,5 +1,6 @@
 package io.confluent.idesidecar.restapi.kafkarest;
 
+import static io.confluent.idesidecar.restapi.util.ExceptionUtil.unwrapWithCombinedMessage;
 import static io.confluent.idesidecar.restapi.util.MutinyUtil.uniItem;
 
 import io.confluent.idesidecar.restapi.clients.KafkaProducerClients;
@@ -7,9 +8,11 @@ import io.confluent.idesidecar.restapi.clients.SchemaRegistryClients;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequest;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceResponse;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceResponseData;
+import io.confluent.idesidecar.restapi.util.ExceptionUtil;
 import io.confluent.idesidecar.restapi.util.MutinyUtil;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 import io.confluent.kafka.serializers.KafkaJsonSerializer;
+import io.smallrye.mutiny.CompositeException;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.infrastructure.Infrastructure;
 import jakarta.inject.Inject;
@@ -61,7 +64,7 @@ public abstract class GenericProduceRecord {
         .chain(this::getSchemas)
         .chain(this::serialize)
         .onFailure(RuntimeException.class)
-        .transform(this::unwrapRootCause);
+        .transform(this::lookForRestClientException);
 
     if (dryRun) {
       return uptoDryRun
@@ -77,12 +80,12 @@ public abstract class GenericProduceRecord {
       return uptoDryRun
           .chain(this::sendSerializedRecord)
           .onFailure(RuntimeException.class)
-          .transform(this::unwrapRootCause)
+          .transform(this::lookForRestClientException)
           .map(this::toProduceResponse);
     }
   }
 
-  private Throwable unwrapRootCause(Throwable throwable) {
+  private Throwable lookForRestClientException(Throwable throwable) {
     if (throwable.getCause() instanceof RestClientException) {
       return throwable.getCause();
     }
@@ -184,12 +187,35 @@ public abstract class GenericProduceRecord {
                 c.produceRequest().getValue().getData(),
                 false
             ))
+        // If several failures have been collected,
+        // a CompositeException is fired wrapping the different failures.
+        .collectFailures()
         .with((key, value) -> c
             .with()
             .serializedKey(key)
             .serializedValue(value)
             .build()
-        );
+        )
+        .onFailure()
+        .recoverWithUni(t -> {
+          if (t instanceof CompositeException e) {
+            return Uni.createFrom().failure(new BadRequestException(
+                "Failed to serialize both key and value: %s".formatted(
+                    e
+                        .getCauses()
+                        .stream()
+                        .map(ExceptionUtil::unwrapWithCombinedMessage)
+                        .map(Throwable::getMessage)
+                        .collect(Collectors.joining(", "))
+                ), e)
+            );
+          } else {
+            var rootCause = unwrapWithCombinedMessage(t);
+            return Uni.createFrom().failure(
+                new BadRequestException(rootCause.getMessage(), rootCause)
+            );
+          }
+        });
   }
 
   protected abstract Uni<ProduceContext> sendSerializedRecord(ProduceContext c);
