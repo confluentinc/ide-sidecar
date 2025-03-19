@@ -76,7 +76,7 @@ public class RecordSerializer {
           "Failed to serialize %s while producing message to topic %s", what, topicName
       );
       throw new RuntimeException(
-          "Unexpected error occurred while trying to serialize %s : %s"
+          "Unexpected error occurred while trying to serialize %s: %s"
               .formatted(what, e.getMessage()),
           e
       );
