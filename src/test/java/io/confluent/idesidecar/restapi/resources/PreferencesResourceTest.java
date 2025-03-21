@@ -206,9 +206,42 @@ public class PreferencesResourceTest {
     assertNotNull(errors);
     var error = errors.get(0);
     assertEquals(
-        "The cert file cert-does-not-exist.pem cannot be found.",
+        "The cert file 'cert-does-not-exist.pem' cannot be found.",
         error.get("detail").textValue()
     );
+  }
+
+  @Test
+  @Order(6)
+  void updatePreferencesShouldReturnErrorIfProvidedTlsPemPathIsEmpty() {
+    var responseBody = given()
+        .when()
+        .body(
+            """
+                {
+                  "api_version": "gateway/v1",
+                  "kind": "Preferences",
+                  "spec": {
+                    "tls_pem_paths": [""]
+                  }
+                }
+                """
+        )
+        .header("Content-Type", "application/json")
+        .put()
+        .then()
+        .statusCode(400)
+        .extract()
+        .body()
+        .asString();
+    var responseJson = asJson(responseBody);
+
+    assertNotNull(responseJson);
+    var errors = responseJson.get("errors");
+    assertNotNull(errors);
+    var error = errors.get(0);
+    assertEquals("cert_path_empty", error.get("code").textValue());
+    assertEquals("The cert file path cannot be empty.", error.get("detail").textValue());
   }
 
   /**
