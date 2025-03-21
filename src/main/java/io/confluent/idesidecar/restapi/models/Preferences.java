@@ -9,6 +9,7 @@ import io.confluent.idesidecar.restapi.resources.PreferencesResource;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.stream.Stream;
 import org.eclipse.microprofile.config.ConfigProvider;
 
 @JsonPropertyOrder({
@@ -67,18 +68,37 @@ public record Preferences(
       }
     }
 
+    /**
+     * Validates the TLS PEM paths provided in the preferences. Checks if the provided paths exist
+     * in the file system and are not empty.
+     *
+     * @return a list of errors if any of the TLS PEM paths are invalid
+     */
     List<Error> validateTlsPemPaths() {
       return this.tlsPemPaths.stream()
-          .filter(pemPath -> Files.notExists(Path.of(pemPath)))
-          .map(pemPath ->
-              new Error(
-                  "cert_not_found",
-                  "Cert file cannot be found",
-                  "The cert file %s cannot be found.".formatted(pemPath),
-                  "/spec/tls_pem_paths"
-
-              )
-          )
+          .flatMap(pemPath -> {
+            if (pemPath == null || pemPath.isBlank()) {
+              return Stream.of(
+                  new Error(
+                      "cert_path_empty",
+                      "Cert file path is null or empty",
+                      "The cert file path cannot be null or empty.",
+                      "/spec/tls_pem_paths"
+                  )
+              );
+            } else if (Files.notExists(Path.of(pemPath))) {
+              return Stream.of(
+                  new Error(
+                      "cert_not_found",
+                      "Cert file cannot be found",
+                      "The cert file '%s' cannot be found.".formatted(pemPath),
+                      "/spec/tls_pem_paths"
+                  )
+              );
+            } else {
+              return Stream.empty();
+            }
+          })
           .toList();
     }
   }
