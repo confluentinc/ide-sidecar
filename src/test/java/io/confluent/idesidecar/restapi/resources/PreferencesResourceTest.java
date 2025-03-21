@@ -241,7 +241,7 @@ public class PreferencesResourceTest {
     assertNotNull(errors);
     var error = errors.get(0);
     assertEquals("cert_path_empty", error.get("code").textValue());
-    assertEquals("The cert file path cannot be empty.", error.get("detail").textValue());
+    assertEquals("The cert file path cannot be null or empty.", error.get("detail").textValue());
   }
 
   /**

@@ -77,12 +77,12 @@ public record Preferences(
     List<Error> validateTlsPemPaths() {
       return this.tlsPemPaths.stream()
           .flatMap(pemPath -> {
-            if (pemPath.isBlank()) {
+            if (pemPath == null || pemPath.isBlank()) {
               return Stream.of(
                   new Error(
                       "cert_path_empty",
-                      "Cert file path is empty",
-                      "The cert file path cannot be empty.",
+                      "Cert file path is null or empty",
+                      "The cert file path cannot be null or empty.",
                       "/spec/tls_pem_paths"
                   )
               );
