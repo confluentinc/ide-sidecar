@@ -16,10 +16,12 @@ import io.confluent.idesidecar.restapi.util.Crn;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
+import io.vertx.core.MultiMap;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
 import java.util.List;
+import java.util.Map;
 import org.eclipse.microprofile.config.ConfigProvider;
 
 /**
@@ -64,6 +66,10 @@ public class RealCCloudFetcher extends ConfluentCloudRestClient implements CClou
   private static final String CONFLUENT_CLOUD_SRS_URI = ConfigProvider
       .getConfig()
       .getValue("ide-sidecar.connections.ccloud.resources.sr-list-uri", String.class);
+
+  private static final String CONFLUENT_CLOUD_FLINK_COMPUTE_POOLS_URI = ConfigProvider
+      .getConfig()
+      .getValue("ide-sidecar.connections.ccloud.resources.flink-compute-pools-uri", String.class);
 
   @Inject
   ConnectionStateManager connectionStateManager;
@@ -533,5 +539,80 @@ public class RealCCloudFetcher extends ConfluentCloudRestClient implements CClou
       // do nothing
     }
     return null;
+  }
+
+  public Multi<FlinkComputePool> getFlinkComputePools(String connectionId, String envId) {
+    var headers = headersFor(connectionId);
+    return listItems(
+        headers,
+        CONFLUENT_CLOUD_FLINK_COMPUTE_POOLS_URI.formatted(envId),
+        null,
+        this::parseFlinkComputePoolsList
+    )
+        .map(pool -> pool.withConnectionId(connectionId));
+  }
+
+  @Override
+  public Multi<FlinkComputePool> listAllFlinkComputePools() {
+    MultiMap headers = (MultiMap) headersForAllConnections();
+    return listItems(
+        headers,
+        CONFLUENT_CLOUD_FLINK_COMPUTE_POOLS_URI,
+        null,
+        this::parseFlinkComputePoolsList
+    );
+  }
+
+  private PageOfResults<FlinkComputePool> parseFlinkComputePoolsList(String json, PaginationState state) {
+    return parseList(json, state, ListFlinkComputePoolsResponse.class);
+  }
+
+  private Multi<Map<String, String>> headersForAllConnections() {
+    // Implement logic to get headers for all connections
+    return Multi.createFrom().empty();
+  }
+
+  @RegisterForReflection
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  private record ListFlinkComputePoolsResponse(
+      @JsonProperty(value = "api_version") String apiVersion,
+      String kind,
+      ListMetadata metadata,
+      @JsonProperty(value = "data", required = true) List<FlinkComputePoolResponse> data
+  ) implements ListResponse<FlinkComputePoolResponse, FlinkComputePool> {
+
+  }
+
+  @RegisterForReflection
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  private record FlinkComputePoolResponse(
+      @JsonProperty(value = "api_version") String apiVersion,
+      String kind,
+      @JsonProperty(required = true) String id,
+      JsonNode metadata,
+      @JsonProperty(value = "display_name") String displayName,
+      @JsonProperty(value = "description") String description,
+      @JsonProperty(value = "identity_claim") String identityClaim,
+      @JsonProperty(value = "filter") String filter,
+      @JsonProperty(value = "principal") String principal,
+      @JsonProperty(value = "state") String state,
+      @JsonProperty(value = "region") String region,
+      @JsonProperty(value = "provider") String provider
+  ) implements ListItem<FlinkComputePool> {
+
+    @Override
+    public FlinkComputePool toRepresentation() {
+      return new FlinkComputePool(
+          id,
+          displayName,
+          description,
+          identityClaim,
+          filter,
+          principal,
+          state,
+          region,
+          provider
+      );
+    }
   }
 }

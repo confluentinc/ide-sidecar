@@ -7,6 +7,7 @@ import io.confluent.idesidecar.restapi.models.graph.CCloudOrganization;
 import io.confluent.idesidecar.restapi.models.graph.CCloudSchemaRegistry;
 import io.confluent.idesidecar.restapi.models.graph.CCloudSearchCriteria;
 import io.confluent.idesidecar.restapi.models.graph.ConfluentRestClient.PageLimits;
+import io.confluent.idesidecar.restapi.models.graph.FlinkComputePool;
 import io.confluent.idesidecar.restapi.models.graph.RealCCloudFetcher;
 import io.quarkus.logging.Log;
 import io.smallrye.graphql.api.Nullable;
@@ -172,6 +173,27 @@ public class ConfluentCloudQueryResource {
             DEFAULT_LIMITS
         )
     );
+  }
+
+  @Query("getFlinkComputePools")
+  @Description("Get Flink compute pools for a specific connection and environment")
+  @NonNull
+  public Uni<List<FlinkComputePool>> getComputePools(@NonNull String connectionId, @NonNull String envId) {
+    Log.infof("Get Flink compute pools for connection %s and environment %s", connectionId, envId);
+    return multiToUni(ccloud.getFlinkComputePools(connectionId, envId));
+  }
+
+  /**
+   * Get all Flink compute pools.
+   *
+   * @return the Flink compute pools; never null but possibly empty
+   */
+  @Query("listAllFlinkComputePools")
+  @Description("Get all Flink compute pools")
+  @NonNull
+  public Uni<List<FlinkComputePool>> listAllFlinkComputePools() {
+    Log.info("Get all Flink compute pools");
+    return multiToUni(ccloud.listAllFlinkComputePools());
   }
 
   /**

@@ -18,6 +18,15 @@ import io.smallrye.mutiny.Uni;
 public interface CCloudFetcher {
 
   /**
+   * Get the Flink compute pools accessible to the specified CCloud connection's principal and within the specified environment.
+   *
+   * @param connectionId the identifier of the CCloud connection
+   * @param envId        the identifier of the CCloud environment
+   * @return the list of Flink compute pools; may be empty
+   */
+  Multi<FlinkComputePool> getFlinkComputePools(String connectionId, String envId);
+  Multi<FlinkComputePool> listAllFlinkComputePools();
+  /**
    * Get all CCloud connections.
    *
    * @return the list of all CCloud connections; never null but possibly empty
