@@ -1,0 +1,52 @@
+{
+  "api_version": "v1",
+  "kind": "FlinkComputePoolList",
+  "metadata": {
+    "self": "/api/v1/flink-compute-pools",
+    "resource_version": "1"
+  },
+  "data": [
+    {
+      "api_version": "v1",
+      "kind": "FlinkComputePool",
+      "id": "pool-1",
+      "metadata": {
+        "self": "/api/v1/flink-compute-pools/pool-1"
+      },
+      "spec": {
+        "display_name": "Flink Pool 1",
+        "description": "Description 1",
+        "identity_claim": "Identity Claim 1",
+        "filter": "Filter 1",
+        "principal": "Principal 1",
+        "state": "State 1",
+        "region": "Region 1",
+        "provider": "Provider 1"
+      },
+      "status": {
+        "phase": "Active"
+      }
+    },
+    {
+      "api_version": "v1",
+      "kind": "FlinkComputePool",
+      "id": "pool-2",
+      "metadata": {
+        "self": "/api/v1/flink-compute-pools/pool-2"
+      },
+      "spec": {
+        "display_name": "Flink Pool 2",
+        "description": "Description 2",
+        "identity_claim": "Identity Claim 2",
+        "filter": "Filter 2",
+        "principal": "Principal 2",
+        "state": "State 2",
+        "region": "Region 2",
+        "provider": "Provider 2"
+      },
+      "status": {
+        "phase": "Active"
+      }
+    }
+  ]
+}

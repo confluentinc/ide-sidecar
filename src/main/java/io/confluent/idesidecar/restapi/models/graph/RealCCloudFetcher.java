@@ -13,6 +13,7 @@ import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
 import io.confluent.idesidecar.restapi.models.Connection;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
 import io.confluent.idesidecar.restapi.util.Crn;
+import io.quarkus.logging.Log;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
@@ -541,9 +542,10 @@ public class RealCCloudFetcher extends ConfluentCloudRestClient implements CClou
     return null;
   }
 
-  public Multi<FlinkComputePool> getFlinkComputePools(String connectionId, String envId, String region, String network) {
+  public Multi<FlinkComputePool> getFlinkComputePools(String connectionId, String envId) {
     var headers = headersFor(connectionId);
-    String url = CONFLUENT_CLOUD_FLINK_COMPUTE_POOLS_URI.formatted(region, envId, network);
+    String url = CONFLUENT_CLOUD_FLINK_COMPUTE_POOLS_URI.formatted(envId);
+    Log.infof("Fetching Flink compute pools from URL: %s with headers: %s", url, headers);
     return listItems(headers, url, null, this::parseFlinkComputePoolsList)
         .map(pool -> pool.withConnectionId(connectionId));
   }
@@ -575,29 +577,47 @@ public class RealCCloudFetcher extends ConfluentCloudRestClient implements CClou
       String kind,
       @JsonProperty(required = true) String id,
       JsonNode metadata,
-      @JsonProperty(value = "display_name") String displayName,
-      @JsonProperty(value = "description") String description,
-      @JsonProperty(value = "identity_claim") String identityClaim,
-      @JsonProperty(value = "filter") String filter,
-      @JsonProperty(value = "principal") String principal,
-      @JsonProperty(value = "state") String state,
-      @JsonProperty(value = "region") String region,
-      @JsonProperty(value = "provider") String provider
+      @JsonProperty(value = "spec") FlinkComputePoolSpec spec,
+      @JsonProperty(value = "status") FlinkComputePoolStatus status
   ) implements ListItem<FlinkComputePool> {
 
     @Override
     public FlinkComputePool toRepresentation() {
       return new FlinkComputePool(
           id,
-          displayName,
-          description,
-          identityClaim,
-          filter,
-          principal,
-          state,
-          region,
-          provider
+          spec.displayName,
+          spec.environment.resourceName,
+          spec.cloud,
+          spec.region,
+          status.phase,
+          spec.description,
+          spec.provider,
+          spec.identityClaim
       );
     }
   }
+
+  @RegisterForReflection
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  private record FlinkComputePoolSpec(
+      @JsonProperty(value = "display_name") String displayName,
+      @JsonProperty(value = "cloud") String cloud,
+      @JsonProperty(value = "region") String region,
+      @JsonProperty(value = "environment") EnvironmentReference environment,
+      @JsonProperty(value = "description") String description, // Add this line
+      @JsonProperty(value = "provider") String provider, // Add this line
+      @JsonProperty(value = "identity_claim") String identityClaim // Add this line
+  ) {
+
+  }
+
+  @RegisterForReflection
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  private record FlinkComputePoolStatus(
+      @JsonProperty(value = "phase") String phase
+  ) {
+
+  }
+
+
 }
