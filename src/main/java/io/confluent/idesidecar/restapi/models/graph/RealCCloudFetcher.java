@@ -541,14 +541,10 @@ public class RealCCloudFetcher extends ConfluentCloudRestClient implements CClou
     return null;
   }
 
-  public Multi<FlinkComputePool> getFlinkComputePools(String connectionId, String envId) {
+  public Multi<FlinkComputePool> getFlinkComputePools(String connectionId, String envId, String region, String network) {
     var headers = headersFor(connectionId);
-    return listItems(
-        headers,
-        CONFLUENT_CLOUD_FLINK_COMPUTE_POOLS_URI.formatted(envId),
-        null,
-        this::parseFlinkComputePoolsList
-    )
+    String url = CONFLUENT_CLOUD_FLINK_COMPUTE_POOLS_URI.formatted(region, envId, network);
+    return listItems(headers, url, null, this::parseFlinkComputePoolsList)
         .map(pool -> pool.withConnectionId(connectionId));
   }
 

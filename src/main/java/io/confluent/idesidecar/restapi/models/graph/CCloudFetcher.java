@@ -24,7 +24,7 @@ public interface CCloudFetcher {
    * @param envId        the identifier of the CCloud environment
    * @return the list of Flink compute pools; may be empty
    */
-  Multi<FlinkComputePool> getFlinkComputePools(String connectionId, String envId);
+  Multi<FlinkComputePool> getFlinkComputePools(String connectionId, String envId, String region, String network);
   Multi<FlinkComputePool> listAllFlinkComputePools();
   /**
    * Get all CCloud connections.
