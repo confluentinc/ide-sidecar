@@ -30,6 +30,7 @@ public class ConfluentCloudQueryResourceTest extends ConfluentQueryResourceTestB
   @BeforeEach
   void setup() {
     Log.info("Setting up before test");
+    // Clean up any pre-existing connections to avoid conflicts
     super.setup();
     ccloudTestUtil.createAuthedConnection(
         "ccloud-dev",
@@ -315,6 +316,20 @@ public class ConfluentCloudQueryResourceTest extends ConfluentQueryResourceTestB
     assertQueryResponseMatches(
         "graph/real/get-ccloud-connection-by-id-query.graphql",
         "graph/real/get-ccloud-connection-by-id-failed-kafka-expected.json",
+        this::replaceWireMockPort
+    );
+  }
+
+  @Test
+  void shouldGetFlinkComputePools() {
+    setupCCloudApiMocks(
+        ccloudTestUtil.getControlPlaneToken("ccloud-dev"));
+    setupCCloudApiMocks(
+        ccloudTestUtil.getControlPlaneToken("ccloud-prod"));
+
+    assertQueryResponseMatches(
+        "graph/real/get-flink-compute-pools-query.graphql",
+        "graph/real/get-flink-compute-pools-expected.json",
         this::replaceWireMockPort
     );
   }

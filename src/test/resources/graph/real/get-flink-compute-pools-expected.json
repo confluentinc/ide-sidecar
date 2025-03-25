@@ -1,0 +1,28 @@
+{
+  "data": {
+    "getFlinkComputePools": [
+      {
+        "id": "pool-1",
+        "displayName": "Flink Pool 1",
+        "description": "Description 1",
+        "identityClaim": "Identity Claim 1",
+        "filter": "Filter 1",
+        "principal": "Principal 1",
+        "state": "State 1",
+        "region": "Region 1",
+        "provider": "Provider 1"
+      },
+      {
+        "id": "pool-2",
+        "displayName": "Flink Pool 2",
+        "description": "Description 2",
+        "identityClaim": "Identity Claim 2",
+        "filter": "Filter 2",
+        "principal": "Principal 2",
+        "state": "State 2",
+        "region": "Region 2",
+        "provider": "Provider 2"
+      }
+    ]
+  }
+}
