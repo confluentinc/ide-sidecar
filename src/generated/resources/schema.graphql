@@ -118,8 +118,6 @@ type Query {
   findCCloudKafkaClusters(connectionId: String!, environmentId: String = "", name: String = "", provider: String = "", region: String = ""): [CCloudKafkaCluster]!
   "Get Flink compute pools for a specific connection and environment"
   getFlinkComputePools(connectionId: String!, envId: String!, network: String!, region: String!): [FlinkComputePool]!
-  "Get all Flink compute pools"
-  listAllFlinkComputePools: [FlinkComputePool]!
   "Get all local connections"
   localConnections: [LocalConnection]!
 }

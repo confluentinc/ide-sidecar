@@ -548,17 +548,6 @@ public class RealCCloudFetcher extends ConfluentCloudRestClient implements CClou
         .map(pool -> pool.withConnectionId(connectionId));
   }
 
-  @Override
-  public Multi<FlinkComputePool> listAllFlinkComputePools() {
-    MultiMap headers = (MultiMap) headersForAllConnections();
-    return listItems(
-        headers,
-        CONFLUENT_CLOUD_FLINK_COMPUTE_POOLS_URI,
-        null,
-        this::parseFlinkComputePoolsList
-    );
-  }
-
   private PageOfResults<FlinkComputePool> parseFlinkComputePoolsList(String json, PaginationState state) {
     return parseList(json, state, ListFlinkComputePoolsResponse.class);
   }

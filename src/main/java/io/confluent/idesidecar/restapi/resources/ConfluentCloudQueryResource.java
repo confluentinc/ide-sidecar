@@ -184,19 +184,6 @@ public class ConfluentCloudQueryResource {
   }
 
   /**
-   * Get all Flink compute pools.
-   *
-   * @return the Flink compute pools; never null but possibly empty
-   */
-  @Query("listAllFlinkComputePools")
-  @Description("Get all Flink compute pools")
-  @NonNull
-  public Uni<List<FlinkComputePool>> listAllFlinkComputePools() {
-    Log.info("Get all Flink compute pools");
-    return multiToUni(ccloud.listAllFlinkComputePools());
-  }
-
-  /**
    * Apparently the Smallrye GraphQL plugin does not handle {@link Multi}, so we have to convert it
    * to {@link Uni}.
    *
