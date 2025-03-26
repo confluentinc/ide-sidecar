@@ -2,24 +2,21 @@
   "data": {
     "getFlinkComputePools": [
       {
-        "id": "flink-1",
+        "id": "ccloud-dev",
         "spec": {
-          "name": "Flink Pool 1",
-          "version": "1.13.2"
+          "display_name": "Flink Pool 1"
         },
         "status": {
-          "state": "RUNNING",
-          "message": "All systems operational"
+          "phase": "Active"
         }
       },
       {
-        "id": "flink-2",
+        "id": "ccloud-dev",
         "spec": {
-          "name": "Flink Pool 2",
-          "version": "1.13.2"
+          "display_name": "Flink Pool 2"
         },
         "status": {
-          "state": "RUNNING",
+          "phase": "Active"
         }
       }
     ]
