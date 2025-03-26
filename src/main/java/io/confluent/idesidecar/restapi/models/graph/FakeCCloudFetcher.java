@@ -32,7 +32,6 @@ public class FakeCCloudFetcher implements CCloudFetcher {
   public static final String TEST_ORG_ID = "33f11e2e-c314-4e92-8e44-546ac834469b";
   public static final String PROD_ORG_ID = "7e468e7d-1efa-4f2d-bbc9-b45b100089e4";
 
-
   @RegisterForReflection
   static class Connection {
 
@@ -234,4 +233,22 @@ public class FakeCCloudFetcher implements CCloudFetcher {
     }
     return Multi.createFrom().iterable(connection.findKafkaClusters(criteria));
   }
+
+  @Override
+  public Multi<FlinkComputePool> getFlinkComputePools(String connectionId, String envId) {
+    var connection = CONNECTIONS.get(connectionId);
+    if (connection == null) {
+      return Multi.createFrom().failure(
+          new ConnectionNotFoundException(
+              String.format("Connection %s is not found.", connectionId)
+          )
+      );
+    }
+    List<FlinkComputePool> flinkComputePools = List.of(
+        new FlinkComputePool("pool-1", "Flink Pool 1", "Description 1", "Identity Claim 1", "Filter 1", "Principal 1", "State 1", "Region 1", "Provider 1"),
+        new FlinkComputePool("pool-2", "Flink Pool 2", "Description 2", "Identity Claim 2", "Filter 2", "Principal 2", "State 2", "Region 2", "Provider 2")
+    );
+    return Multi.createFrom().iterable(flinkComputePools);
+  }
+
 }

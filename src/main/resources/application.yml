@@ -114,6 +114,7 @@ ide-sidecar:
         env-list-uri: https://confluent.cloud/api/org/v2/environments
         lkc-list-uri: https://confluent.cloud/api/cmk/v2/clusters?environment=%s
         sr-list-uri: https://confluent.cloud/api/srcm/v3/clusters?environment=%s
+        flink-compute-pools-uri: https://confluent.cloud/api/fcpm/v2/compute-pools?&environment=%s
 
     confluent-local:
       # We assume that the user is running the confluent-local image with
