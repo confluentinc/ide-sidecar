@@ -32,7 +32,6 @@ public class FakeCCloudFetcher implements CCloudFetcher {
   public static final String TEST_ORG_ID = "33f11e2e-c314-4e92-8e44-546ac834469b";
   public static final String PROD_ORG_ID = "7e468e7d-1efa-4f2d-bbc9-b45b100089e4";
 
-
   @RegisterForReflection
   static class Connection {
 
@@ -234,4 +233,46 @@ public class FakeCCloudFetcher implements CCloudFetcher {
     }
     return Multi.createFrom().iterable(connection.findKafkaClusters(criteria));
   }
+
+  @Override
+  public Multi<FlinkComputePool> getFlinkComputePools(String connectionId, String envId) {
+    var connection = CONNECTIONS.get(connectionId);
+    if (connection == null) {
+      return Multi.createFrom().failure(
+          new ConnectionNotFoundException(
+              String.format("Connection %s is not found.", connectionId)
+          )
+      );
+    }
+    List<FlinkComputePool> flinkComputePools = List.of(
+        new FlinkComputePool(
+            "flink-1",
+            new FlinkComputePoolSpec(
+                "flink-1",
+                "AWS",
+                "us-east-2",
+                10,
+                new EnvironmentReference("id1", "resource1", "resource1"),
+                new NetworkReference("id1", "env2", "related", "resource2")
+            ),
+            new FlinkComputePoolStatus("Active", 10),
+            "ccloud-dev"
+        ),
+        new FlinkComputePool(
+            "flink-2",
+            new FlinkComputePoolSpec(
+                "flink-1",
+                "AWS",
+                "us-west-2",
+                10,
+                new EnvironmentReference("id2", "resource2", "resource2"),
+                new NetworkReference("id2", "env2", "related", "resource2")
+            ),
+            new FlinkComputePoolStatus("PROVISIONING", 5),
+            "ccloud-dev"
+        )
+    );
+    return Multi.createFrom().iterable(flinkComputePools);
+  }
+
 }

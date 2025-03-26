@@ -1,0 +1,12 @@
+query {
+  getFlinkComputePools(connectionId: "ccloud-dev", envId: "env-12345") {
+    id
+    spec {
+      display_name
+      version
+    }
+    status {
+      state
+    }
+  }
+}
