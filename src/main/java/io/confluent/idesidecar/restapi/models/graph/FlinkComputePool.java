@@ -7,10 +7,11 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
 public record FlinkComputePool(
     @JsonProperty("id") String id,
     @JsonProperty("spec") FlinkComputePoolSpec spec,
-    @JsonProperty("status") FlinkComputePoolStatus status
+    @JsonProperty("status") FlinkComputePoolStatus status,
+    @JsonProperty("connectionId") String connectionId
 ) {
   public FlinkComputePool withConnectionId(String connectionId) {
-    return new FlinkComputePool(connectionId, this.spec, this.status);
+    return new FlinkComputePool(this.id, this.spec, this.status, connectionId);
   }
 }
 

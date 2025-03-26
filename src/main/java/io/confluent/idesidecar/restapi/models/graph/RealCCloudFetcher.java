@@ -579,7 +579,8 @@ public class RealCCloudFetcher extends ConfluentCloudRestClient implements CClou
       JsonNode metadata,
       @JsonProperty(value = "spec")
       io.confluent.idesidecar.restapi.models.graph.FlinkComputePoolSpec spec,
-      @JsonProperty(value = "status") io.confluent.idesidecar.restapi.models.graph.FlinkComputePoolStatus status
+      @JsonProperty(value = "status") io.confluent.idesidecar.restapi.models.graph.FlinkComputePoolStatus status,
+      @JsonProperty(value = "connection_id") String connectionId
       ) implements ListItem<FlinkComputePool> {
 
     @Override
@@ -587,7 +588,8 @@ public class RealCCloudFetcher extends ConfluentCloudRestClient implements CClou
       return new FlinkComputePool(
           id,
           spec,
-          status
+          status,
+          connectionId
       );
     }
   }

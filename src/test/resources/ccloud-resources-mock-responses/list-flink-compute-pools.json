@@ -9,7 +9,7 @@
     {
       "api_version": "v1",
       "kind": "FlinkComputePool",
-      "id": "pool-1",
+      "id": "ccloud-dev",
       "metadata": {
         "self": "/api/v1/flink-compute-pools/pool-1"
       },
@@ -38,7 +38,7 @@
     {
       "api_version": "v1",
       "kind": "FlinkComputePool",
-      "id": "pool-2",
+      "id": "ccloud-dev",
       "metadata": {
         "self": "/api/v1/flink-compute-pools/pool-2"
       },

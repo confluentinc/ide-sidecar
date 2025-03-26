@@ -255,7 +255,8 @@ public class FakeCCloudFetcher implements CCloudFetcher {
                 new EnvironmentReference("id1", "resource1", "resource1"),
                 new NetworkReference("id1", "env2", "related", "resource2")
             ),
-            new FlinkComputePoolStatus("Active", 10)
+            new FlinkComputePoolStatus("Active", 10),
+            "ccloud-dev"
         ),
         new FlinkComputePool(
             "flink-2",
@@ -267,7 +268,8 @@ public class FakeCCloudFetcher implements CCloudFetcher {
                 new EnvironmentReference("id2", "resource2", "resource2"),
                 new NetworkReference("id2", "env2", "related", "resource2")
             ),
-            new FlinkComputePoolStatus("PROVISIONING", 5)
+            new FlinkComputePoolStatus("PROVISIONING", 5),
+            "ccloud-dev"
         )
     );
     return Multi.createFrom().iterable(flinkComputePools);
