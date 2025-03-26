@@ -9,7 +9,7 @@ public record FlinkComputePoolSpec(
     @JsonProperty("cloud") String cloud,
     @JsonProperty("region") String region,
     @JsonProperty("max_cfu") int maxCfu,
-    @JsonProperty("environment") EnvironmentReference environment,
+    @JsonProperty("environment") CCloudEnvironment environment,
     @JsonProperty("network") NetworkReference network
 ) {
 

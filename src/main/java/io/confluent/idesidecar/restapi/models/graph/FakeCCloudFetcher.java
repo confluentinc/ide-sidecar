@@ -252,7 +252,7 @@ public class FakeCCloudFetcher implements CCloudFetcher {
                 "AWS",
                 "us-east-2",
                 10,
-                new EnvironmentReference("id1", "resource1", "resource1"),
+                new CCloudEnvironment("id1", "resource1", CCloudGovernancePackage.ESSENTIALS),
                 new NetworkReference("id1", "env2", "related", "resource2")
             ),
             new FlinkComputePoolStatus("Active", 10),
@@ -265,7 +265,7 @@ public class FakeCCloudFetcher implements CCloudFetcher {
                 "AWS",
                 "us-west-2",
                 10,
-                new EnvironmentReference("id2", "resource2", "resource2"),
+                new CCloudEnvironment("id2", "resource2", CCloudGovernancePackage.ESSENTIALS),
                 new NetworkReference("id2", "env2", "related", "resource2")
             ),
             new FlinkComputePoolStatus("PROVISIONING", 5),

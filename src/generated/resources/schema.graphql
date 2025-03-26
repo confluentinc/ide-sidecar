@@ -87,6 +87,7 @@ type EnvironmentReference {
 }
 
 type FlinkComputePool {
+  connectionId: String
   id: String
   spec: FlinkComputePoolSpec
   status: FlinkComputePoolStatus
