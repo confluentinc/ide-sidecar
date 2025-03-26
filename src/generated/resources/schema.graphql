@@ -80,16 +80,30 @@ type DirectSchemaRegistry {
   uri: String!
 }
 
-type FlinkComputePool {
-  description: String
-  displayName: String
-  filter: String
+type EnvironmentReference {
   id: String
-  identityClaim: String
-  principal: String
-  provider: String
+  related: String
+  resource_name: String
+}
+
+type FlinkComputePool {
+  id: String
+  spec: FlinkComputePoolSpec
+  status: FlinkComputePoolStatus
+}
+
+type FlinkComputePoolSpec {
+  cloud: String
+  display_name: String
+  environment: EnvironmentReference
+  max_cfu: Int!
+  network: NetworkReference
   region: String
-  state: String
+}
+
+type FlinkComputePoolStatus {
+  current_cfu: Int!
+  phase: String
 }
 
 type LocalConnection {
@@ -104,6 +118,13 @@ type LocalSchemaRegistry {
   connectionId: String!
   id: String!
   uri: String!
+}
+
+type NetworkReference {
+  environment: String
+  id: String
+  related: String
+  resource_name: String
 }
 
 "Query root"
