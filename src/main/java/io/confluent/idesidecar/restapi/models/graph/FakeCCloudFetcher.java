@@ -245,8 +245,30 @@ public class FakeCCloudFetcher implements CCloudFetcher {
       );
     }
     List<FlinkComputePool> flinkComputePools = List.of(
-        new FlinkComputePool("pool-1", "Flink Pool 1", "Description 1", "Identity Claim 1", "Filter 1", "Principal 1", "State 1", "Region 1", "Provider 1"),
-        new FlinkComputePool("pool-2", "Flink Pool 2", "Description 2", "Identity Claim 2", "Filter 2", "Principal 2", "State 2", "Region 2", "Provider 2")
+        new FlinkComputePool(
+            "flink-1",
+            new FlinkComputePoolSpec(
+                "flink-1",
+                "AWS",
+                "us-east-2",
+                10,
+                new EnvironmentReference("id1", "resource1", "resource1"),
+                new NetworkReference("id1", "env2", "related", "resource2")
+            ),
+            new FlinkComputePoolStatus("Active", 10)
+        ),
+        new FlinkComputePool(
+            "flink-2",
+            new FlinkComputePoolSpec(
+                "flink-1",
+                "AWS",
+                "us-west-2",
+                10,
+                new EnvironmentReference("id2", "resource2", "resource2"),
+                new NetworkReference("id2", "env2", "related", "resource2")
+            ),
+            new FlinkComputePoolStatus("PROVISIONING", 5)
+        )
     );
     return Multi.createFrom().iterable(flinkComputePools);
   }

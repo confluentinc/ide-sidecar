@@ -577,22 +577,17 @@ public class RealCCloudFetcher extends ConfluentCloudRestClient implements CClou
       String kind,
       @JsonProperty(required = true) String id,
       JsonNode metadata,
-      @JsonProperty(value = "spec") FlinkComputePoolSpec spec,
-      @JsonProperty(value = "status") FlinkComputePoolStatus status
-  ) implements ListItem<FlinkComputePool> {
+      @JsonProperty(value = "spec")
+      io.confluent.idesidecar.restapi.models.graph.FlinkComputePoolSpec spec,
+      @JsonProperty(value = "status") io.confluent.idesidecar.restapi.models.graph.FlinkComputePoolStatus status
+      ) implements ListItem<FlinkComputePool> {
 
     @Override
     public FlinkComputePool toRepresentation() {
       return new FlinkComputePool(
           id,
-          spec.displayName,
-          spec.environment.resourceName,
-          spec.cloud,
-          spec.region,
-          status.phase,
-          spec.description,
-          spec.provider,
-          spec.identityClaim
+          spec,
+          status
       );
     }
   }
@@ -603,20 +598,16 @@ public class RealCCloudFetcher extends ConfluentCloudRestClient implements CClou
       @JsonProperty(value = "display_name") String displayName,
       @JsonProperty(value = "cloud") String cloud,
       @JsonProperty(value = "region") String region,
-      @JsonProperty(value = "environment") EnvironmentReference environment,
-      @JsonProperty(value = "description") String description, // Add this line
-      @JsonProperty(value = "provider") String provider, // Add this line
-      @JsonProperty(value = "identity_claim") String identityClaim // Add this line
+      @JsonProperty(value = "max_cfu") int maxCfu
   ) {
-
   }
 
   @RegisterForReflection
   @JsonIgnoreProperties(ignoreUnknown = true)
   private record FlinkComputePoolStatus(
-      @JsonProperty(value = "phase") String phase
+      @JsonProperty(value = "phase") String phase,
+      @JsonProperty(value = "current_cfu") int currentCfu
   ) {
-
   }
 
 
