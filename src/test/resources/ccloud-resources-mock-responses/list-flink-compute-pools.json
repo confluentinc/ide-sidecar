@@ -1,9 +1,12 @@
 {
-  "api_version": "v1",
-  "kind": "FlinkComputePoolList",
+  "api_version": "fcpm/v2",
+  "kind": "ComputePoolList",
   "metadata": {
-    "self": "/api/v1/flink-compute-pools",
-    "resource_version": "1"
+    "first": "https://api.confluent.cloud/fcpm/v2/compute-pools",
+    "last": "https://api.confluent.cloud/fcpm/v2/compute-pools?page_token=bcAOehAY8F16YD84Z1wT",
+    "prev": "https://api.confluent.cloud/fcpm/v2/compute-pools?page_token=YIXRY97wWYmwzrax4dld",
+    "next": "https://api.confluent.cloud/fcpm/v2/compute-pools?page_token=UvmDWOB1iwfAIBPj6EYb",
+    "total_size": 123
   },
   "data": [
     {
@@ -15,16 +18,25 @@
       },
       "spec": {
         "display_name": "Flink Pool 1",
-        "description": "Description 1",
-        "identity_claim": "Identity Claim 1",
-        "filter": "Filter 1",
+        "cloud": "AWS",
+        "region": "us-west-1",
+        "max_cfu": 5,
         "principal": "Principal 1",
-        "state": "State 1",
-        "region": "Region 1",
-        "provider": "Provider 1"
+        "environment": {
+          "id": "env-00000",
+          "related": "https://api.confluent.cloud/org/v2/environments/env-00000",
+          "resource_name": "https://api.confluent.cloud/organization=9bb441c4-edef-46ac-8a41-c49e44a3fd9a/environment=env-00000"
+        },
+        "network": {
+          "id": "n-00000",
+          "environment": "string",
+          "related": "https://api.confluent.cloud/networking/v1/networks/n-00000",
+          "resource_name": "https://api.confluent.cloud/organization=9bb441c4-edef-46ac-8a41-c49e44a3fd9a/environment=env-abc123/network=n-00000"
+        }
       },
       "status": {
-        "phase": "Active"
+        "phase": "Active",
+        "current_cfu": 4
       }
     },
     {
@@ -36,16 +48,25 @@
       },
       "spec": {
         "display_name": "Flink Pool 2",
-        "description": "Description 2",
-        "identity_claim": "Identity Claim 2",
-        "filter": "Filter 2",
+        "cloud": "AWS",
+        "region": "us-west-1",
+        "max_cfu": 5,
         "principal": "Principal 2",
-        "state": "State 2",
-        "region": "Region 2",
-        "provider": "Provider 2"
+        "environment": {
+        "id": "env-00000",
+        "related": "https://api.confluent.cloud/org/v2/environments/env-00000",
+        "resource_name": "https://api.confluent.cloud/organization=9bb441c4-edef-46ac-8a41-c49e44a3fd9a/environment=env-00000"
+        },
+        "network": {
+        "id": "n-00000",
+        "environment": "string",
+        "related": "https://api.confluent.cloud/networking/v1/networks/n-00000",
+        "resource_name": "https://api.confluent.cloud/organization=9bb441c4-edef-46ac-8a41-c49e44a3fd9a/environment=env-abc123/network=n-00000"
+        }
       },
       "status": {
-        "phase": "Active"
+        "phase": "Active",
+        "current_cfu": 4
       }
     }
   ]
