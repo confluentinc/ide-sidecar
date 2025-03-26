@@ -1,0 +1,26 @@
+query {
+  getFlinkComputePools(connectionId: "ccloud-dev", envId: "env-x7727g") {
+    id
+    spec {
+      display_name
+      cloud
+      region
+      max_cfu
+      environment {
+        id
+        related
+        resource_name
+      }
+      network {
+        id
+        environment
+        related
+        resource_name
+      }
+    }
+    status {
+      phase
+      current_cfu
+    }
+  }
+}
