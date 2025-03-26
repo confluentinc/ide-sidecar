@@ -80,6 +80,32 @@ type DirectSchemaRegistry {
   uri: String!
 }
 
+type EnvironmentReference {
+  id: String
+  related: String
+  resource_name: String
+}
+
+type FlinkComputePool {
+  id: String
+  spec: FlinkComputePoolSpec
+  status: FlinkComputePoolStatus
+}
+
+type FlinkComputePoolSpec {
+  cloud: String
+  display_name: String
+  environment: EnvironmentReference
+  max_cfu: Int!
+  network: NetworkReference
+  region: String
+}
+
+type FlinkComputePoolStatus {
+  current_cfu: Int!
+  phase: String
+}
+
 type LocalConnection {
   id: String!
   kafkaCluster: ConfluentLocalKafkaCluster
@@ -94,6 +120,13 @@ type LocalSchemaRegistry {
   uri: String!
 }
 
+type NetworkReference {
+  environment: String
+  id: String
+  related: String
+  resource_name: String
+}
+
 "Query root"
 type Query {
   "Get a CCloud connection with a particular ID"
@@ -104,6 +137,8 @@ type Query {
   directConnections: [DirectConnection]!
   "Find CCloud Kafka clusters using a connection and various criteria"
   findCCloudKafkaClusters(connectionId: String!, environmentId: String = "", name: String = "", provider: String = "", region: String = ""): [CCloudKafkaCluster]!
+  "Get Flink compute pools for a specific connection and environment"
+  getFlinkComputePools(connectionId: String!, envId: String!): [FlinkComputePool]!
   "Get all local connections"
   localConnections: [LocalConnection]!
 }
