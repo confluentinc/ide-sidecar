@@ -5,6 +5,7 @@ import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequest;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceResponse;
 import io.confluent.idesidecar.restapi.processors.Processor;
+import io.confluent.idesidecar.restapi.proxy.CCloudApiProcessor;
 import io.confluent.idesidecar.restapi.proxy.ClusterProxyRequestProcessor;
 import io.confluent.idesidecar.restapi.proxy.ConnectionProcessor;
 import io.confluent.idesidecar.restapi.proxy.ControlPlaneAuthenticationProcessor;
@@ -12,7 +13,7 @@ import io.confluent.idesidecar.restapi.proxy.EmptyProcessor;
 import io.confluent.idesidecar.restapi.proxy.KafkaRestProxyContext;
 import io.confluent.idesidecar.restapi.proxy.ProxyContext;
 import io.confluent.idesidecar.restapi.proxy.ProxyRequestProcessor;
-import io.confluent.idesidecar.restapi.proxy.RBACProxyProcessor;
+import io.confluent.idesidecar.restapi.proxy.GenericProxyProcessor;
 import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
 import io.confluent.idesidecar.restapi.proxy.clusters.processors.ClusterAuthenticationProcessor;
 import io.confluent.idesidecar.restapi.proxy.clusters.processors.ClusterInfoProcessor;
@@ -46,6 +47,9 @@ public class ProxyProcessorBeanProducers {
 
   @Inject
   EmptyProcessor<ProxyContext> emptyProcessorProxyContext;
+
+  @Inject
+  CCloudApiProcessor cCloudApiAuthProcessor;
 
   @Inject
   EmptyProcessor<ClusterProxyContext> emptyProcessorClusterProxyContext;
@@ -83,12 +87,27 @@ public class ProxyProcessorBeanProducers {
   @Singleton
   @Named("RBACProxyProcessor")
   public Processor<ProxyContext, Future<ProxyContext>> RbacProxyProcessor(
-      RBACProxyProcessor rbacProxyProcessor
+      GenericProxyProcessor genericProxyProcessor
   ) {
     return Processor.chain(
         new ConnectionProcessor<>(connectionStateManager),
-        rbacProxyProcessor,
+        genericProxyProcessor,
         controlPlaneAuthenticationProcessor,
+        new ProxyRequestProcessor(webClientFactory, vertx),
+        emptyProcessorProxyContext
+    );
+  }
+
+  @Produces
+  @Singleton
+  @Named("CCloudProxyProcessor")
+  public Processor<ProxyContext, Future<ProxyContext>> ccloudProxyProcessor(
+      GenericProxyProcessor genericProxyProcessor
+  ) {
+    return Processor.chain(
+        new ConnectionProcessor<>(connectionStateManager),
+        genericProxyProcessor,
+        cCloudApiAuthProcessor,
         new ProxyRequestProcessor(webClientFactory, vertx),
         emptyProcessorProxyContext
     );
