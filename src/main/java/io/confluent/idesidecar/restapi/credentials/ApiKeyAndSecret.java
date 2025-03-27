@@ -35,7 +35,7 @@ public record ApiKeyAndSecret(
     ApiSecret secret
 ) implements Credentials {
 
-  private static final int KEY_MAX_LEN = 64;
+  private static final int KEY_MAX_LEN = 96;
 
   private static final String PLAIN_LOGIN_MODULE_CLASS =
       "org.apache.kafka.common.security.plain.PlainLoginModule";
