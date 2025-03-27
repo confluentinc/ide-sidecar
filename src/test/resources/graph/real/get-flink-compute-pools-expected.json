@@ -1,0 +1,50 @@
+{
+  "data": {
+    "getFlinkComputePools": [
+      {
+        "id": "ccloud-dev",
+        "spec": {
+          "display_name": "Flink Pool 1",
+          "cloud": "AWS",
+          "region": "us-west-1",
+          "max_cfu": 5,
+          "environment": {
+            "id": "env-00000"
+          },
+          "network": {
+            "id": "n-00000",
+            "environment": "string",
+            "related": "https://api.confluent.cloud/networking/v1/networks/n-00000",
+            "resource_name": "https://api.confluent.cloud/organization=9bb441c4-edef-46ac-8a41-c49e44a3fd9a/environment=env-abc123/network=n-00000"
+          }
+        },
+        "status": {
+          "phase": "Active",
+          "current_cfu": 4
+        }
+      },
+      {
+        "id": "ccloud-dev",
+        "spec": {
+          "display_name": "Flink Pool 2",
+          "cloud": "AWS",
+          "region": "us-west-1",
+          "max_cfu": 5,
+          "environment": {
+            "id": "env-00000",
+            "related": "https://api.confluent.cloud/org/v2/environments/env-00000",
+            "resource_name": "https://api.confluent.cloud/organization=9bb441c4-edef-46ac-8a41-c49e44a3fd9a/environment=env-00000"
+          },
+          "network": {
+            "id": "n-00000",
+            "environment": "string"
+          }
+        },
+        "status": {
+          "phase": "Active",
+          "current_cfu": 4
+        }
+      }
+    ]
+  }
+}

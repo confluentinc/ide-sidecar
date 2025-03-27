@@ -7,11 +7,17 @@ import static io.confluent.idesidecar.restapi.cache.ClusterCacheAssertions.asser
 import static io.confluent.idesidecar.restapi.testutil.QueryResourceUtil.assertQueryResponseMatches;
 import static io.confluent.idesidecar.restapi.testutil.QueryResourceUtil.queryGraphQLRaw;
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
+import static io.restassured.path.json.JsonPath.from;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import io.confluent.idesidecar.restapi.connections.ConnectionState;
 import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
+import io.confluent.idesidecar.restapi.models.graph.CCloudGovernancePackage;
 import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
 import io.quarkiverse.wiremock.devservice.ConnectWireMock;
 import io.quarkus.logging.Log;
@@ -27,9 +33,14 @@ import org.junitpioneer.jupiter.ExpectedToFail;
 @TestProfile(NoAccessFilterProfile.class)
 public class ConfluentCloudQueryResourceTest extends ConfluentQueryResourceTestBase {
 
+  private WireMockServer wireMockServer;
+
   @BeforeEach
   void setup() {
     Log.info("Setting up before test");
+    wireMockServer = new WireMockServer(WireMockConfiguration.wireMockConfig().dynamicPort());
+    wireMockServer.start();
+    // Clean up any pre-existing connections to avoid conflicts
     super.setup();
     ccloudTestUtil.createAuthedConnection(
         "ccloud-dev",
@@ -47,6 +58,7 @@ public class ConfluentCloudQueryResourceTest extends ConfluentQueryResourceTestB
   @AfterEach
   void afterEach() {
     Log.info("Cleaning up after test");
+    wireMockServer.stop();
     super.afterEach();
   }
 
@@ -315,6 +327,33 @@ public class ConfluentCloudQueryResourceTest extends ConfluentQueryResourceTestB
     assertQueryResponseMatches(
         "graph/real/get-ccloud-connection-by-id-query.graphql",
         "graph/real/get-ccloud-connection-by-id-failed-kafka-expected.json",
+        this::replaceWireMockPort
+    );
+  }
+
+  @Test
+  void shouldGetFlinkComputePools() {
+    setupCCloudApiMocks(
+        ccloudTestUtil.getControlPlaneToken("ccloud-dev"));
+    setupCCloudApiMocks(
+        ccloudTestUtil.getControlPlaneToken("ccloud-prod"));
+
+    assertQueryResponseMatches(
+        "graph/real/get-flink-compute-pools-query.graphql",
+        "graph/real/get-flink-compute-pools-expected.json",
+        this::replaceWireMockPort
+    );
+  }
+  @Test
+  void shouldGetCCloudEnvironmentWithFlinkDetails() {
+    setupCCloudApiMocks(
+        ccloudTestUtil.getControlPlaneToken("ccloud-dev"));
+    setupCCloudApiMocks(
+        ccloudTestUtil.getControlPlaneToken("ccloud-prod"));
+
+    assertQueryResponseMatches(
+        "graph/real/get-ccloud-environment-query.graphql",
+        "graph/real/get-ccloud-environment-expected.json",
         this::replaceWireMockPort
     );
   }

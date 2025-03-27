@@ -7,6 +7,7 @@ import io.confluent.idesidecar.restapi.models.graph.CCloudOrganization;
 import io.confluent.idesidecar.restapi.models.graph.CCloudSchemaRegistry;
 import io.confluent.idesidecar.restapi.models.graph.CCloudSearchCriteria;
 import io.confluent.idesidecar.restapi.models.graph.ConfluentRestClient.PageLimits;
+import io.confluent.idesidecar.restapi.models.graph.FlinkComputePool;
 import io.confluent.idesidecar.restapi.models.graph.RealCCloudFetcher;
 import io.quarkus.logging.Log;
 import io.smallrye.graphql.api.Nullable;
@@ -174,6 +175,19 @@ public class ConfluentCloudQueryResource {
     );
   }
 
+  @NonNull
+  public Uni<List<FlinkComputePool>> getFlinkComputePools(@Source CCloudEnvironment env) {
+    Log.infof("Get Flink compute pools for connection %s and environment %s", env.connectionId(), env.id());
+    return multiToUni(ccloud.getFlinkComputePools(env.connectionId(), env.id()));
+  }
+
+  @Query("getFlinkComputePools")
+  @Description("Get Flink compute pools for a specific connection and environment")
+  @NonNull
+  public Uni<List<FlinkComputePool>> getFlinkComputePools(@NonNull String connectionId, @NonNull String envId) {
+    Log.infof("Get Flink compute pools for connection %s and environment %s", connectionId, envId);
+    return multiToUni(ccloud.getFlinkComputePools(connectionId, envId));
+  }
   /**
    * Apparently the Smallrye GraphQL plugin does not handle {@link Multi}, so we have to convert it
    * to {@link Uni}.

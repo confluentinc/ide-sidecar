@@ -1,0 +1,9 @@
+{"errors":[
+  {"message":"GET http://localhost:${wiremockPort}/api/fcpm/v2/compute-pools?environment=env-x7727g failed with 1 error(s): (HTTP 404) Not found",
+    "locations":
+    [{"line":2,"column":3}],
+    "path":["getFlinkComputePools"],
+    "extensions":
+    {"classification":"DataFetchingException"}}],
+  "data":null
+}

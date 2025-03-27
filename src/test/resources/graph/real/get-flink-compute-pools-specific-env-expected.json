@@ -1,0 +1,24 @@
+{
+  "data": {
+    "getFlinkComputePools": [
+      {
+        "id": "ccloud-dev",
+        "spec": {
+          "display_name": "Flink Pool 1"
+        },
+        "status": {
+          "phase": "Active"
+        }
+      },
+      {
+        "id": "ccloud-dev",
+        "spec": {
+          "display_name": "Flink Pool 2"
+        },
+        "status": {
+          "phase": "Active"
+        }
+      }
+    ]
+  }
+}
