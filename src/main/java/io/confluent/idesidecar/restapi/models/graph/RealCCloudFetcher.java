@@ -13,13 +13,16 @@ import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
 import io.confluent.idesidecar.restapi.models.Connection;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
 import io.confluent.idesidecar.restapi.util.Crn;
+import io.quarkus.logging.Log;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
+import io.vertx.core.MultiMap;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
 import java.util.List;
+import java.util.Map;
 import org.eclipse.microprofile.config.ConfigProvider;
 
 /**
@@ -64,6 +67,10 @@ public class RealCCloudFetcher extends ConfluentCloudRestClient implements CClou
   private static final String CONFLUENT_CLOUD_SRS_URI = ConfigProvider
       .getConfig()
       .getValue("ide-sidecar.connections.ccloud.resources.sr-list-uri", String.class);
+
+  private static final String CONFLUENT_CLOUD_FLINK_COMPUTE_POOLS_URI = ConfigProvider
+      .getConfig()
+      .getValue("ide-sidecar.connections.ccloud.resources.flink-compute-pools-uri", String.class);
 
   @Inject
   ConnectionStateManager connectionStateManager;
@@ -534,4 +541,74 @@ public class RealCCloudFetcher extends ConfluentCloudRestClient implements CClou
     }
     return null;
   }
+
+  public Multi<FlinkComputePool> getFlinkComputePools(String connectionId, String envId) {
+    var headers = headersFor(connectionId);
+    String url = CONFLUENT_CLOUD_FLINK_COMPUTE_POOLS_URI.formatted(envId);
+    Log.infof("Fetching Flink compute pools from URL: %s with headers: %s", url, headers);
+    return listItems(headers, url, null, this::parseFlinkComputePoolsList)
+        .map(pool -> pool.withConnectionId(connectionId));
+  }
+
+  private PageOfResults<FlinkComputePool> parseFlinkComputePoolsList(String json, PaginationState state) {
+    return parseList(json, state, ListFlinkComputePoolsResponse.class);
+  }
+
+  @RegisterForReflection
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  private record ListFlinkComputePoolsResponse(
+      @JsonProperty(value = "api_version") String apiVersion,
+      String kind,
+      ListMetadata metadata,
+      @JsonProperty(value = "data", required = true) List<FlinkComputePoolResponse> data
+  ) implements ListResponse<FlinkComputePoolResponse, FlinkComputePool> {
+
+  }
+
+  @RegisterForReflection
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  private record FlinkComputePoolResponse(
+      @JsonProperty(value = "api_version") String apiVersion,
+      String kind,
+      @JsonProperty(required = true) String id,
+      JsonNode metadata,
+      @JsonProperty(value="environment") CCloudReference environment,
+      @JsonProperty(value="organization") CCloudReference organization,
+      @JsonProperty(value = "spec") FlinkComputePoolSpec spec,
+      @JsonProperty(value = "status") FlinkComputePoolStatus status
+      ) implements ListItem<FlinkComputePool> {
+    @Override
+    public FlinkComputePool toRepresentation() {
+      return new FlinkComputePool(
+          id,
+          spec.displayName,
+          spec.cloud,
+          spec.region,
+          spec.maxCfu,
+          environment,
+          organization,
+          null
+      );
+    }
+  }
+
+  @RegisterForReflection
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  private record FlinkComputePoolSpec(
+      @JsonProperty(value = "display_name") String displayName,
+      @JsonProperty(value = "cloud") String cloud,
+      @JsonProperty(value = "region") String region,
+      @JsonProperty(value = "max_cfu") int maxCfu,// New field
+      @JsonProperty(value = "description") String description // New field
+  ) {
+  }
+  @RegisterForReflection
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  private record FlinkComputePoolStatus(
+      @JsonProperty(value = "phase") String phase,
+      @JsonProperty(value = "current_cfu") int currentCfu
+  ) {
+  }
+
+
 }

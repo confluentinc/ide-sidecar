@@ -1,0 +1,30 @@
+{
+  "data": {
+    "ccloudConnectionById": {
+      "environments": [
+        {
+          "flinkComputePools": [
+            {
+              "id": "dlz-f3a90de",
+              "display_name": "flink_compute_pool_0",
+              "cloud": "AWS",
+              "region": "us-west-1",
+              "max_cfu": 5
+            }
+          ]
+        },
+        {
+          "flinkComputePools": [
+            {
+              "id": "dlz-f3a90de",
+              "display_name": "flink_compute_pool_0",
+              "cloud": "AWS",
+              "region": "us-west-1",
+              "max_cfu": 5
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
