@@ -329,10 +329,13 @@ public class ConfluentCloudQueryResourceTest extends ConfluentQueryResourceTestB
 
   @Test
   void shouldGetEmptyCCloudEnvironmentWithFlinkDetails() {
-    setupCCloudApiMocks(
-        ccloudTestUtil.getControlPlaneToken("ccloud-dev"));
-    setupCCloudApiMocks(
-        ccloudTestUtil.getControlPlaneToken("ccloud-prod"));
+    var bearerToken = ccloudTestUtil.getControlPlaneToken("ccloud-dev");
+
+    String emptyEnvId = "env-kkk3jg";
+    ccloudTestUtil.expectSuccessfulCCloudGet(
+        envListUri.formatted(emptyEnvId),
+        bearerToken,
+        "ccloud-resources-mock-responses/list-flink-compute-pools-empty.json");
 
     assertQueryResponseMatches(
         "graph/real/get-ccloud-environment-empty-flink-query.graphql",
