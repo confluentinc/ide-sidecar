@@ -1,0 +1,13 @@
+query {
+  ccloudConnectionById(id: "ccloud-dev") {
+    environments {
+      flinkComputePools {
+        id
+        display_name
+        provider
+        region
+        max_cfu
+      }
+    }
+  }
+}
