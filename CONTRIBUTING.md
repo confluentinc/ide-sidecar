@@ -337,6 +337,12 @@ Add the `format=json` query parameter to get the JSON formatted specification:
 
     curl -s http://localhost:26636/openapi?format=json
 
+Branches with codebase changes that affect the OpenAPI specification should include the updated documents in the PR.
+These can be captured through, and should result in git diffs for `src/generated/resources/openapi.{json,yaml}`:
+
+    make mvn-generate-sidecar-openapi-spec
+
+
 ##### Swagger UI
 
 The [Swagger UI](https://swagger.io/tools/swagger-ui/) helps visualize and interact with the APIs.
