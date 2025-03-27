@@ -28,8 +28,8 @@ class BasicCredentialsTest extends RedactedTestBase<BasicCredentials> {
   @Test
   void warpstreamLengthCredentialsShouldPassValidation() {
     // 69 char username, 68 char password from prior examples failing.
-    var username = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
-    var password = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+    var username = "x".repeat(69);
+    var password = "x".repeat(68);
 
     var creds = new BasicCredentials(username, new Password(password.toCharArray()));
 

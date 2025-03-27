@@ -28,8 +28,8 @@ class ApiKeyAndSecretTest extends RedactedTestBase<ApiKeyAndSecret> {
   @Test
   void warpstreamLengthCredentialsShouldPassValidation() {
     // 69 char key, 68 char secret from prior examples failing.
-    var key = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
-    var secret = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+    var key = "x".repeat(69);
+    var secret = "x".repeat(68);
 
     var creds = new ApiKeyAndSecret(key, new ApiSecret(secret.toCharArray()));
 
