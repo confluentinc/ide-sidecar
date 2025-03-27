@@ -357,4 +357,18 @@ public class ConfluentCloudQueryResourceTest extends ConfluentQueryResourceTestB
         this::replaceWireMockPort
     );
   }
+
+  @Test
+  void shouldFailToGetCCloudEnvironmentWithFlinkDetails() {
+    setupCCloudApiMocks(
+        ccloudTestUtil.getControlPlaneToken("ccloud-dev"));
+    setupCCloudApiMocks(
+        ccloudTestUtil.getControlPlaneToken("ccloud-prod"));
+
+    assertQueryResponseMatches(
+        "graph/real/get-ccloud-environment-flink-fail-query.graphql",
+        "graph/real/get-ccloud-environment-flink-fail-expected.json",
+        this::replaceWireMockPort
+    );
+  }
 }
