@@ -143,9 +143,15 @@ public abstract class ConfluentQueryResourceTestBase {
     ccloudTestUtil.expectSuccessfulCCloudGet(
         computePoolListUri.formatted(mainTestEnvId),
         bearerToken,
-        "ccloud-resources-mock-responses/list-flink-compute-pools.json"
+        "ccloud-resources-mock-responses/list-flink-compute-pools-empty.json"
     );
-  }
+    // Register mock for listing Flink compute pools within ccloud request
+    ccloudTestUtil.expectSuccessfulCCloudGet(
+        computePoolListUri.formatted(emptyEnvId),
+        bearerToken,
+        "ccloud-resources-mock-responses/list-flink-compute-pools-empty.json"
+    );
+}
 
   void expectSuccessfulListLocalClusters(String resourceFilename) {
     expectSuccessfulGet(confluentLocalClustersUri, resourceFilename);

@@ -239,7 +239,7 @@ public class FakeCCloudFetcher implements CCloudFetcher {
            "AWS",
             "us-west-1",
             10,
-            new CCloudReference(envId, "Devel"),
+            new CCloudReference(envId, "ccloud-dev"),
             new CCloudReference(DEVEL_ORG_ID, "Development Org"),
             "fcp-1234-conn"
         ),
@@ -249,9 +249,9 @@ public class FakeCCloudFetcher implements CCloudFetcher {
             "AWS",
             "us-west-2",
             5,
-            new CCloudReference(envId, "Devel"),
+            new CCloudReference(envId, "ccloud-dev"),
             new CCloudReference(DEVEL_ORG_ID, "Development Org"),
-            "fcp-1234-conn"
+            "fcp-1235-conn"
         )
     );
     return Multi.createFrom().iterable(flinkComputePools);

@@ -9,7 +9,6 @@ import static io.confluent.idesidecar.restapi.testutil.QueryResourceUtil.queryGr
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
 import static io.restassured.path.json.JsonPath.from;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
@@ -17,12 +16,13 @@ import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import io.confluent.idesidecar.restapi.connections.ConnectionState;
 import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
-import io.confluent.idesidecar.restapi.models.graph.CCloudGovernancePackage;
+import io.confluent.idesidecar.restapi.models.graph.FakeCCloudFetcher;
 import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
 import io.quarkiverse.wiremock.devservice.ConnectWireMock;
 import io.quarkus.logging.Log;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,6 +32,9 @@ import org.junitpioneer.jupiter.ExpectedToFail;
 @ConnectWireMock
 @TestProfile(NoAccessFilterProfile.class)
 public class ConfluentCloudQueryResourceTest extends ConfluentQueryResourceTestBase {
+
+  @Inject
+  FakeCCloudFetcher fakeCCloudFetcher;
 
   private WireMockServer wireMockServer;
 
@@ -332,18 +335,19 @@ public class ConfluentCloudQueryResourceTest extends ConfluentQueryResourceTestB
   }
 
   @Test
-  void shouldGetFlinkComputePools() {
+  void shouldGetEmptyCCloudEnvironmentWithFlinkDetails() {
     setupCCloudApiMocks(
         ccloudTestUtil.getControlPlaneToken("ccloud-dev"));
     setupCCloudApiMocks(
         ccloudTestUtil.getControlPlaneToken("ccloud-prod"));
 
     assertQueryResponseMatches(
-        "graph/real/get-flink-compute-pools-query.graphql",
-        "graph/real/get-flink-compute-pools-expected.json",
+        "graph/real/get-ccloud-environment-empty-flink-query.graphql",
+        "graph/real/get-ccloud-environment-empty-flink-expected.json",
         this::replaceWireMockPort
     );
   }
+
   @Test
   void shouldGetCCloudEnvironmentWithFlinkDetails() {
     setupCCloudApiMocks(
@@ -352,8 +356,8 @@ public class ConfluentCloudQueryResourceTest extends ConfluentQueryResourceTestB
         ccloudTestUtil.getControlPlaneToken("ccloud-prod"));
 
     assertQueryResponseMatches(
-        "graph/real/get-ccloud-environment-query.graphql",
-        "graph/real/get-ccloud-environment-expected.json",
+        "graph/real/get-ccloud-environment-empty-flink-query.graphql",
+        "graph/real/get-ccloud-environment-empty-flink-expected.json",
         this::replaceWireMockPort
     );
   }

@@ -575,8 +575,7 @@ public class RealCCloudFetcher extends ConfluentCloudRestClient implements CClou
       @JsonProperty(value="environment") CCloudReference environment,
       @JsonProperty(value="organization") CCloudReference organization,
       @JsonProperty(value = "spec") FlinkComputePoolSpec spec,
-      @JsonProperty(value = "status") FlinkComputePoolStatus status,
-      @JsonProperty(value = "connection_id") String connectionId
+      @JsonProperty(value = "status") FlinkComputePoolStatus status
       ) implements ListItem<FlinkComputePool> {
 
     @Override
@@ -589,7 +588,7 @@ public class RealCCloudFetcher extends ConfluentCloudRestClient implements CClou
           spec.maxCfu,
           environment,
           organization,
-          connectionId
+          null
       );
     }
   }
@@ -611,6 +610,4 @@ public class RealCCloudFetcher extends ConfluentCloudRestClient implements CClou
       @JsonProperty(value = "current_cfu") int currentCfu
   ) {
   }
-
-
 }
