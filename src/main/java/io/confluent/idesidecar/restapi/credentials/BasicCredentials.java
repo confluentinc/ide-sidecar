@@ -30,7 +30,7 @@ public record BasicCredentials(
     Password password
 ) implements Credentials {
 
-  // Warmstream at least likes using > 64 characters for the username
+  // WarpStream likes using > 64 characters for the username
   private static final int USERNAME_MAX_LEN = 96;
 
   private static final String PLAIN_LOGIN_MODULE_CLASS =
