@@ -8,13 +8,24 @@ type CCloudConnection {
 
 type CCloudEnvironment {
   connectionId: String!
-  flinkComputePools: [CcloudFlinkComputePool]!
+  flinkComputePools: [CCloudFlinkComputePool]!
   governancePackage: CCloudGovernancePackage!
   id: String!
   kafkaClusters: [CCloudKafkaCluster]!
   name: String!
   organization: CCloudReference!
   schemaRegistry: CCloudSchemaRegistry
+}
+
+type CCloudFlinkComputePool {
+  connectionId: String
+  display_name: String
+  environment: CCloudReference
+  id: String
+  max_cfu: Int!
+  organization: CCloudReference
+  provider: String
+  region: String
 }
 
 type CCloudKafkaCluster {
@@ -49,17 +60,6 @@ type CCloudSchemaRegistry {
   provider: CloudProvider!
   region: String!
   uri: String!
-}
-
-type CcloudFlinkComputePool {
-  cloud: String
-  connectionId: String
-  display_name: String
-  environment: CCloudReference
-  id: String
-  max_cfu: Int!
-  organization: CCloudReference
-  region: String
 }
 
 type ConfluentLocalKafkaCluster {
@@ -117,7 +117,7 @@ type Query {
   "Find CCloud Kafka clusters using a connection and various criteria"
   findCCloudKafkaClusters(connectionId: String!, environmentId: String = "", name: String = "", provider: String = "", region: String = ""): [CCloudKafkaCluster]!
   "Get Flink compute pools for a specific connection and environment"
-  getFlinkComputePools(connectionId: String!, envId: String!): [CcloudFlinkComputePool]!
+  getFlinkComputePools(connectionId: String!, envId: String!): [CCloudFlinkComputePool]!
   "Get all local connections"
   localConnections: [LocalConnection]!
 }

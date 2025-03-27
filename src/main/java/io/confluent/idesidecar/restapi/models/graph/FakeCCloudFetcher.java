@@ -223,7 +223,7 @@ public class FakeCCloudFetcher implements CCloudFetcher {
   }
 
   @Override
-  public Multi<CcloudFlinkComputePool> getFlinkComputePools(String connectionId, String envId) {
+  public Multi<CCloudFlinkComputePool> getFlinkComputePools(String connectionId, String envId) {
     var connection = CONNECTIONS.get(connectionId);
     if (connection == null) {
       return Multi.createFrom().failure(
@@ -232,8 +232,8 @@ public class FakeCCloudFetcher implements CCloudFetcher {
           )
       );
     }
-    List<CcloudFlinkComputePool> flinkComputePools = List.of(
-        new CcloudFlinkComputePool(
+    List<CCloudFlinkComputePool> flinkComputePools = List.of(
+        new CCloudFlinkComputePool(
             "fcp-1234",
             "Devel Flink Pool 1",
            "AWS",
@@ -243,7 +243,7 @@ public class FakeCCloudFetcher implements CCloudFetcher {
             new CCloudReference(DEVEL_ORG_ID, "Development Org"),
             "fcp-1234-conn"
         ),
-        new CcloudFlinkComputePool(
+        new CCloudFlinkComputePool(
             "fcp-5678",
             "Devel Flink Pool 2",
             "AWS",

@@ -5,18 +5,18 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
 import org.eclipse.microprofile.graphql.Name;
 
 @RegisterForReflection
-public record CcloudFlinkComputePool(
+public record CCloudFlinkComputePool(
     @JsonProperty("id") String id,
     @JsonProperty("display_name") String displayName,
-    @JsonProperty("cloud") @Name("provider") String provider,
+    @JsonProperty("provider") @Name("provider") String provider,
     @JsonProperty("region") String region,
     @JsonProperty("max_cfu") int maxCfu,
     @JsonProperty("environment") CCloudReference environment,
     @JsonProperty("organization") CCloudReference organization,
     @JsonProperty("connectionId") String connectionId
 ) {
-  public CcloudFlinkComputePool withConnectionId(String connectionId) {
-    return new CcloudFlinkComputePool(
+  public CCloudFlinkComputePool withConnectionId(String connectionId) {
+    return new CCloudFlinkComputePool(
         this.id,
         this.displayName,
         this.provider,
