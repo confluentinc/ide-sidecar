@@ -1,0 +1,9 @@
+{
+  "api_version": "fcpm/v2",
+  "data": null,
+  "kind": "flinkComputePools",
+  "metadata": {
+    "first": "https://api/fcpm/v2/compute-pools",
+    "total_size": 0
+  }
+}
