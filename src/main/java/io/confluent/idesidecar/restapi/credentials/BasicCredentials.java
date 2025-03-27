@@ -30,7 +30,8 @@ public record BasicCredentials(
     Password password
 ) implements Credentials {
 
-  private static final int USERNAME_MAX_LEN = 64;
+  // WarpStream likes using > 64 characters for the username
+  private static final int USERNAME_MAX_LEN = 96;
 
   private static final String PLAIN_LOGIN_MODULE_CLASS =
       "org.apache.kafka.common.security.plain.PlainLoginModule";
