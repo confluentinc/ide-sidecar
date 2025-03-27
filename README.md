@@ -29,14 +29,15 @@ You may find the following `make` commands useful during development:
 
 | Make command       | Description                                   |
 |--------------------|-----------------------------------------------|
-| `make quarkus-dev`  | Runs the application in the [Quarkus dev mode](https://quarkus.io/guides/getting-started#development-mode).                                                                                                                                                         |
-| `make quarkus-test` | Runs the [continuous testing mode of Quarkus](https://quarkus.io/guides/continuous-testing#continuous-testing-without-dev-mode).                                                                                                                                    |
+| `make quarkus-dev`  | Runs the application in the [Quarkus dev mode](https://quarkus.io/guides/getting-started#development-mode)  |
+| `make quarkus-test` | Runs the [continuous testing mode of Quarkus](https://quarkus.io/guides/continuous-testing#continuous-testing-without-dev-mode) |
 | `make build`       | Build, compile, package JARs, and run tests.  |
 | `make clean`       | Clean the project and remove temporary files. |
 | `make test`        | Run the unit tests of the project.            |
 | `make test-native` | Run the tests against the native executable.  |
-| `make mvn-package-native`                | Runs the unit and integration tests and creates a native executable for the project.                                                                                                                                |
-| `make mvn-package-native-no-tests`       | Creates a native executable for the project without running the tests.                                                                                                                                              |
+| `make mvn-package-native`                | Runs the unit and integration tests and creates a native executable for the project. |
+| `make mvn-package-native-no-tests`       | Creates a native executable for the project without running the tests.  |
+| `make mvn-generate-sidecar-openapi-spec` | Regenerates the OpenAPI specification for the IDE Sidecar REST API. |
 
 ## Contributing
 
