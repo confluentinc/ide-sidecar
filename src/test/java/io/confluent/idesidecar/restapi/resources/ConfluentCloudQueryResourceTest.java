@@ -7,8 +7,6 @@ import static io.confluent.idesidecar.restapi.cache.ClusterCacheAssertions.asser
 import static io.confluent.idesidecar.restapi.testutil.QueryResourceUtil.assertQueryResponseMatches;
 import static io.confluent.idesidecar.restapi.testutil.QueryResourceUtil.queryGraphQLRaw;
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
-import static io.restassured.path.json.JsonPath.from;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
@@ -16,13 +14,11 @@ import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import io.confluent.idesidecar.restapi.connections.ConnectionState;
 import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
-import io.confluent.idesidecar.restapi.models.graph.FakeCCloudFetcher;
 import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
 import io.quarkiverse.wiremock.devservice.ConnectWireMock;
 import io.quarkus.logging.Log;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
-import jakarta.inject.Inject;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,9 +28,6 @@ import org.junitpioneer.jupiter.ExpectedToFail;
 @ConnectWireMock
 @TestProfile(NoAccessFilterProfile.class)
 public class ConfluentCloudQueryResourceTest extends ConfluentQueryResourceTestBase {
-
-  @Inject
-  FakeCCloudFetcher fakeCCloudFetcher;
 
   private WireMockServer wireMockServer;
 
