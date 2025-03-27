@@ -577,7 +577,6 @@ public class RealCCloudFetcher extends ConfluentCloudRestClient implements CClou
       @JsonProperty(value = "spec") FlinkComputePoolSpec spec,
       @JsonProperty(value = "status") FlinkComputePoolStatus status
       ) implements ListItem<FlinkComputePool> {
-
     @Override
     public FlinkComputePool toRepresentation() {
       return new FlinkComputePool(
@@ -610,4 +609,6 @@ public class RealCCloudFetcher extends ConfluentCloudRestClient implements CClou
       @JsonProperty(value = "current_cfu") int currentCfu
   ) {
   }
+
+
 }

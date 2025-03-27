@@ -349,8 +349,8 @@ public class ConfluentCloudQueryResourceTest extends ConfluentQueryResourceTestB
         ccloudTestUtil.getControlPlaneToken("ccloud-prod"));
 
     assertQueryResponseMatches(
-        "graph/real/get-ccloud-environment-empty-flink-query.graphql",
-        "graph/real/get-ccloud-environment-empty-flink-expected.json",
+        "graph/real/get-ccloud-environment-flink-query.graphql",
+        "graph/real/get-ccloud-environment-flink-expected.json",
         this::replaceWireMockPort
     );
   }

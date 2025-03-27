@@ -5,22 +5,26 @@
         {
           "flinkComputePools": [
             {
-              "id": "lfcp-9qqk20",
-              "display_name": "AWS.us-east-2.env-x7727g.d734",
+              "id": "dlz-f3a90de",
+              "display_name": "flink_compute_pool_0",
               "cloud": "AWS",
-              "region": "us-east-2",
-              "max_cfu": 10
-            },
+              "region": "us-west-1",
+              "max_cfu": 5
+            }
+          ]
+        },
+        {
+          "flinkComputePools": [
             {
-              "id": "lfcp-m66zjw",
-              "display_name": "AWS.us-east-1.env-x7727g_1",
+              "id": "dlz-f3a90de",
+              "display_name": "flink_compute_pool_0",
               "cloud": "AWS",
-              "region": "us-east-1",
-              "max_cfu": 10
+              "region": "us-west-1",
+              "max_cfu": 5
             }
           ]
         }
-        ]
+      ]
     }
   }
 }
