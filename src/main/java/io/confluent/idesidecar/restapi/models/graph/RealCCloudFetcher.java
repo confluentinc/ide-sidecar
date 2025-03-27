@@ -586,7 +586,7 @@ public class RealCCloudFetcher extends ConfluentCloudRestClient implements CClou
       return new CcloudFlinkComputePool(
           id,
           spec.displayName,
-          spec.cloud,
+          spec.provider,
           spec.region,
           spec.maxCfu,
           environment,
@@ -600,10 +600,10 @@ public class RealCCloudFetcher extends ConfluentCloudRestClient implements CClou
   @JsonIgnoreProperties(ignoreUnknown = true)
   private record FlinkComputePoolSpec(
       @JsonProperty(value = "display_name") String displayName,
-      @JsonProperty(value = "cloud") String cloud, // Ensure this field is correctly mapped
+      @JsonProperty(value = "cloud") String provider,
       @JsonProperty(value = "region") String region,
-      @JsonProperty(value = "max_cfu") int maxCfu,// New field
-      @JsonProperty(value = "description") String description // New field
+      @JsonProperty(value = "max_cfu") int maxCfu,
+      @JsonProperty(value = "description") String description
   ) {
   }
   @RegisterForReflection
