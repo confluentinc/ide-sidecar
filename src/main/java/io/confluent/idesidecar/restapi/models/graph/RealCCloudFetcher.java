@@ -17,12 +17,10 @@ import io.quarkus.logging.Log;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
-import io.vertx.core.MultiMap;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
 import java.util.List;
-import java.util.Map;
 import org.eclipse.microprofile.config.ConfigProvider;
 
 /**
@@ -542,7 +540,10 @@ public class RealCCloudFetcher extends ConfluentCloudRestClient implements CClou
     return null;
   }
 
-  public Multi<FlinkComputePool> getFlinkComputePools(String connectionId, String envId) {
+  public Multi<CcloudFlinkComputePool> getFlinkComputePools(
+      String connectionId,
+      String envId
+  ) {
     var headers = headersFor(connectionId);
     String url = CONFLUENT_CLOUD_FLINK_COMPUTE_POOLS_URI.formatted(envId);
     Log.infof("Fetching Flink compute pools from URL: %s with headers: %s", url, headers);
@@ -550,7 +551,10 @@ public class RealCCloudFetcher extends ConfluentCloudRestClient implements CClou
         .map(pool -> pool.withConnectionId(connectionId));
   }
 
-  private PageOfResults<FlinkComputePool> parseFlinkComputePoolsList(String json, PaginationState state) {
+  private PageOfResults<CcloudFlinkComputePool> parseFlinkComputePoolsList(
+      String json,
+      PaginationState state
+  ) {
     return parseList(json, state, ListFlinkComputePoolsResponse.class);
   }
 
@@ -561,7 +565,7 @@ public class RealCCloudFetcher extends ConfluentCloudRestClient implements CClou
       String kind,
       ListMetadata metadata,
       @JsonProperty(value = "data", required = true) List<FlinkComputePoolResponse> data
-  ) implements ListResponse<FlinkComputePoolResponse, FlinkComputePool> {
+  ) implements ListResponse<FlinkComputePoolResponse, CcloudFlinkComputePool> {
 
   }
 
@@ -576,10 +580,10 @@ public class RealCCloudFetcher extends ConfluentCloudRestClient implements CClou
       @JsonProperty(value="organization") CCloudReference organization,
       @JsonProperty(value = "spec") FlinkComputePoolSpec spec,
       @JsonProperty(value = "status") FlinkComputePoolStatus status
-      ) implements ListItem<FlinkComputePool> {
+      ) implements ListItem<CcloudFlinkComputePool> {
     @Override
-    public FlinkComputePool toRepresentation() {
-      return new FlinkComputePool(
+    public CcloudFlinkComputePool toRepresentation() {
+      return new CcloudFlinkComputePool(
           id,
           spec.displayName,
           spec.cloud,
@@ -596,7 +600,7 @@ public class RealCCloudFetcher extends ConfluentCloudRestClient implements CClou
   @JsonIgnoreProperties(ignoreUnknown = true)
   private record FlinkComputePoolSpec(
       @JsonProperty(value = "display_name") String displayName,
-      @JsonProperty(value = "cloud") String cloud,
+      @JsonProperty(value = "cloud") String cloud, // Ensure this field is correctly mapped
       @JsonProperty(value = "region") String region,
       @JsonProperty(value = "max_cfu") int maxCfu,// New field
       @JsonProperty(value = "description") String description // New field

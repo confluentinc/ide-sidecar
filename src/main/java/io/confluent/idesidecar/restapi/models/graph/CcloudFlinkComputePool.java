@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 
 @RegisterForReflection
-public record FlinkComputePool(
+public record CcloudFlinkComputePool(
     @JsonProperty("id") String id,
     @JsonProperty("display_name") String displayName,
     @JsonProperty("cloud") String cloud,
@@ -14,8 +14,8 @@ public record FlinkComputePool(
     @JsonProperty("organization") CCloudReference organization,
     @JsonProperty("connectionId") String connectionId
 ) {
-  public FlinkComputePool withConnectionId(String connectionId) {
-    return new FlinkComputePool(
+  public CcloudFlinkComputePool withConnectionId(String connectionId) {
+    return new CcloudFlinkComputePool(
         this.id,
         this.displayName,
         this.cloud,
