@@ -527,7 +527,7 @@ components:
       properties:
         api_key:
           description: The API key to use when connecting to the external service.
-          maxLength: 64
+          maxLength: 96
           minLength: 1
           type: string
         api_secret:
@@ -581,7 +581,7 @@ components:
       properties:
         username:
           description: The username to use when connecting to the external service.
-          maxLength: 64
+          maxLength: 96
           minLength: 1
           type: string
         password:
@@ -1489,25 +1489,25 @@ components:
     HealthResponse:
       type: object
       properties:
-        status:
-          enum:
-          - UP
-          - DOWN
-          type: string
         checks:
           type: array
           items:
             $ref: "#/components/schemas/HealthCheck"
-    HealthCheck:
-      type: object
-      properties:
-        data:
-          type: object
-          nullable: true
-        name:
-          type: string
         status:
           enum:
           - UP
           - DOWN
           type: string
+    HealthCheck:
+      type: object
+      properties:
+        status:
+          enum:
+          - UP
+          - DOWN
+          type: string
+        name:
+          type: string
+        data:
+          type: object
+          nullable: true
