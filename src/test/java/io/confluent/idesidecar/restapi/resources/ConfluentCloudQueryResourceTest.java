@@ -9,6 +9,8 @@ import static io.confluent.idesidecar.restapi.testutil.QueryResourceUtil.queryGr
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import io.confluent.idesidecar.restapi.connections.ConnectionState;
 import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
@@ -27,9 +29,14 @@ import org.junitpioneer.jupiter.ExpectedToFail;
 @TestProfile(NoAccessFilterProfile.class)
 public class ConfluentCloudQueryResourceTest extends ConfluentQueryResourceTestBase {
 
+  private WireMockServer wireMockServer;
+
   @BeforeEach
   void setup() {
     Log.info("Setting up before test");
+    wireMockServer = new WireMockServer(WireMockConfiguration.wireMockConfig().dynamicPort());
+    wireMockServer.start();
+    // Clean up any pre-existing connections to avoid conflicts
     super.setup();
     ccloudTestUtil.createAuthedConnection(
         "ccloud-dev",
@@ -47,6 +54,7 @@ public class ConfluentCloudQueryResourceTest extends ConfluentQueryResourceTestB
   @AfterEach
   void afterEach() {
     Log.info("Cleaning up after test");
+    wireMockServer.stop();
     super.afterEach();
   }
 
@@ -315,6 +323,34 @@ public class ConfluentCloudQueryResourceTest extends ConfluentQueryResourceTestB
     assertQueryResponseMatches(
         "graph/real/get-ccloud-connection-by-id-query.graphql",
         "graph/real/get-ccloud-connection-by-id-failed-kafka-expected.json",
+        this::replaceWireMockPort
+    );
+  }
+
+  @Test
+  void shouldGetEmptyCCloudEnvironmentWithFlinkDetails() {
+    setupCCloudApiMocks(
+        ccloudTestUtil.getControlPlaneToken("ccloud-dev"));
+    setupCCloudApiMocks(
+        ccloudTestUtil.getControlPlaneToken("ccloud-prod"));
+
+    assertQueryResponseMatches(
+        "graph/real/get-ccloud-environment-empty-flink-query.graphql",
+        "graph/real/get-ccloud-environment-empty-flink-expected.json",
+        this::replaceWireMockPort
+    );
+  }
+
+  @Test
+  void shouldGetCCloudEnvironmentWithFlinkDetails() {
+    setupCCloudApiMocks(
+        ccloudTestUtil.getControlPlaneToken("ccloud-dev"));
+    setupCCloudApiMocks(
+        ccloudTestUtil.getControlPlaneToken("ccloud-prod"));
+
+    assertQueryResponseMatches(
+        "graph/real/get-ccloud-environment-empty-flink-query.graphql",
+        "graph/real/get-ccloud-environment-empty-flink-expected.json",
         this::replaceWireMockPort
     );
   }

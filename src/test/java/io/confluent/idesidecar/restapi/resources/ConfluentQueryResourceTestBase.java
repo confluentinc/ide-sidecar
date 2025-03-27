@@ -22,6 +22,9 @@ public abstract class ConfluentQueryResourceTestBase {
   @ConfigProperty(name = "ide-sidecar.connections.ccloud.resources.env-list-uri")
   String envListUri;
 
+  @ConfigProperty(name = "ide-sidecar.connections.ccloud.resources.flink-compute-pools-uri")
+  String computePoolListUri;
+
   @ConfigProperty(name = "ide-sidecar.connections.ccloud.resources.lkc-list-uri")
   String lkcListUri;
 
@@ -89,6 +92,7 @@ public abstract class ConfluentQueryResourceTestBase {
    *   <li>List Kafka clusters (empty)</li>
    *   <li>List Schema Registry clusters</li>
    *   <li>List Schema Registry clusters (empty)</li>
+   *   <li>List Flink compute pools</li>
    * </ul>
    */
   void setupCCloudApiMocks(String bearerToken) {
@@ -134,7 +138,20 @@ public abstract class ConfluentQueryResourceTestBase {
         bearerToken,
         "ccloud-resources-mock-responses/get-schema-registry-empty.json"
     );
-  }
+
+    // Register mock for listing Flink compute pools
+    ccloudTestUtil.expectSuccessfulCCloudGet(
+        computePoolListUri.formatted(mainTestEnvId),
+        bearerToken,
+        "ccloud-resources-mock-responses/list-flink-compute-pools-empty.json"
+    );
+    // Register mock for listing Flink compute pools within ccloud request
+    ccloudTestUtil.expectSuccessfulCCloudGet(
+        computePoolListUri.formatted(emptyEnvId),
+        bearerToken,
+        "ccloud-resources-mock-responses/list-flink-compute-pools-empty.json"
+    );
+}
 
   void expectSuccessfulListLocalClusters(String resourceFilename) {
     expectSuccessfulGet(confluentLocalClustersUri, resourceFilename);
