@@ -175,6 +175,12 @@ public class ConfluentCloudQueryResource {
     );
   }
 
+  @NonNull
+  public Uni<List<FlinkComputePool>> getFlinkComputePools(@Source CCloudEnvironment env) {
+    Log.infof("Get Flink compute pools for connection %s and environment %s", env.connectionId(), env.id());
+    return multiToUni(ccloud.getFlinkComputePools(env.connectionId(), env.id()));
+  }
+
   @Query("getFlinkComputePools")
   @Description("Get Flink compute pools for a specific connection and environment")
   @NonNull

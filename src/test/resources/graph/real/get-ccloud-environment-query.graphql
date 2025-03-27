@@ -1,0 +1,18 @@
+query {
+  ccloudEnvironment {
+    flinkComputePools {
+      connectionId
+      id
+      spec {
+        display_name
+        cloud
+        region
+        max_cfu
+      }
+      status {
+        current_cfu
+        phase
+      }
+    }
+  }
+}

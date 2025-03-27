@@ -554,11 +554,6 @@ public class RealCCloudFetcher extends ConfluentCloudRestClient implements CClou
     return parseList(json, state, ListFlinkComputePoolsResponse.class);
   }
 
-  private Multi<Map<String, String>> headersForAllConnections() {
-    // Implement logic to get headers for all connections
-    return Multi.createFrom().empty();
-  }
-
   @RegisterForReflection
   @JsonIgnoreProperties(ignoreUnknown = true)
   private record ListFlinkComputePoolsResponse(
@@ -577,9 +572,10 @@ public class RealCCloudFetcher extends ConfluentCloudRestClient implements CClou
       String kind,
       @JsonProperty(required = true) String id,
       JsonNode metadata,
-      @JsonProperty(value = "spec")
-      io.confluent.idesidecar.restapi.models.graph.FlinkComputePoolSpec spec,
-      @JsonProperty(value = "status") io.confluent.idesidecar.restapi.models.graph.FlinkComputePoolStatus status,
+      @JsonProperty(value="environment") CCloudReference environment,
+      @JsonProperty(value="organization") CCloudReference organization,
+      @JsonProperty(value = "spec") FlinkComputePoolSpec spec,
+      @JsonProperty(value = "status") FlinkComputePoolStatus status,
       @JsonProperty(value = "connection_id") String connectionId
       ) implements ListItem<FlinkComputePool> {
 
@@ -587,8 +583,12 @@ public class RealCCloudFetcher extends ConfluentCloudRestClient implements CClou
     public FlinkComputePool toRepresentation() {
       return new FlinkComputePool(
           id,
-          spec,
-          status,
+          spec.displayName,
+          spec.cloud,
+          spec.region,
+          spec.maxCfu,
+          environment,
+          organization,
           connectionId
       );
     }
@@ -600,10 +600,10 @@ public class RealCCloudFetcher extends ConfluentCloudRestClient implements CClou
       @JsonProperty(value = "display_name") String displayName,
       @JsonProperty(value = "cloud") String cloud,
       @JsonProperty(value = "region") String region,
-      @JsonProperty(value = "max_cfu") int maxCfu
+      @JsonProperty(value = "max_cfu") int maxCfu,// New field
+      @JsonProperty(value = "description") String description // New field
   ) {
   }
-
   @RegisterForReflection
   @JsonIgnoreProperties(ignoreUnknown = true)
   private record FlinkComputePoolStatus(

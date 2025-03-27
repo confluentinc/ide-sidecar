@@ -8,8 +8,6 @@ query {
       max_cfu
       environment {
         id
-        related
-        resource_name
       }
       network {
         id

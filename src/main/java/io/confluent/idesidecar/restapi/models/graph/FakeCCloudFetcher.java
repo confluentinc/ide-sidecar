@@ -153,18 +153,6 @@ public class FakeCCloudFetcher implements CCloudFetcher {
     return Uni.createFrom().item(connection.delegate());
   }
 
-  public CCloudConnection getConnection(int index) {
-    try {
-      return CONNECTIONS.values()
-          .stream()
-          .toList()
-          .get(index)
-          .delegate();
-    } catch (IndexOutOfBoundsException e) {
-      return null;
-    }
-  }
-
   public Multi<CCloudOrganization> getOrganizations(String connectionId) {
     var connection = CONNECTIONS.get(connectionId);
     if (connection == null) {
@@ -246,30 +234,24 @@ public class FakeCCloudFetcher implements CCloudFetcher {
     }
     List<FlinkComputePool> flinkComputePools = List.of(
         new FlinkComputePool(
-            "flink-1",
-            new FlinkComputePoolSpec(
-                "flink-1",
-                "AWS",
-                "us-east-2",
-                10,
-                new CCloudEnvironment("id1", "resource1", CCloudGovernancePackage.ESSENTIALS),
-                new NetworkReference("id1", "env2", "related", "resource2")
-            ),
-            new FlinkComputePoolStatus("Active", 10),
-            "ccloud-dev"
+            "fcp-1234",
+            "Devel Flink Pool 1",
+           "AWS",
+            "us-west-1",
+            10,
+            new CCloudReference(envId, "Devel"),
+            new CCloudReference(DEVEL_ORG_ID, "Development Org"),
+            "fcp-1234-conn"
         ),
         new FlinkComputePool(
-            "flink-2",
-            new FlinkComputePoolSpec(
-                "flink-1",
-                "AWS",
-                "us-west-2",
-                10,
-                new CCloudEnvironment("id2", "resource2", CCloudGovernancePackage.ESSENTIALS),
-                new NetworkReference("id2", "env2", "related", "resource2")
-            ),
-            new FlinkComputePoolStatus("PROVISIONING", 5),
-            "ccloud-dev"
+            "fcp-5678",
+            "Devel Flink Pool 2",
+            "AWS",
+            "us-west-2",
+            5,
+            new CCloudReference(envId, "Devel"),
+            new CCloudReference(DEVEL_ORG_ID, "Development Org"),
+            "fcp-1234-conn"
         )
     );
     return Multi.createFrom().iterable(flinkComputePools);

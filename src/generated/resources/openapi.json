@@ -1974,15 +1974,15 @@
       "HealthResponse" : {
         "type" : "object",
         "properties" : {
-          "status" : {
-            "enum" : [ "UP", "DOWN" ],
-            "type" : "string"
-          },
           "checks" : {
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/HealthCheck"
             }
+          },
+          "status" : {
+            "enum" : [ "UP", "DOWN" ],
+            "type" : "string"
           }
         }
       },
@@ -1993,12 +1993,12 @@
             "enum" : [ "UP", "DOWN" ],
             "type" : "string"
           },
+          "name" : {
+            "type" : "string"
+          },
           "data" : {
             "type" : "object",
             "nullable" : true
-          },
-          "name" : {
-            "type" : "string"
           }
         }
       }

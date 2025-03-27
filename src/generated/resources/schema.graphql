@@ -8,6 +8,7 @@ type CCloudConnection {
 
 type CCloudEnvironment {
   connectionId: String!
+  flinkComputePools: [FlinkComputePool]!
   governancePackage: CCloudGovernancePackage!
   id: String!
   kafkaClusters: [CCloudKafkaCluster]!
@@ -80,31 +81,15 @@ type DirectSchemaRegistry {
   uri: String!
 }
 
-type EnvironmentReference {
-  id: String
-  related: String
-  resource_name: String
-}
-
 type FlinkComputePool {
-  connectionId: String
-  id: String
-  spec: FlinkComputePoolSpec
-  status: FlinkComputePoolStatus
-}
-
-type FlinkComputePoolSpec {
   cloud: String
+  connectionId: String
   display_name: String
-  environment: EnvironmentReference
+  environment: CCloudReference
+  id: String
   max_cfu: Int!
-  network: NetworkReference
+  organization: CCloudReference
   region: String
-}
-
-type FlinkComputePoolStatus {
-  current_cfu: Int!
-  phase: String
 }
 
 type LocalConnection {
@@ -119,13 +104,6 @@ type LocalSchemaRegistry {
   connectionId: String!
   id: String!
   uri: String!
-}
-
-type NetworkReference {
-  environment: String
-  id: String
-  related: String
-  resource_name: String
 }
 
 "Query root"
