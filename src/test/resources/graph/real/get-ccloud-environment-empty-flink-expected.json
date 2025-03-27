@@ -1,1 +1,14 @@
-{"data":{"ccloudConnectionById":{"environments":[{"flinkComputePools":[]},{"flinkComputePools":[]}]}}}
+{
+  "data": {
+    "ccloudConnectionById": {
+      "environments": [
+        {
+          "flinkComputePools": []
+        },
+        {
+          "flinkComputePools": []
+        }
+      ]
+    }
+  }
+}
