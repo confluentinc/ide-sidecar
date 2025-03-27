@@ -1,11 +1,13 @@
 package io.confluent.idesidecar.restapi.models.graph;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.confluent.idesidecar.restapi.auth.CCloudOAuthContext.OrganizationDetails;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import io.smallrye.graphql.api.DefaultNonNull;
 
 @RegisterForReflection
 @DefaultNonNull
+@JsonIgnoreProperties(ignoreUnknown = true)
 public record CCloudEnvironment(
     String id,
     String name,
