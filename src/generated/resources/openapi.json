@@ -1975,9 +1975,9 @@
         "type" : "object",
         "properties" : {
         },
-        "status" : {
-          "enum" : [ "UP", "DOWN" ],
-          "type" : "string",
+          "status" : {
+            "enum" : [ "UP", "DOWN" ],
+            "type" : "string",
           "checks" : {
             "type" : "array",
             "items" : {
