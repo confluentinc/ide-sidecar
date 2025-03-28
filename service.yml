@@ -28,7 +28,6 @@ sonarqube:
     - "**/*.pb.*"
     - "**/mk-files/**/*"
     - "**/test/**/*"
-    - "**/FakeCCloudFetcher*"
   coverage_reports:
     - "**/jacoco-report/jacoco.xml"
     - "**/jacoco-report-it/jacoco.xml"
