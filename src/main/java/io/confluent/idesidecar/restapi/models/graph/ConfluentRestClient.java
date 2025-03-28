@@ -421,7 +421,7 @@ public abstract class ConfluentRestClient {
       @JsonProperty(value = "self") String self,
       @JsonProperty(value = "first") String firstPage,
       @JsonProperty(value = "last") String lastPage,
-      @JsonProperty(value = "previous") String previousPage,
+      @JsonProperty(value = "prev") String previousPage,
       @JsonProperty(value = "next") String nextPage,
       @JsonProperty(value = "total_size") int totalSize
   ) {

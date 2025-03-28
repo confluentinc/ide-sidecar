@@ -1,0 +1,17 @@
+{
+  "errors": [
+    {
+      "message": "Validation error (FieldUndefined@[ccloudConnectionById/environments/flinkComputePools/cloud]) : Field 'cloud' in type 'CCloudFlinkComputePool' is undefined",
+      "locations": [
+        {
+          "line": 7,
+          "column": 9
+        }
+      ],
+      "extensions": {
+        "classification": "ValidationError"
+      }
+    }
+  ],
+  "data": null
+}
