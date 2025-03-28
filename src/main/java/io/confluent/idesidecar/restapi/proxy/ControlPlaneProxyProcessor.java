@@ -10,7 +10,7 @@ import jakarta.enterprise.context.ApplicationScoped;
  * Processor to set the proxy request/response parameters for RBAC.
  */
 @ApplicationScoped
-public class RBACProxyProcessor extends Processor<ProxyContext, Future<ProxyContext>> {
+public class ControlPlaneProxyProcessor extends Processor<ProxyContext, Future<ProxyContext>> {
 
   @Override
   public Future<ProxyContext> process(ProxyContext context) {
