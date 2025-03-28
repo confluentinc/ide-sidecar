@@ -6,11 +6,14 @@ import io.confluent.idesidecar.restapi.processors.Processor;
 import io.confluent.idesidecar.restapi.proxy.ProxyContext;
 import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
 import io.confluent.idesidecar.restapi.util.RequestHeadersConstants;
+import io.confluent.idesidecar.restapi.util.UriUtil;
 import io.quarkus.vertx.web.Route;
 import io.smallrye.common.annotation.Blocking;
 import io.swagger.v3.oas.annotations.Operation;
+import io.vertx.codegen.annotations.Nullable;
 import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.RoutingContext;
@@ -35,6 +38,7 @@ public class RestProxyResource {
   public static final String KAFKA_PROXY_REGEX = "/kafka/v3/clusters/(?<clusterId>[^\\/]+).*";
   private static final String CLUSTER_ID_PATH_PARAM = "clusterId";
   public static final String SCHEMA_REGISTRY_PROXY_REGEX = "(/schemas.*)|(/subjects.*)";
+  public static final String CCLOUD_API_PROXY_REGEX = "(/artifact.*)|(/sql.*)|(/fcpm/v2/compute-pools.*)";
   public static final String RBAC_RESOURCE_PATH = "/api/metadata/security/v2alpha1/authorize";
   static final String RBAC_URI = ConfigProvider
       .getConfig()
@@ -50,6 +54,13 @@ public class RestProxyResource {
   @Named("RBACProxyProcessor")
   Processor<ProxyContext, Future<ProxyContext>> rbacProxyProcessor;
 
+  @Inject
+  UriUtil uriUtil;
+
+  @Inject
+  @Named("CCloudProxyProcessor")
+  Processor<ProxyContext, Future<ProxyContext>> ccloudProxyProcessor;
+
   @Route(regex = KAFKA_PROXY_REGEX)
   @Blocking
   public void kafkaClusterProxy(RoutingContext routingContext) {
@@ -60,6 +71,12 @@ public class RestProxyResource {
   @Blocking
   public void schemaRegistryClusterProxy(RoutingContext routingContext) {
     handleClusterProxy(routingContext, createSRClusterContext(routingContext));
+  }
+
+  @Route(regex = CCLOUD_API_PROXY_REGEX)
+  @Blocking
+  public void ccloudProxy(RoutingContext routingContext) {
+    process(routingContext, ccloudProxyProcessor, createCcloudProxyContext(routingContext));
   }
 
   private void handleClusterProxy(RoutingContext routingContext, ClusterProxyContext proxyContext) {
@@ -196,6 +213,17 @@ public class RestProxyResource {
         HttpMethod.PUT,
         routingContext.body().buffer(),
         NO_PATH_PARAMS,
+        routingContext.request().getHeader(RequestHeadersConstants.CONNECTION_ID_HEADER)
+    );
+  }
+
+  private ProxyContext createCcloudProxyContext(RoutingContext routingContext) {
+    return new ProxyContext(
+        routingContext.request().uri(),
+        routingContext.request().headers(),
+        routingContext.request().method(),
+        routingContext.body().buffer(),
+        routingContext.pathParams(),
         routingContext.request().getHeader(RequestHeadersConstants.CONNECTION_ID_HEADER)
     );
   }
