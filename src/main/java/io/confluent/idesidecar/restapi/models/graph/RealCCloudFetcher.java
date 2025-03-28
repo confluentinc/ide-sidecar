@@ -589,8 +589,6 @@ public class RealCCloudFetcher extends ConfluentCloudRestClient implements CClou
           spec.provider,
           spec.region,
           spec.maxCfu,
-          environment,
-          organization,
           null
       );
     }

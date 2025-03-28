@@ -20,10 +20,8 @@ type CCloudEnvironment {
 type CCloudFlinkComputePool {
   connectionId: String
   display_name: String
-  environment: CCloudReference
   id: String
   max_cfu: Int!
-  organization: CCloudReference
   provider: String
   region: String
 }

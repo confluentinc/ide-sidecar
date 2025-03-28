@@ -239,8 +239,6 @@ public class FakeCCloudFetcher implements CCloudFetcher {
            "AWS",
             "us-west-1",
             10,
-            new CCloudReference(envId, "ccloud-dev"),
-            new CCloudReference(DEVEL_ORG_ID, "Development Org"),
             "fcp-1234-conn"
         ),
         new CCloudFlinkComputePool(
@@ -249,8 +247,6 @@ public class FakeCCloudFetcher implements CCloudFetcher {
             "AWS",
             "us-west-2",
             5,
-            new CCloudReference(envId, "ccloud-dev"),
-            new CCloudReference(DEVEL_ORG_ID, "Development Org"),
             "fcp-1235-conn"
         )
     );
