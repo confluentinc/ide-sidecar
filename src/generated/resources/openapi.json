@@ -1974,10 +1974,10 @@
       "HealthResponse" : {
         "type" : "object",
         "properties" : {
-        },
           "status" : {
             "enum" : [ "UP", "DOWN" ],
-            "type" : "string",
+            "type": "string"
+          },
           "checks" : {
             "type" : "array",
             "items" : {
