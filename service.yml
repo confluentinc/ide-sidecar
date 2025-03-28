@@ -28,6 +28,7 @@ sonarqube:
     - "**/*.pb.*"
     - "**/mk-files/**/*"
     - "**/test/**/*"
+    - "src/main/java/io/confluent/idesidecar/restapi/models/graph/FakeCCloudFetcher.java"
   coverage_reports:
     - "**/jacoco-report/jacoco.xml"
     - "**/jacoco-report-it/jacoco.xml"
