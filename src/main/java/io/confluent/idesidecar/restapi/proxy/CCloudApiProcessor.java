@@ -45,12 +45,10 @@ public class CCloudApiProcessor extends Processor<ProxyContext, Future<ProxyCont
             : MultiMap.caseInsensitiveMultiMap();
         headers.add(AUTHORIZATION, "Bearer %s".formatted(dataPlaneToken.token()));
         context.setProxyRequestHeaders(headers);
-        //TODO: figure out how to set base url for data plane requests to ccloud,
-        // maybe need to add a header to the request x-data-plane-endpoint= baseurl
-        // apply some regex to limit the scope of the header to only the data plane requests
       }
     } else {
-      //TODO: throw 400 error because non-ccloud connections are not a concern
+      return Future.failedFuture(
+          new ProcessorFailedException(context.fail(400, "Bad Request: Non-CCloud connections are not supported")));
     }
 
     return next().process(context);
