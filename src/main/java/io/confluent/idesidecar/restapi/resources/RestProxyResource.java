@@ -6,6 +6,7 @@ import io.confluent.idesidecar.restapi.processors.Processor;
 import io.confluent.idesidecar.restapi.proxy.ProxyContext;
 import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
 import io.confluent.idesidecar.restapi.util.RequestHeadersConstants;
+import io.quarkus.runtime.StartupEvent;
 import io.quarkus.vertx.web.Route;
 import io.smallrye.common.annotation.Blocking;
 import io.swagger.v3.oas.annotations.Operation;
@@ -13,13 +14,17 @@ import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.handler.BodyHandler;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.ws.rs.core.MediaType;
 import java.util.Map;
 import org.eclipse.microprofile.config.ConfigProvider;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.parameters.RequestBody;
@@ -42,6 +47,20 @@ public class RestProxyResource {
   static final MultiMap NO_HEADERS = MultiMap.caseInsensitiveMultiMap();
   static final Map<String, String> NO_PATH_PARAMS = Map.of();
 
+  // Add this static declaration alongside the other static constants
+  static final String ccloudApiProxyRegex = ConfigProvider
+      .getConfig()
+      .getValue("ide-sidecar.proxy.ccloud-api-regex", String.class);
+
+  @Inject
+  Router router;
+
+  void init(@Observes StartupEvent ev) {
+    router.routeWithRegex(ccloudApiProxyRegex)
+        .handler(BodyHandler.create())
+        .blockingHandler(this::ccloudProxy);
+  }
+
   @Inject
   @Named("clusterProxyProcessor")
   Processor<ClusterProxyContext, Future<ClusterProxyContext>> clusterProxyProcessor;
@@ -49,6 +68,10 @@ public class RestProxyResource {
   @Inject
   @Named("RBACProxyProcessor")
   Processor<ProxyContext, Future<ProxyContext>> rbacProxyProcessor;
+
+  @Inject
+  @Named("CCloudProxyProcessor")
+  Processor<ProxyContext, Future<ProxyContext>> ccloudProxyProcessor;
 
   @Route(regex = KAFKA_PROXY_REGEX)
   @Blocking
@@ -68,6 +91,10 @@ public class RestProxyResource {
 
   private void handleRBACProxy(RoutingContext routingContext, ProxyContext proxyContext) {
     process(routingContext, rbacProxyProcessor, proxyContext);
+  }
+
+  private void ccloudProxy(RoutingContext routingContext) {
+    process(routingContext, ccloudProxyProcessor, createCcloudProxyContext(routingContext));
   }
 
   public record RBACRequest(
@@ -196,6 +223,17 @@ public class RestProxyResource {
         HttpMethod.PUT,
         routingContext.body().buffer(),
         NO_PATH_PARAMS,
+        routingContext.request().getHeader(RequestHeadersConstants.CONNECTION_ID_HEADER)
+    );
+  }
+
+  private ProxyContext createCcloudProxyContext(RoutingContext routingContext) {
+    return new ProxyContext(
+        routingContext.request().uri(),
+        routingContext.request().headers(),
+        routingContext.request().method(),
+        routingContext.body().buffer(),
+        routingContext.pathParams(),
         routingContext.request().getHeader(RequestHeadersConstants.CONNECTION_ID_HEADER)
     );
   }
