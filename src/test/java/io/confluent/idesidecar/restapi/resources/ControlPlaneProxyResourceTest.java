@@ -3,6 +3,7 @@ package io.confluent.idesidecar.restapi.resources;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
@@ -151,6 +152,7 @@ class ControlPlaneProxyResourceTest {
     // Then the response body should be the same as the expected response body
     assertEquals(expectedResponseBody, actualResponseBody);
   }
+
   @Test
   void testControlPlaneProxyProcessorNoInitialHeaders() {
     // Given a ProxyContext with no initial headers
@@ -187,4 +189,40 @@ class ControlPlaneProxyResourceTest {
     // And the request body should be "TestBody"
     assertEquals("TestBody", result.getProxyRequestBody().toString());
   }
+
+  @Test
+  void testControlPlaneProxyProcessorWithXRequestIDHeader() {
+    // Given a header with X-Request-ID
+    MultiMap headers = MultiMap.caseInsensitiveMultiMap();
+    headers.add("X-Request-ID", "12345");
+
+    var proxyContext = new ProxyContext(
+        "http://localhost/test",
+        headers,
+        HttpMethod.PUT,
+        Buffer.buffer("TestBody"),
+        Map.of(),
+        "test-connection-id"
+    );
+
+    // Create a mock processor that throws an exception
+    Processor<ProxyContext, Future<ProxyContext>> nextProcessor = new Processor<>() {
+      @Override
+      public Future<ProxyContext> process(ProxyContext context) {
+        return Future.failedFuture(new RuntimeException("This route does not support the request header 'X-Cluster-Id'.\" + \" Please remove the header and try again."));
+      }
+    };
+
+    // Create an instance of ControlPlaneProxyProcessor and set the next processor
+    ControlPlaneProxyProcessor processor = new ControlPlaneProxyProcessor();
+    processor.setNext(nextProcessor);
+
+    // When the ControlPlaneProxyProcessor processes the context
+    var result = processor.process(proxyContext);
+
+    // Then the future should be completed exceptionally
+    assertTrue(result.failed());
+    assertEquals("This route does not support the request header 'X-Cluster-Id'.\" + \" Please remove the header and try again.", result.cause().getMessage());
+  }
+
 }
