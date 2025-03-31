@@ -47,8 +47,10 @@ public class RestProxyResource {
   static final MultiMap NO_HEADERS = MultiMap.caseInsensitiveMultiMap();
   static final Map<String, String> NO_PATH_PARAMS = Map.of();
 
-  @ConfigProperty(name = "ide-sidecar.proxy.ccloud-api-regex")
-  String ccloudApiProxyRegex;
+  // Add this static declaration alongside the other static constants
+  static final String ccloudApiProxyRegex = ConfigProvider
+      .getConfig()
+      .getValue("ide-sidecar.proxy.ccloud-api-regex", String.class);
 
   @Inject
   Router router;
