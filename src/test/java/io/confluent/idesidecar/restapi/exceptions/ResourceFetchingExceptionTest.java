@@ -125,4 +125,21 @@ class ResourceFetchingExceptionTest {
         exception.getMessage()
     );
   }
+
+  @Test
+  void shouldCreateFromFailureWithControlPlaneTokenMissing() {
+    var failure = new Failure(
+        Response.Status.UNAUTHORIZED,
+        "control_plane_token_missing",
+        "Missing Confluent Cloud control plane token",
+        "request-id",
+        null
+    );
+    var action = "Authenticate with control plane";
+    var exception = new ResourceFetchingException(failure, action);
+    assertEquals(
+        action + " failed with 1 error(s): Missing Confluent Cloud control plane token",
+        exception.getMessage()
+    );
+  }
 }

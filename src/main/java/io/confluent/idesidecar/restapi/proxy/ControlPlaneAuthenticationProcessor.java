@@ -26,16 +26,7 @@ public class ControlPlaneAuthenticationProcessor extends
 
     switch (connectionState) {
       case CCloudConnectionState cCloudConnection -> {
-        var controlPlaneToken = cCloudConnection.getOauthContext().getControlPlaneToken();
-
-        if (controlPlaneToken == null) {
-          return Future.failedFuture(
-              new ProcessorFailedException(context.fail(401, "Unauthorized")));
-        }
-        var headers = context.getProxyRequestHeaders() != null ? context.getProxyRequestHeaders()
-            : MultiMap.caseInsensitiveMultiMap();
-        headers.add(AUTHORIZATION, "Bearer %s".formatted(controlPlaneToken.token()));
-        context.setProxyRequestHeaders(headers);
+           CCloudApiProcessor.getControlPlaneToken(context, cCloudConnection);
       }
       case LocalConnectionState localConnection -> {
         // Do nothing

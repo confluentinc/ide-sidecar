@@ -47,6 +47,23 @@ public class ExceptionMappers {
   }
 
   @ServerExceptionMapper
+  public Response mapControlPlaneTokenNotFoundException(
+      ControlPlaneTokenNotFoundException exception) {
+    Failure failure = new Failure(
+        exception,
+        Status.UNAUTHORIZED,
+        "control_plane_token_missing",
+        "Missing Confluent Cloud control plane token",
+        uuidFactory.getRandomUuid(),
+        null);
+    return Response
+        .status(Status.UNAUTHORIZED)
+        .entity(failure)
+        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+        .build();
+  }
+
+  @ServerExceptionMapper
   public Response mapInvalidPreferencesException(InvalidPreferencesException exception) {
     var failure = new Failure(
         Status.BAD_REQUEST,
