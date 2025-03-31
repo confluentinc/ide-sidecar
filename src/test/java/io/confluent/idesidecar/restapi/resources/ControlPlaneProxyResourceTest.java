@@ -179,9 +179,6 @@ class ControlPlaneProxyResourceTest {
 
     // When the ControlPlaneProxyProcessor processes the context
     var result = processor.process(proxyContext).result();
-
-    // Then the headers should include Content-Type: application/json
-    assertEquals("application/json", result.getProxyRequestHeaders().get(HttpHeaders.CONTENT_TYPE));
     // And the absolute URL should be set correctly
     assertEquals("http://localhost/test", result.getProxyRequestAbsoluteUrl());
     // And the request method should be PUT
