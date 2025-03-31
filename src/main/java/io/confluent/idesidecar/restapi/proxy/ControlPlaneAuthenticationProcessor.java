@@ -26,25 +26,24 @@ public class ControlPlaneAuthenticationProcessor extends
 
     switch (connectionState) {
       case CCloudConnectionState cCloudConnection -> {
-        if (CCloudApiProcessor.getControlPlaneToken(context, cCloudConnection)) {
-          return Future.failedFuture(
-              new ProcessorFailedException(context.fail(401, "Unauthorized")));
-        }
+        return CCloudApiProcessor.getControlPlaneToken(context, cCloudConnection).compose(v -> next().process(context));
       }
       case LocalConnectionState localConnection -> {
         // Do nothing
+        return next().process(context);
       }
       case DirectConnectionState directConnection -> {
         // Do nothing
+        return next().process(context);
       }
       case PlatformConnectionState platformConnection -> {
         // Do nothing
+        return next().process(context);
       }
       default -> {
         // This should never happen
+        return Future.failedFuture(new ProcessorFailedException(context.fail(500, "Unknown connection state")));
       }
     }
-
-    return next().process(context);
   }
 }

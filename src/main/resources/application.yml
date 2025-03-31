@@ -86,6 +86,7 @@ ide-sidecar:
     ccloud:
       check-token-expiration:
         interval-seconds: 5
+      control-plane-base-url: https://api.confluent.cloud
       control-plane-token:
         exchange-uri: https://confluent.cloud/api/sessions
         check-jwt-uri: https://confluent.cloud/api/check_jwt
