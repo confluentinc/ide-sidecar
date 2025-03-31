@@ -18,7 +18,7 @@ public class CCloudApiProcessor extends Processor<ProxyContext, Future<ProxyCont
   @Inject
   UriUtil uriUtil;
 
-  @ConfigProperty(name = "ide-sidecar.connections.ccloud.api-base-url")
+  @ConfigProperty(name = "ide-sidecar.connections.ccloud.control-plane-base-url")
   String ccloudApiBaseUrl;
 
   @Override
