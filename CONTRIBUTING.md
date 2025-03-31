@@ -762,7 +762,7 @@ You can do one better than the suggested pipeline, which does include the server
 id, but as space delimited field #9. Use awk to cut just that field out, and feed the result
 into kill to get rid of the old process:
 ```shell script
-$ kill $(netstat -anv | grep 26636 | awk '{print $9}')
+kill $(netstat -anv | grep 26636 | awk '{print $9}')
 ```
 
 Then you should be clear to manually start a new one.
