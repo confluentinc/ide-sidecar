@@ -32,11 +32,16 @@ public class CCloudApiProcessor extends Processor<ProxyContext, Future<ProxyCont
               context.fail(400, "This route does not support the request header 'X-Cluster-Id'."
                   + " Please remove the header and try again.")));
     } else if (connectionState instanceof CCloudConnectionState cCloudConnection) {
-      return getControlPlaneToken(context, cCloudConnection).compose(v -> {
+        try {
+          getControlPlaneToken(context, cCloudConnection);
+        } catch (ControlPlaneTokenNotFoundException e) {;
+          return Future.failedFuture(
+              new ProcessorFailedException(
+                  context.fail(401, "%s".formatted(e.getMessage()))));
+        }
         context.setProxyRequestAbsoluteUrl(uriUtil.combine(ccloudApiBaseUrl,
             context.getRequestUri()));
         return next().process(context);
-      });
     } else {
       return Future.failedFuture(
           new ProcessorFailedException(
@@ -50,16 +55,14 @@ public class CCloudApiProcessor extends Processor<ProxyContext, Future<ProxyCont
    *
    * @param context The proxy context to add the authorization header to
    * @param cCloudConnection The CCloud connection state containing the OAuth context with the token
-   * @return A succeeded Future if the token was added, or a failed Future with CCloudAuthenticationFailedException
    */
-  static Future<Void> getControlPlaneToken(
+  static void getControlPlaneToken(
       ProxyContext context, CCloudConnectionState cCloudConnection) {
     var controlPlaneToken = cCloudConnection.getOauthContext().getControlPlaneToken();
 
     // If token is missing, return a failed future with ControlPlaneTokenNotFoundException
     if (controlPlaneToken == null) {
-      return Future.failedFuture(
-          new ControlPlaneTokenNotFoundException("Control plane token not found"));
+    throw new ControlPlaneTokenNotFoundException("Control plane token not found");
     }
 
     // Token exists, add it to the headers
@@ -68,6 +71,5 @@ public class CCloudApiProcessor extends Processor<ProxyContext, Future<ProxyCont
     headers.add(AUTHORIZATION, "Bearer %s".formatted(controlPlaneToken.token()));
     context.setProxyRequestHeaders(headers);
 
-    return Future.succeededFuture();
   }
 }

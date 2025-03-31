@@ -1,5 +1,6 @@
 package io.confluent.idesidecar.restapi.resources;
 
+import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.asJson;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
@@ -10,6 +11,7 @@ import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.matching.EqualToPattern;
 import io.confluent.idesidecar.restapi.connections.CCloudConnectionState;
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
+import io.confluent.idesidecar.restapi.models.ConnectionSpec.CCloudConfig;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
 import io.confluent.idesidecar.restapi.processors.Processor;
 import io.confluent.idesidecar.restapi.proxy.ControlPlaneProxyProcessor;
@@ -17,13 +19,11 @@ import io.confluent.idesidecar.restapi.proxy.ProxyContext;
 import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
 import io.confluent.idesidecar.restapi.util.CCloudTestUtil;
 import io.quarkiverse.wiremock.devservice.ConnectWireMock;
-import io.quarkus.logging.Log;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
 import io.vertx.core.buffer.Buffer;
-import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.core.MediaType;
@@ -220,6 +220,28 @@ class ControlPlaneProxyResourceTest {
     // Then the future should be completed exceptionally
     assertTrue(result.failed());
     assertEquals("This route does not support the request header 'X-Cluster-Id'.\" + \" Please remove the header and try again.", result.cause().getMessage());
+  }
+
+  @Test
+  void testControlPlaneProxyWithoutAuthToken() throws Throwable {
+    // Given an authenticated CCloud connection
+    ccloudTestUtil.createCCloudConnection(CONNECTION_ID, "ccloud-connection-name", new CCloudConfig(null, null));
+
+    // When we hit the Sidecar Control Plane proxy endpoint with the right connection ID
+    var actualResponse = given()
+        .when()
+        .headers(REQUEST_HEADERS)
+        .put("/fcpm/v2/compute-pools")
+        .then();
+
+
+    actualResponse.statusCode(401);
+
+    var actualResponseBody = actualResponse.extract().asString();
+
+    var JSONResponse = asJson(actualResponseBody);
+    // Then the response body should be the same as the expected response body
+    assertEquals("Control plane token not found", JSONResponse.get("title").textValue());
   }
 
 }
