@@ -44,4 +44,23 @@ class FailureTest {
     assertTrue(source.isEmpty());
   }
 
+  @Test
+  void shouldParseControlPlaneTokenMissingFailure() throws IOException {
+    var json = """
+        {
+          "status": "401",
+          "code": "control_plane_token_missing",
+          "title": "Missing Confluent Cloud control plane token",
+          "id": "test-uuid-1234"
+        }
+        """;
+
+    var failure = OBJECT_MAPPER.readValue(json, Failure.class);
+
+    assertEquals("401", failure.status());
+    assertEquals("control_plane_token_missing", failure.code());
+    assertEquals("Missing Confluent Cloud control plane token", failure.title());
+    assertEquals("test-uuid-1234", failure.id());
+    assertNull(failure.errors());
+  }
 }

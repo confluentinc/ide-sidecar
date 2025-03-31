@@ -1,0 +1,43 @@
+{
+  "api_version": "fcpm/v2",
+  "kind": "ComputePoolList",
+  "metadata": {
+    "first": "https://api.confluent.cloud/fcpm/v2/compute-pools",
+    "total_size": 123
+  },
+  "data": [
+    {
+      "api_version": "fcpm/v2",
+      "kind": "ComputePool",
+      "id": "dlz-f3a90de",
+      "metadata": {
+        "self": "https://api.confluent.cloud/fcpm/v2/compute-pools/lfcp-12345",
+        "resource_name": "crn://confluent.cloud/organization=9bb441c4-edef-46ac-8a41-c49e44a3fd9a/environment=env-abc123/flink-region=aws.us-east-2/compute-pool=lfcp-12345",
+        "created_at": "2006-01-02T15:04:05-07:00",
+        "updated_at": "2006-01-02T15:04:05-07:00",
+        "deleted_at": "2006-01-02T15:04:05-07:00"
+      },
+      "spec": {
+        "display_name": "flink_compute_pool_0",
+        "cloud": "AWS",
+        "region": "us-west-1",
+        "max_cfu": 5,
+        "environment": {
+          "id": "env-00000",
+          "related": "https://api.confluent.cloud/org/v2/environments/env-00000",
+          "resource_name": "https://api.confluent.cloud/organization=9bb441c4-edef-46ac-8a41-c49e44a3fd9a/environment=env-00000"
+        },
+        "network": {
+          "id": "n-00000",
+          "environment": "string",
+          "related": "https://api.confluent.cloud/networking/v1/networks/n-00000",
+          "resource_name": "https://api.confluent.cloud/organization=9bb441c4-edef-46ac-8a41-c49e44a3fd9a/environment=env-abc123/network=n-00000"
+        }
+      },
+      "status": {
+        "phase": "PROVISIONING",
+        "current_cfu": 4
+      }
+    }
+  ]
+}
