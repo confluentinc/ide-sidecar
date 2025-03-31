@@ -12,7 +12,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 @ApplicationScoped
-public class CCloudApiProcessor extends Processor<ProxyContext, Future<ProxyContext>>  {
+public class CCloudApiProcessor extends Processor<ProxyContext, Future<ProxyContext>> {
 
   @Inject
   UriUtil uriUtil;
@@ -21,36 +21,33 @@ public class CCloudApiProcessor extends Processor<ProxyContext, Future<ProxyCont
   public Future<ProxyContext> process(ProxyContext context) {
     String clusterId = context.getRequestHeaders().get("X-Cluster-Id");
     var connectionState = context.getConnectionState();
-    if (connectionState instanceof CCloudConnectionState cCloudConnection) {
-      // Process via control plane with authentication
-      if (clusterId != null && !clusterId.isEmpty()) {
-        var controlPlaneToken = cCloudConnection.getOauthContext().getControlPlaneToken();
-        if (controlPlaneToken == null) {
-          return Future.failedFuture(
-              new ProcessorFailedException(context.fail(401, "Unauthorized")));
-        }
-        var headers = context.getProxyRequestHeaders() != null ? context.getProxyRequestHeaders()
-            : MultiMap.caseInsensitiveMultiMap();
-        headers.add(AUTHORIZATION, "Bearer %s".formatted(controlPlaneToken.token()));
-        context.setProxyRequestHeaders(headers);
-        context.setProxyRequestAbsoluteUrl(uriUtil.combine("https://api.confluent.cloud",
-            context.getRequestUri()));
-      } else  {
-        var dataPlaneToken = cCloudConnection.getOauthContext().getDataPlaneToken();
-        if (dataPlaneToken == null) {
-          return Future.failedFuture(
-              new ProcessorFailedException(context.fail(401, "Unauthorized")));
-        }
-        var headers = context.getProxyRequestHeaders() != null ? context.getProxyRequestHeaders()
-            : MultiMap.caseInsensitiveMultiMap();
-        headers.add(AUTHORIZATION, "Bearer %s".formatted(dataPlaneToken.token()));
-        context.setProxyRequestHeaders(headers);
+    if (connectionState instanceof CCloudConnectionState cCloudConnection
+        && (clusterId == null
+        || clusterId.isEmpty())) {
+      if (getControlPlaneToken(context, cCloudConnection)) {
+        return Future.failedFuture(
+            new ProcessorFailedException(context.fail(401, "Unauthorized")));
       }
+      context.setProxyRequestAbsoluteUrl(uriUtil.combine("https://api.confluent.cloud",
+          context.getRequestUri()));
     } else {
       return Future.failedFuture(
-          new ProcessorFailedException(context.fail(400, "Bad Request: Non-CCloud connections are not supported")));
+          new ProcessorFailedException(
+              context.fail(400, "Bad Request: Non-CCloud connections are not supported")));
     }
-
     return next().process(context);
+  }
+
+  static boolean getControlPlaneToken(
+      ProxyContext context, CCloudConnectionState cCloudConnection) {
+    var controlPlaneToken = cCloudConnection.getOauthContext().getControlPlaneToken();
+    if (controlPlaneToken == null) {
+      return true;
+    }
+    var headers = context.getProxyRequestHeaders() != null ? context.getProxyRequestHeaders()
+        : MultiMap.caseInsensitiveMultiMap();
+    headers.add(AUTHORIZATION, "Bearer %s".formatted(controlPlaneToken.token()));
+    context.setProxyRequestHeaders(headers);
+    return false;
   }
 }
