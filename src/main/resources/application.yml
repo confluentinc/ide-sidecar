@@ -87,6 +87,7 @@ ide-sidecar:
     ccloud:
       check-token-expiration:
         interval-seconds: 5
+      control-plane-base-url: https://api.confluent.cloud
       control-plane-token:
         exchange-uri: https://confluent.cloud/api/sessions
         check-jwt-uri: https://confluent.cloud/api/check_jwt
@@ -157,6 +158,8 @@ ide-sidecar:
     enabled: true
     # How often to check?
     interval-seconds: 60
+  proxy:
+    ccloud-api-regex: "(/artifact.*)|(/sql.*)|(/fcpm/v2/compute-pools.*)"
   websockets:
     # How long do we allow a connection to be established w/o it saying HELLO?
     initial-grace-seconds: 60
