@@ -6,23 +6,25 @@ import io.confluent.idesidecar.restapi.processors.Processor;
 import io.confluent.idesidecar.restapi.proxy.ProxyContext;
 import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
 import io.confluent.idesidecar.restapi.util.RequestHeadersConstants;
-import io.confluent.idesidecar.restapi.util.UriUtil;
+import io.quarkus.runtime.StartupEvent;
 import io.quarkus.vertx.web.Route;
 import io.smallrye.common.annotation.Blocking;
 import io.swagger.v3.oas.annotations.Operation;
-import io.vertx.codegen.annotations.Nullable;
 import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
-import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.handler.BodyHandler;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.ws.rs.core.MediaType;
 import java.util.Map;
 import org.eclipse.microprofile.config.ConfigProvider;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.parameters.RequestBody;
@@ -38,13 +40,24 @@ public class RestProxyResource {
   public static final String KAFKA_PROXY_REGEX = "/kafka/v3/clusters/(?<clusterId>[^\\/]+).*";
   private static final String CLUSTER_ID_PATH_PARAM = "clusterId";
   public static final String SCHEMA_REGISTRY_PROXY_REGEX = "(/schemas.*)|(/subjects.*)";
-  public static final String CCLOUD_API_PROXY_REGEX = "(/artifact.*)|(/sql.*)|(/fcpm/v2/compute-pools.*)";
   public static final String RBAC_RESOURCE_PATH = "/api/metadata/security/v2alpha1/authorize";
   static final String RBAC_URI = ConfigProvider
       .getConfig()
       .getValue("ide-sidecar.connections.ccloud.rbac-uri", String.class);
   static final MultiMap NO_HEADERS = MultiMap.caseInsensitiveMultiMap();
   static final Map<String, String> NO_PATH_PARAMS = Map.of();
+
+  @ConfigProperty(name = "ide-sidecar.proxy.ccloud-api-regex")
+  String ccloudApiProxyRegex;
+
+  @Inject
+  Router router;
+
+  void init(@Observes StartupEvent ev) {
+    router.routeWithRegex(ccloudApiProxyRegex)
+        .handler(BodyHandler.create())
+        .blockingHandler(this::ccloudProxy);
+  }
 
   @Inject
   @Named("clusterProxyProcessor")
@@ -53,9 +66,6 @@ public class RestProxyResource {
   @Inject
   @Named("RBACProxyProcessor")
   Processor<ProxyContext, Future<ProxyContext>> rbacProxyProcessor;
-
-  @Inject
-  UriUtil uriUtil;
 
   @Inject
   @Named("CCloudProxyProcessor")
@@ -73,18 +83,16 @@ public class RestProxyResource {
     handleClusterProxy(routingContext, createSRClusterContext(routingContext));
   }
 
-  @Route(regex = CCLOUD_API_PROXY_REGEX)
-  @Blocking
-  public void ccloudProxy(RoutingContext routingContext) {
-    process(routingContext, ccloudProxyProcessor, createCcloudProxyContext(routingContext));
-  }
-
   private void handleClusterProxy(RoutingContext routingContext, ClusterProxyContext proxyContext) {
     process(routingContext, clusterProxyProcessor, proxyContext);
   }
 
   private void handleRBACProxy(RoutingContext routingContext, ProxyContext proxyContext) {
     process(routingContext, rbacProxyProcessor, proxyContext);
+  }
+
+  private void ccloudProxy(RoutingContext routingContext) {
+    process(routingContext, ccloudProxyProcessor, createCcloudProxyContext(routingContext));
   }
 
   public record RBACRequest(
