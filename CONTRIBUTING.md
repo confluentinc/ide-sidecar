@@ -690,6 +690,45 @@ query localConnections {
 curl -s -H "Content-Type:application/json" -H "Authorization: Bearer ${DTX_ACCESS_TOKEN}" http://localhost:26636/gateway/v1/graphql/schema.graphql
 ```
 
+### Invoking the Control Plane Proxy API
+
+The Control Plane Proxy API allows you to make calls to the Confluent Cloud control plane, specifically for artifact and compute pool management endpoints defined by the configuration:
+
+```yaml
+ccloud-api-control-plane-regex: "(/artifact.*)|(/fcpm/v2/compute-pools.*)"
+```
+
+Control Plane endpoints:
+  http://localhost:26636/artifact/* (For artifact management)
+  http://localhost:26636/fcpm/v2/compute-pools/* (For Flink compute pools management)
+
+Required headers:
+
+- Authorization: Bearer ${DTX_ACCESS_TOKEN}
+- x-connection-id: <connection-id> (Must reference a valid Confluent Cloud connection)
+
+> Notes:
+  Control plane endpoints require a valid control plane token which is automatically managed by the proxy
+
+#### Example: List Compute Pools
+
+```bash
+❯ curl -s \
+  -H "Authorization: Bearer ${DTX_ACCESS_TOKEN}" 
+  -H "x-connection-id: c1" 
+  http://localhost:26636/fcpm/v2/compute-pools\?environment\=ccloud-dev | jq -r .
+```
+
+#### Example: List Artifacts
+
+```bash
+curl -X GET \
+  -H "Authorization: Bearer ${DTX_ACCESS_TOKEN}" \
+  -H "x-connection-id: c1" \
+  "http://localhost:26636/artifact/v1/flink-artifacts?cloud=AWS&region=us-east-2&environment=env-name" | jq -r .
+```
+
+
 ### Invoking the Kafka and Schema Registry Proxy APIs
 
 The Kafka and Schema Registry Proxy APIs are available at the following endpoints:
