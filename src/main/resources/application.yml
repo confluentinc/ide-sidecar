@@ -157,7 +157,7 @@ ide-sidecar:
     # How often to check?
     interval-seconds: 60
   proxy:
-    ccloud-api-regex: "(/artifact.*)|(/sql.*)|(/fcpm/v2/compute-pools.*)"
+    ccloud-api-control-plane-regex: "(/artifact.*)|(/fcpm/v2/compute-pools.*)"
   websockets:
     # How long do we allow a connection to be established w/o it saying HELLO?
     initial-grace-seconds: 60

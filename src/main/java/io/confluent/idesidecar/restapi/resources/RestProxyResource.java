@@ -50,7 +50,7 @@ public class RestProxyResource {
   // Add this static declaration alongside the other static constants
   static final String ccloudApiProxyRegex = ConfigProvider
       .getConfig()
-      .getValue("ide-sidecar.proxy.ccloud-api-regex", String.class);
+      .getValue("ide-sidecar.proxy.ccloud-api-control-plane-regex", String.class);
 
   @Inject
   Router router;
