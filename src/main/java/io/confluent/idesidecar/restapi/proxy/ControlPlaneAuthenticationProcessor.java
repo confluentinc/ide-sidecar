@@ -1,15 +1,11 @@
 package io.confluent.idesidecar.restapi.proxy;
 
-import static io.vertx.core.http.HttpHeaders.AUTHORIZATION;
-
 import io.confluent.idesidecar.restapi.connections.CCloudConnectionState;
 import io.confluent.idesidecar.restapi.connections.DirectConnectionState;
 import io.confluent.idesidecar.restapi.connections.LocalConnectionState;
 import io.confluent.idesidecar.restapi.connections.PlatformConnectionState;
-import io.confluent.idesidecar.restapi.exceptions.ProcessorFailedException;
 import io.confluent.idesidecar.restapi.processors.Processor;
 import io.vertx.core.Future;
-import io.vertx.core.MultiMap;
 import jakarta.enterprise.context.ApplicationScoped;
 
 /**
