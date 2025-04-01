@@ -698,6 +698,10 @@ The Control Plane Proxy API allows you to make calls to the Confluent Cloud cont
 ccloud-api-control-plane-regex: "(/artifact.*)|(/fcpm/v2/compute-pools.*)"
 ```
 
+This configuration is defined in [application.yml](./src/main/resources/application.yml) under the ide-sidecar.proxy section.
+
+By editing this regex configuration, you can add or remove control plane routes from the proxy.
+
 Control Plane endpoints:
   http://localhost:26636/artifact/* (For artifact management)
   http://localhost:26636/fcpm/v2/compute-pools/* (For Flink compute pools management)
@@ -705,12 +709,14 @@ Control Plane endpoints:
 Required headers:
 
 - Authorization: Bearer ${DTX_ACCESS_TOKEN}
-- x-connection-id: <connection-id> (Must reference a valid Confluent Cloud connection)
+- x-connection-id: <connection-id> (Must reference an authenticated Confluent Cloud connection)
 
 > Notes:
   Control plane endpoints require a valid control plane token which is automatically managed by the proxy
 
-#### Example: List Compute Pools
+#### Examples For Artifact and Compute Pool Management with Flink
+
+##### Example: List Compute Pools
 
 ```bash
 ❯ curl -s \
@@ -719,7 +725,51 @@ Required headers:
   http://localhost:26636/fcpm/v2/compute-pools\?environment\=ccloud-dev | jq -r .
 ```
 
-#### Example: List Artifacts
+This generates a response similar to the following:
+
+```json
+
+{
+  "api_version": "fcpm/v2",
+  "data": [
+    {
+      "api_version": "fcpm/v2",
+      "id": "lfcp-896vb",
+      "kind": "ComputePool",
+      "metadata": {
+        "created_at": "2025-03-19T16:20:12.781094Z",
+        "resource_name": "crn://confluent.cloud/organization=org_id/environment=env-id/flink-region=aws.ap-northeast-2/compute-pool=pool_id",
+        "self": "https://api.confluent.cloud/fcpm/v2/compute-pools/pool_id",
+        "updated_at": "2025-03-19T16:20:13.148424Z"
+      },
+      "spec": {
+        "cloud": "AWS",
+        "display_name": "AWS.ap-northeast-2.env-id",
+        "enable_ai": false,
+        "environment": {
+          "id": "env-id",
+          "related": "https://api.confluent.cloud/fcpm/v2/compute-pools/pool_id",
+          "resource_name": "crn://confluent.cloud/organization=org_id/environment=env-id"
+        },
+        "max_cfu": 10,
+        "region": "ap-northeast-2"
+      },
+      "status": {
+        "current_cfu": 0,
+        "phase": "PROVISIONED"
+      }
+    }
+  ],
+  "kind": "ComputePoolList",
+  "metadata": {
+    "first": "",
+    "next": ""
+  }
+}
+
+```
+
+##### Example: List Artifacts
 
 ```bash
 curl -X GET \
