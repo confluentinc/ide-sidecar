@@ -70,6 +70,10 @@ public class RestProxyResource {
   Processor<ProxyContext, Future<ProxyContext>> rbacProxyProcessor;
 
   @Inject
+  @Named("ControlPlaneProxyProcessor")
+  Processor<ProxyContext, Future<ProxyContext>> genericProxyProcessor;
+
+  @Inject
   @Named("CCloudProxyProcessor")
   Processor<ProxyContext, Future<ProxyContext>> ccloudProxyProcessor;
 
@@ -91,6 +95,10 @@ public class RestProxyResource {
 
   private void handleRBACProxy(RoutingContext routingContext, ProxyContext proxyContext) {
     process(routingContext, rbacProxyProcessor, proxyContext);
+  }
+
+  private void handleControlPlaneProxy(RoutingContext routingContext, ProxyContext proxyContext) {
+    process(routingContext, genericProxyProcessor, proxyContext);
   }
 
   private void ccloudProxy(RoutingContext routingContext) {
@@ -140,6 +148,10 @@ public class RestProxyResource {
   })
   public void rbacProxyRoute(RoutingContext routingContext) {
     handleRBACProxy(routingContext, createRBACProxyContext(routingContext));
+  }
+
+  public void controlPlaneProxyRoute(RoutingContext routingContext) {
+    handleControlPlaneProxy(routingContext, createControlPlaneProxyContext(routingContext));
   }
 
   private <T extends ProxyContext> void process(RoutingContext routingContext,
@@ -223,6 +235,17 @@ public class RestProxyResource {
         HttpMethod.PUT,
         routingContext.body().buffer(),
         NO_PATH_PARAMS,
+        routingContext.request().getHeader(RequestHeadersConstants.CONNECTION_ID_HEADER)
+    );
+  }
+
+  private ProxyContext createControlPlaneProxyContext(RoutingContext routingContext) {
+    return new ProxyContext(
+        routingContext.request().uri(),
+        routingContext.request().headers(),
+        routingContext.request().method(),
+        routingContext.body().buffer(),
+        routingContext.pathParams(),
         routingContext.request().getHeader(RequestHeadersConstants.CONNECTION_ID_HEADER)
     );
   }
