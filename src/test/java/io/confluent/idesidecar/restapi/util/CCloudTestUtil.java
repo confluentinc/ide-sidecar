@@ -379,6 +379,15 @@ public class CCloudTestUtil {
     }
   }
 
+  public String getDataPlaneToken(String connectionId) {
+    try {
+      return ((CCloudConnectionState) connectionStateManager.getConnectionState(connectionId))
+          .getOauthContext().getDataPlaneToken().token();
+    } catch (ConnectionNotFoundException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   // Auth models
   public record AccessToken(
       String access_token,
@@ -414,8 +423,6 @@ public class CCloudTestUtil {
       return new ControlPlaneTokenAndUserAndOrganization(token, error, user, organization,
           refreshToken, identityProvider);
     }
-
-
 
     public ControlPlaneTokenAndUserAndOrganization withOrganization(
         String name,

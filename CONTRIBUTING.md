@@ -692,7 +692,7 @@ curl -s -H "Content-Type:application/json" -H "Authorization: Bearer ${DTX_ACCES
 
 ### The Control and Data Plane Proxy APIs
 
-The Control Plane Proxy API allows you to make calls to the Confluent Cloud control plane, specifically for artifact and compute pool management endpoints defined by the configuration:
+The Control Plane Proxy API allows you to make calls to the Confluent Cloud control plane, specifically for artifact and compute pool management endpoints.
 The Data Plane Proxy API allows you to make calls to the Confluent Cloud control plane for the statement and catalog endpoints.
 
 ```yaml
