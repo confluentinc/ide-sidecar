@@ -700,7 +700,7 @@ ccloud-api-control-plane-regex: "(/artifact.*)|(/fcpm/v2/compute-pools.*)"
 ccloud-api-data-plane-regex: "(/catalog/v1.*)|(/sql/v1.*)"
 ```
 
-This configuration is defined in [application.yml](./src/main/resources/application.yml) under the ide-sidecar.proxy section.
+This configuration is defined in `application.yml` [under the ide-sidecar.proxy section](./src/main/resources/application.yml).
 
 By editing this regex configuration, you can add or remove data and control plane routes from the proxy.
 
