@@ -13,7 +13,6 @@ import io.confluent.idesidecar.restapi.proxy.EmptyProcessor;
 import io.confluent.idesidecar.restapi.proxy.KafkaRestProxyContext;
 import io.confluent.idesidecar.restapi.proxy.ProxyContext;
 import io.confluent.idesidecar.restapi.proxy.ProxyRequestProcessor;
-import io.confluent.idesidecar.restapi.proxy.RBACProxyProcessor;
 import io.confluent.idesidecar.restapi.proxy.ControlPlaneProxyProcessor;
 import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
 import io.confluent.idesidecar.restapi.proxy.clusters.processors.ClusterAuthenticationProcessor;
