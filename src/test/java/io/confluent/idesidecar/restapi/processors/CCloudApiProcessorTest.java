@@ -3,8 +3,10 @@ package io.confluent.idesidecar.restapi.processors;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
+import io.confluent.idesidecar.restapi.connections.CCloudConnectionState;
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
 import io.confluent.idesidecar.restapi.exceptions.ProcessorFailedException;
+import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.proxy.CCloudApiProcessor;
 import io.confluent.idesidecar.restapi.proxy.ProxyContext;
 import io.confluent.idesidecar.restapi.util.CCloudTestUtil;
@@ -62,4 +64,5 @@ class CCloudApiProcessorTest {
     assertTrue(result.failed());
     assertEquals("400", ((ProcessorFailedException) result.cause()).getFailure().status());
   }
+
 }
