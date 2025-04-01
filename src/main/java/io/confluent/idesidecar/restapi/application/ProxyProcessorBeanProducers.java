@@ -88,11 +88,26 @@ public class ProxyProcessorBeanProducers {
   @Singleton
   @Named("RBACProxyProcessor")
   public Processor<ProxyContext, Future<ProxyContext>> RbacProxyProcessor(
-      RBACProxyProcessor rbacProxyProcessor
+      ControlPlaneProxyProcessor genericProxyProcessor
   ) {
     return Processor.chain(
         new ConnectionProcessor<>(connectionStateManager),
-        rbacProxyProcessor,
+        genericProxyProcessor,
+        controlPlaneAuthenticationProcessor,
+        new ProxyRequestProcessor(webClientFactory, vertx),
+        emptyProcessorProxyContext
+    );
+  }
+
+  @Produces
+  @Singleton
+  @Named("ControlPlaneProxyProcessor")
+  public Processor<ProxyContext, Future<ProxyContext>> ControlPlaneProxyProcessor(
+      ControlPlaneProxyProcessor genericProxyProcessor
+  ) {
+    return Processor.chain(
+        new ConnectionProcessor<>(connectionStateManager),
+        genericProxyProcessor,
         controlPlaneAuthenticationProcessor,
         new ProxyRequestProcessor(webClientFactory, vertx),
         emptyProcessorProxyContext
