@@ -705,12 +705,12 @@ This configuration is defined in [application.yml](./src/main/resources/applicat
 By editing this regex configuration, you can add or remove data and control plane routes from the proxy.
 
 Control Plane endpoints:
-http://localhost:26636/artifact/* (For artifact management)
-http://localhost:26636/fcpm/v2/compute-pools/* (For Flink compute pools management)
+- http://localhost:26636/artifact/* (For artifact management)
+- http://localhost:26636/fcpm/v2/compute-pools/* (For Flink compute pools management)
 
 Data Plane endpoints:
-http://localhost:26636/catalog/v1/* (For catalogs)
-http://localhost:26636/sql/v1* (For Flink statements)
+- http://localhost:26636/catalog/v1/* (For catalogs)
+- http://localhost:26636/sql/v1* (For Flink statements)
 
 Required headers for both control and data plane proxy APIs:
 
