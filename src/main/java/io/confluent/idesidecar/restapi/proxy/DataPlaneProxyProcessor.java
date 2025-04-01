@@ -14,8 +14,8 @@ import org.jboss.logging.Logger;
 public class DataPlaneProxyProcessor extends Processor<ProxyContext, Future<ProxyContext>> {
 
   private static final Logger LOG = Logger.getLogger(DataPlaneProxyProcessor.class);
-  private static final String REGION_HEADER = "x-region";
-  private static final String PROVIDER_HEADER = "x-provider";
+  private static final String REGION_HEADER = "x-ccloud-region";
+  private static final String PROVIDER_HEADER = "x-ccloud-provider";
   private static final String FLINK_URL_PATTERN = "https://flink.%s.%s.confluent.cloud";
 
   @Override
