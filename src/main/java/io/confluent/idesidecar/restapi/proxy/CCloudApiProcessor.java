@@ -48,7 +48,6 @@ public class CCloudApiProcessor extends Processor<ProxyContext, Future<ProxyCont
         // Set data plane authentication
         var headers = context.getProxyRequestHeaders() != null ? context.getProxyRequestHeaders()
             : MultiMap.caseInsensitiveMultiMap();
-        headers.remove(AUTHORIZATION);
         headers.remove("authorization");
         headers.add(AUTHORIZATION, "Bearer %s".formatted(ccloudToken));
         context.setProxyRequestHeaders(headers);
