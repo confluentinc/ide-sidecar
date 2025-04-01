@@ -690,7 +690,9 @@ query localConnections {
 curl -s -H "Content-Type:application/json" -H "Authorization: Bearer ${DTX_ACCESS_TOKEN}" http://localhost:26636/gateway/v1/graphql/schema.graphql
 ```
 
-### Invoking the Control Plane Proxy API For Artifact and Compute Pool Management
+### Invoking the Control Plane Proxy API 
+
+#### Examples For Artifact and Compute Pool Management with Flink
 
 The Control Plane Proxy API allows you to make calls to the Confluent Cloud control plane, specifically for artifact and compute pool management endpoints defined by the configuration:
 
@@ -712,7 +714,7 @@ Required headers:
 > Notes:
   Control plane endpoints require a valid control plane token which is automatically managed by the proxy
 
-#### Example: List Compute Pools
+##### Example: List Compute Pools
 
 ```bash
 ❯ curl -s \
@@ -765,7 +767,7 @@ This generates a response similar to the following:
 
 ```
 
-#### Example: List Artifacts
+##### Example: List Artifacts
 
 ```bash
 curl -X GET \
