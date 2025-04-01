@@ -350,6 +350,7 @@ public class ConfluentCloudQueryResourceTest extends ConfluentQueryResourceTestB
         ccloudTestUtil.getControlPlaneToken("ccloud-dev"));
     setupCCloudApiMocks(
         ccloudTestUtil.getControlPlaneToken("ccloud-prod"));
+
     assertQueryResponseMatches(
         "graph/real/get-ccloud-environment-flink-query.graphql",
         "graph/real/get-ccloud-environment-flink-expected.json",
