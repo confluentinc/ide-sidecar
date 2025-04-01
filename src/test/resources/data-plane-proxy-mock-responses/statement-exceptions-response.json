@@ -1,0 +1,8 @@
+{
+  "api_version": "sql/v1",
+  "data": [],
+  "kind": "StatementExceptionList",
+  "metadata": {
+    "self": "https://flink.us-east-2.aws.confluent.cloud/sql/v1/organizations/org-id/environments/env-id/statements/workspace-name/exceptions"
+  }
+}
