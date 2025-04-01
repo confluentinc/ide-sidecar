@@ -7,9 +7,6 @@ import static io.confluent.idesidecar.restapi.cache.ClusterCacheAssertions.asser
 import static io.confluent.idesidecar.restapi.testutil.QueryResourceUtil.assertQueryResponseMatches;
 import static io.confluent.idesidecar.restapi.testutil.QueryResourceUtil.queryGraphQLRaw;
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
@@ -353,7 +350,6 @@ public class ConfluentCloudQueryResourceTest extends ConfluentQueryResourceTestB
         ccloudTestUtil.getControlPlaneToken("ccloud-dev"));
     setupCCloudApiMocks(
         ccloudTestUtil.getControlPlaneToken("ccloud-prod"));
-
     assertQueryResponseMatches(
         "graph/real/get-ccloud-environment-flink-query.graphql",
         "graph/real/get-ccloud-environment-flink-expected.json",
@@ -388,5 +384,4 @@ public class ConfluentCloudQueryResourceTest extends ConfluentQueryResourceTestB
         this::replaceWireMockPort
     );
   }
-
 }
