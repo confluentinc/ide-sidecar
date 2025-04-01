@@ -9,6 +9,7 @@ import io.confluent.idesidecar.restapi.proxy.CCloudApiProcessor;
 import io.confluent.idesidecar.restapi.proxy.ClusterProxyRequestProcessor;
 import io.confluent.idesidecar.restapi.proxy.ConnectionProcessor;
 import io.confluent.idesidecar.restapi.proxy.ControlPlaneAuthenticationProcessor;
+import io.confluent.idesidecar.restapi.proxy.DataPlaneProxyProcessor;
 import io.confluent.idesidecar.restapi.proxy.EmptyProcessor;
 import io.confluent.idesidecar.restapi.proxy.KafkaRestProxyContext;
 import io.confluent.idesidecar.restapi.proxy.ProxyContext;
@@ -101,13 +102,28 @@ public class ProxyProcessorBeanProducers {
 
   @Produces
   @Singleton
-  @Named("CCloudProxyProcessor")
-  public Processor<ProxyContext, Future<ProxyContext>> ccloudProxyProcessor(
-      ControlPlaneProxyProcessor genericProxyProcessor
+  @Named("controlPlaneProxyProcessor")
+  public Processor<ProxyContext, Future<ProxyContext>> ccloudProxyControlPlaneProcessor(
+      ControlPlaneProxyProcessor controlPlaneProxyProcessor
   ) {
     return Processor.chain(
         new ConnectionProcessor<>(connectionStateManager),
-        genericProxyProcessor,
+        controlPlaneProxyProcessor,
+        cCloudApiAuthProcessor,
+        new ProxyRequestProcessor(webClientFactory, vertx),
+        emptyProcessorProxyContext
+    );
+  }
+
+  @Produces
+  @Singleton
+  @Named("dataPlaneProxyProcessor")
+  public Processor<ProxyContext, Future<ProxyContext>> ccloudDataPlaneProxyProcessor(
+      DataPlaneProxyProcessor dataPlaneProxyProcessor
+  ) {
+    return Processor.chain(
+        new ConnectionProcessor<>(connectionStateManager),
+        dataPlaneProxyProcessor,
         cCloudApiAuthProcessor,
         new ProxyRequestProcessor(webClientFactory, vertx),
         emptyProcessorProxyContext
