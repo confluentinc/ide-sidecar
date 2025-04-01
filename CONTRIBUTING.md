@@ -700,6 +700,8 @@ The Control Plane Proxy API allows you to make calls to the Confluent Cloud cont
 ccloud-api-control-plane-regex: "(/artifact.*)|(/fcpm/v2/compute-pools.*)"
 ```
 
+This configuration is defined in [application.yml](./src/main/resources/application.yml) under the ide-sidecar.proxy section.
+
 By editing this regex configuration, you can add or remove control plane routes from the proxy.
 
 Control Plane endpoints:
