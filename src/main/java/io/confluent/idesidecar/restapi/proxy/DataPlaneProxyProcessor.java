@@ -20,30 +20,20 @@ public class DataPlaneProxyProcessor extends Processor<ProxyContext, Future<Prox
 
   @Override
   public Future<ProxyContext> process(ProxyContext context) {
-    // Get the headers from the request
     MultiMap headers = context.getRequestHeaders() != null ?
         context.getRequestHeaders() : MultiMap.caseInsensitiveMultiMap();
 
-    LOG.info("All request headers: " + headers.entries());
-
-    // Check if this is a Flink-related request
     if (isFlinkRequest(context)) {
       String region = headers.get(REGION_HEADER);
       String provider = headers.get(PROVIDER_HEADER);
 
-      LOG.info("Processing Flink request with region=" + region + ", provider=" + provider);
-
       if (region != null && provider != null) {
-        // Save the necessary information before removing headers
         String flinkBaseUrl = String.format(FLINK_URL_PATTERN,
             region.toLowerCase(), provider.toLowerCase());
         String path = extractPathFromUri(context.getRequestUri());
 
-        // Set the absolute URL for the proxy request
         context.setProxyRequestAbsoluteUrl(flinkBaseUrl + path);
-        LOG.info("Routing Flink request to: " + context.getProxyRequestAbsoluteUrl());
 
-        // Create a new copy of headers to avoid modifying the original
         MultiMap cleanedHeaders = MultiMap.caseInsensitiveMultiMap();
         cleanedHeaders.addAll(headers);
 
@@ -60,11 +50,8 @@ public class DataPlaneProxyProcessor extends Processor<ProxyContext, Future<Prox
           cleanedHeaders.set("Content-Type", "application/json");
         }
 
-        // Set the cleaned headers for the proxy request
         context.setProxyRequestHeaders(cleanedHeaders);
       } else {
-        LOG.warn("Missing required headers for Flink request: region=" + region +
-            ", provider=" + provider);
         context.setProxyRequestAbsoluteUrl(context.getRequestUri());
         context.setProxyRequestHeaders(headers);
       }
@@ -72,12 +59,9 @@ public class DataPlaneProxyProcessor extends Processor<ProxyContext, Future<Prox
       context.setProxyRequestAbsoluteUrl(context.getRequestUri());
       context.setProxyRequestHeaders(headers);
     }
-
-    // These settings should be kept regardless of the request type
     context.setProxyRequestMethod(context.getRequestMethod());
     context.setProxyRequestBody(context.getRequestBody());
 
-    LOG.info("Final proxy request headers: " + context.getProxyRequestHeaders().entries());
     return next().process(context);
   }
   private boolean isFlinkRequest(ProxyContext context) {
@@ -86,13 +70,11 @@ public class DataPlaneProxyProcessor extends Processor<ProxyContext, Future<Prox
   }
 
   private String extractPathFromUri(String uri) {
-    // For SQL API requests
     if (uri.contains("sql/v1")) {
       int sqlIndex = uri.indexOf("sql/v1");
       return "/" + uri.substring(sqlIndex);
     }
 
-    // For catalog API requests
     if (uri.contains("catalog/v1")) {
       int catalogIndex = uri.indexOf("catalog/v1");
       return "/" + uri.substring(catalogIndex);

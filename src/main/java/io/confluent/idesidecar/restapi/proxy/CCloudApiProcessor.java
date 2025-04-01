@@ -26,7 +26,6 @@ public class CCloudApiProcessor extends Processor<ProxyContext, Future<ProxyCont
   public Future<ProxyContext> process(ProxyContext context) {
     String clusterId = context.getRequestHeaders().get("X-Cluster-Id");
     var connectionState = context.getConnectionState();
-
     if (clusterId != null && !clusterId.isEmpty()) {
       return Future.failedFuture(
           new ProcessorFailedException(
@@ -65,7 +64,6 @@ public class CCloudApiProcessor extends Processor<ProxyContext, Future<ProxyCont
               new ProcessorFailedException(
                   context.fail(401, "%s".formatted(e.getMessage()))));
         }
-
         // Only set URL for control plane requests
         context.setProxyRequestAbsoluteUrl(uriUtil.combine(ccloudApiBaseUrl,
             context.getRequestUri()));
@@ -82,7 +80,6 @@ public class CCloudApiProcessor extends Processor<ProxyContext, Future<ProxyCont
     return context.getRequestUri().contains("sql/v1") ||
         context.getRequestUri().contains("catalog/v1");
   }
-
   /**
    * Adds the control plane token to the provided context's request headers or returns a failed Future
    * with a CCloudAuthenticationFailedException if the token is missing.

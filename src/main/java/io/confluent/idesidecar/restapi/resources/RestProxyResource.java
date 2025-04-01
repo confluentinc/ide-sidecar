@@ -242,9 +242,6 @@ public class RestProxyResource {
 
   private ProxyContext createCcloudProxyContext(RoutingContext routingContext) {
     MultiMap headers = routingContext.request().headers();
-    System.out.println("Headers in RoutingContext: " + headers);
-    System.out.println("x-region header: " + headers.get("x-region"));
-    System.out.println("x-provider header: " + headers.get("x-provider"));
     return new ProxyContext(
         routingContext.request().uri(),
         headers,
