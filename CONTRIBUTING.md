@@ -796,7 +796,7 @@ curl -X GET \
 
 ##### Example: List Statement Exceptions
 
-```json
+```bash
  curl --request GET \
   --url 'http://localhost:26636/sql/v1/organizations/org_d/environments/env-id/statements/workspace-id/exceptions' \
   --header "Authorization: Bearer ${DTX_ACCESS_TOKEN}" \
