@@ -24,7 +24,6 @@ import jakarta.inject.Named;
 import jakarta.ws.rs.core.MediaType;
 import java.util.Map;
 import org.eclipse.microprofile.config.ConfigProvider;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.parameters.RequestBody;
@@ -47,18 +46,24 @@ public class RestProxyResource {
   static final MultiMap NO_HEADERS = MultiMap.caseInsensitiveMultiMap();
   static final Map<String, String> NO_PATH_PARAMS = Map.of();
 
-  // Add this static declaration alongside the other static constants
-  static final String ccloudApiProxyRegex = ConfigProvider
+  static final String ccloudApiControlPlaneProxyRegex = ConfigProvider
       .getConfig()
       .getValue("ide-sidecar.proxy.ccloud-api-control-plane-regex", String.class);
+
+  static final String ccloudApiDataPlaneProxyRegex = ConfigProvider
+      .getConfig()
+      .getValue("ide-sidecar.proxy.ccloud-api-data-plane-regex", String.class);
 
   @Inject
   Router router;
 
   void init(@Observes StartupEvent ev) {
-    router.routeWithRegex(ccloudApiProxyRegex)
+    router.routeWithRegex(ccloudApiControlPlaneProxyRegex)
         .handler(BodyHandler.create())
-        .blockingHandler(this::ccloudProxy);
+        .blockingHandler(this::ccloudControlPlaneProxy);
+    router.routeWithRegex(ccloudApiDataPlaneProxyRegex)
+        .handler(BodyHandler.create())
+        .blockingHandler(this::ccloudDataPlaneProxy);
   }
 
   @Inject
@@ -70,8 +75,12 @@ public class RestProxyResource {
   Processor<ProxyContext, Future<ProxyContext>> rbacProxyProcessor;
 
   @Inject
-  @Named("CCloudProxyProcessor")
-  Processor<ProxyContext, Future<ProxyContext>> ccloudProxyProcessor;
+  @Named("controlPlaneProxyProcessor")
+  Processor<ProxyContext, Future<ProxyContext>> controlPlaneProxyProcessor;
+
+  @Inject
+  @Named("dataPlaneProxyProcessor")
+  Processor<ProxyContext, Future<ProxyContext>> dataPlaneProxyProcessor;
 
   @Route(regex = KAFKA_PROXY_REGEX)
   @Blocking
@@ -93,8 +102,12 @@ public class RestProxyResource {
     process(routingContext, rbacProxyProcessor, proxyContext);
   }
 
-  private void ccloudProxy(RoutingContext routingContext) {
-    process(routingContext, ccloudProxyProcessor, createCcloudProxyContext(routingContext));
+  private void ccloudControlPlaneProxy(RoutingContext routingContext) {
+    process(routingContext, controlPlaneProxyProcessor, createCcloudProxyContext(routingContext));
+  }
+
+  private void ccloudDataPlaneProxy(RoutingContext routingContext) {
+    process(routingContext, dataPlaneProxyProcessor, createCcloudProxyContext(routingContext));
   }
 
   public record RBACRequest(
@@ -228,9 +241,13 @@ public class RestProxyResource {
   }
 
   private ProxyContext createCcloudProxyContext(RoutingContext routingContext) {
+    MultiMap headers = routingContext.request().headers();
+    System.out.println("Headers in RoutingContext: " + headers);
+    System.out.println("x-region header: " + headers.get("x-region"));
+    System.out.println("x-provider header: " + headers.get("x-provider"));
     return new ProxyContext(
         routingContext.request().uri(),
-        routingContext.request().headers(),
+        headers,
         routingContext.request().method(),
         routingContext.body().buffer(),
         routingContext.pathParams(),
