@@ -145,6 +145,8 @@ ide-sidecar:
     ccloud-project:
       client-id: 5c636508aa445d32c86f26b1
       eval-uri: https://confluent.cloud/ldapi/sdk/evalx/%s/contexts/%s
+  flink:
+    url-pattern: https://custom-flink.%s.%s.example.com
   access_token_filter:
     excluded_paths:
       # Following needed by oauth
@@ -160,6 +162,7 @@ ide-sidecar:
     interval-seconds: 60
   proxy:
     ccloud-api-control-plane-regex: "(/artifact.*)|(/fcpm/v2/compute-pools.*)"
+    ccloud-api-flink-data-plane-regex: "(/sql/v1.*)"
   websockets:
     # How long do we allow a connection to be established w/o it saying HELLO?
     initial-grace-seconds: 60
@@ -202,6 +205,8 @@ ide-sidecar:
     http-header-exclusions:
       - x-connection-id
       - x-cluster-id
+      - x-ccloud-region
+      - x-ccloud-provider
       - Authorization
       - Host
       - Connection
