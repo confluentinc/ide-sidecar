@@ -24,7 +24,6 @@ import jakarta.inject.Named;
 import jakarta.ws.rs.core.MediaType;
 import java.util.Map;
 import org.eclipse.microprofile.config.ConfigProvider;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.parameters.RequestBody;
@@ -66,10 +65,6 @@ public class RestProxyResource {
   Processor<ClusterProxyContext, Future<ClusterProxyContext>> clusterProxyProcessor;
 
   @Inject
-  @Named("RBACProxyProcessor")
-  Processor<ProxyContext, Future<ProxyContext>> rbacProxyProcessor;
-
-  @Inject
   @Named("CCloudProxyProcessor")
   Processor<ProxyContext, Future<ProxyContext>> ccloudProxyProcessor;
 
@@ -87,10 +82,6 @@ public class RestProxyResource {
 
   private void handleClusterProxy(RoutingContext routingContext, ClusterProxyContext proxyContext) {
     process(routingContext, clusterProxyProcessor, proxyContext);
-  }
-
-  private void handleRBACProxy(RoutingContext routingContext, ProxyContext proxyContext) {
-    process(routingContext, rbacProxyProcessor, proxyContext);
   }
 
   private void ccloudProxy(RoutingContext routingContext) {
@@ -138,9 +129,6 @@ public class RestProxyResource {
           content = @Content(schema = @Schema(implementation = String[].class))
       ),
   })
-  public void rbacProxyRoute(RoutingContext routingContext) {
-    handleRBACProxy(routingContext, createRBACProxyContext(routingContext));
-  }
 
   private <T extends ProxyContext> void process(RoutingContext routingContext,
       Processor<T, Future<T>> processor, T proxyContext) {

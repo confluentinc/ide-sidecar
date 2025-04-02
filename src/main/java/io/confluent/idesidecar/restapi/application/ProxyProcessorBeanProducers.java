@@ -85,21 +85,6 @@ public class ProxyProcessorBeanProducers {
 
   @Produces
   @Singleton
-  @Named("RBACProxyProcessor")
-  public Processor<ProxyContext, Future<ProxyContext>> RbacProxyProcessor(
-      ControlPlaneProxyProcessor genericProxyProcessor
-  ) {
-    return Processor.chain(
-        new ConnectionProcessor<>(connectionStateManager),
-        genericProxyProcessor,
-        controlPlaneAuthenticationProcessor,
-        new ProxyRequestProcessor(webClientFactory, vertx),
-        emptyProcessorProxyContext
-    );
-  }
-
-  @Produces
-  @Singleton
   @Named("CCloudProxyProcessor")
   public Processor<ProxyContext, Future<ProxyContext>> ccloudProxyProcessor(
       ControlPlaneProxyProcessor genericProxyProcessor
