@@ -9,6 +9,7 @@ import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
 import jakarta.enterprise.context.ApplicationScoped;
 import java.util.List;
+import java.util.Optional;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
@@ -19,10 +20,23 @@ public class FlinkDataPlaneProxyProcessor extends Processor<ProxyContext, Future
 
   private static final String REGION_HEADER = "x-ccloud-region";
   private static final String PROVIDER_HEADER = "x-ccloud-provider";
-  private static final String FLINK_URL_PATTERN = "https://flink.%s.%s.confluent.cloud";
+
+  private final String flinkUrlPattern;
 
   @ConfigProperty(name = "ide-sidecar.cluster-proxy.http-header-exclusions")
   List<String> httpHeaderExclusions;
+
+  public FlinkDataPlaneProxyProcessor() {
+    // Default value if config system hasn't initialized the value
+    this.flinkUrlPattern = "https://flink.%s.%s.confluent.cloud";
+  }
+
+  //Allow injection via constructor for production code
+  public FlinkDataPlaneProxyProcessor(
+      @ConfigProperty(name = "ide-sidecar.flink.url-pattern")
+      Optional<String> configuredPattern) {
+    this.flinkUrlPattern = configuredPattern.orElse("https://flink.%s.%s.confluent.cloud");
+  }
 
   @Override
   public Future<ProxyContext> process(ProxyContext context) {
@@ -35,7 +49,7 @@ public class FlinkDataPlaneProxyProcessor extends Processor<ProxyContext, Future
 
     if (region != null && provider != null) {
       // Build the Flink URL correctly
-      String flinkBaseUrl = FLINK_URL_PATTERN.formatted(region.toLowerCase(), provider.toLowerCase());
+      String flinkBaseUrl = flinkUrlPattern.formatted(region.toLowerCase(), provider.toLowerCase());
       String path = context.getRequestUri();
 
       // Make sure path starts with a / if not already, else it will fail with a 404
@@ -53,19 +67,11 @@ public class FlinkDataPlaneProxyProcessor extends Processor<ProxyContext, Future
 
       // Explicitly remove the Flink-specific headers
       sanitizeHeaders(cleanedHeaders,httpHeaderExclusions);
-      cleanedHeaders.remove("x-connection-id");
-      cleanedHeaders.remove("host");
 
       if (httpHeaderExclusions != null) {
         for (String exclusion : httpHeaderExclusions) {
           cleanedHeaders.remove(exclusion);
         }
-      }
-
-      cleanedHeaders.set("Accept", "application/json");
-      if (context.getRequestMethod().name().equals("POST") ||
-          context.getRequestMethod().name().equals("PUT")) {
-        cleanedHeaders.set("Content-Type", "application/json");
       }
 
       context.setProxyRequestHeaders(cleanedHeaders);

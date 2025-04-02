@@ -43,14 +43,4 @@ public class FlinkDataPlaneAuthenticationProcessor extends Processor<ProxyContex
 
     return next().process(context);
   }
-
-  /**
-   * Determines whether the request is for a data plane service.
-   *
-   * @param context The proxy context containing the request URI
-   * @return true if the request is for a data plane service
-   */
-  private boolean isDataPlaneRequest(ProxyContext context) {
-    return context.getRequestUri().contains("sql/v1");
-  }
 }
