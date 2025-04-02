@@ -32,40 +32,15 @@ public class CCloudApiProcessor extends Processor<ProxyContext, Future<ProxyCont
               context.fail(400, "This route does not support the request header 'X-Cluster-Id'."
                   + " Please remove the header and try again.")));
     } else if (connectionState instanceof CCloudConnectionState cCloudConnection) {
-      // Check if this is a data plane request (like Flink)
-      if (isDataPlaneRequest(context)) {
-        // Get the proper Confluent Cloud API token from the connection state
-        String ccloudToken = null;
-        if (cCloudConnection.getOauthContext() != null &&
-            cCloudConnection.getOauthContext().getDataPlaneToken() != null) {
-         ccloudToken = cCloudConnection.getOauthContext().getDataPlaneToken().token();
-        } else {
-          return Future.failedFuture(
-              new ProcessorFailedException(
-                  context.fail(401, "Data plane token not found")));
-        }
-
-        // Set data plane authentication
-        var headers = context.getProxyRequestHeaders() != null ? context.getProxyRequestHeaders()
-            : MultiMap.caseInsensitiveMultiMap();
-        headers.remove("authorization");
-        headers.add(AUTHORIZATION, "Bearer %s".formatted(ccloudToken));
-        context.setProxyRequestHeaders(headers);
-
-        // Don't modify the URL for data plane requests as it's handled by DataPlaneProxyProcessor
-      } else {
-        // Control plane request - use existing logic
-        try {
-          getControlPlaneToken(context, cCloudConnection);
-        } catch (ControlPlaneTokenNotFoundException e) {
-          return Future.failedFuture(
-              new ProcessorFailedException(
-                  context.fail(401, "%s".formatted(e.getMessage()))));
-        }
-        // Only set URL for control plane requests
-        context.setProxyRequestAbsoluteUrl(uriUtil.combine(ccloudApiBaseUrl,
-            context.getRequestUri()));
+      try {
+        getControlPlaneToken(context, cCloudConnection);
+      } catch (ControlPlaneTokenNotFoundException e) {;
+        return Future.failedFuture(
+            new ProcessorFailedException(
+                context.fail(401, "%s".formatted(e.getMessage()))));
       }
+      context.setProxyRequestAbsoluteUrl(uriUtil.combine(ccloudApiBaseUrl,
+          context.getRequestUri()));
       return next().process(context);
     } else {
       return Future.failedFuture(
@@ -74,10 +49,6 @@ public class CCloudApiProcessor extends Processor<ProxyContext, Future<ProxyCont
     }
   }
 
-  private boolean isDataPlaneRequest(ProxyContext context) {
-    return context.getRequestUri().contains("sql/v1") ||
-        context.getRequestUri().contains("catalog/v1");
-  }
   /**
    * Adds the control plane token to the provided context's request headers or returns a failed Future
    * with a CCloudAuthenticationFailedException if the token is missing.
@@ -91,7 +62,7 @@ public class CCloudApiProcessor extends Processor<ProxyContext, Future<ProxyCont
 
     // If token is missing, return a failed future with ControlPlaneTokenNotFoundException
     if (controlPlaneToken == null) {
-    throw new ControlPlaneTokenNotFoundException("Control plane token not found");
+      throw new ControlPlaneTokenNotFoundException("Control plane token not found");
     }
 
     // Token exists, add it to the headers
