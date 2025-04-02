@@ -40,7 +40,7 @@ public class FlinkDataPlaneProxyProcessor extends Processor<ProxyContext, Future
 
       // Make sure path starts with a / if not already, else it will fail with a 404
       if (!path.startsWith("/")) {
-        path = "/" + path;
+        path = uriUtil.combine("/", path);
       }
 
       // Ensure we have a proper URL
