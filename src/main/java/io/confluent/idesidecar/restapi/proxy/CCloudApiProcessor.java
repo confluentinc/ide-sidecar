@@ -38,7 +38,7 @@ public class CCloudApiProcessor extends Processor<ProxyContext, Future<ProxyCont
         String ccloudToken = null;
         if (cCloudConnection.getOauthContext() != null &&
             cCloudConnection.getOauthContext().getDataPlaneToken() != null) {
-          ccloudToken = cCloudConnection.getOauthContext().getDataPlaneToken().token();
+         ccloudToken = cCloudConnection.getOauthContext().getDataPlaneToken().token();
         } else {
           return Future.failedFuture(
               new ProcessorFailedException(
@@ -53,7 +53,6 @@ public class CCloudApiProcessor extends Processor<ProxyContext, Future<ProxyCont
         context.setProxyRequestHeaders(headers);
 
         // Don't modify the URL for data plane requests as it's handled by DataPlaneProxyProcessor
-        return next().process(context);
       } else {
         // Control plane request - use existing logic
         try {
@@ -66,8 +65,8 @@ public class CCloudApiProcessor extends Processor<ProxyContext, Future<ProxyCont
         // Only set URL for control plane requests
         context.setProxyRequestAbsoluteUrl(uriUtil.combine(ccloudApiBaseUrl,
             context.getRequestUri()));
-        return next().process(context);
       }
+      return next().process(context);
     } else {
       return Future.failedFuture(
           new ProcessorFailedException(

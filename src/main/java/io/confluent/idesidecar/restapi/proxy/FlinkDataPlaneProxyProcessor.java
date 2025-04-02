@@ -1,21 +1,17 @@
 package io.confluent.idesidecar.restapi.proxy;
 
-import static io.confluent.idesidecar.restapi.proxy.clusters.strategy.ClusterStrategy.UriUtil;
-
-import io.confluent.idesidecar.restapi.connections.CCloudConnectionState;
 import io.confluent.idesidecar.restapi.exceptions.ProcessorFailedException;
 import io.confluent.idesidecar.restapi.processors.Processor;
 import io.confluent.idesidecar.restapi.util.UriUtil;
 import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
 import jakarta.enterprise.context.ApplicationScoped;
-import org.jboss.logging.Logger;
 
 /**
  * Processor to set the proxy request/response parameters for the data plane.
  */
 @ApplicationScoped
-public class DataPlaneProxyProcessor extends Processor<ProxyContext, Future<ProxyContext>> {
+public class FlinkDataPlaneProxyProcessor extends Processor<ProxyContext, Future<ProxyContext>> {
 
   private static final String REGION_HEADER = "x-ccloud-region";
   private static final String PROVIDER_HEADER = "x-ccloud-provider";
@@ -55,8 +51,6 @@ public class DataPlaneProxyProcessor extends Processor<ProxyContext, Future<Prox
 
         context.setProxyRequestHeaders(cleanedHeaders);
       } else {
-        // Return 400 error when required headers are missing for Flink requests
-        LOG.warn("Missing required headers for Flink request. Region: " + region + ", Provider: " + provider);
         return Future.failedFuture(
             new ProcessorFailedException(
                 context.fail(400, "Missing required headers: x-ccloud-region and x-ccloud-provider are required for Flink requests")

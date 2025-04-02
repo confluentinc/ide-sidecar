@@ -160,7 +160,7 @@ ide-sidecar:
     interval-seconds: 60
   proxy:
     ccloud-api-control-plane-regex: "(/artifact.*)|(/fcpm/v2/compute-pools.*)"
-    ccloud-api-data-plane-regex: "(/catalog/v1.*)|(/sql/v1.*)"
+    ccloud-api-flink-data-plane-regex: "(/sql/v1.*)"
   websockets:
     # How long do we allow a connection to be established w/o it saying HELLO?
     initial-grace-seconds: 60

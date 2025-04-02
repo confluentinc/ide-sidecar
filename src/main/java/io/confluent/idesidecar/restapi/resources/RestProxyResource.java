@@ -52,7 +52,7 @@ public class RestProxyResource {
 
   static final String ccloudApiDataPlaneProxyRegex = ConfigProvider
       .getConfig()
-      .getValue("ide-sidecar.proxy.ccloud-api-data-plane-regex", String.class);
+      .getValue("ide-sidecar.proxy.ccloud-api-flink-data-plane-regex", String.class);
 
   @Inject
   Router router;
@@ -79,7 +79,7 @@ public class RestProxyResource {
   Processor<ProxyContext, Future<ProxyContext>> controlPlaneProxyProcessor;
 
   @Inject
-  @Named("dataPlaneProxyProcessor")
+  @Named("flinkDataPlaneProxyProcessor")
   Processor<ProxyContext, Future<ProxyContext>> dataPlaneProxyProcessor;
 
   @Route(regex = KAFKA_PROXY_REGEX)
@@ -241,10 +241,9 @@ public class RestProxyResource {
   }
 
   private ProxyContext createCcloudProxyContext(RoutingContext routingContext) {
-    MultiMap headers = routingContext.request().headers();
     return new ProxyContext(
         routingContext.request().uri(),
-        headers,
+        routingContext.request().headers(),
         routingContext.request().method(),
         routingContext.body().buffer(),
         routingContext.pathParams(),
