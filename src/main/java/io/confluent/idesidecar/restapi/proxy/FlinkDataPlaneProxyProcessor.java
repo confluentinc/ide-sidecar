@@ -1,7 +1,11 @@
 package io.confluent.idesidecar.restapi.proxy;
 
+import static io.confluent.idesidecar.restapi.proxy.clusters.strategy.ClusterStrategy.UriUtil;
+
 import io.confluent.idesidecar.restapi.connections.CCloudConnectionState;
+import io.confluent.idesidecar.restapi.exceptions.ProcessorFailedException;
 import io.confluent.idesidecar.restapi.processors.Processor;
+import io.confluent.idesidecar.restapi.util.UriUtil;
 import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -13,7 +17,6 @@ import org.jboss.logging.Logger;
 @ApplicationScoped
 public class DataPlaneProxyProcessor extends Processor<ProxyContext, Future<ProxyContext>> {
 
-  private static final Logger LOG = Logger.getLogger(DataPlaneProxyProcessor.class);
   private static final String REGION_HEADER = "x-ccloud-region";
   private static final String PROVIDER_HEADER = "x-ccloud-provider";
   private static final String FLINK_URL_PATTERN = "https://flink.%s.%s.confluent.cloud";
@@ -28,11 +31,11 @@ public class DataPlaneProxyProcessor extends Processor<ProxyContext, Future<Prox
       String provider = headers.get(PROVIDER_HEADER);
 
       if (region != null && provider != null) {
-        String flinkBaseUrl = String.format(FLINK_URL_PATTERN,
-            region.toLowerCase(), provider.toLowerCase());
+        String flinkBaseUrl = FLINK_URL_PATTERN.formatted(region.toLowerCase(), provider.toLowerCase());
         String path = extractPathFromUri(context.getRequestUri());
+        UriUtil uriUtil = new UriUtil();
 
-        context.setProxyRequestAbsoluteUrl(flinkBaseUrl + path);
+        context.setProxyRequestAbsoluteUrl(uriUtil.combine(flinkBaseUrl, path));
 
         MultiMap cleanedHeaders = MultiMap.caseInsensitiveMultiMap();
         cleanedHeaders.addAll(headers);
@@ -52,8 +55,13 @@ public class DataPlaneProxyProcessor extends Processor<ProxyContext, Future<Prox
 
         context.setProxyRequestHeaders(cleanedHeaders);
       } else {
-        context.setProxyRequestAbsoluteUrl(context.getRequestUri());
-        context.setProxyRequestHeaders(headers);
+        // Return 400 error when required headers are missing for Flink requests
+        LOG.warn("Missing required headers for Flink request. Region: " + region + ", Provider: " + provider);
+        return Future.failedFuture(
+            new ProcessorFailedException(
+                context.fail(400, "Missing required headers: x-ccloud-region and x-ccloud-provider are required for Flink requests")
+            )
+        );
       }
     } else {
       context.setProxyRequestAbsoluteUrl(context.getRequestUri());
@@ -64,6 +72,7 @@ public class DataPlaneProxyProcessor extends Processor<ProxyContext, Future<Prox
 
     return next().process(context);
   }
+
   private boolean isFlinkRequest(ProxyContext context) {
     return context.getRequestUri().contains("sql/v1") ||
         context.getRequestUri().contains("catalog/v1");
