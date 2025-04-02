@@ -13,6 +13,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.client.WireMock;
+import io.confluent.idesidecar.restapi.auth.Token;
 import io.confluent.idesidecar.restapi.connections.CCloudConnectionState;
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
 import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
@@ -36,6 +37,34 @@ public class CCloudTestUtil {
   public CCloudTestUtil(WireMock wireMock, ConnectionStateManager connectionStateManager) {
     this.wireMock = wireMock;
     this.connectionStateManager = connectionStateManager;
+  }
+
+  /**
+   * Sets the data plane token for a specific connection
+   *
+   * @param connectionId The connection ID
+   * @param token The data plane token value to set
+   */
+  public void setDataPlaneToken(String connectionId, String token) {
+    try {
+      CCloudConnectionState state = (CCloudConnectionState) connectionStateManager.getConnectionState(connectionId);
+      if (state != null && state.getOauthContext() != null) {
+        // Create a new Token instance and use reflection to set it
+        try {
+          Class<?> tokenClass = Class.forName("io.confluent.idesidecar.restapi.connections.Token");
+          Object tokenInstance = tokenClass.getConstructor(String.class).newInstance(token);
+
+          // Get the method to set data plane token
+          java.lang.reflect.Method setMethod = state.getOauthContext().getClass()
+              .getMethod("setDataPlaneToken", tokenClass);
+          setMethod.invoke(state.getOauthContext(), tokenInstance);
+        } catch (Exception e) {
+          throw new RuntimeException("Failed to set data plane token", e);
+        }
+      }
+    } catch (ConnectionNotFoundException e) {
+      throw new RuntimeException("Connection not found: " + connectionId, e);
+    }
   }
 
   private static String getRandomString() {
@@ -345,6 +374,15 @@ public class CCloudTestUtil {
     try {
       return ((CCloudConnectionState) connectionStateManager.getConnectionState(connectionId))
           .getOauthContext().getControlPlaneToken().token();
+    } catch (ConnectionNotFoundException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public String getDataPlaneToken(String connectionId) {
+    try {
+      return ((CCloudConnectionState) connectionStateManager.getConnectionState(connectionId))
+          .getOauthContext().getDataPlaneToken().token();
     } catch (ConnectionNotFoundException e) {
       throw new RuntimeException(e);
     }

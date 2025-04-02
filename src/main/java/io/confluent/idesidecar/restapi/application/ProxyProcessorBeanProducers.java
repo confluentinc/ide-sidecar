@@ -9,6 +9,8 @@ import io.confluent.idesidecar.restapi.proxy.CCloudApiProcessor;
 import io.confluent.idesidecar.restapi.proxy.ClusterProxyRequestProcessor;
 import io.confluent.idesidecar.restapi.proxy.ConnectionProcessor;
 import io.confluent.idesidecar.restapi.proxy.ControlPlaneAuthenticationProcessor;
+import io.confluent.idesidecar.restapi.proxy.FlinkDataPlaneAuthenticationProcessor;
+import io.confluent.idesidecar.restapi.proxy.FlinkDataPlaneProxyProcessor;
 import io.confluent.idesidecar.restapi.proxy.EmptyProcessor;
 import io.confluent.idesidecar.restapi.proxy.KafkaRestProxyContext;
 import io.confluent.idesidecar.restapi.proxy.ProxyContext;
@@ -59,6 +61,9 @@ public class ProxyProcessorBeanProducers {
   ConnectionProcessor<ClusterProxyContext> connectionProcessorClusterProxyContext;
 
   @Inject
+  FlinkDataPlaneAuthenticationProcessor flinkDataPlaneAuthenticationProcessor;
+
+  @Inject
   ControlPlaneAuthenticationProcessor controlPlaneAuthenticationProcessor;
 
   @Inject
@@ -101,14 +106,29 @@ public class ProxyProcessorBeanProducers {
 
   @Produces
   @Singleton
-  @Named("CCloudProxyProcessor")
-  public Processor<ProxyContext, Future<ProxyContext>> ccloudProxyProcessor(
-      ControlPlaneProxyProcessor genericProxyProcessor
+  @Named("controlPlaneProxyProcessor")
+  public Processor<ProxyContext, Future<ProxyContext>> ccloudProxyControlPlaneProcessor(
+      ControlPlaneProxyProcessor controlPlaneProxyProcessor
   ) {
     return Processor.chain(
         new ConnectionProcessor<>(connectionStateManager),
-        genericProxyProcessor,
+        controlPlaneProxyProcessor,
         cCloudApiAuthProcessor,
+        new ProxyRequestProcessor(webClientFactory, vertx),
+        emptyProcessorProxyContext
+    );
+  }
+
+  @Produces
+  @Singleton
+  @Named("flinkDataPlaneProxyProcessor")
+  public Processor<ProxyContext, Future<ProxyContext>> ccloudDataPlaneProxyProcessor(
+      FlinkDataPlaneProxyProcessor dataPlaneProxyProcessor
+  ) {
+    return Processor.chain(
+        new ConnectionProcessor<>(connectionStateManager),
+        dataPlaneProxyProcessor,
+        flinkDataPlaneAuthenticationProcessor,
         new ProxyRequestProcessor(webClientFactory, vertx),
         emptyProcessorProxyContext
     );
