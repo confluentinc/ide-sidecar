@@ -31,6 +31,7 @@ public class FlinkDataPlaneProxyProcessor extends Processor<ProxyContext, Future
 
     String region = headers.get(REGION_HEADER);
     String provider = headers.get(PROVIDER_HEADER);
+    UriUtil uriUtil = new UriUtil();
 
     if (region != null && provider != null) {
       // Build the Flink URL correctly
@@ -43,7 +44,7 @@ public class FlinkDataPlaneProxyProcessor extends Processor<ProxyContext, Future
       }
 
       // Ensure we have a proper URL
-      String absoluteUrl = flinkBaseUrl + path;
+      String absoluteUrl = uriUtil.combine(flinkBaseUrl, path);
       context.setProxyRequestAbsoluteUrl(absoluteUrl);
 
       // Create a copy of headers to modify
@@ -51,8 +52,7 @@ public class FlinkDataPlaneProxyProcessor extends Processor<ProxyContext, Future
       cleanedHeaders.addAll(headers);
 
       // Explicitly remove the Flink-specific headers
-      cleanedHeaders.remove(REGION_HEADER);
-      cleanedHeaders.remove(PROVIDER_HEADER);
+      sanitizeHeaders(cleanedHeaders,httpHeaderExclusions);
       cleanedHeaders.remove("x-connection-id");
       cleanedHeaders.remove("host");
 
