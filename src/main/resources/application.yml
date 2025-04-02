@@ -203,6 +203,8 @@ ide-sidecar:
     http-header-exclusions:
       - x-connection-id
       - x-cluster-id
+      - x-ccloud-region
+      - x-ccloud-provider
       - Authorization
       - Host
       - Connection

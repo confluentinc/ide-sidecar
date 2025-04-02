@@ -1,11 +1,15 @@
 package io.confluent.idesidecar.restapi.proxy;
 
+import static io.confluent.idesidecar.restapi.util.SanitizeHeadersUtil.sanitizeHeaders;
+
 import io.confluent.idesidecar.restapi.exceptions.ProcessorFailedException;
 import io.confluent.idesidecar.restapi.processors.Processor;
 import io.confluent.idesidecar.restapi.util.UriUtil;
 import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
 import jakarta.enterprise.context.ApplicationScoped;
+import java.util.List;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
  * Processor to set the proxy request/response parameters for the data plane.
@@ -17,74 +21,63 @@ public class FlinkDataPlaneProxyProcessor extends Processor<ProxyContext, Future
   private static final String PROVIDER_HEADER = "x-ccloud-provider";
   private static final String FLINK_URL_PATTERN = "https://flink.%s.%s.confluent.cloud";
 
+  @ConfigProperty(name = "ide-sidecar.cluster-proxy.http-header-exclusions")
+  List<String> httpHeaderExclusions;
+
   @Override
   public Future<ProxyContext> process(ProxyContext context) {
     MultiMap headers = context.getRequestHeaders() != null ?
         context.getRequestHeaders() : MultiMap.caseInsensitiveMultiMap();
 
-    if (isFlinkRequest(context)) {
-      String region = headers.get(REGION_HEADER);
-      String provider = headers.get(PROVIDER_HEADER);
+    String region = headers.get(REGION_HEADER);
+    String provider = headers.get(PROVIDER_HEADER);
 
-      if (region != null && provider != null) {
-        String flinkBaseUrl = FLINK_URL_PATTERN.formatted(region.toLowerCase(), provider.toLowerCase());
-        String path = extractPathFromUri(context.getRequestUri());
-        UriUtil uriUtil = new UriUtil();
+    if (region != null && provider != null) {
+      // Build the Flink URL correctly
+      String flinkBaseUrl = FLINK_URL_PATTERN.formatted(region.toLowerCase(), provider.toLowerCase());
+      String path = context.getRequestUri();
 
-        context.setProxyRequestAbsoluteUrl(uriUtil.combine(flinkBaseUrl, path));
-
-        MultiMap cleanedHeaders = MultiMap.caseInsensitiveMultiMap();
-        cleanedHeaders.addAll(headers);
-
-        // Remove the headers that shouldn't be forwarded
-        cleanedHeaders.remove(REGION_HEADER);
-        cleanedHeaders.remove(PROVIDER_HEADER);
-        cleanedHeaders.remove("x-connection-id");
-        cleanedHeaders.remove("host");
-
-        cleanedHeaders.set("Accept", "application/json");
-
-        if (context.getRequestMethod().name().equals("POST") ||
-            context.getRequestMethod().name().equals("PUT")) {
-          cleanedHeaders.set("Content-Type", "application/json");
-        }
-
-        context.setProxyRequestHeaders(cleanedHeaders);
-      } else {
-        return Future.failedFuture(
-            new ProcessorFailedException(
-                context.fail(400, "Missing required headers: x-ccloud-region and x-ccloud-provider are required for Flink requests")
-            )
-        );
+      // Make sure path starts with a / if not already, else it will fail with a 404
+      if (!path.startsWith("/")) {
+        path = "/" + path;
       }
+
+      // Ensure we have a proper URL
+      String absoluteUrl = flinkBaseUrl + path;
+      context.setProxyRequestAbsoluteUrl(absoluteUrl);
+
+      // Create a copy of headers to modify
+      MultiMap cleanedHeaders = MultiMap.caseInsensitiveMultiMap();
+      cleanedHeaders.addAll(headers);
+
+      // Explicitly remove the Flink-specific headers
+      cleanedHeaders.remove(REGION_HEADER);
+      cleanedHeaders.remove(PROVIDER_HEADER);
+      cleanedHeaders.remove("x-connection-id");
+      cleanedHeaders.remove("host");
+
+      // Apply other exclusions
+      for (String exclusion : httpHeaderExclusions) {
+        cleanedHeaders.remove(exclusion);
+      }
+
+      cleanedHeaders.set("Accept", "application/json");
+      if (context.getRequestMethod().name().equals("POST") ||
+          context.getRequestMethod().name().equals("PUT")) {
+        cleanedHeaders.set("Content-Type", "application/json");
+      }
+
+      context.setProxyRequestHeaders(cleanedHeaders);
+      context.setProxyRequestMethod(context.getRequestMethod());
+      context.setProxyRequestBody(context.getRequestBody());
+
+      return next().process(context);
     } else {
-      context.setProxyRequestAbsoluteUrl(context.getRequestUri());
-      context.setProxyRequestHeaders(headers);
+      return Future.failedFuture(
+          new ProcessorFailedException(
+              context.fail(400, "Missing required headers: x-ccloud-region and x-ccloud-provider are required for Flink requests")
+          )
+      );
     }
-    context.setProxyRequestMethod(context.getRequestMethod());
-    context.setProxyRequestBody(context.getRequestBody());
-
-    return next().process(context);
-  }
-
-  private boolean isFlinkRequest(ProxyContext context) {
-    return context.getRequestUri().contains("sql/v1") ||
-        context.getRequestUri().contains("catalog/v1");
-  }
-
-  private String extractPathFromUri(String uri) {
-    if (uri.contains("sql/v1")) {
-      int sqlIndex = uri.indexOf("sql/v1");
-      return "/" + uri.substring(sqlIndex);
-    }
-
-    if (uri.contains("catalog/v1")) {
-      int catalogIndex = uri.indexOf("catalog/v1");
-      return "/" + uri.substring(catalogIndex);
-    }
-
-    // Fallback to original extraction
-    int pathStart = uri.indexOf('/', uri.indexOf("://") + 3);
-    return pathStart >= 0 ? uri.substring(pathStart) : "";
   }
 }
