@@ -693,11 +693,11 @@ curl -s -H "Content-Type:application/json" -H "Authorization: Bearer ${DTX_ACCES
 ### The Control and Data Plane Proxy APIs
 
 The Control Plane Proxy API is a generic API that allows you to make calls to the Confluent Cloud control plane, specifically for artifact and compute pool management endpoints.
-The Data Plane Proxy API allows you to make calls to the Confluent Cloud control plane for Flink resources, specifically the statement and catalog endpoints.
+The Data Plane Proxy API allows you to make calls to the Confluent Cloud control plane for Flink resources, specifically the statement endpoints.
 
 ```yaml
 ccloud-api-control-plane-regex: "(/artifact.*)|(/fcpm/v2/compute-pools.*)"
-ccloud-api-data-plane-regex: "(/catalog/v1.*)|(/sql/v1.*)"
+ccloud-api-flink-data-plane-regex: "(/sql/v1.*)"
 ```
 
 This configuration is defined in `application.yml` [under the ide-sidecar.proxy section](./src/main/resources/application.yml).
@@ -709,7 +709,6 @@ Control Plane endpoints:
 - http://localhost:26636/fcpm/v2/compute-pools/* (For Flink compute pools management)
 
 Data Plane endpoints:
-- http://localhost:26636/catalog/v1/* (For catalogs)
 - http://localhost:26636/sql/v1* (For Flink statements)
 
 Required headers for both control and data plane proxy APIs:
