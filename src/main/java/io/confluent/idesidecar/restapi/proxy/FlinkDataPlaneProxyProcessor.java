@@ -56,9 +56,10 @@ public class FlinkDataPlaneProxyProcessor extends Processor<ProxyContext, Future
       cleanedHeaders.remove("x-connection-id");
       cleanedHeaders.remove("host");
 
-      // Apply other exclusions
-      for (String exclusion : httpHeaderExclusions) {
-        cleanedHeaders.remove(exclusion);
+      if (httpHeaderExclusions != null) {
+        for (String exclusion : httpHeaderExclusions) {
+          cleanedHeaders.remove(exclusion);
+        }
       }
 
       cleanedHeaders.set("Accept", "application/json");

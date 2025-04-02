@@ -39,8 +39,12 @@ public class CCloudApiProcessor extends Processor<ProxyContext, Future<ProxyCont
             new ProcessorFailedException(
                 context.fail(401, "%s".formatted(e.getMessage()))));
       }
-      context.setProxyRequestAbsoluteUrl(uriUtil.combine(ccloudApiBaseUrl,
-          context.getRequestUri()));
+      context.setProxyRequestAbsoluteUrl(
+          uriUtil.combine(
+              ccloudApiBaseUrl,
+          context.getRequestUri()
+          )
+      );
       return next().process(context);
     } else {
       return Future.failedFuture(

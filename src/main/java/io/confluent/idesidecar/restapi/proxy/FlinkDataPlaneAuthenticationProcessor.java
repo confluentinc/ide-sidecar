@@ -24,13 +24,6 @@ public class FlinkDataPlaneAuthenticationProcessor extends Processor<ProxyContex
           new ProcessorFailedException(
               context.fail(400, "Bad Request: Non-CCloud connections are not supported")));
     }
-
-    // Check if this is a data plane request
-    if (!isDataPlaneRequest(context)) {
-      // Skip non-data plane requests
-      return next().process(context);
-    }
-
     // Get the proper Confluent Cloud API token from the connection state
     if (cCloudConnection.getOauthContext() == null ||
         cCloudConnection.getOauthContext().getDataPlaneToken() == null) {

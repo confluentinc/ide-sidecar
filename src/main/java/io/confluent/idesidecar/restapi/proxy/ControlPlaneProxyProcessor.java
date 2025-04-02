@@ -4,7 +4,6 @@ import io.confluent.idesidecar.restapi.processors.Processor;
 import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Named;
 import org.jboss.logging.Logger;
 
 /**
