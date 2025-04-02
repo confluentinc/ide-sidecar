@@ -62,5 +62,4 @@ class CCloudApiProcessorTest {
     assertTrue(result.failed());
     assertEquals("400", ((ProcessorFailedException) result.cause()).getFailure().status());
   }
-
 }

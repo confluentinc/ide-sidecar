@@ -11,7 +11,6 @@ import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.matching.EqualToPattern;
 import io.confluent.idesidecar.restapi.connections.CCloudConnectionState;
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
-import io.confluent.idesidecar.restapi.models.ConnectionSpec.CCloudConfig;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
 import io.confluent.idesidecar.restapi.processors.Processor;
 import io.confluent.idesidecar.restapi.proxy.ControlPlaneProxyProcessor;
@@ -22,7 +21,6 @@ import io.quarkiverse.wiremock.devservice.ConnectWireMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 import io.vertx.core.Future;
-import io.vertx.core.MultiMap;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
 import jakarta.inject.Inject;
@@ -41,7 +39,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 @QuarkusTest
 @TestProfile(NoAccessFilterProfile.class)
 @ConnectWireMock
-class DataPlaneProxyResourceTest {
+class FlinkDataPlaneProxyResourceTest {
 
   @Inject
   ConnectionStateManager connectionStateManager;
