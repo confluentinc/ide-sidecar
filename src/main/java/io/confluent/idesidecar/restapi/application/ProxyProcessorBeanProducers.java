@@ -13,7 +13,6 @@ import io.confluent.idesidecar.restapi.proxy.EmptyProcessor;
 import io.confluent.idesidecar.restapi.proxy.KafkaRestProxyContext;
 import io.confluent.idesidecar.restapi.proxy.ProxyContext;
 import io.confluent.idesidecar.restapi.proxy.ProxyRequestProcessor;
-import io.confluent.idesidecar.restapi.proxy.RBACProxyProcessor;
 import io.confluent.idesidecar.restapi.proxy.ControlPlaneProxyProcessor;
 import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
 import io.confluent.idesidecar.restapi.proxy.clusters.processors.ClusterAuthenticationProcessor;
@@ -81,21 +80,6 @@ public class ProxyProcessorBeanProducers {
         clusterProxyProcessor,
         clusterProxyRequestProcessor,
         emptyProcessorClusterProxyContext
-    );
-  }
-
-  @Produces
-  @Singleton
-  @Named("RBACProxyProcessor")
-  public Processor<ProxyContext, Future<ProxyContext>> RbacProxyProcessor(
-      RBACProxyProcessor rbacProxyProcessor
-  ) {
-    return Processor.chain(
-        new ConnectionProcessor<>(connectionStateManager),
-        rbacProxyProcessor,
-        controlPlaneAuthenticationProcessor,
-        new ProxyRequestProcessor(webClientFactory, vertx),
-        emptyProcessorProxyContext
     );
   }
 
