@@ -6,6 +6,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.stream.Collectors;
 
 /**
@@ -67,7 +68,11 @@ public class UriUtil {
       // Create a URI from the base URL
       URI baseUri = new URI(baseUrl);
 
-      // Create a URI from the relative path
+      // Combine the base URI's path and the relative path passed in
+      if (baseUri.getPath() != null) {
+        relativePath = Path.of(baseUri.getPath(), relativePath).toString();
+      }
+
       URI relativeUri = new URI(relativePath);
 
       // Resolve the relative URI against the base URI
