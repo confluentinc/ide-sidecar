@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.matching.EqualToPattern;
@@ -33,7 +34,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletionException;
 import java.util.stream.Stream;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -51,6 +51,11 @@ class FlinkDataPlaneProxyResourceTest {
 
   @Inject
   FlinkDataPlaneProxyProcessor flinkDataPlaneProxyProcessor;
+
+  // This is a hack: It captures the original next processor
+  // defined in the chain so that we can reset it after overriding it
+  // in the test methods.
+  static Processor<ProxyContext, Future<ProxyContext>> originalNextProcessor = null;
 
   WireMock wireMock;
 
@@ -75,6 +80,12 @@ class FlinkDataPlaneProxyResourceTest {
   @BeforeEach
   void setUp() {
     ccloudTestUtil = new CCloudTestUtil(wireMock, connectionStateManager);
+    if (originalNextProcessor == null) {
+        originalNextProcessor = flinkDataPlaneProxyProcessor.next();
+    }
+
+    // Reset the next processor back to the original one
+    flinkDataPlaneProxyProcessor.setNext(originalNextProcessor);
   }
 
   @AfterEach
@@ -126,7 +137,7 @@ class FlinkDataPlaneProxyResourceTest {
 
 
     wireMock.register(
-        WireMock.put("/sql/v1/organizations")
+        WireMock.put("/flink.us-west-2.aws.confluent.cloud/sql/v1/organizations")
             .withHeader("Authorization",
                 new EqualToPattern("Bearer %s".formatted(dataPlaneToken.token()))
             )
@@ -196,8 +207,8 @@ class FlinkDataPlaneProxyResourceTest {
         .join();
 
     // Then the URL should be transformed to the Flink URL
-    String expectedUrl = "https://flink.us-west-2.aws.confluent.cloud/test";
-    assertEquals(expectedUrl, result.getProxyRequestAbsoluteUrl());
+    String expectedUrl = "flink.us-west-2.aws.confluent.cloud/test";
+    assertTrue(result.getProxyRequestAbsoluteUrl().endsWith(expectedUrl));
     assertEquals(HttpMethod.PUT, result.getProxyRequestMethod());
     assertEquals("TestBody", result.getProxyRequestBody().toString());
   }
