@@ -23,6 +23,9 @@ public final class SanitizeHeadersUtil {
    */
   public static Map<String, String> sanitizeHeaders(MultiMap requestHeaders, List<String> exclusions) {
     var headers = new HashMap<String, String>();
+    if (requestHeaders == null) {
+      throw new IllegalArgumentException("Request headers cannot be null");
+    }
     if (requestHeaders != null) {
       requestHeaders.forEach(
           entry -> headers.put(entry.getKey(), entry.getValue())

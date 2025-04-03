@@ -46,11 +46,11 @@ public class RestProxyResource {
   static final MultiMap NO_HEADERS = MultiMap.caseInsensitiveMultiMap();
   static final Map<String, String> NO_PATH_PARAMS = Map.of();
 
-  static final String ccloudApiControlPlaneProxyRegex = ConfigProvider
+  static final String CCLOUD_API_CONTROL_PLANE_PROXY_REGEX = ConfigProvider
       .getConfig()
       .getValue("ide-sidecar.proxy.ccloud-api-control-plane-regex", String.class);
 
-  static final String ccloudApiDataPlaneProxyRegex = ConfigProvider
+  static final String CCLOUD_API_DATA_PLANE_PROXY_REGEX = ConfigProvider
       .getConfig()
       .getValue("ide-sidecar.proxy.ccloud-api-flink-data-plane-regex", String.class);
 
@@ -58,10 +58,10 @@ public class RestProxyResource {
   Router router;
 
   void init(@Observes StartupEvent ev) {
-    router.routeWithRegex(ccloudApiControlPlaneProxyRegex)
+    router.routeWithRegex(CCLOUD_API_CONTROL_PLANE_PROXY_REGEX)
         .handler(BodyHandler.create())
         .blockingHandler(this::ccloudControlPlaneProxy);
-    router.routeWithRegex(ccloudApiDataPlaneProxyRegex)
+    router.routeWithRegex(CCLOUD_API_DATA_PLANE_PROXY_REGEX)
         .handler(BodyHandler.create())
         .blockingHandler(this::ccloudDataPlaneProxy);
   }

@@ -9,7 +9,7 @@ import io.confluent.idesidecar.restapi.proxy.CCloudApiProcessor;
 import io.confluent.idesidecar.restapi.proxy.ClusterProxyRequestProcessor;
 import io.confluent.idesidecar.restapi.proxy.ConnectionProcessor;
 import io.confluent.idesidecar.restapi.proxy.ControlPlaneAuthenticationProcessor;
-import io.confluent.idesidecar.restapi.proxy.FlinkDataPlaneAuthenticationProcessor;
+import io.confluent.idesidecar.restapi.proxy.CCloudDataPlaneAuthenticationProcessor;
 import io.confluent.idesidecar.restapi.proxy.FlinkDataPlaneProxyProcessor;
 import io.confluent.idesidecar.restapi.proxy.EmptyProcessor;
 import io.confluent.idesidecar.restapi.proxy.KafkaRestProxyContext;
@@ -61,7 +61,7 @@ public class ProxyProcessorBeanProducers {
   ConnectionProcessor<ClusterProxyContext> connectionProcessorClusterProxyContext;
 
   @Inject
-  FlinkDataPlaneAuthenticationProcessor flinkDataPlaneAuthenticationProcessor;
+  CCloudDataPlaneAuthenticationProcessor flinkDataPlaneAuthenticationProcessor;
 
   @Inject
   ControlPlaneAuthenticationProcessor controlPlaneAuthenticationProcessor;

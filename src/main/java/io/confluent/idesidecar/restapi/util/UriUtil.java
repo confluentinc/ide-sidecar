@@ -67,14 +67,28 @@ public class UriUtil {
       // Create a URI from the base URL
       URI baseUri = new URI(baseUrl);
 
-      // Create a URI from the relative path
-      URI relativeUri = new URI(relativePath);
+      // Normalize the relative path - ensure it has exactly one leading slash
+      String normalizedPath = relativePath;
+      if (!normalizedPath.startsWith("/")) {
+        normalizedPath = "/" + normalizedPath;
+      }
+
+      // Handle the case where base URL ends with slash and relative path starts with slash
+      if (baseUrl.endsWith("/") && normalizedPath.startsWith("/")) {
+        normalizedPath = normalizedPath.substring(1);
+      }
+
+      // Create a URI from the relative path, properly handling encoding
+      URI relativeUri = new URI(null, null, normalizedPath, null);
 
       // Resolve the relative URI against the base URI
       URI resolvedUri = baseUri.resolve(relativeUri);
 
+      // Normalize the path to handle ".." and "." segments
+      URI normalizedUri = resolvedUri.normalize();
+
       // Return the resolved URI as a string
-      return resolvedUri.toString();
+      return normalizedUri.toString();
     } catch (URISyntaxException e) {
       throw new IllegalArgumentException(INVALID_URI + baseUrl);
     }

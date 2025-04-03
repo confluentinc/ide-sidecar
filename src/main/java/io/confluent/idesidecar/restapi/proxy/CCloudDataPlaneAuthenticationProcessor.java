@@ -13,7 +13,7 @@ import jakarta.enterprise.context.ApplicationScoped;
  * Processor for handling data plane requests to services like Flink SQL and Catalog.
  */
 @ApplicationScoped
-public class FlinkDataPlaneAuthenticationProcessor extends Processor<ProxyContext, Future<ProxyContext>> {
+public class CCloudDataPlaneAuthenticationProcessor extends Processor<ProxyContext, Future<ProxyContext>> {
 
   @Override
   public Future<ProxyContext> process(ProxyContext context) {

@@ -146,7 +146,7 @@ ide-sidecar:
       client-id: 5c636508aa445d32c86f26b1
       eval-uri: https://confluent.cloud/ldapi/sdk/evalx/%s/contexts/%s
   flink:
-    url-pattern: https://custom-flink.%s.%s.example.com
+    url-pattern: https://flink.%s.%s.confluent.cloud
   access_token_filter:
     excluded_paths:
       # Following needed by oauth

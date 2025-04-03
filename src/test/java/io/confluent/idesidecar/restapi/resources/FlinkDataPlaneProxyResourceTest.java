@@ -1,6 +1,5 @@
 package io.confluent.idesidecar.restapi.resources;
 
-import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.asJson;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
@@ -19,6 +18,7 @@ import io.confluent.idesidecar.restapi.proxy.FlinkDataPlaneProxyProcessor;
 import io.confluent.idesidecar.restapi.proxy.ProxyContext;
 import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
 import io.confluent.idesidecar.restapi.util.CCloudTestUtil;
+import io.confluent.idesidecar.restapi.util.UriUtil;
 import io.quarkiverse.wiremock.devservice.ConnectWireMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
@@ -50,6 +50,9 @@ class FlinkDataPlaneProxyResourceTest {
 
   @ConfigProperty(name = "quarkus.wiremock.devservices.port")
   int wireMockPort;
+
+  @Inject
+  FlinkDataPlaneProxyProcessor flinkDataPlaneProxyProcessor;
 
   WireMock wireMock;
 
@@ -168,7 +171,7 @@ class FlinkDataPlaneProxyResourceTest {
   void testDataPlaneProxyProcessorNoInitialHeaders() {
     // Given a ProxyContext with no initial headers
     var proxyContext = new ProxyContext(
-        "http://localhost/test",
+        "/test",
         createSampleHeaders(),
         HttpMethod.PUT,
         Buffer.buffer("TestBody"),
@@ -184,20 +187,19 @@ class FlinkDataPlaneProxyResourceTest {
       }
     };
 
-    FlinkDataPlaneProxyProcessor processor = new FlinkDataPlaneProxyProcessor();
-    processor.setNext(nextProcessor);
+    flinkDataPlaneProxyProcessor.uriUtil = new UriUtil();
+    flinkDataPlaneProxyProcessor.setNext(nextProcessor);
 
-    // Wait for the future to complete
-    ProxyContext result = processor.process(proxyContext)
+    // When processing the context
+    ProxyContext result = flinkDataPlaneProxyProcessor.process(proxyContext)
         .toCompletionStage()
         .toCompletableFuture()
         .join();
 
-    // And the absolute URL should be set correctly
-    assertEquals("http://localhost/test", result.getProxyRequestAbsoluteUrl());
-    // And the request method should be PUT
+    // Then the URL should be transformed to the Flink URL
+    String expectedUrl = "https://flink.us-west-2.aws.confluent.cloud/test";
+    assertEquals(expectedUrl, result.getProxyRequestAbsoluteUrl());
     assertEquals(HttpMethod.PUT, result.getProxyRequestMethod());
-    // And the request body should be "TestBody"
     assertEquals("TestBody", result.getProxyRequestBody().toString());
   }
 
@@ -223,12 +225,11 @@ class FlinkDataPlaneProxyResourceTest {
       }
     };
 
-    FlinkDataPlaneProxyProcessor processor = new FlinkDataPlaneProxyProcessor();
-    processor.setNext(nextProcessor);
+    flinkDataPlaneProxyProcessor.setNext(nextProcessor);
 
     // The processor should throw a ProcessorFailedException
     CompletionException exception = assertThrows(CompletionException.class, () -> {
-      processor.process(proxyContext)
+      flinkDataPlaneProxyProcessor.process(proxyContext)
           .toCompletionStage()
           .toCompletableFuture()
           .join();
@@ -262,12 +263,11 @@ class FlinkDataPlaneProxyResourceTest {
       }
     };
 
-    FlinkDataPlaneProxyProcessor processor = new FlinkDataPlaneProxyProcessor();
-    processor.setNext(nextProcessor);
+    flinkDataPlaneProxyProcessor.setNext(nextProcessor);
 
     // The processor should throw a ProcessorFailedException
     CompletionException exception = assertThrows(CompletionException.class, () -> {
-      processor.process(proxyContext)
+      flinkDataPlaneProxyProcessor.process(proxyContext)
           .toCompletionStage()
           .toCompletableFuture()
           .join();
