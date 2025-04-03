@@ -4,7 +4,6 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -21,7 +20,6 @@ import io.confluent.idesidecar.restapi.proxy.FlinkDataPlaneProxyProcessor;
 import io.confluent.idesidecar.restapi.proxy.ProxyContext;
 import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
 import io.confluent.idesidecar.restapi.util.CCloudTestUtil;
-import io.confluent.idesidecar.restapi.util.UriUtil;
 import io.quarkiverse.wiremock.devservice.ConnectWireMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
@@ -50,9 +48,6 @@ class FlinkDataPlaneProxyResourceTest {
 
   @Inject
   ConnectionStateManager connectionStateManager;
-
-  @ConfigProperty(name = "quarkus.wiremock.devservices.port")
-  int wireMockPort;
 
   @Inject
   FlinkDataPlaneProxyProcessor flinkDataPlaneProxyProcessor;
@@ -151,7 +146,9 @@ class FlinkDataPlaneProxyResourceTest {
         .when()
         .headers(REQUEST_HEADERS)
         .header("Authorization", "Bearer " + dataPlaneToken.token())
-        .put("http://localhost:%d/sql/v1/organizations".formatted(wireMockPort))
+        .header("x-ccloud-region", "us-west-2")
+        .header("x-ccloud-provider", "aws")
+        .put("/sql/v1/organizations")
         .then();
 
     // Then we should get a 200 response
@@ -276,7 +273,7 @@ class FlinkDataPlaneProxyResourceTest {
     });
 
     // Verify the exception contains the expected message
-    assertTrue(exception.getCause() instanceof ProcessorFailedException);
+    assertInstanceOf(ProcessorFailedException.class, exception.getCause());
     assertEquals("Missing required headers: x-ccloud-region and x-ccloud-provider are required for Flink requests",
         exception.getCause().getMessage());
   }
