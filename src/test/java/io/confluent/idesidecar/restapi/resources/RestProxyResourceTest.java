@@ -62,7 +62,7 @@ class RestProxyResourceTest {
 
   private static Stream<Arguments> pathSource() {
     return Stream.of(
-        Arguments.of("/api/metadata/security/v2alpha1/authorize")
+        Arguments.of("/metadata/security/v2alpha1/authorize")
     );
   }
 
