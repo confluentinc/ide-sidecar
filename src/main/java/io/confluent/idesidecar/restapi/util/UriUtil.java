@@ -64,20 +64,92 @@ public class UriUtil {
 
   public String combine(String baseUrl, String relativePath) {
     try {
-      // Create a URI from the base URL
+      // Check if relative path is already an absolute URL
+      if (relativePath.matches("^[a-zA-Z][a-zA-Z0-9+.-]*:.*")) {
+        return new URI(relativePath).toString();
+      }
+
       URI baseUri = new URI(baseUrl);
 
-      // Create a URI from the relative path
-      URI relativeUri = new URI(relativePath);
+      // Handle the special case with spaces and special characters in the path
+      if (relativePath.contains(" ") || containsSpecialChars(relativePath)) {
+        String encodedPath = encodeCombinedPath(relativePath);
 
-      // Resolve the relative URI against the base URI
-      URI resolvedUri = baseUri.resolve(relativeUri);
+        // Build the URI manually as a string to prevent double-encoding
+        StringBuilder result = new StringBuilder();
+        result.append(baseUri.getScheme()).append("://").append(baseUri.getAuthority());
 
-      // Return the resolved URI as a string
+        if (relativePath.startsWith("/")) {
+          // Absolute path relative to the host
+          result.append(encodedPath);
+        } else {
+          // Relative to current path
+          String basePath = baseUri.getPath();
+          if (basePath == null || basePath.isEmpty()) {
+            basePath = "/";
+          } else if (!basePath.endsWith("/")) {
+            basePath += "/";
+          }
+          result.append(basePath).append(encodedPath);
+        }
+
+        return result.toString();
+      }
+
+      // For paths with complex structures or "../"
+      if (relativePath.contains("..") || (baseUri.getPath() != null && !baseUri.getPath().isEmpty() && !"/".equals(baseUri.getPath()))) {
+        String basePath = baseUri.getPath();
+        if (basePath == null) {
+          basePath = "/";
+        }
+
+        // Handle cases where path doesn't start with /
+        if (!relativePath.startsWith("/")) {
+          if (!basePath.endsWith("/")) {
+            basePath += "/";
+          }
+          relativePath = basePath + relativePath;
+        } else if (!"/".equals(basePath)) {
+          // For paths that start with / but have a non-root base path
+          relativePath = basePath + relativePath;
+        }
+
+        // Create new URI with normalized path
+        URI result = new URI(
+            baseUri.getScheme(),
+            baseUri.getUserInfo(),
+            baseUri.getHost(),
+            baseUri.getPort(),
+            relativePath,
+            baseUri.getQuery(),
+            baseUri.getFragment()
+        ).normalize();
+
+        return result.toString();
+      }
+
+      // For regular paths
+      URI relativeUri;
+      if (!relativePath.startsWith("/")) {
+        relativeUri = new URI("/" + relativePath);
+      } else {
+        relativeUri = new URI(relativePath);
+      }
+
+      URI resolvedUri = baseUri.resolve(relativeUri).normalize();
       return resolvedUri.toString();
     } catch (URISyntaxException e) {
-      throw new IllegalArgumentException(INVALID_URI + baseUrl);
+      throw new IllegalArgumentException("Invalid URI: " + baseUrl + " or " + relativePath, e);
     }
+  }
+
+  private boolean containsSpecialChars(String path) {
+    return path.matches(".*[^a-zA-Z0-9/._-].*");
+  }
+
+  private String encodeCombinedPath(String path) {
+    // Simply replace spaces with %20 without any additional encoding
+    return path.replace(" ", "%20");
   }
 
   public String getHost(String uri) {
