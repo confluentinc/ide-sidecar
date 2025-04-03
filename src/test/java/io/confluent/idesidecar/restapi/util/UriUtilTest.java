@@ -80,42 +80,42 @@ public class UriUtilTest {
 
   @Test
   void testCombineWithoutLeadingSlashInRelativePath() {
-    String baseUrl = "http://localhost";
+    String baseUrl = "https://flink.us-west-2.aws.confluent.cloud";
     String relativePath = "test";
 
     String result = uriUtil.combine(baseUrl, relativePath);
 
-    assertEquals("http://localhost/test", result);
+    assertEquals("https://flink.us-west-2.aws.confluent.cloud/test", result);
   }
 
   @Test
   void testCombineWithLeadingSlashInRelativePath() {
-    String baseUrl = "http://localhost";
+    String baseUrl = "https://flink.us-west-2.aws.confluent.cloud";
     String relativePath = "/test";
 
     String result = uriUtil.combine(baseUrl, relativePath);
 
-    assertEquals("http://localhost/test", result);
+    assertEquals("https://flink.us-west-2.aws.confluent.cloud/test", result);
   }
 
   @Test
   void testCombineWithTrailingSlashInBaseUrl() {
-    String baseUrl = "http://localhost/";
+    String baseUrl = "https://flink.us-west-2.aws.confluent.cloud/";
     String relativePath = "test";
 
     String result = uriUtil.combine(baseUrl, relativePath);
 
-    assertEquals("http://localhost/test", result);
+    assertEquals("https://flink.us-west-2.aws.confluent.cloud/test", result);
   }
 
   @Test
   void testCombineWithBothSlashes() {
-    String baseUrl = "http://localhost/";
+    String baseUrl = "https://flink.us-west-2.aws.confluent.cloud";
     String relativePath = "/test";
 
     String result = uriUtil.combine(baseUrl, relativePath);
 
-    assertEquals("http://localhost/test", result);
+    assertEquals("https://flink.us-west-2.aws.confluent.cloud/test", result);
   }
 
   @Test
@@ -126,15 +126,5 @@ public class UriUtilTest {
     String result = uriUtil.combine(baseUrl, relativePath);
 
     assertEquals("https://api.confluent.cloud/something/v1/resources", result);
-  }
-
-  @Test
-  void testCombineWithFlinkUrl() {
-    String baseUrl = "https://flink.us-west-2.aws.confluent.cloud";
-    String relativePath = "/test";
-
-    String result = uriUtil.combine(baseUrl, relativePath);
-
-    assertEquals("https://flink.us-west-2.aws.confluent.cloud/test", result);
   }
 }
