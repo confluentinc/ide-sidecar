@@ -39,7 +39,6 @@ public class RestProxyResource {
   public static final String KAFKA_PROXY_REGEX = "/kafka/v3/clusters/(?<clusterId>[^\\/]+).*";
   private static final String CLUSTER_ID_PATH_PARAM = "clusterId";
   public static final String SCHEMA_REGISTRY_PROXY_REGEX = "(/schemas.*)|(/subjects.*)";
-  public static final String RBAC_RESOURCE_PATH = "/api/metadata/security/v2alpha1/authorize";
   static final String RBAC_URI = ConfigProvider
       .getConfig()
       .getValue("ide-sidecar.connections.ccloud.rbac-uri", String.class);
@@ -173,17 +172,6 @@ public class RestProxyResource {
         routingContext.request().getHeader(RequestHeadersConstants.CONNECTION_ID_HEADER),
         routingContext.request().getHeader(RequestHeadersConstants.CLUSTER_ID_HEADER),
         ClusterType.SCHEMA_REGISTRY
-    );
-  }
-
-  private ProxyContext createRBACProxyContext(RoutingContext routingContext) {
-    return new ProxyContext(
-        RBAC_URI,
-        NO_HEADERS,
-        HttpMethod.PUT,
-        routingContext.body().buffer(),
-        NO_PATH_PARAMS,
-        routingContext.request().getHeader(RequestHeadersConstants.CONNECTION_ID_HEADER)
     );
   }
 
