@@ -6,6 +6,8 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.matching.EqualToPattern;
@@ -277,5 +279,88 @@ class FlinkDataPlaneProxyResourceTest {
     assertTrue(exception.getCause() instanceof ProcessorFailedException);
     assertEquals("Missing required headers: x-ccloud-region and x-ccloud-provider are required for Flink requests",
         exception.getCause().getMessage());
+  }
+
+  @Test
+  void testHeadersAreSanitized() {
+    // Setup - create a valid CCloud connection
+    ccloudTestUtil.createAuthedConnection(CONNECTION_ID, ConnectionType.CCLOUD);
+
+    // Setup request headers with region and provider
+    MultiMap headers = MultiMap.caseInsensitiveMultiMap();
+    headers.add("x-ccloud-region", "us-west-2");
+    headers.add("x-ccloud-provider", "aws");
+    headers.add("Authorization", "Bearer token123");
+    headers.add("Content-Type", "application/json");
+    headers.add("Host", "original-host.com");
+
+    // Mock the next processor to avoid actual remote calls
+    Processor<ProxyContext, Future<ProxyContext>> nextProcessor = new Processor<>() {
+      @Override
+      public Future<ProxyContext> process(ProxyContext context) {
+        return Future.succeededFuture(context);
+      }
+    };
+    flinkDataPlaneProxyProcessor.setNext(nextProcessor);
+
+    ProxyContext context = new ProxyContext(
+        "/test-path",
+        headers,
+        HttpMethod.GET,
+        Buffer.buffer(),
+        null,
+        CONNECTION_ID  // Use the valid connection ID
+    );
+
+    // Process the context
+    ProxyContext result = flinkDataPlaneProxyProcessor.process(context)
+        .toCompletionStage().toCompletableFuture().join();
+
+    // Verify the proxy headers were correctly sanitized
+    MultiMap proxyHeaders = result.getProxyRequestHeaders();
+    assertNotNull(proxyHeaders);
+    assertEquals("application/json", proxyHeaders.get("Content-Type"));
+    assertFalse(proxyHeaders.contains("Authorization"));
+    assertFalse(proxyHeaders.contains("Host"));
+    assertEquals("us-west-2", headers.get("x-ccloud-region")); // Original headers unchanged
+  }
+
+  @Test
+  void testRequestBodyAndMethodPreserved() {
+    // Setup - create a valid CCloud connection
+    ccloudTestUtil.createAuthedConnection(CONNECTION_ID, ConnectionType.CCLOUD);
+
+    // Mock the next processor to avoid actual remote calls
+    Processor<ProxyContext, Future<ProxyContext>> nextProcessor = new Processor<>() {
+      @Override
+      public Future<ProxyContext> process(ProxyContext context) {
+        return Future.succeededFuture(context);
+      }
+    };
+    flinkDataPlaneProxyProcessor.setNext(nextProcessor);
+
+    // Setup headers
+    MultiMap headers = MultiMap.caseInsensitiveMultiMap();
+    headers.add("x-ccloud-region", "us-west-2");
+    headers.add("x-ccloud-provider", "aws");
+
+    Buffer testBody = Buffer.buffer("test-request-body");
+
+    ProxyContext context = new ProxyContext(
+        "/test-path",
+        headers,
+        HttpMethod.POST,
+        testBody,
+        null,
+        CONNECTION_ID  // Use the connection ID that was properly setup
+    );
+
+    // Process the context
+    ProxyContext result = flinkDataPlaneProxyProcessor.process(context)
+        .toCompletionStage().toCompletableFuture().join();
+
+    // Verify body and method are preserved
+    assertEquals(HttpMethod.POST, result.getProxyRequestMethod());
+    assertEquals("test-request-body", result.getProxyRequestBody().toString());
   }
 }
