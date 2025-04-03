@@ -1,5 +1,7 @@
 package io.confluent.idesidecar.restapi.proxy;
 
+import static io.confluent.idesidecar.restapi.util.SanitizeHeadersUtil.sanitizeHeaders;
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.confluent.idesidecar.restapi.clients.SchemaRegistryClients;
@@ -8,7 +10,6 @@ import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
 import io.confluent.idesidecar.restapi.util.WebClientFactory;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 import io.vertx.core.Future;
-import io.vertx.core.MultiMap;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpHeaders;
@@ -17,9 +18,7 @@ import jakarta.inject.Inject;
 import jakarta.json.Json;
 import jakarta.ws.rs.core.Response;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
@@ -74,7 +73,7 @@ public class ClusterProxyRequestProcessor extends
               .ofNullable(context.getProxyRequestBody())
               .map(Buffer::getBytes)
               .orElse(null),
-          sanitizeHeaders(context.getProxyRequestHeaders()),
+          sanitizeHeaders(context.getProxyRequestHeaders(), httpHeaderExclusions),
           new TypeReference<JsonNode>() {
           }
       );
@@ -115,14 +114,5 @@ public class ClusterProxyRequestProcessor extends
     }
 
     return Future.succeededFuture(context);
-  }
-
-  private Map<String, String> sanitizeHeaders(MultiMap requestHeaders) {
-    var headers = new HashMap<String, String>();
-    requestHeaders.forEach(
-        entry -> headers.put(entry.getKey(), entry.getValue())
-    );
-    httpHeaderExclusions.forEach(headers::remove);
-    return headers;
   }
 }
