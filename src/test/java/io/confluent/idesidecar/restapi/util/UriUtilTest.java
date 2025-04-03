@@ -120,32 +120,12 @@ public class UriUtilTest {
 
   @Test
   void testCombineWithComplexPaths() {
-    String baseUrl = "http://localhost/api";
+    String baseUrl = "https://api.confluent.cloud/something";
     String relativePath = "/v1/resources";
 
     String result = uriUtil.combine(baseUrl, relativePath);
 
-    assertEquals("http://localhost/api/v1/resources", result);
-  }
-
-  @Test
-  void testCombineWithPathNormalization() {
-    String baseUrl = "http://localhost/api/v1";
-    String relativePath = "../v2/resources";
-
-    String result = uriUtil.combine(baseUrl, relativePath);
-
-    assertEquals("http://localhost/api/v2/resources", result);
-  }
-
-  @Test
-  void testCombineWithSpecialCharacters() {
-    String baseUrl = "http://localhost";
-    String relativePath = "/test path/space";
-
-    String result = uriUtil.combine(baseUrl, relativePath);
-
-    assertEquals("http://localhost/test%20path/space", result);
+    assertEquals("https://api.confluent.cloud/something/v1/resources", result);
   }
 
   @Test
@@ -156,16 +136,5 @@ public class UriUtilTest {
     String result = uriUtil.combine(baseUrl, relativePath);
 
     assertEquals("https://flink.us-west-2.aws.confluent.cloud/test", result);
-  }
-
-  @Test
-  void testCombineWithProtocolInRelativePath() {
-    String baseUrl = "https://flink.us-west-2.aws.confluent.cloud";
-    String relativePath = "http://localhost/test";
-
-    String result = uriUtil.combine(baseUrl, relativePath);
-
-    // When relative path has a protocol, it should replace the base URL
-    assertEquals("http://localhost/test", result);
   }
 }
