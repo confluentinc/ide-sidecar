@@ -31,7 +31,10 @@ public final class SanitizeHeadersUtil {
       );
 
     if (exclusions != null) {
-      exclusions.forEach(headers::remove);
+      // Create case-insensitive exclusion matching
+      for (String exclusion : exclusions) {
+        headers.keySet().removeIf(key -> key.equalsIgnoreCase(exclusion));
+      }
     }
     return headers;
   }

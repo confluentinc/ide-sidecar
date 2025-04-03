@@ -152,30 +152,6 @@ public class UriUtil {
     return path.replace(" ", "%20");
   }
 
-  private String encodePath(String path) {
-    // Split path into segments and encode each segment separately
-    String[] segments = path.split("/");
-    StringBuilder encodedPath = new StringBuilder();
-
-    for (String segment : segments) {
-      if (!segment.isEmpty()) {
-        // Don't encode slashes
-        encodedPath.append("/").append(URLEncoder.encode(segment, StandardCharsets.UTF_8));
-      }
-    }
-
-    // Handle paths that start with /
-    if (path.startsWith("/") && encodedPath.length() > 0) {
-      return encodedPath.toString();
-    } else if (path.startsWith("/")) {
-      return "/";
-    } else if (encodedPath.length() > 0) {
-      return encodedPath.substring(1);
-    }
-
-    return path;
-  }
-
   public String getHost(String uri) {
     try {
       return new URI(uri).getHost();
