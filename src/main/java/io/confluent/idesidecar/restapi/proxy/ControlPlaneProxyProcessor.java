@@ -7,7 +7,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import org.jboss.logging.Logger;
 
 /**
- * Processor to set the proxy request/response parameters for RBAC.
+ * Processor to set the proxy request/response parameters for the control plane.
  */
 @ApplicationScoped
 public class ControlPlaneProxyProcessor extends Processor<ProxyContext, Future<ProxyContext>> {

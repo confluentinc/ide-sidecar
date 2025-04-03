@@ -42,6 +42,8 @@
     schema-fetch-error-ttl: 30
     schema-fetch-retry:
       max-retries: 3
+    flink:
+      url-pattern: http://localhost:${quarkus.wiremock.devservices.port}/flink.%s.%s.confluent.cloud
   quarkus:
     wiremock:
       devservices:
@@ -145,6 +147,8 @@ ide-sidecar:
     ccloud-project:
       client-id: 5c636508aa445d32c86f26b1
       eval-uri: https://confluent.cloud/ldapi/sdk/evalx/%s/contexts/%s
+  flink:
+    url-pattern: https://flink.%s.%s.confluent.cloud
   access_token_filter:
     excluded_paths:
       # Following needed by oauth
@@ -159,7 +163,8 @@ ide-sidecar:
     # How often to check?
     interval-seconds: 60
   proxy:
-    ccloud-api-control-plane-regex: "(/artifact.*)|(/fcpm/v2/compute-pools.*)|(/api/metadata/security/v2alpha1/authorize)"
+    ccloud-api-control-plane-regex: "(/artifact.*)|(/fcpm/v2/compute-pools.*)|(/metadata/security/v2alpha1/authorize)"
+    ccloud-api-flink-data-plane-regex: "(/sql/v1.*)"
   websockets:
     # How long do we allow a connection to be established w/o it saying HELLO?
     initial-grace-seconds: 60
@@ -202,6 +207,8 @@ ide-sidecar:
     http-header-exclusions:
       - x-connection-id
       - x-cluster-id
+      - x-ccloud-region
+      - x-ccloud-provider
       - Authorization
       - Host
       - Connection

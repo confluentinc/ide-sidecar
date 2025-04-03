@@ -46,18 +46,24 @@ public class RestProxyResource {
   static final MultiMap NO_HEADERS = MultiMap.caseInsensitiveMultiMap();
   static final Map<String, String> NO_PATH_PARAMS = Map.of();
 
-  // Add this static declaration alongside the other static constants
-  static final String ccloudApiProxyRegex = ConfigProvider
+  static final String CCLOUD_API_CONTROL_PLANE_PROXY_REGEX = ConfigProvider
       .getConfig()
       .getValue("ide-sidecar.proxy.ccloud-api-control-plane-regex", String.class);
+
+  static final String CCLOUD_API_DATA_PLANE_PROXY_REGEX = ConfigProvider
+      .getConfig()
+      .getValue("ide-sidecar.proxy.ccloud-api-flink-data-plane-regex", String.class);
 
   @Inject
   Router router;
 
   void init(@Observes StartupEvent ev) {
-    router.routeWithRegex(ccloudApiProxyRegex)
+    router.routeWithRegex(CCLOUD_API_CONTROL_PLANE_PROXY_REGEX)
         .handler(BodyHandler.create())
-        .blockingHandler(this::ccloudProxy);
+        .blockingHandler(this::ccloudControlPlaneProxy);
+    router.routeWithRegex(CCLOUD_API_DATA_PLANE_PROXY_REGEX)
+        .handler(BodyHandler.create())
+        .blockingHandler(this::ccloudDataPlaneProxy);
   }
 
   @Inject
@@ -65,8 +71,12 @@ public class RestProxyResource {
   Processor<ClusterProxyContext, Future<ClusterProxyContext>> clusterProxyProcessor;
 
   @Inject
-  @Named("CCloudProxyProcessor")
-  Processor<ProxyContext, Future<ProxyContext>> ccloudProxyProcessor;
+  @Named("controlPlaneProxyProcessor")
+  Processor<ProxyContext, Future<ProxyContext>> controlPlaneProxyProcessor;
+
+  @Inject
+  @Named("flinkDataPlaneProxyProcessor")
+  Processor<ProxyContext, Future<ProxyContext>> dataPlaneProxyProcessor;
 
   @Route(regex = KAFKA_PROXY_REGEX)
   @Blocking
@@ -84,49 +94,12 @@ public class RestProxyResource {
     process(routingContext, clusterProxyProcessor, proxyContext);
   }
 
-  public record RBACRequest(
-      String userPrincipal,
-      Action[] actions
-  ) {
-
-    public record Action(
-        String resourceType,
-        String resourceName,
-        String operation,
-        Scope scope
-    ) {
-
-      public record Scope(
-          Map<String, String> clusters,
-          String[] path
-      ) {
-
-      }
-    }
+  private void ccloudControlPlaneProxy(RoutingContext routingContext) {
+    process(routingContext, controlPlaneProxyProcessor, createCcloudProxyContext(routingContext));
   }
 
-  @Route(
-      path = RBAC_RESOURCE_PATH,
-      methods = Route.HttpMethod.PUT,
-      produces = MediaType.APPLICATION_JSON,
-      consumes = MediaType.APPLICATION_JSON
-  )
-  @Blocking
-  @Operation(summary = "RBAC proxy route", description = "Proxy route for RBAC requests")
-  @RequestBody(
-      description = "RBAC request body",
-      required = true,
-      content = @Content(schema = @Schema(implementation = RBACRequest.class))
-  )
-  @APIResponses({
-      @APIResponse(
-          responseCode = "200",
-          description = "Successful response",
-          content = @Content(schema = @Schema(implementation = String[].class))
-      ),
-  })
-  private void ccloudProxy(RoutingContext routingContext) {
-    process(routingContext, ccloudProxyProcessor, createCcloudProxyContext(routingContext));
+  private void ccloudDataPlaneProxy(RoutingContext routingContext) {
+    process(routingContext, dataPlaneProxyProcessor, createCcloudProxyContext(routingContext));
   }
 
   private <T extends ProxyContext> void process(RoutingContext routingContext,
@@ -200,6 +173,17 @@ public class RestProxyResource {
         routingContext.request().getHeader(RequestHeadersConstants.CONNECTION_ID_HEADER),
         routingContext.request().getHeader(RequestHeadersConstants.CLUSTER_ID_HEADER),
         ClusterType.SCHEMA_REGISTRY
+    );
+  }
+
+  private ProxyContext createRBACProxyContext(RoutingContext routingContext) {
+    return new ProxyContext(
+        RBAC_URI,
+        NO_HEADERS,
+        HttpMethod.PUT,
+        routingContext.body().buffer(),
+        NO_PATH_PARAMS,
+        routingContext.request().getHeader(RequestHeadersConstants.CONNECTION_ID_HEADER)
     );
   }
 
