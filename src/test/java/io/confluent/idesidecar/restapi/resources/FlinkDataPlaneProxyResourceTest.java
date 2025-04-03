@@ -7,6 +7,7 @@ import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
@@ -61,7 +62,7 @@ class FlinkDataPlaneProxyResourceTest {
   CCloudTestUtil ccloudTestUtil;
 
   private static final String CONNECTION_ID = "fake-connection-id";
-  private static final Map<String, String> RESPONSE_HEADERS = Map.of(
+  private static final Map<String, String> REQUEST_HEADERS = Map.of(
       "x-connection-id", CONNECTION_ID
   );
 
@@ -148,7 +149,7 @@ class FlinkDataPlaneProxyResourceTest {
 
     var actualResponse = given()
         .when()
-        .headers(RESPONSE_HEADERS)
+        .headers(REQUEST_HEADERS)
         .header("Authorization", "Bearer " + dataPlaneToken.token())
         .put("http://localhost:%d/sql/v1/organizations".formatted(wireMockPort))
         .then();
@@ -189,7 +190,6 @@ class FlinkDataPlaneProxyResourceTest {
       }
     };
 
-    flinkDataPlaneProxyProcessor.uriUtil = new UriUtil();
     flinkDataPlaneProxyProcessor.setNext(nextProcessor);
 
     // When processing the context
@@ -238,7 +238,7 @@ class FlinkDataPlaneProxyResourceTest {
     });
 
     // Verify the exception contains the expected message
-    assertTrue(exception.getCause() instanceof ProcessorFailedException);
+    assertInstanceOf(ProcessorFailedException.class, exception.getCause());
     assertEquals("Missing required headers: x-ccloud-region and x-ccloud-provider are required for Flink requests",
         exception.getCause().getMessage());
   }

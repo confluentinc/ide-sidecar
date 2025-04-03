@@ -28,7 +28,7 @@ public class FlinkDataPlaneProxyProcessor extends Processor<ProxyContext, Future
   String flinkUrlPattern;
 
   @Inject
-  public UriUtil uriUtil;
+  UriUtil uriUtil;
 
   @Override
   public Future<ProxyContext> process(ProxyContext context) {

@@ -42,6 +42,8 @@
     schema-fetch-error-ttl: 30
     schema-fetch-retry:
       max-retries: 3
+  flink:
+      url-pattern: http://localhost:${quarkus.wiremock.devservices.port}
   quarkus:
     wiremock:
       devservices:
