@@ -328,19 +328,6 @@ public class CCloudTestUtil {
     );
   }
 
-
-  public void expectUnauthorizedForCCloudGet(String url) {
-    wireMock.register(
-        WireMock
-            .get(uriUtil.getPath(url))
-            .willReturn(
-                WireMock
-                    .aResponse()
-                    .withStatus(401)
-                    .withBody("{\"errors\": [{\"status\": 401, \"detail\": \"Unauthorized\"}]}")
-            ).atPriority(100));
-  }
-
   public String getControlPlaneToken(String connectionId) {
     try {
       return ((CCloudConnectionState) connectionStateManager.getConnectionState(connectionId))

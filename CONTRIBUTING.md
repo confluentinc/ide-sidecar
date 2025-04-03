@@ -690,33 +690,32 @@ query localConnections {
 curl -s -H "Content-Type:application/json" -H "Authorization: Bearer ${DTX_ACCESS_TOKEN}" http://localhost:26636/gateway/v1/graphql/schema.graphql
 ```
 
-### Invoking the Control Plane Proxy API
+### Invoking the Confluent Cloud Control Plane proxy
 
-The Control Plane Proxy API allows you to make calls to the Confluent Cloud control plane, specifically for artifact and compute pool management endpoints defined by the configuration:
+The Control Plane Proxy API is a generic API that allows you to make calls to the Confluent Cloud control plane, specifically for artifact and compute pool management endpoints.
 
 ```yaml
 ccloud-api-control-plane-regex: "(/artifact.*)|(/fcpm/v2/compute-pools.*)"
 ```
 
-This configuration is defined in [application.yml](./src/main/resources/application.yml) under the ide-sidecar.proxy section.
+This configuration is defined in `application.yml` [under the ide-sidecar.proxy section](./src/main/resources/application.yml).
 
 By editing this regex configuration, you can add or remove control plane routes from the proxy.
 
 Control Plane endpoints:
-  http://localhost:26636/artifact/* (For artifact management)
-  http://localhost:26636/fcpm/v2/compute-pools/* (For Flink compute pools management)
+- http://localhost:26636/artifact/* (For artifact management)
+- http://localhost:26636/fcpm/v2/compute-pools/* (For Flink compute pools management)
 
-Required headers:
+Required headers for both control and data plane proxy APIs:
 
 - Authorization: Bearer ${DTX_ACCESS_TOKEN}
 - x-connection-id: <connection-id> (Must reference an authenticated Confluent Cloud connection)
 
 > Notes:
-  Control plane endpoints require a valid control plane token which is automatically managed by the proxy
+Endpoints require a valid control/data plane token which is automatically managed by the proxy
 
-#### Examples For Artifact and Compute Pool Management with Flink
 
-##### Example: List Compute Pools
+###### Example: List Compute Pools
 
 ```bash
 ❯ curl -s \
@@ -778,6 +777,55 @@ curl -X GET \
   "http://localhost:26636/artifact/v1/flink-artifacts?cloud=AWS&region=us-east-2&environment=env-name" | jq -r .
 ```
 
+
+#### Invoking the Confluent Cloud Flink Data Plane proxy
+The Data Plane Proxy API allows you to make calls to the Confluent Cloud control plane for Flink resources, specifically the statement endpoints.
+
+```yaml
+ccloud-api-flink-data-plane-regex: "(/sql/v1.*)"
+```
+
+This configuration is defined in `application.yml` [under the ide-sidecar.proxy section](./src/main/resources/application.yml).
+
+By editing this regex configuration, you can add or remove data plane routes from the proxy.
+
+Required headers for both control and data plane proxy APIs:
+
+- Authorization: Bearer ${DTX_ACCESS_TOKEN}
+- x-connection-id: <connection-id> (Must reference an authenticated Confluent Cloud connection)
+
+Required headers for data plane proxy APIs:
+- x-ccloud-region: <region> (e.g., us-east-2)
+- x-ccloud-provider: <provider> (e.g., AWS)
+
+> Notes:
+Endpoints require a valid control/data plane token which is automatically managed by the proxy
+Invoking the data plane proxy API requires the `x-ccloud-region` and `x-ccloud-provider` headers to be set.
+
+##### Example: List Statement Exceptions
+
+```bash
+ curl --request GET \
+  --url 'http://localhost:26636/sql/v1/organizations/org_d/environments/env-id/statements/workspace-id/exceptions' \
+  --header "Authorization: Bearer ${DTX_ACCESS_TOKEN}" \
+  --header "x-connection-id: c1" \
+  --header "x-ccloud-region: us-east-2" \
+  --header "x-ccloud-provider: AWS"
+```
+
+The response should be similar to:
+
+```json
+{
+  "api_version":"sql/v1",
+  "data":[],
+  "kind":"StatementExceptionList",
+  "metadata":
+    {
+      "self":"https://flink.us-east-2.aws.confluent.cloud/sql/v1/organizations/org-id/environments/env-id/statements/workspace-id/exceptions"
+    }
+}
+```
 
 ### Invoking the Kafka and Schema Registry Proxy APIs
 
