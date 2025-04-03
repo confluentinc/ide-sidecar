@@ -10,7 +10,6 @@ import io.vertx.core.MultiMap;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.util.List;
-import java.util.Optional;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**

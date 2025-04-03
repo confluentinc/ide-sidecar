@@ -26,11 +26,10 @@ public final class SanitizeHeadersUtil {
     if (requestHeaders == null) {
       throw new IllegalArgumentException("Request headers cannot be null");
     }
-    if (requestHeaders != null) {
       requestHeaders.forEach(
           entry -> headers.put(entry.getKey(), entry.getValue())
       );
-    }
+
     if (exclusions != null) {
       exclusions.forEach(headers::remove);
     }

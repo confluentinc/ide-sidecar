@@ -34,7 +34,7 @@ public class CCloudApiProcessor extends Processor<ProxyContext, Future<ProxyCont
     } else if (connectionState instanceof CCloudConnectionState cCloudConnection) {
       try {
         getControlPlaneToken(context, cCloudConnection);
-      } catch (ControlPlaneTokenNotFoundException e) {;
+      } catch (ControlPlaneTokenNotFoundException e) {
         return Future.failedFuture(
             new ProcessorFailedException(
                 context.fail(401, "%s".formatted(e.getMessage()))));

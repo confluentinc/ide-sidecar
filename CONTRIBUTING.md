@@ -822,7 +822,7 @@ The response should be similar to:
   "kind":"StatementExceptionList",
   "metadata":
     {
-      "self":"https://flink.us-east-2.aws.confluent.cloud/sql/v1/organizations/org-id/environments/env-id/statements/workspace-id/exceptions",
+      "self":"https://flink.us-east-2.aws.confluent.cloud/sql/v1/organizations/org-id/environments/env-id/statements/workspace-id/exceptions"
     }
 }
 ```
