@@ -84,10 +84,6 @@ public class RestProxyResource {
     process(routingContext, clusterProxyProcessor, proxyContext);
   }
 
-  private void ccloudProxy(RoutingContext routingContext) {
-    process(routingContext, ccloudProxyProcessor, createCcloudProxyContext(routingContext));
-  }
-
   public record RBACRequest(
       String userPrincipal,
       Action[] actions
@@ -129,6 +125,9 @@ public class RestProxyResource {
           content = @Content(schema = @Schema(implementation = String[].class))
       ),
   })
+  private void ccloudProxy(RoutingContext routingContext) {
+    process(routingContext, ccloudProxyProcessor, createCcloudProxyContext(routingContext));
+  }
 
   private <T extends ProxyContext> void process(RoutingContext routingContext,
       Processor<T, Future<T>> processor, T proxyContext) {
@@ -201,17 +200,6 @@ public class RestProxyResource {
         routingContext.request().getHeader(RequestHeadersConstants.CONNECTION_ID_HEADER),
         routingContext.request().getHeader(RequestHeadersConstants.CLUSTER_ID_HEADER),
         ClusterType.SCHEMA_REGISTRY
-    );
-  }
-
-  private ProxyContext createRBACProxyContext(RoutingContext routingContext) {
-    return new ProxyContext(
-        RBAC_URI,
-        NO_HEADERS,
-        HttpMethod.PUT,
-        routingContext.body().buffer(),
-        NO_PATH_PARAMS,
-        routingContext.request().getHeader(RequestHeadersConstants.CONNECTION_ID_HEADER)
     );
   }
 
