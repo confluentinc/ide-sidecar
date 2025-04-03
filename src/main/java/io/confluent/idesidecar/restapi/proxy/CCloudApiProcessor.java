@@ -32,16 +32,20 @@ public class CCloudApiProcessor extends Processor<ProxyContext, Future<ProxyCont
               context.fail(400, "This route does not support the request header 'X-Cluster-Id'."
                   + " Please remove the header and try again.")));
     } else if (connectionState instanceof CCloudConnectionState cCloudConnection) {
-        try {
-          getControlPlaneToken(context, cCloudConnection);
-        } catch (ControlPlaneTokenNotFoundException e) {;
-          return Future.failedFuture(
-              new ProcessorFailedException(
-                  context.fail(401, "%s".formatted(e.getMessage()))));
-        }
-        context.setProxyRequestAbsoluteUrl(uriUtil.combine(ccloudApiBaseUrl,
-            context.getRequestUri()));
-        return next().process(context);
+      try {
+        getControlPlaneToken(context, cCloudConnection);
+      } catch (ControlPlaneTokenNotFoundException e) {
+        return Future.failedFuture(
+            new ProcessorFailedException(
+                context.fail(401, "%s".formatted(e.getMessage()))));
+      }
+      context.setProxyRequestAbsoluteUrl(
+          uriUtil.combine(
+              ccloudApiBaseUrl,
+          context.getRequestUri()
+          )
+      );
+      return next().process(context);
     } else {
       return Future.failedFuture(
           new ProcessorFailedException(
@@ -62,7 +66,7 @@ public class CCloudApiProcessor extends Processor<ProxyContext, Future<ProxyCont
 
     // If token is missing, return a failed future with ControlPlaneTokenNotFoundException
     if (controlPlaneToken == null) {
-    throw new ControlPlaneTokenNotFoundException("Control plane token not found");
+      throw new ControlPlaneTokenNotFoundException("Control plane token not found");
     }
 
     // Token exists, add it to the headers

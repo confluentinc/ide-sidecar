@@ -77,4 +77,95 @@ public class UriUtilTest {
     assertEquals(expected, uriUtil.getHostAndPort(uri));
     assertEquals(expected, uriUtil.getHostAndPort(new URI(uri)));
   }
+
+  @Test
+  void testCombineWithoutLeadingSlashInRelativePath() {
+    String baseUrl = "http://localhost";
+    String relativePath = "test";
+
+    String result = uriUtil.combine(baseUrl, relativePath);
+
+    assertEquals("http://localhost/test", result);
+  }
+
+  @Test
+  void testCombineWithLeadingSlashInRelativePath() {
+    String baseUrl = "http://localhost";
+    String relativePath = "/test";
+
+    String result = uriUtil.combine(baseUrl, relativePath);
+
+    assertEquals("http://localhost/test", result);
+  }
+
+  @Test
+  void testCombineWithTrailingSlashInBaseUrl() {
+    String baseUrl = "http://localhost/";
+    String relativePath = "test";
+
+    String result = uriUtil.combine(baseUrl, relativePath);
+
+    assertEquals("http://localhost/test", result);
+  }
+
+  @Test
+  void testCombineWithBothSlashes() {
+    String baseUrl = "http://localhost/";
+    String relativePath = "/test";
+
+    String result = uriUtil.combine(baseUrl, relativePath);
+
+    assertEquals("http://localhost/test", result);
+  }
+
+  @Test
+  void testCombineWithComplexPaths() {
+    String baseUrl = "http://localhost/api";
+    String relativePath = "/v1/resources";
+
+    String result = uriUtil.combine(baseUrl, relativePath);
+
+    assertEquals("http://localhost/api/v1/resources", result);
+  }
+
+  @Test
+  void testCombineWithPathNormalization() {
+    String baseUrl = "http://localhost/api/v1";
+    String relativePath = "../v2/resources";
+
+    String result = uriUtil.combine(baseUrl, relativePath);
+
+    assertEquals("http://localhost/api/v2/resources", result);
+  }
+
+  @Test
+  void testCombineWithSpecialCharacters() {
+    String baseUrl = "http://localhost";
+    String relativePath = "/test path/space";
+
+    String result = uriUtil.combine(baseUrl, relativePath);
+
+    assertEquals("http://localhost/test%20path/space", result);
+  }
+
+  @Test
+  void testCombineWithFlinkUrl() {
+    String baseUrl = "https://flink.us-west-2.aws.confluent.cloud";
+    String relativePath = "/test";
+
+    String result = uriUtil.combine(baseUrl, relativePath);
+
+    assertEquals("https://flink.us-west-2.aws.confluent.cloud/test", result);
+  }
+
+  @Test
+  void testCombineWithProtocolInRelativePath() {
+    String baseUrl = "https://flink.us-west-2.aws.confluent.cloud";
+    String relativePath = "http://localhost/test";
+
+    String result = uriUtil.combine(baseUrl, relativePath);
+
+    // When relative path has a protocol, it should replace the base URL
+    assertEquals("http://localhost/test", result);
+  }
 }

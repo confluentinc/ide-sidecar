@@ -3,12 +3,11 @@ package io.confluent.idesidecar.restapi.proxy;
 import io.confluent.idesidecar.restapi.processors.Processor;
 import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
-import io.vertx.core.http.HttpHeaders;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.jboss.logging.Logger;
 
 /**
- * Processor to set the proxy request/response parameters for RBAC.
+ * Processor to set the proxy request/response parameters for the control plane.
  */
 @ApplicationScoped
 public class ControlPlaneProxyProcessor extends Processor<ProxyContext, Future<ProxyContext>> {
