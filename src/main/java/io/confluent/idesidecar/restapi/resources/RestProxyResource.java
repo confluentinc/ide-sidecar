@@ -39,6 +39,7 @@ public class RestProxyResource {
   public static final String KAFKA_PROXY_REGEX = "/kafka/v3/clusters/(?<clusterId>[^\\/]+).*";
   private static final String CLUSTER_ID_PATH_PARAM = "clusterId";
   public static final String SCHEMA_REGISTRY_PROXY_REGEX = "(/schemas.*)|(/subjects.*)";
+  public static final String GENERIC_CONTROL_PLANE_REGEX = "(/artifact.*)|(/fcpm/v2/compute-pools.*)|(/metadata/security/v2alpha1/authorize)";
   static final String RBAC_URI = ConfigProvider
       .getConfig()
       .getValue("ide-sidecar.connections.ccloud.rbac-uri", String.class);
@@ -59,7 +60,7 @@ public class RestProxyResource {
   void init(@Observes StartupEvent ev) {
     router.routeWithRegex(CCLOUD_API_CONTROL_PLANE_PROXY_REGEX)
         .handler(BodyHandler.create())
-        .blockingHandler(this::ccloudControlPlaneProxy);
+        .blockingHandler(this::handleCCloudControlPlaneProxy);
     router.routeWithRegex(CCLOUD_API_DATA_PLANE_PROXY_REGEX)
         .handler(BodyHandler.create())
         .blockingHandler(this::ccloudDataPlaneProxy);
@@ -93,8 +94,58 @@ public class RestProxyResource {
     process(routingContext, clusterProxyProcessor, proxyContext);
   }
 
-  private void ccloudControlPlaneProxy(RoutingContext routingContext) {
+  @Route(regex = GENERIC_CONTROL_PLANE_REGEX)
+  @Blocking
+  public void genericControlPlaneProxy(RoutingContext routingContext) {
+    handleCCloudControlPlaneProxy(routingContext);
+  }
+
+  private void handleCCloudControlPlaneProxy(RoutingContext routingContext) {
     process(routingContext, controlPlaneProxyProcessor, createCcloudProxyContext(routingContext));
+  }
+
+  public record GenericRequest(
+      String userPrincipal,
+      Action[] actions
+  ) {
+
+    public record Action(
+        String resourceType,
+        String resourceName,
+        String operation,
+        Scope scope
+    ) {
+
+      public record Scope(
+          Map<String, String> clusters,
+          String[] path
+      ) {
+
+      }
+    }
+  }
+
+  @Route(
+      path = GENERIC_CONTROL_PLANE_REGEX,
+      produces = MediaType.APPLICATION_JSON,
+      consumes = MediaType.APPLICATION_JSON
+  )
+  @Blocking
+  @Operation(summary = "Generic proxy route", description = "Proxy route for General requests")
+  @RequestBody(
+      description = "Generic request body",
+      required = true,
+      content = @Content(schema = @Schema(implementation = GenericRequest.class))
+  )
+  @APIResponses({
+      @APIResponse(
+          responseCode = "200",
+          description = "Successful response",
+          content = @Content(schema = @Schema(implementation = String[].class))
+      ),
+  })
+  public void genericProxyRoute(RoutingContext routingContext) {
+    handleCCloudControlPlaneProxy(routingContext);
   }
 
   private void ccloudDataPlaneProxy(RoutingContext routingContext) {
