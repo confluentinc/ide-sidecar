@@ -62,7 +62,7 @@ class RestProxyResourceTest {
 
   private static Stream<Arguments> pathSource() {
     return Stream.of(
-        Arguments.of("/api/metadata/security/v2alpha1/authorize")
+        Arguments.of("/metadata/security/v2alpha1/authorize")
     );
   }
 
@@ -181,7 +181,11 @@ class RestProxyResourceTest {
             .willReturn(
                 WireMock.aResponse()
                     .withStatus(401)
-                    .withBody("{\"title\":\"Unauthorized\"}")).atPriority(100));
+                    .withHeader("Content-Type", MediaType.APPLICATION_JSON)
+                    .withBody("{\"title\":\"Unauthorized\"}")
+            )
+        .atPriority(100)
+        );
 
     // When we hit the Sidecar RBAC proxy endpoint without the Authorization header
     var actualResponse = given()
