@@ -39,7 +39,7 @@ public class RestProxyResource {
   public static final String KAFKA_PROXY_REGEX = "/kafka/v3/clusters/(?<clusterId>[^\\/]+).*";
   private static final String CLUSTER_ID_PATH_PARAM = "clusterId";
   public static final String SCHEMA_REGISTRY_PROXY_REGEX = "(/schemas.*)|(/subjects.*)";
-  public static final String RBAC_RESOURCE_PATH = "/api/metadata/security/v2alpha1/authorize";
+  public static final String GENERIC_CONTROL_PLANE_REGEX = "(/artifact.*)|(/fcpm/v2/compute-pools.*)|(/metadata/security/v2alpha1/authorize)";
   static final String RBAC_URI = ConfigProvider
       .getConfig()
       .getValue("ide-sidecar.connections.ccloud.rbac-uri", String.class);
@@ -60,7 +60,7 @@ public class RestProxyResource {
   void init(@Observes StartupEvent ev) {
     router.routeWithRegex(CCLOUD_API_CONTROL_PLANE_PROXY_REGEX)
         .handler(BodyHandler.create())
-        .blockingHandler(this::ccloudControlPlaneProxy);
+        .blockingHandler(this::handleCCloudControlPlaneProxy);
     router.routeWithRegex(CCLOUD_API_DATA_PLANE_PROXY_REGEX)
         .handler(BodyHandler.create())
         .blockingHandler(this::ccloudDataPlaneProxy);
@@ -69,10 +69,6 @@ public class RestProxyResource {
   @Inject
   @Named("clusterProxyProcessor")
   Processor<ClusterProxyContext, Future<ClusterProxyContext>> clusterProxyProcessor;
-
-  @Inject
-  @Named("RBACProxyProcessor")
-  Processor<ProxyContext, Future<ProxyContext>> rbacProxyProcessor;
 
   @Inject
   @Named("controlPlaneProxyProcessor")
@@ -98,19 +94,7 @@ public class RestProxyResource {
     process(routingContext, clusterProxyProcessor, proxyContext);
   }
 
-  private void handleRBACProxy(RoutingContext routingContext, ProxyContext proxyContext) {
-    process(routingContext, rbacProxyProcessor, proxyContext);
-  }
-
-  private void ccloudControlPlaneProxy(RoutingContext routingContext) {
-    process(routingContext, controlPlaneProxyProcessor, createCcloudProxyContext(routingContext));
-  }
-
-  private void ccloudDataPlaneProxy(RoutingContext routingContext) {
-    process(routingContext, dataPlaneProxyProcessor, createCcloudProxyContext(routingContext));
-  }
-
-  public record RBACRequest(
+  public record GenericRequest(
       String userPrincipal,
       Action[] actions
   ) {
@@ -132,17 +116,16 @@ public class RestProxyResource {
   }
 
   @Route(
-      path = RBAC_RESOURCE_PATH,
-      methods = Route.HttpMethod.PUT,
+      path = GENERIC_CONTROL_PLANE_REGEX,
       produces = MediaType.APPLICATION_JSON,
       consumes = MediaType.APPLICATION_JSON
   )
   @Blocking
-  @Operation(summary = "RBAC proxy route", description = "Proxy route for RBAC requests")
+  @Operation(summary = "Generic proxy route", description = "Proxy route for General requests")
   @RequestBody(
-      description = "RBAC request body",
+      description = "Generic request body",
       required = true,
-      content = @Content(schema = @Schema(implementation = RBACRequest.class))
+      content = @Content(schema = @Schema(implementation = GenericRequest.class))
   )
   @APIResponses({
       @APIResponse(
@@ -151,8 +134,16 @@ public class RestProxyResource {
           content = @Content(schema = @Schema(implementation = String[].class))
       ),
   })
-  public void rbacProxyRoute(RoutingContext routingContext) {
-    handleRBACProxy(routingContext, createRBACProxyContext(routingContext));
+  public void genericProxyRoute(RoutingContext routingContext) {
+    handleCCloudControlPlaneProxy(routingContext);
+  }
+
+  private void handleCCloudControlPlaneProxy(RoutingContext routingContext) {
+    process(routingContext, controlPlaneProxyProcessor, createCcloudProxyContext(routingContext));
+  }
+
+  private void ccloudDataPlaneProxy(RoutingContext routingContext) {
+    process(routingContext, dataPlaneProxyProcessor, createCcloudProxyContext(routingContext));
   }
 
   private <T extends ProxyContext> void process(RoutingContext routingContext,
@@ -226,17 +217,6 @@ public class RestProxyResource {
         routingContext.request().getHeader(RequestHeadersConstants.CONNECTION_ID_HEADER),
         routingContext.request().getHeader(RequestHeadersConstants.CLUSTER_ID_HEADER),
         ClusterType.SCHEMA_REGISTRY
-    );
-  }
-
-  private ProxyContext createRBACProxyContext(RoutingContext routingContext) {
-    return new ProxyContext(
-        RBAC_URI,
-        NO_HEADERS,
-        HttpMethod.PUT,
-        routingContext.body().buffer(),
-        NO_PATH_PARAMS,
-        routingContext.request().getHeader(RequestHeadersConstants.CONNECTION_ID_HEADER)
     );
   }
 
