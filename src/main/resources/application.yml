@@ -4,6 +4,7 @@
   ide-sidecar:
     connections:
       ccloud:
+        control-plane-base-url: http://localhost:${quarkus.wiremock.devservices.port}
         id-token:
           exchange-uri: http://localhost:${quarkus.wiremock.devservices.port}/oauth/token
         control-plane-token:
@@ -13,7 +14,6 @@
           exchange-uri: http://localhost:${quarkus.wiremock.devservices.port}/api/access_tokens
         oauth:
           login-realm-uri: http://localhost:${quarkus.wiremock.devservices.port}/api/login/realm
-        rbac-uri: http://localhost:${quarkus.wiremock.devservices.port}/api/metadata/security/v2alpha1/authorize
         resources:
           org-list-uri: http://localhost:${quarkus.wiremock.devservices.port}/api/org/v2/organizations
           env-list-uri: http://localhost:${quarkus.wiremock.devservices.port}/api/org/v2/environments
@@ -107,7 +107,6 @@ ide-sidecar:
         # URI redirect to tell the VS Code extension if the auth flow completed successfully or not
         vscode-extension-uri: vscode://confluentinc.vscode-confluent/authCallback
         scope: email openid offline_access
-      rbac-uri: https://confluent.cloud/api/metadata/security/v2alpha1/authorize
       refresh-status-interval-seconds: 5
       refresh-token:
         absolute-lifetime-seconds: 28800
