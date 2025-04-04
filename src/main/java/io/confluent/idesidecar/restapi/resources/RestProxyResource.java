@@ -9,11 +9,9 @@ import io.confluent.idesidecar.restapi.util.RequestHeadersConstants;
 import io.quarkus.runtime.StartupEvent;
 import io.quarkus.vertx.web.Route;
 import io.smallrye.common.annotation.Blocking;
-import io.swagger.v3.oas.annotations.Operation;
 import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpHeaders;
-import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
@@ -52,7 +50,7 @@ public class RestProxyResource {
   void init(@Observes StartupEvent ev) {
     router.routeWithRegex(CCLOUD_API_CONTROL_PLANE_PROXY_REGEX)
         .handler(BodyHandler.create())
-        .blockingHandler(this::handleCCloudControlPlaneProxy);
+        .blockingHandler(this::ccloudControlPlaneProxy);
     router.routeWithRegex(CCLOUD_API_DATA_PLANE_PROXY_REGEX)
         .handler(BodyHandler.create())
         .blockingHandler(this::ccloudDataPlaneProxy);
@@ -86,7 +84,7 @@ public class RestProxyResource {
     process(routingContext, clusterProxyProcessor, proxyContext);
   }
 
-  private void handleCCloudControlPlaneProxy(RoutingContext routingContext) {
+  private void ccloudControlPlaneProxy(RoutingContext routingContext) {
     process(routingContext, controlPlaneProxyProcessor, createCcloudProxyContext(routingContext));
   }
 
