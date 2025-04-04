@@ -24,11 +24,7 @@ import jakarta.inject.Named;
 import jakarta.ws.rs.core.MediaType;
 import java.util.Map;
 import org.eclipse.microprofile.config.ConfigProvider;
-import org.eclipse.microprofile.openapi.annotations.media.Content;
-import org.eclipse.microprofile.openapi.annotations.media.Schema;
-import org.eclipse.microprofile.openapi.annotations.parameters.RequestBody;
-import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
-import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
+
 
 /**
  * Resource that proxies requests to the Kafka REST and Schema Registry APIs.
@@ -39,10 +35,6 @@ public class RestProxyResource {
   public static final String KAFKA_PROXY_REGEX = "/kafka/v3/clusters/(?<clusterId>[^\\/]+).*";
   private static final String CLUSTER_ID_PATH_PARAM = "clusterId";
   public static final String SCHEMA_REGISTRY_PROXY_REGEX = "(/schemas.*)|(/subjects.*)";
-  public static final String GENERIC_CONTROL_PLANE_REGEX = "(/artifact.*)|(/fcpm/v2/compute-pools.*)|(/metadata/security/v2alpha1/authorize)";
-  static final String RBAC_URI = ConfigProvider
-      .getConfig()
-      .getValue("ide-sidecar.connections.ccloud.rbac-uri", String.class);
   static final MultiMap NO_HEADERS = MultiMap.caseInsensitiveMultiMap();
   static final Map<String, String> NO_PATH_PARAMS = Map.of();
 
@@ -92,50 +84,6 @@ public class RestProxyResource {
 
   private void handleClusterProxy(RoutingContext routingContext, ClusterProxyContext proxyContext) {
     process(routingContext, clusterProxyProcessor, proxyContext);
-  }
-
-  public record GenericRequest(
-      String userPrincipal,
-      Action[] actions
-  ) {
-
-    public record Action(
-        String resourceType,
-        String resourceName,
-        String operation,
-        Scope scope
-    ) {
-
-      public record Scope(
-          Map<String, String> clusters,
-          String[] path
-      ) {
-
-      }
-    }
-  }
-
-  @Route(
-      path = GENERIC_CONTROL_PLANE_REGEX,
-      produces = MediaType.APPLICATION_JSON,
-      consumes = MediaType.APPLICATION_JSON
-  )
-  @Blocking
-  @Operation(summary = "Generic proxy route", description = "Proxy route for General requests")
-  @RequestBody(
-      description = "Generic request body",
-      required = true,
-      content = @Content(schema = @Schema(implementation = GenericRequest.class))
-  )
-  @APIResponses({
-      @APIResponse(
-          responseCode = "200",
-          description = "Successful response",
-          content = @Content(schema = @Schema(implementation = String[].class))
-      ),
-  })
-  public void genericProxyRoute(RoutingContext routingContext) {
-    handleCCloudControlPlaneProxy(routingContext);
   }
 
   private void handleCCloudControlPlaneProxy(RoutingContext routingContext) {
