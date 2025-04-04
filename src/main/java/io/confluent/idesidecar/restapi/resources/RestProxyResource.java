@@ -94,16 +94,6 @@ public class RestProxyResource {
     process(routingContext, clusterProxyProcessor, proxyContext);
   }
 
-  @Route(regex = GENERIC_CONTROL_PLANE_REGEX)
-  @Blocking
-  public void genericControlPlaneProxy(RoutingContext routingContext) {
-    handleCCloudControlPlaneProxy(routingContext);
-  }
-
-  private void handleCCloudControlPlaneProxy(RoutingContext routingContext) {
-    process(routingContext, controlPlaneProxyProcessor, createCcloudProxyContext(routingContext));
-  }
-
   public record GenericRequest(
       String userPrincipal,
       Action[] actions
@@ -146,6 +136,10 @@ public class RestProxyResource {
   })
   public void genericProxyRoute(RoutingContext routingContext) {
     handleCCloudControlPlaneProxy(routingContext);
+  }
+
+  private void handleCCloudControlPlaneProxy(RoutingContext routingContext) {
+    process(routingContext, controlPlaneProxyProcessor, createCcloudProxyContext(routingContext));
   }
 
   private void ccloudDataPlaneProxy(RoutingContext routingContext) {
