@@ -17,8 +17,6 @@ public class ControlPlaneProxyProcessor extends Processor<ProxyContext, Future<P
   @ConfigProperty(name = "ide-sidecar.cluster-proxy.http-header-exclusions")
   List<String> httpHeaderExclusions;
 
-  private static final Logger LOG = Logger.getLogger(ControlPlaneProxyProcessor.class);
-
   private Processor<ProxyContext, Future<ProxyContext>> next;
 
   @Override
