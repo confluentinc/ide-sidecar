@@ -1,9 +1,12 @@
 package io.confluent.idesidecar.restapi.proxy;
 
+import static io.confluent.idesidecar.restapi.util.SanitizeHeadersUtil.sanitizeHeaders;
 import io.confluent.idesidecar.restapi.processors.Processor;
 import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
 import jakarta.enterprise.context.ApplicationScoped;
+import java.util.List;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
 /**
@@ -11,6 +14,8 @@ import org.jboss.logging.Logger;
  */
 @ApplicationScoped
 public class ControlPlaneProxyProcessor extends Processor<ProxyContext, Future<ProxyContext>> {
+  @ConfigProperty(name = "ide-sidecar.cluster-proxy.http-header-exclusions")
+  List<String> httpHeaderExclusions;
 
   private static final Logger LOG = Logger.getLogger(ControlPlaneProxyProcessor.class);
 
@@ -18,9 +23,14 @@ public class ControlPlaneProxyProcessor extends Processor<ProxyContext, Future<P
 
   @Override
   public Future<ProxyContext> process(ProxyContext context) {
-    var headers = context.getProxyRequestHeaders() != null ? context.getProxyRequestHeaders()
+    var headers = context.getRequestHeaders() != null ? context.getRequestHeaders()
         : MultiMap.caseInsensitiveMultiMap();
-    context.setProxyRequestHeaders(headers);
+    var cleanedHeaders = sanitizeHeaders(headers, httpHeaderExclusions);
+    // Create a new MultiMap from the cleaned headers
+    var proxyHeaders = MultiMap.caseInsensitiveMultiMap();
+    cleanedHeaders.forEach(proxyHeaders::add);
+
+    context.setProxyRequestHeaders(proxyHeaders);
     context.setProxyRequestAbsoluteUrl(context.getRequestUri());
     context.setProxyRequestMethod(context.getRequestMethod());
     context.setProxyRequestBody(context.getRequestBody());
