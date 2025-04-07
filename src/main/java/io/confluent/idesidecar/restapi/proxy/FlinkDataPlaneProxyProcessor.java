@@ -43,7 +43,7 @@ public class FlinkDataPlaneProxyProcessor extends Processor<ProxyContext, Future
     if (CloudProvider.NONE.equals(provider)) {
       return Future.failedFuture(
           new ProcessorFailedException(
-              context.fail(400, "CCloud provider specified in request header '%s' is not valid.".formatted(PROVIDER_HEADER))
+              context.fail(400, "CCloud provider specified in request header '%s' is missing or invalid.".formatted(PROVIDER_HEADER))
           )
       );
     }

@@ -285,7 +285,7 @@ class FlinkDataPlaneProxyResourceTest {
 
     // Verify the exception contains the expected message
     assertInstanceOf(ProcessorFailedException.class, exception.getCause());
-    assertEquals("CCloud provider specified in request header 'x-ccloud-provider' is not valid.",
+    assertEquals("CCloud provider specified in request header 'x-ccloud-provider' is missing or invalid.",
         exception.getCause().getMessage());
   }
 
@@ -406,7 +406,7 @@ class FlinkDataPlaneProxyResourceTest {
 
     // Verify the exception contains the expected message
     assertInstanceOf(ProcessorFailedException.class, exception.getCause());
-    assertEquals("CCloud provider specified in request header 'x-ccloud-provider' is not valid.",
+    assertEquals("CCloud provider specified in request header 'x-ccloud-provider' is missing or invalid.",
         exception.getCause().getMessage());
   }
   @Test
