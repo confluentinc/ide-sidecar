@@ -40,33 +40,37 @@ public class FlinkDataPlaneProxyProcessor extends Processor<ProxyContext, Future
     String providerStr = headers.get(PROVIDER_HEADER);
     CloudProvider provider = CloudProvider.of(providerStr);
 
-    if (region != null && !region.isBlank() && provider != CloudProvider.NONE) {
-      // Build the Flink URL correctly
-      String flinkBaseUrl = flinkUrlPattern.formatted(region.toLowerCase(), providerStr.toLowerCase());
-      String path = context.getRequestUri();
-
-      // Ensure we have a proper URL
-      String absoluteUrl = uriUtil.combine(flinkBaseUrl, path);
-      context.setProxyRequestAbsoluteUrl(absoluteUrl);
-
-      var cleanedHeaders = sanitizeHeaders(headers, httpHeaderExclusions);
-
-      // Create a new MultiMap from the cleaned headers
-      MultiMap proxyHeaders = MultiMap.caseInsensitiveMultiMap();
-      cleanedHeaders.forEach(proxyHeaders::add);
-
-      //Set the properly typed headers
-      context.setProxyRequestHeaders(proxyHeaders);
-      context.setProxyRequestMethod(context.getRequestMethod());
-      context.setProxyRequestBody(context.getRequestBody());
-
-      return next().process(context);
-    } else {
+    if (CloudProvider.NONE.equals(provider)) {
       return Future.failedFuture(
           new ProcessorFailedException(
-              context.fail(400, "Required headers missing or invalid: x-ccloud-region and x-ccloud-provider are required for Flink requests")
+              context.fail(400, "CCloud provider specified in request header '%s' is not valid.".formatted(PROVIDER_HEADER))
           )
       );
     }
+
+    if (region == null || region.isBlank()) {
+      return Future.failedFuture(
+          new ProcessorFailedException(
+              context.fail(400, "Region specified in request header '%s' is missing or invalid.".formatted(REGION_HEADER))
+          )
+      );
+    }
+
+    String flinkBaseUrl = flinkUrlPattern.formatted(region.toLowerCase(), providerStr.toLowerCase());
+    String path = context.getRequestUri();
+
+    String absoluteUrl = uriUtil.combine(flinkBaseUrl, path);
+    context.setProxyRequestAbsoluteUrl(absoluteUrl);
+
+    var cleanedHeaders = sanitizeHeaders(headers, httpHeaderExclusions);
+
+    MultiMap proxyHeaders = MultiMap.caseInsensitiveMultiMap();
+    cleanedHeaders.forEach(proxyHeaders::add);
+
+    context.setProxyRequestHeaders(proxyHeaders);
+    context.setProxyRequestMethod(context.getRequestMethod());
+    context.setProxyRequestBody(context.getRequestBody());
+
+    return next().process(context);
   }
 }

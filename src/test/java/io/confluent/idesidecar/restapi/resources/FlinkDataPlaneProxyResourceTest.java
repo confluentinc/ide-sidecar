@@ -247,7 +247,7 @@ class FlinkDataPlaneProxyResourceTest {
 
     // Verify the exception contains the expected message
     assertInstanceOf(ProcessorFailedException.class, exception.getCause());
-    assertEquals("Required headers missing or invalid: x-ccloud-region and x-ccloud-provider are required for Flink requests",
+    assertEquals("Region specified in request header 'x-ccloud-region' is missing or invalid.",
         exception.getCause().getMessage());
   }
 
@@ -285,7 +285,7 @@ class FlinkDataPlaneProxyResourceTest {
 
     // Verify the exception contains the expected message
     assertInstanceOf(ProcessorFailedException.class, exception.getCause());
-    assertEquals("Required headers missing or invalid: x-ccloud-region and x-ccloud-provider are required for Flink requests",
+    assertEquals("CCloud provider specified in request header 'x-ccloud-provider' is not valid.",
         exception.getCause().getMessage());
   }
 
@@ -406,7 +406,7 @@ class FlinkDataPlaneProxyResourceTest {
 
     // Verify the exception contains the expected message
     assertInstanceOf(ProcessorFailedException.class, exception.getCause());
-    assertEquals("Required headers missing or invalid: x-ccloud-region and x-ccloud-provider are required for Flink requests",
+    assertEquals("CCloud provider specified in request header 'x-ccloud-provider' is not valid.",
         exception.getCause().getMessage());
   }
   @Test
@@ -443,7 +443,7 @@ class FlinkDataPlaneProxyResourceTest {
 
     // Verify the exception contains the expected message
     assertInstanceOf(ProcessorFailedException.class, exception.getCause());
-    assertEquals("Required headers missing or invalid: x-ccloud-region and x-ccloud-provider are required for Flink requests",
+    assertEquals("Region specified in request header 'x-ccloud-region' is missing or invalid.",
         exception.getCause().getMessage());
   }
 
