@@ -7,7 +7,6 @@ import io.vertx.core.MultiMap;
 import jakarta.enterprise.context.ApplicationScoped;
 import java.util.List;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.jboss.logging.Logger;
 
 /**
  * Processor to set the proxy request/response parameters for the control plane.
