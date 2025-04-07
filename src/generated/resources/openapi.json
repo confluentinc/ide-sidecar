@@ -69,36 +69,6 @@
         }
       }
     },
-    "/api/metadata/security/v2alpha1/authorize" : {
-      "put" : {
-        "requestBody" : {
-          "description" : "RBAC request body",
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/RBACRequest"
-              }
-            }
-          },
-          "required" : true
-        },
-        "responses" : {
-          "200" : {
-            "description" : "Successful response",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "type" : "string"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/gateway/v1/callback-vscode-docs" : {
       "get" : {
         "tags" : [ "O Auth Callback Resource" ],
@@ -760,23 +730,6 @@
   },
   "components" : {
     "schemas" : {
-      "Action" : {
-        "type" : "object",
-        "properties" : {
-          "resourceType" : {
-            "type" : "string"
-          },
-          "resourceName" : {
-            "type" : "string"
-          },
-          "operation" : {
-            "type" : "string"
-          },
-          "scope" : {
-            "$ref" : "#/components/schemas/Scope"
-          }
-        }
-      },
       "ApiKeyAndSecret" : {
         "description" : "API key and secret authentication credentials",
         "required" : [ "api_key", "api_secret" ],
@@ -1676,20 +1629,6 @@
           }
         }
       },
-      "RBACRequest" : {
-        "type" : "object",
-        "properties" : {
-          "userPrincipal" : {
-            "type" : "string"
-          },
-          "actions" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/Action"
-            }
-          }
-        }
-      },
       "RecordMetadata" : {
         "type" : "object",
         "properties" : {
@@ -1763,23 +1702,6 @@
             "allOf" : [ {
               "$ref" : "#/components/schemas/AuthErrors"
             } ]
-          }
-        }
-      },
-      "Scope" : {
-        "type" : "object",
-        "properties" : {
-          "clusters" : {
-            "type" : "object",
-            "additionalProperties" : {
-              "type" : "string"
-            }
-          },
-          "path" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            }
           }
         }
       },
