@@ -3,6 +3,7 @@ package io.confluent.idesidecar.restapi.proxy;
 import static io.confluent.idesidecar.restapi.util.SanitizeHeadersUtil.sanitizeHeaders;
 
 import io.confluent.idesidecar.restapi.exceptions.ProcessorFailedException;
+import io.confluent.idesidecar.restapi.models.graph.CloudProvider;
 import io.confluent.idesidecar.restapi.processors.Processor;
 import io.confluent.idesidecar.restapi.util.UriUtil;
 import io.vertx.core.Future;
@@ -36,35 +37,40 @@ public class FlinkDataPlaneProxyProcessor extends Processor<ProxyContext, Future
         context.getRequestHeaders() : MultiMap.caseInsensitiveMultiMap();
 
     String region = headers.get(REGION_HEADER);
-    String provider = headers.get(PROVIDER_HEADER);
+    String providerStr = headers.get(PROVIDER_HEADER);
+    CloudProvider provider = CloudProvider.of(providerStr);
 
-    if (region != null && provider != null) {
-      // Build the Flink URL correctly
-      String flinkBaseUrl = flinkUrlPattern.formatted(region.toLowerCase(), provider.toLowerCase());
-      String path = context.getRequestUri();
-
-      // Ensure we have a proper URL
-      String absoluteUrl = uriUtil.combine(flinkBaseUrl, path);
-      context.setProxyRequestAbsoluteUrl(absoluteUrl);
-
-      var cleanedHeaders = sanitizeHeaders(headers, httpHeaderExclusions);
-
-      // Create a new MultiMap from the cleaned headers
-      MultiMap proxyHeaders = MultiMap.caseInsensitiveMultiMap();
-      cleanedHeaders.forEach(proxyHeaders::add);
-
-      //Set the properly typed headers
-      context.setProxyRequestHeaders(proxyHeaders);
-      context.setProxyRequestMethod(context.getRequestMethod());
-      context.setProxyRequestBody(context.getRequestBody());
-
-      return next().process(context);
-    } else {
+    if (CloudProvider.NONE.equals(provider)) {
       return Future.failedFuture(
           new ProcessorFailedException(
-              context.fail(400, "Missing required headers: x-ccloud-region and x-ccloud-provider are required for Flink requests")
+              context.fail(400, "CCloud provider specified in request header '%s' is not valid.".formatted(PROVIDER_HEADER))
           )
       );
     }
+
+    if (region == null || region.isBlank()) {
+      return Future.failedFuture(
+          new ProcessorFailedException(
+              context.fail(400, "Region specified in request header '%s' is missing or invalid.".formatted(REGION_HEADER))
+          )
+      );
+    }
+
+    String flinkBaseUrl = flinkUrlPattern.formatted(region.toLowerCase(), providerStr.toLowerCase());
+    String path = context.getRequestUri();
+
+    String absoluteUrl = uriUtil.combine(flinkBaseUrl, path);
+    context.setProxyRequestAbsoluteUrl(absoluteUrl);
+
+    var cleanedHeaders = sanitizeHeaders(headers, httpHeaderExclusions);
+
+    MultiMap proxyHeaders = MultiMap.caseInsensitiveMultiMap();
+    cleanedHeaders.forEach(proxyHeaders::add);
+
+    context.setProxyRequestHeaders(proxyHeaders);
+    context.setProxyRequestMethod(context.getRequestMethod());
+    context.setProxyRequestBody(context.getRequestBody());
+
+    return next().process(context);
   }
 }
