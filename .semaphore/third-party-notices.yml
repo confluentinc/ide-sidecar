@@ -16,7 +16,8 @@ blocks:
         commands:
           - checkout
           - sem-version java 21
-          - . vault-setup
+          - export VAULT_ADDR="https://vault.cireops.gcp.internal.confluent.cloud"
+          - vault login -no-print token=$(vault write -field=token "auth/semaphore_self_hosted/login" role="default" jwt="$SEMAPHORE_OIDC_TOKEN")
       jobs:
         - name: "Update Third Party Notices PR"
           commands:
