@@ -1039,30 +1039,6 @@
         "type" : "string",
         "example" : "2022-03-10"
       },
-      "Error" : {
-        "description" : "Describes a particular error encountered while performing an operation.",
-        "type" : "object",
-        "properties" : {
-          "code" : {
-            "type" : "string"
-          },
-          "status" : {
-            "type" : "string"
-          },
-          "title" : {
-            "type" : "string"
-          },
-          "id" : {
-            "type" : "string"
-          },
-          "detail" : {
-            "type" : "string"
-          },
-          "source" : {
-            "$ref" : "#/components/schemas/JsonNode"
-          }
-        }
-      },
       "ExceededFields" : {
         "type" : "object",
         "properties" : {
@@ -1093,7 +1069,7 @@
           "errors" : {
             "type" : "array",
             "items" : {
-              "$ref" : "#/components/schemas/Error"
+              "$ref" : "#/components/schemas/SidecarError"
             }
           }
         }
@@ -1739,6 +1715,30 @@
         "properties" : {
           "auth_secret" : {
             "type" : "string"
+          }
+        }
+      },
+      "SidecarError" : {
+        "description" : "Describes a particular error encountered while performing an operation.",
+        "type" : "object",
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "detail" : {
+            "type" : "string"
+          },
+          "source" : {
+            "$ref" : "#/components/schemas/JsonNode"
           }
         }
       },
