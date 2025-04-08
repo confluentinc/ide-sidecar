@@ -8,7 +8,7 @@ info:
     name: Confluent for VS Code Support
     url: https://confluent.io/contact
     email: vscode@confluent.io
-  version: 0.190.0
+  version: 0.191.0
 servers:
 - url: http://127.0.0.1:26636
   description: Auto generated value
@@ -725,22 +725,6 @@ components:
       format: date
       type: string
       example: 2022-03-10
-    Error:
-      description: Describes a particular error encountered while performing an operation.
-      type: object
-      properties:
-        code:
-          type: string
-        status:
-          type: string
-        title:
-          type: string
-        id:
-          type: string
-        detail:
-          type: string
-        source:
-          $ref: "#/components/schemas/JsonNode"
     ExceededFields:
       type: object
       properties:
@@ -764,7 +748,7 @@ components:
         errors:
           type: array
           items:
-            $ref: "#/components/schemas/Error"
+            $ref: "#/components/schemas/SidecarError"
     HashAlgorithm:
       enum:
       - SCRAM_SHA_256
@@ -1272,6 +1256,22 @@ components:
       properties:
         auth_secret:
           type: string
+    SidecarError:
+      description: Describes a particular error encountered while performing an operation.
+      type: object
+      properties:
+        code:
+          type: string
+        status:
+          type: string
+        title:
+          type: string
+        id:
+          type: string
+        detail:
+          type: string
+        source:
+          $ref: "#/components/schemas/JsonNode"
     SidecarVersionResponse:
       type: object
       properties:
@@ -1402,25 +1402,25 @@ components:
     HealthResponse:
       type: object
       properties:
+        status:
+          enum:
+          - UP
+          - DOWN
+          type: string
         checks:
           type: array
           items:
             $ref: "#/components/schemas/HealthCheck"
-        status:
-          enum:
-          - UP
-          - DOWN
-          type: string
     HealthCheck:
       type: object
       properties:
-        status:
-          enum:
-          - UP
-          - DOWN
-          type: string
         data:
           type: object
           nullable: true
         name:
+          type: string
+        status:
+          enum:
+          - UP
+          - DOWN
           type: string

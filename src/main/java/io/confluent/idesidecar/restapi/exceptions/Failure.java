@@ -97,7 +97,12 @@ public record Failure(
       "detail",
       "source"
   })
-  @Schema(description = "Describes a particular error encountered while performing an operation.")
+  @Schema(
+      // Named this way so that JS/TS OpenAPI generated client code doesn't conflict with
+      // the builtin `Error` class.
+      name = "SidecarError",
+      description = "Describes a particular error encountered while performing an operation."
+  )
   public record Error(
       String id,
       String status,
