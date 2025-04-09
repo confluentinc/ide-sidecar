@@ -26,14 +26,6 @@
           brokers-list-uri: http://localhost:${quarkus.wiremock.devservices.port}/v3/clusters/%s/brokers
           broker-adv-listeners-config-uri: http://localhost:${quarkus.wiremock.devservices.port}/v3/clusters/%s/brokers/%s/configs/advertised.listeners
           kafka-topic-uri: http://localhost:${quarkus.wiremock.devservices.port}/v3/clusters/%s/topics/%s
-    feature-flags:
-      refresh-interval-seconds: 0 # disables the scheduled refresh during testing
-      ide-project:
-        client-id: mock-ide-ld-client-id
-        eval-uri: http://localhost:${quarkus.wiremock.devservices.port}/api/flags/%s/contexts/%s
-      ccloud-project:
-        client-id: mock-ccloud-ld-client-id
-        eval-uri: http://localhost:${quarkus.wiremock.devservices.port}/api/flags/%s/contexts/%s
     grim-reaper:
       # Should we check for remaining living vs code processes at all, and exit() if none left?
       enabled: false
@@ -138,14 +130,6 @@ ide-sidecar:
     direct:
       refresh-status-interval-seconds: 5
       timeout-seconds: 5
-  feature-flags:
-    refresh-interval-seconds: 60
-    ide-project:
-      client-id: 66f5797143c600083425a930
-      eval-uri: https://confluent.cloud/ldapi/sdk/evalx/%s/contexts/%s
-    ccloud-project:
-      client-id: 5c636508aa445d32c86f26b1
-      eval-uri: https://confluent.cloud/ldapi/sdk/evalx/%s/contexts/%s
   flink:
     url-pattern: https://flink.%s.%s.confluent.cloud
   access_token_filter:

@@ -1,4 +1,0 @@
-{
-  "code":"invalid_request",
-  "message":"couldn't parse user JSON: EOF while parsing a string at line 1 column 261"
-}
