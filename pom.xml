@@ -213,11 +213,6 @@
       <artifactId>jackson-dataformat-avro</artifactId>
       <version>${jackson-dataformat.version}</version>
     </dependency>
-    <dependency>
-      <groupId>com.launchdarkly</groupId>
-      <artifactId>launchdarkly-java-server-sdk</artifactId>
-      <version>${launch-darkly-sdk.version}</version>
-    </dependency>
     <!-- BEGIN: Quarkus extensions for Kafka and SR clients -->
     <!-- This Quarkus extension registers the many classes that may be loaded reflectively by the Kafka client -->
     <dependency>
