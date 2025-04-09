@@ -63,18 +63,8 @@ public class FlinkLanguageServiceProxy {
       );
     }
 
-    String getId() {
-      return "%s-%s-%s-%s-%s".formatted(
-          connectionId,
-          region,
-          provider,
-          environmentId,
-          organizationId
-      );
-    }
-
     String getConnectUrl() {
-      // TODO: I guess this won't work with private networking, we'll need something more sophisticated
+      // TODO: I guess this won't work for private networks, we'll need something more sophisticated
       return LANGUAGE_SERVICE_URL_PATTERN.formatted(
           region,
           provider
@@ -104,7 +94,8 @@ public class FlinkLanguageServiceProxy {
     public void onOpen(Session remoteSession) {
       this.remoteSession = remoteSession;
       try {
-        var connection = (CCloudConnectionState) connectionStateManager.getConnectionState("1");
+        var connection = (CCloudConnectionState) connectionStateManager.getConnectionState(
+            context.connectionId);
         this.remoteSession.getAsyncRemote().sendText(
             OBJECT_MAPPER.writeValueAsString(
                 new AuthMessage(
@@ -113,7 +104,7 @@ public class FlinkLanguageServiceProxy {
                     context.organizationId
                 )
             )
-        ).get();
+        );
       } catch (Exception e) {
         Log.errorf("Failed to send initial auth message: %s", e.getMessage());
       }
@@ -171,12 +162,9 @@ public class FlinkLanguageServiceProxy {
   @OnOpen
   public void onOpen(Session session) throws IOException {
     var context = ProxyContext.from(session);
-    if (proxyClients.containsKey(context.getId())) {
+    if (proxyClients.containsKey(session.getId())) {
       session.close(
-          new CloseReason(
-              CloseCodes.CANNOT_ACCEPT,
-              "Connection for the given context with ID=%s already exists.".formatted(context.getId())
-          )
+          new CloseReason(CloseCodes.CANNOT_ACCEPT, "Session ID already exists.")
       );
       return;
     }
@@ -195,7 +183,8 @@ public class FlinkLanguageServiceProxy {
           );
         } else {
           var client = new ProxyClient(context, session);
-          proxyClients.put(context.getId(), client);
+          proxyClients.put(session.getId(), client);
+          Log.infof("Added LSP client for session ID=%s", session.getId());
         }
       } else {
         session.close(
@@ -217,8 +206,7 @@ public class FlinkLanguageServiceProxy {
 
   @OnMessage
   public void onMessage(String message, Session session) throws IOException {
-    var context = ProxyContext.from(session);
-    var client = proxyClients.get(context.getId());
+    var client = proxyClients.get(session.getId());
     if (client != null) {
       client.sendToCCloud(message);
     } else {
@@ -233,15 +221,13 @@ public class FlinkLanguageServiceProxy {
 
   @OnClose
   public void onClose(Session session) {
-    // TODO: Handle case where no client exists for given session
-    var context = ProxyContext.from(session);
-    var client = proxyClients.get(context.getId());
+    var client = proxyClients.get(session.getId());
     if (client != null) {
       // Close WebSockets session to CCloud Language Service
       client.close();
       // Remove client
-      proxyClients.remove(context.getId());
-      Log.infof("Removed Language Service proxy client for ID=%s", context.getId());
+      proxyClients.remove(session.getId());
+      Log.infof("Removed LSP client for session ID=%s", session.getId());
     }
   }
 }
