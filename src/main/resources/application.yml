@@ -156,7 +156,7 @@ ide-sidecar:
       - /
       # And finally, the handshake route itself.
       - /gateway/v1/handshake
-      # TODO: Only during testing, to be removed
+      # TODO: To be removed
       - /flsp
   grim-reaper:
     # Should we check for remaining living vs code processes at all, and exit() if none left?
