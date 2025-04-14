@@ -26,23 +26,21 @@ public class FlinkLanguageServiceProxyClient implements AutoCloseable {
   static final Integer MAX_RECONNECT_ATTEMPTS = ConfigProvider
       .getConfig()
       .getValue("ide-sidecar.flink-language-service-proxy.reconnect-attempts", Integer.class);
+  static final String CCLOUD_CONTROL_PLANE_TOKEN_PLACEHOLDER = "{{ ccloud.control_plane_token }}";
 
   Session remoteSession;
   Session localSession;
   ProxyContext context;
-  ConnectionStateManager connectionStateManager;
   AtomicInteger reconnectAttempts = new AtomicInteger(0);
 
   private FlinkLanguageServiceProxyClient() {}
 
   public FlinkLanguageServiceProxyClient(
       ProxyContext context,
-      Session localSession,
-      ConnectionStateManager connectionStateManager
+      Session localSession
   ) {
     this.context = context;
     this.localSession = localSession;
-    this.connectionStateManager = connectionStateManager;
     try {
       var container = ContainerProvider.getWebSocketContainer();
       container.connectToServer(this, URI.create(context.getConnectUrl()));
@@ -55,12 +53,10 @@ public class FlinkLanguageServiceProxyClient implements AutoCloseable {
   public void onOpen(Session remoteSession) {
     this.remoteSession = remoteSession;
     try {
-      var connection = (CCloudConnectionState) connectionStateManager.getConnectionState(
-          context.connectionId());
       this.remoteSession.getAsyncRemote().sendText(
           OBJECT_MAPPER.writeValueAsString(
               new FlinkLanguageServiceAuthMessage(
-                  connection.getOauthContext().getDataPlaneToken().token(),
+                  context.connection().getOauthContext().getDataPlaneToken().token(),
                   context.environmentId(),
                   context.organizationId()
               )
@@ -100,7 +96,11 @@ public class FlinkLanguageServiceProxyClient implements AutoCloseable {
   }
 
   public Future<Void> sendToCCloud(String message) {
-    return this.remoteSession.getAsyncRemote().sendText(message);
+    var processedMessage = message.replace(
+        CCLOUD_CONTROL_PLANE_TOKEN_PLACEHOLDER,
+        context.connection().getOauthContext().getControlPlaneToken().token()
+    );
+    return this.remoteSession.getAsyncRemote().sendText(processedMessage);
   }
 
   public void close() {

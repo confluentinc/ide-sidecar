@@ -51,7 +51,10 @@ public class FlinkLanguageServiceProxy {
               )
           );
         } else {
-          var client = new FlinkLanguageServiceProxyClient(context, session, connectionStateManager);
+          var client = new FlinkLanguageServiceProxyClient(
+              context.withConnection(cCloudConnectionState),
+              session
+          );
           proxyClients.put(session.getId(), client);
           Log.infof("Added LSP client for session ID=%s", session.getId());
         }

@@ -1,5 +1,6 @@
 package io.confluent.idesidecar.websocket.proxy;
 
+import io.confluent.idesidecar.restapi.connections.CCloudConnectionState;
 import jakarta.websocket.Session;
 import org.eclipse.microprofile.config.ConfigProvider;
 
@@ -8,7 +9,8 @@ public record ProxyContext (
     String region,
     String provider,
     String environmentId,
-    String organizationId
+    String organizationId,
+    CCloudConnectionState connection
 ) {
 
   static final String LANGUAGE_SERVICE_URL_PATTERN = ConfigProvider
@@ -28,7 +30,19 @@ public record ProxyContext (
         paramMap.get(REGION_PARAM_NAME).get(0),
         paramMap.get(PROVIDER_PARAM_NAME).get(0),
         paramMap.get(ENVIRONMENT_ID_PARAM_NAME).get(0),
-        paramMap.get(ORGANIZATION_ID_PARAM_NAME).get(0)
+        paramMap.get(ORGANIZATION_ID_PARAM_NAME).get(0),
+        null
+    );
+  }
+
+  public ProxyContext withConnection(CCloudConnectionState connection) {
+    return new ProxyContext(
+        connectionId,
+        region,
+        provider,
+        environmentId,
+        organizationId,
+        connection
     );
   }
 
