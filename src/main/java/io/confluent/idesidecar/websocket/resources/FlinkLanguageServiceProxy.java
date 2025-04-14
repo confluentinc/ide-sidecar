@@ -23,13 +23,18 @@ import java.util.concurrent.Future;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.eclipse.microprofile.config.ConfigProvider;
 
 @ServerEndpoint("/flsp")
 @ApplicationScoped
 public class FlinkLanguageServiceProxy {
 
-  static final Integer MAX_RECONNECT_ATTEMPTS = 1;
-  static final String LANGUAGE_SERVICE_URL_PATTERN = "wss://flinkpls.%s.%s.confluent.cloud/lsp";
+  static final String LANGUAGE_SERVICE_URL_PATTERN = ConfigProvider
+      .getConfig()
+      .getValue("ide-sidecar.flink-language-service-proxy.url-pattern", String.class);
+  static final Integer MAX_RECONNECT_ATTEMPTS = ConfigProvider
+      .getConfig()
+      .getValue("ide-sidecar.flink-language-service-proxy.reconnect-attempts", Integer.class);
   static final String CONNECTION_ID_PARAM_NAME = "connectionId";
   static final String REGION_PARAM_NAME = "region";
   static final String PROVIDER_PARAM_NAME = "provider";
@@ -65,10 +70,9 @@ public class FlinkLanguageServiceProxy {
 
     String getConnectUrl() {
       // TODO: I guess this won't work for private networks, we'll need something more sophisticated
-      return LANGUAGE_SERVICE_URL_PATTERN.formatted(
-          region,
-          provider
-      );
+      return LANGUAGE_SERVICE_URL_PATTERN
+          .replace("{{ region }}", region)
+          .replace("{{ provider }}", provider);
     }
   }
 
@@ -123,15 +127,12 @@ public class FlinkLanguageServiceProxy {
       // reconnect attempts has been reached
       if (reconnectAttempts.incrementAndGet() > MAX_RECONNECT_ATTEMPTS) {
         Log.errorf("Max reconnect attempts reached. Closing session.");
-        localSession.close();
+        localSession.close(
+            new CloseReason(CloseCodes.CLOSED_ABNORMALLY, "Max reconnect attempts reached.")
+        );
         return;
       }
 
-      Log.infof(
-          "Reconnecting to CCloud Language Service (Attempt %d/%d).",
-          reconnectAttempts.get(),
-          MAX_RECONNECT_ATTEMPTS
-      );
       this.remoteSession = null;
       try {
         var container = ContainerProvider.getWebSocketContainer();

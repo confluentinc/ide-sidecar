@@ -163,6 +163,9 @@ ide-sidecar:
     enabled: true
     # How often to check?
     interval-seconds: 60
+  flink-language-service-proxy:
+    reconnect-attempts: 1
+    url-pattern: wss://flinkpls.{{ region }}.{{ provider }}.confluent.cloud/lsp
   proxy:
     ccloud-api-control-plane-regex: "(/artifact.*)|(/fcpm/v2/compute-pools.*)|(/metadata/security/v2alpha1/authorize)"
     ccloud-api-flink-data-plane-regex: "(/sql/v1.*)"
