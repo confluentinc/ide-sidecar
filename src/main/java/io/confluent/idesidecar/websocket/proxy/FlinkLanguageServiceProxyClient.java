@@ -1,8 +1,6 @@
 package io.confluent.idesidecar.websocket.proxy;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.confluent.idesidecar.restapi.connections.CCloudConnectionState;
-import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
 import io.confluent.idesidecar.websocket.messages.FlinkLanguageServiceAuthMessage;
 import io.quarkus.logging.Log;
 import jakarta.websocket.ClientEndpoint;
