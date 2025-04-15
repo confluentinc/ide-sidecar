@@ -39,6 +39,8 @@
       enabled: false
       # How often to check?
       interval-seconds: 60
+    flink-language-service-proxy:
+      url-pattern: ws://127.0.0.1:${quarkus.http.test-port}/flsp-mock
     schema-fetch-error-ttl: 30
     schema-fetch-retry:
       max-retries: 3

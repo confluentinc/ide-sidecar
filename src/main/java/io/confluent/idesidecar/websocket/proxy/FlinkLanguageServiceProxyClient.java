@@ -48,7 +48,7 @@ public class FlinkLanguageServiceProxyClient implements AutoCloseable {
   }
 
   @OnOpen
-  public void onOpen(Session remoteSession) {
+  public synchronized void onOpen(Session remoteSession) {
     this.remoteSession = remoteSession;
     try {
       this.remoteSession.getAsyncRemote().sendText(
@@ -73,7 +73,7 @@ public class FlinkLanguageServiceProxyClient implements AutoCloseable {
   }
 
   @OnClose
-  public void onClose(Session session) throws IOException {
+  public synchronized void onClose(Session session) throws IOException {
     // Increase number of reconnect attempts and close the session if the maximum number of
     // reconnect attempts has been reached
     if (reconnectAttempts.incrementAndGet() > MAX_RECONNECT_ATTEMPTS) {
@@ -93,7 +93,7 @@ public class FlinkLanguageServiceProxyClient implements AutoCloseable {
     }
   }
 
-  public Future<Void> sendToCCloud(String message) {
+  public synchronized Future<Void> sendToCCloud(String message) {
     var processedMessage = message.replace(
         CCLOUD_CONTROL_PLANE_TOKEN_PLACEHOLDER,
         context.connection().getOauthContext().getControlPlaneToken().token()
@@ -103,7 +103,9 @@ public class FlinkLanguageServiceProxyClient implements AutoCloseable {
 
   public void close() {
     try {
-      remoteSession.close();
+      if (remoteSession != null) {
+        remoteSession.close();
+      }
     } catch (IOException e) {
       Log.error("Could not close WebSockets session to CCloud Language Service.", e);
     }
