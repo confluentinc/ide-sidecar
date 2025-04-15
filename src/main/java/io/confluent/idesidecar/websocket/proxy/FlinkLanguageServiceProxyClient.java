@@ -24,7 +24,7 @@ public class FlinkLanguageServiceProxyClient implements AutoCloseable {
   static final Integer MAX_RECONNECT_ATTEMPTS = ConfigProvider
       .getConfig()
       .getValue("ide-sidecar.flink-language-service-proxy.reconnect-attempts", Integer.class);
-  static final String CCLOUD_CONTROL_PLANE_TOKEN_PLACEHOLDER = "{{ ccloud.control_plane_token }}";
+  static final String CCLOUD_DATA_PLANE_TOKEN_PLACEHOLDER = "{{ ccloud.data_plane_token }}";
 
   Session remoteSession;
   Session localSession;
@@ -95,8 +95,8 @@ public class FlinkLanguageServiceProxyClient implements AutoCloseable {
 
   public synchronized Future<Void> sendToCCloud(String message) {
     var processedMessage = message.replace(
-        CCLOUD_CONTROL_PLANE_TOKEN_PLACEHOLDER,
-        context.connection().getOauthContext().getControlPlaneToken().token()
+        CCLOUD_DATA_PLANE_TOKEN_PLACEHOLDER,
+        context.connection().getOauthContext().getDataPlaneToken().token()
     );
     return this.remoteSession.getAsyncRemote().sendText(processedMessage);
   }
