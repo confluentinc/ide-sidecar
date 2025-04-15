@@ -1,6 +1,7 @@
 package io.confluent.idesidecar.websocket.proxy;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.confluent.idesidecar.websocket.exceptions.ProxyConnectionFailedException;
 import io.confluent.idesidecar.websocket.messages.FlinkLanguageServiceAuthMessage;
 import io.quarkus.logging.Log;
 import jakarta.websocket.ClientEndpoint;
@@ -43,7 +44,7 @@ public class FlinkLanguageServiceProxyClient implements AutoCloseable {
       var container = ContainerProvider.getWebSocketContainer();
       container.connectToServer(this, URI.create(context.getConnectUrl()));
     } catch (Exception e) {
-      throw new RuntimeException(e);
+      throw new ProxyConnectionFailedException(e);
     }
   }
 
@@ -89,7 +90,7 @@ public class FlinkLanguageServiceProxyClient implements AutoCloseable {
       var container = ContainerProvider.getWebSocketContainer();
       container.connectToServer(this, URI.create(context.getConnectUrl()));
     } catch (Exception e) {
-      throw new RuntimeException(e);
+      throw new ProxyConnectionFailedException(e);
     }
   }
 
