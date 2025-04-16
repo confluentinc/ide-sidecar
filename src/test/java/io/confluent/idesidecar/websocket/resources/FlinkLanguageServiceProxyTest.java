@@ -119,9 +119,6 @@ public class FlinkLanguageServiceProxyTest {
 
     var oAuthContext = Mockito.spy(CCloudOAuthContext.class);
     Mockito
-        .when(oAuthContext.getControlPlaneToken())
-        .thenReturn(new Token("control-plane-token", Instant.now()));
-    Mockito
         .when(oAuthContext.getDataPlaneToken())
         .thenReturn(new Token("data-plane-token", Instant.now()));
     var mockedConnection = Mockito.spy(CCloudConnectionState.class);
@@ -170,6 +167,56 @@ public class FlinkLanguageServiceProxyTest {
   public void testOpeningProxyForUnauthenticatedConnection() throws Exception {
     // Create a connection without a valid OAuth context
     var mockedConnection = Mockito.spy(CCloudConnectionState.class);
+    Mockito
+        .when(connectionStateManager.getConnectionState("ccloud-flink"))
+        .thenReturn(mockedConnection);
+
+    var session = ContainerProvider.getWebSocketContainer().connectToServer(TestClient.class, uri);
+    // Allow the proxy to close the session
+    Thread.sleep(3_000);
+    // Verify that the session has been closed
+    Assertions.assertNotNull(CLOSE_REASON.get());
+    Assertions.assertFalse(session.isOpen());
+    // Check the close code and reason
+    Assertions.assertEquals(CloseCodes.CANNOT_ACCEPT, CLOSE_REASON.get().getCloseCode());
+    Assertions.assertEquals(
+        "Connection with ID=ccloud-flink does not have a data plane token.",
+        CLOSE_REASON.get().getReasonPhrase()
+    );
+  }
+
+  @Test
+  public void testOpeningProxyForConnectionWithExpiredAuthContext() throws Exception {
+    // Create a connection without a valid OAuth context
+    var authContext = Mockito.spy(CCloudOAuthContext.class);
+    Mockito.when(authContext.hasReachedEndOfLifetime()).thenReturn(true);
+    var mockedConnection = Mockito.spy(CCloudConnectionState.class);
+    Mockito.when(mockedConnection.getOauthContext()).thenReturn(authContext);
+    Mockito
+        .when(connectionStateManager.getConnectionState("ccloud-flink"))
+        .thenReturn(mockedConnection);
+
+    var session = ContainerProvider.getWebSocketContainer().connectToServer(TestClient.class, uri);
+    // Allow the proxy to close the session
+    Thread.sleep(3_000);
+    // Verify that the session has been closed
+    Assertions.assertNotNull(CLOSE_REASON.get());
+    Assertions.assertFalse(session.isOpen());
+    // Check the close code and reason
+    Assertions.assertEquals(CloseCodes.CANNOT_ACCEPT, CLOSE_REASON.get().getCloseCode());
+    Assertions.assertEquals(
+        "Connection with ID=ccloud-flink does not have a data plane token.",
+        CLOSE_REASON.get().getReasonPhrase()
+    );
+  }
+
+  @Test
+  public void testOpeningProxyForConnectionWithoutDataPlaneToken() throws Exception {
+    // Create a connection without a valid OAuth context
+    var authContext = Mockito.spy(CCloudOAuthContext.class);
+    Mockito.when(authContext.getDataPlaneToken()).thenReturn(null);
+    var mockedConnection = Mockito.spy(CCloudConnectionState.class);
+    Mockito.when(mockedConnection.getOauthContext()).thenReturn(authContext);
     Mockito
         .when(connectionStateManager.getConnectionState("ccloud-flink"))
         .thenReturn(mockedConnection);
