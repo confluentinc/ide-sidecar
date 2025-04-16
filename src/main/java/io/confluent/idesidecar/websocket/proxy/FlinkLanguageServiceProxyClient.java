@@ -74,23 +74,25 @@ public class FlinkLanguageServiceProxyClient implements AutoCloseable {
   }
 
   @OnClose
-  public synchronized void onClose(Session session) throws IOException {
-    // Increase number of reconnect attempts and close the session if the maximum number of
-    // reconnect attempts has been reached
-    if (reconnectAttempts.incrementAndGet() > MAX_RECONNECT_ATTEMPTS) {
+  public synchronized void onClose(Session session, CloseReason closeReason) throws IOException {
+    if (closeReason.getCloseCode().equals(CloseCodes.NORMAL_CLOSURE)) {
+      Log.infof("Closing session normally.");
+    } else if (reconnectAttempts.incrementAndGet() > MAX_RECONNECT_ATTEMPTS) {
+      // Increase number of reconnect attempts and close the session if the maximum number of
+      // reconnect attempts has been reached
       Log.errorf("Max reconnect attempts reached. Closing session.");
       localSession.close(
           new CloseReason(CloseCodes.CLOSED_ABNORMALLY, "Max reconnect attempts reached.")
       );
-      return;
-    }
-
-    this.remoteSession = null;
-    try {
-      var container = ContainerProvider.getWebSocketContainer();
-      container.connectToServer(this, URI.create(context.getConnectUrl()));
-    } catch (Exception e) {
-      throw new ProxyConnectionFailedException(e);
+    } else {
+      Log.infof("Reconnecting to CCloud Flink Language Service due to abnormal closure.");
+      this.remoteSession = null;
+      try {
+        var container = ContainerProvider.getWebSocketContainer();
+        container.connectToServer(this, URI.create(context.getConnectUrl()));
+      } catch (Exception e) {
+        throw new ProxyConnectionFailedException(e);
+      }
     }
   }
 
@@ -105,7 +107,12 @@ public class FlinkLanguageServiceProxyClient implements AutoCloseable {
   public void close() {
     try {
       if (remoteSession != null) {
-        remoteSession.close();
+        remoteSession.close(
+            new CloseReason(
+                CloseCodes.NORMAL_CLOSURE,
+                "Closing session from FlinkLanguageServiceProxyClient."
+            )
+        );
       }
     } catch (IOException e) {
       Log.error("Could not close WebSockets session to CCloud Language Service.", e);
