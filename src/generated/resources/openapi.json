@@ -1856,8 +1856,8 @@
             "type" : "string"
           },
           "data" : {
-            "type" : "object",
-            "nullable" : true
+            "type": "object",
+            "nullable": true
           },
           "status" : {
             "enum" : [ "UP", "DOWN" ],
