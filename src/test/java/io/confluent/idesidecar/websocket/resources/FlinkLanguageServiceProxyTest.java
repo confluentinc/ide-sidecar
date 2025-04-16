@@ -18,7 +18,6 @@ import jakarta.websocket.ClientEndpoint;
 import jakarta.websocket.ContainerProvider;
 import jakarta.websocket.OnClose;
 import jakarta.websocket.OnMessage;
-import jakarta.websocket.OnOpen;
 import jakarta.websocket.server.ServerEndpoint;
 import java.time.Instant;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -39,8 +38,8 @@ public class FlinkLanguageServiceProxyTest {
   @InjectMock
   ConnectionStateManager connectionStateManager;
 
-  static LinkedBlockingDeque<String> MESSAGES = new LinkedBlockingDeque<>();
-  static AtomicReference<CloseReason> CLOSE_REASON = new AtomicReference<>(null);
+  static LinkedBlockingDeque<String> messages = new LinkedBlockingDeque<>();
+  static AtomicReference<CloseReason> closeReason = new AtomicReference<>(null);
 
   static final String CLIENT_RPC_REQUEST = """
       {
@@ -114,8 +113,8 @@ public class FlinkLanguageServiceProxyTest {
 
   @BeforeEach
   void setup() {
-    MESSAGES = new LinkedBlockingDeque<>();
-    CLOSE_REASON.set(null);
+    messages = new LinkedBlockingDeque<>();
+    closeReason.set(null);
 
     var oAuthContext = Mockito.spy(CCloudOAuthContext.class);
     Mockito
@@ -133,8 +132,8 @@ public class FlinkLanguageServiceProxyTest {
     try (var session = ContainerProvider.getWebSocketContainer().connectToServer(TestClient.class, uri)) {
       // Send an example valid message and check that the session will not be closed.
       session.getAsyncRemote().sendText(CLIENT_RPC_REQUEST);
-      Assertions.assertEquals(SERVER_RPC_RESPONSE, MESSAGES.poll(10, TimeUnit.SECONDS));
-      Assertions.assertNull(CLOSE_REASON.get());
+      Assertions.assertEquals(SERVER_RPC_RESPONSE, messages.poll(10, TimeUnit.SECONDS));
+      Assertions.assertNull(closeReason.get());
     }
   }
 
@@ -146,20 +145,20 @@ public class FlinkLanguageServiceProxyTest {
     // Allow the proxy to reconnect to remote server, as the session should have been closed
     Thread.sleep(3_000);
     // The session between the client and the proxy should not yet been closed
-    Assertions.assertNull(CLOSE_REASON.get());
+    Assertions.assertNull(closeReason.get());
     Assertions.assertTrue(session.isOpen());
     // Send a second invalid message
     session.getAsyncRemote().sendText("This is another invalid message").get();
     // Allow the proxy to close the session
     Thread.sleep(3_000);
     // Verify that the session has been closed
-    Assertions.assertNotNull(CLOSE_REASON.get());
+    Assertions.assertNotNull(closeReason.get());
     Assertions.assertFalse(session.isOpen());
     // Check the close code and reason
-    Assertions.assertEquals(CloseCodes.GOING_AWAY, CLOSE_REASON.get().getCloseCode());
+    Assertions.assertEquals(CloseCodes.GOING_AWAY, closeReason.get().getCloseCode());
     Assertions.assertEquals(
         "Max reconnect attempts reached. Lost connection to the remote server.",
-        CLOSE_REASON.get().getReasonPhrase()
+        closeReason.get().getReasonPhrase()
     );
   }
 
@@ -175,13 +174,13 @@ public class FlinkLanguageServiceProxyTest {
     // Allow the proxy to close the session
     Thread.sleep(3_000);
     // Verify that the session has been closed
-    Assertions.assertNotNull(CLOSE_REASON.get());
+    Assertions.assertNotNull(closeReason.get());
     Assertions.assertFalse(session.isOpen());
     // Check the close code and reason
-    Assertions.assertEquals(CloseCodes.CANNOT_ACCEPT, CLOSE_REASON.get().getCloseCode());
+    Assertions.assertEquals(CloseCodes.CANNOT_ACCEPT, closeReason.get().getCloseCode());
     Assertions.assertEquals(
         "Connection with ID=ccloud-flink does not have a data plane token.",
-        CLOSE_REASON.get().getReasonPhrase()
+        closeReason.get().getReasonPhrase()
     );
   }
 
@@ -200,13 +199,13 @@ public class FlinkLanguageServiceProxyTest {
     // Allow the proxy to close the session
     Thread.sleep(3_000);
     // Verify that the session has been closed
-    Assertions.assertNotNull(CLOSE_REASON.get());
+    Assertions.assertNotNull(closeReason.get());
     Assertions.assertFalse(session.isOpen());
     // Check the close code and reason
-    Assertions.assertEquals(CloseCodes.CANNOT_ACCEPT, CLOSE_REASON.get().getCloseCode());
+    Assertions.assertEquals(CloseCodes.CANNOT_ACCEPT, closeReason.get().getCloseCode());
     Assertions.assertEquals(
         "Connection with ID=ccloud-flink does not have a data plane token.",
-        CLOSE_REASON.get().getReasonPhrase()
+        closeReason.get().getReasonPhrase()
     );
   }
 
@@ -225,13 +224,13 @@ public class FlinkLanguageServiceProxyTest {
     // Allow the proxy to close the session
     Thread.sleep(3_000);
     // Verify that the session has been closed
-    Assertions.assertNotNull(CLOSE_REASON.get());
+    Assertions.assertNotNull(closeReason.get());
     Assertions.assertFalse(session.isOpen());
     // Check the close code and reason
-    Assertions.assertEquals(CloseCodes.CANNOT_ACCEPT, CLOSE_REASON.get().getCloseCode());
+    Assertions.assertEquals(CloseCodes.CANNOT_ACCEPT, closeReason.get().getCloseCode());
     Assertions.assertEquals(
         "Connection with ID=ccloud-flink does not have a data plane token.",
-        CLOSE_REASON.get().getReasonPhrase()
+        closeReason.get().getReasonPhrase()
     );
   }
 
@@ -239,12 +238,12 @@ public class FlinkLanguageServiceProxyTest {
   public static class TestClient {
     @OnMessage
     void handleReceivedMessage(String msg) {
-      MESSAGES.add(msg);
+      messages.add(msg);
     }
 
     @OnClose
     public void close(Session session, CloseReason closeReason) {
-      CLOSE_REASON.set(closeReason);
+      FlinkLanguageServiceProxyTest.closeReason.set(closeReason);
     }
   }
 
