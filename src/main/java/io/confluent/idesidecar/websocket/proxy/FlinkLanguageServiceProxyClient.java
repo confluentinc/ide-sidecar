@@ -14,11 +14,13 @@ import jakarta.websocket.OnOpen;
 import jakarta.websocket.Session;
 import java.io.IOException;
 import java.net.URI;
-import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.eclipse.microprofile.config.ConfigProvider;
 
+/**
+ * WebSocket client for connecting to the CCloud Flink Language Service.
+ */
 @ClientEndpoint
 public class FlinkLanguageServiceProxyClient implements AutoCloseable {
 
@@ -53,6 +55,7 @@ public class FlinkLanguageServiceProxyClient implements AutoCloseable {
   public synchronized void onOpen(Session remoteSession) {
     this.remoteSession = remoteSession;
     try {
+      // When opening the connection, we need to send the auth message to the LanguageService
       this.remoteSession.getAsyncRemote().sendText(
           OBJECT_MAPPER.writeValueAsString(
               new FlinkLanguageServiceAuthMessage(
@@ -68,7 +71,7 @@ public class FlinkLanguageServiceProxyClient implements AutoCloseable {
   }
 
   @OnMessage
-  public void onMessage(String message) {
+  public synchronized void onMessage(String message) {
     localSession.getAsyncRemote().sendText(message);
     // Connection seems to be healthy, let's reset the number of reconnect attempts
     reconnectAttempts.set(0);

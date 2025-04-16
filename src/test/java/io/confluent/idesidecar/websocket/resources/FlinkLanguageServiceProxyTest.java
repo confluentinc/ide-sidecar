@@ -238,6 +238,7 @@ public class FlinkLanguageServiceProxyTest {
   @ClientEndpoint
   public static class TestClient {
     Session session;
+
     @OnOpen
     public void open(Session session) {
       this.session = session;
@@ -256,15 +257,15 @@ public class FlinkLanguageServiceProxyTest {
 
   @ServerEndpoint("/flsp-mock")
   public static class MockedCCloudLanguageService {
-    boolean clientHasAuthed = false;
+    boolean clientHasAuthenticated = false;
 
     @OnMessage
     public void onMessage(String message, Session session) throws IOException {
       // The first message sent by the client should be the auth message
       // The following messages can be JSON RPC calls
       if (message.equals(AUTH_MESSAGE)) {
-        clientHasAuthed = true;
-      } else if (!clientHasAuthed) {
+        clientHasAuthenticated = true;
+      } else if (!clientHasAuthenticated) {
         session.close(
             new CloseReason(
                 CloseReason.CloseCodes.CANNOT_ACCEPT,
