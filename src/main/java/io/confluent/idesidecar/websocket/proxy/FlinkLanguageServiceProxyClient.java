@@ -27,10 +27,6 @@ public class FlinkLanguageServiceProxyClient implements AutoCloseable {
       .getConfig()
       .getValue("ide-sidecar.flink-language-service-proxy.reconnect-attempts", Integer.class);
   static final String CCLOUD_DATA_PLANE_TOKEN_PLACEHOLDER = "{{ ccloud.data_plane_token }}";
-  static final List<CloseCodes> EXPECTED_CLOSE_CODES = List.of(
-      CloseCodes.NORMAL_CLOSURE,
-      CloseCodes.GOING_AWAY
-  );
 
   Session remoteSession;
   Session localSession;
@@ -80,8 +76,14 @@ public class FlinkLanguageServiceProxyClient implements AutoCloseable {
 
   @OnClose
   public synchronized void onClose(Session session, CloseReason closeReason) throws IOException {
-    if (EXPECTED_CLOSE_CODES.contains(closeReason.getCloseCode())) {
+    if (CloseCodes.NORMAL_CLOSURE.equals(closeReason.getCloseCode())) {
       Log.infof("Closing session normally.");
+      localSession.close(
+          new CloseReason(
+              CloseCodes.NORMAL_CLOSURE,
+              "Session closed normally."
+          )
+      );
     } else if (reconnectAttempts.incrementAndGet() > MAX_RECONNECT_ATTEMPTS) {
       // Increase number of reconnect attempts and close the session if the maximum number of
       // reconnect attempts has been reached
