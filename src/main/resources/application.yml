@@ -31,6 +31,8 @@
       enabled: false
       # How often to check?
       interval-seconds: 60
+    flink-language-service-proxy:
+      url-pattern: ws://127.0.0.1:${quarkus.http.test-port}/flsp-mock
     schema-fetch-error-ttl: 30
     schema-fetch-retry:
       max-retries: 3
@@ -145,6 +147,9 @@ ide-sidecar:
     enabled: true
     # How often to check?
     interval-seconds: 60
+  flink-language-service-proxy:
+    reconnect-attempts: 1
+    url-pattern: wss://flinkpls.{{ region }}.{{ provider }}.confluent.cloud/lsp
   proxy:
     ccloud-api-control-plane-regex: "(/artifact.*)|(/fcpm/v2/compute-pools.*)|(/metadata/security/v2alpha1/authorize)"
     ccloud-api-flink-data-plane-regex: "(/sql/v1.*)"
