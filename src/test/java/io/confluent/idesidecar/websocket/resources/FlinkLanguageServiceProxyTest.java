@@ -237,13 +237,6 @@ public class FlinkLanguageServiceProxyTest {
 
   @ClientEndpoint
   public static class TestClient {
-    Session session;
-
-    @OnOpen
-    public void open(Session session) {
-      this.session = session;
-    }
-
     @OnMessage
     void handleReceivedMessage(String msg) {
       MESSAGES.add(msg);
@@ -255,7 +248,7 @@ public class FlinkLanguageServiceProxyTest {
     }
   }
 
-  @ServerEndpoint("/flsp-mock")
+  @ServerEndpoint("/fls-mock")
   public static class MockedCCloudLanguageService {
     boolean clientHasAuthenticated = false;
 

@@ -43,6 +43,7 @@ public class FlinkLanguageServiceProxyClient implements AutoCloseable {
   ) {
     this.context = context;
     this.localSession = localSession;
+    // Open connection to CCloud Flink Language Service
     try {
       var container = ContainerProvider.getWebSocketContainer();
       container.connectToServer(this, URI.create(context.getConnectUrl()));
@@ -55,7 +56,7 @@ public class FlinkLanguageServiceProxyClient implements AutoCloseable {
   public synchronized void onOpen(Session remoteSession) {
     this.remoteSession = remoteSession;
     try {
-      // When opening the connection, we need to send the auth message to the LanguageService
+      // After opening the connection, we need to send the auth message to the Language Service
       this.remoteSession.getAsyncRemote().sendText(
           OBJECT_MAPPER.writeValueAsString(
               new FlinkLanguageServiceAuthMessage(
@@ -88,8 +89,8 @@ public class FlinkLanguageServiceProxyClient implements AutoCloseable {
           )
       );
     } else if (reconnectAttempts.incrementAndGet() > MAX_RECONNECT_ATTEMPTS) {
-      // Increase number of reconnect attempts and close the session if the maximum number of
-      // reconnect attempts has been reached
+      // Increase number of attempts and close the session if the maximum number of attempts has
+      // been reached
       Log.errorf("Max reconnect attempts reached. Closing session.");
       localSession.close(
           new CloseReason(
