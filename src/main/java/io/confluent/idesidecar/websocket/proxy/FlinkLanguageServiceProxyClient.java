@@ -14,6 +14,7 @@ import jakarta.websocket.OnOpen;
 import jakarta.websocket.Session;
 import java.io.IOException;
 import java.net.URI;
+import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.eclipse.microprofile.config.ConfigProvider;
@@ -26,6 +27,10 @@ public class FlinkLanguageServiceProxyClient implements AutoCloseable {
       .getConfig()
       .getValue("ide-sidecar.flink-language-service-proxy.reconnect-attempts", Integer.class);
   static final String CCLOUD_DATA_PLANE_TOKEN_PLACEHOLDER = "{{ ccloud.data_plane_token }}";
+  static final List<CloseCodes> EXPECTED_CLOSE_CODES = List.of(
+      CloseCodes.NORMAL_CLOSURE,
+      CloseCodes.GOING_AWAY
+  );
 
   Session remoteSession;
   Session localSession;
@@ -75,17 +80,20 @@ public class FlinkLanguageServiceProxyClient implements AutoCloseable {
 
   @OnClose
   public synchronized void onClose(Session session, CloseReason closeReason) throws IOException {
-    if (closeReason.getCloseCode().equals(CloseCodes.NORMAL_CLOSURE)) {
+    if (EXPECTED_CLOSE_CODES.contains(closeReason.getCloseCode())) {
       Log.infof("Closing session normally.");
     } else if (reconnectAttempts.incrementAndGet() > MAX_RECONNECT_ATTEMPTS) {
       // Increase number of reconnect attempts and close the session if the maximum number of
       // reconnect attempts has been reached
       Log.errorf("Max reconnect attempts reached. Closing session.");
       localSession.close(
-          new CloseReason(CloseCodes.CLOSED_ABNORMALLY, "Max reconnect attempts reached.")
+          new CloseReason(
+              CloseCodes.GOING_AWAY,
+              "Max reconnect attempts reached. Lost connection to the remote server."
+          )
       );
     } else {
-      Log.infof("Reconnecting to CCloud Flink Language Service due to abnormal closure.");
+      Log.infof("Reconnecting to CCloud Flink Language Service due to unexpected closure.");
       this.remoteSession = null;
       try {
         var container = ContainerProvider.getWebSocketContainer();

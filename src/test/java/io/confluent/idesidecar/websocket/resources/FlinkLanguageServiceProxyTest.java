@@ -6,6 +6,7 @@ import io.confluent.idesidecar.restapi.connections.CCloudConnectionState;
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
 import io.quarkus.test.InjectMock;
 import jakarta.websocket.CloseReason;
+import jakarta.websocket.CloseReason.CloseCodes;
 import jakarta.websocket.Session;
 import java.io.IOException;
 import java.net.URI;
@@ -138,6 +139,31 @@ public class FlinkLanguageServiceProxyTest {
       Assertions.assertEquals(SERVER_RPC_RESPONSE, MESSAGES.poll(10, TimeUnit.SECONDS));
       Assertions.assertNull(CLOSE_REASON.get());
     }
+  }
+
+  @Test
+  public void testSendingInvalidMessage() throws Exception {
+    var session = ContainerProvider.getWebSocketContainer().connectToServer(TestClient.class, uri);
+    // Send a first invalid message
+    session.getAsyncRemote().sendText("This is an invalid message.").get();
+    // Allow the proxy to reconnect to remote server, as the session should have been closed
+    Thread.sleep(3_000);
+    // The session between the client and the proxy should not yet been closed
+    Assertions.assertNull(CLOSE_REASON.get());
+    Assertions.assertTrue(session.isOpen());
+    // Send a second invalid message
+    session.getAsyncRemote().sendText("This is another invalid message").get();
+    // Allow the proxy to close the session
+    Thread.sleep(3_000);
+    // Verify that the session has been closed
+    Assertions.assertNotNull(CLOSE_REASON.get());
+    Assertions.assertFalse(session.isOpen());
+    // Check the close code and reason
+    Assertions.assertEquals(CloseCodes.GOING_AWAY, CLOSE_REASON.get().getCloseCode());
+    Assertions.assertEquals(
+        "Max reconnect attempts reached. Lost connection to the remote server.",
+        CLOSE_REASON.get().getReasonPhrase()
+    );
   }
 
   @ClientEndpoint
