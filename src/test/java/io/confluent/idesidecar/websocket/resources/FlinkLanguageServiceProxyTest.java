@@ -24,7 +24,6 @@ import jakarta.websocket.server.ServerEndpoint;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -137,7 +136,9 @@ public class FlinkLanguageServiceProxyTest {
     try (var session = ContainerProvider.getWebSocketContainer().connectToServer(TestClient.class, uri)) {
       // Send an example valid message and check that the session will not be closed.
       session.getAsyncRemote().sendText(CLIENT_RPC_REQUEST);
-      Assertions.assertEquals(SERVER_RPC_RESPONSE, messages.poll(10, TimeUnit.SECONDS));
+      await()
+          .atMost(Duration.ofMillis(PROXY_CLOSE_TIMEOUT_MS))
+          .until(() -> SERVER_RPC_RESPONSE.equals(messages.poll()));
       Assertions.assertNull(closeReason.get());
     }
   }
