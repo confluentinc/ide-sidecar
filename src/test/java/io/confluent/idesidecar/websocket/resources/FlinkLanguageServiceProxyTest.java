@@ -1,5 +1,7 @@
 package io.confluent.idesidecar.websocket.resources;
 
+import static org.awaitility.Awaitility.await;
+
 import io.confluent.idesidecar.restapi.auth.CCloudOAuthContext;
 import io.confluent.idesidecar.restapi.auth.Token;
 import io.confluent.idesidecar.restapi.connections.CCloudConnectionState;
@@ -19,6 +21,7 @@ import jakarta.websocket.ContainerProvider;
 import jakarta.websocket.OnClose;
 import jakarta.websocket.OnMessage;
 import jakarta.websocket.server.ServerEndpoint;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
@@ -40,6 +43,8 @@ public class FlinkLanguageServiceProxyTest {
 
   static LinkedBlockingDeque<String> messages = new LinkedBlockingDeque<>();
   static AtomicReference<CloseReason> closeReason = new AtomicReference<>(null);
+
+  static final Integer PROXY_CLOSE_TIMEOUT_MS = 3_000;
 
   static final String CLIENT_RPC_REQUEST = """
       {
@@ -143,16 +148,16 @@ public class FlinkLanguageServiceProxyTest {
     // Send a first invalid message
     session.getAsyncRemote().sendText("This is an invalid message.").get();
     // Allow the proxy to reconnect to remote server, as the session should have been closed
-    Thread.sleep(3_000);
+    Thread.sleep(PROXY_CLOSE_TIMEOUT_MS);
     // The session between the client and the proxy should not yet been closed
     Assertions.assertNull(closeReason.get());
     Assertions.assertTrue(session.isOpen());
     // Send a second invalid message
     session.getAsyncRemote().sendText("This is another invalid message").get();
-    // Allow the proxy to close the session
-    Thread.sleep(3_000);
     // Verify that the session has been closed
-    Assertions.assertNotNull(closeReason.get());
+    await()
+        .atMost(Duration.ofMillis(PROXY_CLOSE_TIMEOUT_MS))
+        .until(() -> closeReason.get() != null);
     Assertions.assertFalse(session.isOpen());
     // Check the close code and reason
     Assertions.assertEquals(CloseCodes.GOING_AWAY, closeReason.get().getCloseCode());
@@ -171,10 +176,10 @@ public class FlinkLanguageServiceProxyTest {
         .thenReturn(mockedConnection);
 
     var session = ContainerProvider.getWebSocketContainer().connectToServer(TestClient.class, uri);
-    // Allow the proxy to close the session
-    Thread.sleep(3_000);
     // Verify that the session has been closed
-    Assertions.assertNotNull(closeReason.get());
+    await()
+        .atMost(Duration.ofMillis(PROXY_CLOSE_TIMEOUT_MS))
+        .until(() -> closeReason.get() != null);
     Assertions.assertFalse(session.isOpen());
     // Check the close code and reason
     Assertions.assertEquals(CloseCodes.CANNOT_ACCEPT, closeReason.get().getCloseCode());
@@ -196,10 +201,10 @@ public class FlinkLanguageServiceProxyTest {
         .thenReturn(mockedConnection);
 
     var session = ContainerProvider.getWebSocketContainer().connectToServer(TestClient.class, uri);
-    // Allow the proxy to close the session
-    Thread.sleep(3_000);
     // Verify that the session has been closed
-    Assertions.assertNotNull(closeReason.get());
+    await()
+        .atMost(Duration.ofMillis(PROXY_CLOSE_TIMEOUT_MS))
+        .until(() -> closeReason.get() != null);
     Assertions.assertFalse(session.isOpen());
     // Check the close code and reason
     Assertions.assertEquals(CloseCodes.CANNOT_ACCEPT, closeReason.get().getCloseCode());
@@ -221,10 +226,10 @@ public class FlinkLanguageServiceProxyTest {
         .thenReturn(mockedConnection);
 
     var session = ContainerProvider.getWebSocketContainer().connectToServer(TestClient.class, uri);
-    // Allow the proxy to close the session
-    Thread.sleep(3_000);
     // Verify that the session has been closed
-    Assertions.assertNotNull(closeReason.get());
+    await()
+        .atMost(Duration.ofMillis(PROXY_CLOSE_TIMEOUT_MS))
+        .until(() -> closeReason.get() != null);
     Assertions.assertFalse(session.isOpen());
     // Check the close code and reason
     Assertions.assertEquals(CloseCodes.CANNOT_ACCEPT, closeReason.get().getCloseCode());
