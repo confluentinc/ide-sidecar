@@ -312,7 +312,7 @@
     <dependency>
       <groupId>io.soabase.record-builder</groupId>
       <artifactId>record-builder-processor</artifactId>
-      <version>43</version>
+      <version>45</version>
       <scope>compile</scope>
     </dependency>
   </dependencies>
@@ -813,7 +813,7 @@
             <path>
               <groupId>io.soabase.record-builder</groupId>
               <artifactId>record-builder-processor</artifactId>
-              <version>43</version>
+              <version>45</version>
             </path>
           </annotationProcessorPaths>
           <compilerArgs>
