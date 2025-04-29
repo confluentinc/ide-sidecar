@@ -88,6 +88,7 @@ public class ClusterProxyProcessor extends
                   }
 
                   options.setKeyStoreOptions(keystoreOptions);
+                  options.setVerifyHost(tlsConfig.verifyHostname());
                 }
 
                 context.setWebClientOptions(options);
