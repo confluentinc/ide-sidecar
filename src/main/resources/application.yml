@@ -37,7 +37,7 @@
     schema-fetch-retry:
       max-retries: 3
     flink:
-      url-pattern: http://localhost:${quarkus.wiremock.devservices.port}/flink.%s.%s.confluent.cloud
+      url-pattern: http://localhost:${quarkus.wiremock.devservices.port}
   quarkus:
     wiremock:
       devservices:
