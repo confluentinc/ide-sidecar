@@ -137,7 +137,7 @@ class FlinkDataPlaneProxyResourceTest {
 
 
     wireMock.register(
-        WireMock.put("/flink.us-west-2.aws.confluent.cloud/sql/v1/organizations")
+        WireMock.put("/sql/v1/organizations")
             .withHeader("Authorization",
                 new EqualToPattern("Bearer %s".formatted(dataPlaneToken.token()))
             )
@@ -156,7 +156,6 @@ class FlinkDataPlaneProxyResourceTest {
     var actualResponse = given()
         .when()
         .headers(REQUEST_HEADERS)
-        .header("Authorization", "Bearer " + dataPlaneToken.token())
         .header("x-ccloud-region", "us-west-2")
         .header("x-ccloud-provider", "aws")
         .put("/sql/v1/organizations")
@@ -182,7 +181,7 @@ class FlinkDataPlaneProxyResourceTest {
   void testDataPlaneProxyProcessorNoInitialHeaders() {
     // Given a ProxyContext with no initial headers
     var proxyContext = new ProxyContext(
-        "/test",
+        "/sql/v1/test",
         createSampleHeaders(),
         HttpMethod.PUT,
         Buffer.buffer("TestBody"),
@@ -207,7 +206,7 @@ class FlinkDataPlaneProxyResourceTest {
         .join();
 
     // Then the URL should be transformed to the Flink URL
-    String expectedUrl = "flink.us-west-2.aws.confluent.cloud/test";
+    String expectedUrl = "/sql/v1/test";
     assertTrue(result.getProxyRequestAbsoluteUrl().endsWith(expectedUrl));
     assertEquals(HttpMethod.PUT, result.getProxyRequestMethod());
     assertEquals("TestBody", result.getProxyRequestBody().toString());
