@@ -37,7 +37,7 @@
     schema-fetch-retry:
       max-retries: 3
     flink:
-      url-pattern: http://localhost:${quarkus.wiremock.devservices.port}
+      url-pattern: http://localhost:${quarkus.wiremock.devservices.port}/flink.%s.%s.confluent.cloud
   quarkus:
     wiremock:
       devservices:
@@ -83,20 +83,20 @@ ide-sidecar:
     ccloud:
       check-token-expiration:
         interval-seconds: 5
-      control-plane-base-url: https://api.confluent.cloud
+      control-plane-base-url: https://api.devel.cpdev.cloud
       control-plane-token:
-        exchange-uri: https://confluent.cloud/api/sessions
-        check-jwt-uri: https://confluent.cloud/api/check_jwt
+        exchange-uri: https://api.devel.cpdev.cloud/sessions
+        check-jwt-uri: https://api.devel.cpdev.cloud/check_jwt
         life-time-seconds: 300
       data-plane-token:
-        exchange-uri: https://confluent.cloud/api/access_tokens
+        exchange-uri: https://api.devel.cpdev.cloud/access_tokens
       id-token:
-        exchange-uri: https://login.confluent.io/oauth/token
+        exchange-uri: https://login.confluent-dev.io/oauth/token
         life-time-seconds: 60
       oauth:
-        authorize-uri: https://login.confluent.io/oauth/authorize
-        client-id: Q93zdbI3FnltpEa9G1gg6tiMuoDDBkwS
-        login-realm-uri: https://confluent.cloud/api/login/realm
+        authorize-uri: https://login.confluent-dev.io/oauth/authorize
+        client-id: cUmAgrkbAZSqSiy38JE7Ya3i7FwXmyUF
+        login-realm-uri: https://api.devel.cpdev.cloud/login/realm
         redirect-uri: http://127.0.0.1:26636/gateway/v1/callback-vscode-docs
         # URI redirect to tell the VS Code extension if the auth flow completed successfully or not
         vscode-extension-uri: vscode://confluentinc.vscode-confluent/authCallback
@@ -106,12 +106,12 @@ ide-sidecar:
         absolute-lifetime-seconds: 28800
         max-refresh-attempts: 50
       resources:
-        homepage-uri: https://confluent.cloud/
-        org-list-uri: https://confluent.cloud/api/org/v2/organizations
-        env-list-uri: https://confluent.cloud/api/org/v2/environments
-        lkc-list-uri: https://confluent.cloud/api/cmk/v2/clusters?environment=%s
-        sr-list-uri: https://confluent.cloud/api/srcm/v3/clusters?environment=%s
-        flink-compute-pools-uri: https://confluent.cloud/api/fcpm/v2/compute-pools?environment=%s
+        homepage-uri: https://devel.cpdev.cloud/
+        org-list-uri: https://api.devel.cpdev.cloud/org/v2/organizations
+        env-list-uri: https://api.devel.cpdev.cloud/org/v2/environments
+        lkc-list-uri: https://api.devel.cpdev.cloud/cmk/v2/clusters?environment=%s
+        sr-list-uri: https://api.devel.cpdev.cloud/srcm/v3/clusters?environment=%s
+        flink-compute-pools-uri: https://api.devel.cpdev.cloud/fcpm/v2/compute-pools?environment=%s
 
     confluent-local:
       # We assume that the user is running the confluent-local image with
@@ -149,7 +149,7 @@ ide-sidecar:
     interval-seconds: 60
   flink-language-service-proxy:
     reconnect-attempts: 1
-    url-pattern: wss://flinkpls.{{ region }}.{{ provider }}.confluent.cloud/lsp
+    url-pattern: wss://flinkpls.{{ region }}.{{ provider }}.devel.cpdev.cloud/lsp
   proxy:
     ccloud-api-control-plane-regex: "(/artifact.*)|(/fcpm/v2/compute-pools.*)|(/metadata/security/v2alpha1/authorize)"
     ccloud-api-flink-data-plane-regex: "(/sql/v1.*)"

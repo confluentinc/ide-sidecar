@@ -1,5 +1,6 @@
 package io.confluent.idesidecar.restapi.util;
 
+import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.core.UriInfo;
 import java.net.URI;
@@ -68,19 +69,14 @@ public class UriUtil {
       // Create a URI from the base URL
       URI baseUri = new URI(baseUrl);
 
-      // Combine the base URI's path and the relative path passed in
-      if (baseUri.getPath() != null) {
-        relativePath = Path.of(baseUri.getPath(), relativePath).toString();
-      }
-
       URI relativeUri = new URI(relativePath);
 
       // Resolve the relative URI against the base URI
       URI resolvedUri = baseUri.resolve(relativeUri);
-
       // Return the resolved URI as a string
       return resolvedUri.toString();
     } catch (URISyntaxException e) {
+      Log.error("Could not combine invalid URIs", e);
       throw new IllegalArgumentException(INVALID_URI + baseUrl);
     }
   }
@@ -89,6 +85,7 @@ public class UriUtil {
     try {
       return new URI(uri).getHost();
     } catch (URISyntaxException e) {
+      Log.error("Could not extract host from invalid URI", e);
       throw new IllegalArgumentException(INVALID_URI + uri);
     }
   }
@@ -102,6 +99,7 @@ public class UriUtil {
       URI parsedUri = new URI(uri);
       return getHostAndPort(parsedUri, defaultPort);
     } catch (URISyntaxException e) {
+      Log.error("Could not extract host and port from invalid URI", e);
       throw new IllegalArgumentException(INVALID_URI + uri);
     }
   }
@@ -129,6 +127,7 @@ public class UriUtil {
       URI parsedUri = new URI(uri);
       return parsedUri.getPath() + (parsedUri.getQuery() != null ? "?" + parsedUri.getQuery() : "");
     } catch (URISyntaxException e) {
+      Log.error("Could not extract path from invalid URI", e);
       throw new IllegalArgumentException(INVALID_URI + uri);
     }
   }
