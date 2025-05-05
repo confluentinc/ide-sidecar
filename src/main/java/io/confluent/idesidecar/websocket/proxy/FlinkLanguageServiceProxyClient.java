@@ -15,8 +15,6 @@ import jakarta.websocket.Session;
 import java.io.IOException;
 import java.net.URI;
 import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicInteger;
-import org.eclipse.microprofile.config.ConfigProvider;
 
 /**
  * WebSocket client for connecting to the CCloud Flink Language Service.
@@ -25,15 +23,11 @@ import org.eclipse.microprofile.config.ConfigProvider;
 public class FlinkLanguageServiceProxyClient implements AutoCloseable {
 
   static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-  static final Integer MAX_RECONNECT_ATTEMPTS = ConfigProvider
-      .getConfig()
-      .getValue("ide-sidecar.flink-language-service-proxy.reconnect-attempts", Integer.class);
   static final String CCLOUD_DATA_PLANE_TOKEN_PLACEHOLDER = "{{ ccloud.data_plane_token }}";
 
   Session remoteSession;
   Session localSession;
   ProxyContext context;
-  AtomicInteger reconnectAttempts = new AtomicInteger(0);
 
   private FlinkLanguageServiceProxyClient() {}
 
@@ -74,40 +68,16 @@ public class FlinkLanguageServiceProxyClient implements AutoCloseable {
   @OnMessage
   public synchronized void onMessage(String message) {
     localSession.getAsyncRemote().sendText(message);
-    // Connection seems to be healthy, let's reset the number of reconnect attempts
-    reconnectAttempts.set(0);
   }
 
   @OnClose
   public synchronized void onClose(Session session, CloseReason closeReason) throws IOException {
-    if (CloseCodes.NORMAL_CLOSURE.equals(closeReason.getCloseCode())) {
-      Log.infof("Closing session normally.");
-      localSession.close(
-          new CloseReason(
-              CloseCodes.NORMAL_CLOSURE,
-              "Session closed normally."
-          )
-      );
-    } else if (reconnectAttempts.incrementAndGet() > MAX_RECONNECT_ATTEMPTS) {
-      // Increase number of attempts and close the session if the maximum number of attempts has
-      // been reached
-      Log.errorf("Max reconnect attempts reached. Closing session.");
-      localSession.close(
-          new CloseReason(
-              CloseCodes.GOING_AWAY,
-              "Max reconnect attempts reached. Lost connection to the remote server."
-          )
-      );
-    } else {
-      Log.infof("Reconnecting to CCloud Flink Language Service due to unexpected closure.");
-      this.remoteSession = null;
-      try {
-        var container = ContainerProvider.getWebSocketContainer();
-        container.connectToServer(this, URI.create(context.getConnectUrl()));
-      } catch (Exception e) {
-        throw new ProxyConnectionFailedException(e);
-      }
-    }
+    Log.infof("Closing session normally with status: %s and reason: %s.",
+        closeReason.getCloseCode().toString(),
+        closeReason.getReasonPhrase()
+    );
+    // Forward close reason from CCloud service to client
+    localSession.close(closeReason);
   }
 
   public synchronized Future<Void> sendToCCloud(String message) {
