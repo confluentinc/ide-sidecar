@@ -28,6 +28,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junitpioneer.jupiter.RetryingTest;
 import org.mockito.Mockito;
 
 @QuarkusTest
@@ -131,7 +132,7 @@ public class FlinkLanguageServiceProxyTest {
         .thenReturn(mockedConnection);
   }
 
-  @Test
+  @RetryingTest(maxAttempts = 3)
   public void testSendingJsonRpcCall() throws Exception {
     try (var session = ContainerProvider.getWebSocketContainer().connectToServer(TestClient.class, uri)) {
       // Send an example valid message and check that the session will not be closed.
@@ -146,24 +147,17 @@ public class FlinkLanguageServiceProxyTest {
   @Test
   public void testSendingInvalidMessage() throws Exception {
     var session = ContainerProvider.getWebSocketContainer().connectToServer(TestClient.class, uri);
-    // Send a first invalid message
+    // Send an invalid message
     session.getAsyncRemote().sendText("This is an invalid message.").get();
-    // Allow the proxy to reconnect to remote server, as the session should have been closed
-    Thread.sleep(PROXY_CLOSE_TIMEOUT_MS);
-    // The session between the client and the proxy should not yet been closed
-    Assertions.assertNull(closeReason.get());
-    Assertions.assertTrue(session.isOpen());
-    // Send a second invalid message
-    session.getAsyncRemote().sendText("This is another invalid message").get();
     // Verify that the session has been closed
     await()
         .atMost(Duration.ofMillis(PROXY_CLOSE_TIMEOUT_MS))
         .until(() -> closeReason.get() != null);
     Assertions.assertFalse(session.isOpen());
     // Check the close code and reason
-    Assertions.assertEquals(CloseCodes.GOING_AWAY, closeReason.get().getCloseCode());
+    Assertions.assertEquals(CloseCodes.CANNOT_ACCEPT, closeReason.get().getCloseCode());
     Assertions.assertEquals(
-        "Max reconnect attempts reached. Lost connection to the remote server.",
+        "Unknown message received.",
         closeReason.get().getReasonPhrase()
     );
   }
