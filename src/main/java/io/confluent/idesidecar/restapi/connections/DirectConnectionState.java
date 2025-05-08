@@ -382,12 +382,19 @@ public class DirectConnectionState extends ConnectionState {
         false,
         TIMEOUT
     );
+
     var restService = new RestService(config.uri());
     restService.configure(srClientConfig);
+    if (config.tlsConfig() != null && Boolean.FALSE.equals(config.tlsConfig().verifyHostname())) {
+      // Disable hostname verification
+      restService.setHostnameVerifier((hostname, session) -> true);
+    }
+
     var sslFactory = new SslFactory(srClientConfig);
     if (sslFactory.sslContext() != null) {
       restService.setSslSocketFactory(sslFactory.sslContext().getSocketFactory());
     }
+
     return new SidecarSchemaRegistryClient(restService, 10);
   }
 }
