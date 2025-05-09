@@ -113,6 +113,10 @@ public class SchemaRegistryClients extends Clients<SchemaRegistryClient> {
   ) {
     var restService = new RestService(srClusterUri);
     restService.configure(configurationProperties);
+    if ("".equals(configurationProperties.get("ssl.endpoint.identification.algorithm"))) {
+      // Disable hostname verification
+      restService.setHostnameVerifier((hostname, session) -> true);
+    }
 
     var httpHeaders = new HashMap<String, String>();
     headers.forEach(entry -> httpHeaders.put(entry.getKey(), entry.getValue()));

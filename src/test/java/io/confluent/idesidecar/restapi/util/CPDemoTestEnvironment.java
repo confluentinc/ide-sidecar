@@ -8,7 +8,9 @@ import io.confluent.idesidecar.restapi.credentials.Password;
 import io.confluent.idesidecar.restapi.credentials.ScramCredentials;
 import io.confluent.idesidecar.restapi.credentials.ScramCredentials.HashAlgorithm;
 import io.confluent.idesidecar.restapi.credentials.TLSConfig;
+import io.confluent.idesidecar.restapi.credentials.TLSConfig.TrustStore;
 import io.confluent.idesidecar.restapi.credentials.TLSConfigBuilder;
+import io.confluent.idesidecar.restapi.credentials.TLSConfigTrustStoreBuilder;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionSpecKafkaClusterConfigBuilder;
 import io.confluent.idesidecar.restapi.models.ConnectionSpecSchemaRegistryConfigBuilder;
@@ -389,6 +391,67 @@ public class CPDemoTestEnvironment implements TestEnvironment {
                 .tlsConfig(TLSConfigBuilder.builder().enabled(false).build())
                 .build(),
             null
+        )
+    );
+  }
+
+  public Optional<ConnectionSpec> directConnectionSpecWithoutHostnameVerification() {
+    var cwd = System.getProperty("user.dir");
+    var schemaRegistryTrustStoreLocation = new File(cwd,
+        ".cp-demo/scripts/security/kafka.schemaregistry.truststore.jks"
+    ).getAbsolutePath();
+    var password = new Password("confluent".toCharArray());
+    var kafkaTrustStoreLocation = new File(cwd,
+        ".cp-demo/scripts/security/kafka.kafka1.truststore.jks"
+    ).getAbsolutePath();
+
+    return Optional.of(
+        ConnectionSpec.createDirect(
+            "direct-to-local-connection-without-hostname-verification",
+            "Direct to Local without Hostname Verification",
+            ConnectionSpecKafkaClusterConfigBuilder
+                .builder()
+                .bootstrapServers("localhost:11091")
+                .tlsConfig(
+                    TLSConfigBuilder
+                        .builder()
+                        .verifyHostname(false)
+                        .truststore(
+                            new TLSConfig.TrustStore(
+                                kafkaTrustStoreLocation,
+                                password,
+                                null
+                            )
+                        )
+                        .enabled(true)
+                        .build()
+                )
+                .build(),
+            ConnectionSpecSchemaRegistryConfigBuilder
+                .builder()
+                .id("local-sr-cp-demo")
+                // Using the IP address fails the hostname verification
+                .uri("https://127.0.0.1:8085")
+                .credentials(
+                    new BasicCredentials(
+                        "superUser",
+                        new Password("superUser".toCharArray())
+                    )
+                )
+                .tlsConfig(
+                    TLSConfigBuilder.builder()
+                        .enabled(true)
+                        .verifyHostname(false)
+                        .truststore(
+                            new TLSConfig.TrustStore(
+                                schemaRegistryTrustStoreLocation,
+                                password,
+                                null
+                            )
+                        )
+                        .build()
+                )
+                .build()
         )
     );
   }
