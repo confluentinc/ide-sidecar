@@ -138,4 +138,27 @@ public class ConfluentPlatformIT {
       setupConnection(this, TestEnvironment::directConnectionSpec);
     }
   }
+
+  @QuarkusIntegrationTest
+  @Tag("io.confluent.common.utils.IntegrationTest")
+  @TestProfile(NoAccessFilterProfile.class)
+  @Nested
+  @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+  class WithoutHostnameVerificationRecordTests extends AbstractIT implements
+      RecordsV3Suite, RecordsV3ErrorsSuite {
+
+    @Override
+    public CPDemoTestEnvironment environment() {
+      return TEST_ENVIRONMENT;
+    }
+
+    @BeforeEach
+    @Override
+    public void setupConnection() {
+      setupConnection(
+          this,
+          environment().directConnectionSpecWithoutHostnameVerification()
+      );
+    }
+  }
 }
