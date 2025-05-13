@@ -2,7 +2,6 @@ package io.confluent.idesidecar.restapi.credentials;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.confluent.idesidecar.restapi.exceptions.Failure.Error;
-import io.confluent.idesidecar.restapi.util.OperatingSystemType;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import io.soabase.recordbuilder.core.RecordBuilder;
 import org.apache.kafka.clients.CommonClientConfigs;
