@@ -39,18 +39,22 @@ public record Preferences(
   }
 
   @JsonPropertyOrder({
+      "kerberos_config_file_path",
       "tls_pem_paths",
       "trust_all_certificates"
   })
   public record PreferencesSpec(
+      @JsonProperty("kerberos_config_file_path") String kerberosConfigFilePath,
       @JsonProperty("tls_pem_paths") List<String> tlsPemPaths,
       @JsonProperty("trust_all_certificates") Boolean trustAllCertificates
   ) {
 
     public PreferencesSpec(
+        String kerberosConfigFilePath,
         List<String> tlsPemPaths,
         Boolean trustAllCertificates
     ) {
+      this.kerberosConfigFilePath = kerberosConfigFilePath != null ? kerberosConfigFilePath : "";
       this.tlsPemPaths = tlsPemPaths != null ? tlsPemPaths : List.of();
       this.trustAllCertificates = trustAllCertificates != null ? trustAllCertificates : false;
     }
@@ -61,7 +65,12 @@ public record Preferences(
      * @throws InvalidPreferencesException if any of the preferences are invalid
      */
     public void validate() throws InvalidPreferencesException {
-      var errors = validateTlsPemPaths();
+      var errors = Stream
+          .concat(
+              validateTlsPemPaths(),
+              validateKerberosConfigFilePath()
+          )
+          .toList();
 
       if (!errors.isEmpty()) {
         throw new InvalidPreferencesException(errors);
@@ -74,7 +83,7 @@ public record Preferences(
      *
      * @return a list of errors if any of the TLS PEM paths are invalid
      */
-    List<Error> validateTlsPemPaths() {
+    Stream<Error> validateTlsPemPaths() {
       return this.tlsPemPaths.stream()
           .flatMap(pemPath -> {
             if (pemPath == null || pemPath.isBlank()) {
@@ -98,8 +107,31 @@ public record Preferences(
             } else {
               return Stream.empty();
             }
-          })
-          .toList();
+          });
+    }
+
+    /**
+     * Validates the Kerberos config file path provided in the preferences. Checks if the provided
+     * path exists in the file system and is not empty.
+     *
+     * @return the error if the Kerberos config file path is invalid
+     */
+    Stream<Error> validateKerberosConfigFilePath() {
+      if (kerberosConfigFilePath != null
+          && !kerberosConfigFilePath.isBlank()
+          && Files.notExists(Path.of(kerberosConfigFilePath))
+      ) {
+        return Stream.of(
+            new Error(
+                "krb5_config_file_not_found",
+                "Kerberos config file cannot be found",
+                "The Kerberos config file '%s' cannot be found.".formatted(kerberosConfigFilePath),
+                "/spec/kerberos_config_file_path"
+            )
+        );
+      } else {
+        return Stream.empty();
+      }
     }
   }
 

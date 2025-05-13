@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import io.confluent.idesidecar.restapi.credentials.KerberosCredentials;
 import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
 import io.confluent.idesidecar.restapi.util.WebClientFactory;
 import io.quarkus.test.common.http.TestHTTPEndpoint;
@@ -158,6 +159,7 @@ public class PreferencesResourceTest {
                   "api_version": "gateway/v1",
                   "kind": "Preferences",
                   "spec": {
+                    "kerberos_config_file_path": null,
                     "tls_pem_paths": null,
                     "trust_all_certificates": null
                   }
@@ -242,6 +244,87 @@ public class PreferencesResourceTest {
     var error = errors.get(0);
     assertEquals("cert_path_empty", error.get("code").textValue());
     assertEquals("The cert file path cannot be null or empty.", error.get("detail").textValue());
+  }
+
+  @Test
+  @Order(7)
+  void updatePreferencesShouldReturnErrorIfProvidedKerberosConfigFilePathDoesNotExist() {
+    var responseBody = given()
+        .when()
+        .body(
+            """
+                {
+                  "api_version": "gateway/v1",
+                  "kind": "Preferences",
+                  "spec": {
+                    "kerberos_config_file_path": "does-not-exist.cfg"
+                  }
+                }
+                """
+        )
+        .header("Content-Type", "application/json")
+        .put()
+        .then()
+        .statusCode(400)
+        .extract()
+        .body()
+        .asString();
+    var responseJson = asJson(responseBody);
+
+    assertNotNull(responseJson);
+    var errors = responseJson.get("errors");
+    assertNotNull(errors);
+    var error = errors.get(0);
+    assertEquals(
+        "The Kerberos config file 'does-not-exist.cfg' cannot be found.",
+        error.get("detail").textValue()
+    );
+  }
+
+  @Test
+  @Order(8)
+  void updatePreferencesShouldUpdateTheKerberosSystemProperty() {
+    // Make sure the system property is empty
+    System.setProperty(KerberosCredentials.KERBEROS_CONFIG_FILE_PROPERTY_NAME, "");
+
+    var configFilePath = Thread
+        .currentThread()
+        .getContextClassLoader()
+        .getResource("credentials/empty-krb5-config.cfg")
+        .getFile();
+    var responseBody = given()
+        .when()
+        .body(
+            """
+                {
+                  "api_version": "gateway/v1",
+                  "kind": "Preferences",
+                  "spec": {
+                    "kerberos_config_file_path": "%s",
+                    "tls_pem_paths": [],
+                    "trust_all_certificates": false
+                  }
+                }
+                """.formatted(configFilePath)
+        )
+        .header("Content-Type", "application/json")
+        .put()
+        .then()
+        .statusCode(200)
+        .extract()
+        .body()
+        .asString();
+    var responseJson = asJson(responseBody);
+
+    var expectedResponse = loadResource(
+        "preferences/update-kerberos-config-file-path-response.json");
+    var expectedResponseJson = asJson(expectedResponse.formatted(configFilePath));
+    assertEquals(expectedResponseJson, responseJson);
+
+    assertEquals(
+        configFilePath,
+        System.getProperty(KerberosCredentials.KERBEROS_CONFIG_FILE_PROPERTY_NAME)
+    );
   }
 
   /**
