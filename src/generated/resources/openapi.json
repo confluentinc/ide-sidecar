@@ -1412,6 +1412,9 @@
       "PreferencesSpec" : {
         "type" : "object",
         "properties" : {
+          "kerberos_config_file_path" : {
+            "type" : "string"
+          },
           "tls_pem_paths" : {
             "type" : "array",
             "items" : {

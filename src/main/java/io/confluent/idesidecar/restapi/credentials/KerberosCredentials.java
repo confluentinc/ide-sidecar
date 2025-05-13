@@ -33,6 +33,8 @@ public record KerberosCredentials(
     String serviceName
 ) implements Credentials {
 
+  public static final String KERBEROS_CONFIG_FILE_PROPERTY_NAME = "java.security.krb5.conf";
+
   private static final String KERBEROS_LOGIN_MODULE_CLASS =
       "com.sun.security.auth.module.Krb5LoginModule";
 
