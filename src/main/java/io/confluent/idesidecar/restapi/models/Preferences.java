@@ -81,7 +81,7 @@ public record Preferences(
      * Validates the TLS PEM paths provided in the preferences. Checks if the provided paths exist
      * in the file system and are not empty.
      *
-     * @return a list of errors if any of the TLS PEM paths are invalid
+     * @return errors if any of the TLS PEM paths are invalid
      */
     Stream<Error> validateTlsPemPaths() {
       return this.tlsPemPaths.stream()
@@ -112,7 +112,7 @@ public record Preferences(
 
     /**
      * Validates the Kerberos config file path provided in the preferences. Checks if the provided
-     * path exists in the file system and is not empty.
+     * path exists in the file system.
      *
      * @return the error if the Kerberos config file path is invalid
      */
