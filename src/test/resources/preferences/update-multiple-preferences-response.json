@@ -5,6 +5,7 @@
     "self": "http://localhost:26637/gateway/v1/preferences"
   },
   "spec": {
+    "kerberos_config_file_path": "",
     "tls_pem_paths": ["%s"],
     "trust_all_certificates": true
   }
