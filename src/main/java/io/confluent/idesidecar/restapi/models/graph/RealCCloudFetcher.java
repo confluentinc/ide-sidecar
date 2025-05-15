@@ -546,7 +546,7 @@ public class RealCCloudFetcher extends ConfluentCloudRestClient implements CClou
   ) {
     var headers = headersFor(connectionId);
     String url = CONFLUENT_CLOUD_FLINK_COMPUTE_POOLS_URI.formatted(envId);
-    Log.infof("Fetching Flink compute pools from URL: %s with headers: %s", url, headers);
+    Log.infof("Fetching Flink compute pools from URL: %s", url);
     return listItems(headers, url, null, this::parseFlinkComputePoolsList)
         .map(pool -> pool.withConnectionId(connectionId));
   }
