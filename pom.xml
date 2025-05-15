@@ -46,7 +46,7 @@
     <license.current.year>2024</license.current.year>
     <project.inceptionYear>2024</project.inceptionYear>
     <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
-    <vertx.version>4.5.10</vertx.version>
+    <vertx.version>5.0.0</vertx.version>
     <wiremock.version>1.3.2</wiremock.version>
     <netty.version>4.1.109.Final</netty.version>
     <commons-codec.version>1.17.0</commons-codec.version>
