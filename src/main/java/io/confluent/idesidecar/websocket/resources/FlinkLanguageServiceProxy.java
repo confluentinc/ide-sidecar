@@ -32,7 +32,8 @@ public class FlinkLanguageServiceProxy {
   Map<String, FlinkLanguageServiceProxyClient> proxyClients = new ConcurrentHashMap<>();
 
   @OnOpen
-  public void onOpen(Session session) throws IOException {
+  public synchronized void onOpen(Session session) throws IOException {
+    Log.infof("Opening new LSP client for session ID=%s", session.getId());
     var context = ProxyContext.from(session);
     if (proxyClients.containsKey(session.getId())) {
       session.close(
@@ -80,11 +81,16 @@ public class FlinkLanguageServiceProxy {
   }
 
   @OnMessage
-  public void onMessage(String message, Session session) throws IOException {
+  public synchronized void onMessage(String message, Session session) throws IOException {
+    Log.infof("Processing message for session ID=%s message=%s", session.getId(), message);
     var client = proxyClients.get(session.getId());
     if (client != null) {
       client.sendToCCloud(message);
     } else {
+      Log.errorf(
+          "No client exists for the given session. Available session IDs: %s",
+          proxyClients.keySet().toString()
+      );
       session.close(
           new CloseReason(
               CloseCodes.CANNOT_ACCEPT,
@@ -95,7 +101,7 @@ public class FlinkLanguageServiceProxy {
   }
 
   @OnClose
-  public void onClose(Session session) {
+  public synchronized void onClose(Session session) {
     var client = proxyClients.get(session.getId());
     if (client != null) {
       // Close WebSockets session to CCloud Language Service
