@@ -11,7 +11,7 @@
 
   <groupId>io.confluent</groupId>
   <artifactId>ide-sidecar</artifactId>
-  <version>0.187.0</version>
+  <version>0.202.0</version>
   <packaging>jar</packaging>
   <name>IDE Sidecar</name>
   <description>Sidecar used by Confluent for VS Code.</description>
@@ -213,11 +213,6 @@
       <artifactId>jackson-dataformat-avro</artifactId>
       <version>${jackson-dataformat.version}</version>
     </dependency>
-    <dependency>
-      <groupId>com.launchdarkly</groupId>
-      <artifactId>launchdarkly-java-server-sdk</artifactId>
-      <version>${launch-darkly-sdk.version}</version>
-    </dependency>
     <!-- BEGIN: Quarkus extensions for Kafka and SR clients -->
     <!-- This Quarkus extension registers the many classes that may be loaded reflectively by the Kafka client -->
     <dependency>
@@ -317,7 +312,7 @@
     <dependency>
       <groupId>io.soabase.record-builder</groupId>
       <artifactId>record-builder-processor</artifactId>
-      <version>43</version>
+      <version>45</version>
       <scope>compile</scope>
     </dependency>
   </dependencies>
@@ -818,7 +813,7 @@
             <path>
               <groupId>io.soabase.record-builder</groupId>
               <artifactId>record-builder-processor</artifactId>
-              <version>43</version>
+              <version>45</version>
             </path>
           </annotationProcessorPaths>
           <compilerArgs>

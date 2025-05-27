@@ -137,7 +137,7 @@ class FlinkDataPlaneProxyResourceTest {
 
 
     wireMock.register(
-        WireMock.put("/flink.us-west-2.aws.confluent.cloud/sql/v1/organizations")
+        WireMock.put("/sql/v1/organizations")
             .withHeader("Authorization",
                 new EqualToPattern("Bearer %s".formatted(dataPlaneToken.token()))
             )
@@ -156,7 +156,6 @@ class FlinkDataPlaneProxyResourceTest {
     var actualResponse = given()
         .when()
         .headers(REQUEST_HEADERS)
-        .header("Authorization", "Bearer " + dataPlaneToken.token())
         .header("x-ccloud-region", "us-west-2")
         .header("x-ccloud-provider", "aws")
         .put("/sql/v1/organizations")
@@ -182,7 +181,7 @@ class FlinkDataPlaneProxyResourceTest {
   void testDataPlaneProxyProcessorNoInitialHeaders() {
     // Given a ProxyContext with no initial headers
     var proxyContext = new ProxyContext(
-        "/test",
+        "/sql/v1/test",
         createSampleHeaders(),
         HttpMethod.PUT,
         Buffer.buffer("TestBody"),
@@ -207,7 +206,7 @@ class FlinkDataPlaneProxyResourceTest {
         .join();
 
     // Then the URL should be transformed to the Flink URL
-    String expectedUrl = "flink.us-west-2.aws.confluent.cloud/test";
+    String expectedUrl = "/sql/v1/test";
     assertTrue(result.getProxyRequestAbsoluteUrl().endsWith(expectedUrl));
     assertEquals(HttpMethod.PUT, result.getProxyRequestMethod());
     assertEquals("TestBody", result.getProxyRequestBody().toString());
@@ -247,7 +246,7 @@ class FlinkDataPlaneProxyResourceTest {
 
     // Verify the exception contains the expected message
     assertInstanceOf(ProcessorFailedException.class, exception.getCause());
-    assertEquals("Missing required headers: x-ccloud-region and x-ccloud-provider are required for Flink requests",
+    assertEquals("Region specified in request header 'x-ccloud-region' is missing or invalid.",
         exception.getCause().getMessage());
   }
 
@@ -285,7 +284,7 @@ class FlinkDataPlaneProxyResourceTest {
 
     // Verify the exception contains the expected message
     assertInstanceOf(ProcessorFailedException.class, exception.getCause());
-    assertEquals("Missing required headers: x-ccloud-region and x-ccloud-provider are required for Flink requests",
+    assertEquals("CCloud provider specified in request header 'x-ccloud-provider' is missing or invalid.",
         exception.getCause().getMessage());
   }
 
@@ -371,4 +370,80 @@ class FlinkDataPlaneProxyResourceTest {
     assertEquals(HttpMethod.POST, result.getProxyRequestMethod());
     assertEquals("test-request-body", result.getProxyRequestBody().toString());
   }
+
+  @Test
+  void testDataPlaneProxyProcessorBadProviderHeader() {
+    // Given a ProxyContext with no region header
+    MultiMap headers = createSampleHeaders();
+    headers.set("x-ccloud-provider", "invalid-provider");
+    var proxyContext = new ProxyContext(
+        "http://localhost/test",
+        headers,
+        HttpMethod.PUT,
+        Buffer.buffer("TestBody"),
+        Map.of(),
+        "test-connection-id"
+    );
+
+    // Create a mock processor to be the next in the chain
+    Processor<ProxyContext, Future<ProxyContext>> nextProcessor = new Processor<>() {
+      @Override
+      public Future<ProxyContext> process(ProxyContext context) {
+        return Future.succeededFuture(context);
+      }
+    };
+
+    flinkDataPlaneProxyProcessor.setNext(nextProcessor);
+
+    // The processor should throw a ProcessorFailedException
+    CompletionException exception = assertThrows(CompletionException.class, () -> {
+      flinkDataPlaneProxyProcessor.process(proxyContext)
+          .toCompletionStage()
+          .toCompletableFuture()
+          .join();
+    });
+
+    // Verify the exception contains the expected message
+    assertInstanceOf(ProcessorFailedException.class, exception.getCause());
+    assertEquals("CCloud provider specified in request header 'x-ccloud-provider' is missing or invalid.",
+        exception.getCause().getMessage());
+  }
+  @Test
+  void testDataPlaneProxyProcessorEmptyRegionHeader() {
+    // Given a ProxyContext with no region header
+    MultiMap headers = createSampleHeaders();
+    headers.set("x-ccloud-region", "");
+    var proxyContext = new ProxyContext(
+        "http://localhost/test",
+        headers,
+        HttpMethod.PUT,
+        Buffer.buffer("TestBody"),
+        Map.of(),
+        "test-connection-id"
+    );
+
+    // Create a mock processor to be the next in the chain
+    Processor<ProxyContext, Future<ProxyContext>> nextProcessor = new Processor<>() {
+      @Override
+      public Future<ProxyContext> process(ProxyContext context) {
+        return Future.succeededFuture(context);
+      }
+    };
+
+    flinkDataPlaneProxyProcessor.setNext(nextProcessor);
+
+    // The processor should throw a ProcessorFailedException
+    CompletionException exception = assertThrows(CompletionException.class, () -> {
+      flinkDataPlaneProxyProcessor.process(proxyContext)
+          .toCompletionStage()
+          .toCompletableFuture()
+          .join();
+    });
+
+    // Verify the exception contains the expected message
+    assertInstanceOf(ProcessorFailedException.class, exception.getCause());
+    assertEquals("Region specified in request header 'x-ccloud-region' is missing or invalid.",
+        exception.getCause().getMessage());
+  }
+
 }

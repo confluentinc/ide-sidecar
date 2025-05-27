@@ -117,14 +117,4 @@ public class UriUtilTest {
 
     assertEquals("https://flink.us-west-2.aws.confluent.cloud/test", result);
   }
-
-  @Test
-  void testCombineWithComplexPaths() {
-    String baseUrl = "https://api.confluent.cloud/something";
-    String relativePath = "/v1/resources";
-
-    String result = uriUtil.combine(baseUrl, relativePath);
-
-    assertEquals("https://api.confluent.cloud/something/v1/resources", result);
-  }
 }

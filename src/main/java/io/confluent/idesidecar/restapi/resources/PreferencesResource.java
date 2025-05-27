@@ -32,7 +32,7 @@ public class PreferencesResource {
   Event<PreferencesSpec> preferencesChangeEvents;
 
   volatile Preferences preferences = new Preferences(
-      new PreferencesSpec(null, null)
+      new PreferencesSpec(null, null, null)
   );
 
   @GET
