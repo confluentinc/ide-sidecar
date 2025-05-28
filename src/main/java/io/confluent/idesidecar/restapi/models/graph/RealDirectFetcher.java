@@ -79,6 +79,21 @@ public class RealDirectFetcher extends ConfluentRestClient implements DirectFetc
   }
 
   @Override
+  public DirectConnection getDirectConnectionByID(String connectionID) {
+    return connections
+        .getConnectionStates()
+        .stream()
+        .filter(connection -> DIRECT.equals(connection.getSpec().type())
+            && connection.getSpec().id().equals(connectionID))
+        .findFirst()
+        .map(connection -> new DirectConnection(
+            connection.getSpec().id(),
+            connection.getSpec().name()
+        ))
+        .orElse(null);
+  }
+
+  @Override
   public Uni<DirectKafkaCluster> getKafkaCluster(String connectionId) {
     var state = connections.getConnectionState(connectionId);
     if (state instanceof DirectConnectionState directState) {
