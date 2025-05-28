@@ -114,7 +114,7 @@ type Query {
   directConnections: [DirectConnection]!
   "Find CCloud Kafka clusters using a connection and various criteria"
   findCCloudKafkaClusters(connectionId: String!, environmentId: String = "", name: String = "", provider: String = "", region: String = ""): [CCloudKafkaCluster]!
-  "Get direction connection by ID"
+  "Get direct connection by ID"
   getConnectionByID(connectionID: String): DirectConnection!
   "Get Flink compute pools for a specific connection and environment"
   getFlinkComputePools(connectionId: String!, envId: String!): [CCloudFlinkComputePool]!
