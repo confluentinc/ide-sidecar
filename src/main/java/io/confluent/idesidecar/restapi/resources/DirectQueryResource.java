@@ -43,7 +43,7 @@ public class DirectQueryResource {
    * @return the connection; never null but possibly empty
    */
   @Query("getConnectionByID")
-  @Description("Get direction connection by ID")
+  @Description("Get direct connection by ID")
   @NonNull
   public DirectConnection getDirectConnectionByID(String connectionID) {
     return direct.getConnectionByID(connectionID);
