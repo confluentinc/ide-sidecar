@@ -1,5 +1,7 @@
 package io.confluent.idesidecar.restapi.models.graph;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.eq;
@@ -21,6 +23,7 @@ import io.smallrye.mutiny.Uni;
 import jakarta.inject.Inject;
 import java.io.IOException;
 import java.time.Duration;
+import java.util.List;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.DescribeClusterResult;
 import org.apache.kafka.common.KafkaFuture;
@@ -130,6 +133,33 @@ public class RealDirectFetcherTest {
 
       // Then the Kafka cluster will be null
       assertNull(kafkaCluster.await().atMost(ONE_SECOND));
+    }
+
+    @Test
+    void shouldGetConnectionByID() throws Exception {
+      // Given a connection spec in the manager
+      var connection = new DirectConnectionState(KAFKA_AND_SR_SPEC, null);
+      when(connections.getConnectionStates()).thenReturn(List.of(connection));
+
+      // When we try to fetch the connection by ID
+      DirectConnection result = directFetcher.getDirectConnectionByID(CONNECTION_ID);
+
+      // Then the connection should be returned with correct ID and name
+      assertNotNull(result);
+      assertEquals(CONNECTION_ID, result.getId());
+      assertEquals("my connection", result.getName());
+    }
+
+    @Test
+    void shouldReturnNullForNonexistentConnectionID() throws Exception {
+      // Given an empty connection list
+      when(connections.getConnectionStates()).thenReturn(List.of());
+
+      // When we try to fetch a connection with a non-existent ID
+      DirectConnection result = directFetcher.getDirectConnectionByID("nonexistent-id");
+
+      // Then null should be returned
+      assertNull(result);
     }
 
     @Test
@@ -350,6 +380,31 @@ public class RealDirectFetcherTest {
 
       // Then the cluster will be null
       assertNull(srCluster.await().atMost(ONE_SECOND));
+    }
+
+    @Test
+    void shouldThrowExceptionForNonDirectConnection() {
+      // Given a non-DIRECT connection spec in the manager
+      var nonDirectSpec = ConnectionSpecBuilder
+          .builder()
+          .id("non-direct-id")
+          .name("non direct connection")
+          .type(ConnectionSpec.ConnectionType.CCLOUD)
+          .build();
+      var connection = new DirectConnectionState(nonDirectSpec, null);
+      when(connections.getConnectionStates()).thenReturn(List.of(connection));
+
+      // When we try to fetch the connection by ID
+      // Then an exception should be thrown
+      Exception exception = assertThrows(
+          Exception.class,
+          () -> directFetcher.getDirectConnectionByID("non-direct-id")
+      );
+
+      assertEquals(
+          "Connection with ID=non-direct-id is not a direct connection.",
+          exception.getMessage()
+      );
     }
   }
 }
