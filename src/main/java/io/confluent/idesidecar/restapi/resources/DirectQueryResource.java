@@ -40,7 +40,7 @@ public class DirectQueryResource {
   /**
    * Get {@link DirectConnection} by ID.
    *
-   * @return the connection; never null but possibly empty
+   * @return the connection
    */
   @Query("getConnectionByID")
   @Description("Get direct connection by ID")
