@@ -141,7 +141,7 @@ public class RealDirectFetcherTest {
       when(connections.getConnectionStates()).thenReturn(List.of(connection));
 
       // When we try to fetch the connection by ID
-      DirectConnection result = directFetcher.getConnectionByID(CONNECTION_ID);
+      DirectConnection result = directFetcher.getDirectConnectionByID(CONNECTION_ID);
 
       // Then the connection should be returned with correct ID and name
       assertNotNull(result);
@@ -155,7 +155,7 @@ public class RealDirectFetcherTest {
       when(connections.getConnectionStates()).thenReturn(List.of());
 
       // When we try to fetch a connection with a non-existent ID
-      DirectConnection result = directFetcher.getConnectionByID("nonexistent-id");
+      DirectConnection result = directFetcher.getDirectConnectionByID("nonexistent-id");
 
       // Then null should be returned
       assertNull(result);

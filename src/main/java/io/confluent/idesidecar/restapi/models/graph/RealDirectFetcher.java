@@ -79,7 +79,7 @@ public class RealDirectFetcher extends ConfluentRestClient implements DirectFetc
   }
 
   @Override
-  public DirectConnection getConnectionByID(String connectionID) {
+  public DirectConnection getDirectConnectionByID(String connectionID) {
     return connections
         .getConnectionStates()
         .stream()
