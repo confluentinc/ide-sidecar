@@ -16,7 +16,7 @@ public interface DirectFetcher {
    * Get direct connection by ID.
    *
    * @param connectionId the ID of the connection
-   * @return the direct connection by ID; never null but possibly empty
+   * @return the direct connection by ID; may be null
    */
   DirectConnection getConnectionByID(String connectionID);
 
