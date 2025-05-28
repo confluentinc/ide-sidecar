@@ -79,18 +79,26 @@ public class RealDirectFetcher extends ConfluentRestClient implements DirectFetc
   }
 
   @Override
-  public DirectConnection getDirectConnectionByID(String connectionID) {
-    return connections
+  public DirectConnection getDirectConnectionByID(String connectionID) throws Exception {
+    var connection = connections
         .getConnectionStates()
         .stream()
-        .filter(connection -> DIRECT.equals(connection.getSpec().type())
-            && connection.getSpec().id().equals(connectionID))
-        .findFirst()
-        .map(connection -> new DirectConnection(
-            connection.getSpec().id(),
-            connection.getSpec().name()
-        ))
-        .orElse(null);
+        .filter(conn -> conn.getSpec().id().equals(connectionID))
+        .findFirst();
+
+    if (connection.isPresent()) {
+      var foundConnection = connection.get();
+      if (!DIRECT.equals(foundConnection.getSpec().type())) {
+        throw new Exception(
+            "Connection with ID=" + connectionID + " is not a direct connection."
+        );
+      }
+      return new DirectConnection(
+          foundConnection.getSpec().id(),
+          foundConnection.getSpec().name()
+      );
+    }
+    return null;
   }
 
   @Override

@@ -42,10 +42,10 @@ public class DirectQueryResource {
    *
    * @return the connection
    */
-  @Query("getConnectionByID")
+  @Query("directConnectionById")
   @Description("Get direct connection by ID")
   @NonNull
-  public DirectConnection getDirectConnectionByID(String connectionID) {
+  public DirectConnection getDirectConnectionByID(String connectionID) throws Exception {
     return direct.getDirectConnectionByID(connectionID);
   }
 

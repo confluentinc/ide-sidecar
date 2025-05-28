@@ -18,7 +18,7 @@ public interface DirectFetcher {
    * @param connectionId the ID of the connection
    * @return the direct connection by ID; may be null
    */
-  DirectConnection getDirectConnectionByID(String connectionID);
+  DirectConnection getDirectConnectionByID(String connectionID) throws Exception;
 
   /**
    * Get the Kafka cluster or broker.
