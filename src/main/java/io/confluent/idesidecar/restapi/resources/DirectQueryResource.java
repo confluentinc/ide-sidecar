@@ -38,6 +38,18 @@ public class DirectQueryResource {
   }
 
   /**
+   * Get {@link DirectConnection} by ID.
+   *
+   * @return the connection
+   */
+  @Query("getConnectionByID")
+  @Description("Get direct connection by ID")
+  @NonNull
+  public DirectConnection getDirectConnectionByID(String connectionID) {
+    return direct.getConnectionByID(connectionID);
+  }
+
+  /**
    * Get the Kafka cluster for the given direct connection.
    *
    * @param connection the direct connection
