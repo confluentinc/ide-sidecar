@@ -27,16 +27,18 @@
           broker-adv-listeners-config-uri: http://localhost:${quarkus.wiremock.devservices.port}/v3/clusters/%s/brokers/%s/configs/advertised.listeners
           kafka-topic-uri: http://localhost:${quarkus.wiremock.devservices.port}/v3/clusters/%s/topics/%s
       direct:
-        refresh-status-interval-seconds: 15
-        timeout-seconds: 15
+        # smaller timeouts for tests
+        refresh-status-interval-seconds: 5
+        timeout-seconds: 5
     grim-reaper:
       # Should we check for remaining living vs code processes at all, and exit() if none left?
       enabled: false
       # How often to check?
       interval-seconds: 60
     admin-client-configs:
-      "default.api.timeout.ms": 15000
-      "request.timeout.ms": 15000
+      # smaller timeouts for tests
+      "default.api.timeout.ms": 5000
+      "request.timeout.ms": 5000
     flink-language-service-proxy:
       url-pattern: ws://127.0.0.1:${quarkus.http.test-port}/fls-mock
     schema-fetch-error-ttl: 30
