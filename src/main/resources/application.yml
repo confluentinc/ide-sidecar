@@ -26,11 +26,17 @@
           brokers-list-uri: http://localhost:${quarkus.wiremock.devservices.port}/v3/clusters/%s/brokers
           broker-adv-listeners-config-uri: http://localhost:${quarkus.wiremock.devservices.port}/v3/clusters/%s/brokers/%s/configs/advertised.listeners
           kafka-topic-uri: http://localhost:${quarkus.wiremock.devservices.port}/v3/clusters/%s/topics/%s
+      direct:
+        refresh-status-interval-seconds: 15
+        timeout-seconds: 15
     grim-reaper:
       # Should we check for remaining living vs code processes at all, and exit() if none left?
       enabled: false
       # How often to check?
       interval-seconds: 60
+    admin-client-configs:
+      "default.api.timeout.ms": 15000
+      "request.timeout.ms": 15000
     flink-language-service-proxy:
       url-pattern: ws://127.0.0.1:${quarkus.http.test-port}/fls-mock
     schema-fetch-error-ttl: 30
@@ -130,8 +136,8 @@ ide-sidecar:
         kafka-topic-uri: ${outpost.connections.confluent-local.default.kafkarest-uri}/v3/clusters/%s/topics/%s
 
     direct:
-      refresh-status-interval-seconds: 5
-      timeout-seconds: 5
+      refresh-status-interval-seconds: 15
+      timeout-seconds: 15
   flink:
     url-pattern: https://flink.%s.%s.confluent.cloud
   access_token_filter:
@@ -161,8 +167,8 @@ ide-sidecar:
   # (We may choose to allow connection-specific overrides in the future)
   admin-client-configs:
     "client.id": Confluent for VS Code sidecar ${vscode.extension.version} - Admin
-    "default.api.timeout.ms": 5000
-    "request.timeout.ms": 5000
+    "default.api.timeout.ms": 15000
+    "request.timeout.ms": 15000
     "reconnect.backoff.max.ms": 7500
   # Configuration set by the sidecar when instantiating the Kafka Consumer
   # (We may choose to allow connection-specific overrides in the future)
