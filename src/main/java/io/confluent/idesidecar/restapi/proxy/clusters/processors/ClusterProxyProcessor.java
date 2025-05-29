@@ -41,7 +41,6 @@ public class ClusterProxyProcessor extends
 
   @Override
   public Future<ClusterProxyContext> process(ClusterProxyContext context) {
-    // Set everything needed to do the proxy request
     var requestStrategy = context.getClusterStrategy();
     context.setProxyRequestAbsoluteUrl(
         requestStrategy.constructProxyUri(context.getRequestUri(), context.getClusterInfo().uri())
@@ -49,49 +48,45 @@ public class ClusterProxyProcessor extends
     context.setProxyRequestHeaders(
         requestStrategy.constructProxyHeaders(context));
 
-    // Pass request method and body straight through, no processing needed
     context.setProxyRequestMethod(context.getRequestMethod());
     context.setProxyRequestBody(context.getRequestBody());
 
-    // Set TLS options
     var connectionState = context.getConnectionState();
 
     switch (context.getClusterType()) {
       case KAFKA -> {
-        // Confluent Local Kafka REST Proxy is not configured with TLS.
-        // However, Confluent Cloud Kafka REST does support mutual TLS. It only requires
-        // the keystore options to be set. This is a TODO item for the future.
-        // (https://github.com/confluentinc/ide-sidecar/issues/235)
+        // No TLS config for local Kafka REST Proxy (see comment above)
       }
       case SCHEMA_REGISTRY -> connectionState
           .getSchemaRegistryTLSConfig()
-          .ifPresent(
-              tlsConfig -> {
-                var options = webClientFactory.getDefaultWebClientOptions();
-                if (tlsConfig.truststore() != null) {
-                  var trustStore = tlsConfig.truststore();
-                  var trustStoreOptions = new JksOptions()
-                      .setPath(trustStore.path())
-                      .setPassword(trustStore.password().asString(false));
+          .ifPresent(tlsConfig -> {
+            var options = webClientFactory.getDefaultWebClientOptions();
 
-                  options.setTrustStoreOptions(trustStoreOptions);
+            if (tlsConfig.truststore() != null) {
+              var trustStore = tlsConfig.truststore();
+              if (trustStore.path() != null && trustStore.password() != null) {
+                var trustStoreOptions = new JksOptions()
+                    .setPath(trustStore.path())
+                    .setPassword(trustStore.password().asString(false));
+                options.setTrustStoreOptions(trustStoreOptions);
+              }
+            }
+
+            if (tlsConfig.keystore() != null) {
+              var keyStore = tlsConfig.keystore();
+              if (keyStore.path() != null && keyStore.password() != null) {
+                var keystoreOptions = new JksOptions()
+                    .setPath(keyStore.path())
+                    .setPassword(keyStore.password().asString(false));
+                if (keyStore.keyPassword() != null) {
+                  keystoreOptions.setAliasPassword(keyStore.keyPassword().asString(false));
                 }
+                options.setKeyStoreOptions(keystoreOptions);
+              }
+            }
 
-                if (tlsConfig.keystore() != null) {
-                  var keyStore = tlsConfig.keystore();
-                  var keystoreOptions = new JksOptions()
-                      .setPath(keyStore.path())
-                      .setPassword(keyStore.password().asString(false));
-
-                  if (keyStore.keyPassword() != null) {
-                    keystoreOptions.setAliasPassword(keyStore.keyPassword().asString(false));
-                  }
-
-                  options.setKeyStoreOptions(keystoreOptions);
-                }
-
-                context.setWebClientOptions(options);
-              });
+            context.setWebClientOptions(options);
+          });
     }
 
     return next().process(context).map(
