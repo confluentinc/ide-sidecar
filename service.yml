@@ -32,3 +32,5 @@ sonarqube:
     - "**/jacoco-report/jacoco.xml"
     - "**/jacoco-report-it/jacoco.xml"
   main_branch: main
+renovatebot:
+  enable: false
