@@ -31,6 +31,9 @@
       enabled: false
       # How often to check?
       interval-seconds: 60
+    admin-client-configs:
+      "default.api.timeout.ms": 15000
+      "request.timeout.ms": 15000
     flink-language-service-proxy:
       url-pattern: ws://127.0.0.1:${quarkus.http.test-port}/fls-mock
     schema-fetch-error-ttl: 30
@@ -163,16 +166,19 @@ ide-sidecar:
     "client.id": Confluent for VS Code sidecar ${vscode.extension.version} - Admin
     "default.api.timeout.ms": 15000
     "request.timeout.ms": 15000
+    "reconnect.backoff.max.ms": 7500
   # Configuration set by the sidecar when instantiating the Kafka Consumer
   # (We may choose to allow connection-specific overrides in the future)
   consumer-client-configs:
     "client.id": Confluent for VS Code sidecar ${vscode.extension.version} - Consumer
     "session.timeout.ms": 45000
+    "reconnect.backoff.max.ms": 7500
   # Configuration set by the sidecar when instantiating the Kafka Producer
   # (We may choose to allow connection-specific overrides in the future)
   producer-client-configs:
     acks: all
     "client.id": Confluent for VS Code sidecar ${vscode.extension.version} - Producer
+    "reconnect.backoff.max.ms": 7500
   # Configuration set by the sidecar when instantiating Kafka record serializers and deserializers.
   # See https://github.com/confluentinc/schema-registry/blob/master/schema-serializer/src/main/java/io/confluent/kafka/serializers/AbstractKafkaSchemaSerDeConfig.java#L39
   # for a full list of available configs.
