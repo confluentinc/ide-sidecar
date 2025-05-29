@@ -19,7 +19,7 @@ build:
 
 .PHONY: test
 test:
-	$(MAKE) mvn-verify
+	$(MAKE) mvn-verify MAVEN_VERIFY_OPTS="$(if $(TEST),-Dtest=$(TEST),)"
 
 .PHONY: test-native
 test-native:
