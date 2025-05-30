@@ -27,7 +27,7 @@
           broker-adv-listeners-config-uri: http://localhost:${quarkus.wiremock.devservices.port}/v3/clusters/%s/brokers/%s/configs/advertised.listeners
           kafka-topic-uri: http://localhost:${quarkus.wiremock.devservices.port}/v3/clusters/%s/topics/%s
       direct:
-        # smaller timeouts for tests
+        # faster frequency / lower timeouts matching expectations of tests
         refresh-status-interval-seconds: 5
         timeout-seconds: 5
     grim-reaper:
@@ -36,7 +36,7 @@
       # How often to check?
       interval-seconds: 60
     admin-client-configs:
-      # smaller timeouts for tests
+      # faster frequency / lower timeouts matching expectations of tests
       "default.api.timeout.ms": 5000
       "request.timeout.ms": 5000
     flink-language-service-proxy:
