@@ -17,7 +17,11 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
 import java.io.IOException;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import org.apache.kafka.clients.admin.AdminClient;
 
@@ -50,6 +54,10 @@ public class RealDirectFetcher extends ConfluentRestClient implements DirectFetc
 
   @Inject
   Event<ClusterEvent> clusterEvents;
+
+  // Simple cluster ID cache: connectionId -> clusterId|bootstrapServers|timestamp
+  private final ConcurrentHashMap<String, String> clusterCache = new ConcurrentHashMap<>();
+  private final Duration cacheTtl = Duration.ofMinutes(30);
 
   // TODO: DIRECT fetcher should use logic similar to RealLocalFetcher to find the cluster
   // information from a Kafka REST URL endpoint, if it is available.
@@ -106,11 +114,23 @@ public class RealDirectFetcher extends ConfluentRestClient implements DirectFetc
     var state = connections.getConnectionState(connectionId);
     if (state instanceof DirectConnectionState directState) {
       if (!directState.isKafkaConnected()) {
-        // Either there is no Kafka cluster configured or it is not connected, so return no info
         Log.debugf("Skipping connection '%s' since Kafka is not connected.", connectionId);
         return Uni.createFrom().nullItem();
       }
-      // If there is a Kafka cluster configured, get the details
+
+      // Check cache first
+      var cached = clusterCache.get(connectionId);
+      if (cached != null) {
+        var parts = cached.split("\\|");
+        if (parts.length == 3 && Instant.parse(parts[2]).plus(cacheTtl).isAfter(Instant.now())) {
+          var cluster = new DirectKafkaCluster(parts[0], null, parts[1], connectionId);
+          onLoad(connectionId, cluster);
+          return Uni.createFrom().item(cluster);
+        }
+        clusterCache.remove(connectionId); // Remove expired
+      }
+
+      // Cache miss - fetch from Kafka
       return directState.withAdminClient(
           adminClient -> getKafkaCluster(directState, adminClient),
           error -> {
@@ -122,12 +142,8 @@ public class RealDirectFetcher extends ConfluentRestClient implements DirectFetc
             );
             return Uni.createFrom().<DirectKafkaCluster>nullItem();
           }
-      ).orElseGet(
-          // There was no Kafka cluster configured, so return no info
-          () -> Uni.createFrom().nullItem()
-      );
+      ).orElseGet(() -> Uni.createFrom().nullItem());
     }
-    // Unexpectedly not a direct connection
     Log.errorf("Connection with ID=%s is not a direct connection.", connectionId);
     return Uni.createFrom().nullItem();
   }
@@ -141,20 +157,20 @@ public class RealDirectFetcher extends ConfluentRestClient implements DirectFetc
     return Uni
         .createFrom()
         .completionStage(
-            // Use the client to get the cluster ID, to verify that we can connect
             adminClient.describeCluster().clusterId().toCompletionStage()
         )
-        .map(clusterId ->
-            new DirectKafkaCluster(
-                clusterId,
-                null,
-                kafkaConfig.bootstrapServers(),
-                state.getId()
-            )
-        ).map(cluster -> {
-          // Emit an event that this cluster was loaded
+        .map(clusterId -> {
+          var cluster = new DirectKafkaCluster(
+              clusterId,
+              null,
+              kafkaConfig.bootstrapServers(),
+              state.getId()
+          );
+          // Cache the cluster for future use
+          clusterCache.put(state.getId(), cluster.id() + "|" + cluster.bootstrapServers() + "|" + Instant.now());
+          return cluster;
+        }).map(cluster -> {
           onLoad(state.getId(), cluster);
-          // And return the cluster
           return cluster;
         });
   }
