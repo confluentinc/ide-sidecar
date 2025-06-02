@@ -1,14 +1,4 @@
 # This file configures Quarkus for running the integration tests against the native executable
-ide-sidecar:
-  connections:
-    direct:
-      # faster frequency / lower timeouts matching expectations of tests matching the %test% profile
-      refresh-status-interval-seconds: 5
-      timeout-seconds: 5
-  admin-client-configs:
-    # faster frequency / lower timeouts matching expectations of tests matching the %test% profile
-    "default.api.timeout.ms": 5000
-    "request.timeout.ms": 5000
 quarkus:
   http:
     test-port: 26637

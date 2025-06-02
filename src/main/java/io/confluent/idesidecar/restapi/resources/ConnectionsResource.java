@@ -14,6 +14,7 @@ import io.confluent.idesidecar.restapi.models.ConnectionsList;
 import io.quarkus.logging.Log;
 import io.smallrye.common.annotation.Blocking;
 import io.smallrye.mutiny.Uni;
+import io.vertx.core.Vertx;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
@@ -51,6 +52,9 @@ public class ConnectionsResource {
 
   @Inject
   ConnectionStateManager connectionStateManager;
+
+  @Inject
+  Vertx vertx;
 
   @GET
   @Produces(MediaType.APPLICATION_JSON)
@@ -90,12 +94,18 @@ public class ConnectionsResource {
               Connection.from(testedState, connectionStatus)
           );
     }
-    // Create a real connection state and return the connection using the latest status
-    var newState = connectionStateManager.createConnectionState(connectionSpec);
+    // Create the connection
+    var connection = connectionStateManager.createConnectionState(connectionSpec);
+    // Immediately kick off async check of the new connection, independent of the periodic scheduled
+    // task, which may not fire for "a while" from now. Overlapping checks at connection creation
+    // time are fine and should resolve to the same state.
+    vertx.executeBlocking(connection::refreshStatus);
+    // Return the connection including the current/initial status. Websocket pushes will happen when
+    // async checks update the status.
     return Uni
         .createFrom()
         .item(
-            Connection.from(newState, newState.getStatus())
+            Connection.from(connection, connection.getStatus())
         );
   }
 
@@ -143,7 +153,13 @@ public class ConnectionsResource {
   public Uni<Connection> updateConnection(@PathParam("id") String id, ConnectionSpec spec) {
     return connectionStateManager
         .updateSpecForConnectionState(id, spec)
-        .chain(ignored -> Uni.createFrom().item(() -> getConnectionModel(id)));
+        .chain(ignored -> {
+          // Immediately kick off async check of the updated connection, independent of the periodic
+          // scheduled task, which may not fire for "a while" from now.
+          var connection = connectionStateManager.getConnectionState(id);
+          vertx.executeBlocking(connection::refreshStatus);
+          return Uni.createFrom().item(() -> getConnectionModel(id));
+        });
   }
 
   @PATCH
@@ -186,16 +202,21 @@ public class ConnectionsResource {
   ) {
     ObjectMapper mapper = new ObjectMapper();
     try {
-      JsonNode existingSpecNode = mapper.valueToTree(
-          connectionStateManager
-              .getConnectionState(id).getSpec());
-
-      JsonNode patchedSpecNode = patch.apply(existingSpecNode);
-      ConnectionSpec patchedSpec = mapper.treeToValue(patchedSpecNode,
-          ConnectionSpec.class);
+      var connection = connectionStateManager.getConnectionState(id);
+      // Convert connection spec to JsonNode
+      var existingSpecNode = mapper.valueToTree(connection.getSpec());
+      // Apply the patch to the existing spec
+      var patchedSpecNode = patch.apply(existingSpecNode);
+      // Convert patched spec back to ConnectionSpec
+      var patchedSpec = mapper.treeToValue(patchedSpecNode, ConnectionSpec.class);
       return connectionStateManager
           .updateSpecForConnectionState(id, patchedSpec)
-          .chain(ignored -> Uni.createFrom().item(() -> getConnectionModel(id)));
+          .chain(ignored -> {
+            // Immediately kick off async check of the patched connection, independent of the
+            // periodic scheduled task, which may not fire for "a while" from now.
+            vertx.executeBlocking(connection::refreshStatus);
+            return Uni.createFrom().item(() -> getConnectionModel(id));
+          });
     } catch (JsonPatchException | IOException e) {
       Log.errorf(
           "Failed to patch connection: %s, Connection ID: %s, Request: %s",
