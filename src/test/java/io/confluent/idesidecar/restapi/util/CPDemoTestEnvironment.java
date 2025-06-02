@@ -23,6 +23,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -610,8 +611,11 @@ public class CPDemoTestEnvironment implements TestEnvironment {
 
       // Write certificates to temporary PEM file
       var pemFile = File.createTempFile("ide-sidecar-it", ".pem");
-      try (Writer writer = new OutputStreamWriter(new FileOutputStream(pemFile))) {
-        for (String alias : Collections.list(keyStore.aliases())) {
+      // Clean up the PEM file after running the tests
+      pemFile.deleteOnExit();
+      try (var writer = new OutputStreamWriter(new FileOutputStream(pemFile),
+          StandardCharsets.UTF_8)) {
+        for (var alias : Collections.list(keyStore.aliases())) {
           if (keyStore.isCertificateEntry(alias)) {
             Certificate cert = keyStore.getCertificate(alias);
             writer.write("-----BEGIN CERTIFICATE-----\n");
