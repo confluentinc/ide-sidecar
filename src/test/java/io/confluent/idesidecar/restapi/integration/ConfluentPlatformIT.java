@@ -161,4 +161,26 @@ public class ConfluentPlatformIT {
       );
     }
   }
+
+  @QuarkusIntegrationTest
+  @Tag("io.confluent.common.utils.IntegrationTest")
+  @TestProfile(NoAccessFilterProfile.class)
+  @Nested
+  @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+  class DirectWithPemFilesTests extends AbstractIT implements RecordsV3Suite, RecordsV3ErrorsSuite {
+
+    @Override
+    public CPDemoTestEnvironment environment() {
+      return TEST_ENVIRONMENT;
+    }
+
+    @BeforeEach
+    @Override
+    public void setupConnection() {
+      setupConnection(
+          this,
+          environment().directConnectionSpecWithPemFiles()
+      );
+    }
+  }
 }

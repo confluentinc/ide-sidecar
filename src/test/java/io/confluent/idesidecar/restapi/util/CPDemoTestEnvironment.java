@@ -8,9 +8,8 @@ import io.confluent.idesidecar.restapi.credentials.Password;
 import io.confluent.idesidecar.restapi.credentials.ScramCredentials;
 import io.confluent.idesidecar.restapi.credentials.ScramCredentials.HashAlgorithm;
 import io.confluent.idesidecar.restapi.credentials.TLSConfig;
-import io.confluent.idesidecar.restapi.credentials.TLSConfig.TrustStore;
+import io.confluent.idesidecar.restapi.credentials.TLSConfig.StoreType;
 import io.confluent.idesidecar.restapi.credentials.TLSConfigBuilder;
-import io.confluent.idesidecar.restapi.credentials.TLSConfigTrustStoreBuilder;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionSpecKafkaClusterConfigBuilder;
 import io.confluent.idesidecar.restapi.models.ConnectionSpecSchemaRegistryConfigBuilder;
@@ -20,8 +19,19 @@ import io.confluent.idesidecar.restapi.util.cpdemo.SchemaRegistryContainer;
 import io.confluent.idesidecar.restapi.util.cpdemo.ToolsContainer;
 import io.quarkus.logging.Log;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.nio.file.Files;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
 import java.util.Arrays;
+import java.util.Base64;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -337,6 +347,68 @@ public class CPDemoTestEnvironment implements TestEnvironment {
     );
   }
 
+  public Optional<ConnectionSpec> directConnectionSpecWithPemFiles() {
+    var cwd = System.getProperty("user.dir");
+    var schemaRegistryTrustStoreLocation = new File(
+        cwd,
+        ".cp-demo/scripts/security/kafka.schemaregistry.truststore.jks"
+    );
+    var kafkaTrustStoreLocation = new File(
+        cwd,
+        ".cp-demo/scripts/security/kafka.kafka1.truststore.jks" // PEM file for Kafka
+    );
+    var schemaRegistryPemFile = createTemporaryPemFileFromJksFile(
+        schemaRegistryTrustStoreLocation,
+        "confluent"
+    );
+    var kafkaPemFile = createTemporaryPemFileFromJksFile(
+        kafkaTrustStoreLocation,
+        "confluent"
+    );
+
+    return Optional.of(
+        ConnectionSpec.createDirect(
+            "direct-to-local-connection",
+            "Direct to Local",
+            ConnectionSpecKafkaClusterConfigBuilder
+                .builder()
+                .bootstrapServers("localhost:11091")
+                .tlsConfig(TLSConfigBuilder
+                    .builder()
+                    .truststore(new TLSConfig.TrustStore(
+                        kafkaPemFile.getAbsolutePath(),
+                        null,
+                        StoreType.PEM
+                    ))
+                    .enabled(true)
+                    .build()
+                )
+                .build(),
+            ConnectionSpecSchemaRegistryConfigBuilder
+                .builder()
+                .id("local-sr-cp-demo")
+                .uri("https://localhost:8085")
+                .credentials(
+                    new BasicCredentials(
+                        "superUser",
+                        new Password("superUser".toCharArray())
+                    )
+                )
+                .tlsConfig(TLSConfigBuilder
+                    .builder()
+                    .truststore(new TLSConfig.TrustStore(
+                        schemaRegistryPemFile.getAbsolutePath(),
+                        null,
+                        StoreType.PEM
+                    ))
+                    .enabled(true)
+                    .build()
+                )
+                .build()
+        )
+    );
+  }
+
   public Optional<ConnectionSpec> directConnectionSpecWithoutSR() {
     return Optional.of(
         ConnectionSpec.createDirect(
@@ -516,6 +588,35 @@ public class CPDemoTestEnvironment implements TestEnvironment {
         throw new RuntimeException("Script failed with exit code " + process.exitValue());
       }
     } catch (IOException | InterruptedException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private File createTemporaryPemFileFromJksFile(File jksFile, String jksPassword) {
+    try {
+      // Load the JKS trust store
+      KeyStore keyStore = KeyStore.getInstance("JKS");
+      try (var jksInputStream = Files.newInputStream(jksFile.toPath())) {
+        keyStore.load(jksInputStream, jksPassword.toCharArray());
+      }
+
+      // Write certificates to temporary PEM file
+      var pemFile = File.createTempFile("ide-sidecar-it-pem-file", ".pem");
+      try (Writer writer = new OutputStreamWriter(new FileOutputStream(pemFile))) {
+        for (String alias : Collections.list(keyStore.aliases())) {
+          if (keyStore.isCertificateEntry(alias)) {
+            Certificate cert = keyStore.getCertificate(alias);
+            writer.write("-----BEGIN CERTIFICATE-----\n");
+            writer.write(Base64.getMimeEncoder(64, "\n".getBytes())
+                .encodeToString(cert.getEncoded()));
+            writer.write("\n-----END CERTIFICATE-----\n");
+          }
+        }
+      }
+
+      return pemFile;
+    } catch (KeyStoreException | IOException | CertificateException | NoSuchAlgorithmException e) {
+      Log.error("Failed to create PEM file from JKS file.", e);
       throw new RuntimeException(e);
     }
   }

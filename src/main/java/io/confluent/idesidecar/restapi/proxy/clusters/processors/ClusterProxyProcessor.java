@@ -72,7 +72,8 @@ public class ClusterProxyProcessor extends
                   var trustStore = tlsConfig.truststore();
                   var trustStoreOptions = new JksOptions()
                       .setPath(trustStore.path());
-                  // Passwords are optional. We don't support passwords for PEM files.
+                  // Passwords must be treated as optional. For instance, we don't support passwords
+                  // for PEM files.
                   if (trustStore.password() != null) {
                       trustStoreOptions.setPassword(trustStore.password().asString(false));
                   }
@@ -84,7 +85,8 @@ public class ClusterProxyProcessor extends
                   var keyStore = tlsConfig.keystore();
                   var keystoreOptions = new JksOptions()
                       .setPath(keyStore.path());
-                  // Passwords are optional. We don't support passwords for PEM files.
+                  // Passwords must be treated as optional. For instance, we don't support passwords
+                  // for PEM files.
                   if (keyStore.password() != null) {
                       keystoreOptions.setPassword(keyStore.password().asString(false));
                   }
