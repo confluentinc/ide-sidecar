@@ -604,7 +604,7 @@ public class CPDemoTestEnvironment implements TestEnvironment {
   private File createTemporaryPemFileFromJksFile(File jksFile, String jksPassword) {
     try {
       // Load the JKS trust store
-      KeyStore keyStore = KeyStore.getInstance("JKS");
+      var keyStore = KeyStore.getInstance("JKS");
       try (var jksInputStream = Files.newInputStream(jksFile.toPath())) {
         keyStore.load(jksInputStream, jksPassword.toCharArray());
       }
@@ -617,7 +617,7 @@ public class CPDemoTestEnvironment implements TestEnvironment {
           StandardCharsets.UTF_8)) {
         for (var alias : Collections.list(keyStore.aliases())) {
           if (keyStore.isCertificateEntry(alias)) {
-            Certificate cert = keyStore.getCertificate(alias);
+            var cert = keyStore.getCertificate(alias);
             writer.write("-----BEGIN CERTIFICATE-----\n");
             writer.write(Base64.getMimeEncoder(64, "\n".getBytes())
                 .encodeToString(cert.getEncoded()));
