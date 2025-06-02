@@ -26,16 +26,19 @@ public class ClientConfiguratorTest {
   @InjectMock
   ClusterCache clusterCache;
 
+  static final String TEST_CONNECTION_ID = "test-connection-id";
+  static final String TEST_CLUSTER_ID = "test-cluster-id";
+
   @BeforeEach
   void setup() {
     // Mock a direct connection with a Kafka cluster
     Mockito
-        .when(connectionStateManager.getConnectionState("test-connection-id"))
+        .when(connectionStateManager.getConnectionState(TEST_CONNECTION_ID))
         .thenReturn(
             ConnectionStates.from(
                 ConnectionSpec.createDirect(
-                    "test-connection-id",
-                    "test-cluster-id",
+                    TEST_CONNECTION_ID,
+                    TEST_CLUSTER_ID,
                     new KafkaClusterConfig("localhost:9092", null, null),
                     null
                 ),
@@ -44,13 +47,13 @@ public class ClientConfiguratorTest {
         );
     // Mock the cached Kafka cluster
     Mockito
-        .when(clusterCache.getKafkaCluster("test-connection-id", "test-cluster-id"))
+        .when(clusterCache.getKafkaCluster(TEST_CONNECTION_ID, TEST_CLUSTER_ID))
         .thenReturn(
             new DirectKafkaCluster(
-                "test-cluster-id",
+                TEST_CLUSTER_ID,
                 null,
                 "localhost:9092",
-                "test-connection-id"
+                TEST_CONNECTION_ID
             )
         );
   }
@@ -58,8 +61,8 @@ public class ClientConfiguratorTest {
   @Test
   void getConsumerClientConfigShouldIncludeOnlyConsumerConfigProps() {
     var consumerClientConfig = clientConfigurator.getConsumerClientConfig(
-        "test-connection-id",
-        "test-cluster-id",
+        TEST_CONNECTION_ID,
+        TEST_CLUSTER_ID,
         false
     ).asMap();
 
@@ -74,8 +77,8 @@ public class ClientConfiguratorTest {
   @Test
   void getProducerClientConfigShouldIncludeOnlyProducerConfigProps() {
     var producerClientConfig = clientConfigurator.getProducerClientConfig(
-        "test-connection-id",
-        "test-cluster-id",
+        TEST_CONNECTION_ID,
+        TEST_CLUSTER_ID,
         false
     ).asMap();
 
@@ -90,8 +93,8 @@ public class ClientConfiguratorTest {
   @Test
   void getAdminClientConfigShouldIncludeOnlyAdminConfigProps() {
     var adminClientConfig = clientConfigurator.getAdminClientConfig(
-        "test-connection-id",
-        "test-cluster-id"
+        TEST_CONNECTION_ID,
+        TEST_CLUSTER_ID
     ).asMap();
 
     // Assert that the admin client config contains the admin-specific client.id; note that
