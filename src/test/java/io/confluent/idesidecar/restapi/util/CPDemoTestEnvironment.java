@@ -355,8 +355,9 @@ public class CPDemoTestEnvironment implements TestEnvironment {
     );
     var kafkaTrustStoreLocation = new File(
         cwd,
-        ".cp-demo/scripts/security/kafka.kafka1.truststore.jks" // PEM file for Kafka
+        ".cp-demo/scripts/security/kafka.kafka1.truststore.jks"
     );
+    // Create PEM files from the JKS files provided by CP Demo
     var schemaRegistryPemFile = createTemporaryPemFileFromJksFile(
         schemaRegistryTrustStoreLocation,
         "confluent"
@@ -591,7 +592,14 @@ public class CPDemoTestEnvironment implements TestEnvironment {
       throw new RuntimeException(e);
     }
   }
-
+  /**
+   * Creates a temporary PEM file from a JKS file.
+   * This is useful for tests that require PEM files instead of JKS files.
+   *
+   * @param jksFile the JKS file to convert
+   * @param jksPassword the password for the JKS file
+   * @return a temporary PEM file containing the certificates from the JKS file
+   */
   private File createTemporaryPemFileFromJksFile(File jksFile, String jksPassword) {
     try {
       // Load the JKS trust store
@@ -601,7 +609,7 @@ public class CPDemoTestEnvironment implements TestEnvironment {
       }
 
       // Write certificates to temporary PEM file
-      var pemFile = File.createTempFile("ide-sidecar-it-pem-file", ".pem");
+      var pemFile = File.createTempFile("ide-sidecar-it", ".pem");
       try (Writer writer = new OutputStreamWriter(new FileOutputStream(pemFile))) {
         for (String alias : Collections.list(keyStore.aliases())) {
           if (keyStore.isCertificateEntry(alias)) {
