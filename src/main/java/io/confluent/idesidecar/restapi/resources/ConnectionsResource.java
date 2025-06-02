@@ -154,9 +154,8 @@ public class ConnectionsResource {
     return connectionStateManager
         .updateSpecForConnectionState(id, spec)
         .chain(ignored -> {
-          // Immediately kick off async check of the new connection, independent of the periodic scheduled
-          // task, which may not fire for "a while" from now. Overlapping checks at connection creation
-          // time are fine and should resolve to the same state.
+          // Immediately kick off async check of the updated connection, independent of the periodic
+          // scheduled task, which may not fire for "a while" from now.
           var connection = connectionStateManager.getConnectionState(id);
           vertx.executeBlocking(connection::refreshStatus);
           return Uni.createFrom().item(() -> getConnectionModel(id));
@@ -213,9 +212,8 @@ public class ConnectionsResource {
       return connectionStateManager
           .updateSpecForConnectionState(id, patchedSpec)
           .chain(ignored -> {
-            // Immediately kick off async check of the new connection, independent of the periodic scheduled
-            // task, which may not fire for "a while" from now. Overlapping checks at connection creation
-            // time are fine and should resolve to the same state.
+            // Immediately kick off async check of the patched connection, independent of the
+            // periodic scheduled task, which may not fire for "a while" from now.
             vertx.executeBlocking(connection::refreshStatus);
             return Uni.createFrom().item(() -> getConnectionModel(id));
           });
