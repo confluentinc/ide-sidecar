@@ -14,6 +14,7 @@ import io.confluent.idesidecar.restapi.models.ConnectionsList;
 import io.quarkus.logging.Log;
 import io.smallrye.common.annotation.Blocking;
 import io.smallrye.mutiny.Uni;
+import io.vertx.core.Vertx;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
@@ -51,6 +52,9 @@ public class ConnectionsResource {
 
   @Inject
   ConnectionStateManager connectionStateManager;
+
+  @Inject
+  Vertx vertx;
 
   @GET
   @Produces(MediaType.APPLICATION_JSON)
@@ -90,12 +94,15 @@ public class ConnectionsResource {
               Connection.from(testedState, connectionStatus)
           );
     }
-    // Create a real connection state and return the connection using the latest status
-    var newState = connectionStateManager.createConnectionState(connectionSpec);
+    // Create the connection
+    var connection = connectionStateManager.createConnectionState(connectionSpec);
+    // Check the connection's status without blocking on it
+    vertx.executeBlocking(connection::refreshStatus);
+    // Return the connection including the latest status
     return Uni
         .createFrom()
         .item(
-            Connection.from(newState, newState.getStatus())
+            Connection.from(connection, connection.getStatus())
         );
   }
 
