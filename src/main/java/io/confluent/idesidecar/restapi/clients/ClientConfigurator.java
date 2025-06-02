@@ -411,7 +411,7 @@ public class ClientConfigurator {
       Log.debugf("Not using Schema Registry for Kafka cluster %s", cluster.id());
     }
 
-    return getKafkaProducerConfig(
+    return getKafkaConsumerConfig(
         connection,
         cluster.bootstrapServers(),
         sr != null ? sr.uri() : null,
@@ -458,7 +458,7 @@ public class ClientConfigurator {
       Log.debugf("Not using Schema Registry for Kafka cluster %s", cluster.id());
     }
 
-    return getKafkaConsumerConfig(
+    return getKafkaProducerConfig(
         connection,
         cluster.bootstrapServers(),
         sr != null ? sr.uri() : null,
