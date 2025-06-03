@@ -9,7 +9,7 @@
       "url" : "https://confluent.io/contact",
       "email" : "vscode@confluent.io"
     },
-    "version" : "0.205.0"
+    "version" : "0.210.0"
   },
   "servers" : [ {
     "url" : "http://127.0.0.1:26636",
@@ -1840,26 +1840,26 @@
       "HealthResponse" : {
         "type" : "object",
         "properties" : {
+          "status" : {
+            "enum" : [ "UP", "DOWN" ],
+            "type" : "string"
+          },
           "checks" : {
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/HealthCheck"
             }
-          },
-          "status" : {
-            "enum" : [ "UP", "DOWN" ],
-            "type" : "string"
           }
         }
       },
       "HealthCheck" : {
         "type" : "object",
         "properties" : {
-          "status" : {
-            "enum" : [ "UP", "DOWN" ],
+          "name" : {
             "type" : "string"
           },
-          "name" : {
+          "status" : {
+            "enum" : [ "UP", "DOWN" ],
             "type" : "string"
           },
           "data" : {
