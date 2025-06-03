@@ -112,6 +112,8 @@ public class RealDirectFetcherTest {
 
     @Test
     void shouldFailToFetchKafkaClusterIfAdminClientFails() {
+      directFetcher.clearCache();
+
       // When there is a direct connection that thinks it has connected to Kafka but fails to create an admin client
       var connection = new DirectConnectionState(KAFKA_AND_SR_SPEC, null) {
         @Override
@@ -164,6 +166,8 @@ public class RealDirectFetcherTest {
 
     @Test
     void shouldFailToFetchKafkaClusterWhenAdminClientFailsToReturnsClusterId() {
+      directFetcher.clearCache();
+
       // When we have a mock admin client that returns the Kafka cluster ID
       var mockAdminClient = mock(AdminClient.class);
       var describeCluster = mock(DescribeClusterResult.class);
@@ -231,6 +235,8 @@ public class RealDirectFetcherTest {
 
     @Test
     void shouldFetchNoKafkaClusterIfNoKafkaClusterIsConfigured() {
+      directFetcher.clearCache();
+
       // When there is a direct connection that thinks it has connected to Kafka but has no Kafka cluster configured
       var connection = new DirectConnectionState(NO_KAFKA_SPEC, null) {
         @Override

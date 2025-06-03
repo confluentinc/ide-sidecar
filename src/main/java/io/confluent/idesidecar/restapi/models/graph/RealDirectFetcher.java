@@ -237,4 +237,8 @@ public class RealDirectFetcher extends ConfluentRestClient implements DirectFetc
   private String orDefault(String value, Supplier<String> defaultValue) {
     return value != null ? value : defaultValue.get();
   }
+
+  void clearCache() {
+    clusterCache.clear();
+  }
 }
