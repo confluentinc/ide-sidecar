@@ -259,6 +259,7 @@ quarkus:
       origins: https://login.confluent-dev.io,https://login-stag.confluent-dev.io,https://login.confluent.io
   jackson:
     fail-on-unknown-properties: true
+    serialization-inclusion: always
   native:
     additional-build-args: --initialize-at-run-time=io.confluent.idesidecar.restapi.auth.CCloudOAuthConfig\,io.confluent.idesidecar.restapi.auth.CCloudOAuthContext\,io.confluent.ide.sidecar.restapi.util.WebClientFactory\,org.apache.kafka.common.security.authenticator.SaslClientAuthenticator\,org.apache.avro.file.DataFileWriter\,io.confluent.kafka.schemaregistry.avro.AvroSchemaUtils\,com.github.luben.zstd
     march: compatibility
