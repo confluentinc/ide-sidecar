@@ -287,7 +287,6 @@ quarkus:
     show-runtime-exception-message:
       -  io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException
       -  io.confluent.idesidecar.restapi.exceptions.ResourceFetchingException
-    exclude-null-fields-in-responses: false
   scheduler:
     start-mode: forced
   swagger-ui:
