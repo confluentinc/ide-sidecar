@@ -112,6 +112,8 @@ public class RealDirectFetcherTest {
 
     @Test
     void shouldFailToFetchKafkaClusterIfAdminClientFails() {
+      directFetcher.clearCache();
+
       // When there is a direct connection that thinks it has connected to Kafka but fails to create an admin client
       var connection = new DirectConnectionState(KAFKA_AND_SR_SPEC, null) {
         @Override
@@ -164,6 +166,8 @@ public class RealDirectFetcherTest {
 
     @Test
     void shouldFailToFetchKafkaClusterWhenAdminClientFailsToReturnsClusterId() {
+      directFetcher.clearCache();
+
       // When we have a mock admin client that returns the Kafka cluster ID
       var mockAdminClient = mock(AdminClient.class);
       var describeCluster = mock(DescribeClusterResult.class);
@@ -231,6 +235,8 @@ public class RealDirectFetcherTest {
 
     @Test
     void shouldFetchNoKafkaClusterIfNoKafkaClusterIsConfigured() {
+      directFetcher.clearCache();
+
       // When there is a direct connection that thinks it has connected to Kafka but has no Kafka cluster configured
       var connection = new DirectConnectionState(NO_KAFKA_SPEC, null) {
         @Override
@@ -247,6 +253,53 @@ public class RealDirectFetcherTest {
 
       // Then the Kafka cluster will be null
       assertNull(kafkaCluster.await().atMost(ONE_SECOND));
+    }
+
+    @Test
+    void shouldCacheKafkaClusterIdAndReturnFromCacheOnSubsequentCalls() {
+      // Given a mock admin client that returns the Kafka cluster ID
+      var mockAdminClient = mock(AdminClient.class);
+      var describeCluster = mock(DescribeClusterResult.class);
+      when(mockAdminClient.describeCluster()).thenReturn(describeCluster);
+      when(describeCluster.clusterId()).thenReturn(KafkaFuture.completedFuture(KAFKA_CLUSTER_ID));
+
+      // And a direct connection that is connected to Kafka
+      var connection = new DirectConnectionState(KAFKA_AND_SR_SPEC, null) {
+        @Override
+        protected AdminClient createAdminClient(ConnectionSpec.KafkaClusterConfig config) {
+          return mockAdminClient;
+        }
+
+        @Override
+        public boolean isKafkaConnected() {
+          return true;
+        }
+      };
+
+      when(connections.getConnectionState(eq(CONNECTION_ID))).thenReturn(connection);
+
+      // When we fetch the Kafka cluster for the first time (cache miss)
+      var firstResult = directFetcher.getKafkaCluster(CONNECTION_ID)
+          .await().atMost(ONE_SECOND);
+
+      // Then it should return the correct cluster info
+      assertNotNull(firstResult);
+      assertEquals(KAFKA_CLUSTER_ID, firstResult.id());
+      assertEquals(KAFKA_BOOTSTRAP_SERVERS, firstResult.bootstrapServers());
+
+      // When we fetch the Kafka cluster again (should be cache hit)
+      var secondResult = directFetcher.getKafkaCluster(CONNECTION_ID)
+          .await().atMost(ONE_SECOND);
+
+      // Then it should return the same cluster info from cache
+      assertNotNull(secondResult);
+      assertEquals(KAFKA_CLUSTER_ID, secondResult.id());
+      assertEquals(KAFKA_BOOTSTRAP_SERVERS, secondResult.bootstrapServers());
+      assertEquals(CONNECTION_ID, secondResult.connectionId());
+
+      // Both results should be identical (proving cache is working)
+      assertEquals(firstResult.id(), secondResult.id());
+      assertEquals(firstResult.bootstrapServers(), secondResult.bootstrapServers());
     }
   }
 
