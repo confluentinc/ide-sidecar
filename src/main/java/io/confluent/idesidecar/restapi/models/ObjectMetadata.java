@@ -38,7 +38,6 @@ public class ObjectMetadata {
   }
 
   @JsonProperty(value = "resource_name")
-  @JsonInclude(JsonInclude.Include.ALWAYS)
   public String resourceName() {
     return resourceName;
   }
