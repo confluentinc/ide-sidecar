@@ -42,6 +42,7 @@
     flink-language-service-proxy:
       url-pattern: ws://127.0.0.1:${quarkus.http.test-port}/fls-mock
     schema-fetch-error-ttl: 30
+    direct-connection-cache-ttl: 30
     schema-fetch-retry:
       max-retries: 3
     flink:
