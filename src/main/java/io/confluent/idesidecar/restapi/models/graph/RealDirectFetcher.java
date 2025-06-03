@@ -20,6 +20,11 @@ import java.io.IOException;
 import java.util.List;
 import java.util.function.Supplier;
 import org.apache.kafka.clients.admin.AdminClient;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import java.time.Duration;
+import org.eclipse.microprofile.config.ConfigProvider;
+
 
 /**
  * A {@link DirectFetcher} that uses the {@link ConnectionStateManager} to find direct
@@ -51,6 +56,47 @@ public class RealDirectFetcher extends ConfluentRestClient implements DirectFetc
   @Inject
   Event<ClusterEvent> clusterEvents;
 
+  /**
+   * Represents a unique connection identifier for caching.
+   */
+  private record ConnectionId(String id) {
+  }
+
+  // DirectConnection cache configuration
+  private static final Duration DIRECT_CONNECTION_CACHE_TTL = Duration.ofMinutes(
+      ConfigProvider
+          .getConfig()
+          .getValue(
+              "ide-sidecar.direct-connection-cache-ttl",
+              Long.class));
+
+  private static final Cache<ConnectionId, DirectConnection> directConnectionCache =
+      Caffeine.newBuilder()
+              .expireAfterWrite(DIRECT_CONNECTION_CACHE_TTL)
+              .build();
+
+  /**
+   * Reads a DirectConnection from the cache.
+   *
+   * @param connectionId The connection identifier.
+   * @return The DirectConnection, or null if not found.
+   */
+  private DirectConnection readDirectConnectionFromCache(String connectionId) {
+    var cId = new ConnectionId(connectionId);
+    return directConnectionCache.getIfPresent(cId);
+  }
+
+  /**
+   * Writes a DirectConnection to the cache.
+   *
+   * @param connectionId The connection identifier.
+   * @param connection The DirectConnection to cache.
+   */
+  private void writeDirectConnectionToCache(String connectionId, DirectConnection connection) {
+    var cId = new ConnectionId(connectionId);
+    directConnectionCache.put(cId, connection);
+  }
+
   // TODO: DIRECT fetcher should use logic similar to RealLocalFetcher to find the cluster
   // information from a Kafka REST URL endpoint, if it is available.
   // That is left to future improvements.
@@ -80,6 +126,12 @@ public class RealDirectFetcher extends ConfluentRestClient implements DirectFetc
 
   @Override
   public DirectConnection getDirectConnectionByID(String connectionID) throws Exception {
+    // Check if the connection is in the cache
+    DirectConnection cachedConnection = readDirectConnectionFromCache(connectionID);
+    if (cachedConnection != null) {
+      return cachedConnection;
+    }
+
     var connection = connections
         .getConnectionStates()
         .stream()
@@ -93,10 +145,15 @@ public class RealDirectFetcher extends ConfluentRestClient implements DirectFetc
             "Connection with ID=" + connectionID + " is not a direct connection."
         );
       }
-      return new DirectConnection(
+
+      // Create the DirectConnection and add to cache
+      DirectConnection directConnection = new DirectConnection(
           foundConnection.getSpec().id(),
           foundConnection.getSpec().name()
       );
+      writeDirectConnectionToCache(connectionID, directConnection);
+
+      return directConnection;
     }
     return null;
   }
