@@ -8,25 +8,20 @@ import io.confluent.idesidecar.restapi.connections.DirectConnectionState;
 import io.confluent.idesidecar.restapi.events.ClusterKind;
 import io.confluent.idesidecar.restapi.events.Lifecycle;
 import io.confluent.idesidecar.restapi.events.ServiceKind;
+import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
 import io.confluent.idesidecar.restapi.models.Connection;
+import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 import io.quarkus.logging.Log;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
-import jakarta.enterprise.event.ObservesAsync;
 import jakarta.inject.Inject;
 import java.io.IOException;
 import java.util.List;
 import java.util.function.Supplier;
 import org.apache.kafka.clients.admin.AdminClient;
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
-import java.time.Duration;
-import org.eclipse.microprofile.config.ConfigProvider;
-import io.confluent.idesidecar.restapi.connections.ConnectionState;
-
 
 /**
  * A {@link DirectFetcher} that uses the {@link ConnectionStateManager} to find direct
@@ -58,58 +53,6 @@ public class RealDirectFetcher extends ConfluentRestClient implements DirectFetc
   @Inject
   Event<ClusterEvent> clusterEvents;
 
-  /**
-   * Represents a unique connection identifier for caching.
-   */
-  private record ConnectionId(String id) {
-  }
-
-  // DirectConnection cache configuration
-  private static final Duration DIRECT_CONNECTION_CACHE_TTL = Duration.ofSeconds(
-      ConfigProvider
-          .getConfig()
-          .getValue(
-              "ide-sidecar.direct-connection-cache-ttl",
-              Long.class));
-
-  private static final Cache<ConnectionId, DirectConnection> directConnectionCache =
-      Caffeine.newBuilder()
-              .expireAfterWrite(DIRECT_CONNECTION_CACHE_TTL)
-              .build();
-
-  /**
-   * Reads a DirectConnection from the cache.
-   *
-   * @param connectionId The connection identifier.
-   * @return The DirectConnection, or null if not found.
-   */
-  private DirectConnection readDirectConnectionFromCache(String connectionId) {
-    var cId = new ConnectionId(connectionId);
-    return directConnectionCache.getIfPresent(cId);
-  }
-
-  /**
-   * Writes a DirectConnection to the cache.
-   *
-   * @param connectionId The connection identifier.
-   * @param connection The DirectConnection to cache.
-   */
-  private void writeDirectConnectionToCache(String connectionId, DirectConnection connection) {
-    var cId = new ConnectionId(connectionId);
-    directConnectionCache.put(cId, connection);
-  }
-
-  /**
-   * Clears the cache for a specific connection.
-   *
-   * @param connectionId The connection identifier.
-   */
-  public void clearByConnectionId(String connectionId) {
-    var cId = new ConnectionId(connectionId);
-    directConnectionCache.invalidate(cId);
-  }
-
-
   // TODO: DIRECT fetcher should use logic similar to RealLocalFetcher to find the cluster
   // information from a Kafka REST URL endpoint, if it is available.
   // That is left to future improvements.
@@ -138,35 +81,20 @@ public class RealDirectFetcher extends ConfluentRestClient implements DirectFetc
   }
 
   @Override
-  public DirectConnection getDirectConnectionByID(String connectionID) throws Exception {
-    // Check if the connection is in the cache
-    DirectConnection cachedConnection = readDirectConnectionFromCache(connectionID);
-    if (cachedConnection != null) {
-      return cachedConnection;
-    }
-
-    var connection = connections
-        .getConnectionStates()
-        .stream()
-        .filter(conn -> conn.getSpec().id().equals(connectionID))
-        .findFirst();
-
-    if (connection.isPresent()) {
-      var foundConnection = connection.get();
-      if (!DIRECT.equals(foundConnection.getSpec().type())) {
-        throw new Exception(
-            "Connection with ID=" + connectionID + " is not a direct connection."
+  public Uni<DirectConnection> getDirectConnectionByID(String id) {
+    try {
+      var spec = connections.getConnectionSpec(id);
+      if (!ConnectionType.DIRECT.equals(spec.type())) {
+        return Uni.createFrom().failure(
+            new ConnectionNotFoundException(
+                "Connection %s is not a Direct connection".formatted(id)
+            )
         );
+      } else {
+        return Uni.createFrom().item(new DirectConnection(spec.id(), spec.name()));
       }
-
-      // Create the DirectConnection and add to cache
-      DirectConnection directConnection = new DirectConnection(
-          foundConnection.getSpec().id(),
-          foundConnection.getSpec().name()
-      );
-      writeDirectConnectionToCache(connectionID, directConnection);
-
-      return directConnection;
+    } catch (ConnectionNotFoundException e) {
+      return Uni.createFrom().failure(e);
     }
     return null;
   }

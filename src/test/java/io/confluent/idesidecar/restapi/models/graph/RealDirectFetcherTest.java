@@ -4,17 +4,15 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import io.confluent.idesidecar.restapi.cache.MockSchemaRegistryClient;
 import io.confluent.idesidecar.restapi.clients.SchemaRegistryClient;
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
 import io.confluent.idesidecar.restapi.connections.DirectConnectionState;
+import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionSpecBuilder;
 import io.confluent.idesidecar.restapi.models.ConnectionSpecKafkaClusterConfigBuilder;
@@ -23,6 +21,7 @@ import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientExcept
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.smallrye.mutiny.Uni;
+import io.smallrye.mutiny.helpers.test.UniAssertSubscriber;
 import jakarta.inject.Inject;
 import java.io.IOException;
 import java.time.Duration;
@@ -30,8 +29,7 @@ import java.util.List;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.DescribeClusterResult;
 import org.apache.kafka.common.KafkaFuture;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -96,16 +94,6 @@ public class RealDirectFetcherTest {
   @Inject
   RealDirectFetcher directFetcher;
 
-  @BeforeEach
-  void setUp() {
-    directFetcher.clearByConnectionId(CONNECTION_ID);
-  }
-
-  @AfterEach
-  void tearDown() {
-    directFetcher.clearByConnectionId(CONNECTION_ID);
-  }
-
   @Nested
   class FetchesKafkaCluster {
 
@@ -152,62 +140,32 @@ public class RealDirectFetcherTest {
 
     @Test
     void shouldGetConnectionByID() throws Exception {
-      // Given a connection spec in the manager
-      var connection = new DirectConnectionState(KAFKA_AND_SR_SPEC, null);
-      when(connections.getConnectionStates()).thenReturn(List.of(connection));
+      // Given a Direct connection
+      when(connections.getConnectionSpec(CONNECTION_ID)).thenReturn(KAFKA_AND_SR_SPEC);
 
-      // When we try to fetch the connection by ID
-      DirectConnection result = directFetcher.getDirectConnectionByID(CONNECTION_ID);
-
-      // Then the connection should be returned with correct ID and name
-      assertNotNull(result);
-      assertEquals(CONNECTION_ID, result.getId());
-      assertEquals("my connection", result.getName());
+      // When trying to fetch it
+      var tester = directFetcher.getDirectConnectionByID(CONNECTION_ID)
+          .invoke(Assertions::assertNotNull)
+          .invoke(item -> assertEquals(CONNECTION_ID, item.getId()))
+          .invoke(item -> assertEquals("my connection", item.getName()))
+          .subscribe().withSubscriber(UniAssertSubscriber.create());
+      // We expect the connection to be returned
+      tester.assertCompleted();
     }
 
     @Test
-    void shouldReturnCachedDirectConnection() throws Exception {
-      // Given a unique connection ID to avoid cache pollution from other tests
-      String uniqueConnectionId = "cache-test-connection-" + System.currentTimeMillis();
-      var connectionSpec = ConnectionSpecBuilder
-          .builder()
-          .id(uniqueConnectionId)
-          .name("my cached connection")
-          .type(ConnectionSpec.ConnectionType.DIRECT)
-          .kafkaClusterConfig(
-              ConnectionSpecKafkaClusterConfigBuilder
-                  .builder()
-                  .bootstrapServers(KAFKA_BOOTSTRAP_SERVERS)
-                  .build()
-          )
-          .build();
-
-      var connection = new DirectConnectionState(connectionSpec, null);
-      when(connections.getConnectionStates()).thenReturn(List.of(connection));
-
-      // When we fetch the connection by ID twice
-      DirectConnection result1 = directFetcher.getDirectConnectionByID(uniqueConnectionId);
-      DirectConnection result2 = directFetcher.getDirectConnectionByID(uniqueConnectionId);
-
-      // Then both results should be the same object (cached)
-      assertSame(result1, result2);
-      assertEquals(uniqueConnectionId, result1.getId());
-      assertEquals("my cached connection", result1.getName());
-
-      // And the connection manager should only be called once (cache hit on second call)
-      verify(connections, times(1)).getConnectionStates();
-    }
-
-    @Test
-    void shouldReturnNullForNonexistentConnectionID() throws Exception {
-      // Given an empty connection list
-      when(connections.getConnectionStates()).thenReturn(List.of());
-
-      // When we try to fetch a connection with a non-existent ID
-      DirectConnection result = directFetcher.getDirectConnectionByID("nonexistent-id");
-
-      // Then null should be returned
-      assertNull(result);
+    void shouldReturnFailureForNonexistentConnectionID() {
+      // When trying to access a non-existing connection
+      when(connections.getConnectionSpec("non-existent-id"))
+          .thenThrow(new ConnectionNotFoundException("Connection non-existent-id is not found."));
+      var tester = directFetcher.getDirectConnectionByID("non-existent-id")
+          .subscribe()
+          .withSubscriber(UniAssertSubscriber.create());
+      // We expect a failure because the requested connection does not exist
+      tester.assertFailedWith(
+          ConnectionNotFoundException.class,
+          "Connection non-existent-id is not found."
+      );
     }
 
     @Test
@@ -431,27 +389,23 @@ public class RealDirectFetcherTest {
     }
 
     @Test
-    void shouldThrowExceptionForNonDirectConnection() {
-      // Given a non-DIRECT connection spec in the manager
+    void shouldReturnFailureForNonDirectConnection() {
+      // Given a CCloud connection
       var nonDirectSpec = ConnectionSpecBuilder
           .builder()
           .id("non-direct-id")
           .name("non direct connection")
           .type(ConnectionSpec.ConnectionType.CCLOUD)
           .build();
-      var connection = new DirectConnectionState(nonDirectSpec, null);
-      when(connections.getConnectionStates()).thenReturn(List.of(connection));
+      when(connections.getConnectionSpec("non-direct-id")).thenReturn(nonDirectSpec);
 
-      // When we try to fetch the connection by ID
-      // Then an exception should be thrown
-      Exception exception = assertThrows(
-          Exception.class,
-          () -> directFetcher.getDirectConnectionByID("non-direct-id")
-      );
-
-      assertEquals(
-          "Connection with ID=non-direct-id is not a direct connection.",
-          exception.getMessage()
+      // When trying to fetch it
+      var tester = directFetcher.getDirectConnectionByID("non-direct-id")
+          .subscribe().withSubscriber(UniAssertSubscriber.create());
+      // We expect a failure because the requested connection is not of type Direct
+      tester.assertFailedWith(
+          ConnectionNotFoundException.class,
+          "Connection non-direct-id is not a Direct connection"
       );
     }
   }
