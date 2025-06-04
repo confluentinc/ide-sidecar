@@ -1,0 +1,9 @@
+{
+  "data": {
+    "directConnectionById": {
+      "id": "direct-1",
+      "name": "Direct 1",
+      "type": "DIRECT"
+    }
+  }
+}
