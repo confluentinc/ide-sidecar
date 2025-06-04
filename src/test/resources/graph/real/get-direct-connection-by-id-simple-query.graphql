@@ -1,0 +1,7 @@
+query directConnections {
+    directConnectionById(id: "direct-1") {
+        id
+        name
+        type
+    }
+}
