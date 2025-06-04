@@ -96,6 +96,7 @@ public class RealDirectFetcher extends ConfluentRestClient implements DirectFetc
     } catch (ConnectionNotFoundException e) {
       return Uni.createFrom().failure(e);
     }
+    return null;
   }
 
   @Override
