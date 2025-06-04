@@ -44,9 +44,8 @@ public class DirectQueryResource {
    */
   @Query("directConnectionById")
   @Description("Get direct connection by ID")
-  @NonNull
-  public DirectConnection getDirectConnectionByID(String connectionID) throws Exception {
-    return direct.getDirectConnectionByID(connectionID);
+  public Uni<DirectConnection> getDirectConnectionByID(@NonNull String id) {
+    return direct.getDirectConnectionByID(id);
   }
 
   /**
