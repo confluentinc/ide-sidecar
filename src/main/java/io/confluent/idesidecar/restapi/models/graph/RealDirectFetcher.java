@@ -15,6 +15,7 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
+import jakarta.enterprise.event.ObservesAsync;
 import jakarta.inject.Inject;
 import java.io.IOException;
 import java.util.List;
@@ -24,6 +25,7 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import java.time.Duration;
 import org.eclipse.microprofile.config.ConfigProvider;
+import io.confluent.idesidecar.restapi.connections.ConnectionState;
 
 
 /**
@@ -63,7 +65,7 @@ public class RealDirectFetcher extends ConfluentRestClient implements DirectFetc
   }
 
   // DirectConnection cache configuration
-  private static final Duration DIRECT_CONNECTION_CACHE_TTL = Duration.ofMinutes(
+  private static final Duration DIRECT_CONNECTION_CACHE_TTL = Duration.ofSeconds(
       ConfigProvider
           .getConfig()
           .getValue(
@@ -96,6 +98,17 @@ public class RealDirectFetcher extends ConfluentRestClient implements DirectFetc
     var cId = new ConnectionId(connectionId);
     directConnectionCache.put(cId, connection);
   }
+
+  /**
+   * Clears the cache for a specific connection.
+   *
+   * @param connectionId The connection identifier.
+   */
+  public void clearByConnectionId(String connectionId) {
+    var cId = new ConnectionId(connectionId);
+    directConnectionCache.invalidate(cId);
+  }
+
 
   // TODO: DIRECT fetcher should use logic similar to RealLocalFetcher to find the cluster
   // information from a Kafka REST URL endpoint, if it is available.

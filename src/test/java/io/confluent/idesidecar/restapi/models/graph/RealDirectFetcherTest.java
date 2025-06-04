@@ -4,8 +4,11 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import io.confluent.idesidecar.restapi.cache.MockSchemaRegistryClient;
@@ -27,6 +30,8 @@ import java.util.List;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.DescribeClusterResult;
 import org.apache.kafka.common.KafkaFuture;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -91,6 +96,16 @@ public class RealDirectFetcherTest {
   @Inject
   RealDirectFetcher directFetcher;
 
+  @BeforeEach
+  void setUp() {
+    directFetcher.clearByConnectionId(CONNECTION_ID);
+  }
+
+  @AfterEach
+  void tearDown() {
+    directFetcher.clearByConnectionId(CONNECTION_ID);
+  }
+
   @Nested
   class FetchesKafkaCluster {
 
@@ -148,6 +163,39 @@ public class RealDirectFetcherTest {
       assertNotNull(result);
       assertEquals(CONNECTION_ID, result.getId());
       assertEquals("my connection", result.getName());
+    }
+
+    @Test
+    void shouldReturnCachedDirectConnection() throws Exception {
+      // Given a unique connection ID to avoid cache pollution from other tests
+      String uniqueConnectionId = "cache-test-connection-" + System.currentTimeMillis();
+      var connectionSpec = ConnectionSpecBuilder
+          .builder()
+          .id(uniqueConnectionId)
+          .name("my cached connection")
+          .type(ConnectionSpec.ConnectionType.DIRECT)
+          .kafkaClusterConfig(
+              ConnectionSpecKafkaClusterConfigBuilder
+                  .builder()
+                  .bootstrapServers(KAFKA_BOOTSTRAP_SERVERS)
+                  .build()
+          )
+          .build();
+
+      var connection = new DirectConnectionState(connectionSpec, null);
+      when(connections.getConnectionStates()).thenReturn(List.of(connection));
+
+      // When we fetch the connection by ID twice
+      DirectConnection result1 = directFetcher.getDirectConnectionByID(uniqueConnectionId);
+      DirectConnection result2 = directFetcher.getDirectConnectionByID(uniqueConnectionId);
+
+      // Then both results should be the same object (cached)
+      assertSame(result1, result2);
+      assertEquals(uniqueConnectionId, result1.getId());
+      assertEquals("my cached connection", result1.getName());
+
+      // And the connection manager should only be called once (cache hit on second call)
+      verify(connections, times(1)).getConnectionStates();
     }
 
     @Test
