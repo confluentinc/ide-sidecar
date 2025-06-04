@@ -209,8 +209,14 @@ public class RealDirectFetcher extends ConfluentRestClient implements DirectFetc
             )
         )
         .invoke(cluster -> {
-            // cache the cluster id, in separate stage and won't break the chain
-            writeClusterToCache(state.getId(), cluster.id());
+            // cache the cluster id
+            try {
+                writeClusterToCache(state.getId(), cluster.id());
+            } catch (Exception e) {
+                Log.warnf("Failed to cache cluster ID for connection %s: %s",
+                         state.getId(), e.getMessage());
+                // Don't rethrow - caching failure shouldn't break the flow
+            }
         })
         .map(cluster -> {
             // Event emission and return
