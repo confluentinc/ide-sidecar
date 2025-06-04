@@ -1,31 +1,15 @@
 package io.confluent.idesidecar.restapi.resources;
 
 import static io.confluent.idesidecar.restapi.testutil.QueryResourceUtil.assertQueryResponseMatches;
-import static org.mockito.Mockito.when;
 
-import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
-import io.confluent.idesidecar.restapi.connections.DirectConnectionState;
-import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
-import io.confluent.idesidecar.restapi.models.ConnectionSpecBuilder;
-import io.confluent.idesidecar.restapi.models.ConnectionSpecKafkaClusterConfigBuilder;
-import io.confluent.idesidecar.restapi.models.ConnectionSpecSchemaRegistryConfigBuilder;
-import io.confluent.idesidecar.restapi.models.ConnectionStatus;
-import io.confluent.idesidecar.restapi.models.graph.DirectConnection;
-import io.confluent.idesidecar.restapi.models.graph.DirectFetcher;
-import io.confluent.idesidecar.restapi.models.graph.DirectKafkaCluster;
-import io.confluent.idesidecar.restapi.models.graph.RealDirectFetcher;
 import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
 import io.quarkiverse.wiremock.devservice.ConnectWireMock;
-import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
-import io.smallrye.mutiny.Uni;
-import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
 @QuarkusTest
 @ConnectWireMock

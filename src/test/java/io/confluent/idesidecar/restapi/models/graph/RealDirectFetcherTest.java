@@ -140,11 +140,13 @@ public class RealDirectFetcherTest {
       // Given a Direct connection
       when(connections.getConnectionSpec(CONNECTION_ID)).thenReturn(KAFKA_AND_SR_SPEC);
 
+      // When trying to fetch it
       var tester = directFetcher.getDirectConnectionByID(CONNECTION_ID)
           .invoke(Assertions::assertNotNull)
           .invoke(item -> assertEquals(CONNECTION_ID, item.getId()))
           .invoke(item -> assertEquals("my connection", item.getName()))
           .subscribe().withSubscriber(UniAssertSubscriber.create());
+      // We expect the connection to be returned
       tester.assertCompleted();
     }
 
@@ -394,6 +396,7 @@ public class RealDirectFetcherTest {
           .build();
       when(connections.getConnectionSpec("non-direct-id")).thenReturn(nonDirectSpec);
 
+      // When trying to fetch it
       var tester = directFetcher.getDirectConnectionByID("non-direct-id")
           .subscribe().withSubscriber(UniAssertSubscriber.create());
       // We expect a failure because the requested connection is not of type Direct
