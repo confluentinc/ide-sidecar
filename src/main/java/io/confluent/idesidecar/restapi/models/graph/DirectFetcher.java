@@ -13,12 +13,12 @@ public interface DirectFetcher {
   List<DirectConnection> getConnections();
 
   /**
-   * Get direct connection by ID.
+   * Get the Direct connection with the specified identifier.
    *
-   * @param connectionId the ID of the connection
-   * @return the direct connection by ID; may be null
+   * @param id the ID of the connection
+   * @return the Direct connection
    */
-  DirectConnection getDirectConnectionByID(String connectionID) throws Exception;
+  Uni<DirectConnection> getDirectConnectionByID(String id);
 
   /**
    * Get the Kafka cluster or broker.

@@ -8,7 +8,9 @@ import io.confluent.idesidecar.restapi.connections.DirectConnectionState;
 import io.confluent.idesidecar.restapi.events.ClusterKind;
 import io.confluent.idesidecar.restapi.events.Lifecycle;
 import io.confluent.idesidecar.restapi.events.ServiceKind;
+import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
 import io.confluent.idesidecar.restapi.models.Connection;
+import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 import io.quarkus.logging.Log;
 import io.quarkus.runtime.annotations.RegisterForReflection;
@@ -79,26 +81,21 @@ public class RealDirectFetcher extends ConfluentRestClient implements DirectFetc
   }
 
   @Override
-  public DirectConnection getDirectConnectionByID(String connectionID) throws Exception {
-    var connection = connections
-        .getConnectionStates()
-        .stream()
-        .filter(conn -> conn.getSpec().id().equals(connectionID))
-        .findFirst();
-
-    if (connection.isPresent()) {
-      var foundConnection = connection.get();
-      if (!DIRECT.equals(foundConnection.getSpec().type())) {
-        throw new Exception(
-            "Connection with ID=" + connectionID + " is not a direct connection."
+  public Uni<DirectConnection> getDirectConnectionByID(String id) {
+    try {
+      var spec = connections.getConnectionSpec(id);
+      if (!ConnectionType.DIRECT.equals(spec.type())) {
+        return Uni.createFrom().failure(
+            new ConnectionNotFoundException(
+                "Connection %s is not a Direct connection".formatted(id)
+            )
         );
+      } else {
+        return Uni.createFrom().item(new DirectConnection(spec.id(), spec.name()));
       }
-      return new DirectConnection(
-          foundConnection.getSpec().id(),
-          foundConnection.getSpec().name()
-      );
+    } catch (ConnectionNotFoundException e) {
+      return Uni.createFrom().failure(e);
     }
-    return null;
   }
 
   @Override

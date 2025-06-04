@@ -1,0 +1,22 @@
+{
+  "errors": [
+    {
+      "message": "Connection direct-1 is not a Direct connection",
+      "locations": [
+        {
+          "line": 2,
+          "column": 5
+        }
+      ],
+      "path": [
+        "directConnectionById"
+      ],
+      "extensions": {
+        "classification": "DataFetchingException"
+      }
+    }
+  ],
+  "data": {
+    "directConnectionById": null
+  }
+}
