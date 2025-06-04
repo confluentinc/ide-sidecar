@@ -197,17 +197,17 @@ public class RealDirectFetcher extends ConfluentRestClient implements DirectFetc
     return Uni
         .createFrom()
         .completionStage(
-            // Use the client to get the cluster ID, to verify that we can connect
-            adminClient.describeCluster().clusterId().toCompletionStage()
+          // Use the client to get the cluster ID, to verify that we can connect
+          adminClient.describeCluster().clusterId().toCompletionStage()
         )
-        .map(clusterId -> {
-            return new DirectKafkaCluster(
+        .map(clusterId ->
+            new DirectKafkaCluster(
                 clusterId,
                 null,
                 kafkaConfig.bootstrapServers(),
                 state.getId()
-            );
-        })
+            )
+        )
         .invoke(cluster -> {
             // cache the cluster id, in separate stage and won't break the chain
             writeClusterToCache(state.getId(), cluster.id());
