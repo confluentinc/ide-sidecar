@@ -2,9 +2,12 @@ package io.confluent.idesidecar.restapi.models.graph;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.times;
 
 import io.confluent.idesidecar.restapi.cache.MockSchemaRegistryClient;
 import io.confluent.idesidecar.restapi.clients.SchemaRegistryClient;
@@ -35,10 +38,12 @@ public class RealDirectFetcherTest {
 
   private static final String CONNECTION_ID = "connection-id";
   private static final String KAFKA_CLUSTER_ID = "cluster-1";
+  private static final String KAFKA_CLUSTER_ID_TO_TEST_CACHE = "cluster-2";
   private static final String KAFKA_BOOTSTRAP_SERVERS = "kafka_host:100";
   private static final String SR_CLUSTER_ID = "schema-registry-1";
   private static final String SR_URL = "http://localhost:123456";
   private static final Duration ONE_SECOND = Duration.ofSeconds(1);
+  private static final Duration FIVE_SECONDS = Duration.ofSeconds(5);
   private static final ConnectionSpec KAFKA_AND_SR_SPEC = ConnectionSpecBuilder
       .builder()
       .id(CONNECTION_ID)
@@ -251,6 +256,52 @@ public class RealDirectFetcherTest {
       // Then the Kafka cluster will be null
       assertNull(kafkaCluster.await().atMost(ONE_SECOND));
     }
+  }
+
+  @Test
+  void shouldReturnCachedKafkaClusterOnSecondCall() {
+    var mockAdminClient = mock(AdminClient.class);
+    var describeCluster = mock(DescribeClusterResult.class);
+    when(mockAdminClient.describeCluster()).thenAnswer(invocation -> {
+      Thread.sleep(3000); // delay 3 seconds to simulate a slow call
+      return describeCluster;
+    });
+    when(describeCluster.clusterId()).thenReturn(KafkaFuture.completedFuture(KAFKA_CLUSTER_ID_TO_TEST_CACHE));
+
+    var connection = new DirectConnectionState(KAFKA_AND_SR_SPEC, null) {
+      @Override
+      protected AdminClient createAdminClient(ConnectionSpec.KafkaClusterConfig config) {
+          return mockAdminClient;
+      }
+
+      @Override
+      public boolean isKafkaConnected() {
+          return true;
+      }
+    };
+
+    when(connections.getConnectionState(eq(CONNECTION_ID))).thenReturn(connection);
+
+    // First call - should fetch from admin client and take ~3 seconds
+    var startTime1 = System.currentTimeMillis();
+    var firstResult = directFetcher.getKafkaCluster(CONNECTION_ID).await().atMost(FIVE_SECONDS);
+    var endTime1 = System.currentTimeMillis();
+    var firstCallDuration = endTime1 - startTime1;
+
+    // Second call - from cache, should be much faster
+    var startTime2 = System.currentTimeMillis();
+    var secondResult = directFetcher.getKafkaCluster(CONNECTION_ID).await().atMost(ONE_SECOND);
+    var endTime2 = System.currentTimeMillis();
+    var secondCallDuration = endTime2 - startTime2;
+
+    // Verify results are the same and timing
+    assertEquals(firstResult, secondResult);
+    assertEquals(KAFKA_CLUSTER_ID, firstResult.id());
+    assertTrue(firstCallDuration >= 2900);
+    assertTrue(secondCallDuration < 100);
+
+    // Verify admin client was only called once
+    verify(mockAdminClient, times(1)).describeCluster();
   }
 
   @Nested
