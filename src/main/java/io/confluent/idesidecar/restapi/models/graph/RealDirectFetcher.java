@@ -204,9 +204,7 @@ public class RealDirectFetcher extends ConfluentRestClient implements DirectFetc
         })
         .map(cluster -> {
           // Emit an event that this cluster was loaded
-          onLoad(state.getId(), cluster);
-          // And return the cluster
-          return cluster;
+          return onLoad(state.getId(), cluster);
         });
   }
 
