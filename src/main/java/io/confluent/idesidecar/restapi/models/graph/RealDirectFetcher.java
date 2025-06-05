@@ -90,14 +90,6 @@ public class RealDirectFetcher extends ConfluentRestClient implements DirectFetc
     clusterIdCache.invalidate(connectionId);
   }
 
-  /**
-   * Observes connection lifecycle events to clear cache when connections change.
-   */
-  public void onConnectionChange(
-      @ObservesAsync @Lifecycle.Deleted @Lifecycle.Created @Lifecycle.Updated ConnectionState connection) {
-      clusterIdCache.invalidate(connection.getId());
-  }
-
   // TODO: DIRECT fetcher should use logic similar to RealLocalFetcher to find the cluster
   // information from a Kafka REST URL endpoint, if it is available.
   // That is left to future improvements.
@@ -211,8 +203,10 @@ public class RealDirectFetcher extends ConfluentRestClient implements DirectFetc
             return cluster;
         })
         .map(cluster -> {
-            // Event emission and return
-            return onLoad(state.getId(), cluster);
+          // Emit an event that this cluster was loaded
+          onLoad(state.getId(), cluster);
+          // And return the cluster
+          return cluster;
         });
   }
 
