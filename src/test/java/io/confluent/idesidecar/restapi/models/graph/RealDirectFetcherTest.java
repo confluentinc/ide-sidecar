@@ -30,6 +30,7 @@ import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.DescribeClusterResult;
 import org.apache.kafka.common.KafkaFuture;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -38,7 +39,6 @@ public class RealDirectFetcherTest {
 
   private static final String CONNECTION_ID = "connection-id";
   private static final String KAFKA_CLUSTER_ID = "cluster-1";
-  private static final String KAFKA_CLUSTER_ID_TO_TEST_CACHE = "cluster-2";
   private static final String KAFKA_BOOTSTRAP_SERVERS = "kafka_host:100";
   private static final String SR_CLUSTER_ID = "schema-registry-1";
   private static final String SR_URL = "http://localhost:123456";
@@ -95,6 +95,11 @@ public class RealDirectFetcherTest {
 
   @Inject
   RealDirectFetcher directFetcher;
+
+  @BeforeEach
+  void clearCache() {
+    directFetcher.clearClusterCache(CONNECTION_ID);
+  }
 
   @Nested
   class FetchesKafkaCluster {
@@ -266,7 +271,7 @@ public class RealDirectFetcherTest {
       Thread.sleep(3000); // delay 3 seconds to simulate a slow call
       return describeCluster;
     });
-    when(describeCluster.clusterId()).thenReturn(KafkaFuture.completedFuture(KAFKA_CLUSTER_ID_TO_TEST_CACHE));
+    when(describeCluster.clusterId()).thenReturn(KafkaFuture.completedFuture(KAFKA_CLUSTER_ID));
 
     var connection = new DirectConnectionState(KAFKA_AND_SR_SPEC, null) {
       @Override
