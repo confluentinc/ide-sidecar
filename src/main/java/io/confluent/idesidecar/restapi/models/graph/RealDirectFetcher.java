@@ -195,10 +195,10 @@ public class RealDirectFetcher extends ConfluentRestClient implements DirectFetc
             writeClusterToCache(state.getId(), clusterId);
             return cluster;
         })
-        .map(cluster -> {
+        .map(cluster ->
           // Emit an event that this cluster was loaded
-          return onLoad(state.getId(), cluster);
-        });
+          onLoad(state.getId(), cluster)
+        );
   }
 
   public Uni<DirectSchemaRegistry> getSchemaRegistry(String connectionId) {
