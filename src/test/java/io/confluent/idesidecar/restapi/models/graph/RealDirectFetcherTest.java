@@ -293,9 +293,6 @@ public class RealDirectFetcherTest {
     var endTime2 = System.currentTimeMillis();
     var secondCallDuration = endTime2 - startTime2;
 
-    System.out.println("First call took: " + firstCallDuration + "ms");
-    System.out.println("Second call took: " + secondCallDuration + "ms");
-
     // Verify results are the same and timing
     assertEquals(firstResult, secondResult);
     assertEquals(KAFKA_CLUSTER_ID, firstResult.id());
