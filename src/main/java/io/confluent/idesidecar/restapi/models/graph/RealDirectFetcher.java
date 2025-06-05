@@ -65,7 +65,7 @@ public class RealDirectFetcher extends ConfluentRestClient implements DirectFetc
           .getConfig()
           .getValue("ide-sidecar.kafka-cluster-cache-ttl", Long.class));
 
-  private final Cache<String, String> clusterIdCache = Caffeine.newBuilder()
+  private static final Cache<String, String> clusterIdCache = Caffeine.newBuilder()
       .expireAfterWrite(KAFKA_CLUSTER_CACHE_TTL)
       .build();
 
@@ -200,23 +200,15 @@ public class RealDirectFetcher extends ConfluentRestClient implements DirectFetc
           // Use the client to get the cluster ID, to verify that we can connect
           adminClient.describeCluster().clusterId().toCompletionStage()
         )
-        .map(clusterId ->
-            new DirectKafkaCluster(
+        .map(clusterId -> {
+          var cluster = new DirectKafkaCluster(
                 clusterId,
                 null,
                 kafkaConfig.bootstrapServers(),
                 state.getId()
-            )
-        )
-        .invoke(cluster -> {
-            // cache the cluster id
-            try {
-                writeClusterToCache(state.getId(), cluster.id());
-            } catch (Exception e) {
-                Log.warnf("Failed to cache cluster ID for connection %s: %s",
-                         state.getId(), e.getMessage());
-                // Don't rethrow - caching failure shouldn't break the flow
-            }
+            );
+            writeClusterToCache(state.getId(), clusterId);
+            return cluster;
         })
         .map(cluster -> {
             // Event emission and return
