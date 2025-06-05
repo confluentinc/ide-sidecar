@@ -78,15 +78,15 @@ class ConnectionEventsTest extends AbstractWebsocketTestBase {
 
       // When events are triggered
       connectionEvents.onConnectionCreated(newConnection);
-      connectionEvents.onConnectionEstablished(connectedConnection);
       connectionEvents.onConnectionUpdated(updatedConnection);
+      connectionEvents.onConnectionEstablished(connectedConnection);
       connectionEvents.onConnectionDisconnected(disconnectedConnection);
       connectionEvents.onConnectionDeleted(disconnectedConnection);
 
       // Then the workspace with a workspace should receive all messages and no more
       assertEventReceived(sessionWithWorkspace, Action.CREATED, newConnection);
-      assertEventReceived(sessionWithWorkspace, Action.CONNECTED, connectedConnection);
       assertEventReceived(sessionWithWorkspace, Action.UPDATED, updatedConnection);
+      assertEventReceived(sessionWithWorkspace, Action.CONNECTED, connectedConnection);
       assertEventReceived(sessionWithWorkspace, Action.DISCONNECTED, disconnectedConnection);
       assertEventReceived(sessionWithWorkspace, Action.DELETED, disconnectedConnection);
       assertNoMoreEventsReceived(sessionWithWorkspace);
