@@ -37,8 +37,8 @@ import org.junit.jupiter.api.Test;
 public class RealDirectFetcherTest {
 
   private static final String CONNECTION_ID = "connection-id";
-  private static final String CONNECTION_ID_TO_TEST_CACHE = "connection-id-2";
   private static final String KAFKA_CLUSTER_ID = "cluster-1";
+  private static final String KAFKA_CLUSTER_ID_TO_TEST_CACHE = "cluster-2";
   private static final String KAFKA_BOOTSTRAP_SERVERS = "kafka_host:100";
   private static final String SR_CLUSTER_ID = "schema-registry-1";
   private static final String SR_URL = "http://localhost:123456";
@@ -266,7 +266,7 @@ public class RealDirectFetcherTest {
       Thread.sleep(3000); // delay 3 seconds to simulate a slow call
       return describeCluster;
     });
-    when(describeCluster.clusterId()).thenReturn(KafkaFuture.completedFuture(KAFKA_CLUSTER_ID));
+    when(describeCluster.clusterId()).thenReturn(KafkaFuture.completedFuture(KAFKA_CLUSTER_ID_TO_TEST_CACHE));
 
     var connection = new DirectConnectionState(KAFKA_AND_SR_SPEC, null) {
       @Override
@@ -280,17 +280,17 @@ public class RealDirectFetcherTest {
       }
     };
 
-    when(connections.getConnectionState(eq(CONNECTION_ID_TO_TEST_CACHE))).thenReturn(connection);
+    when(connections.getConnectionState(eq(CONNECTION_ID))).thenReturn(connection);
 
     // First call - should fetch from admin client and take ~3 seconds
     var startTime1 = System.currentTimeMillis();
-    var firstResult = directFetcher.getKafkaCluster(CONNECTION_ID_TO_TEST_CACHE).await().atMost(FIVE_SECONDS);
+    var firstResult = directFetcher.getKafkaCluster(CONNECTION_ID).await().atMost(FIVE_SECONDS);
     var endTime1 = System.currentTimeMillis();
     var firstCallDuration = endTime1 - startTime1;
 
     // Second call - from cache, should be much faster
     var startTime2 = System.currentTimeMillis();
-    var secondResult = directFetcher.getKafkaCluster(CONNECTION_ID_TO_TEST_CACHE).await().atMost(ONE_SECOND);
+    var secondResult = directFetcher.getKafkaCluster(CONNECTION_ID).await().atMost(ONE_SECOND);
     var endTime2 = System.currentTimeMillis();
     var secondCallDuration = endTime2 - startTime2;
 
