@@ -5,7 +5,6 @@ import static io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionTy
 import io.confluent.idesidecar.restapi.clients.SchemaRegistryClient;
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
 import io.confluent.idesidecar.restapi.connections.DirectConnectionState;
-import io.confluent.idesidecar.restapi.connections.ConnectionState;
 import io.confluent.idesidecar.restapi.events.ClusterKind;
 import io.confluent.idesidecar.restapi.events.Lifecycle;
 import io.confluent.idesidecar.restapi.events.ServiceKind;
@@ -18,7 +17,6 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
-import jakarta.enterprise.event.ObservesAsync;
 import jakarta.inject.Inject;
 import java.io.IOException;
 import java.time.Duration;
