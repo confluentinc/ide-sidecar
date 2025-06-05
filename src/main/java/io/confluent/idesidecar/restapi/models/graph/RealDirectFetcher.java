@@ -65,7 +65,7 @@ public class RealDirectFetcher extends ConfluentRestClient implements DirectFetc
           .getConfig()
           .getValue("ide-sidecar.kafka-cluster-cache-ttl", Long.class));
 
-  private final Cache<String, String> clusterIdCache = Caffeine.newBuilder()
+  private static final Cache<String, String> clusterIdCache = Caffeine.newBuilder()
       .expireAfterWrite(KAFKA_CLUSTER_CACHE_TTL)
       .build();
 
@@ -83,12 +83,6 @@ public class RealDirectFetcher extends ConfluentRestClient implements DirectFetc
     clusterIdCache.put(connectionId, clusterId);
   }
 
-  /**
-   * Clears the cluster cache for a specific connection.
-   */
-  public void clearClusterCache(String connectionId) {
-    clusterIdCache.invalidate(connectionId);
-  }
 
   // TODO: DIRECT fetcher should use logic similar to RealLocalFetcher to find the cluster
   // information from a Kafka REST URL endpoint, if it is available.
