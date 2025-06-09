@@ -57,35 +57,27 @@ public class RealDirectFetcher extends ConfluentRestClient implements DirectFetc
   @Inject
   Event<ClusterEvent> clusterEvents;
 
+  private record ConnectionId(String id) {
+  }
+
+  private record KafkaClusterId(String id) {
+  }
+
   // initial cache parameters and functions for kafka cluster id
   private static final Duration KAFKA_CLUSTER_CACHE_TTL = Duration.ofSeconds(
       ConfigProvider
           .getConfig()
           .getValue("ide-sidecar.kafka-cluster-cache-ttl", Long.class));
 
-  private static final Cache<String, String> clusterIdCache = Caffeine.newBuilder()
+  public static final Cache<ConnectionId, KafkaClusterId> clusterIdCache = Caffeine.newBuilder()
       .expireAfterWrite(KAFKA_CLUSTER_CACHE_TTL)
       .build();
-
-  /**
-   * Reads cached cluster info for a connection.
-   */
-  public String readClusterFromCache(String connectionId) {
-    return clusterIdCache.getIfPresent(connectionId);
-  }
-
-  /**
-   * Writes cluster info to cache for a connection.
-   */
-  public void writeClusterToCache(String connectionId, String clusterId) {
-    clusterIdCache.put(connectionId, clusterId);
-  }
 
   /**
    * Clears the cluster cache for a specific connection.
    */
   public void clearClusterCache(String connectionId) {
-    clusterIdCache.invalidate(connectionId);
+    clusterIdCache.invalidate(new ConnectionId(connectionId));
   }
 
   // TODO: DIRECT fetcher should use logic similar to RealLocalFetcher to find the cluster
@@ -135,6 +127,7 @@ public class RealDirectFetcher extends ConfluentRestClient implements DirectFetc
 
   @Override
   public Uni<DirectKafkaCluster> getKafkaCluster(String connectionId) {
+    ConnectionId id = new ConnectionId(connectionId);
     var state = connections.getConnectionState(connectionId);
     if (state instanceof DirectConnectionState directState) {
       if (!directState.isKafkaConnected()) {
@@ -144,11 +137,11 @@ public class RealDirectFetcher extends ConfluentRestClient implements DirectFetc
       }
 
       // Check cache first
-      var cachedClusterId = readClusterFromCache(connectionId);
+      var cachedClusterId = clusterIdCache.getIfPresent(id);
       if (cachedClusterId != null) {
         var kafkaConfig = directState.getSpec().kafkaClusterConfig();
         var cluster = new DirectKafkaCluster(
-            cachedClusterId,
+            cachedClusterId.id(),
             null,
             kafkaConfig.bootstrapServers(),
             directState.getId()
@@ -197,7 +190,8 @@ public class RealDirectFetcher extends ConfluentRestClient implements DirectFetc
                 kafkaConfig.bootstrapServers(),
                 state.getId()
             );
-            writeClusterToCache(state.getId(), clusterId);
+            // Write the cluster ID to cache
+            clusterIdCache.put(new ConnectionId(state.getId()), new KafkaClusterId(clusterId));
             return cluster;
         })
         .map(cluster -> {

@@ -267,46 +267,39 @@ public class RealDirectFetcherTest {
   void shouldReturnCachedKafkaClusterOnSecondCall() {
     var mockAdminClient = mock(AdminClient.class);
     var describeCluster = mock(DescribeClusterResult.class);
-    when(mockAdminClient.describeCluster()).thenAnswer(invocation -> {
-      Thread.sleep(3000); // delay 3 seconds to simulate a slow call
-      return describeCluster;
-    });
+    when(mockAdminClient.describeCluster()).thenReturn(describeCluster);
     when(describeCluster.clusterId()).thenReturn(KafkaFuture.completedFuture(KAFKA_CLUSTER_ID));
 
     var connection = new DirectConnectionState(KAFKA_AND_SR_SPEC, null) {
-      @Override
-      protected AdminClient createAdminClient(ConnectionSpec.KafkaClusterConfig config) {
-          return mockAdminClient;
-      }
-
-      @Override
-      public boolean isKafkaConnected() {
-          return true;
-      }
+        @Override
+        protected AdminClient createAdminClient(ConnectionSpec.KafkaClusterConfig config) {
+            return mockAdminClient;
+        }
+        @Override
+        public boolean isKafkaConnected() {
+            return true;
+        }
     };
 
     when(connections.getConnectionState(eq(CONNECTION_ID))).thenReturn(connection);
 
-    // First call - should fetch from admin client and take ~3 seconds
-    var startTime1 = System.currentTimeMillis();
-    var firstResult = directFetcher.getKafkaCluster(CONNECTION_ID).await().atMost(FIVE_SECONDS);
-    var endTime1 = System.currentTimeMillis();
-    var firstCallDuration = endTime1 - startTime1;
+    // First call: should fetch from admin client, verify admin client was called once
+    var firstSubscriber = directFetcher.getKafkaCluster(CONNECTION_ID)
+        .subscribe().withSubscriber(UniAssertSubscriber.create());
+    firstSubscriber.assertCompleted();
+    var firstResult = firstSubscriber.getItem();
+    verify(mockAdminClient, times(1)).describeCluster();
 
-    // Second call - from cache, should be much faster
-    var startTime2 = System.currentTimeMillis();
-    var secondResult = directFetcher.getKafkaCluster(CONNECTION_ID).await().atMost(ONE_SECOND);
-    var endTime2 = System.currentTimeMillis();
-    var secondCallDuration = endTime2 - startTime2;
+    // Second call: should use cache, verify admin client was still only called once
+    var secondSubscriber = directFetcher.getKafkaCluster(CONNECTION_ID)
+        .subscribe().withSubscriber(UniAssertSubscriber.create());
+    secondSubscriber.assertCompleted();
+    var secondResult = secondSubscriber.getItem();
+    verify(mockAdminClient, times(1)).describeCluster();
 
-    // Verify results are the same and timing
+    // Assert results
     assertEquals(firstResult, secondResult);
     assertEquals(KAFKA_CLUSTER_ID, firstResult.id());
-    assertTrue(firstCallDuration >= 2900);
-    assertTrue(secondCallDuration < 100);
-
-    // Verify admin client was only called once
-    verify(mockAdminClient, times(1)).describeCluster();
   }
 
   @Nested
