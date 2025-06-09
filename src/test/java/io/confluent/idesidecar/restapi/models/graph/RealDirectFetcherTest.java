@@ -2,9 +2,12 @@ package io.confluent.idesidecar.restapi.models.graph;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.times;
 
 import io.confluent.idesidecar.restapi.cache.MockSchemaRegistryClient;
 import io.confluent.idesidecar.restapi.clients.SchemaRegistryClient;
@@ -27,6 +30,7 @@ import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.DescribeClusterResult;
 import org.apache.kafka.common.KafkaFuture;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -39,6 +43,7 @@ public class RealDirectFetcherTest {
   private static final String SR_CLUSTER_ID = "schema-registry-1";
   private static final String SR_URL = "http://localhost:123456";
   private static final Duration ONE_SECOND = Duration.ofSeconds(1);
+  private static final Duration FIVE_SECONDS = Duration.ofSeconds(5);
   private static final ConnectionSpec KAFKA_AND_SR_SPEC = ConnectionSpecBuilder
       .builder()
       .id(CONNECTION_ID)
@@ -90,6 +95,11 @@ public class RealDirectFetcherTest {
 
   @Inject
   RealDirectFetcher directFetcher;
+
+  @BeforeEach
+  void clearCache() {
+    directFetcher.clearClusterCache(CONNECTION_ID);
+  }
 
   @Nested
   class FetchesKafkaCluster {
@@ -251,6 +261,45 @@ public class RealDirectFetcherTest {
       // Then the Kafka cluster will be null
       assertNull(kafkaCluster.await().atMost(ONE_SECOND));
     }
+  }
+
+  @Test
+  void shouldReturnCachedKafkaClusterOnSecondCall() {
+    var mockAdminClient = mock(AdminClient.class);
+    var describeCluster = mock(DescribeClusterResult.class);
+    when(mockAdminClient.describeCluster()).thenReturn(describeCluster);
+    when(describeCluster.clusterId()).thenReturn(KafkaFuture.completedFuture(KAFKA_CLUSTER_ID));
+
+    var connection = new DirectConnectionState(KAFKA_AND_SR_SPEC, null) {
+        @Override
+        protected AdminClient createAdminClient(ConnectionSpec.KafkaClusterConfig config) {
+            return mockAdminClient;
+        }
+        @Override
+        public boolean isKafkaConnected() {
+            return true;
+        }
+    };
+
+    when(connections.getConnectionState(eq(CONNECTION_ID))).thenReturn(connection);
+
+    // First call: should fetch from admin client, verify admin client was called once
+    var firstSubscriber = directFetcher.getKafkaCluster(CONNECTION_ID)
+        .subscribe().withSubscriber(UniAssertSubscriber.create());
+    firstSubscriber.assertCompleted();
+    var firstResult = firstSubscriber.getItem();
+    verify(mockAdminClient, times(1)).describeCluster();
+
+    // Second call: should use cache, verify admin client was still only called once
+    var secondSubscriber = directFetcher.getKafkaCluster(CONNECTION_ID)
+        .subscribe().withSubscriber(UniAssertSubscriber.create());
+    secondSubscriber.assertCompleted();
+    var secondResult = secondSubscriber.getItem();
+    verify(mockAdminClient, times(1)).describeCluster();
+
+    // Assert results
+    assertEquals(firstResult, secondResult);
+    assertEquals(KAFKA_CLUSTER_ID, firstResult.id());
   }
 
   @Nested
