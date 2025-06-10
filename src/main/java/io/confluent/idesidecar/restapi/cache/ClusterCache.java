@@ -499,7 +499,7 @@ public class ClusterCache {
           case LOCAL -> localFetcher.getKafkaCluster(connectionId)
               .await()
               .atMost(timeout);
-          case DIRECT -> realDirectFetcher.getKafkaCluster(connectionId)
+          case DIRECT -> directFetcher.getKafkaCluster(connectionId)
               .await()
               .atMost(timeout);
           case PLATFORM -> null;
@@ -527,7 +527,7 @@ public class ClusterCache {
           case LOCAL -> localFetcher.getSchemaRegistry(connectionId)
               .await()
               .atMost(timeout);
-          case DIRECT -> realDirectFetcher.getSchemaRegistry(connectionId)
+          case DIRECT -> directFetcher.getSchemaRegistry(connectionId)
               .await()
               .atMost(timeout);
           case PLATFORM -> null;
@@ -555,7 +555,7 @@ public class ClusterCache {
           case LOCAL -> localFetcher.getSchemaRegistry(connectionId)
               .await()
               .atMost(timeout);
-          case DIRECT -> realDirectFetcher.getSchemaRegistry(connectionId)
+          case DIRECT -> directFetcher.getSchemaRegistry(connectionId)
               .await()
               .atMost(timeout);
           case PLATFORM -> null;
