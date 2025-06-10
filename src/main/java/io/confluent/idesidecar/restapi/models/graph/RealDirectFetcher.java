@@ -69,7 +69,7 @@ public class RealDirectFetcher extends ConfluentRestClient implements DirectFetc
           .getConfig()
           .getValue("ide-sidecar.kafka-cluster-cache-ttl", Long.class));
 
-  public static final Cache<ConnectionId, KafkaClusterId> clusterIdCache = Caffeine.newBuilder()
+  private static final Cache<ConnectionId, KafkaClusterId> clusterIdCache = Caffeine.newBuilder()
       .expireAfterWrite(KAFKA_CLUSTER_CACHE_TTL)
       .build();
 
