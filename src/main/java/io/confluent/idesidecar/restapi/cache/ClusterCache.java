@@ -191,8 +191,10 @@ public class ClusterCache {
   }
 
   void onConnectionUpdated(@ObservesAsync @Lifecycle.Updated ConnectionState connection) {
-    directFetcher.clearClusterCache(connection.getId());
     Log.infof("Updated %s", connection.getSpec());
+
+    // clear directFetcher cache
+    directFetcher.clearClusterCache(connection.getId());
 
     // Replace the existing cache for this connection with a new one
     clustersByConnectionId.put(
@@ -214,8 +216,10 @@ public class ClusterCache {
   }
 
   void onConnectionDeleted(@ObservesAsync @Lifecycle.Deleted ConnectionState connection) {
-    directFetcher.clearClusterCache(connection.getId());
     Log.infof("Deleted %s", connection.getSpec());
+
+    // clear directFetcher cache
+    directFetcher.clearClusterCache(connection.getId());
 
     // Remove it, in case it was not disconnected first
     clustersByConnectionId.remove(connection.getSpec().id());
