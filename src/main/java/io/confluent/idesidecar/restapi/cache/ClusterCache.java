@@ -191,6 +191,7 @@ public class ClusterCache {
   }
 
   void onConnectionUpdated(@ObservesAsync @Lifecycle.Updated ConnectionState connection) {
+    directFetcher.clearClusterCache(connection.getId());
     Log.infof("Updated %s", connection.getSpec());
 
     // Replace the existing cache for this connection with a new one
@@ -213,6 +214,7 @@ public class ClusterCache {
   }
 
   void onConnectionDeleted(@ObservesAsync @Lifecycle.Deleted ConnectionState connection) {
+    directFetcher.clearClusterCache(connection.getId());
     Log.infof("Deleted %s", connection.getSpec());
 
     // Remove it, in case it was not disconnected first
@@ -497,7 +499,7 @@ public class ClusterCache {
           case LOCAL -> localFetcher.getKafkaCluster(connectionId)
               .await()
               .atMost(timeout);
-          case DIRECT -> directFetcher.getKafkaCluster(connectionId)
+          case DIRECT -> realDirectFetcher.getKafkaCluster(connectionId)
               .await()
               .atMost(timeout);
           case PLATFORM -> null;
@@ -525,7 +527,7 @@ public class ClusterCache {
           case LOCAL -> localFetcher.getSchemaRegistry(connectionId)
               .await()
               .atMost(timeout);
-          case DIRECT -> directFetcher.getSchemaRegistry(connectionId)
+          case DIRECT -> realDirectFetcher.getSchemaRegistry(connectionId)
               .await()
               .atMost(timeout);
           case PLATFORM -> null;
@@ -553,7 +555,7 @@ public class ClusterCache {
           case LOCAL -> localFetcher.getSchemaRegistry(connectionId)
               .await()
               .atMost(timeout);
-          case DIRECT -> directFetcher.getSchemaRegistry(connectionId)
+          case DIRECT -> realDirectFetcher.getSchemaRegistry(connectionId)
               .await()
               .atMost(timeout);
           case PLATFORM -> null;

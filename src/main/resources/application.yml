@@ -30,6 +30,7 @@
         # faster frequency / lower timeouts matching expectations of tests
         refresh-status-interval-seconds: 5
         timeout-seconds: 5
+        kafka-cluster-cache-ttl: 1800
     grim-reaper:
       # Should we check for remaining living vs code processes at all, and exit() if none left?
       enabled: false
@@ -42,7 +43,6 @@
     flink-language-service-proxy:
       url-pattern: ws://127.0.0.1:${quarkus.http.test-port}/fls-mock
     schema-fetch-error-ttl: 30
-    kafka-cluster-cache-ttl: 30
     schema-fetch-retry:
       max-retries: 3
     flink:
@@ -141,6 +141,7 @@ ide-sidecar:
     direct:
       refresh-status-interval-seconds: 15
       timeout-seconds: 15
+      kafka-cluster-cache-ttl: 1800
   flink:
     url-pattern: https://flink.%s.%s.confluent.cloud
   access_token_filter:
@@ -217,7 +218,6 @@ ide-sidecar:
   webclient:
     connect-timeout-seconds: 10
   schema-fetch-error-ttl: 30
-  kafka-cluster-cache-ttl: 1800
   schema-fetch-retry:
     initial-backoff-ms: 250
     max-backoff-ms: 5000
