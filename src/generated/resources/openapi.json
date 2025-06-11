@@ -1138,30 +1138,30 @@
       "HealthResponse" : {
         "type" : "object",
         "properties" : {
+          "status" : {
+            "type" : "string",
+            "enum" : [ "UP", "DOWN" ]
+          },
           "checks" : {
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/HealthCheck"
             }
-          },
-          "status" : {
-            "type" : "string",
-            "enum" : [ "UP", "DOWN" ]
           }
         }
       },
       "HealthCheck" : {
         "type" : "object",
         "properties" : {
+          "name" : {
+            "type" : "string"
+          },
           "data" : {
             "type" : [ "object", "null" ]
           },
           "status" : {
             "type" : "string",
             "enum" : [ "UP", "DOWN" ]
-          },
-          "name" : {
-            "type" : "string"
           }
         }
       }
@@ -1853,7 +1853,7 @@
   },
   "info" : {
     "title" : "Confluent ide-sidecar API",
-    "version" : "0.213.0",
+    "version" : "0.214.0",
     "description" : "API for the Confluent ide-sidecar, part of Confluent for VS Code",
     "termsOfService" : "Your terms here",
     "contact" : {
