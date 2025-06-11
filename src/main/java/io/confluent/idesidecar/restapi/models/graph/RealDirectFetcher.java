@@ -26,6 +26,7 @@ import org.apache.kafka.clients.admin.AdminClient;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import org.eclipse.microprofile.config.ConfigProvider;
+import jakarta.enterprise.event.ObservesAsync;
 
 /**
  * A {@link DirectFetcher} that uses the {@link ConnectionStateManager} to find direct
@@ -263,5 +264,13 @@ public class RealDirectFetcher extends ConfluentRestClient implements DirectFetc
 
   private String orDefault(String value, Supplier<String> defaultValue) {
     return value != null ? value : defaultValue.get();
+  }
+
+  void onConnectionUpdated(@ObservesAsync @Lifecycle.Updated ConnectionState connection) {
+    clearClusterCache(connection.getId());
+  }
+
+  void onConnectionDeleted(@ObservesAsync @Lifecycle.Deleted ConnectionState connection) {
+    clearClusterCache(connection.getId());
   }
 }

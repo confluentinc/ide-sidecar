@@ -43,7 +43,6 @@ public class RealDirectFetcherTest {
   private static final String SR_CLUSTER_ID = "schema-registry-1";
   private static final String SR_URL = "http://localhost:123456";
   private static final Duration ONE_SECOND = Duration.ofSeconds(1);
-  private static final Duration FIVE_SECONDS = Duration.ofSeconds(5);
   private static final ConnectionSpec KAFKA_AND_SR_SPEC = ConnectionSpecBuilder
       .builder()
       .id(CONNECTION_ID)
