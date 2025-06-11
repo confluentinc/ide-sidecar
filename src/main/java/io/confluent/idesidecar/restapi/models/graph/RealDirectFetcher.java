@@ -12,12 +12,14 @@ import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
 import io.confluent.idesidecar.restapi.models.Connection;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
+import io.confluent.idesidecar.restapi.connections.ConnectionState;
 import io.quarkus.logging.Log;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
+import jakarta.enterprise.event.ObservesAsync;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
@@ -26,7 +28,7 @@ import org.apache.kafka.clients.admin.AdminClient;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import org.eclipse.microprofile.config.ConfigProvider;
-import jakarta.enterprise.event.ObservesAsync;
+
 
 /**
  * A {@link DirectFetcher} that uses the {@link ConnectionStateManager} to find direct
