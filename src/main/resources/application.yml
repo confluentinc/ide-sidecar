@@ -30,6 +30,7 @@
         # faster frequency / lower timeouts matching expectations of tests
         refresh-status-interval-seconds: 5
         timeout-seconds: 5
+        kafka-cluster-cache-ttl: 1800
     grim-reaper:
       # Should we check for remaining living vs code processes at all, and exit() if none left?
       enabled: false
@@ -140,6 +141,7 @@ ide-sidecar:
     direct:
       refresh-status-interval-seconds: 15
       timeout-seconds: 15
+      kafka-cluster-cache-ttl: 1800
   flink:
     url-pattern: https://flink.%s.%s.confluent.cloud
   access_token_filter:
