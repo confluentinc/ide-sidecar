@@ -182,7 +182,6 @@ public class Events {
         case LOCAL -> ConnectionTypeQualifier.local();
         case CCLOUD -> ConnectionTypeQualifier.ccloud();
         case DIRECT -> ConnectionTypeQualifier.direct();
-        case PLATFORM -> ConnectionTypeQualifier.confluentPlatform();
       };
     }
   }

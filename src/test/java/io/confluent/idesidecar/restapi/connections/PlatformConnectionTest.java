@@ -22,7 +22,7 @@ public class PlatformConnectionTest {
   void getStatusShouldReturnInitialStatusForNewConnections() {
     var mockListener = mock(StateChangedListener.class);
     var connectionState = ConnectionStates.from(
-        new ConnectionSpec("1", "foo", ConnectionType.PLATFORM),
+        new ConnectionSpec("1", "foo", ConnectionType.DIRECT),
         mockListener
     );
     assertEquals(ConnectionStatus.INITIAL_STATUS, connectionState.getStatus());
@@ -32,7 +32,7 @@ public class PlatformConnectionTest {
   void refreshStatusShouldReturnInitialStatus() throws Throwable {
     var mockListener = mock(ConnectionState.StateChangedListener.class);
     var connectionState = ConnectionStates.from(
-        new ConnectionSpec("1", "foo", ConnectionType.PLATFORM),
+        new ConnectionSpec("1", "foo", ConnectionType.DIRECT),
         mockListener
     );
 

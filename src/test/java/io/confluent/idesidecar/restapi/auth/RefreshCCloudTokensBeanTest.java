@@ -94,7 +94,6 @@ class RefreshCCloudTokensBeanTest {
       case CCLOUD -> CCloudConnectionState.class;
       case LOCAL -> LocalConnectionState.class;
       case DIRECT -> DirectConnectionState.class;
-      case PLATFORM -> PlatformConnectionState.class;
     };
 
     var connectionState = Mockito.spy(clazz);

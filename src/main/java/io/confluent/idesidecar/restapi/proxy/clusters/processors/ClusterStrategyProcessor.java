@@ -61,12 +61,10 @@ public class ClusterStrategyProcessor extends
         case CCLOUD -> confluentCloudKafkaClusterStrategy;
         case LOCAL -> confluentLocalKafkaClusterStrategy;
         case DIRECT -> directKafkaClusterStrategy;
-        case PLATFORM -> null;
       };
       case SCHEMA_REGISTRY -> switch (connectionType) {
         case CCLOUD, DIRECT -> schemaRegistryClusterStrategy;
         case LOCAL -> confluentLocalSchemaRegistryClusterStrategy;
-        case PLATFORM -> null;
       };
     };
   }

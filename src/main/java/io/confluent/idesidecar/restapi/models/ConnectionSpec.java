@@ -74,9 +74,6 @@ public record ConnectionSpec(
   public enum ConnectionType {
     @Schema(description = "Connection type when using Confluent Local.")
     LOCAL,
-    @Schema(description = "Connection type when using Confluent Platform to connect "
-        + "to clusters registered with MDS.")
-    PLATFORM,
     @Schema(description = "Connection type when using Confluent Cloud and its available resources.")
     CCLOUD,
     @Schema(description = "Connection type when directly connecting to clusters and services.")
@@ -575,8 +572,6 @@ public record ConnectionSpec(
           }
           checkLocalConfigNotAllowed(errors, newSpec);
           checkCCloudConfigNotAllowed(errors, newSpec);
-        }
-        case PLATFORM -> {
         }
         default -> {
           errors.add(
