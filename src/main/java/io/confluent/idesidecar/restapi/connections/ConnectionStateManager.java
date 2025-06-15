@@ -236,7 +236,7 @@ public class ConnectionStateManager {
           // TODO: DIRECT connection changes need to be validated
           case DIRECT -> Uni.createFrom().voidItem();
           // No need to validate the spec for LOCAL, DIRECT, and PLATFORM connections
-          case LOCAL, PLATFORM -> Uni.createFrom().voidItem();
+          case LOCAL -> Uni.createFrom().voidItem();
         })
         .chain(ignored -> {
           // Get and update the connection spec after all validations are green
