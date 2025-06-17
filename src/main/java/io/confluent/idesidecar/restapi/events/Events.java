@@ -48,7 +48,6 @@ import jakarta.enterprise.util.AnnotationLiteral;
  * <p>The {@link ServiceKind} qualifiers represent different types of connections:
  * <ul>
  *   <li>{@link ServiceKind.CCloud}</li>
- *   <li>{@link ServiceKind.ConfluentPlatform}</li>
  *   <li>{@link ServiceKind.Local}</li>
  * </ul>
  *
@@ -134,15 +133,6 @@ public class Events {
      * {@link ConnectionType#CCLOUD Confluent Cloud}.
      */
     public static AnnotationLiteral<ServiceKind.CCloud> ccloud() {
-      return new AnnotationLiteral<>() {
-      };
-    }
-
-    /**
-     * Return a qualifier to signal the annotated event represents an object from
-     * {@link ConnectionType#PLATFORM Confluent Platform}.
-     */
-    public static AnnotationLiteral<ServiceKind.ConfluentPlatform> confluentPlatform() {
       return new AnnotationLiteral<>() {
       };
     }

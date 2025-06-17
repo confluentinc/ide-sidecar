@@ -213,7 +213,6 @@ components:
       type: string
       enum:
       - LOCAL
-      - PLATFORM
       - CCLOUD
       - DIRECT
     ConnectionsList:

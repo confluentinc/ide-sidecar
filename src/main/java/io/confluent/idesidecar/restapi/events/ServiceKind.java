@@ -29,13 +29,6 @@ public @interface ServiceKind {
   @Qualifier
   @Target({METHOD, FIELD, PARAMETER, TYPE})
   @Retention(RUNTIME)
-  @interface ConfluentPlatform {
-
-  }
-
-  @Qualifier
-  @Target({METHOD, FIELD, PARAMETER, TYPE})
-  @Retention(RUNTIME)
   @interface Direct {
 
   }
