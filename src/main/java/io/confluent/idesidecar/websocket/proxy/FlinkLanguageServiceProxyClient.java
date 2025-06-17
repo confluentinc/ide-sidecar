@@ -42,7 +42,7 @@ public class FlinkLanguageServiceProxyClient implements AutoCloseable {
       var container = ContainerProvider.getWebSocketContainer();
       container.connectToServer(this, URI.create(context.getConnectUrl()));
     } catch (Exception e) {
-      Log.warnf("Failed to connect to CCloud Flink Language Service: %s", e.getMessage());
+      Log.warn("Failed to connect to CCloud Flink Language Service.", e);
       throw new ProxyConnectionFailedException(e);
     }
   }
