@@ -35,6 +35,7 @@ public class FlinkLanguageServiceProxy {
   public void onOpen(Session session) throws IOException {
     var context = ProxyContext.from(session);
     if (proxyClients.containsKey(session.getId())) {
+      Log.warnf("Failed to open a new session: Session ID=%s already exists.", session.getId());
       session.close(
           new CloseReason(CloseCodes.CANNOT_ACCEPT, "Session ID already exists.")
       );
@@ -46,6 +47,10 @@ public class FlinkLanguageServiceProxy {
         if (cCloudConnectionState.getOauthContext() == null
             || cCloudConnectionState.getOauthContext().hasReachedEndOfLifetime()
             || cCloudConnectionState.getOauthContext().getDataPlaneToken() == null) {
+          Log.warnf(
+              "Failed to open a new session: Connection with ID=%s lacks valid data plane token.",
+              context.connectionId()
+          );
           session.close(
               new CloseReason(
                   CloseCodes.CANNOT_ACCEPT,
@@ -59,9 +64,13 @@ public class FlinkLanguageServiceProxy {
               session
           );
           proxyClients.put(session.getId(), client);
-          Log.infof("Added LSP client for session ID=%s", session.getId());
+          Log.infof("Opened a new session and added LSP client for session ID=%s", session.getId());
         }
       } else {
+        Log.warnf(
+            "Failed to open a new session: Connection with ID=%s is not of type CCLOUD.",
+            context.connectionId()
+        );
         session.close(
             new CloseReason(
                 CloseCodes.CANNOT_ACCEPT,
@@ -70,6 +79,10 @@ public class FlinkLanguageServiceProxy {
         );
       }
     } catch (ConnectionNotFoundException e) {
+      Log.warnf(
+          "Failed to open a new session: Connection with ID=%s not found.",
+          context.connectionId()
+      );
       session.close(
           new CloseReason(
               CloseCodes.CANNOT_ACCEPT,
@@ -85,6 +98,10 @@ public class FlinkLanguageServiceProxy {
     if (client != null) {
       client.sendToCCloud(message);
     } else {
+      Log.warnf(
+          "Closing session when processing message because no client exists for session ID=%s",
+          session.getId()
+      );
       session.close(
           new CloseReason(
               CloseCodes.CANNOT_ACCEPT,
@@ -103,6 +120,8 @@ public class FlinkLanguageServiceProxy {
       // Remove client
       proxyClients.remove(session.getId());
       Log.infof("Removed LSP client for session ID=%s", session.getId());
+    } else {
+      Log.infof("Couldn't find client for session ID=%s, nothing to remove.", session.getId());
     }
   }
 }
