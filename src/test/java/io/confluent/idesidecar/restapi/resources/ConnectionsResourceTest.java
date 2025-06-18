@@ -976,6 +976,7 @@ public class ConnectionsResourceTest {
                   "kafka_cluster": {
                     "bootstrap_servers": "localhost:9092",
                     "credentials": {
+                      "type": "SCRAM",
                       "hash_algorithm": "SCRAM_SHA_512",
                       "scram_username": "user",
                       "scram_password": "pass"
@@ -994,6 +995,7 @@ public class ConnectionsResourceTest {
                   "kafka_cluster": {
                     "bootstrap_servers": "localhost:9092",
                     "credentials": {
+                      "type": "SCRAM",
                       "hash_algorithm": "SCRAM_SHA_256",
                       "scram_username": "user",
                       "scram_password": "pass"
@@ -1012,6 +1014,7 @@ public class ConnectionsResourceTest {
                         "kafka_cluster": {
                             "bootstrap_servers": "localhost:9092",
                             "credentials": {
+                                "type": "SCRAM",
                                 "hash_algorithm": "SCRAM_SHA_256",
                                 "scram_password" : "pass"
                 
@@ -1038,6 +1041,7 @@ public class ConnectionsResourceTest {
                         "kafka_cluster": {
                             "bootstrap_servers": "localhost:9092",
                             "credentials": {
+                                "type": "SCRAM",
                                 "scram_password" : "pass",
                                 "scram_username" : "user"
                             },
@@ -1122,6 +1126,7 @@ public class ConnectionsResourceTest {
                   "schema_registry": {
                     "uri": "http://localhost:8081",
                     "credentials": {
+                      "type": "BASIC",
                       "username": "user",
                       "password": "pass"
                     }
@@ -1138,6 +1143,7 @@ public class ConnectionsResourceTest {
                   "schema_registry": {
                     "uri": "http://localhost:8081",
                     "credentials": {
+                      "type": "API_KEY_AND_SECRET",
                       "api_key": "my-api-key",
                       "api_secret": "my-api-secret"
                     }
@@ -1260,6 +1266,7 @@ public class ConnectionsResourceTest {
                   "schema_registry": {
                     "uri": "http://localhost:8081",
                     "credentials": {
+                      "type": "BASIC",
                       "username": "user"
                     }
                   }
@@ -1507,6 +1514,7 @@ public class ConnectionsResourceTest {
                   "kafka_cluster": {
                     "bootstrap_servers": "localhost:9092",
                     "credentials": {
+                      "type": "BASIC",
                       "username": "user",
                       "password": "pass"
                     },
@@ -1783,6 +1791,7 @@ public class ConnectionsResourceTest {
               "kafka_cluster": {
                 "bootstrap_servers": "localhost:9092",
                 "credentials": {
+                  "type": "KERBEROS",
                   "keytab_path": "/path/to/keytab",
                   "principal": "alice@EXAMPLE.com"
                 }
@@ -1799,6 +1808,7 @@ public class ConnectionsResourceTest {
               "kafka_cluster": {
                 "bootstrap_servers": "localhost:9092",
                 "credentials": {
+                  "type": "KERBEROS",
                   "keytab_path": "/path/to/keytab",
                   "principal": "alice@EXAMPLE.com",
                   "service_name": "foobar"
@@ -1816,6 +1826,7 @@ public class ConnectionsResourceTest {
               "kafka_cluster": {
                 "bootstrap_servers": "localhost:9092",
                 "credentials": {
+                  "type": "KERBEROS",
                   "keytab_path": "/path/to/keytab"
                 }
               }
@@ -1834,6 +1845,7 @@ public class ConnectionsResourceTest {
               "kafka_cluster": {
                 "bootstrap_servers": "localhost:9092",
                 "credentials": {
+                  "type": "KERBEROS",
                   "principal": "alice@EXAMPLE.com"
                 }
               }
