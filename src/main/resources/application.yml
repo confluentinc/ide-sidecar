@@ -305,6 +305,9 @@ quarkus:
 # Hide the /internal/kafka route from the OpenAPI spec
 mp:
   openapi:
+    extensions:
+      smallrye:
+        openapi: 3.0.3
     scan:
       exclude:
         classes: >
