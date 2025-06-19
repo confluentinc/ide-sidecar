@@ -3,7 +3,6 @@ package io.confluent.idesidecar.restapi.proxy;
 import io.confluent.idesidecar.restapi.connections.CCloudConnectionState;
 import io.confluent.idesidecar.restapi.connections.DirectConnectionState;
 import io.confluent.idesidecar.restapi.connections.LocalConnectionState;
-import io.confluent.idesidecar.restapi.connections.PlatformConnectionState;
 import io.confluent.idesidecar.restapi.processors.Processor;
 import io.vertx.core.Future;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -28,9 +27,6 @@ public class ControlPlaneAuthenticationProcessor extends
         // Do nothing
       }
       case DirectConnectionState directConnection -> {
-        // Do nothing
-      }
-      case PlatformConnectionState platformConnection -> {
         // Do nothing
       }
       default -> {

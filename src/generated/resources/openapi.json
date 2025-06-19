@@ -277,7 +277,7 @@
         }
       },
       "ConnectionType" : {
-        "enum" : [ "LOCAL", "PLATFORM", "CCLOUD", "DIRECT" ],
+        "enum" : [ "LOCAL", "CCLOUD", "DIRECT" ],
         "type" : "string"
       },
       "ConnectionsList" : {

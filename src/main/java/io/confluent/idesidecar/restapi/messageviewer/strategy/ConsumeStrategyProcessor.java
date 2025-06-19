@@ -42,13 +42,6 @@ public class ConsumeStrategyProcessor
     return switch (connectionType) {
       case DIRECT, LOCAL -> nativeConsumeStrategy;
       case CCLOUD -> confluentCloudConsumeStrategy;
-      case PLATFORM -> throw new ProcessorFailedException(
-          context.failf(
-              501,
-              "This endpoint does not yet support connection-type=%s",
-              connectionType
-          )
-      );
     };
   }
 }

@@ -5,7 +5,6 @@ import io.confluent.idesidecar.restapi.connections.ConnectionState;
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
 import io.confluent.idesidecar.restapi.connections.DirectConnectionState;
 import io.confluent.idesidecar.restapi.connections.LocalConnectionState;
-import io.confluent.idesidecar.restapi.connections.PlatformConnectionState;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
 import io.quarkus.test.junit.QuarkusTest;
@@ -94,7 +93,6 @@ class RefreshCCloudTokensBeanTest {
       case CCLOUD -> CCloudConnectionState.class;
       case LOCAL -> LocalConnectionState.class;
       case DIRECT -> DirectConnectionState.class;
-      case PLATFORM -> PlatformConnectionState.class;
     };
 
     var connectionState = Mockito.spy(clazz);
