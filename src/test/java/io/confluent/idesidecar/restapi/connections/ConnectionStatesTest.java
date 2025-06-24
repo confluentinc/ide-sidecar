@@ -29,14 +29,4 @@ public class ConnectionStatesTest {
 
     assertInstanceOf(LocalConnectionState.class, connectionState);
   }
-
-  @Test
-  void fromShouldCreatePlatformConnectionIfTypeEqualsPlatform() {
-    var connectionState = ConnectionStates.from(
-        new ConnectionSpec("id", "name", ConnectionType.PLATFORM),
-        null
-    );
-
-    assertInstanceOf(PlatformConnectionState.class, connectionState);
-  }
 }

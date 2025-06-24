@@ -54,7 +54,7 @@ public class ClusterProxyRequestProcessor extends
         // user-provided HTTP settings, like custom SSL certs
         case CCLOUD -> proxyHttpClient.send(context);
         // For all other connections, use the REST service of the cached SR client
-        case DIRECT, LOCAL, PLATFORM -> processSchemaRegistry(context);
+        case DIRECT, LOCAL -> processSchemaRegistry(context);
       };
     };
 
