@@ -15,8 +15,6 @@ public class LifecycleBean {
 
   void onStart(@Observes StartupEvent ev) {
     Log.info("Sidecar starting...");
-    // TODO: Remove
-    System.setProperty("org.xerial.snappy.lib.path", "/tmp");
   }
 
   void onStop(@Observes ShutdownEvent ev) {
