@@ -15,6 +15,9 @@ public class LifecycleBean {
 
   void onStart(@Observes StartupEvent ev) {
     Log.info("Sidecar starting...");
+    var libPath = "/tmp/libsnappyjava.dylib";
+    System.load(libPath);
+    Log.info("Loaded native snappy library from " + libPath);
   }
 
   void onStop(@Observes ShutdownEvent ev) {
