@@ -14,15 +14,18 @@ import java.io.IOException;
 public class SnappyNative {
 
   void initialize(@Observes StartupEvent ev) {
-    var library = Thread.currentThread().getContextClassLoader()
+    var libraryFile = Thread.currentThread().getContextClassLoader()
         .getResource("libs/libsnappyjava.dylib");
-    var name = "libsnappyjava.dylib";
-    var tmp = System.getProperty("java.io.tmpdir");
-    var extractedLibFile = new File(tmp, name);
+    var extractedLibFile = new File(
+        System.getProperty("java.io.tmpdir"),
+        "libsnappyjava.dylib"
+    );
 
-    try (var inputStream = new BufferedInputStream(library.openStream());
-        var fileOS = new FileOutputStream(extractedLibFile)) {
-      byte[] data = new byte[8192];
+    try (
+        var inputStream = new BufferedInputStream(libraryFile.openStream());
+        var fileOS = new FileOutputStream(extractedLibFile)
+    ) {
+      var data = new byte[8192];
       int byteContent;
       while ((byteContent = inputStream.read(data, 0, 8192)) != -1) {
         fileOS.write(data, 0, byteContent);
@@ -34,7 +37,6 @@ public class SnappyNative {
     // Point Snappy to the extracted library
     System.setProperty("org.xerial.snappy.lib.path", extractedLibFile.getParentFile().getAbsolutePath());
     System.setProperty("org.xerial.snappy.lib.name", extractedLibFile.getName());
-    Log.info("Updated Snappy properties");
 
     extractedLibFile.deleteOnExit();
   }
