@@ -12,6 +12,3 @@ curl -s "https://get.sdkman.io?rcupdate=false" | bash
 source "$HOME/.sdkman/bin/sdkman-init.sh"
 # Install GraalVM as defined in .sdkmanrc
 sdk env install
-# TODO: Remove
-curl -L --output /tmp/libsnappyjava.dylib https://github.com/xerial/snappy-java/raw/refs/heads/master/src/main/resources/org/xerial/snappy/native/Mac/aarch64/libsnappyjava.dylib
-ls -alh /tmp/
