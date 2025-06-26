@@ -1,9 +1,0 @@
-[
-  {
-    "name":"java.lang.ClassLoader",
-    "allDeclaredFields":true,
-    "allDeclaredMethods":true,
-    "allPublicMethods":true,
-    "allPublicConstructors":true
-  }
-]
