@@ -1,7 +1,6 @@
 package io.confluent.idesidecar.restapi.application;
 
 import io.quarkus.logging.Log;
-import io.quarkus.runtime.Application;
 import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
@@ -35,8 +34,14 @@ public class SnappyNative {
     }
 
     // Point Snappy to the extracted library
-    System.setProperty("org.xerial.snappy.lib.path", extractedLibFile.getParentFile().getAbsolutePath());
-    System.setProperty("org.xerial.snappy.lib.name", extractedLibFile.getName());
+    System.setProperty(
+        "org.xerial.snappy.lib.path",
+        extractedLibFile.getParentFile().getAbsolutePath()
+    );
+    System.setProperty(
+        "org.xerial.snappy.lib.name",
+        extractedLibFile.getName()
+    );
 
     extractedLibFile.deleteOnExit();
   }
