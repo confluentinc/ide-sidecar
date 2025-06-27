@@ -36,7 +36,7 @@ GIT_REMOTE_NAME := origin
 .PHONY: ci-macos-code-signing-setup
 ci-macos-code-signing-setup:
 ifeq ($(CI),true)
-  sudo security create-keychain -p "" /Library/Keychains/VSCode.keychain; \
+	sudo security create-keychain -p "" /Library/Keychains/VSCode.keychain; \
 	sudo security default-keychain -s /Library/Keychains/VSCode.keychain; \
 	sudo security unlock-keychain -p "" /Library/Keychains/VSCode.keychain; \
 	vault kv get -field apple_certificate v1/ci/kv/vscodeextension/release | openssl base64 -d -A > certificate.p12; \
@@ -49,7 +49,7 @@ endif
 .PHONY: ci-macos-code-signing-teardown
 ci-macos-code-signing-teardown:
 ifeq ($(CI),true)
-  sudo security delete-keychain /Library/Keychains/VSCode.keychain
+	sudo security delete-keychain /Library/Keychains/VSCode.keychain
 endif
 
 # Sign and notarize the macOS executable as documented on https://confluentinc.atlassian.net/wiki/spaces/DTX/pages/3541959564/Signing+and+notarizing+native+executables.
