@@ -33,26 +33,36 @@ IDE_SIDECAR_SCRIPTS := $(CURDIR)/scripts
 IDE_SIDECAR_STATIC_RESOURCE_DIR := $(CURDIR)/src/main/resources/static
 GIT_REMOTE_NAME := origin
 
-# Sign and notarize the macOS executable as documented on https://confluentinc.atlassian.net/wiki/spaces/DTX/pages/3541959564/Signing+and+notarizing+native+executables.
-# This command requires a working Vault session and must be executed in the CI pipeline.
-.PHONY: ci-sign-notarize-macos-executable
-ci-sign-notarize-macos-executable:
+.PHONY: ci-macos-code-signing-setup
+ci-macos-code-signing-setup:
 ifeq ($(CI),true)
-	sudo security create-keychain -p "" /Library/Keychains/VSCode.keychain; \
+  sudo security create-keychain -p "" /Library/Keychains/VSCode.keychain; \
 	sudo security default-keychain -s /Library/Keychains/VSCode.keychain; \
 	sudo security unlock-keychain -p "" /Library/Keychains/VSCode.keychain; \
 	vault kv get -field apple_certificate v1/ci/kv/vscodeextension/release | openssl base64 -d -A > certificate.p12; \
 	sudo security import certificate.p12 -k /Library/Keychains/VSCode.keychain -P $$(vault kv get -field apple_certificate_password v1/ci/kv/vscodeextension/release) -T /usr/bin/codesign; \
 	rm certificate.p12; \
 	sudo security set-key-partition-list -S "apple-tool:,apple:,codesign:" -s -k "" /Library/Keychains/VSCode.keychain; \
-	sudo security unlock-keychain -p "" /Library/Keychains/VSCode.keychain; \
+	sudo security unlock-keychain -p "" /Library/Keychains/VSCode.keychain
+endif
+
+.PHONY: ci-macos-code-signing-teardown
+ci-macos-code-signing-teardown:
+ifeq ($(CI),true)
+  sudo security delete-keychain /Library/Keychains/VSCode.keychain
+endif
+
+# Sign and notarize the macOS executable as documented on https://confluentinc.atlassian.net/wiki/spaces/DTX/pages/3541959564/Signing+and+notarizing+native+executables.
+# This command requires a working Vault session and must be executed in the CI pipeline.
+.PHONY: ci-sign-notarize-macos-executable
+ci-sign-notarize-macos-executable:
+ifeq ($(CI),true)
 	NATIVE_EXECUTABLE=$$(find target -name "*-runner"); \
 	codesign -s "Developer ID Application: Confluent, Inc." -v $${NATIVE_EXECUTABLE} --options=runtime; \
 	zip sidecar_signed.zip $${NATIVE_EXECUTABLE}; \
 	vault kv get -field apple_key v1/ci/kv/vscodeextension/release | openssl base64 -d -A > auth_key.p8; \
 	xcrun notarytool submit sidecar_signed.zip --apple-id $$(vault kv get -field apple_id_email v1/ci/kv/vscodeextension/release) --team-id $$(vault kv get -field apple_team_id v1/ci/kv/vscodeextension/release) --wait --issuer $$(vault kv get -field apple_issuer v1/ci/kv/vscodeextension/release) --key-id $$(vault kv get -field apple_key_id v1/ci/kv/vscodeextension/release) --key auth_key.p8; \
-	rm auth_key.p8; \
-	sudo security delete-keychain /Library/Keychains/VSCode.keychain
+	rm auth_key.p8
 endif
 
 # Set SNAPPY_ARCH to x86_64 if ARCH is set to amd64, otherwise set it to aarch64
@@ -63,21 +73,12 @@ SNAPPY_ARCH := $(if $(filter amd64,$(ARCH)),x86_64,aarch64)
 .PHONY: ci-sign-notarize-macos-native-libraries
 ci-sign-notarize-macos-native-libraries:
 ifeq ($(CI),true)
-	sudo security create-keychain -p "" /Library/Keychains/VSCode.keychain; \
-	sudo security default-keychain -s /Library/Keychains/VSCode.keychain; \
-	sudo security unlock-keychain -p "" /Library/Keychains/VSCode.keychain; \
-	vault kv get -field apple_certificate v1/ci/kv/vscodeextension/release | openssl base64 -d -A > certificate.p12; \
-	sudo security import certificate.p12 -k /Library/Keychains/VSCode.keychain -P $$(vault kv get -field apple_certificate_password v1/ci/kv/vscodeextension/release) -T /usr/bin/codesign; \
-	rm certificate.p12; \
-	sudo security set-key-partition-list -S "apple-tool:,apple:,codesign:" -s -k "" /Library/Keychains/VSCode.keychain; \
-	sudo security unlock-keychain -p "" /Library/Keychains/VSCode.keychain; \
 	NATIVE_LIBRARY=src/main/resources/libs/snappy-java/Mac/$(SNAPPY_ARCH)/libsnappyjava.dylib; \
 	codesign -s "Developer ID Application: Confluent, Inc." -v $${NATIVE_LIBRARY} --options=runtime; \
 	zip library_signed.zip $${NATIVE_LIBRARY}; \
 	vault kv get -field apple_key v1/ci/kv/vscodeextension/release | openssl base64 -d -A > auth_key.p8; \
 	xcrun notarytool submit library_signed.zip --apple-id $$(vault kv get -field apple_id_email v1/ci/kv/vscodeextension/release) --team-id $$(vault kv get -field apple_team_id v1/ci/kv/vscodeextension/release) --wait --issuer $$(vault kv get -field apple_issuer v1/ci/kv/vscodeextension/release) --key-id $$(vault kv get -field apple_key_id v1/ci/kv/vscodeextension/release) --key auth_key.p8; \
-	rm auth_key.p8; \
-	sudo security delete-keychain -p "" /Library/Keychains/VSCode.keychain
+	rm auth_key.p8
 endif
 
 
