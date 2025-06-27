@@ -55,6 +55,7 @@ ifeq ($(CI),true)
 	sudo security delete-keychain /Library/Keychains/VSCode.keychain
 endif
 
+# Set SNAPPY_ARCH to x86_64 if ARCH is set to amd64, otherwise set it to aarch64
 SNAPPY_ARCH := $(if $(filter amd64,$(ARCH)),x86_64,aarch64)
 
 # Sign and notarize native macOS libaries
@@ -70,7 +71,7 @@ ifeq ($(CI),true)
 	rm certificate.p12; \
 	sudo security set-key-partition-list -S "apple-tool:,apple:,codesign:" -s -k "" /Library/Keychains/VSCode.keychain; \
 	sudo security unlock-keychain -p "" /Library/Keychains/VSCode.keychain; \
-	NATIVE_LIBRARY=src/main/resources/libs/snappy-java/Mac/$${SNAPPY_ARCH}/libsnappyjava.dylib; \
+	NATIVE_LIBRARY=src/main/resources/libs/snappy-java/Mac/$(SNAPPY_ARCH)/libsnappyjava.dylib; \
 	codesign -s "Developer ID Application: Confluent, Inc." -v $${NATIVE_LIBRARY} --options=runtime; \
 	zip library_signed.zip $${NATIVE_LIBRARY}; \
 	vault kv get -field apple_key v1/ci/kv/vscodeextension/release | openssl base64 -d -A > auth_key.p8; \
