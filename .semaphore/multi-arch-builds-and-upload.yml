@@ -21,6 +21,8 @@ blocks:
           value: macos
         - name: ARCH
           value: amd64
+        - name: SNAPPY_ARCH
+          value: x86_64
       jobs:
         - name: "Build Native Executable (MacOS AMD64)"
           commands:
@@ -46,6 +48,8 @@ blocks:
           value: macos
         - name: ARCH
           value: arm64
+        - name: SNAPPY_ARCH
+          value: aarch64
       jobs:
         - name: "Build Native Executable (MacOS ARM64)"
           commands:

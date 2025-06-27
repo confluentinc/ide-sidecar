@@ -33,6 +33,8 @@ IDE_SIDECAR_SCRIPTS := $(CURDIR)/scripts
 IDE_SIDECAR_STATIC_RESOURCE_DIR := $(CURDIR)/src/main/resources/static
 GIT_REMOTE_NAME := origin
 
+# Set up code signing on macOS
+# This command requires a working Vault session and must be executed in the CI pipeline.
 .PHONY: ci-macos-code-signing-setup
 ci-macos-code-signing-setup:
 ifeq ($(CI),true)
@@ -46,6 +48,8 @@ ifeq ($(CI),true)
 	sudo security unlock-keychain -p "" /Library/Keychains/VSCode.keychain
 endif
 
+# Tear down the Keychain used for storing the macOS code signing certificate
+# This command requires a working Vault session and must be executed in the CI pipeline.
 .PHONY: ci-macos-code-signing-teardown
 ci-macos-code-signing-teardown:
 ifeq ($(CI),true)
@@ -65,9 +69,6 @@ ifeq ($(CI),true)
 	rm auth_key.p8
 endif
 
-# Set SNAPPY_ARCH to x86_64 if ARCH is set to amd64, otherwise set it to aarch64
-SNAPPY_ARCH := $(if $(filter amd64,$(ARCH)),x86_64,aarch64)
-
 # Sign and notarize native macOS libaries
 # This command requires a working Vault session and must be executed in the CI pipeline.
 .PHONY: ci-sign-notarize-macos-native-libraries
@@ -80,7 +81,6 @@ ifeq ($(CI),true)
 	xcrun notarytool submit library_signed.zip --apple-id $$(vault kv get -field apple_id_email v1/ci/kv/vscodeextension/release) --team-id $$(vault kv get -field apple_team_id v1/ci/kv/vscodeextension/release) --wait --issuer $$(vault kv get -field apple_issuer v1/ci/kv/vscodeextension/release) --key-id $$(vault kv get -field apple_key_id v1/ci/kv/vscodeextension/release) --key auth_key.p8; \
 	rm auth_key.p8
 endif
-
 
 # To run locally, ensure you're logged into Vault
 # Generates the `THIRD_PARTY_NOTICES.txt` using FOSSA and saves it to the root of the project.
