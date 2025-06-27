@@ -24,8 +24,11 @@ blocks:
       jobs:
         - name: "Build Native Executable (MacOS AMD64)"
           commands:
+            - make ci-macos-code-signing-setup
+            - make ci-sign-notarize-macos-native-libraries
             - make mvn-package-native
             - make ci-sign-notarize-macos-executable
+            - make ci-macos-code-signing-teardown
       epilogue:
         on_pass:
           commands_file: build_native_executable_epilogue_macos_linux.sh
@@ -46,8 +49,11 @@ blocks:
       jobs:
         - name: "Build Native Executable (MacOS ARM64)"
           commands:
+            - make ci-macos-code-signing-setup
+            - make ci-sign-notarize-macos-native-libraries
             - make mvn-package-native
             - make ci-sign-notarize-macos-executable
+            - make ci-macos-code-signing-teardown
       epilogue:
         on_pass:
           commands_file: build_native_executable_epilogue_macos_linux.sh
@@ -152,6 +158,10 @@ blocks:
       jobs:
         - name: "Build Native Executable (Windows x64)"
           commands:
+            # Sign the native libraries for Windows
+            - |
+              Write-Host "Signing native libraries";
+              signtool sign /debug /v /f certificate.pfx src\main\resources\libs\snappy-java\Windows\x86_64\snappyjava.dll;
             # Builds native executable for Windows x64
             # TODO: Temporarily disable running tests while we investigate why they fail randomly
             - make mvn-package-native-no-tests
