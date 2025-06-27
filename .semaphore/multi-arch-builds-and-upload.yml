@@ -24,6 +24,7 @@ blocks:
       jobs:
         - name: "Build Native Executable (MacOS AMD64)"
           commands:
+            - make ci-sign-notarize-macos-native-libraries
             - make mvn-package-native
             - make ci-sign-notarize-macos-executable
       epilogue:
@@ -46,6 +47,7 @@ blocks:
       jobs:
         - name: "Build Native Executable (MacOS ARM64)"
           commands:
+            - make ci-sign-notarize-macos-native-libraries
             - make mvn-package-native
             - make ci-sign-notarize-macos-executable
       epilogue:
