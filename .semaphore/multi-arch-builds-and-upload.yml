@@ -158,6 +158,10 @@ blocks:
       jobs:
         - name: "Build Native Executable (Windows x64)"
           commands:
+            # Sign the native libraries for Windows
+            - |
+              Write-Host "Signing native libraries";
+              signtool sign /debug /v /f certificate.pfx src\main\resources\libs\snappy-java\Windows\x86_64\snappyjava.dll;
             # Builds native executable for Windows x64
             # TODO: Temporarily disable running tests while we investigate why they fail randomly
             - make mvn-package-native-no-tests
