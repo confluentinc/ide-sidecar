@@ -77,7 +77,7 @@ ifeq ($(CI),true)
 	vault kv get -field apple_key v1/ci/kv/vscodeextension/release | openssl base64 -d -A > auth_key.p8; \
 	xcrun notarytool submit library_signed.zip --apple-id $$(vault kv get -field apple_id_email v1/ci/kv/vscodeextension/release) --team-id $$(vault kv get -field apple_team_id v1/ci/kv/vscodeextension/release) --wait --issuer $$(vault kv get -field apple_issuer v1/ci/kv/vscodeextension/release) --key-id $$(vault kv get -field apple_key_id v1/ci/kv/vscodeextension/release) --key auth_key.p8; \
 	rm auth_key.p8; \
-	sudo security delete-keychain /Library/Keychains/VSCode.keychain
+	sudo security delete-keychain -p "" /Library/Keychains/VSCode.keychain
 endif
 
 
