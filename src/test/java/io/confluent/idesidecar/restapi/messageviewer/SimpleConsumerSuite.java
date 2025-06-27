@@ -270,8 +270,7 @@ public interface SimpleConsumerSuite extends ITSuite {
   }
 
   @ParameterizedTest
-  // TODO: Add "snappy" once we support it (see https://github.com/confluentinc/ide-sidecar/issues/304)
-  @ValueSource(strings = {"gzip", "lz4", "zstd"})
+  @ValueSource(strings = {"gzip", "lz4", "zstd", "snappy"})
   default void testProduceAndConsumeWithCompression(String compressionType) {
     // When we create a topic
     String topic = randomTopicName();
