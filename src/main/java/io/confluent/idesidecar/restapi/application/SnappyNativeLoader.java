@@ -26,6 +26,11 @@ import org.xerial.snappy.SnappyLoader;
 public class SnappyNativeLoader {
 
   /**
+   * The size of the buffer used to read the native Snappy library file from the classpath.
+   */
+  private static final int BUFFER_SIZE = 8192;
+
+  /**
    * This method is called during the startup of the Quarkus application to load the native Snappy
    * library for the current operating system and platform.
    * It extracts the library from the classpath and sets the necessary system properties for
@@ -61,9 +66,9 @@ public class SnappyNativeLoader {
         var inputStream = new BufferedInputStream(libraryFile.openStream());
         var fileOS = new FileOutputStream(extractedLibFile)
     ) {
-      var data = new byte[8192];
+      var data = new byte[BUFFER_SIZE];
       int byteContent;
-      while ((byteContent = inputStream.read(data, 0, 8192)) != -1) {
+      while ((byteContent = inputStream.read(data, 0, BUFFER_SIZE)) != -1) {
         fileOS.write(data, 0, byteContent);
       }
     } catch (IOException e) {
