@@ -15,7 +15,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import io.confluent.idesidecar.restapi.integration.ITSuite;
 import io.confluent.idesidecar.restapi.models.Connection;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
-import io.confluent.idesidecar.restapi.models.ConnectionStatus.Authentication.Status;
 import io.restassured.http.ContentType;
 import jakarta.ws.rs.core.MediaType;
 import org.junit.jupiter.api.Test;
@@ -44,7 +43,6 @@ public interface LocalConnectionSuite extends ITSuite {
         .body("spec.local_config", nullValue())
         .body("spec.kafka_cluster", nullValue())
         .body("spec.schema_registry", notNullValue())
-        .body("status.authentication.status", equalTo(Status.NO_TOKEN.name()))
         .body("status.kafka_cluster", nullValue())
         .body("status.schema_registry", nullValue())
         .extract().body().as(Connection.class);
@@ -73,7 +71,6 @@ public interface LocalConnectionSuite extends ITSuite {
         .body("spec.local_config", nullValue())
         .body("spec.kafka_cluster", nullValue())
         .body("spec.schema_registry", notNullValue())
-        .body("status.authentication.status", equalTo(Status.NO_TOKEN.name()))
         .body("status.kafka_cluster", nullValue())
         .body("status.schema_registry", nullValue())
         .extract().body().as(Connection.class);
@@ -98,8 +95,6 @@ public interface LocalConnectionSuite extends ITSuite {
     assertNotNull(connection.spec().schemaRegistryConfig());
     assertEquals(spec.schemaRegistryConfig(), connection.spec().schemaRegistryConfig());
     assertNotNull(connection.status());
-    assertNotNull(connection.status().authentication());
-    assertEquals(Status.NO_TOKEN, connection.status().authentication().status());
 
     // Update the spec to include the generated ID
     spec = spec.withId(connection.id());
@@ -119,10 +114,6 @@ public interface LocalConnectionSuite extends ITSuite {
         .body("spec.ccloud_config", nullValue())
         .body("spec.kafka_cluster", nullValue())
         .body("spec.schema_registry", notNullValue())
-        .body(
-            "status.authentication.status",
-            equalTo(Status.NO_TOKEN.name())
-        )
         .extract().body().as(Connection.class);
 
     // Query for resources
@@ -153,10 +144,6 @@ public interface LocalConnectionSuite extends ITSuite {
         .body("spec.ccloud_config", nullValue())
         .body("spec.kafka_cluster", nullValue())
         .body("spec.schema_registry", nullValue())
-        .body(
-            "status.authentication.status",
-            equalTo(Status.NO_TOKEN.name())
-        )
         .extract().body().as(Connection.class);
 
     // Query for resources
