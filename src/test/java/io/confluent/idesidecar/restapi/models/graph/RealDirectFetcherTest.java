@@ -1,17 +1,19 @@
 package io.confluent.idesidecar.restapi.models.graph;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.times;
 
 import io.confluent.idesidecar.restapi.cache.MockSchemaRegistryClient;
 import io.confluent.idesidecar.restapi.clients.SchemaRegistryClient;
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
 import io.confluent.idesidecar.restapi.connections.DirectConnectionState;
+import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionSpecBuilder;
 import io.confluent.idesidecar.restapi.models.ConnectionSpecKafkaClusterConfigBuilder;
@@ -20,13 +22,15 @@ import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientExcept
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.smallrye.mutiny.Uni;
+import io.smallrye.mutiny.helpers.test.UniAssertSubscriber;
 import jakarta.inject.Inject;
 import java.io.IOException;
 import java.time.Duration;
-import java.util.List;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.DescribeClusterResult;
 import org.apache.kafka.common.KafkaFuture;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -91,6 +95,11 @@ public class RealDirectFetcherTest {
   @Inject
   RealDirectFetcher directFetcher;
 
+  @BeforeEach
+  void clearCache() {
+    directFetcher.clearClusterCache(CONNECTION_ID);
+  }
+
   @Nested
   class FetchesKafkaCluster {
 
@@ -137,29 +146,32 @@ public class RealDirectFetcherTest {
 
     @Test
     void shouldGetConnectionByID() throws Exception {
-      // Given a connection spec in the manager
-      var connection = new DirectConnectionState(KAFKA_AND_SR_SPEC, null);
-      when(connections.getConnectionStates()).thenReturn(List.of(connection));
+      // Given a Direct connection
+      when(connections.getConnectionSpec(CONNECTION_ID)).thenReturn(KAFKA_AND_SR_SPEC);
 
-      // When we try to fetch the connection by ID
-      DirectConnection result = directFetcher.getDirectConnectionByID(CONNECTION_ID);
-
-      // Then the connection should be returned with correct ID and name
-      assertNotNull(result);
-      assertEquals(CONNECTION_ID, result.getId());
-      assertEquals("my connection", result.getName());
+      // When trying to fetch it
+      var tester = directFetcher.getDirectConnectionByID(CONNECTION_ID)
+          .invoke(Assertions::assertNotNull)
+          .invoke(item -> assertEquals(CONNECTION_ID, item.getId()))
+          .invoke(item -> assertEquals("my connection", item.getName()))
+          .subscribe().withSubscriber(UniAssertSubscriber.create());
+      // We expect the connection to be returned
+      tester.assertCompleted();
     }
 
     @Test
-    void shouldReturnNullForNonexistentConnectionID() throws Exception {
-      // Given an empty connection list
-      when(connections.getConnectionStates()).thenReturn(List.of());
-
-      // When we try to fetch a connection with a non-existent ID
-      DirectConnection result = directFetcher.getDirectConnectionByID("nonexistent-id");
-
-      // Then null should be returned
-      assertNull(result);
+    void shouldReturnFailureForNonexistentConnectionID() {
+      // When trying to access a non-existing connection
+      when(connections.getConnectionSpec("non-existent-id"))
+          .thenThrow(new ConnectionNotFoundException("Connection non-existent-id is not found."));
+      var tester = directFetcher.getDirectConnectionByID("non-existent-id")
+          .subscribe()
+          .withSubscriber(UniAssertSubscriber.create());
+      // We expect a failure because the requested connection does not exist
+      tester.assertFailedWith(
+          ConnectionNotFoundException.class,
+          "Connection non-existent-id is not found."
+      );
     }
 
     @Test
@@ -248,6 +260,45 @@ public class RealDirectFetcherTest {
       // Then the Kafka cluster will be null
       assertNull(kafkaCluster.await().atMost(ONE_SECOND));
     }
+  }
+
+  @Test
+  void shouldReturnCachedKafkaClusterOnSecondCall() {
+    var mockAdminClient = mock(AdminClient.class);
+    var describeCluster = mock(DescribeClusterResult.class);
+    when(mockAdminClient.describeCluster()).thenReturn(describeCluster);
+    when(describeCluster.clusterId()).thenReturn(KafkaFuture.completedFuture(KAFKA_CLUSTER_ID));
+
+    var connection = new DirectConnectionState(KAFKA_AND_SR_SPEC, null) {
+        @Override
+        protected AdminClient createAdminClient(ConnectionSpec.KafkaClusterConfig config) {
+            return mockAdminClient;
+        }
+        @Override
+        public boolean isKafkaConnected() {
+            return true;
+        }
+    };
+
+    when(connections.getConnectionState(eq(CONNECTION_ID))).thenReturn(connection);
+
+    // First call: should fetch from admin client, verify admin client was called once
+    var firstSubscriber = directFetcher.getKafkaCluster(CONNECTION_ID)
+        .subscribe().withSubscriber(UniAssertSubscriber.create());
+    firstSubscriber.assertCompleted();
+    var firstResult = firstSubscriber.getItem();
+    verify(mockAdminClient, times(1)).describeCluster();
+
+    // Second call: should use cache, verify admin client was still only called once
+    var secondSubscriber = directFetcher.getKafkaCluster(CONNECTION_ID)
+        .subscribe().withSubscriber(UniAssertSubscriber.create());
+    secondSubscriber.assertCompleted();
+    var secondResult = secondSubscriber.getItem();
+    verify(mockAdminClient, times(1)).describeCluster();
+
+    // Assert results
+    assertEquals(firstResult, secondResult);
+    assertEquals(KAFKA_CLUSTER_ID, firstResult.id());
   }
 
   @Nested
@@ -383,27 +434,23 @@ public class RealDirectFetcherTest {
     }
 
     @Test
-    void shouldThrowExceptionForNonDirectConnection() {
-      // Given a non-DIRECT connection spec in the manager
+    void shouldReturnFailureForNonDirectConnection() {
+      // Given a CCloud connection
       var nonDirectSpec = ConnectionSpecBuilder
           .builder()
           .id("non-direct-id")
           .name("non direct connection")
           .type(ConnectionSpec.ConnectionType.CCLOUD)
           .build();
-      var connection = new DirectConnectionState(nonDirectSpec, null);
-      when(connections.getConnectionStates()).thenReturn(List.of(connection));
+      when(connections.getConnectionSpec("non-direct-id")).thenReturn(nonDirectSpec);
 
-      // When we try to fetch the connection by ID
-      // Then an exception should be thrown
-      Exception exception = assertThrows(
-          Exception.class,
-          () -> directFetcher.getDirectConnectionByID("non-direct-id")
-      );
-
-      assertEquals(
-          "Connection with ID=non-direct-id is not a direct connection.",
-          exception.getMessage()
+      // When trying to fetch it
+      var tester = directFetcher.getDirectConnectionByID("non-direct-id")
+          .subscribe().withSubscriber(UniAssertSubscriber.create());
+      // We expect a failure because the requested connection is not of type Direct
+      tester.assertFailedWith(
+          ConnectionNotFoundException.class,
+          "Connection non-direct-id is not a Direct connection"
       );
     }
   }

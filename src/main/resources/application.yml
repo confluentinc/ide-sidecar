@@ -30,6 +30,7 @@
         # faster frequency / lower timeouts matching expectations of tests
         refresh-status-interval-seconds: 5
         timeout-seconds: 5
+        kafka-cluster-cache-ttl: 1800
     grim-reaper:
       # Should we check for remaining living vs code processes at all, and exit() if none left?
       enabled: false
@@ -140,6 +141,7 @@ ide-sidecar:
     direct:
       refresh-status-interval-seconds: 15
       timeout-seconds: 15
+      kafka-cluster-cache-ttl: 1800
   flink:
     url-pattern: https://flink.%s.%s.confluent.cloud
   access_token_filter:
@@ -260,10 +262,10 @@ quarkus:
   jackson:
     fail-on-unknown-properties: true
   native:
-    additional-build-args: --initialize-at-run-time=io.confluent.idesidecar.restapi.auth.CCloudOAuthConfig\,io.confluent.idesidecar.restapi.auth.CCloudOAuthContext\,io.confluent.ide.sidecar.restapi.util.WebClientFactory\,org.apache.kafka.common.security.authenticator.SaslClientAuthenticator\,org.apache.avro.file.DataFileWriter\,io.confluent.kafka.schemaregistry.avro.AvroSchemaUtils\,com.github.luben.zstd
+    additional-build-args: --initialize-at-run-time=io.confluent.idesidecar.restapi.auth.CCloudOAuthConfig\,io.confluent.idesidecar.restapi.auth.CCloudOAuthContext\,io.confluent.ide.sidecar.restapi.util.WebClientFactory\,org.apache.kafka.common.security.authenticator.SaslClientAuthenticator\,org.apache.avro.file.DataFileWriter\,io.confluent.kafka.schemaregistry.avro.AvroSchemaUtils\,com.github.luben.zstd\,org.xerial.snappy\,io.confluent.idesidecar.restapi.application.SnappyNativeLoader
     march: compatibility
     resources:
-      includes: templates/callback.html,templates/callback_failure.html,templates/default.html,templates/reset_password.html,feature-flag-defaults.json
+      includes: libs/**/*,templates/callback.html,templates/callback_failure.html,templates/default.html,templates/reset_password.html
   smallrye-health:
     root-path: /gateway/v1/health
     openapi:
@@ -303,6 +305,9 @@ quarkus:
 # Hide the /internal/kafka route from the OpenAPI spec
 mp:
   openapi:
+    extensions:
+      smallrye:
+        openapi: 3.0.3
     scan:
       exclude:
         classes: >

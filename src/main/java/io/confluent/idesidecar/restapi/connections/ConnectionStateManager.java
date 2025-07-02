@@ -41,7 +41,6 @@ import java.util.Objects;
  * and one of the following {@link ServiceKind} qualifiers:
  * <ul>
  *   <li>{@link ServiceKind.CCloud}</li>
- *   <li>{@link ServiceKind.ConfluentPlatform}</li>
  *   <li>{@link ServiceKind.Local}</li>
  * </ul>
  */
@@ -235,8 +234,8 @@ public class ConnectionStateManager {
           case CCLOUD -> validateCCloudOrganizationId(id, newSpec.ccloudOrganizationId());
           // TODO: DIRECT connection changes need to be validated
           case DIRECT -> Uni.createFrom().voidItem();
-          // No need to validate the spec for LOCAL, DIRECT, and PLATFORM connections
-          case LOCAL, PLATFORM -> Uni.createFrom().voidItem();
+          // No need to validate the spec for LOCAL, and DIRECT connections
+          case LOCAL -> Uni.createFrom().voidItem();
         })
         .chain(ignored -> {
           // Get and update the connection spec after all validations are green

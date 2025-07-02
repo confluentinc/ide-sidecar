@@ -22,7 +22,6 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * @see CCloudConnectionState
  * @see LocalConnectionState
- * @see PlatformConnectionState
  */
 public abstract class ConnectionState {
 

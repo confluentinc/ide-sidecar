@@ -500,7 +500,6 @@ public class ClusterCache {
           case DIRECT -> directFetcher.getKafkaCluster(connectionId)
               .await()
               .atMost(timeout);
-          case PLATFORM -> null;
         };
       } catch (CompletionException e) {
         if (e.getCause() instanceof TimeoutException) {
@@ -528,7 +527,6 @@ public class ClusterCache {
           case DIRECT -> directFetcher.getSchemaRegistry(connectionId)
               .await()
               .atMost(timeout);
-          case PLATFORM -> null;
         };
       } catch (CompletionException e) {
         if (e.getCause() instanceof TimeoutException) {
@@ -556,7 +554,6 @@ public class ClusterCache {
           case DIRECT -> directFetcher.getSchemaRegistry(connectionId)
               .await()
               .atMost(timeout);
-          case PLATFORM -> null;
         };
       } catch (CompletionException e) {
         if (e.getCause() instanceof TimeoutException) {

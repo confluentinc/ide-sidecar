@@ -540,7 +540,7 @@ public class ConnectionsResourceTest {
             new ConnectionSpec(
                 "c1",
                 "Connection 1",
-                ConnectionType.PLATFORM
+                ConnectionType.DIRECT
             ),
             200
         ),
@@ -577,7 +577,7 @@ public class ConnectionsResourceTest {
             new ConnectionSpec(
                 "c1",
                 "",
-                ConnectionType.PLATFORM
+                ConnectionType.DIRECT
             ),
             400
         ),
@@ -586,7 +586,7 @@ public class ConnectionsResourceTest {
             new ConnectionSpec(
                 null,
                 "Connection 1",
-                ConnectionType.PLATFORM
+                ConnectionType.DIRECT
             ),
             400
         )
@@ -660,7 +660,7 @@ public class ConnectionsResourceTest {
         .builder()
         .id("c3")
         .name("Connection name changed!")
-        .type(ConnectionType.PLATFORM)
+        .type(ConnectionType.DIRECT)
         .ccloudConfig(new CCloudConfig("org-id", null))
         .build();
 
