@@ -13,7 +13,7 @@ import io.confluent.idesidecar.restapi.connections.ConnectionState.StateChangedL
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
 import io.confluent.idesidecar.restapi.models.ConnectionStatus;
-import io.confluent.idesidecar.restapi.models.ConnectionStatus.Authentication.Status;
+import io.confluent.idesidecar.restapi.models.ConnectionStatus.ConnectedState;
 import io.quarkus.test.junit.QuarkusTest;
 import io.vertx.core.Future;
 import io.vertx.junit5.VertxTestContext;
@@ -64,7 +64,7 @@ public class CCloudConnectionTest {
   }
 
   @Test
-  void refreshStatusShouldReturnNoTokenIfRefreshTokenIsMissing() throws Throwable {
+  void refreshStatusShouldReturnNoneIfRefreshTokenIsMissing() throws Throwable {
     var testContext = new VertxTestContext();
     var connectionState = spyCCloudConnectionState(
         true,
@@ -79,8 +79,8 @@ public class CCloudConnectionTest {
             testContext.succeeding(status ->
                 testContext.verify(() -> {
                   assertEquals(
-                      Status.NO_TOKEN,
-                      status.authentication().status()
+                      ConnectedState.NONE,
+                      status.ccloud().state()
                   );
                   testContext.completeNow();
                 })));
@@ -93,7 +93,7 @@ public class CCloudConnectionTest {
   }
 
   @Test
-  void refreshStatusShouldReturnNoTokenIfControlPlaneTokenIsMissing() throws Throwable {
+  void refreshStatusShouldReturnNoneIfControlPlaneTokenIsMissing() throws Throwable {
     var testContext = new VertxTestContext();
     var connectionState = spyCCloudConnectionState(
         true,
@@ -108,8 +108,8 @@ public class CCloudConnectionTest {
             testContext.succeeding(status ->
                 testContext.verify(() -> {
                   assertEquals(
-                      Status.NO_TOKEN,
-                      status.authentication().status()
+                      ConnectedState.NONE,
+                      status.ccloud().state()
                   );
                   testContext.completeNow();
                 })));
@@ -122,7 +122,7 @@ public class CCloudConnectionTest {
   }
 
   @Test
-  void refreshStatusShouldReturnNoTokenIfDataPlaneTokenIsMissing() throws Throwable {
+  void refreshStatusShouldReturnNoneIfDataPlaneTokenIsMissing() throws Throwable {
     var testContext = new VertxTestContext();
     var connectionState = spyCCloudConnectionState(
         true,
@@ -137,8 +137,8 @@ public class CCloudConnectionTest {
             testContext.succeeding(status ->
                 testContext.verify(() -> {
                   assertEquals(
-                      Status.NO_TOKEN,
-                      status.authentication().status()
+                      ConnectedState.NONE,
+                      status.ccloud().state()
                   );
                   testContext.completeNow();
                 })));
@@ -181,7 +181,7 @@ public class CCloudConnectionTest {
   }
 
   @Test
-  void refreshStatusShouldReturnValidTokenIfAuthenticationSucceeds() throws Throwable {
+  void refreshStatusShouldReturnSuccessIfAuthenticationSucceeds() throws Throwable {
     var testContext = new VertxTestContext();
     var connectionState = spyCCloudConnectionState(
         true,
@@ -196,8 +196,8 @@ public class CCloudConnectionTest {
             testContext.succeeding(status ->
                 testContext.verify(() -> {
                   assertEquals(
-                      Status.VALID_TOKEN,
-                      status.authentication().status()
+                      ConnectedState.SUCCESS,
+                      status.ccloud().state()
                   );
                   testContext.completeNow();
                 })));
@@ -210,7 +210,7 @@ public class CCloudConnectionTest {
   }
 
   @Test
-  void refreshStatusShouldReturnInvalidTokenIfAuthenticationFails() throws Throwable {
+  void refreshStatusShouldReturnExpiredIfAuthenticationFails() throws Throwable {
     var testContext = new VertxTestContext();
     var connectionState = spyCCloudConnectionState(
         false,
@@ -225,8 +225,8 @@ public class CCloudConnectionTest {
             testContext.succeeding(status ->
                 testContext.verify(() -> {
                   assertEquals(
-                      Status.INVALID_TOKEN,
-                      status.authentication().status()
+                      ConnectedState.EXPIRED,
+                      status.ccloud().state()
                   );
                   testContext.completeNow();
                 })));
@@ -254,8 +254,8 @@ public class CCloudConnectionTest {
             testContext.succeeding(status ->
                 testContext.verify(() -> {
                   assertEquals(
-                      Status.FAILED,
-                      status.authentication().status()
+                      ConnectedState.FAILED,
+                      status.ccloud().state()
                   );
                   testContext.completeNow();
                 })));

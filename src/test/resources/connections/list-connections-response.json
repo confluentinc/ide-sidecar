@@ -21,12 +21,7 @@
         "name": "Connection 1",
         "type": "LOCAL"
       },
-      "status":
-      {
-        "authentication": {
-          "status": "NO_TOKEN"
-        }
-      }
+      "status": {}
     },
     {
       "api_version": "gateway/v1",
@@ -45,9 +40,6 @@
       },
       "status":
       {
-        "authentication": {
-          "status": "NO_TOKEN"
-        },
         "ccloud": {
           "state": "NONE"
         }

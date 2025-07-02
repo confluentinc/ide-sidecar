@@ -35,7 +35,6 @@ import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
 import io.confluent.idesidecar.restapi.models.ConnectionSpecBuilder;
 import io.confluent.idesidecar.restapi.models.ConnectionSpecSchemaRegistryConfigBuilder;
 import io.confluent.idesidecar.restapi.models.ConnectionStatus;
-import io.confluent.idesidecar.restapi.models.ConnectionStatus.Authentication.Status;
 import io.confluent.idesidecar.restapi.models.ConnectionStatus.ConnectedState;
 import io.confluent.idesidecar.restapi.models.ConnectionsList;
 import io.confluent.idesidecar.restapi.models.ObjectMetadata;
@@ -191,8 +190,7 @@ public class ConnectionsResourceTest {
           .body("id", equalTo(requestSpec.id()))
           .body("spec.id", equalTo(requestSpec.id()))
           .body("spec.name", equalTo(requestSpec.name()))
-          .body("spec.type", equalTo(ConnectionType.LOCAL.name()))
-          .body("status.authentication.status", equalTo(Status.NO_TOKEN.name()));
+          .body("spec.type", equalTo(ConnectionType.LOCAL.name()));
 
       // Verify it can be deserialized
       var testedConnection = actualResponse.extract().as(Connection.class);
@@ -234,8 +232,7 @@ public class ConnectionsResourceTest {
         .body("id", nullValue())
         .body("spec.id", nullValue())
         .body("spec.name", equalTo(requestSpec.name()))
-        .body("spec.type", equalTo(ConnectionType.LOCAL.name()))
-        .body("status.authentication.status", equalTo(Status.NO_TOKEN.name()));
+        .body("spec.type", equalTo(ConnectionType.LOCAL.name()));
 
     // Verify it can be deserialized
     var testedConnection = actualResponse.extract().as(Connection.class);
@@ -266,7 +263,6 @@ public class ConnectionsResourceTest {
           .body("spec.id", equalTo(requestSpec.id()))
           .body("spec.name", equalTo(requestSpec.name()))
           .body("spec.type", equalTo(ConnectionType.CCLOUD.name()))
-          .body("status.authentication.status", equalTo(Status.NO_TOKEN.name()))
           .body("status.ccloud.state", equalTo(ConnectedState.NONE.name()));
 
       // Verify it can be deserialized
@@ -326,8 +322,8 @@ public class ConnectionsResourceTest {
     assertEquals(expectedStatusAsJson, treeActual.get("status"));
 
     // Status should include neither user nor organization if token is absent
-    assertFalse(treeActual.get("status").get("authentication").has("user"));
-    assertFalse(treeActual.get("status").get("authentication").has("organization"));
+    assertFalse(treeActual.get("status").get("ccloud").has("user"));
+    assertFalse(treeActual.get("status").get("ccloud").has("organization"));
   }
 
   @Test
@@ -362,14 +358,14 @@ public class ConnectionsResourceTest {
 
       // Verify ConnectionStatus
       assertTrue(treeActual.has("status"));
-      assertTrue(treeActual.get("status").has("authentication"));
-      var authenticationStatus = treeActual.get("status").get("authentication");
+      assertTrue(treeActual.get("status").has("ccloud"));
+      var authenticationStatus = treeActual.get("status").get("ccloud");
 
       // Verify that token is valid
-      assertEquals(Status.VALID_TOKEN.name(), authenticationStatus.get("status").textValue());
+      assertEquals(ConnectedState.SUCCESS.name(), authenticationStatus.get("state").textValue());
 
       // Status should include user and organization because token is valid
-      assertTrue(treeActual.get("status").get("authentication").has("user"));
+      assertTrue(treeActual.get("status").get("ccloud").has("user"));
       testContext.completeNow();
     });
   }
@@ -409,13 +405,13 @@ public class ConnectionsResourceTest {
 
       // Verify ConnectionStatus
       assertTrue(connectionAsJson.has("status"));
-      assertTrue(connectionAsJson.get("status").has("authentication"));
-      var authenticationStatus = connectionAsJson.get("status").get("authentication");
+      assertTrue(connectionAsJson.get("status").has("ccloud"));
+      var authenticationStatus = connectionAsJson.get("status").get("ccloud");
 
       // Verify that token is valid
       assertEquals(
-          Status.INVALID_TOKEN.name(),
-          authenticationStatus.get("status").textValue()
+          ConnectedState.FAILED.name(),
+          authenticationStatus.get("state").textValue()
       );
 
       // Verify that error related to auth status check is present
@@ -499,7 +495,7 @@ public class ConnectionsResourceTest {
 
     var testContext = new VertxTestContext();
     refreshConnectionStatusAndThen(connectionId, testContext, () -> {
-      assertAuthStatus(connectionId, "VALID_TOKEN");
+      assertAuthStatus(connectionId, ConnectedState.SUCCESS.name());
 
       var mapper = new ObjectMapper();
       var patchRequest = mapper.writeValueAsString(payload);
@@ -776,7 +772,7 @@ public class ConnectionsResourceTest {
 
     var testContext = new VertxTestContext();
     refreshConnectionStatusAndThen(connectionId, testContext, () -> {
-      assertAuthStatus(connectionId, "VALID_TOKEN");
+      assertAuthStatus(connectionId, ConnectedState.SUCCESS.name());
 
       assertCurrentOrganizationForConnection(
           orgName,
@@ -797,7 +793,7 @@ public class ConnectionsResourceTest {
       );
 
       // Expect tokens to have been refreshed and is still valid
-      assertAuthStatus(connectionId, "VALID_TOKEN");
+      assertAuthStatus(connectionId, ConnectedState.SUCCESS.name());
       testContext.completeNow();
     });
   }
@@ -822,7 +818,7 @@ public class ConnectionsResourceTest {
           .body("errors[0].title", is("Could not authenticate"));
 
       // The above update should have triggered a failed auth refresh, which is fine
-      assertAuthStatus(connectionId, "NO_TOKEN")
+      assertAuthStatus(connectionId, ConnectedState.NONE.name())
           // Validate that we don't update the connection state due to failed refresh
           .body("status.authentication.errors.token_refresh", is(nullValue()));
 
@@ -836,7 +832,7 @@ public class ConnectionsResourceTest {
         null
     );
     refreshConnectionStatusAndThen(connectionId, testContext, () -> {
-      assertAuthStatus(connectionId, "VALID_TOKEN");
+      assertAuthStatus(connectionId, ConnectedState.SUCCESS.name());
       testContext.completeNow();
     });
   }
@@ -855,7 +851,7 @@ public class ConnectionsResourceTest {
 
     var testContext = new VertxTestContext();
     refreshConnectionStatusAndThen(connectionId, testContext, () -> {
-      assertAuthStatus(connectionId, "VALID_TOKEN")
+      assertAuthStatus(connectionId, ConnectedState.SUCCESS.name())
           .body("spec.ccloud_config.organization_id", is(nullValue()));
       var refreshedTokens = ccloudTestUtil.expectRefreshTokenExchangeRequest(
           accessTokens.refresh_token()
@@ -895,7 +891,7 @@ public class ConnectionsResourceTest {
 
     var testContext = new VertxTestContext();
     refreshConnectionStatusAndThen(connectionId, testContext, () -> {
-      assertAuthStatus("c1", "VALID_TOKEN")
+      assertAuthStatus("c1", ConnectedState.SUCCESS.name())
           .body("spec.ccloud_config.organization_id", is("1a507773-d2cb-4055-917e-ffb205f3c433"));
       testContext.completeNow();
     });
@@ -908,7 +904,7 @@ public class ConnectionsResourceTest {
         "Development Org"
     );
     refreshConnectionStatusAndThen(connectionId, testContext, () -> {
-      assertAuthStatus("c1", "VALID_TOKEN")
+      assertAuthStatus("c1", ConnectedState.SUCCESS.name())
           .body("spec.ccloud_config.organization_id", is(nullValue()));
 
       assertCurrentOrganizationForConnection(
@@ -2064,13 +2060,16 @@ public class ConnectionsResourceTest {
     }
   }
 
-  protected static ValidatableResponse assertAuthStatus(String connectionId, String authStatus) {
+  protected static ValidatableResponse assertAuthStatus(
+      String connectionId,
+      String authStatus
+  ) {
     return given()
         .contentType(ContentType.JSON)
         .when().get("/gateway/v1/connections/{id}", connectionId)
         .then()
         .statusCode(200)
-        .body("status.authentication.status", is(authStatus));
+        .body("status.ccloud.state", is(authStatus));
   }
 
   /**
