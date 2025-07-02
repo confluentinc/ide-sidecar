@@ -20,7 +20,6 @@ import io.confluent.idesidecar.restapi.credentials.Password;
 import io.confluent.idesidecar.restapi.integration.ITSuite;
 import io.confluent.idesidecar.restapi.models.Connection;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
-import io.confluent.idesidecar.restapi.models.ConnectionStatus.Authentication.Status;
 import io.confluent.idesidecar.restapi.models.ConnectionStatus.ConnectedState;
 import io.confluent.idesidecar.restapi.util.SidecarClient;
 import io.restassured.http.ContentType;
@@ -49,7 +48,6 @@ public interface DirectConnectionSuite extends ITSuite {
         .body("spec.id", equalTo(spec.id()))
         .body("spec.name", equalTo(spec.name()))
         .body("spec.type", equalTo(ConnectionType.DIRECT.name()))
-        .body("status.authentication.status", equalTo(Status.NO_TOKEN.name()))
         .body("status.kafka_cluster.state", equalTo(ConnectedState.SUCCESS.name()));
 
     assertNotNull(rsps.extract().body().as(Connection.class));
@@ -71,7 +69,6 @@ public interface DirectConnectionSuite extends ITSuite {
           .body("spec.type", equalTo(ConnectionType.DIRECT.name()))
           .body("spec.kafka_cluster", notNullValue())
           .body("spec.schema_registry", nullValue())
-          .body("status.authentication.status", equalTo(Status.NO_TOKEN.name()))
           .body("status.kafka_cluster.state", equalTo(ConnectedState.SUCCESS.name()))
           .body("status.schema_registry", nullValue())
           .extract().body().as(Connection.class);
@@ -90,7 +87,6 @@ public interface DirectConnectionSuite extends ITSuite {
           .body("spec.type", equalTo(ConnectionType.DIRECT.name()))
           .body("spec.kafka_cluster", nullValue())
           .body("spec.schema_registry", notNullValue())
-          .body("status.authentication.status", equalTo(Status.NO_TOKEN.name()))
           .body("status.kafka_cluster", nullValue())
           .body("status.schema_registry.state", equalTo(ConnectedState.SUCCESS.name()))
           .extract().body().as(Connection.class);
@@ -116,7 +112,6 @@ public interface DirectConnectionSuite extends ITSuite {
         .body("spec.id", nullValue())
         .body("spec.name", equalTo(spec.name()))
         .body("spec.type", equalTo(ConnectionType.DIRECT.name()))
-        .body("status.authentication.status", equalTo(Status.NO_TOKEN.name()))
         .body("status.kafka_cluster.state", equalTo(ConnectedState.SUCCESS.name()))
         .extract().body().as(Connection.class);
   }

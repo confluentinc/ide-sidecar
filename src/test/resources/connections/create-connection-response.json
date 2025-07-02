@@ -12,8 +12,5 @@
     "type": "LOCAL"
   },
   "status": {
-    "authentication": {
-      "status": "NO_TOKEN"
-    }
   }
 }

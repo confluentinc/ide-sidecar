@@ -11,6 +11,7 @@ import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.matching.EqualToPattern;
 import io.confluent.idesidecar.restapi.connections.CCloudConnectionState;
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
+import io.confluent.idesidecar.restapi.models.ConnectionStatus.ConnectedState;
 import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
 import io.confluent.idesidecar.restapi.util.CCloudTestUtil;
 import io.quarkiverse.wiremock.devservice.ConnectWireMock;
@@ -109,7 +110,7 @@ class RestProxyResourceTest {
     var orgName = "Development Org";
     ccloudTestUtil.createAuthedCCloudConnection(connectionId, connectionName, orgName, null);
 
-    assertAuthStatus(connectionId, "VALID_TOKEN");
+    assertAuthStatus(connectionId, ConnectedState.SUCCESS.name());
 
     // Get the data plane token directly from the connection manager
     var controlPlaneToken =
@@ -172,7 +173,7 @@ class RestProxyResourceTest {
         null
     );
 
-    assertAuthStatus(connectionId, "VALID_TOKEN");
+    assertAuthStatus(connectionId, ConnectedState.SUCCESS.name());
 
     // Given we have a fake CCloud RBAC server endpoint
     // that always returns a 401

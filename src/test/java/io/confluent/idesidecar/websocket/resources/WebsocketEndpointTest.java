@@ -290,7 +290,7 @@ public class WebsocketEndpointTest extends AbstractWebsocketTestBase {
 
     // assert that body.connection.status.authentication.requires_authentication_at round-tripped as a java.time.Instant
     assertInstanceOf(Instant.class,
-        receivedBody.connection().status().authentication().requiresAuthenticationAt());
+        receivedBody.connection().status().ccloud().requiresAuthenticationAt());
   }
 
   /**
