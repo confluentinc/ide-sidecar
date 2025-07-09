@@ -55,25 +55,6 @@
           }
         }
       },
-      "Authentication" : {
-        "description" : "The authentication-related status (deprecated).",
-        "required" : [ "status" ],
-        "type" : "object",
-        "properties" : {
-          "status" : {
-            "$ref" : "#/components/schemas/Status"
-          },
-          "requires_authentication_at" : {
-            "$ref" : "#/components/schemas/Instant"
-          },
-          "user" : {
-            "$ref" : "#/components/schemas/UserInfo"
-          },
-          "errors" : {
-            "$ref" : "#/components/schemas/AuthErrors"
-          }
-        }
-      },
       "BasicCredentials" : {
         "description" : "Basic authentication credentials",
         "required" : [ "username", "password" ],
@@ -259,7 +240,6 @@
         }
       },
       "ConnectionStatus" : {
-        "required" : [ "authentication" ],
         "type" : "object",
         "properties" : {
           "ccloud" : {
@@ -270,9 +250,6 @@
           },
           "schema_registry" : {
             "$ref" : "#/components/schemas/SchemaRegistryStatus"
-          },
-          "authentication" : {
-            "$ref" : "#/components/schemas/Authentication"
           }
         }
       },
@@ -1070,10 +1047,6 @@
           }
         }
       },
-      "Status" : {
-        "enum" : [ "NO_TOKEN", "VALID_TOKEN", "INVALID_TOKEN", "FAILED" ],
-        "type" : "string"
-      },
       "StoreType" : {
         "enum" : [ "JKS", "PKCS12", "PEM", "UNKNOWN" ],
         "type" : "string"
@@ -1184,15 +1157,15 @@
       "HealthCheck" : {
         "type" : "object",
         "properties" : {
-          "status" : {
-            "enum" : [ "UP", "DOWN" ],
+          "name" : {
             "type" : "string"
           },
           "data" : {
             "type" : "object",
             "nullable" : true
           },
-          "name" : {
+          "status" : {
+            "enum" : [ "UP", "DOWN" ],
             "type" : "string"
           }
         }
@@ -1885,7 +1858,7 @@
   },
   "info" : {
     "title" : "Confluent ide-sidecar API",
-    "version" : "0.219.0",
+    "version" : "0.220.0",
     "description" : "API for the Confluent ide-sidecar, part of Confluent for VS Code",
     "termsOfService" : "Your terms here",
     "contact" : {
