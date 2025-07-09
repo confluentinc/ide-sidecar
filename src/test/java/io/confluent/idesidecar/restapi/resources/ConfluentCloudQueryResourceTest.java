@@ -313,7 +313,7 @@ public class ConfluentCloudQueryResourceTest extends ConfluentQueryResourceTestB
         bearerToken,
         "ccloud-resources-mock-responses/get-schema-registry-empty.json");
 
-    // Then the results should have orgs, environments, schema registries but no kafka clusters.
+    // Then the results should have orgs, environments, and schema registries but no kafka clusters.
     // This actual results are strange, in that the parent environment is null when a child
     // fetched object has an error, rather than the environment's field for the child being null.
     // It's not clear how better to handle errors. If we return an empty Multi then no error
