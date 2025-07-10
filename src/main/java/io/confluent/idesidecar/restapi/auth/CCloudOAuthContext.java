@@ -571,7 +571,6 @@ public class CCloudOAuthContext implements AuthContext {
                 response.bodyAsString(),
                 DataPlaneTokenExchangeResponse.class);
           } catch (JsonProcessingException exception) {
-
             throw new CCloudAuthenticationFailedException(
                 String.format(
                     "Could not parse the response from Confluent Cloud when exchanging the control "
