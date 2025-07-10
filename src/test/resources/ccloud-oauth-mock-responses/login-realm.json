@@ -1,1 +1,6 @@
-{"realm":"ccloud-local","is_sso":false,"error":null}
+{
+  "realm": "ccloud-local",
+  "is_sso": false,
+  "error": null,
+  "unknown_field": "baz"
+}

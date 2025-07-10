@@ -1,4 +1,6 @@
 {
   "error": null,
-  "token": "foo"
+  "regional_token": "bar",
+  "token": "foo",
+  "unknown_field": "baz"
 }
