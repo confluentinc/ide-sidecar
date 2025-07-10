@@ -118,5 +118,6 @@
     "parent_organization_resource_id": ""
   },
   "refresh_token": "",
-  "identity_provider": ""
+  "identity_provider": "",
+  "unknown_field": "baz"
 }

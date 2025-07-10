@@ -193,7 +193,7 @@ public class CCloudTestUtil {
   }
 
   private static DataPlaneToken createDataPlaneToken() {
-    return new DataPlaneToken(null, getRandomString());
+    return new DataPlaneToken(null, getRandomString(), getRandomString());
   }
 
   @SuppressWarnings("checkstyle:MissingSwitchDefault")
@@ -338,6 +338,7 @@ public class CCloudTestUtil {
   }
 
   // Auth models
+  @JsonIgnoreProperties(ignoreUnknown = true)
   public record AccessToken(
       String access_token,
       String refresh_token,
@@ -360,6 +361,7 @@ public class CCloudTestUtil {
   }
 
   // Copied from CCloudOAuthContext
+  @JsonIgnoreProperties(ignoreUnknown = true)
   public record ControlPlaneTokenAndUserAndOrganization(
       String token,
       JsonNode error,
@@ -402,9 +404,11 @@ public class CCloudTestUtil {
     }
   }
 
+  @JsonIgnoreProperties(ignoreUnknown = true)
   public record DataPlaneToken(
       JsonNode error,
-      String token
+      String token,
+      @JsonProperty("regional_token") String regionalToken
   ) {
 
   }
