@@ -848,8 +848,11 @@ public class CCloudOAuthContext implements AuthContext {
   }
 
   @RegisterForReflection
-  private record DataPlaneTokenExchangeResponse(JsonNode error, String token) {
-
+  private record DataPlaneTokenExchangeResponse(
+      JsonNode error,
+      String token,
+      @JsonProperty(value = "regional_token") String regionalToken
+  ) {
   }
 
   @RegisterForReflection
