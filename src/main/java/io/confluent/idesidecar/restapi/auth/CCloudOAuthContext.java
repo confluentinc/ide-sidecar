@@ -571,6 +571,7 @@ public class CCloudOAuthContext implements AuthContext {
                 response.bodyAsString(),
                 DataPlaneTokenExchangeResponse.class);
           } catch (JsonProcessingException exception) {
+
             throw new CCloudAuthenticationFailedException(
                 String.format(
                     "Could not parse the response from Confluent Cloud when exchanging the control "
@@ -848,8 +849,11 @@ public class CCloudOAuthContext implements AuthContext {
   }
 
   @RegisterForReflection
-  private record DataPlaneTokenExchangeResponse(JsonNode error, String token) {
-
+  private record DataPlaneTokenExchangeResponse(
+      JsonNode error,
+      String token,
+      @JsonProperty(value = "regional_token") String regionalToken
+  ) {
   }
 
   @RegisterForReflection
