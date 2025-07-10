@@ -23,5 +23,6 @@
       ]
     }
   },
-  "error": null
+  "error": null,
+  "unknown_field": "baz"
 }

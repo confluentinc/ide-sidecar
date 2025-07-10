@@ -823,6 +823,7 @@ public class CCloudOAuthContext implements AuthContext {
   }
 
   @RegisterForReflection
+  @JsonIgnoreProperties(ignoreUnknown = true)
   private record IdTokenExchangeResponse(
       @JsonProperty(value = "access_token") String accessToken,
       @JsonProperty(value = "refresh_token") String refreshToken,
@@ -837,6 +838,7 @@ public class CCloudOAuthContext implements AuthContext {
   }
 
   @RegisterForReflection
+  @JsonIgnoreProperties(ignoreUnknown = true)
   private record ControlPlaneTokenExchangeResponse(
       String token,
       JsonNode error,
@@ -848,6 +850,7 @@ public class CCloudOAuthContext implements AuthContext {
   }
 
   @RegisterForReflection
+  @JsonIgnoreProperties(ignoreUnknown = true)
   private record DataPlaneTokenExchangeResponse(
       JsonNode error,
       String token,
@@ -856,12 +859,14 @@ public class CCloudOAuthContext implements AuthContext {
   }
 
   @RegisterForReflection
+  @JsonIgnoreProperties(ignoreUnknown = true)
   private record CheckJwtResponse(JsonNode error, JsonNode claims) {
 
   }
 
   @RegisterForReflection
   @JsonInclude(JsonInclude.Include.NON_NULL)
+  @JsonIgnoreProperties(ignoreUnknown = true)
   private record ExchangeControlPlaneTokenRequest(
       @JsonProperty(value = "id_token", required = true) String idToken,
       @JsonProperty("org_resource_id") String orgResourceId
