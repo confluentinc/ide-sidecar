@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.confluent.idesidecar.restapi.util.ObjectMapperFactory;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import io.soabase.recordbuilder.core.RecordBuilder;
 import java.util.List;
@@ -25,7 +26,7 @@ public record SimpleConsumeMultiPartitionRequest(
     @JsonProperty("from_beginning") Boolean fromBeginning
 ) implements SimpleConsumeMultiPartitionRequestBuilder.With {
 
-  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+  private static final ObjectMapper OBJECT_MAPPER = ObjectMapperFactory.getObjectMapper();
 
   @RegisterForReflection
   public record PartitionOffset(
