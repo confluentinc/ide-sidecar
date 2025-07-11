@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.confluent.idesidecar.restapi.util.ObjectMapperFactory;
 import jakarta.ws.rs.core.Response.Status;
 import java.io.Serializable;
 import java.util.List;
@@ -48,7 +49,7 @@ public record Failure(
     List<Error> errors
 ) implements Serializable {
 
-  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+  private static final ObjectMapper OBJECT_MAPPER = ObjectMapperFactory.getObjectMapper();
 
   public Failure(Exception exception, Status status, String code, String title, String id,
       String source) {

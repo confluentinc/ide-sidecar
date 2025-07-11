@@ -16,6 +16,7 @@ import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPart
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.RecordMetadata;
 import io.confluent.idesidecar.restapi.proxy.KafkaRestProxyContext;
 import io.confluent.idesidecar.restapi.proxy.ProxyHttpClient;
+import io.confluent.idesidecar.restapi.util.ObjectMapperFactory;
 import io.confluent.idesidecar.restapi.util.WebClientFactory;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.quarkus.logging.Log;
@@ -39,7 +40,7 @@ import java.util.Optional;
 @ApplicationScoped
 public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
 
-  static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+  static final ObjectMapper OBJECT_MAPPER = ObjectMapperFactory.getObjectMapper();
   static final Base64.Decoder BASE64_DECODER = Base64.getDecoder();
   static final Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
 

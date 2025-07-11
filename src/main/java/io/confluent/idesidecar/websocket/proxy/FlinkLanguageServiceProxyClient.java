@@ -1,6 +1,7 @@
 package io.confluent.idesidecar.websocket.proxy;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.confluent.idesidecar.restapi.util.ObjectMapperFactory;
 import io.confluent.idesidecar.websocket.exceptions.ProxyConnectionFailedException;
 import io.confluent.idesidecar.websocket.messages.FlinkLanguageServiceAuthMessage;
 import io.quarkus.logging.Log;
@@ -22,7 +23,7 @@ import java.util.concurrent.Future;
 @ClientEndpoint
 public class FlinkLanguageServiceProxyClient implements AutoCloseable {
 
-  static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+  static final ObjectMapper OBJECT_MAPPER = ObjectMapperFactory.getObjectMapper();
   static final String CCLOUD_DATA_PLANE_TOKEN_PLACEHOLDER = "{{ ccloud.data_plane_token }}";
 
   Session remoteSession;

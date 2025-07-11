@@ -7,6 +7,7 @@ import com.google.protobuf.Message;
 import com.google.protobuf.util.JsonFormat;
 import io.confluent.idesidecar.restapi.clients.ClientConfigurator;
 import io.confluent.idesidecar.restapi.util.ByteArrayJsonUtil;
+import io.confluent.idesidecar.restapi.util.ObjectMapperFactory;
 import io.confluent.kafka.schemaregistry.ParsedSchema;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.json.JsonSchema;
@@ -34,7 +35,7 @@ public class RecordSerializer {
   @Inject
   ClientConfigurator clientConfigurator;
 
-  private static final ObjectMapper objectMapper = new ObjectMapper();
+  private static final ObjectMapper objectMapper = ObjectMapperFactory.getObjectMapper();
 
 
   public ByteString serialize(

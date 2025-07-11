@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.idesidecar.restapi.exceptions.CCloudAuthenticationFailedException;
 import io.confluent.idesidecar.restapi.models.ConnectionStatus;
 import io.confluent.idesidecar.restapi.util.CCloud;
+import io.confluent.idesidecar.restapi.util.ObjectMapperFactory;
 import io.confluent.idesidecar.restapi.util.UriUtil;
 import io.confluent.idesidecar.restapi.util.WebClientFactory;
 import io.quarkus.arc.Arc;
@@ -51,7 +52,7 @@ import org.apache.commons.codec.binary.Base64;
 @SuppressWarnings("checkstyle:ClassDataAbstractionCoupling")
 public class CCloudOAuthContext implements AuthContext {
 
-  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+  private static final ObjectMapper OBJECT_MAPPER = ObjectMapperFactory.getObjectMapper();
   private static final String HASH_ALGORITHM = "SHA-256";
   private static final int CODE_VERIFIER_LENGTH = 32;
   private static final int OAUTH_STATE_PARAMETER_LENGTH = 32;

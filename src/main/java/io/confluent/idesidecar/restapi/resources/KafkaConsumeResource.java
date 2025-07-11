@@ -9,6 +9,7 @@ import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPart
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
 import io.confluent.idesidecar.restapi.processors.Processor;
 import io.confluent.idesidecar.restapi.proxy.KafkaRestProxyContext;
+import io.confluent.idesidecar.restapi.util.ObjectMapperFactory;
 import io.quarkus.logging.Log;
 import io.smallrye.common.annotation.Blocking;
 import io.smallrye.mutiny.Uni;
@@ -75,7 +76,7 @@ public class KafkaConsumeResource {
         .map(messageViewerContext -> {
           // Extract the number of bytes of the response body
           var response = messageViewerContext.getResponse();
-          ObjectMapper objectMapper = new ObjectMapper();
+          ObjectMapper objectMapper = ObjectMapperFactory.getObjectMapper();
           String jsonResponse;
           try {
             jsonResponse = objectMapper.writeValueAsString(response);
