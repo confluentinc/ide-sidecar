@@ -15,7 +15,7 @@ import java.util.Base64;
 public final class ByteArrayJsonUtil {
 
   public static final String RAW_FIELD = "__raw__";
-  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+  private static final ObjectMapper OBJECT_MAPPER = ObjectMapperFactory.getObjectMapper();
   private static final CharsetDecoder UTF8_DECODER = StandardCharsets.UTF_8.newDecoder();
 
   public static byte[] asBytes(JsonNode node) {

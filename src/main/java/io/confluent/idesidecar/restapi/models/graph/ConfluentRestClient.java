@@ -11,6 +11,7 @@ import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
 import io.confluent.idesidecar.restapi.exceptions.ErrorResponse;
 import io.confluent.idesidecar.restapi.exceptions.Failure;
 import io.confluent.idesidecar.restapi.exceptions.ResourceFetchingException;
+import io.confluent.idesidecar.restapi.util.ObjectMapperFactory;
 import io.confluent.idesidecar.restapi.util.UriUtil;
 import io.confluent.idesidecar.restapi.util.WebClientFactory;
 import io.quarkus.logging.Log;
@@ -31,7 +32,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @RegisterForReflection
 public abstract class ConfluentRestClient {
 
-  protected static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+  protected static final ObjectMapper OBJECT_MAPPER = ObjectMapperFactory.getObjectMapper();
 
   @Inject
   ConnectionStateManager connections;
