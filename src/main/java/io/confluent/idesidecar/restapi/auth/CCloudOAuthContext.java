@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.idesidecar.restapi.exceptions.CCloudAuthenticationFailedException;
 import io.confluent.idesidecar.restapi.models.ConnectionStatus;
 import io.confluent.idesidecar.restapi.util.CCloud;
+import io.confluent.idesidecar.restapi.util.ObjectMapperFactory;
 import io.confluent.idesidecar.restapi.util.UriUtil;
 import io.confluent.idesidecar.restapi.util.WebClientFactory;
 import io.quarkus.arc.Arc;
@@ -51,7 +52,7 @@ import org.apache.commons.codec.binary.Base64;
 @SuppressWarnings("checkstyle:ClassDataAbstractionCoupling")
 public class CCloudOAuthContext implements AuthContext {
 
-  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+  private static final ObjectMapper OBJECT_MAPPER = ObjectMapperFactory.getObjectMapper();
   private static final String HASH_ALGORITHM = "SHA-256";
   private static final int CODE_VERIFIER_LENGTH = 32;
   private static final int OAUTH_STATE_PARAMETER_LENGTH = 32;
@@ -823,6 +824,7 @@ public class CCloudOAuthContext implements AuthContext {
   }
 
   @RegisterForReflection
+  @JsonIgnoreProperties(ignoreUnknown = true)
   private record IdTokenExchangeResponse(
       @JsonProperty(value = "access_token") String accessToken,
       @JsonProperty(value = "refresh_token") String refreshToken,
@@ -837,6 +839,7 @@ public class CCloudOAuthContext implements AuthContext {
   }
 
   @RegisterForReflection
+  @JsonIgnoreProperties(ignoreUnknown = true)
   private record ControlPlaneTokenExchangeResponse(
       String token,
       JsonNode error,
@@ -848,17 +851,23 @@ public class CCloudOAuthContext implements AuthContext {
   }
 
   @RegisterForReflection
-  private record DataPlaneTokenExchangeResponse(JsonNode error, String token) {
-
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  private record DataPlaneTokenExchangeResponse(
+      JsonNode error,
+      String token,
+      @JsonProperty(value = "regional_token") String regionalToken
+  ) {
   }
 
   @RegisterForReflection
+  @JsonIgnoreProperties(ignoreUnknown = true)
   private record CheckJwtResponse(JsonNode error, JsonNode claims) {
 
   }
 
   @RegisterForReflection
   @JsonInclude(JsonInclude.Include.NON_NULL)
+  @JsonIgnoreProperties(ignoreUnknown = true)
   private record ExchangeControlPlaneTokenRequest(
       @JsonProperty(value = "id_token", required = true) String idToken,
       @JsonProperty("org_resource_id") String orgResourceId

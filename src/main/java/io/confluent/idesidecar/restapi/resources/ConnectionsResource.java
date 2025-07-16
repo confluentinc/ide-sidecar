@@ -11,6 +11,7 @@ import io.confluent.idesidecar.restapi.exceptions.Failure;
 import io.confluent.idesidecar.restapi.models.Connection;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionsList;
+import io.confluent.idesidecar.restapi.util.ObjectMapperFactory;
 import io.quarkus.logging.Log;
 import io.smallrye.common.annotation.Blocking;
 import io.smallrye.mutiny.Uni;
@@ -200,7 +201,7 @@ public class ConnectionsResource {
       @PathParam("id") String id,
       JsonMergePatch patch
   ) {
-    ObjectMapper mapper = new ObjectMapper();
+    ObjectMapper mapper = ObjectMapperFactory.getObjectMapper();
     try {
       var connection = connectionStateManager.getConnectionState(id);
       // Convert connection spec to JsonNode

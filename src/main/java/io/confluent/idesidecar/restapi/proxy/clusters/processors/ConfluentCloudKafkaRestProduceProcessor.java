@@ -8,6 +8,7 @@ import io.confluent.idesidecar.restapi.kafkarest.model.ProduceResponse;
 import io.confluent.idesidecar.restapi.processors.Processor;
 import io.confluent.idesidecar.restapi.proxy.KafkaRestProxyContext;
 import io.confluent.idesidecar.restapi.proxy.ProxyHttpClient;
+import io.confluent.idesidecar.restapi.util.ObjectMapperFactory;
 import io.confluent.idesidecar.restapi.util.WebClientFactory;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
@@ -23,7 +24,7 @@ public class ConfluentCloudKafkaRestProduceProcessor extends Processor<
     KafkaRestProxyContext<ProduceRequest, ProduceResponse>,
     Future<KafkaRestProxyContext<ProduceRequest, ProduceResponse>>> {
 
-  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+  private static final ObjectMapper OBJECT_MAPPER = ObjectMapperFactory.getObjectMapper();
 
   @Inject
   WebClientFactory webClientFactory;
