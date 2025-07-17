@@ -115,9 +115,6 @@ blocks:
           # Login to Vault
           - $Env:VAULT_ADDR = "https://vault.cireops.gcp.internal.confluent.cloud"
           - vault login -no-print token=$(vault write -field=token "auth/semaphore_self_hosted/login" role="default" jwt="$Env:SEMAPHORE_OIDC_TOKEN")
-          # Fetch Azure certificate from Vault and create the PFX file
-          - vault kv get -field=azure_certificate v1/ci/kv/cli/release > certificate_base64.txt
-          - certutil -decode certificate_base64.txt certificate.pfx
           # Install GraalVM
           - |
             if (-not (Test-Path graalvm-community-jdk-21.0.2_windows-x64_bin.zip)) {
@@ -152,16 +149,28 @@ blocks:
       jobs:
         - name: "Build Native Executable (Windows x64)"
           commands:
+            # Install Azure Sign Tool
+            - dotnet tool install --global AzureSignTool
+            - powershell -Command "Invoke-WebRequest -Uri https://dot.net/v1/dotnet-install.ps1 -OutFile dotnet-install.ps1"
+            - powershell -ExecutionPolicy Bypass -File dotnet-install.ps1 -Channel 8.0
+            - $env:DOTNET_ROOT = "C:\Users\semaphore\AppData\Local\Microsoft\dotnet\"
+            # Fetch Azure client ID, client secret, and tenant ID from Vault
+            - vault kv get -field=azure_client_id v1/ci/kv/vscodeextension/release > client_id.txt
+            - vault kv get -field=azure_tenant_id v1/ci/kv/vscodeextension/release > tenant_id.txt
+            - vault kv get -field=azure_client_secret v1/ci/kv/vscodeextension/release > client_secret.txt
+            - $Env:APP_CLIENT_ID = Get-Content ./client_id.txt -Raw
+            - $Env:APP_CLIENT_SECRET = Get-Content ./client_secret.txt -Raw
+            - $Env:APP_TENANT_ID = Get-Content ./tenant_id.txt -Raw
             # Builds native executable for Windows x64
             # TODO: Temporarily disable running tests while we investigate why they fail randomly
             - make mvn-package-native-no-tests
-            # Push signed executable to GH release and Semaphore
+            # Sign executable and push it to Semaphore artifacts
             - |
               $executable = Get-ChildItem -Recurse ".\target\" -Filter "*-runner.exe" | Select-Object -ExpandProperty FullName
               $executable_with_os_arch = $executable -replace "-runner", "-runner-$($Env:OS)-$($Env:ARCH)"
               Rename-Item -Path $executable -NewName (Split-Path -Leaf $executable_with_os_arch)
               Write-Host "Signing executable $executable_with_os_arch";
-              signtool sign /debug /v /f certificate.pfx "$executable_with_os_arch";
+              azuresigntool sign -kvu "https://clicodesigningkeyvault.vault.azure.net/" -kvc CLICodeSigningCertificate -kvi $Env:APP_CLIENT_ID -kvs $Env:APP_CLIENT_SECRET --azure-key-vault-tenant-id $Env:APP_TENANT_ID -tr http://timestamp.globalsign.com/tsa/advanced -td sha256 "$executable_with_os_arch";
               try {artifact push workflow $executable_with_os_arch --destination "native-executables/$(Split-Path -Leaf $executable_with_os_arch)"} catch {Write-Host "Artifact push failed"}
       epilogue:
         commands:
