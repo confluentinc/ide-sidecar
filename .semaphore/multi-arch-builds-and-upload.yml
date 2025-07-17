@@ -171,14 +171,14 @@ blocks:
             - $Env:APP_CLIENT_ID = Get-Content ./client_id.txt -Raw
             - $Env:APP_CLIENT_SECRET = Get-Content ./client_secret.txt -Raw
             - $Env:APP_TENANT_ID = Get-Content ./tenant_id.txt -Raw
-            # Builds native executable for Windows x64
-            # TODO: Temporarily disable running tests while we investigate why they fail randomly
-            - $Env:QUARKUS_NATIVE_RESOURCES_EXCLUDES="libs/**/*.dylib,libs/**/*.so"
-            - make mvn-package-native-no-tests
             # Sign the native libraries for Windows
             - |
               Write-Host "Signing native libraries";
               azuresigntool sign -kvu "https://clicodesigningkeyvault.vault.azure.net/" -kvc CLICodeSigningCertificate -kvi $Env:APP_CLIENT_ID -kvs $Env:APP_CLIENT_SECRET --azure-key-vault-tenant-id $Env:APP_TENANT_ID -tr http://timestamp.globalsign.com/tsa/advanced -td sha256 src\main\resources\libs\snappy-java\Windows\x86_64\snappyjava.dll;
+            # Builds native executable for Windows x64
+            # TODO: Temporarily disable running tests while we investigate why they fail randomly
+            - $Env:QUARKUS_NATIVE_RESOURCES_EXCLUDES="libs/**/*.dylib,libs/**/*.so"
+            - make mvn-package-native-no-tests
             # Sign executable and push it to Semaphore artifacts
             - |
               $executable = Get-ChildItem -Recurse ".\target\" -Filter "*-runner.exe" | Select-Object -ExpandProperty FullName
