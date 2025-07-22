@@ -22,6 +22,7 @@ public class FlinkDataPlaneProxyProcessor extends Processor<ProxyContext, Future
 
   private static final String REGION_HEADER = "x-ccloud-region";
   private static final String PROVIDER_HEADER = "x-ccloud-provider";
+  private static final String ENVIRONMENT_HEADER = "x-ccloud-env-id";
 
   @ConfigProperty(name = "ide-sidecar.cluster-proxy.http-header-exclusions")
   List<String> httpHeaderExclusions;
@@ -43,6 +44,7 @@ public class FlinkDataPlaneProxyProcessor extends Processor<ProxyContext, Future
     String region = headers.get(REGION_HEADER);
     String providerStr = headers.get(PROVIDER_HEADER);
     CloudProvider provider = CloudProvider.of(providerStr);
+    String environmentId = headers.get(ENVIRONMENT_HEADER);
 
     if (CloudProvider.NONE.equals(provider)) {
       return Future.failedFuture(
@@ -60,10 +62,15 @@ public class FlinkDataPlaneProxyProcessor extends Processor<ProxyContext, Future
       );
     }
 
-    // Get environment ID
-    String environmentId = extractEnvIdFromPath(context.getRequestUri());
+    if (environmentId == null || environmentId.isBlank()) {
+      return Future.failedFuture(
+          new ProcessorFailedException(
+              context.fail(400, "Environment ID specified in request header '%s' is missing or invalid.".formatted(ENVIRONMENT_HEADER))
+          )
+      );
+    }
 
-    // Get private endpoints for this environment
+    // Get private endpoints for current environment
     List<String> privateEndpoints = flinkPrivateEndpointUtil.getPrivateEndpoints(environmentId);
 
     String flinkBaseUrl;
@@ -97,16 +104,16 @@ public class FlinkDataPlaneProxyProcessor extends Processor<ProxyContext, Future
     return next().process(context);
   }
 
-  private String extractEnvIdFromPath(String uri) {
-    if (uri == null) return null;
-    if (uri.contains("/environments/")) {
-      return uri.split("/environments/")[1].split("/")[0].split("\\?")[0];
-    }
-    if (uri.contains("environment=")) {
-      return uri.split("environment=")[1].split("&")[0];
-    }
-    return null;
-  }
+  // private String extractEnvIdFromPath(String uri) {
+  //   if (uri == null) return null;
+  //   if (uri.contains("/environments/")) {
+  //     return uri.split("/environments/")[1].split("/")[0].split("\\?")[0];
+  //   }
+  //   if (uri.contains("environment=")) {
+  //     return uri.split("environment=")[1].split("&")[0];
+  //   }
+  //   return null;
+  // }
 
   /**
    * Selects the first endpoint that matches the given region and provider.
