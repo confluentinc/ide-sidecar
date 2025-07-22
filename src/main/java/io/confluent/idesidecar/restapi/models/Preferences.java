@@ -161,7 +161,7 @@ public record Preferences(
           "flink\\." +
           "(" +
             "[a-z0-9-]+\\.[a-z0-9-]+\\.private\\.confluent\\.cloud|" +              // private format
-            "dom[a-z0-9$-]+\\.[a-z0-9-]+\\.[a-z0-9-]+\\.private\\.confluent\\.cloud" // private with domain
+            "dom[a-z0-9-]+\\.[a-z0-9-]+\\.[a-z0-9-]+\\.private\\.confluent\\.cloud" // private with domain
           + ")" +
           "/?$"
       );
