@@ -6,22 +6,23 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @ApplicationScoped
 public class FlinkPrivateEndpointUtil {
 
     // stores Environment ID and List of private endpoints
-    private volatile Map<String, List<String>> flinkPrivateEndpoints = Map.of();
+    private final Map<String, List<String>> flinkPrivateEndpoints = new ConcurrentHashMap<>();
 
     // Listen for preference changes
     public synchronized void updateFlinkPrivateEndpoints(@Observes PreferencesSpec preferences) {
         var newEndpoints = preferences.flinkPrivateEndpoints();
 
+        flinkPrivateEndpoints.clear();
         if (newEndpoints != null && !newEndpoints.isEmpty()) {
-            this.flinkPrivateEndpoints = newEndpoints;
+            flinkPrivateEndpoints.putAll(newEndpoints);
             Log.infof("Updated Flink private endpoints: %s", flinkPrivateEndpoints);
         } else {
-            this.flinkPrivateEndpoints = Map.of();
             Log.debug("Cleared Flink private endpoints (using public pattern)");
         }
     }
