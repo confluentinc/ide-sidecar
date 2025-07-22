@@ -54,6 +54,8 @@ public record Preferences(
       @JsonProperty("flink_private_endpoints") Map<String, List<String>> flinkPrivateEndpoints
   ) {
 
+    private static final String FLINK_PRIVATE_ENDPOINTS_PATH = "/spec/flink_private_endpoints";
+
     public PreferencesSpec(
         String kerberosConfigFilePath,
         List<String> tlsPemPaths,
@@ -176,7 +178,7 @@ public record Preferences(
                   "private_endpoint_empty_key",
                   "Environment ID cannot be empty",
                   "Environment ID key cannot be null or empty.",
-                  "/spec/flink_private_endpoints"
+                  FLINK_PRIVATE_ENDPOINTS_PATH
               )
           );
         }
@@ -188,7 +190,7 @@ public record Preferences(
                     "private_endpoint_empty_value",
                     "Private endpoint cannot be empty",
                     "Private endpoint in environment '%s' cannot be null or empty.".formatted(envId),
-                    "/spec/flink_private_endpoints"
+                    FLINK_PRIVATE_ENDPOINTS_PATH
                 )
             );
           }
@@ -199,7 +201,7 @@ public record Preferences(
                     "private_endpoint_invalid_format",
                     "Private endpoint format is invalid",
                     "Private endpoint '%s' in environment '%s' must follow the correct format",
-                    "/spec/flink_private_endpoints"
+                    FLINK_PRIVATE_ENDPOINTS_PATH
                 )
             );
           }
