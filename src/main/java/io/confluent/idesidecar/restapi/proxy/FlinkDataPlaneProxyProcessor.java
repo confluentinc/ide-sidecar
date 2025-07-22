@@ -104,17 +104,6 @@ public class FlinkDataPlaneProxyProcessor extends Processor<ProxyContext, Future
     return next().process(context);
   }
 
-  // private String extractEnvIdFromPath(String uri) {
-  //   if (uri == null) return null;
-  //   if (uri.contains("/environments/")) {
-  //     return uri.split("/environments/")[1].split("/")[0].split("\\?")[0];
-  //   }
-  //   if (uri.contains("environment=")) {
-  //     return uri.split("environment=")[1].split("&")[0];
-  //   }
-  //   return null;
-  // }
-
   /**
    * Selects the first endpoint that matches the given region and provider.
    */
