@@ -74,15 +74,11 @@ public record Preferences(
      * @throws InvalidPreferencesException if any of the preferences are invalid
      */
     public void validate() throws InvalidPreferencesException {
-      var errors = Stream
-          .concat(
-              Stream.concat(
-                  validateTlsPemPaths(),
-                  validateKerberosConfigFilePath()
-              ),
-              validateFlinkPrivateEndpoints()
-          )
-          .toList();
+      var errors = Stream.of(
+          validateTlsPemPaths(),
+          validateKerberosConfigFilePath(),
+          validateFlinkPrivateEndpoints()
+      ).flatMap(stream -> stream).toList();
 
       if (!errors.isEmpty()) {
         throw new InvalidPreferencesException(errors);
