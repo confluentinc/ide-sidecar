@@ -10,7 +10,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Stream;
+import java.util.regex.Pattern;
+import java.util.Map;
 import org.eclipse.microprofile.config.ConfigProvider;
+
 
 @JsonPropertyOrder({
     "api_version",
@@ -41,22 +44,26 @@ public record Preferences(
   @JsonPropertyOrder({
       "kerberos_config_file_path",
       "tls_pem_paths",
-      "trust_all_certificates"
+      "trust_all_certificates",
+      "flink_private_endpoints"
   })
   public record PreferencesSpec(
       @JsonProperty("kerberos_config_file_path") String kerberosConfigFilePath,
       @JsonProperty("tls_pem_paths") List<String> tlsPemPaths,
-      @JsonProperty("trust_all_certificates") Boolean trustAllCertificates
+      @JsonProperty("trust_all_certificates") Boolean trustAllCertificates,
+      @JsonProperty("flink_private_endpoints") Map<String, List<String>> flinkPrivateEndpoints
   ) {
 
     public PreferencesSpec(
         String kerberosConfigFilePath,
         List<String> tlsPemPaths,
-        Boolean trustAllCertificates
+        Boolean trustAllCertificates,
+        Map<String, List<String>> flinkPrivateEndpoints
     ) {
       this.kerberosConfigFilePath = kerberosConfigFilePath != null ? kerberosConfigFilePath : "";
       this.tlsPemPaths = tlsPemPaths != null ? tlsPemPaths : List.of();
       this.trustAllCertificates = trustAllCertificates != null ? trustAllCertificates : false;
+      this.flinkPrivateEndpoints = flinkPrivateEndpoints != null ? flinkPrivateEndpoints : Map.of();
     }
 
     /**
@@ -67,8 +74,11 @@ public record Preferences(
     public void validate() throws InvalidPreferencesException {
       var errors = Stream
           .concat(
-              validateTlsPemPaths(),
-              validateKerberosConfigFilePath()
+              Stream.concat(
+                  validateTlsPemPaths(),
+                  validateKerberosConfigFilePath()
+              ),
+              validateFlinkPrivateEndpoints()
           )
           .toList();
 
@@ -132,6 +142,71 @@ public record Preferences(
       } else {
         return Stream.empty();
       }
+    }
+
+    /**
+     * Validates the private endpoints map. Checks if the provided
+     * endpoints follow the required patterns for Confluent Cloud private endpoints.
+     *
+     * @return errors if any private endpoints are invalid
+     */
+    Stream<Error> validateFlinkPrivateEndpoints() {
+      if (flinkPrivateEndpoints == null || flinkPrivateEndpoints.isEmpty()) {
+        return Stream.empty();
+      }
+
+      // Validates Flink private endpoint formats
+      Pattern flinkPattern = Pattern.compile(
+          "^(https?://)?" +
+          "flink\\." +
+          "(" +
+            "[a-z0-9-]+\\.[a-z0-9-]+\\.private\\.confluent\\.cloud|" +              // private format
+            "dom[a-z0-9$-]+\\.[a-z0-9-]+\\.[a-z0-9-]+\\.private\\.confluent\\.cloud" // private with domain
+          + ")" +
+          "/?$"
+      );
+
+      for (var entry : flinkPrivateEndpoints.entrySet()) {
+        String envId = entry.getKey();
+        List<String> endpoints = entry.getValue();
+
+        if (envId == null || envId.isBlank()) {
+          return Stream.of(
+              new Error(
+                  "private_endpoint_empty_key",
+                  "Environment ID cannot be empty",
+                  "Environment ID key cannot be null or empty.",
+                  "/spec/flink_private_endpoints"
+              )
+          );
+        }
+
+        for (String endpoint : endpoints) {
+          if (endpoint == null || endpoint.isBlank()) {
+            return Stream.of(
+                new Error(
+                    "private_endpoint_empty_value",
+                    "Private endpoint cannot be empty",
+                    "Private endpoint in environment '%s' cannot be null or empty.".formatted(envId),
+                    "/spec/flink_private_endpoints"
+                )
+            );
+          }
+
+          if (!flinkPattern.matcher(endpoint).matches()) {
+            return Stream.of(
+                new Error(
+                    "private_endpoint_invalid_format",
+                    "Private endpoint format is invalid",
+                    "Private endpoint '%s' in environment '%s' must follow the correct format",
+                    "/spec/flink_private_endpoints"
+                )
+            );
+          }
+        }
+      }
+
+      return Stream.empty();
     }
   }
 
