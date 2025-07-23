@@ -7,6 +7,8 @@ import jakarta.enterprise.event.Observes;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 @ApplicationScoped
 public class FlinkPrivateEndpointUtil {
@@ -46,5 +48,34 @@ public class FlinkPrivateEndpointUtil {
 
     private String normalizeEndpointUrl(String endpoint) {
         return endpoint.startsWith("http") ? endpoint : "https://" + endpoint;
+    }
+
+    /**
+     * Validates that the endpoint is a valid Flink private endpoint URL and
+     * matches the given region and provider.
+     * Supports both formats:
+     * - flink.{region}.{provider}.private.confluent.cloud
+     * - flink.{domainid}.{region}.{provider}.private.confluent.cloud
+     */
+    public boolean isValidEndpointWithMatchingRegionAndProvider(String endpoint, String region, String provider) {
+        if (endpoint == null || region == null || provider == null) {
+            return false;
+        }
+
+        // Pattern to match both formats:
+        Pattern pattern = Pattern.compile(
+            "^https?://flink\\.(?:[^.]+\\.)?([^.]+)\\.([^.]+)\\.private\\.confluent\\.cloud/?$",
+            Pattern.CASE_INSENSITIVE
+        );
+
+        Matcher matcher = pattern.matcher(endpoint);
+        if (!matcher.matches()) {
+            return false;
+        }
+
+        String endpointRegion = matcher.group(1);
+        String endpointProvider = matcher.group(2);
+
+        return region.equalsIgnoreCase(endpointRegion) && provider.equalsIgnoreCase(endpointProvider);
     }
 }

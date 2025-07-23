@@ -10,7 +10,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Stream;
-import java.util.regex.Pattern;
 import java.util.Map;
 import org.eclipse.microprofile.config.ConfigProvider;
 
@@ -144,7 +143,7 @@ public record Preferences(
 
     /**
      * Validates the private endpoints map. Checks if the provided
-     * endpoints follow the required patterns for Confluent Cloud private endpoints.
+     * endpoints are not null or empty.
      *
      * @return errors if any private endpoints are invalid
      */
@@ -152,15 +151,6 @@ public record Preferences(
       if (flinkPrivateEndpoints == null || flinkPrivateEndpoints.isEmpty()) {
         return Stream.empty();
       }
-
-      // Validates Flink private endpoint formats
-      final String PROTOCOL_PATTERN = "^(https?://)?";
-      final String FLINK_PREFIX = "flink\\.";
-      final String PRIVATE_FORMAT = "[a-z0-9-]+\\.[a-z0-9-]+\\.private\\.confluent\\.cloud";
-      final String DOMAIN_FORMAT = "dom[a-z0-9-]+\\.[a-z0-9-]+\\.[a-z0-9-]+\\.private\\.confluent\\.cloud";
-      final String FULL_FLINK_PATTERN = PROTOCOL_PATTERN + FLINK_PREFIX + "(" + PRIVATE_FORMAT + "|" + DOMAIN_FORMAT + ")/?$";
-      // Compile the full regex pattern
-      Pattern flinkPattern = Pattern.compile(FULL_FLINK_PATTERN);
 
       for (var entry : flinkPrivateEndpoints.entrySet()) {
         String envId = entry.getKey();
@@ -184,17 +174,6 @@ public record Preferences(
                     "private_endpoint_empty_value",
                     "Private endpoint cannot be empty",
                     "Private endpoint in environment '%s' cannot be null or empty.".formatted(envId),
-                    FLINK_PRIVATE_ENDPOINTS_PATH
-                )
-            );
-          }
-
-          if (!flinkPattern.matcher(endpoint).matches()) {
-            return Stream.of(
-                new Error(
-                    "private_endpoint_invalid_format",
-                    "Private endpoint format is invalid",
-                    "Private endpoint '%s' in environment '%s' must follow the correct format".formatted(endpoint, envId),
                     FLINK_PRIVATE_ENDPOINTS_PATH
                 )
             );

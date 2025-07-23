@@ -23,8 +23,6 @@ public class FlinkDataPlaneProxyProcessor extends Processor<ProxyContext, Future
   private static final String REGION_HEADER = "x-ccloud-region";
   private static final String PROVIDER_HEADER = "x-ccloud-provider";
   private static final String ENVIRONMENT_HEADER = "x-ccloud-env-id";
-  private static final int REGION_INDEX_FROM_END = 5;
-  private static final int PROVIDER_INDEX_FROM_END = 4;
 
   @ConfigProperty(name = "ide-sidecar.cluster-proxy.http-header-exclusions")
   List<String> httpHeaderExclusions;
@@ -103,32 +101,10 @@ public class FlinkDataPlaneProxyProcessor extends Processor<ProxyContext, Future
    */
   private String selectMatchingEndpoint(List<String> endpoints, String region, String provider) {
     return endpoints.stream()
-        .filter(endpoint -> matchesRegionAndProvider(endpoint, region, provider))
+        .filter(endpoint ->
+            flinkPrivateEndpointUtil.isValidEndpointWithMatchingRegionAndProvider(
+                endpoint, region, provider))
         .findFirst()
         .orElse(null);
-  }
-
-  /**
-   * Checks if an endpoint matches the given region and provider.
-   * Supports both formats:
-   * - flink.{region}.{provider}.private.confluent.cloud
-   * - flink.{domain}.{region}.{provider}.private.confluent.cloud
-   */
-  private boolean matchesRegionAndProvider(String endpoint, String region, String provider) {
-    if (endpoint == null || region == null || provider == null) {
-      return false;
-    }
-
-    // Remove protocol prefix and split by dots
-    String cleanEndpoint = endpoint.replaceFirst("^https?://", "");
-    String[] parts = cleanEndpoint.split("\\.");
-
-    // Extract region and provider - always 5th and 4th from the end
-    // "https://flink.dom123.us-east-1.aws.private.confluent.cloud"
-    // "http://flink.us-west-2.aws.private.confluent.cloud"
-    String endpointRegion = parts[parts.length - REGION_INDEX_FROM_END];   // e.g. us-east-1
-    String endpointProvider = parts[parts.length - PROVIDER_INDEX_FROM_END]; // e.g. aws
-
-    return region.equalsIgnoreCase(endpointRegion) && provider.equalsIgnoreCase(endpointProvider);
   }
 }

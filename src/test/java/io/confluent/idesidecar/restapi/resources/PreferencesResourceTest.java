@@ -444,44 +444,6 @@ public class PreferencesResourceTest {
 
   @Test
   @Order(12)
-  void updatePreferencesShouldReturnErrorIfFlinkPrivateEndpointFormatIsInvalid() {
-    var responseBody = given()
-        .when()
-        .body(
-            """
-                {
-                  "api_version": "gateway/v1",
-                  "kind": "Preferences",
-                  "spec": {
-                    "flink_private_endpoints": {
-                      "env-12345": ["https://invalid-endpoint.com"]
-                    }
-                  }
-                }
-                """
-        )
-        .header("Content-Type", "application/json")
-        .put()
-        .then()
-        .statusCode(400)
-        .extract()
-        .body()
-        .asString();
-    var responseJson = asJson(responseBody);
-
-    assertNotNull(responseJson);
-    var errors = responseJson.get("errors");
-    assertNotNull(errors);
-    var error = errors.get(0);
-    assertEquals("private_endpoint_invalid_format", error.get("code").textValue());
-    assertEquals(
-        "Private endpoint 'https://invalid-endpoint.com' in environment 'env-12345' must follow the correct format",
-        error.get("detail").textValue()
-    );
-  }
-
-  @Test
-  @Order(13)
   void updatePreferencesShouldAcceptFlinkPrivateEndpointsWithDomainPrefix() {
     var responseBody = given()
         .when()
@@ -517,7 +479,7 @@ public class PreferencesResourceTest {
   }
 
   @Test
-  @Order(14)
+  @Order(13)
   void updatePreferencesShouldAcceptFlinkPrivateEndpointsWithoutHttpsPrefix() {
     var responseBody = given()
         .when()
