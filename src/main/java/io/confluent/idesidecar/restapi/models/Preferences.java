@@ -10,7 +10,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Stream;
+import java.util.Map;
 import org.eclipse.microprofile.config.ConfigProvider;
+
 
 @JsonPropertyOrder({
     "api_version",
@@ -41,22 +43,28 @@ public record Preferences(
   @JsonPropertyOrder({
       "kerberos_config_file_path",
       "tls_pem_paths",
-      "trust_all_certificates"
+      "trust_all_certificates",
+      "flink_private_endpoints"
   })
   public record PreferencesSpec(
       @JsonProperty("kerberos_config_file_path") String kerberosConfigFilePath,
       @JsonProperty("tls_pem_paths") List<String> tlsPemPaths,
-      @JsonProperty("trust_all_certificates") Boolean trustAllCertificates
+      @JsonProperty("trust_all_certificates") Boolean trustAllCertificates,
+      @JsonProperty("flink_private_endpoints") Map<String, List<String>> flinkPrivateEndpoints
   ) {
+
+    private static final String FLINK_PRIVATE_ENDPOINTS_PATH = "/spec/flink_private_endpoints";
 
     public PreferencesSpec(
         String kerberosConfigFilePath,
         List<String> tlsPemPaths,
-        Boolean trustAllCertificates
+        Boolean trustAllCertificates,
+        Map<String, List<String>> flinkPrivateEndpoints
     ) {
       this.kerberosConfigFilePath = kerberosConfigFilePath != null ? kerberosConfigFilePath : "";
       this.tlsPemPaths = tlsPemPaths != null ? tlsPemPaths : List.of();
       this.trustAllCertificates = trustAllCertificates != null ? trustAllCertificates : false;
+      this.flinkPrivateEndpoints = flinkPrivateEndpoints != null ? flinkPrivateEndpoints : Map.of();
     }
 
     /**
@@ -65,12 +73,11 @@ public record Preferences(
      * @throws InvalidPreferencesException if any of the preferences are invalid
      */
     public void validate() throws InvalidPreferencesException {
-      var errors = Stream
-          .concat(
-              validateTlsPemPaths(),
-              validateKerberosConfigFilePath()
-          )
-          .toList();
+      var errors = Stream.of(
+          validateTlsPemPaths(),
+          validateKerberosConfigFilePath(),
+          validateFlinkPrivateEndpoints()
+      ).flatMap(stream -> stream).toList();
 
       if (!errors.isEmpty()) {
         throw new InvalidPreferencesException(errors);
@@ -132,6 +139,49 @@ public record Preferences(
       } else {
         return Stream.empty();
       }
+    }
+
+    /**
+     * Validates the private endpoints map. Checks if the provided
+     * endpoints are not null or empty.
+     *
+     * @return errors if any private endpoints are invalid
+     */
+    Stream<Error> validateFlinkPrivateEndpoints() {
+      if (flinkPrivateEndpoints == null || flinkPrivateEndpoints.isEmpty()) {
+        return Stream.empty();
+      }
+
+      for (var entry : flinkPrivateEndpoints.entrySet()) {
+        String envId = entry.getKey();
+        List<String> endpoints = entry.getValue();
+
+        if (envId == null || envId.isBlank()) {
+          return Stream.of(
+              new Error(
+                  "private_endpoint_empty_key",
+                  "Environment ID cannot be empty",
+                  "Environment ID key cannot be null or empty.",
+                  FLINK_PRIVATE_ENDPOINTS_PATH
+              )
+          );
+        }
+
+        for (String endpoint : endpoints) {
+          if (endpoint == null || endpoint.isBlank()) {
+            return Stream.of(
+                new Error(
+                    "private_endpoint_empty_value",
+                    "Private endpoint cannot be empty",
+                    "Private endpoint in environment '%s' cannot be null or empty.".formatted(envId),
+                    FLINK_PRIVATE_ENDPOINTS_PATH
+                )
+            );
+          }
+        }
+      }
+
+      return Stream.empty();
     }
   }
 
