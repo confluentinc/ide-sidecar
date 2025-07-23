@@ -99,7 +99,7 @@ public class FlinkDataPlaneProxyProcessor extends Processor<ProxyContext, Future
   /**
    * Selects the first endpoint that matches the given region and provider.
    */
-  private String selectMatchingEndpoint(List<String> endpoints, String region, String provider) {
+  public String selectMatchingEndpoint(List<String> endpoints, String region, String provider) {
     return endpoints.stream()
         .filter(endpoint ->
             flinkPrivateEndpointUtil.isValidEndpointWithMatchingRegionAndProvider(

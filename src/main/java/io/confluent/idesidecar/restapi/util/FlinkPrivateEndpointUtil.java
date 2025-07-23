@@ -46,8 +46,19 @@ public class FlinkPrivateEndpointUtil {
                 .toList();
     }
 
+    /**
+     * Normalizes the endpoint URL by adding https:// if not present and removing trailing slash.
+     */
     private String normalizeEndpointUrl(String endpoint) {
-        return endpoint.startsWith("http") ? endpoint : "https://" + endpoint;
+        // Add https:// if not present
+        String normalized = endpoint.startsWith("http") ? endpoint : "https://" + endpoint;
+
+        // Remove trailing slash if present
+        if (normalized.endsWith("/")) {
+            normalized = normalized.substring(0, normalized.length() - 1);
+        }
+
+        return normalized;
     }
 
     /**
@@ -64,7 +75,7 @@ public class FlinkPrivateEndpointUtil {
 
         // Pattern to match both formats:
         Pattern pattern = Pattern.compile(
-            "^https?://flink\\.(?:[^.]+\\.)?([^.]+)\\.([^.]+)\\.private\\.confluent\\.cloud/?$",
+            "^https?://flink\\.(?:[^.]+\\.)?([^.]+)\\.([^.]+)\\.private\\.confluent\\.cloud$",
             Pattern.CASE_INSENSITIVE
         );
 
