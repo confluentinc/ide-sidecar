@@ -196,7 +196,7 @@ public record Preferences(
                 new Error(
                     "private_endpoint_invalid_format",
                     "Private endpoint format is invalid",
-                    "Private endpoint '%s' in environment '%s' must follow the correct format",
+                    "Private endpoint '%s' in environment '%s' must follow the correct format".formatted(endpoint, envId),
                     FLINK_PRIVATE_ENDPOINTS_PATH
                 )
             );
