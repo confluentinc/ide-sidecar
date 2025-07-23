@@ -23,6 +23,8 @@ public class FlinkDataPlaneProxyProcessor extends Processor<ProxyContext, Future
   private static final String REGION_HEADER = "x-ccloud-region";
   private static final String PROVIDER_HEADER = "x-ccloud-provider";
   private static final String ENVIRONMENT_HEADER = "x-ccloud-env-id";
+  private static final int REGION_INDEX_FROM_END = 5;
+  private static final int PROVIDER_INDEX_FROM_END = 4;
 
   @ConfigProperty(name = "ide-sidecar.cluster-proxy.http-header-exclusions")
   List<String> httpHeaderExclusions;
@@ -58,14 +60,6 @@ public class FlinkDataPlaneProxyProcessor extends Processor<ProxyContext, Future
       return Future.failedFuture(
           new ProcessorFailedException(
               context.fail(400, "Region specified in request header '%s' is missing or invalid.".formatted(REGION_HEADER))
-          )
-      );
-    }
-
-    if (environmentId == null || environmentId.isBlank()) {
-      return Future.failedFuture(
-          new ProcessorFailedException(
-              context.fail(400, "Environment ID specified in request header '%s' is missing or invalid.".formatted(ENVIRONMENT_HEADER))
           )
       );
     }
@@ -129,14 +123,11 @@ public class FlinkDataPlaneProxyProcessor extends Processor<ProxyContext, Future
     String cleanEndpoint = endpoint.replaceFirst("^https?://", "");
     String[] parts = cleanEndpoint.split("\\.");
 
-    // Must end with .private.confluent.cloud (3 parts)
-    if (parts.length < 6) return false;
-
     // Extract region and provider - always 5th and 4th from the end
     // "https://flink.dom123.us-east-1.aws.private.confluent.cloud"
     // "http://flink.us-west-2.aws.private.confluent.cloud"
-    String endpointRegion = parts[parts.length - 5];   // e.g. us-east-1
-    String endpointProvider = parts[parts.length - 4]; // e.g. aws
+    String endpointRegion = parts[parts.length - REGION_INDEX_FROM_END];   // e.g. us-east-1
+    String endpointProvider = parts[parts.length - PROVIDER_INDEX_FROM_END]; // e.g. aws
 
     return region.equalsIgnoreCase(endpointRegion) && provider.equalsIgnoreCase(endpointProvider);
   }

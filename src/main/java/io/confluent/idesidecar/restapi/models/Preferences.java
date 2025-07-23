@@ -154,15 +154,13 @@ public record Preferences(
       }
 
       // Validates Flink private endpoint formats
-      Pattern flinkPattern = Pattern.compile(
-          "^(https?://)?" +
-          "flink\\." +
-          "(" +
-            "[a-z0-9-]+\\.[a-z0-9-]+\\.private\\.confluent\\.cloud|" +              // private format
-            "dom[a-z0-9-]+\\.[a-z0-9-]+\\.[a-z0-9-]+\\.private\\.confluent\\.cloud" // private with domain
-          + ")" +
-          "/?$"
-      );
+      final String PROTOCOL_PATTERN = "^(https?://)?";
+      final String FLINK_PREFIX = "flink\\.";
+      final String PRIVATE_FORMAT = "[a-z0-9-]+\\.[a-z0-9-]+\\.private\\.confluent\\.cloud";
+      final String DOMAIN_FORMAT = "dom[a-z0-9-]+\\.[a-z0-9-]+\\.[a-z0-9-]+\\.private\\.confluent\\.cloud";
+      final String FULL_FLINK_PATTERN = PROTOCOL_PATTERN + FLINK_PREFIX + "(" + PRIVATE_FORMAT + "|" + DOMAIN_FORMAT + ")/?$";
+      // Compile the full regex pattern
+      Pattern flinkPattern = Pattern.compile(FULL_FLINK_PATTERN);
 
       for (var entry : flinkPrivateEndpoints.entrySet()) {
         String envId = entry.getKey();
