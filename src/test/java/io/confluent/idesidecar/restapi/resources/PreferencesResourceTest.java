@@ -104,7 +104,8 @@ public class PreferencesResourceTest {
                   "kind": "Preferences",
                   "spec": {
                     "trust_all_certificates": true,
-                    "tls_pem_paths": ["%s"]
+                    "tls_pem_paths": ["%s"],
+                    "flink_private_endpoints":{}
                   }
                 }
                 """.formatted(certPath)
@@ -161,7 +162,8 @@ public class PreferencesResourceTest {
                   "spec": {
                     "kerberos_config_file_path": null,
                     "tls_pem_paths": null,
-                    "trust_all_certificates": null
+                    "trust_all_certificates": null,
+                    "flink_private_endpoints": null
                   }
                 }
                 """
@@ -325,6 +327,229 @@ public class PreferencesResourceTest {
         configFilePath,
         System.getProperty(KerberosCredentials.KERBEROS_CONFIG_FILE_PROPERTY_NAME)
     );
+  }
+
+  @Test
+  @Order(9)
+  void updatePreferencesShouldAllowValidFlinkPrivateEndpoints() {
+    var responseBody = given()
+        .when()
+        .body(
+            """
+                {
+                  "api_version": "gateway/v1",
+                  "kind": "Preferences",
+                  "spec": {
+                    "kerberos_config_file_path": "",
+                    "tls_pem_paths": [],
+                    "trust_all_certificates": false,
+                    "flink_private_endpoints": {
+                      "env-12345": [
+                        "https://flink.abc123.def456.private.confluent.cloud",
+                        "flink.domzef456.xyz789.region1.private.confluent.cloud"
+                      ]
+                    }
+                  }
+                }
+                """
+        )
+        .header("Content-Type", "application/json")
+        .put()
+        .then()
+        .statusCode(200)
+        .extract()
+        .body()
+        .asString();
+    var responseJson = asJson(responseBody);
+
+    assertNotNull(responseJson);
+    var spec = responseJson.get("spec");
+    var flinkEndpoints = spec.get("flink_private_endpoints");
+    assertNotNull(flinkEndpoints);
+    assertTrue(flinkEndpoints.has("env-12345"));
+  }
+
+  @Test
+  @Order(10)
+  void updatePreferencesShouldReturnErrorIfFlinkPrivateEndpointEnvironmentIdIsEmpty() {
+    var responseBody = given()
+        .when()
+        .body(
+            """
+                {
+                  "api_version": "gateway/v1",
+                  "kind": "Preferences",
+                  "spec": {
+                    "flink_private_endpoints": {
+                      "": ["https://flink.abc123.private.confluent.cloud"]
+                    }
+                  }
+                }
+                """
+        )
+        .header("Content-Type", "application/json")
+        .put()
+        .then()
+        .statusCode(400)
+        .extract()
+        .body()
+        .asString();
+    var responseJson = asJson(responseBody);
+
+    assertNotNull(responseJson);
+    var errors = responseJson.get("errors");
+    assertNotNull(errors);
+    var error = errors.get(0);
+    assertEquals("private_endpoint_empty_key", error.get("code").textValue());
+    assertEquals("Environment ID key cannot be null or empty.", error.get("detail").textValue());
+  }
+
+  @Test
+  @Order(11)
+  void updatePreferencesShouldReturnErrorIfFlinkPrivateEndpointValueIsEmpty() {
+    var responseBody = given()
+        .when()
+        .body(
+            """
+                {
+                  "api_version": "gateway/v1",
+                  "kind": "Preferences",
+                  "spec": {
+                    "flink_private_endpoints": {
+                      "env-12345": [""]
+                    }
+                  }
+                }
+                """
+        )
+        .header("Content-Type", "application/json")
+        .put()
+        .then()
+        .statusCode(400)
+        .extract()
+        .body()
+        .asString();
+    var responseJson = asJson(responseBody);
+
+    assertNotNull(responseJson);
+    var errors = responseJson.get("errors");
+    assertNotNull(errors);
+    var error = errors.get(0);
+    assertEquals("private_endpoint_empty_value", error.get("code").textValue());
+    assertEquals(
+        "Private endpoint in environment 'env-12345' cannot be null or empty.",
+        error.get("detail").textValue()
+    );
+  }
+
+  @Test
+  @Order(12)
+  void updatePreferencesShouldReturnErrorIfFlinkPrivateEndpointFormatIsInvalid() {
+    var responseBody = given()
+        .when()
+        .body(
+            """
+                {
+                  "api_version": "gateway/v1",
+                  "kind": "Preferences",
+                  "spec": {
+                    "flink_private_endpoints": {
+                      "env-12345": ["https://invalid-endpoint.com"]
+                    }
+                  }
+                }
+                """
+        )
+        .header("Content-Type", "application/json")
+        .put()
+        .then()
+        .statusCode(400)
+        .extract()
+        .body()
+        .asString();
+    var responseJson = asJson(responseBody);
+
+    assertNotNull(responseJson);
+    var errors = responseJson.get("errors");
+    assertNotNull(errors);
+    var error = errors.get(0);
+    assertEquals("private_endpoint_invalid_format", error.get("code").textValue());
+    assertEquals(
+        "Private endpoint 'https://invalid-endpoint.com' in environment 'env-12345' must follow the correct format",
+        error.get("detail").textValue()
+    );
+  }
+
+  @Test
+  @Order(13)
+  void updatePreferencesShouldAcceptFlinkPrivateEndpointsWithDomainPrefix() {
+    var responseBody = given()
+        .when()
+        .body(
+            """
+                {
+                  "api_version": "gateway/v1",
+                  "kind": "Preferences",
+                  "spec": {
+                    "flink_private_endpoints": {
+                      "env-12345": [
+                        "https://flink.dom123.abc456.xyz789.private.confluent.cloud"
+                      ]
+                    }
+                  }
+                }
+                """
+        )
+        .header("Content-Type", "application/json")
+        .put()
+        .then()
+        .statusCode(200)
+        .extract()
+        .body()
+        .asString();
+    var responseJson = asJson(responseBody);
+
+    assertNotNull(responseJson);
+    var spec = responseJson.get("spec");
+    var flinkEndpoints = spec.get("flink_private_endpoints");
+    assertNotNull(flinkEndpoints);
+    assertTrue(flinkEndpoints.has("env-12345"));
+  }
+
+  @Test
+  @Order(14)
+  void updatePreferencesShouldAcceptFlinkPrivateEndpointsWithoutHttpsPrefix() {
+    var responseBody = given()
+        .when()
+        .body(
+            """
+                {
+                  "api_version": "gateway/v1",
+                  "kind": "Preferences",
+                  "spec": {
+                    "flink_private_endpoints": {
+                      "env-12345": [
+                        "flink.abc123.def456.private.confluent.cloud"
+                      ]
+                    }
+                  }
+                }
+                """
+        )
+        .header("Content-Type", "application/json")
+        .put()
+        .then()
+        .statusCode(200)
+        .extract()
+        .body()
+        .asString();
+    var responseJson = asJson(responseBody);
+
+    assertNotNull(responseJson);
+    var spec = responseJson.get("spec");
+    var flinkEndpoints = spec.get("flink_private_endpoints");
+    assertNotNull(flinkEndpoints);
+    assertTrue(flinkEndpoints.has("env-12345"));
   }
 
   /**
