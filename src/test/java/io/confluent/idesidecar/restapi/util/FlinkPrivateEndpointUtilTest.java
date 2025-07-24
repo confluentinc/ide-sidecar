@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.quarkus.test.junit.QuarkusTest;
+import java.util.List;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
@@ -139,5 +140,19 @@ class FlinkPrivateEndpointUtilTest {
     // With query parameters
     assertFalse(flinkPrivateEndpointUtil.isValidEndpointWithMatchingRegionAndProvider(
         "https://flink.us-west-2.aws.private.confluent.cloud?param=value", "us-west-2", "aws"));
+  }
+
+  @Test
+  void testGetPrivateEndpointsNullEnvironmentId() {
+    // Null environmentId should return empty list
+    List<String> result = flinkPrivateEndpointUtil.getPrivateEndpoints(null);
+    assertTrue(result.isEmpty());
+  }
+
+  @Test
+  void testGetPrivateEndpointsEmptyEnvironmentId() {
+    // Empty environmentId should return empty list (no endpoints configured)
+    List<String> result = flinkPrivateEndpointUtil.getPrivateEndpoints("");
+    assertTrue(result.isEmpty());
   }
 }
