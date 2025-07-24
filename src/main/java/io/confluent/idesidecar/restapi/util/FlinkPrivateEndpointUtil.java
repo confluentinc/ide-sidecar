@@ -25,7 +25,7 @@ public class FlinkPrivateEndpointUtil {
             flinkPrivateEndpoints.putAll(newEndpoints);
             Log.infof("Updated Flink private endpoints: %s", flinkPrivateEndpoints);
         } else {
-            Log.debug("Cleared Flink private endpoints (using public pattern)");
+            Log.infof("Cleared Flink private endpoints (using public pattern)");
         }
     }
 
