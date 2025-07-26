@@ -50,7 +50,16 @@
       ],
       "environments":
       [
-        null,
+        {
+          "id": "env-x7727g",
+          "name": "main-test-env",
+          "kafkaClusters": null,
+          "schemaRegistry": {
+            "provider": "GCP",
+            "region": "us-west2",
+            "uri": "https://psrc-ghijk0.us-west2.gcp.confluent.cloud"
+          }
+        },
         {
           "id": "env-kkk3jg",
           "name": "env-with-no-kafka-cluster",

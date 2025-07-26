@@ -313,7 +313,7 @@ public class ConfluentCloudQueryResourceTest extends ConfluentQueryResourceTestB
         bearerToken,
         "ccloud-resources-mock-responses/get-schema-registry-empty.json");
 
-    // Then the results should have orgs and environments but no kafka clusters.
+    // Then the results should have orgs, environments, and schema registries but no kafka clusters.
     // This actual results are strange, in that the parent environment is null when a child
     // fetched object has an error, rather than the environment's field for the child being null.
     // It's not clear how better to handle errors. If we return an empty Multi then no error
@@ -323,6 +323,63 @@ public class ConfluentCloudQueryResourceTest extends ConfluentQueryResourceTestB
     assertQueryResponseMatches(
         "graph/real/get-ccloud-connection-by-id-query.graphql",
         "graph/real/get-ccloud-connection-by-id-failed-kafka-expected.json",
+        this::replaceWireMockPort
+    );
+  }
+
+  @Test
+  void shouldFailWhenErrorGettingFlinkComputePools() {
+    // When listing organizations is successful
+    var bearerToken = ccloudTestUtil.getControlPlaneToken("ccloud-dev");
+    ccloudTestUtil.expectSuccessfulCCloudGet(
+        orgListUri,
+        bearerToken,
+        "ccloud-resources-mock-responses/list-organizations.json");
+
+    // And listing environments is successful
+    ccloudTestUtil.expectSuccessfulCCloudGet(
+        envListUri,
+        bearerToken,
+        "ccloud-resources-mock-responses/list-environments.json");
+
+    // And getting Kafka clusters works
+    String mainTestEnvId = "env-x7727g";
+    ccloudTestUtil.expectSuccessfulCCloudGet(
+        lkcListUri.formatted(mainTestEnvId),
+        bearerToken,
+        "ccloud-resources-mock-responses/list-kafka-clusters.json");
+    String emptyEnvId = "env-kkk3jg";
+    ccloudTestUtil.expectSuccessfulCCloudGet(
+        lkcListUri.formatted(emptyEnvId),
+        bearerToken,
+        "ccloud-resources-mock-responses/list-kafka-clusters-empty.json");
+
+    // And getting schema registry works
+    ccloudTestUtil.expectSuccessfulCCloudGet(
+        srListUri.formatted(mainTestEnvId),
+        bearerToken,
+        "ccloud-resources-mock-responses/get-schema-registry.json");
+    ccloudTestUtil.expectSuccessfulCCloudGet(
+        srListUri.formatted(emptyEnvId),
+        bearerToken,
+        "ccloud-resources-mock-responses/get-schema-registry-empty.json");
+
+    // And getting Flink compute pools DOES NOT work for the first environment
+    expectNotFoundForCCloudGet(
+        computePoolListUri.formatted(mainTestEnvId),
+        bearerToken
+    );
+    // but for the second environment
+    ccloudTestUtil.expectSuccessfulCCloudGet(
+        computePoolListUri.formatted(emptyEnvId),
+        bearerToken,
+        "ccloud-resources-mock-responses/list-flink-compute-pools-empty.json");
+
+    // The GraphQL API should return a partial data/failure response returning all resources
+    // except for the Flink compute pools of the first environment
+    assertQueryResponseMatches(
+        "graph/real/get-ccloud-connection-by-id-with-compute-pools-query.graphql",
+        "graph/real/get-ccloud-connection-by-id-failed-compute-pool-expected.json",
         this::replaceWireMockPort
     );
   }

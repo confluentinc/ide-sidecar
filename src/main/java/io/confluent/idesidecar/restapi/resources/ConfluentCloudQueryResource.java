@@ -92,7 +92,7 @@ public class ConfluentCloudQueryResource {
    * @param env the environment
    * @return the Kafka clusters; never null but may be empty
    */
-  @NonNull
+  @Nullable
   public Uni<List<CCloudKafkaCluster>> getKafkaClusters(
       @Source CCloudEnvironment env
   ) {
@@ -149,7 +149,7 @@ public class ConfluentCloudQueryResource {
    */
   @Query("findCCloudKafkaClusters")
   @Description("Find CCloud Kafka clusters using a connection and various criteria")
-  @NonNull
+  @Nullable
   public Uni<List<CCloudKafkaCluster>> findKafkaClusters(
       @NonNull String connectionId,
       @DefaultValue("") String environmentId,
@@ -175,7 +175,7 @@ public class ConfluentCloudQueryResource {
     );
   }
 
-  @NonNull
+  @Nullable
   public Uni<List<CCloudFlinkComputePool>> getFlinkComputePools(@Source CCloudEnvironment env) {
     Log.infof("Get Flink compute pools for connection %s and environment %s", env.connectionId(), env.id());
     return multiToUni(ccloud.getFlinkComputePools(env.connectionId(), env.id()));
@@ -183,7 +183,7 @@ public class ConfluentCloudQueryResource {
 
   @Query("getFlinkComputePools")
   @Description("Get Flink compute pools for a specific connection and environment")
-  @NonNull
+  @Nullable
   public Uni<List<CCloudFlinkComputePool>> getFlinkComputePools(@NonNull String connectionId, @NonNull String envId) {
     Log.infof("Get Flink compute pools for connection %s and environment %s", connectionId, envId);
     return multiToUni(ccloud.getFlinkComputePools(connectionId, envId));

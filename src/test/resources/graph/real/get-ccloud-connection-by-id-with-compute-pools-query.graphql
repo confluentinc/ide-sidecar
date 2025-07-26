@@ -1,0 +1,36 @@
+query devConnection {
+    ccloudConnectionById(id: "ccloud-dev") {
+        id
+        name
+        type
+        organizations {
+            id
+            name
+            current
+        }
+        environments {
+            id
+            name
+            kafkaClusters {
+                id
+                name
+                provider
+                region
+                bootstrapServers
+                uri
+            }
+            schemaRegistry {
+                provider
+                region
+                uri
+            }
+            flinkComputePools {
+                id
+                display_name
+                provider
+                region
+                max_cfu
+            }
+        }
+    }
+}
