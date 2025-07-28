@@ -59,12 +59,28 @@ public class FlinkLanguageServiceProxy {
               )
           );
         } else {
-          var client = new FlinkLanguageServiceProxyClient(
-              context.withConnection(cCloudConnectionState),
-              session
-          );
-          proxyClients.put(session.getId(), client);
-          Log.infof("Opened a new session and added LSP client for session ID=%s", session.getId());
+          java.util.concurrent.CompletableFuture.runAsync(() -> {
+            try {
+              var client = new FlinkLanguageServiceProxyClient(
+                  context.withConnection(cCloudConnectionState),
+                  session
+              );
+              proxyClients.put(session.getId(), client);
+              Log.infof("Opened a new session and added LSP client for session ID=%s", session.getId());
+            } catch (Exception e) {
+              Log.errorf(e, "Failed to create FlinkLanguageServiceProxyClient for session ID=%s", session.getId());
+              try {
+                session.close(
+                  new CloseReason(
+                    CloseCodes.CANNOT_ACCEPT,
+                    "Failed to create proxy client: " + e.getMessage()
+                  )
+                );
+              } catch (IOException ioe) {
+                Log.errorf(ioe, "Failed to close session after proxy client creation failure for session ID=%s", session.getId());
+              }
+            }
+          });
         }
       } else {
         Log.warnf(
@@ -113,15 +129,16 @@ public class FlinkLanguageServiceProxy {
 
   @OnClose
   public void onClose(Session session) {
+    Log.infof("ServerEndpoint.onClose: local session %s is closing", session.getId());
     var client = proxyClients.get(session.getId());
     if (client != null) {
-      // Close WebSockets session to CCloud Language Service
+      Log.infof("Invoking proxyClient.close() for session %s", session.getId());
       client.close();
-      // Remove client
+      Log.infof("Removing proxy client for session %s", session.getId());
       proxyClients.remove(session.getId());
       Log.infof("Removed LSP client for session ID=%s", session.getId());
     } else {
-      Log.infof("Couldn't find client for session ID=%s, nothing to remove.", session.getId());
+      Log.infof("No proxy client found to remove for session %s", session.getId());
     }
   }
 }
