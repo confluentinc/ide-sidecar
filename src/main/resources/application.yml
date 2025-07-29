@@ -298,6 +298,8 @@ quarkus:
     # Disable file caching in Vert.X since the native executable includes the path of the tmp dir
     # of the machine where the native image was built.
     caching: false
+  websocket:
+    dispatch-to-worker: true
   kerberos:
     devservices:
       enabled: false
