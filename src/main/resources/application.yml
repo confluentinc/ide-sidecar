@@ -42,6 +42,7 @@
       "request.timeout.ms": 5000
     flink-language-service-proxy:
       url-pattern: ws://127.0.0.1:${quarkus.http.test-port}/fls-mock
+      private-url-pattern: ws://127.0.0.1:${quarkus.http.test-port}/fls-mock?private=true
     schema-fetch-error-ttl: 30
     schema-fetch-retry:
       max-retries: 3
