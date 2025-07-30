@@ -1,8 +1,12 @@
 package io.confluent.idesidecar.websocket.proxy;
 
 import io.confluent.idesidecar.restapi.connections.CCloudConnectionState;
+import io.confluent.idesidecar.restapi.util.FlinkPrivateEndpointUtil;
 import jakarta.websocket.Session;
+import jakarta.enterprise.inject.spi.CDI;
 import org.eclipse.microprofile.config.ConfigProvider;
+import java.util.List;
+import java.util.Optional;
 
 public record ProxyContext (
     String connectionId,
@@ -16,6 +20,9 @@ public record ProxyContext (
   static final String LANGUAGE_SERVICE_URL_PATTERN = ConfigProvider
       .getConfig()
       .getValue("ide-sidecar.flink-language-service-proxy.url-pattern", String.class);
+  static final String LANGUAGE_SERVICE_PRIVATE_URL_PATTERN = ConfigProvider
+      .getConfig()
+      .getValue("ide-sidecar.flink-language-service-proxy.private-url-pattern", String.class);
 
   static final String CONNECTION_ID_PARAM_NAME = "connectionId";
   static final String REGION_PARAM_NAME = "region";
@@ -47,9 +54,21 @@ public record ProxyContext (
   }
 
   public String getConnectUrl() {
-    // TODO: I guess this won't work for private networks, we'll need something more sophisticated
-    return LANGUAGE_SERVICE_URL_PATTERN
+    String urlPattern = getUrlPattern();
+    return urlPattern
         .replace("{{ region }}", region)
         .replace("{{ provider }}", provider);
+  }
+
+  private String getUrlPattern() {
+    return hasPrivateEndpoints() ?
+        LANGUAGE_SERVICE_PRIVATE_URL_PATTERN :
+        LANGUAGE_SERVICE_URL_PATTERN;
+  }
+
+  private boolean hasPrivateEndpoints() {
+    FlinkPrivateEndpointUtil util = CDI.current().select(FlinkPrivateEndpointUtil.class).get();
+    List<String> endpoints = util.getPrivateEndpoints(environmentId);
+    return endpoints != null && !endpoints.isEmpty();
   }
 }
