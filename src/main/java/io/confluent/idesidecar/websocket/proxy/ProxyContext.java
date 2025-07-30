@@ -67,7 +67,10 @@ public record ProxyContext (
   }
 
   private boolean hasPrivateEndpoints() {
-    List<String> endpoints = flinkPrivateEndpointUtil.getPrivateEndpoints(environmentId);
+    FlinkPrivateEndpointUtil util = CDI.current()
+        .select(FlinkPrivateEndpointUtil.class)
+        .get();
+    List<String> endpoints = util.getPrivateEndpoints(environmentId);
     return endpoints != null && !endpoints.isEmpty();
   }
 }
