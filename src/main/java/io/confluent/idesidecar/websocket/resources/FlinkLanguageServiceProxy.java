@@ -26,6 +26,8 @@ import java.util.concurrent.ConcurrentHashMap;
 @ApplicationScoped
 public class FlinkLanguageServiceProxy {
 
+  public static final String INITIAL_MESSAGE = "OK";
+
   @Inject
   ConnectionStateManager connectionStateManager;
 
@@ -63,8 +65,12 @@ public class FlinkLanguageServiceProxy {
               context.withConnection(cCloudConnectionState),
               session
           );
+          client.connectToCCloud();
           proxyClients.put(session.getId(), client);
-          Log.infof("Opened a new session and added LSP client for session ID=%s", session.getId());
+          Log.infof("Opened a new session and added LSP client for session ID=%s",
+              session.getId());
+          // Let the client know that the connection to the Language Service is established
+          session.getAsyncRemote().sendText(INITIAL_MESSAGE);
         }
       } else {
         Log.warnf(

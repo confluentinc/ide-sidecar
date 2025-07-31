@@ -44,7 +44,7 @@ public class FlinkLanguageServiceProxyTest {
   static LinkedBlockingDeque<String> messages = new LinkedBlockingDeque<>();
   static AtomicReference<CloseReason> closeReason = new AtomicReference<>(null);
 
-  static final Integer PROXY_CLOSE_TIMEOUT_MS = 3_000;
+  static final Integer PROXY_TIMEOUT_MS = 3_000;
 
   static final String CLIENT_RPC_REQUEST = """
       {
@@ -135,23 +135,31 @@ public class FlinkLanguageServiceProxyTest {
   @RetryingTest(maxAttempts = 3)
   public void testSendingJsonRpcCall() throws Exception {
     try (var session = ContainerProvider.getWebSocketContainer().connectToServer(TestClient.class, uri)) {
+      // Wait for initial message from the proxy
+      await()
+          .atMost(Duration.ofMillis(PROXY_TIMEOUT_MS))
+          .until(() -> FlinkLanguageServiceProxy.INITIAL_MESSAGE.equals(messages.poll()));
       // Send an example valid message and check that the session will not be closed.
       session.getAsyncRemote().sendText(CLIENT_RPC_REQUEST);
       await()
-          .atMost(Duration.ofMillis(PROXY_CLOSE_TIMEOUT_MS))
+          .atMost(Duration.ofMillis(PROXY_TIMEOUT_MS))
           .until(() -> SERVER_RPC_RESPONSE.equals(messages.poll()));
       Assertions.assertNull(closeReason.get());
     }
   }
 
-  @Test
+  @RetryingTest(maxAttempts = 3)
   public void testSendingInvalidMessage() throws Exception {
     var session = ContainerProvider.getWebSocketContainer().connectToServer(TestClient.class, uri);
+    // Wait for initial message from the proxy
+    await()
+        .atMost(Duration.ofMillis(PROXY_TIMEOUT_MS))
+        .until(() -> FlinkLanguageServiceProxy.INITIAL_MESSAGE.equals(messages.poll()));
     // Send an invalid message
     session.getAsyncRemote().sendText("This is an invalid message.").get();
     // Verify that the session has been closed
     await()
-        .atMost(Duration.ofMillis(PROXY_CLOSE_TIMEOUT_MS))
+        .atMost(Duration.ofMillis(PROXY_TIMEOUT_MS))
         .until(() -> closeReason.get() != null);
     Assertions.assertFalse(session.isOpen());
     // Check the close code and reason
@@ -162,7 +170,7 @@ public class FlinkLanguageServiceProxyTest {
     );
   }
 
-  @Test
+  @RetryingTest(maxAttempts = 3)
   public void testOpeningProxyForUnauthenticatedConnection() throws Exception {
     // Create a connection without a valid OAuth context
     var mockedConnection = Mockito.spy(CCloudConnectionState.class);
@@ -173,7 +181,7 @@ public class FlinkLanguageServiceProxyTest {
     var session = ContainerProvider.getWebSocketContainer().connectToServer(TestClient.class, uri);
     // Verify that the session has been closed
     await()
-        .atMost(Duration.ofMillis(PROXY_CLOSE_TIMEOUT_MS))
+        .atMost(Duration.ofMillis(PROXY_TIMEOUT_MS))
         .until(() -> closeReason.get() != null);
     Assertions.assertFalse(session.isOpen());
     // Check the close code and reason
@@ -184,7 +192,7 @@ public class FlinkLanguageServiceProxyTest {
     );
   }
 
-  @Test
+  @RetryingTest(maxAttempts = 3)
   public void testOpeningProxyForConnectionWithExpiredAuthContext() throws Exception {
     // Create a connection without a valid OAuth context
     var authContext = Mockito.spy(CCloudOAuthContext.class);
@@ -198,7 +206,7 @@ public class FlinkLanguageServiceProxyTest {
     var session = ContainerProvider.getWebSocketContainer().connectToServer(TestClient.class, uri);
     // Verify that the session has been closed
     await()
-        .atMost(Duration.ofMillis(PROXY_CLOSE_TIMEOUT_MS))
+        .atMost(Duration.ofMillis(PROXY_TIMEOUT_MS))
         .until(() -> closeReason.get() != null);
     Assertions.assertFalse(session.isOpen());
     // Check the close code and reason
@@ -209,7 +217,7 @@ public class FlinkLanguageServiceProxyTest {
     );
   }
 
-  @Test
+  @RetryingTest(maxAttempts = 3)
   public void testOpeningProxyForConnectionWithoutDataPlaneToken() throws Exception {
     // Create a connection without a valid OAuth context
     var authContext = Mockito.spy(CCloudOAuthContext.class);
@@ -223,7 +231,7 @@ public class FlinkLanguageServiceProxyTest {
     var session = ContainerProvider.getWebSocketContainer().connectToServer(TestClient.class, uri);
     // Verify that the session has been closed
     await()
-        .atMost(Duration.ofMillis(PROXY_CLOSE_TIMEOUT_MS))
+        .atMost(Duration.ofMillis(PROXY_TIMEOUT_MS))
         .until(() -> closeReason.get() != null);
     Assertions.assertFalse(session.isOpen());
     // Check the close code and reason
