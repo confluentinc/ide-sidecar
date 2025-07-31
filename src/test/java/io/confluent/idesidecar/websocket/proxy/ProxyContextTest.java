@@ -59,7 +59,7 @@ class ProxyContextTest {
 
     String url = context.getConnectUrl();
 
-    // Then - test that private pattern is used
+    // Test that private pattern is used
     assertTrue(url.contains("?private=true"));
     assertTrue(url.contains("127.0.0.1"));
   }
@@ -73,7 +73,7 @@ class ProxyContextTest {
 
     String url = context.getConnectUrl();
 
-    // Then - test that public pattern is used
+    // Test that public pattern is used
     assertTrue(url.contains("fls-mock"));
     assertFalse(url.contains("private=true"));
   }
@@ -100,6 +100,6 @@ class ProxyContextTest {
     String url = context.getConnectUrl();
 
     assertTrue(url.contains("fls-mock"));
-    assertFalse(url.contains("?private=true"));
+    assertFalse(url.contains("private=true"));
   }
 }
