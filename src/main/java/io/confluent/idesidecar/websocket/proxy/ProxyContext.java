@@ -20,15 +20,16 @@ public record ProxyContext (
   static final String LANGUAGE_SERVICE_URL_PATTERN = ConfigProvider
       .getConfig()
       .getValue("ide-sidecar.flink-language-service-proxy.url-pattern", String.class);
-  static final String LANGUAGE_SERVICE_PRIVATE_URL_PATTERN = ConfigProvider
-      .getConfig()
-      .getValue("ide-sidecar.flink-language-service-proxy.private-url-pattern", String.class);
 
   static final String CONNECTION_ID_PARAM_NAME = "connectionId";
   static final String REGION_PARAM_NAME = "region";
   static final String PROVIDER_PARAM_NAME = "provider";
   static final String ENVIRONMENT_ID_PARAM_NAME = "environmentId";
   static final String ORGANIZATION_ID_PARAM_NAME = "organizationId";
+  static final String FLINK_PREFIX = "flink.";
+  static final String LANGUAGE_SERVICE_PREFIX = "flinkpls.";
+  static final String WSS_SCHEME = "wss";
+  static final String LSP_PATH = "/lsp";
 
   public static ProxyContext from(Session session) {
     var paramMap = session.getRequestParameterMap();
@@ -54,23 +55,53 @@ public record ProxyContext (
   }
 
   public String getConnectUrl() {
-    String urlPattern = getUrlPattern();
-    return urlPattern
-        .replace("{{ region }}", region)
-        .replace("{{ provider }}", provider);
+    String privateEndpoint = getMatchingPrivateEndpoint();
+    if (privateEndpoint != null) {
+      return transformToLanguageServiceUrl(privateEndpoint);
+    }
+
+    return buildPublicUrl();
   }
 
-  private String getUrlPattern() {
-    return hasPrivateEndpoints() ?
-        LANGUAGE_SERVICE_PRIVATE_URL_PATTERN :
-        LANGUAGE_SERVICE_URL_PATTERN;
+  private String getMatchingPrivateEndpoint() {
+    FlinkPrivateEndpointUtil util = getPrivateEndpointUtil();
+    List<String> endpoints = util.getPrivateEndpoints(environmentId);
+
+    if (endpoints == null || endpoints.isEmpty()) {
+      return null;
+    }
+
+    return endpoints.stream()
+        .filter(endpoint -> util.isValidEndpointWithMatchingRegionAndProvider(endpoint, region, provider))
+        .findFirst()
+        .orElse(null);
   }
 
-  private boolean hasPrivateEndpoints() {
-    FlinkPrivateEndpointUtil util = CDI.current()
+  private FlinkPrivateEndpointUtil getPrivateEndpointUtil() {
+    return CDI.current()
         .select(FlinkPrivateEndpointUtil.class)
         .get();
-    List<String> endpoints = util.getPrivateEndpoints(environmentId);
-    return endpoints != null && !endpoints.isEmpty();
+  }
+
+  /**
+   * Transform a Flink private endpoint URL to a Language Service URL.
+   * Example: https://flink.us-west-2.aws.private.confluent.cloud
+   *       -> wss://flinkpls.us-west-2.aws.private.confluent.cloud/lsp
+   */
+  private String transformToLanguageServiceUrl(String privateEndpoint) {
+    try {
+      java.net.URI uri = java.net.URI.create(privateEndpoint);
+      String languageServiceHost = uri.getHost().replace(FLINK_PREFIX, LANGUAGE_SERVICE_PREFIX);
+
+      return String.format("%s://%s%s", WSS_SCHEME, languageServiceHost, LSP_PATH);
+    } catch (Exception e) {
+      return buildPublicUrl();
+    }
+  }
+
+  private String buildPublicUrl() {
+    return LANGUAGE_SERVICE_URL_PATTERN
+        .replace("{{ region }}", region)
+        .replace("{{ provider }}", provider);
   }
 }

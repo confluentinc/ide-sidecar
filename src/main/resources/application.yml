@@ -42,7 +42,6 @@
       "request.timeout.ms": 5000
     flink-language-service-proxy:
       url-pattern: ws://127.0.0.1:${quarkus.http.test-port}/fls-mock
-      private-url-pattern: ws://127.0.0.1:${quarkus.http.test-port}/fls-mock?private=true
     schema-fetch-error-ttl: 30
     schema-fetch-retry:
       max-retries: 3
@@ -160,7 +159,6 @@ ide-sidecar:
     interval-seconds: 60
   flink-language-service-proxy:
     url-pattern: wss://flinkpls.{{ region }}.{{ provider }}.confluent.cloud/lsp
-    private-url-pattern: wss://flinkpls.{{ region }}.{{ provider }}.private.confluent.cloud/lsp
   proxy:
     ccloud-api-control-plane-regex: "(/artifact.*)|(/fcpm/v2/compute-pools.*)|(/metadata/security/v2alpha1/authorize)"
     ccloud-api-flink-data-plane-regex: "(/sql/v1.*)"
