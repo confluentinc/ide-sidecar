@@ -69,7 +69,11 @@ public class FlinkLanguageServiceProxy {
           proxyClients.put(session.getId(), client);
           Log.infof("Opened a new session and added LSP client for session ID=%s",
               session.getId());
-          // Let the client know that the connection to the Language Service is established
+          // Let the client know that the connection to the CCloud Flink Language Service is
+          // established by sending an initial "OK" message. This message does NOT comply with the
+          // LSP protocol but makes sure that the client does not send any LSP-related messages
+          // before this proxy is fully set up, hence improving the overall experience of the Flink
+          // language server in the IDE.
           session.getAsyncRemote().sendText(INITIAL_MESSAGE);
         }
       } else {
