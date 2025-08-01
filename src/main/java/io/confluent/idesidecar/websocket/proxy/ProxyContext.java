@@ -96,11 +96,11 @@ public record ProxyContext (
 
       return String.format("%s://%s%s", WSS_SCHEME, languageServiceHost, LSP_PATH);
     } catch (IllegalArgumentException e) {
-      Log.debugf("Malformed private endpoint: %s", privateEndpoint);
+      Log.errorf("Malformed private endpoint: %s", privateEndpoint);
     } catch (NullPointerException e) {
-      Log.debugf("Null private endpoint: %s", privateEndpoint);
+      Log.errorf("Null private endpoint: %s", privateEndpoint);
     } catch (Exception e) {
-      Log.debugf("Error transforming private endpoint '%s': %s", privateEndpoint, e.getMessage());
+      Log.errorf("Error transforming private endpoint '%s': %s", privateEndpoint, e.getMessage());
     }
 
     return buildPublicUrl();
