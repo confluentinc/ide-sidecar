@@ -9,6 +9,8 @@ import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.Test;
 import java.util.List;
+import java.util.Map;
+import jakarta.websocket.Session;
 
 @QuarkusTest
 class ProxyContextTest {
@@ -16,61 +18,53 @@ class ProxyContextTest {
   @InjectMock
   FlinkPrivateEndpointUtil flinkPrivateEndpointUtil;
 
-  private ProxyContext createContext() {
-    return new ProxyContext(
-        "conn1",
-        "us-west-2",  // Changed to match test private endpoints
-        "aws",
-        "env-123",
-        "org-456",
-        null
-    );
-  }
-
-  private ProxyContext createContextWithDifferentRegion() {
-    return new ProxyContext(
-        "conn1",
-        "eu-central-1",
-        "aws",
-        "env-123",
-        "org-456",
-        null
-    );
-  }
+  static final String TEST_CONNECTION_ID = "conn1";
+  static final String TEST_ENVIRONMENT_ID = "env-123";
+  static final String TEST_REGION = "us-west-2";
+  static final String TEST_PROVIDER = "aws";
+  static final String TEST_ORGANIZATION_ID = "org-456";
+  static final ProxyContext PROXY_CONTEXT_AWS_US_WEST = new ProxyContext(
+      TEST_CONNECTION_ID,
+      TEST_REGION,
+      TEST_PROVIDER,
+      TEST_ENVIRONMENT_ID,
+      TEST_ORGANIZATION_ID,
+      null
+  );
 
   @Test
   void testFromSession() {
     // Given
-    jakarta.websocket.Session session = mock(jakarta.websocket.Session.class);
-    java.util.Map<String, java.util.List<String>> paramMap = java.util.Map.of(
-        "connectionId", List.of("test-conn"),
-        "region", List.of("eu-west-1"),
-        "provider", List.of("gcp"),
-        "environmentId", List.of("test-env"),
-        "organizationId", List.of("test-org")
+    Session session = mock(Session.class);
+    Map<String, List<String>> paramMap = Map.of(
+        "connectionId", List.of(TEST_CONNECTION_ID),
+        "region", List.of(TEST_REGION),
+        "provider", List.of(TEST_PROVIDER),
+        "environmentId", List.of(TEST_ENVIRONMENT_ID),
+        "organizationId", List.of(TEST_ORGANIZATION_ID)
     );
     when(session.getRequestParameterMap()).thenReturn(paramMap);
 
     ProxyContext context = ProxyContext.from(session);
 
-    assertEquals("test-conn", context.connectionId());
-    assertEquals("eu-west-1", context.region());
-    assertEquals("gcp", context.provider());
-    assertEquals("test-env", context.environmentId());
-    assertEquals("test-org", context.organizationId());
+    assertEquals(TEST_CONNECTION_ID, context.connectionId());
+    assertEquals(TEST_REGION, context.region());
+    assertEquals(TEST_PROVIDER, context.provider());
+    assertEquals(TEST_ENVIRONMENT_ID, context.environmentId());
+    assertEquals(TEST_ORGANIZATION_ID, context.organizationId());
     assertNull(context.connection());
   }
 
   @Test
   void testTransformPrivateEndpointToLanguageServiceUrl() {
     // Given: Matching private endpoint exists
-    ProxyContext context = createContext(); // us-west-2, aws
+    ProxyContext context = PROXY_CONTEXT_AWS_US_WEST;
     String privateEndpoint = "https://flink.us-west-2.aws.private.confluent.cloud";
 
-    when(flinkPrivateEndpointUtil.getPrivateEndpoints("env-123"))
+    when(flinkPrivateEndpointUtil.getPrivateEndpoints(TEST_ENVIRONMENT_ID))
         .thenReturn(List.of(privateEndpoint));
     when(flinkPrivateEndpointUtil.isValidEndpointWithMatchingRegionAndProvider(
-        privateEndpoint, "us-west-2", "aws"))
+        privateEndpoint, TEST_REGION, TEST_PROVIDER))
         .thenReturn(true);
 
     String url = context.getConnectUrl();
@@ -82,13 +76,13 @@ class ProxyContextTest {
   @Test
   void testTransformCCNPrivateEndpointToLanguageServiceUrl() {
     // Given: CCN private endpoint with domain ID
-    ProxyContext context = createContext(); // us-west-2, aws
+    ProxyContext context = PROXY_CONTEXT_AWS_US_WEST;
     String ccnEndpoint = "https://flink.domid123.us-west-2.aws.private.confluent.cloud";
 
-    when(flinkPrivateEndpointUtil.getPrivateEndpoints("env-123"))
+    when(flinkPrivateEndpointUtil.getPrivateEndpoints(TEST_ENVIRONMENT_ID))
         .thenReturn(List.of(ccnEndpoint));
     when(flinkPrivateEndpointUtil.isValidEndpointWithMatchingRegionAndProvider(
-        ccnEndpoint, "us-west-2", "aws"))
+        ccnEndpoint, TEST_REGION, TEST_PROVIDER))
         .thenReturn(true);
 
     String url = context.getConnectUrl();
@@ -100,8 +94,8 @@ class ProxyContextTest {
   @Test
   void testFallbackToPublicUrlWhenNoPrivateEndpoints() {
     // Given: No private endpoints configured
-    ProxyContext context = createContext();
-    when(flinkPrivateEndpointUtil.getPrivateEndpoints("env-123"))
+    ProxyContext context = PROXY_CONTEXT_AWS_US_WEST;
+    when(flinkPrivateEndpointUtil.getPrivateEndpoints(TEST_ENVIRONMENT_ID))
         .thenReturn(List.of());
 
     String url = context.getConnectUrl();
@@ -115,18 +109,18 @@ class ProxyContextTest {
   @Test
   void testFallbackToPublicUrlWhenNoMatchingPrivateEndpoints() {
     // Given: Private endpoints exist but don't match region/provider
-    ProxyContext context = createContext(); // us-west-2, aws
+    ProxyContext context = PROXY_CONTEXT_AWS_US_WEST;
     String nonMatchingEndpoint = "https://flink.eu-central-1.aws.private.confluent.cloud";
 
-    when(flinkPrivateEndpointUtil.getPrivateEndpoints("env-123"))
+    when(flinkPrivateEndpointUtil.getPrivateEndpoints(TEST_ENVIRONMENT_ID))
         .thenReturn(List.of(nonMatchingEndpoint));
     when(flinkPrivateEndpointUtil.isValidEndpointWithMatchingRegionAndProvider(
-        nonMatchingEndpoint, "us-west-2", "aws"))
+        nonMatchingEndpoint, TEST_REGION, TEST_PROVIDER))
         .thenReturn(false);
 
     String url = context.getConnectUrl();
 
-    // Then: Should fallback to public URL (test pattern)
+    // Then: Should fallback to public URL
     assertTrue(url.contains("fls-mock"));
     assertTrue(url.contains("127.0.0.1"));
     assertFalse(url.contains(".private."));
@@ -135,21 +129,21 @@ class ProxyContextTest {
   @Test
   void testSelectsCorrectEndpointFromMultiple() {
     // Given: Multiple private endpoints, only one matches
-    ProxyContext context = createContext(); // us-west-2, aws
+    ProxyContext context = PROXY_CONTEXT_AWS_US_WEST;
     String matchingEndpoint = "https://flink.us-west-2.aws.private.confluent.cloud";
     String wrongRegion = "https://flink.eu-central-1.aws.private.confluent.cloud";
     String wrongProvider = "https://flink.us-west-2.gcp.private.confluent.cloud";
 
-    when(flinkPrivateEndpointUtil.getPrivateEndpoints("env-123"))
+    when(flinkPrivateEndpointUtil.getPrivateEndpoints(TEST_ENVIRONMENT_ID))
         .thenReturn(List.of(wrongRegion, matchingEndpoint, wrongProvider));
     when(flinkPrivateEndpointUtil.isValidEndpointWithMatchingRegionAndProvider(
-        matchingEndpoint, "us-west-2", "aws"))
+        matchingEndpoint, TEST_REGION, TEST_PROVIDER))
         .thenReturn(true);
     when(flinkPrivateEndpointUtil.isValidEndpointWithMatchingRegionAndProvider(
-        wrongRegion, "us-west-2", "aws"))
+        wrongRegion, TEST_REGION, TEST_PROVIDER))
         .thenReturn(false);
     when(flinkPrivateEndpointUtil.isValidEndpointWithMatchingRegionAndProvider(
-        wrongProvider, "us-west-2", "aws"))
+        wrongProvider, TEST_REGION, TEST_PROVIDER))
         .thenReturn(false);
 
     String url = context.getConnectUrl();
@@ -161,13 +155,13 @@ class ProxyContextTest {
   @Test
   void testHandlesInvalidPrivateEndpoint() {
     // Given: Invalid private endpoint URL
-    ProxyContext context = createContext();
+    ProxyContext context = PROXY_CONTEXT_AWS_US_WEST;
     String invalidEndpoint = "not-a-valid-url";
 
-    when(flinkPrivateEndpointUtil.getPrivateEndpoints("env-123"))
+    when(flinkPrivateEndpointUtil.getPrivateEndpoints(TEST_ENVIRONMENT_ID))
         .thenReturn(List.of(invalidEndpoint));
     when(flinkPrivateEndpointUtil.isValidEndpointWithMatchingRegionAndProvider(
-        invalidEndpoint, "us-west-2", "aws"))
+        invalidEndpoint, TEST_REGION, TEST_PROVIDER))
         .thenReturn(true);
 
     String url = context.getConnectUrl();

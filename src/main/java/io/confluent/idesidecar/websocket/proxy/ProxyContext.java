@@ -2,9 +2,11 @@ package io.confluent.idesidecar.websocket.proxy;
 
 import io.confluent.idesidecar.restapi.connections.CCloudConnectionState;
 import io.confluent.idesidecar.restapi.util.FlinkPrivateEndpointUtil;
+import io.quarkus.logging.Log;
 import jakarta.websocket.Session;
 import jakarta.enterprise.inject.spi.CDI;
 import org.eclipse.microprofile.config.ConfigProvider;
+import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 
@@ -55,26 +57,25 @@ public record ProxyContext (
   }
 
   public String getConnectUrl() {
-    String privateEndpoint = getMatchingPrivateEndpoint();
-    if (privateEndpoint != null) {
-      return transformToLanguageServiceUrl(privateEndpoint);
+    Optional<String> privateEndpoint = getMatchingPrivateEndpoint();
+    if (privateEndpoint.isPresent()) {
+        return transformToLanguageServiceUrl(privateEndpoint.get());
     }
-
     return buildPublicUrl();
   }
 
-  private String getMatchingPrivateEndpoint() {
+  private Optional<String> getMatchingPrivateEndpoint() {
     FlinkPrivateEndpointUtil util = getPrivateEndpointUtil();
     List<String> endpoints = util.getPrivateEndpoints(environmentId);
 
     if (endpoints == null || endpoints.isEmpty()) {
-      return null;
+      return Optional.empty();
     }
 
     return endpoints.stream()
-        .filter(endpoint -> util.isValidEndpointWithMatchingRegionAndProvider(endpoint, region, provider))
-        .findFirst()
-        .orElse(null);
+        .filter(endpoint ->
+            util.isValidEndpointWithMatchingRegionAndProvider(endpoint, region, provider))
+        .findFirst();
   }
 
   private FlinkPrivateEndpointUtil getPrivateEndpointUtil() {
@@ -90,13 +91,19 @@ public record ProxyContext (
    */
   private String transformToLanguageServiceUrl(String privateEndpoint) {
     try {
-      java.net.URI uri = java.net.URI.create(privateEndpoint);
+      URI uri = URI.create(privateEndpoint);
       String languageServiceHost = uri.getHost().replace(FLINK_PREFIX, LANGUAGE_SERVICE_PREFIX);
 
       return String.format("%s://%s%s", WSS_SCHEME, languageServiceHost, LSP_PATH);
+    } catch (IllegalArgumentException e) {
+      Log.debugf("Malformed private endpoint: %s", privateEndpoint);
+    } catch (NullPointerException e) {
+      Log.debugf("Null private endpoint: %s", privateEndpoint);
     } catch (Exception e) {
-      return buildPublicUrl();
+      Log.debugf("Error transforming private endpoint '%s': %s", privateEndpoint, e.getMessage());
     }
+
+    return buildPublicUrl();
   }
 
   private String buildPublicUrl() {

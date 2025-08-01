@@ -12,6 +12,7 @@ import io.vertx.core.MultiMap;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.util.List;
+import java.util.Optional;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
@@ -65,19 +66,9 @@ public class FlinkDataPlaneProxyProcessor extends Processor<ProxyContext, Future
     // Get private endpoints for current environment
     List<String> privateEndpoints = flinkPrivateEndpointUtil.getPrivateEndpoints(environmentId);
 
-    String flinkBaseUrl;
-    if (!privateEndpoints.isEmpty()) {
-      String selectedEndpoint = selectMatchingEndpoint(privateEndpoints, region, providerStr);
-      if (selectedEndpoint != null) {
-        flinkBaseUrl = selectedEndpoint;
-      } else {
-        // No matching private endpoint, fall back to public pattern
-        flinkBaseUrl = flinkUrlPattern.formatted(region.toLowerCase(), providerStr.toLowerCase());
-      }
-    } else {
-      // No private endpoints configured, use public pattern
-      flinkBaseUrl = flinkUrlPattern.formatted(region.toLowerCase(), providerStr.toLowerCase());
-    }
+    // Try private endpoint first, then fallback to public endpoint
+    String flinkBaseUrl = selectMatchingEndpoint(privateEndpoints, region, providerStr)
+        .orElse(flinkUrlPattern.formatted(region.toLowerCase(), providerStr.toLowerCase()));
 
     String path = context.getRequestUri();
 
@@ -99,12 +90,11 @@ public class FlinkDataPlaneProxyProcessor extends Processor<ProxyContext, Future
   /**
    * Selects the first endpoint that matches the given region and provider.
    */
-  public String selectMatchingEndpoint(List<String> endpoints, String region, String provider) {
+  public Optional<String> selectMatchingEndpoint(List<String> endpoints, String region, String provider) {
     return endpoints.stream()
         .filter(endpoint ->
             flinkPrivateEndpointUtil.isValidEndpointWithMatchingRegionAndProvider(
                 endpoint, region, provider))
-        .findFirst()
-        .orElse(null);
+        .findFirst();
   }
 }
