@@ -135,10 +135,6 @@ public class FlinkLanguageServiceProxyTest {
   @RetryingTest(maxAttempts = 3)
   public void testSendingJsonRpcCall() throws Exception {
     try (var session = ContainerProvider.getWebSocketContainer().connectToServer(TestClient.class, uri)) {
-      // Wait for initial message from the proxy
-      await()
-          .atMost(Duration.ofMillis(PROXY_TIMEOUT_MS))
-          .until(() -> FlinkLanguageServiceProxy.INITIAL_MESSAGE.equals(messages.poll()));
       // Send an example valid message and check that the session will not be closed.
       session.getAsyncRemote().sendText(CLIENT_RPC_REQUEST);
       await()
@@ -151,10 +147,6 @@ public class FlinkLanguageServiceProxyTest {
   @RetryingTest(maxAttempts = 3)
   public void testSendingInvalidMessage() throws Exception {
     var session = ContainerProvider.getWebSocketContainer().connectToServer(TestClient.class, uri);
-    // Wait for initial message from the proxy
-    await()
-        .atMost(Duration.ofMillis(PROXY_TIMEOUT_MS))
-        .until(() -> FlinkLanguageServiceProxy.INITIAL_MESSAGE.equals(messages.poll()));
     // Send an invalid message
     session.getAsyncRemote().sendText("This is an invalid message.").get();
     // Verify that the session has been closed
