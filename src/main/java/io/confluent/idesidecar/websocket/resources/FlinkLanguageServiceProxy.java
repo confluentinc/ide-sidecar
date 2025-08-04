@@ -16,6 +16,8 @@ import jakarta.websocket.OnOpen;
 import jakarta.websocket.Session;
 import jakarta.websocket.server.ServerEndpoint;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -32,6 +34,7 @@ public class FlinkLanguageServiceProxy {
   ConnectionStateManager connectionStateManager;
 
   Map<String, FlinkLanguageServiceProxyClient> proxyClients = new ConcurrentHashMap<>();
+  Map<String, List<String>> pendingMessages = new ConcurrentHashMap<>();
 
   @OnOpen
   public void onOpen(Session session) throws IOException {
@@ -67,14 +70,18 @@ public class FlinkLanguageServiceProxy {
           );
           client.connectToCCloud();
           proxyClients.put(session.getId(), client);
+
+          // Process any queued messages that arrived while client was connecting
+          List<String> queuedMessages = pendingMessages.remove(session.getId());
+          if (queuedMessages != null && !queuedMessages.isEmpty()) {
+            Log.infof("Processing %d queued messages for session %s", queuedMessages.size(), session.getId());
+            for (String queuedMessage : queuedMessages) {
+              client.sendToCCloud(queuedMessage);
+            }
+          }
+
           Log.infof("Opened a new session and added LSP client for session ID=%s",
               session.getId());
-          // Let the client know that the connection to the CCloud Flink Language Service is
-          // established by sending an initial "OK" message. This message does NOT comply with the
-          // LSP protocol but makes sure that the client does not send any LSP-related messages
-          // before this proxy is fully set up, hence improving the overall experience of the Flink
-          // language server in the IDE.
-          session.getAsyncRemote().sendText(INITIAL_MESSAGE);
         }
       } else {
         Log.warnf(
@@ -108,16 +115,9 @@ public class FlinkLanguageServiceProxy {
     if (client != null) {
       client.sendToCCloud(message);
     } else {
-      Log.warnf(
-          "Closing session when processing message because no client exists for session ID=%s",
-          session.getId()
-      );
-      session.close(
-          new CloseReason(
-              CloseCodes.CANNOT_ACCEPT,
-              "No client exists for the given session."
-          )
-      );
+      // Queue message instead of closing session
+      pendingMessages.computeIfAbsent(session.getId(), k -> new ArrayList<>()).add(message);
+      Log.infof("Queued message for session %s (client not ready yet)", session.getId());
     }
   }
 
@@ -133,5 +133,8 @@ public class FlinkLanguageServiceProxy {
     } else {
       Log.infof("Couldn't find client for session ID=%s, nothing to remove.", session.getId());
     }
+
+    // Clean up any pending messages
+    pendingMessages.remove(session.getId());
   }
 }
