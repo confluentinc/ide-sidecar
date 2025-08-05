@@ -22,7 +22,7 @@ class FlinkPrivateEndpointUtilTest {
 
     // With domain prefix - should match
     assertTrue(flinkPrivateEndpointUtil.isValidEndpointWithMatchingRegionAndProvider(
-        "https://flink.dom123.us-west-2.aws.private.confluent.cloud", "us-west-2", "aws"));
+        "https://flink.dom123.us-west-2.aws.confluent.cloud", "us-west-2", "aws"));
 
     // HTTP instead of HTTPS - should match
     assertTrue(flinkPrivateEndpointUtil.isValidEndpointWithMatchingRegionAndProvider(

@@ -64,29 +64,45 @@ public class FlinkPrivateEndpointUtil {
     /**
      * Validates that the endpoint is a valid Flink private endpoint URL and
      * matches the given region and provider.
-     * Supports both formats:
-     * - flink.{region}.{provider}.private.confluent.cloud
-     * - flink.{domainid}.{region}.{provider}.private.confluent.cloud
+     * Supports four formats (plus temporary dev testing variants):
+     * 1. flink.{region}.{provider}.private.confluent.cloud
+     * 2. flink.{domainid}.{region}.{provider}.confluent.cloud
+     * 3. flink-{nid}.{region}.{provider}.glb.confluent.cloud
+     * 4. flink-{peeringid}.{region}.{provider}.confluent.cloud
      */
     public boolean isValidEndpointWithMatchingRegionAndProvider(String endpoint, String region, String provider) {
         if (endpoint == null || region == null || provider == null) {
             return false;
         }
 
-        // Pattern to match both formats:
-        Pattern pattern = Pattern.compile(
-            "^https?://flink\\.(?:[^.]+\\.)?([^.]+)\\.([^.]+)\\.private\\.confluent\\.cloud$",
-            Pattern.CASE_INSENSITIVE
-        );
+        // Define format patterns with their corresponding region/provider group indices
+        var formats = new Object[][]{
+            // Production patterns
+            {Pattern.compile("^https?://flink\\.([^.]+)\\.([^.]+)\\.private\\.confluent\\.cloud$", Pattern.CASE_INSENSITIVE), 1, 2},
+            {Pattern.compile("^https?://flink\\.([^.]+)\\.([^.]+)\\.([^.]+)\\.confluent\\.cloud$", Pattern.CASE_INSENSITIVE), 2, 3},
+            {Pattern.compile("^https?://flink-[^.]+\\.([^.]+)\\.([^.]+)\\.glb\\.confluent\\.cloud$", Pattern.CASE_INSENSITIVE), 1, 2},
+            {Pattern.compile("^https?://flink-[^.]+\\.([^.]+)\\.([^.]+)\\.confluent\\.cloud$", Pattern.CASE_INSENSITIVE), 1, 2},
+            // Dev testing patterns
+            {Pattern.compile("^https?://flink\\.([^.]+)\\.([^.]+)\\.private\\.devel\\.cpdev\\.cloud$", Pattern.CASE_INSENSITIVE), 1, 2},
+            {Pattern.compile("^https?://flink\\.([^.]+)\\.([^.]+)\\.([^.]+)\\.devel\\.cpdev\\.cloud$", Pattern.CASE_INSENSITIVE), 2, 3},
+            {Pattern.compile("^https?://flink-[^.]+\\.([^.]+)\\.([^.]+)\\.glb\\.devel\\.cpdev\\.cloud$", Pattern.CASE_INSENSITIVE), 1, 2},
+            {Pattern.compile("^https?://flink-[^.]+\\.([^.]+)\\.([^.]+)\\.devel\\.cpdev\\.cloud$", Pattern.CASE_INSENSITIVE), 1, 2}
+        };
 
-        Matcher matcher = pattern.matcher(endpoint);
-        if (!matcher.matches()) {
-            return false;
+        // Try each format
+        for (var format : formats) {
+            Pattern pattern = (Pattern) format[0];
+            int regionGroup = (int) format[1];
+            int providerGroup = (int) format[2];
+
+            Matcher matcher = pattern.matcher(endpoint);
+            if (matcher.matches()) {
+                String endpointRegion = matcher.group(regionGroup);
+                String endpointProvider = matcher.group(providerGroup);
+                return region.equalsIgnoreCase(endpointRegion) && provider.equalsIgnoreCase(endpointProvider);
+            }
         }
 
-        String endpointRegion = matcher.group(1);
-        String endpointProvider = matcher.group(2);
-
-        return region.equalsIgnoreCase(endpointRegion) && provider.equalsIgnoreCase(endpointProvider);
+        return false;
     }
 }
