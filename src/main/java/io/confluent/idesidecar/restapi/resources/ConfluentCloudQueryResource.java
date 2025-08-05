@@ -15,6 +15,7 @@ import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
 import jakarta.inject.Inject;
 import java.util.List;
+import java.util.Collections;
 import org.eclipse.microprofile.graphql.DefaultValue;
 import org.eclipse.microprofile.graphql.Description;
 import org.eclipse.microprofile.graphql.GraphQLApi;
@@ -188,6 +189,23 @@ public class ConfluentCloudQueryResource {
     Log.infof("Get Flink compute pools for connection %s and environment %s", connectionId, envId);
     return multiToUni(ccloud.getFlinkComputePools(connectionId, envId));
   }
+
+  /**
+   * Get the list of regions for a specific cloud provider.
+   *
+   * @param connectionId the connection ID
+   * @param cloudProvider the cloud provider (e.g., "AWS", "GCP", "AZURE")
+   * @return the list of region names; never null but may be empty
+   */
+  @Query("getRegionsForCloudProvider")
+  @Description("Get the list of regions for a specific cloud provider")
+  @NonNull
+  public Uni<List<String>> getRegionsForCloudProvider(@NonNull String connectionId, @NonNull String cloudProvider) {
+    Log.infof("Get regions for cloud provider %s", cloudProvider);
+    return ccloud.getRegionsForCloudProvider(connectionId, cloudProvider)
+        .collect().asList();
+  }
+
   /**
    * Apparently the Smallrye GraphQL plugin does not handle {@link Multi}, so we have to convert it
    * to {@link Uni}.

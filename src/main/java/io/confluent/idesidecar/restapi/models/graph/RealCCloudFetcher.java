@@ -612,5 +612,44 @@ public class RealCCloudFetcher extends ConfluentCloudRestClient implements CClou
   ) {
   }
 
+  /**
+   * Get the list of regions for a specific cloud provider.
+   *
+   * @param connectionId the connection ID
+   * @param cloudProvider the cloud provider (e.g., "AWS", "GCP", "AZURE")
+   * @return a Multi of region names
+   */
+  public Multi<String> getRegionsForCloudProvider(String connectionId, String cloudProvider) {
+    String url = "https://api.confluent.cloud/fcpm/v2/regions?cloud=%s".formatted(cloudProvider);
+    var headers = headersFor(connectionId);
+    Log.infof("Fetching regions for cloud provider %s from URL: %s", cloudProvider, url);
+    return listItems(headers, url, null, this::parseRegionsList);
+  }
+
+  private PageOfResults<String> parseRegionsList(String json, PaginationState state) {
+    return parseList(json, state, ListRegionsResponse.class);
+  }
+
+  @RegisterForReflection
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  private record ListRegionsResponse(
+      @JsonProperty(value = "api_version") String apiVersion,
+      String kind,
+      ListMetadata metadata,
+      @JsonProperty(value = "data", required = true) List<RegionResponse> data
+  ) implements ListResponse<RegionResponse, String> {
+  }
+
+  @RegisterForReflection
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  private record RegionResponse(
+      @JsonProperty(value = "region_name") String regionName,
+      @JsonProperty(value = "cloud") String cloud
+  ) implements ListItem<String> {
+    @Override
+    public String toRepresentation() {
+      return regionName;
+    }
+  }
 
 }
