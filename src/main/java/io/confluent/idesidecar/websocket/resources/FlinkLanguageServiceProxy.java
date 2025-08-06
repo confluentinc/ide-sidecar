@@ -26,6 +26,8 @@ import java.util.concurrent.ConcurrentHashMap;
 @ApplicationScoped
 public class FlinkLanguageServiceProxy {
 
+  public static final String INITIAL_MESSAGE = "OK";
+
   @Inject
   ConnectionStateManager connectionStateManager;
 
@@ -63,8 +65,16 @@ public class FlinkLanguageServiceProxy {
               context.withConnection(cCloudConnectionState),
               session
           );
+          client.connectToCCloud();
           proxyClients.put(session.getId(), client);
-          Log.infof("Opened a new session and added LSP client for session ID=%s", session.getId());
+          Log.infof("Opened a new session and added LSP client for session ID=%s",
+              session.getId());
+          // Let the client know that the connection to the CCloud Flink Language Service is
+          // established by sending an initial "OK" message. This message does NOT comply with the
+          // LSP protocol but makes sure that the client does not send any LSP-related messages
+          // before this proxy is fully set up, hence improving the overall experience of the Flink
+          // language server in the IDE.
+          session.getAsyncRemote().sendText(INITIAL_MESSAGE);
         }
       } else {
         Log.warnf(

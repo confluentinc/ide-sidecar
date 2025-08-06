@@ -32,26 +32,16 @@ public class FlinkLanguageServiceProxyClient implements AutoCloseable {
 
   private FlinkLanguageServiceProxyClient() {}
 
-  public FlinkLanguageServiceProxyClient(
-      ProxyContext context,
-      Session localSession
-  ) {
+  public FlinkLanguageServiceProxyClient(ProxyContext context, Session localSession) {
     this.context = context;
     this.localSession = localSession;
-    // Open connection to CCloud Flink Language Service
-    try {
-      var container = ContainerProvider.getWebSocketContainer();
-      container.connectToServer(this, URI.create(context.getConnectUrl()));
-    } catch (Exception e) {
-      Log.warn("Failed to connect to CCloud Flink Language Service.", e);
-      throw new ProxyConnectionFailedException(e);
-    }
   }
 
-  @OnOpen
-  public synchronized void onOpen(Session remoteSession) {
-    this.remoteSession = remoteSession;
+  public synchronized void connectToCCloud() {
     try {
+      // Open connection to CCloud Flink Language Service
+      var container = ContainerProvider.getWebSocketContainer();
+      this.remoteSession = container.connectToServer(this, URI.create(context.getConnectUrl()));
       // After opening the connection, we need to send the auth message to the Language Service
       this.remoteSession.getAsyncRemote().sendText(
           OBJECT_MAPPER.writeValueAsString(
@@ -61,9 +51,10 @@ public class FlinkLanguageServiceProxyClient implements AutoCloseable {
                   context.organizationId()
               )
           )
-      );
+      ).get();
     } catch (Exception e) {
-      Log.errorf("Failed to send initial auth message: %s", e.getMessage());
+      Log.warn("Failed to connect to CCloud Flink Language Service.", e);
+      throw new ProxyConnectionFailedException(e);
     }
   }
 

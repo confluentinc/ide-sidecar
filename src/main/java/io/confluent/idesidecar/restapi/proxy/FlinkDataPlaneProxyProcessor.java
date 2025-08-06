@@ -6,11 +6,13 @@ import io.confluent.idesidecar.restapi.exceptions.ProcessorFailedException;
 import io.confluent.idesidecar.restapi.models.graph.CloudProvider;
 import io.confluent.idesidecar.restapi.processors.Processor;
 import io.confluent.idesidecar.restapi.util.UriUtil;
+import io.confluent.idesidecar.restapi.util.FlinkPrivateEndpointUtil;
 import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.util.List;
+import java.util.Optional;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
@@ -21,6 +23,7 @@ public class FlinkDataPlaneProxyProcessor extends Processor<ProxyContext, Future
 
   private static final String REGION_HEADER = "x-ccloud-region";
   private static final String PROVIDER_HEADER = "x-ccloud-provider";
+  private static final String ENVIRONMENT_HEADER = "x-ccloud-env-id";
 
   @ConfigProperty(name = "ide-sidecar.cluster-proxy.http-header-exclusions")
   List<String> httpHeaderExclusions;
@@ -31,6 +34,9 @@ public class FlinkDataPlaneProxyProcessor extends Processor<ProxyContext, Future
   @Inject
   UriUtil uriUtil;
 
+  @Inject
+  FlinkPrivateEndpointUtil flinkPrivateEndpointUtil;
+
   @Override
   public Future<ProxyContext> process(ProxyContext context) {
     MultiMap headers = context.getRequestHeaders() != null ?
@@ -39,6 +45,7 @@ public class FlinkDataPlaneProxyProcessor extends Processor<ProxyContext, Future
     String region = headers.get(REGION_HEADER);
     String providerStr = headers.get(PROVIDER_HEADER);
     CloudProvider provider = CloudProvider.of(providerStr);
+    String environmentId = headers.get(ENVIRONMENT_HEADER);
 
     if (CloudProvider.NONE.equals(provider)) {
       return Future.failedFuture(
@@ -56,7 +63,13 @@ public class FlinkDataPlaneProxyProcessor extends Processor<ProxyContext, Future
       );
     }
 
-    String flinkBaseUrl = flinkUrlPattern.formatted(region.toLowerCase(), providerStr.toLowerCase());
+    // Get private endpoints for current environment
+    List<String> privateEndpoints = flinkPrivateEndpointUtil.getPrivateEndpoints(environmentId);
+
+    // Try private endpoint first, then fallback to public endpoint
+    String flinkBaseUrl = selectMatchingEndpoint(privateEndpoints, region, providerStr)
+        .orElse(flinkUrlPattern.formatted(region.toLowerCase(), providerStr.toLowerCase()));
+
     String path = context.getRequestUri();
 
     String absoluteUrl = uriUtil.combine(flinkBaseUrl, path);
@@ -72,5 +85,16 @@ public class FlinkDataPlaneProxyProcessor extends Processor<ProxyContext, Future
     context.setProxyRequestBody(context.getRequestBody());
 
     return next().process(context);
+  }
+
+  /**
+   * Selects the first endpoint that matches the given region and provider.
+   */
+  public Optional<String> selectMatchingEndpoint(List<String> endpoints, String region, String provider) {
+    return endpoints.stream()
+        .filter(endpoint ->
+            flinkPrivateEndpointUtil.isValidEndpointWithMatchingRegionAndProvider(
+                endpoint, region, provider))
+        .findFirst();
   }
 }

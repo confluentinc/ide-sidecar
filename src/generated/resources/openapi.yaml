@@ -611,6 +611,12 @@ components:
             type: string
         trust_all_certificates:
           type: boolean
+        flink_private_endpoints:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
     ProduceRequest:
       type: object
       properties:
@@ -927,23 +933,23 @@ components:
     HealthResponse:
       type: object
       properties:
-        checks:
-          type: array
-          items:
-            $ref: "#/components/schemas/HealthCheck"
         status:
           enum:
           - UP
           - DOWN
           type: string
+        checks:
+          type: array
+          items:
+            $ref: "#/components/schemas/HealthCheck"
     HealthCheck:
       type: object
       properties:
-        name:
-          type: string
         data:
           type: object
           nullable: true
+        name:
+          type: string
         status:
           enum:
           - UP
@@ -1415,7 +1421,7 @@ paths:
                 $ref: "#/components/schemas/HealthResponse"
 info:
   title: Confluent ide-sidecar API
-  version: 0.224.0
+  version: 0.230.0
   description: "API for the Confluent ide-sidecar, part of Confluent for VS Code"
   termsOfService: Your terms here
   contact:
