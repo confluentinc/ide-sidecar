@@ -64,7 +64,7 @@ public class FlinkPrivateEndpointUtil {
     /**
      * Validates that the endpoint is a valid Flink private endpoint URL and
      * matches the given region and provider.
-     * Supports four formats (plus temporary dev testing variants):
+     * Supports four formats:
      * 1. flink.{region}.{provider}.private.confluent.cloud
      * 2. flink.{domainid}.{region}.{provider}.confluent.cloud
      * 3. flink-{nid}.{region}.{provider}.glb.confluent.cloud
@@ -77,16 +77,10 @@ public class FlinkPrivateEndpointUtil {
 
         // Define format patterns with their corresponding region/provider group indices
         var formats = new Object[][]{
-            // Production patterns
             {Pattern.compile("^https?://flink\\.([^.]+)\\.([^.]+)\\.private\\.confluent\\.cloud$", Pattern.CASE_INSENSITIVE), 1, 2},
             {Pattern.compile("^https?://flink\\.([^.]+)\\.([^.]+)\\.([^.]+)\\.confluent\\.cloud$", Pattern.CASE_INSENSITIVE), 2, 3},
             {Pattern.compile("^https?://flink-[^.]+\\.([^.]+)\\.([^.]+)\\.glb\\.confluent\\.cloud$", Pattern.CASE_INSENSITIVE), 1, 2},
             {Pattern.compile("^https?://flink-[^.]+\\.([^.]+)\\.([^.]+)\\.confluent\\.cloud$", Pattern.CASE_INSENSITIVE), 1, 2},
-            // Dev testing patterns
-            {Pattern.compile("^https?://flink\\.([^.]+)\\.([^.]+)\\.private\\.devel\\.cpdev\\.cloud$", Pattern.CASE_INSENSITIVE), 1, 2},
-            {Pattern.compile("^https?://flink\\.([^.]+)\\.([^.]+)\\.([^.]+)\\.devel\\.cpdev\\.cloud$", Pattern.CASE_INSENSITIVE), 2, 3},
-            {Pattern.compile("^https?://flink-[^.]+\\.([^.]+)\\.([^.]+)\\.glb\\.devel\\.cpdev\\.cloud$", Pattern.CASE_INSENSITIVE), 1, 2},
-            {Pattern.compile("^https?://flink-[^.]+\\.([^.]+)\\.([^.]+)\\.devel\\.cpdev\\.cloud$", Pattern.CASE_INSENSITIVE), 1, 2}
         };
 
         // Try each format
