@@ -17,5 +17,9 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
 
+  - repo: https://github.com/confluentinc/devprod-pre-commit
+    rev: v0.4.0
+    hooks:
+      - id: trufflehog
 fail_fast: false
 exclude: ^.devcontainer/|^charts/|^mk-include/|^node_modules/
