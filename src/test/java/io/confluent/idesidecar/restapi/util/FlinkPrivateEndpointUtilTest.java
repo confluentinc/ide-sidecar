@@ -24,9 +24,13 @@ class FlinkPrivateEndpointUtilTest {
     assertTrue(flinkPrivateEndpointUtil.isValidEndpointWithMatchingRegionAndProvider(
         "https://flink.dom123.us-west-2.aws.confluent.cloud", "us-west-2", "aws"));
 
-    // HTTP instead of HTTPS - should match
+    // GLB format with NID - should match
     assertTrue(flinkPrivateEndpointUtil.isValidEndpointWithMatchingRegionAndProvider(
-        "http://flink.us-east-1.gcp.private.confluent.cloud", "us-east-1", "gcp"));
+        "https://flink-abc123.us-west-2.aws.glb.confluent.cloud", "us-west-2", "aws"));
+
+    // Peering format with peering ID - should match
+    assertTrue(flinkPrivateEndpointUtil.isValidEndpointWithMatchingRegionAndProvider(
+        "https://flink-peer456.eu-central-1.azure.confluent.cloud", "eu-central-1", "azure"));
   }
 
   @Test
@@ -42,6 +46,22 @@ class FlinkPrivateEndpointUtilTest {
     // Both wrong
     assertFalse(flinkPrivateEndpointUtil.isValidEndpointWithMatchingRegionAndProvider(
         "https://flink.us-west-2.aws.private.confluent.cloud", "eu-west-1", "azure"));
+
+    // GLB format with wrong region
+    assertFalse(flinkPrivateEndpointUtil.isValidEndpointWithMatchingRegionAndProvider(
+        "https://flink-nid123.us-west-2.aws.glb.confluent.cloud", "eu-west-1", "aws"));
+
+    // GLB format with wrong provider
+    assertFalse(flinkPrivateEndpointUtil.isValidEndpointWithMatchingRegionAndProvider(
+        "https://flink-nid123.us-west-2.aws.glb.confluent.cloud", "us-west-2", "azure"));
+
+    // Peering format with wrong region
+    assertFalse(flinkPrivateEndpointUtil.isValidEndpointWithMatchingRegionAndProvider(
+        "https://flink-peer456.us-west-2.azure.confluent.cloud", "eu-central-1", "azure"));
+
+    // Peering format with wrong provider
+    assertFalse(flinkPrivateEndpointUtil.isValidEndpointWithMatchingRegionAndProvider(
+        "https://flink-peer456.us-west-2.azure.confluent.cloud", "us-west-2", "aws"));
   }
 
   @Test
@@ -118,13 +138,25 @@ class FlinkPrivateEndpointUtilTest {
     assertTrue(flinkPrivateEndpointUtil.isValidEndpointWithMatchingRegionAndProvider(
         "https://flink.eu-central-1.aws.private.confluent.cloud", "eu-central-1", "aws"));
 
-    // GCP regions
+    // Additional AWS regions
     assertTrue(flinkPrivateEndpointUtil.isValidEndpointWithMatchingRegionAndProvider(
-        "https://flink.us-central1.gcp.private.confluent.cloud", "us-central1", "gcp"));
+        "https://flink.us-central1.aws.private.confluent.cloud", "us-central1", "aws"));
 
     // Azure regions
     assertTrue(flinkPrivateEndpointUtil.isValidEndpointWithMatchingRegionAndProvider(
         "https://flink.eastus.azure.private.confluent.cloud", "eastus", "azure"));
+
+    // GLB format with different providers
+    assertTrue(flinkPrivateEndpointUtil.isValidEndpointWithMatchingRegionAndProvider(
+        "https://flink-nid789.us-central1.aws.glb.confluent.cloud", "us-central1", "aws"));
+    assertTrue(flinkPrivateEndpointUtil.isValidEndpointWithMatchingRegionAndProvider(
+        "https://flink-nid456.eastus.azure.glb.confluent.cloud", "eastus", "azure"));
+
+    // Peering format with different providers
+    assertTrue(flinkPrivateEndpointUtil.isValidEndpointWithMatchingRegionAndProvider(
+        "https://flink-peer123.us-east-1.aws.confluent.cloud", "us-east-1", "aws"));
+    assertTrue(flinkPrivateEndpointUtil.isValidEndpointWithMatchingRegionAndProvider(
+        "https://flink-peer789.westus2.azure.confluent.cloud", "westus2", "azure"));
   }
 
   @Test
