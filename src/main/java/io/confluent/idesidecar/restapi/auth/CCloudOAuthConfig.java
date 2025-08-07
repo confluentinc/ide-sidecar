@@ -47,7 +47,6 @@ public final class CCloudOAuthConfig {
   public static final String CCLOUD_DATA_PLANE_TOKEN_URI = ConfigProvider.getConfig()
       .getValue("ide-sidecar.connections.ccloud.data-plane-token.exchange-uri", String.class);
 
-
   public static final String CCLOUD_OAUTH_TOKEN_URI;
 
   public static final String CCLOUD_OAUTH_AUTHORIZE_URI;
