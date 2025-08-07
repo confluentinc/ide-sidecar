@@ -102,11 +102,20 @@ ide-sidecar:
       data-plane-token:
         exchange-uri: https://${ide-sidecar.connections.ccloud.base-path}/api/access_tokens
       id-token:
-        exchange-uri: https://login.confluent.io/oauth/token
+        exchange-uri:
+          prod: https://login.confluent.io/oauth/token
+          stag: https://login-stag.confluent-dev.io/oauth/token
+          devel: https://login.confluent-dev.io/oauth/token
         life-time-seconds: 60
       oauth:
-        authorize-uri: https://login.confluent.io/oauth/authorize
-        client-id: Q93zdbI3FnltpEa9G1gg6tiMuoDDBkwS
+        authorize-uri:
+          prod: https://login.confluent.io/oauth/authorize
+          stag: https://login-stag.confluent-dev.io/oauth/authorize
+          devel: https://login.confluent-dev.io/oauth/authorize
+        client-id:
+          prod: Q93zdbI3FnltpEa9G1gg6tiMuoDDBkwS
+          stag: S5PWFB5AQoLRg7fmsCxtBrGhYwTTzmAu
+          devel: cUmAgrkbAZSqSiy38JE7Ya3i7FwXmyUF
         login-realm-uri: https://${ide-sidecar.connections.ccloud.base-path}/api/login/realm
         redirect-uri: http://127.0.0.1:26636/gateway/v1/callback-vscode-docs
         # URI redirect to tell the VS Code extension if the auth flow completed successfully or not
