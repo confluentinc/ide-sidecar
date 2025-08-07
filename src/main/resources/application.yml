@@ -6,7 +6,8 @@
       ccloud:
         control-plane-base-url: http://localhost:${quarkus.wiremock.devservices.port}
         id-token:
-          exchange-uri: http://localhost:${quarkus.wiremock.devservices.port}/oauth/token
+          exchange-uri:
+            prod: http://localhost:${quarkus.wiremock.devservices.port}/oauth/token
         control-plane-token:
           exchange-uri: http://localhost:${quarkus.wiremock.devservices.port}/api/sessions
           check-jwt-uri: http://localhost:${quarkus.wiremock.devservices.port}/api/check_jwt
