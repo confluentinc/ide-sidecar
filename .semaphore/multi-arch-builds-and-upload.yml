@@ -186,7 +186,7 @@ blocks:
               Rename-Item -Path $executable -NewName (Split-Path -Leaf $executable_with_os_arch)
               Write-Host "Signing executable $executable_with_os_arch";
               azuresigntool sign -kvu "https://clicodesigningkeyvault.vault.azure.net/" -kvc CLICodeSigningCertificate -kvi $Env:APP_CLIENT_ID -kvs $Env:APP_CLIENT_SECRET --azure-key-vault-tenant-id $Env:APP_TENANT_ID -tr http://timestamp.globalsign.com/tsa/advanced -td sha256 "$executable_with_os_arch";
-              try {artifact push workflow $executable_with_os_arch --destination "native-executables/$(Split-Path -Leaf $executable_with_os_arch)"} catch {Write-Host "Artifact push failed"}
+              try {artifact push workflow $executable_with_os_arch --destination "native-executables/$(Split-Path -Leaf $executable_with_os_arch)" --force} catch {Write-Host "Artifact push failed"}
       epilogue:
         commands:
           - cache store graal_download_zip graalvm-community-jdk-21.0.2_windows-x64_bin.zip
