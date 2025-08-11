@@ -1,0 +1,23 @@
+/* Axon theme design tokens */
+:root {
+    --background: #F5F4F4;
+    --text-primary: #131316;
+    --link-primary: #4933D7;
+    --link_primary_hover: #30228B;
+    --support_failure: #C43B42;
+    --support_success: #107F49;
+    --logo: #040531;
+;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --background: #131316;
+        --text-primary: #F5F4F4;
+        --link-primary: #BDB3FF;
+        --link_primary_hover: #B4A8FF;
+        --support_failure: #F07A80;
+        --support_success: #42BD82;
+        --logo: #FFFFFF;
+    }
+}

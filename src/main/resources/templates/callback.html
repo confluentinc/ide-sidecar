@@ -4,11 +4,15 @@
 <head>
   <title>Confluent VS Code Extension</title>
   <link rel="shortcut icon" href="https://www.confluent.io/favicon.ico"/>
+  <link rel="stylesheet" href="/colors.css">
+  <meta name="color-scheme" content="light dark">
 
   <style>
     body {
       margin: 0;
       overflow: hidden;
+      background-color: var(--background-color);
+      color: var(--text-color);
     }
 
     div.logo {
@@ -18,8 +22,11 @@
     div.banner {
       margin-top: 80px;
       font-family: 'MarkPro-NarrowBook', 'Arial', sans-serif;
-      color: #173361;
       text-align: center;
+    }
+
+    .success {
+      color: var(--support_success);
     }
   </style>
   <script type="text/javascript">
@@ -41,7 +48,7 @@
               fill:none;
             }
             .st1{
-              fill:#173361;
+              fill: var(--logo);
             }
         </style>
     <g>
@@ -97,7 +104,7 @@
 <div class='banner'>
   <h1>Authentication Complete</h1>
   <p>
-    You have successfully authenticated with Confluent Cloud using the account <b>{email}</b>.
+    You have successfully authenticated with Confluent Cloud using the account <b class="success">{email}</b>.
   </p>
   <p>
     If you prefer to log in with a different account, please head to

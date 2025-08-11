@@ -277,7 +277,7 @@ quarkus:
     additional-build-args: --initialize-at-run-time=io.confluent.idesidecar.restapi.auth.CCloudOAuthConfig\,io.confluent.idesidecar.restapi.auth.CCloudOAuthContext\,io.confluent.ide.sidecar.restapi.util.WebClientFactory\,org.apache.kafka.common.security.authenticator.SaslClientAuthenticator\,org.apache.avro.file.DataFileWriter\,io.confluent.kafka.schemaregistry.avro.AvroSchemaUtils\,com.github.luben.zstd\,org.xerial.snappy\,io.confluent.idesidecar.restapi.application.SnappyNativeLoader\,io.confluent.idesidecar.restapi.models.graph.RealCCloudFetcher\,io.confluent.idesidecar.websocket.proxy.ProxyContext\,io.confluent.idesidecar.restapi.proxy.FlinkDataPlaneProxyProcessor
     march: compatibility
     resources:
-      includes: libs/**/*,templates/callback.html,templates/callback_failure.html,templates/default.html,templates/reset_password.html
+      includes: libs/**/*,templates/callback.html,templates/callback_failure.html,templates/default.html,templates/reset_password.html,META-INF/resources/colors.css
   smallrye-health:
     root-path: /gateway/v1/health
     openapi:
