@@ -13,8 +13,41 @@ import java.util.regex.Matcher;
 @ApplicationScoped
 public class FlinkPrivateEndpointUtil {
 
-    // stores Environment ID and List of private endpoints
+    // Stores Environment ID and List of private endpoints
     private final Map<String, List<String>> flinkPrivateEndpoints = new ConcurrentHashMap<>();
+
+    /**
+     * Represents a format pattern for validating and extracting region and provider
+     * information from Flink private endpoint URLs.
+     *
+     * @param pattern       the regex pattern for the endpoint format
+     * @param regionGroup   the group index for the region in the regex pattern
+     * @param providerGroup the group index for the provider in the regex pattern
+     */
+    private record FlinkPrivateEndpointFormat(Pattern pattern, int regionGroup, int providerGroup) {}
+
+    /** Matches flink.{region}.{provider}.private.confluent.cloud */
+    private static final Pattern FORMAT_1 =
+        Pattern.compile("^https?://flink\\.([^.]+)\\.([^.]+)\\.private\\.confluent\\.cloud$", Pattern.CASE_INSENSITIVE);
+
+    /** Matches flink.{domainid}.{region}.{provider}.confluent.cloud */
+    private static final Pattern FORMAT_2 =
+        Pattern.compile("^https?://flink\\.([^.]+)\\.([^.]+)\\.([^.]+)\\.confluent\\.cloud$", Pattern.CASE_INSENSITIVE);
+
+    /** Matches flink-{nid}.{region}.{provider}.glb.confluent.cloud */
+    private static final Pattern FORMAT_3 =
+        Pattern.compile("^https?://flink-[^.]+\\.([^.]+)\\.([^.]+)\\.glb\\.confluent\\.cloud$", Pattern.CASE_INSENSITIVE);
+
+    /** Matches flink-{peeringid}.{region}.{provider}.confluent.cloud */
+    private static final Pattern FORMAT_4 =
+        Pattern.compile("^https?://flink-[^.]+\\.([^.]+)\\.([^.]+)\\.confluent\\.cloud$", Pattern.CASE_INSENSITIVE);
+
+    private static final List<FlinkPrivateEndpointFormat> FORMATS = List.of(
+        new FlinkPrivateEndpointFormat(FORMAT_1, 1, 2),
+        new FlinkPrivateEndpointFormat(FORMAT_2, 2, 3),
+        new FlinkPrivateEndpointFormat(FORMAT_3, 1, 2),
+        new FlinkPrivateEndpointFormat(FORMAT_4, 1, 2)
+    );
 
     // Listen for preference changes
     public synchronized void updateFlinkPrivateEndpoints(@Observes PreferencesSpec preferences) {
@@ -33,7 +66,7 @@ public class FlinkPrivateEndpointUtil {
      * Gets private endpoints for a specified environment.
      *
      * @param environmentId the environment ID
-     * @return list of private endpoints with https:// prefix, empty if none found
+     * @return list of normalized private endpoints with https:// prefix, empty if none found
      */
     public List<String> getPrivateEndpoints(String environmentId) {
         if (environmentId == null) {
@@ -46,57 +79,30 @@ public class FlinkPrivateEndpointUtil {
                 .toList();
     }
 
-    /**
-     * Normalizes the endpoint URL by adding https:// if not present and removing trailing slash.
-     */
+    // Normalizes the endpoint URL by adding https:// if not present and removing trailing slash.
     private String normalizeEndpointUrl(String endpoint) {
-        // Add https:// if not present
         String normalized = endpoint.startsWith("http") ? endpoint : "https://" + endpoint;
-
-        // Remove trailing slash if present
         if (normalized.endsWith("/")) {
             normalized = normalized.substring(0, normalized.length() - 1);
         }
-
         return normalized;
     }
 
-    /**
-     * Validates that the endpoint is a valid Flink private endpoint URL and
-     * matches the given region and provider.
-     * Supports four formats:
-     * 1. flink.{region}.{provider}.private.confluent.cloud
-     * 2. flink.{domainid}.{region}.{provider}.confluent.cloud
-     * 3. flink-{nid}.{region}.{provider}.glb.confluent.cloud
-     * 4. flink-{peeringid}.{region}.{provider}.confluent.cloud
-     */
+    // Validates that the endpoint is a valid Flink private endpoint URL and matches the given region and provider.
     public boolean isValidEndpointWithMatchingRegionAndProvider(String endpoint, String region, String provider) {
         if (endpoint == null || region == null || provider == null) {
             return false;
         }
 
-        // Define format patterns with their corresponding region/provider group indices
-        var formats = new Object[][]{
-            {Pattern.compile("^https?://flink\\.([^.]+)\\.([^.]+)\\.private\\.confluent\\.cloud$", Pattern.CASE_INSENSITIVE), 1, 2},
-            {Pattern.compile("^https?://flink\\.([^.]+)\\.([^.]+)\\.([^.]+)\\.confluent\\.cloud$", Pattern.CASE_INSENSITIVE), 2, 3},
-            {Pattern.compile("^https?://flink-[^.]+\\.([^.]+)\\.([^.]+)\\.glb\\.confluent\\.cloud$", Pattern.CASE_INSENSITIVE), 1, 2},
-            {Pattern.compile("^https?://flink-[^.]+\\.([^.]+)\\.([^.]+)\\.confluent\\.cloud$", Pattern.CASE_INSENSITIVE), 1, 2},
-        };
-
-        // Try each format
-        for (var format : formats) {
-            Pattern pattern = (Pattern) format[0];
-            int regionGroup = (int) format[1];
-            int providerGroup = (int) format[2];
-
-            Matcher matcher = pattern.matcher(endpoint);
+        for (var format : FORMATS) {
+            Matcher matcher = format.pattern().matcher(endpoint);
             if (matcher.matches()) {
-                String endpointRegion = matcher.group(regionGroup);
-                String endpointProvider = matcher.group(providerGroup);
-                return region.equalsIgnoreCase(endpointRegion) && provider.equalsIgnoreCase(endpointProvider);
+                String endpointRegion = matcher.group(format.regionGroup());
+                String endpointProvider = matcher.group(format.providerGroup());
+                return region.equalsIgnoreCase(endpointRegion)
+                    && provider.equalsIgnoreCase(endpointProvider);
             }
         }
-
         return false;
     }
 }
