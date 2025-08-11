@@ -4,11 +4,15 @@
 <head>
   <title>Confluent VS Code Extension</title>
   <link rel="shortcut icon" href="https://www.confluent.io/favicon.ico"/>
+  <link rel="stylesheet" href="/colors.css">
+  <meta name="color-scheme" content="light dark">
 
   <style>
     body {
       margin: 0;
       overflow: hidden;
+      background-color: var(--background);
+      color: var(--text-primary);
     }
 
     div.logo {
@@ -18,7 +22,6 @@
     div.banner {
       margin-top: 80px;
       font-family: 'MarkPro-NarrowBook', 'Arial', sans-serif;
-      color: #173361;
       text-align: center;
     }
   </style>
@@ -41,7 +44,7 @@
               fill:none;
             }
             .st1{
-              fill:#173361;
+              fill: var(--logo);
             }
         </style>
     <g>
