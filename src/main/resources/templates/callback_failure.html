@@ -4,11 +4,15 @@
 <head>
   <title>Confluent VS Code Extension</title>
   <link rel="shortcut icon" href="https://www.confluent.io/favicon.ico"/>
+  <link rel="stylesheet" href="/colors.css">
+  <meta name="color-scheme" content="light dark">
 
   <style>
     body {
       margin: 0;
       overflow: hidden;
+	  background-color: var(--background);
+      color: var(--text-primary);
     }
 
     div.logo {
@@ -18,9 +22,12 @@
     div.banner {
       margin-top: 80px;
       font-family: 'MarkPro-NarrowBook', 'Arial', sans-serif;
-      color: #173361;
       text-align: center;
     }
+
+	.failure {
+	  color: var(--support_failure);
+	}
   </style>
   <script type="text/javascript">
     // Redirect to the VS Code extension's URI when the page is loaded
@@ -41,7 +48,7 @@
 			  fill:none;
 			}
 			.st1{
-			  fill:#173361;
+			  fill: var(--logo);
 			}
 		</style>
     <g>
@@ -97,7 +104,7 @@
 <div class='banner'>
   <h1>Authentication Failed</h1>
   <p>We couldn't complete the authentication with Confluent Cloud due to the following error:</p>
-  <p><b>{error}</b></p>
+  <p><b class="failure">{error}</b></p>
   <p>You may close this page and re-start the authentication flow in Confluent for VS Code.</p>
 </div>
 </body>
