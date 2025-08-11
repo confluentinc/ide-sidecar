@@ -6,7 +6,8 @@
       ccloud:
         control-plane-base-url: http://localhost:${quarkus.wiremock.devservices.port}
         id-token:
-          exchange-uri: http://localhost:${quarkus.wiremock.devservices.port}/oauth/token
+          exchange-uri:
+            prod: http://localhost:${quarkus.wiremock.devservices.port}/oauth/token
         control-plane-token:
           exchange-uri: http://localhost:${quarkus.wiremock.devservices.port}/api/sessions
           check-jwt-uri: http://localhost:${quarkus.wiremock.devservices.port}/api/check_jwt
@@ -90,22 +91,33 @@ ide-sidecar:
     version: v1
   connections:
     ccloud:
+      # can be one of "confluent.cloud", "stag.cpdev.cloud", or "devel.cpdev.cloud"
+      base-path: confluent.cloud
       check-token-expiration:
         interval-seconds: 5
-      control-plane-base-url: https://api.confluent.cloud
+      control-plane-base-url: https://api.${ide-sidecar.connections.ccloud.base-path}
       control-plane-token:
-        exchange-uri: https://confluent.cloud/api/sessions
-        check-jwt-uri: https://confluent.cloud/api/check_jwt
+        exchange-uri: https://${ide-sidecar.connections.ccloud.base-path}/api/sessions
+        check-jwt-uri: https://${ide-sidecar.connections.ccloud.base-path}/api/check_jwt
         life-time-seconds: 300
       data-plane-token:
-        exchange-uri: https://confluent.cloud/api/access_tokens
+        exchange-uri: https://${ide-sidecar.connections.ccloud.base-path}/api/access_tokens
       id-token:
-        exchange-uri: https://login.confluent.io/oauth/token
+        exchange-uri:
+          prod: https://login.confluent.io/oauth/token
+          stag: https://login-stag.confluent-dev.io/oauth/token
+          devel: https://login.confluent-dev.io/oauth/token
         life-time-seconds: 60
       oauth:
-        authorize-uri: https://login.confluent.io/oauth/authorize
-        client-id: Q93zdbI3FnltpEa9G1gg6tiMuoDDBkwS
-        login-realm-uri: https://confluent.cloud/api/login/realm
+        authorize-uri:
+          prod: https://login.confluent.io/oauth/authorize
+          stag: https://login-stag.confluent-dev.io/oauth/authorize
+          devel: https://login.confluent-dev.io/oauth/authorize
+        client-id:
+          prod: Q93zdbI3FnltpEa9G1gg6tiMuoDDBkwS
+          stag: S5PWFB5AQoLRg7fmsCxtBrGhYwTTzmAu
+          devel: cUmAgrkbAZSqSiy38JE7Ya3i7FwXmyUF
+        login-realm-uri: https://${ide-sidecar.connections.ccloud.base-path}/api/login/realm
         redirect-uri: http://127.0.0.1:26636/gateway/v1/callback-vscode-docs
         # URI redirect to tell the VS Code extension if the auth flow completed successfully or not
         vscode-extension-uri: vscode://confluentinc.vscode-confluent/authCallback
@@ -115,12 +127,12 @@ ide-sidecar:
         absolute-lifetime-seconds: 28800
         max-refresh-attempts: 50
       resources:
-        homepage-uri: https://confluent.cloud/
-        org-list-uri: https://confluent.cloud/api/org/v2/organizations
-        env-list-uri: https://confluent.cloud/api/org/v2/environments
-        lkc-list-uri: https://confluent.cloud/api/cmk/v2/clusters?environment=%s
-        sr-list-uri: https://confluent.cloud/api/srcm/v3/clusters?environment=%s
-        flink-compute-pools-uri: https://confluent.cloud/api/fcpm/v2/compute-pools?environment=%s
+        homepage-uri: https://${ide-sidecar.connections.ccloud.base-path}/
+        org-list-uri: https://${ide-sidecar.connections.ccloud.base-path}/api/org/v2/organizations
+        env-list-uri: https://${ide-sidecar.connections.ccloud.base-path}/api/org/v2/environments
+        lkc-list-uri: https://${ide-sidecar.connections.ccloud.base-path}/api/cmk/v2/clusters?environment=%s
+        sr-list-uri: https://${ide-sidecar.connections.ccloud.base-path}/api/srcm/v3/clusters?environment=%s
+        flink-compute-pools-uri: https://${ide-sidecar.connections.ccloud.base-path}/api/fcpm/v2/compute-pools?environment=%s
 
     confluent-local:
       # We assume that the user is running the confluent-local image with
@@ -143,7 +155,7 @@ ide-sidecar:
       timeout-seconds: 15
       kafka-cluster-cache-ttl: 1800
   flink:
-    url-pattern: https://flink.%s.%s.confluent.cloud
+    url-pattern: https://flink.%s.%s.${ide-sidecar.connections.ccloud.base-path}
   access_token_filter:
     excluded_paths:
       # Following needed by oauth
@@ -158,7 +170,7 @@ ide-sidecar:
     # How often to check?
     interval-seconds: 60
   flink-language-service-proxy:
-    url-pattern: wss://flinkpls.{{ region }}.{{ provider }}.confluent.cloud/lsp
+    url-pattern: wss://flinkpls.{{ region }}.{{ provider }}.${ide-sidecar.connections.ccloud.base-path}/lsp
   proxy:
     ccloud-api-control-plane-regex: "(/artifact.*)|(/fcpm/v2.*)|(/metadata/security/v2alpha1/authorize)"
     ccloud-api-flink-data-plane-regex: "(/sql/v1.*)"
@@ -262,7 +274,7 @@ quarkus:
   jackson:
     fail-on-unknown-properties: true
   native:
-    additional-build-args: --initialize-at-run-time=io.confluent.idesidecar.restapi.auth.CCloudOAuthConfig\,io.confluent.idesidecar.restapi.auth.CCloudOAuthContext\,io.confluent.ide.sidecar.restapi.util.WebClientFactory\,org.apache.kafka.common.security.authenticator.SaslClientAuthenticator\,org.apache.avro.file.DataFileWriter\,io.confluent.kafka.schemaregistry.avro.AvroSchemaUtils\,com.github.luben.zstd\,org.xerial.snappy\,io.confluent.idesidecar.restapi.application.SnappyNativeLoader
+    additional-build-args: --initialize-at-run-time=io.confluent.idesidecar.restapi.auth.CCloudOAuthConfig\,io.confluent.idesidecar.restapi.auth.CCloudOAuthContext\,io.confluent.ide.sidecar.restapi.util.WebClientFactory\,org.apache.kafka.common.security.authenticator.SaslClientAuthenticator\,org.apache.avro.file.DataFileWriter\,io.confluent.kafka.schemaregistry.avro.AvroSchemaUtils\,com.github.luben.zstd\,org.xerial.snappy\,io.confluent.idesidecar.restapi.application.SnappyNativeLoader\,io.confluent.idesidecar.restapi.models.graph.RealCCloudFetcher\,io.confluent.idesidecar.websocket.proxy.ProxyContext\,io.confluent.idesidecar.restapi.proxy.FlinkDataPlaneProxyProcessor
     march: compatibility
     resources:
       includes: libs/**/*,templates/callback.html,templates/callback_failure.html,templates/default.html,templates/reset_password.html
