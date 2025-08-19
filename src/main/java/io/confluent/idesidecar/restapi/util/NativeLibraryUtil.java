@@ -24,12 +24,12 @@ public final class NativeLibraryUtil {
    * Extracts a native library file from the resources folder into a temporary file.
    *
    * @param resourcePath the path to the native library file in the resources folder
-   * @param libraryName the name of the native library file to be extracted
+   * @param tempFileName the name to be used for the temporary file
    * @return the extracted native library file
-   * @throws IOException
-   * @throws IllegalArgumentException
+   * @throws IOException if an error occurs when extracting the library file to the tmp directory
+   * @throws IllegalArgumentException if the native library cannot be found in the resources folder
    */
-  public static File extractNativeLibraryFromResources(String resourcePath, String libraryName)
+  public static File extractNativeLibraryFromResources(String resourcePath, String tempFileName)
       throws IOException, IllegalArgumentException {
 
     // Load the library file from the folder src/main/resources
@@ -47,7 +47,7 @@ public final class NativeLibraryUtil {
     // Extract the library file to a temporary file
     var extractedLibFile = new File(
         System.getProperty("java.io.tmpdir"),
-        libraryName
+        tempFileName
     );
     try (
         var inputStream = new BufferedInputStream(libraryFile.openStream());
