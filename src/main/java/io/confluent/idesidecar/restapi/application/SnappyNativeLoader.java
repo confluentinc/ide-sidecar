@@ -1,12 +1,10 @@
 package io.confluent.idesidecar.restapi.application;
 
+import io.confluent.idesidecar.restapi.util.NativeLibraryUtil;
 import io.quarkus.logging.Log;
 import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import org.xerial.snappy.OSInfo;
 import org.xerial.snappy.SnappyLoader;
@@ -26,11 +24,6 @@ import org.xerial.snappy.SnappyLoader;
 public class SnappyNativeLoader {
 
   /**
-   * The size of the buffer used to read the native Snappy library file from the classpath.
-   */
-  private static final int BUFFER_SIZE = 8192;
-
-  /**
    * This method is called during the startup of the Quarkus application to load the native Snappy
    * library for the current operating system and platform.
    * It extracts the library from the classpath and sets the necessary system properties for
@@ -43,49 +36,28 @@ public class SnappyNativeLoader {
     var libraryName = System.mapLibraryName("snappyjava");
     // Get path to Snappy library file for the current OS/platform
     var pathForCurrentOs = OSInfo.getNativeLibFolderPathForCurrentOS();
-    // Load the library file from the folder src/main/resources/libs/snappy-java
-    var libraryFile = Thread.currentThread()
-        .getContextClassLoader()
-        .getResource("libs/snappy-java/%s/%s".formatted(pathForCurrentOs, libraryName));
-    // If we can't find the native library file, log an error but do not let the application
-    // startup fail.
-    if (libraryFile == null) {
+    try {
+      var extractedLibFile = NativeLibraryUtil.extractNativeLibraryFromResources(
+          "libs/snappy-java/%s/%s".formatted(pathForCurrentOs, libraryName),
+          libraryName
+      );
+      // Point Snappy to the extracted library stored in the temporary file
+      System.setProperty(
+          SnappyLoader.KEY_SNAPPY_LIB_PATH,
+          extractedLibFile.getParentFile().getAbsolutePath()
+      );
+      System.setProperty(
+          SnappyLoader.KEY_SNAPPY_LIB_NAME,
+          extractedLibFile.getName()
+      );
+    } catch (IllegalArgumentException e) {
       Log.errorf(
           "Could not find native Snappy library for OS=%s and Arch=%s. You probably won't be" +
               " able to consume records that were compressed with Snappy.",
           OSInfo.getOSName(), OSInfo.getArchName()
       );
-      return;
-    }
-    // Extract the library file to a temporary file
-    var extractedLibFile = new File(
-        System.getProperty("java.io.tmpdir"),
-        libraryName
-    );
-    try (
-        var inputStream = new BufferedInputStream(libraryFile.openStream());
-        var fileOS = new FileOutputStream(extractedLibFile)
-    ) {
-      var data = new byte[BUFFER_SIZE];
-      int byteContent;
-      while ((byteContent = inputStream.read(data, 0, BUFFER_SIZE)) != -1) {
-        fileOS.write(data, 0, byteContent);
-      }
     } catch (IOException e) {
       Log.error("Failed to extract Snappy library", e);
     }
-
-    // Point Snappy to the extracted library stored in the temporary file
-    System.setProperty(
-        SnappyLoader.KEY_SNAPPY_LIB_PATH,
-        extractedLibFile.getParentFile().getAbsolutePath()
-    );
-    System.setProperty(
-        SnappyLoader.KEY_SNAPPY_LIB_NAME,
-        extractedLibFile.getName()
-    );
-
-    // Make sure we delete the temporary file when the application exits
-    extractedLibFile.deleteOnExit();
   }
 }
