@@ -26,27 +26,28 @@ public class FlinkPrivateEndpointUtil {
      */
     private record FlinkPrivateEndpointFormat(Pattern pattern, int regionGroup, int providerGroup) {}
 
-    /** Matches flink.{region}.{provider}.private.confluent.cloud */
-    private static final Pattern FORMAT_1 =
+    /** Matches flink.{region}.{provider}.private.confluent.cloud - PLATTC private networking */
+    private static final Pattern PLATTC_FORMAT =
         Pattern.compile("^https?://flink\\.([^.]+)\\.([^.]+)\\.private\\.confluent\\.cloud$", Pattern.CASE_INSENSITIVE);
 
-    /** Matches flink.{domainid}.{region}.{provider}.confluent.cloud */
-    private static final Pattern FORMAT_2 =
+    /** Matches flink.{domainid}.{region}.{provider}.confluent.cloud - CCN private networking */
+    private static final Pattern CCN_DOMAIN_FORMAT =
         Pattern.compile("^https?://flink\\.([^.]+)\\.([^.]+)\\.([^.]+)\\.confluent\\.cloud$", Pattern.CASE_INSENSITIVE);
 
-    /** Matches flink-{nid}.{region}.{provider}.glb.confluent.cloud */
-    private static final Pattern FORMAT_3 =
+    /** Matches flink-{nid}.{region}.{provider}.glb.confluent.cloud - CCN private networking */
+    private static final Pattern CCN_GLB_FORMAT =
         Pattern.compile("^https?://flink-[^.]+\\.([^.]+)\\.([^.]+)\\.glb\\.confluent\\.cloud$", Pattern.CASE_INSENSITIVE);
 
-    /** Matches flink-{peeringid}.{region}.{provider}.confluent.cloud */
-    private static final Pattern FORMAT_4 =
+    /** Matches flink-{peeringid}.{region}.{provider}.confluent.cloud - CCN private networking */
+    private static final Pattern CCN_PEERING_FORMAT =
         Pattern.compile("^https?://flink-[^.]+\\.([^.]+)\\.([^.]+)\\.confluent\\.cloud$", Pattern.CASE_INSENSITIVE);
 
-    private static final List<FlinkPrivateEndpointFormat> FORMATS = List.of(
-        new FlinkPrivateEndpointFormat(FORMAT_1, 1, 2),
-        new FlinkPrivateEndpointFormat(FORMAT_2, 2, 3),
-        new FlinkPrivateEndpointFormat(FORMAT_3, 1, 2),
-        new FlinkPrivateEndpointFormat(FORMAT_4, 1, 2)
+    // All private networking formats - both PLATTC and CCN are private networking scenarios
+    private static final List<FlinkPrivateEndpointFormat> PRIVATE_FORMATS = List.of(
+        new FlinkPrivateEndpointFormat(PLATTC_FORMAT, 1, 2),       // PLATTC
+        new FlinkPrivateEndpointFormat(CCN_DOMAIN_FORMAT, 2, 3),   // CCN
+        new FlinkPrivateEndpointFormat(CCN_GLB_FORMAT, 1, 2),      // CCN
+        new FlinkPrivateEndpointFormat(CCN_PEERING_FORMAT, 1, 2)   // CCN
     );
 
     // Listen for preference changes
@@ -94,7 +95,7 @@ public class FlinkPrivateEndpointUtil {
             return false;
         }
 
-        for (var format : FORMATS) {
+        for (var format : PRIVATE_FORMATS) {
             Matcher matcher = format.pattern().matcher(endpoint);
             if (matcher.matches()) {
                 String endpointRegion = matcher.group(format.regionGroup());
