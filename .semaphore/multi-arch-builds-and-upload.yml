@@ -23,6 +23,8 @@ blocks:
           value: amd64
         - name: SNAPPY_ARCH
           value: x86_64
+        - name: ZSTD_ARCH
+          value: x86_64
       jobs:
         - name: "Build Native Executable (MacOS AMD64)"
           commands:
@@ -49,6 +51,8 @@ blocks:
         - name: ARCH
           value: arm64
         - name: SNAPPY_ARCH
+          value: aarch64
+        - name: ZSTD_ARCH
           value: aarch64
       jobs:
         - name: "Build Native Executable (MacOS ARM64)"
@@ -175,6 +179,7 @@ blocks:
             - |
               Write-Host "Signing native libraries";
               azuresigntool sign -kvu "https://clicodesigningkeyvault.vault.azure.net/" -kvc CLICodeSigningCertificate -kvi $Env:APP_CLIENT_ID -kvs $Env:APP_CLIENT_SECRET --azure-key-vault-tenant-id $Env:APP_TENANT_ID -tr http://timestamp.globalsign.com/tsa/advanced -td sha256 src\main\resources\libs\snappy-java\Windows\x86_64\snappyjava.dll;
+              azuresigntool sign -kvu "https://clicodesigningkeyvault.vault.azure.net/" -kvc CLICodeSigningCertificate -kvi $Env:APP_CLIENT_ID -kvs $Env:APP_CLIENT_SECRET --azure-key-vault-tenant-id $Env:APP_TENANT_ID -tr http://timestamp.globalsign.com/tsa/advanced -td sha256 src\main\resources\libs\zstd-jni\win\amd64\libzstd-jni.dll;
             # Builds native executable for Windows x64
             # TODO: Temporarily disable running tests while we investigate why they fail randomly
             - $Env:QUARKUS_NATIVE_RESOURCES_EXCLUDES="libs/**/*.dylib,libs/**/*.so"
