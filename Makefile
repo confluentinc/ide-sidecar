@@ -1,8 +1,8 @@
 # Intentionally using the project's local settings.xml for all builds
 # and to use the breadth-first dependency collector which is able to fetch dependency POMs in parallel,
 # greatly speeding up cold cache build times
-# 
-MAVEN_ARGS += --settings .mvn/settings.xml -Daether.dependencyCollector.impl=bf 
+#
+MAVEN_ARGS += --settings .mvn/settings.xml -Daether.dependencyCollector.impl=bf
 
 include ./mk-files/begin.mk
 include ./mk-files/semver.mk
@@ -74,11 +74,13 @@ endif
 .PHONY: ci-sign-notarize-macos-native-libraries
 ci-sign-notarize-macos-native-libraries:
 ifeq ($(CI),true)
-	NATIVE_LIBRARY=src/main/resources/libs/snappy-java/Mac/$(SNAPPY_ARCH)/libsnappyjava.dylib; \
-	codesign -s "Developer ID Application: Confluent, Inc." -v $${NATIVE_LIBRARY} --options=runtime; \
-	zip library_signed.zip $${NATIVE_LIBRARY}; \
+	SNAPPY_NATIVE_LIBRARY=src/main/resources/libs/snappy-java/Mac/$(SNAPPY_ARCH)/libsnappyjava.dylib; \
+	ZSTD_NATIVE_LIBRARY=src/main/resources/libs/zstd-jni/darwin/$(ZSTD_ARCH)/libzstd-jni.dylib; \
+	codesign -s "Developer ID Application: Confluent, Inc." -v $${SNAPPY_NATIVE_LIBRARY} --options=runtime; \
+	codesign -s "Developer ID Application: Confluent, Inc." -v $${ZSTD_NATIVE_LIBRARY} --options=runtime; \
+	zip libraries_signed.zip $${SNAPPY_NATIVE_LIBRARY} $${ZSTD_NATIVE_LIBRARY}; \
 	vault kv get -field apple_key v1/ci/kv/vscodeextension/release | openssl base64 -d -A > auth_key.p8; \
-	xcrun notarytool submit library_signed.zip --apple-id $$(vault kv get -field apple_id_email v1/ci/kv/vscodeextension/release) --team-id $$(vault kv get -field apple_team_id v1/ci/kv/vscodeextension/release) --wait --issuer $$(vault kv get -field apple_issuer v1/ci/kv/vscodeextension/release) --key-id $$(vault kv get -field apple_key_id v1/ci/kv/vscodeextension/release) --key auth_key.p8; \
+	xcrun notarytool submit libraries_signed.zip --apple-id $$(vault kv get -field apple_id_email v1/ci/kv/vscodeextension/release) --team-id $$(vault kv get -field apple_team_id v1/ci/kv/vscodeextension/release) --wait --issuer $$(vault kv get -field apple_issuer v1/ci/kv/vscodeextension/release) --key-id $$(vault kv get -field apple_key_id v1/ci/kv/vscodeextension/release) --key auth_key.p8; \
 	rm auth_key.p8
 endif
 
