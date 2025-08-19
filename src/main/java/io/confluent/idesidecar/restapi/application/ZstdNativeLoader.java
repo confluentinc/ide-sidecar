@@ -1,12 +1,10 @@
 package io.confluent.idesidecar.restapi.application;
 
+import io.confluent.idesidecar.restapi.util.NativeLibraryUtil;
 import io.quarkus.logging.Log;
 import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 
 /**
@@ -22,11 +20,6 @@ import java.io.IOException;
  */
 @ApplicationScoped
 public class ZstdNativeLoader {
-
-  /**
-   * The size of the buffer used to read the native zstd-jni library file from the classpath.
-   */
-  private static final int BUFFER_SIZE = 8192;
 
   /**
    * The system property that overrides the path to the native zstd-jni library.
@@ -89,45 +82,24 @@ public class ZstdNativeLoader {
   void loadLibraryFile(@Observes StartupEvent ev) {
     // Get OS/platform-specific name of the zstd-jni native library
     var libraryName = "libzstd-jni" + libraryExtension();
-    // Load the library file from the folder src/main/resources/libs/zstd-jni
-    var libraryFile = Thread.currentThread()
-        .getContextClassLoader()
-        .getResource("libs/zstd-jni/%s/%s/%s".formatted(currentOs(), currentArch(), libraryName));
-    // If we can't find the native library file, log an error but do not let the application
-    // startup fail.
-    if (libraryFile == null) {
+    try {
+      var extractedLibFile = NativeLibraryUtil.extractNativeLibraryFromResources(
+          "libs/zstd-jni/%s/%s/%s".formatted(currentOs(), currentArch(), libraryName),
+          libraryName
+      );
+      // Point zstd-jni to the extracted library stored in the temporary file
+      System.setProperty(
+          ZSTD_NATIVE_PATH_OVERRIDE,
+          extractedLibFile.getAbsolutePath()
+      );
+    } catch (IllegalArgumentException e) {
       Log.errorf(
           "Could not find native zstd-jni library for OS=%s and Arch=%s. You probably won't be" +
               " able to consume records that were compressed with zstd.",
           currentOs(), currentArch()
       );
-      return;
-    }
-    // Extract the library file to a temporary file
-    var extractedLibFile = new File(
-        System.getProperty("java.io.tmpdir"),
-        libraryName
-    );
-    try (
-        var inputStream = new BufferedInputStream(libraryFile.openStream());
-        var fileOS = new FileOutputStream(extractedLibFile)
-    ) {
-      var data = new byte[BUFFER_SIZE];
-      int byteContent;
-      while ((byteContent = inputStream.read(data, 0, BUFFER_SIZE)) != -1) {
-        fileOS.write(data, 0, byteContent);
-      }
     } catch (IOException e) {
-      Log.error("Failed to extract zstd-jni native library", e);
+      Log.error("Failed to extract zstd-jni library", e);
     }
-
-    // Point zstd-jni to the extracted library stored in the temporary file
-    System.setProperty(
-        ZSTD_NATIVE_PATH_OVERRIDE,
-        extractedLibFile.getAbsolutePath()
-    );
-
-    // Make sure we delete the temporary file when the application exits
-    extractedLibFile.deleteOnExit();
   }
 }
