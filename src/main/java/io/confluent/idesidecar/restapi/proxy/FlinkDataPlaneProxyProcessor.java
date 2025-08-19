@@ -13,6 +13,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.util.List;
 import java.util.Optional;
+import io.quarkus.logging.Log;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
@@ -67,8 +68,18 @@ public class FlinkDataPlaneProxyProcessor extends Processor<ProxyContext, Future
     List<String> privateEndpoints = flinkPrivateEndpointUtil.getPrivateEndpoints(environmentId);
 
     // Try private endpoint first, then fallback to public endpoint
-    String flinkBaseUrl = selectMatchingEndpoint(privateEndpoints, region, providerStr)
-        .orElse(flinkUrlPattern.formatted(region.toLowerCase(), providerStr.toLowerCase()));
+    Optional<String> privateEndpoint = selectMatchingEndpoint(privateEndpoints, region, providerStr);
+    String flinkBaseUrl;
+    String endpointType;
+    if (privateEndpoint.isPresent()) {
+      flinkBaseUrl = privateEndpoint.get();
+      endpointType = "PRIVATE";
+    } else {
+      flinkBaseUrl = flinkUrlPattern.formatted(region.toLowerCase(), providerStr.toLowerCase());
+      endpointType = "PUBLIC";
+    }
+
+    Log.infof("Using %s endpoint: %s", endpointType, flinkBaseUrl);
 
     String path = context.getRequestUri();
 
