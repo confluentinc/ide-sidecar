@@ -42,7 +42,6 @@ public class FlinkPrivateEndpointUtil {
     private static final Pattern CCN_PEERING_FORMAT =
         Pattern.compile("^https?://flink-[^.]+\\.([^.]+)\\.([^.]+)\\.confluent\\.cloud$", Pattern.CASE_INSENSITIVE);
 
-    // All private networking formats - both PLATTC and CCN are private networking scenarios
     private static final List<FlinkPrivateEndpointFormat> PRIVATE_FORMATS = List.of(
         new FlinkPrivateEndpointFormat(PLATTC_FORMAT, 1, 2),       // PLATTC
         new FlinkPrivateEndpointFormat(CCN_DOMAIN_FORMAT, 2, 3),   // CCN
