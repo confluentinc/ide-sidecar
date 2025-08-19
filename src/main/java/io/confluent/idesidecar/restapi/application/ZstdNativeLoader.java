@@ -33,7 +33,7 @@ public class ZstdNativeLoader {
    */
   private static String currentOs() {
     var os = System.getProperty("os.name").toLowerCase();
-    if (os.startsWith("win")){
+    if (os.startsWith("win")) {
       return "win";
     } else if (os.startsWith("mac")) {
       return "darwin";
