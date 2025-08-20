@@ -1,0 +1,6 @@
+custom-dependencies:
+  - name: zstd-jni native (Copyright (c) 2016-present, Facebook, Inc. All rights reserved.)
+    version: 1.5.7-4
+    license: BSD 3-Clause
+    metadata:
+      homepage: https://github.com/luben/zstd-jni/tree/master/src/main/native
