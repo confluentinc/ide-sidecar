@@ -284,6 +284,18 @@ public class ClientConfigurator {
       });
     }
 
+    // Add client ID suffix to common client config if configured
+    if (
+        connection.getSpec() != null &&
+        connection.getSpec().kafkaClusterConfig() != null &&
+        connection.getSpec().kafkaClusterConfig().clientIdSuffix() != null
+    ) {
+      var clientIdWithSuffix =
+          props.getOrDefault(CommonClientConfigs.CLIENT_ID_CONFIG, "").toString()
+              + connection.getSpec().kafkaClusterConfig().clientIdSuffix();
+      props.put(CommonClientConfigs.CLIENT_ID_CONFIG, clientIdWithSuffix);
+    }
+
     return props;
   }
 
