@@ -88,7 +88,7 @@ public class ClientConfiguratorTest {
                         "localhost:9092",
                         null,
                         null,
-                        " - client ID suffix"
+                        " - ws_host_override=localhost"
                     ),
                     null
                 ),
@@ -105,7 +105,7 @@ public class ClientConfiguratorTest {
     // Assert that the consumer client config contains the consumer-specific client.id including the
     // configured client ID suffix; the sidecar version is set to unknown in the test profile
     Assertions.assertEquals(
-        "Confluent for VS Code sidecar unknown - Consumer - client ID suffix",
+        "Confluent for VS Code sidecar unknown - Consumer - ws_host_override=localhost",
         consumerClientConfig.get("client.id")
     );
   }
@@ -140,7 +140,7 @@ public class ClientConfiguratorTest {
                         "localhost:9092",
                         null,
                         null,
-                        " - client ID suffix"
+                        " - ws_host_override=localhost"
                     ),
                     null
                 ),
@@ -157,7 +157,7 @@ public class ClientConfiguratorTest {
     // Assert that the producer client config contains the producer-specific client.id including the
     // configured client ID suffix; the sidecar version is set to unknown in the test profile
     Assertions.assertEquals(
-        "Confluent for VS Code sidecar unknown - Producer - client ID suffix",
+        "Confluent for VS Code sidecar unknown - Producer - ws_host_override=localhost",
         producerClientConfig.get("client.id")
     );
   }
@@ -191,7 +191,7 @@ public class ClientConfiguratorTest {
                         "localhost:9092",
                         null,
                         null,
-                        " - client ID suffix"
+                        " - ws_host_override=localhost"
                     ),
                     null
                 ),
@@ -207,7 +207,7 @@ public class ClientConfiguratorTest {
     // Assert that the admin client config contains the admin-specific client.id including the
     // configured client ID suffix; the sidecar version is set to unknown in the test profile
     Assertions.assertEquals(
-        "Confluent for VS Code sidecar unknown - Admin - client ID suffix",
+        "Confluent for VS Code sidecar unknown - Admin - ws_host_override=localhost",
         adminClientConfig.get("client.id")
     );
   }
