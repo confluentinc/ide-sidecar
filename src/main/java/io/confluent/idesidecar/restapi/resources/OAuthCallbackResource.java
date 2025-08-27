@@ -123,7 +123,7 @@ public class OAuthCallbackResource {
     return Future.succeededFuture(
         callbackFailure
             .data("error", errorMessage)
-            .data("vscode_redirect_uri", Objects.requireNonNullElse(redirectUri, ""))
+            .data("vscode_redirect_uri", Objects.requireNonNullElse(redirectUri, VsCodeExtensionUtil.CCLOUD_OAUTH_VSCODE_EXTENSION_URI))
             .render()
     );
   }
