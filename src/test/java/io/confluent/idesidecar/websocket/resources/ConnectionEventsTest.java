@@ -39,6 +39,7 @@ class ConnectionEventsTest extends AbstractWebsocketTestBase {
               "user",
               new Password("password".toCharArray())
           ),
+          null,
           null
       ),
       new SchemaRegistryConfig(

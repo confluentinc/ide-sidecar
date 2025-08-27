@@ -39,7 +39,7 @@ public class ClientConfiguratorTest {
                 ConnectionSpec.createDirect(
                     TEST_CONNECTION_ID,
                     TEST_CLUSTER_ID,
-                    new KafkaClusterConfig("localhost:9092", null, null),
+                    new KafkaClusterConfig("localhost:9092", null, null, null),
                     null
                 ),
                 null
@@ -75,6 +75,42 @@ public class ClientConfiguratorTest {
   }
 
   @Test
+  void getConsumerClientConfigShouldIncludeClientIdPrefixIfSet() {
+    // Update the connection state to include a client ID prefix
+    Mockito
+        .when(connectionStateManager.getConnectionState(TEST_CONNECTION_ID))
+        .thenReturn(
+            ConnectionStates.from(
+                ConnectionSpec.createDirect(
+                    TEST_CONNECTION_ID,
+                    TEST_CLUSTER_ID,
+                    new KafkaClusterConfig(
+                        "localhost:9092",
+                        null,
+                        null,
+                        " - ws_host_override=localhost"
+                    ),
+                    null
+                ),
+                null
+            )
+        );
+
+    var consumerClientConfig = clientConfigurator.getConsumerClientConfig(
+        TEST_CONNECTION_ID,
+        TEST_CLUSTER_ID,
+        false
+    ).asMap();
+
+    // Assert that the consumer client config contains the consumer-specific client.id including the
+    // configured client ID suffix; the sidecar version is set to unknown in the test profile
+    Assertions.assertEquals(
+        "Confluent for VS Code sidecar unknown - Consumer - ws_host_override=localhost",
+        consumerClientConfig.get("client.id")
+    );
+  }
+
+  @Test
   void getProducerClientConfigShouldIncludeOnlyProducerConfigProps() {
     var producerClientConfig = clientConfigurator.getProducerClientConfig(
         TEST_CONNECTION_ID,
@@ -91,6 +127,42 @@ public class ClientConfiguratorTest {
   }
 
   @Test
+  void getProducerClientConfigShouldIncludeClientIdPrefixIfSet() {
+    // Update the connection state to include a client ID prefix
+    Mockito
+        .when(connectionStateManager.getConnectionState(TEST_CONNECTION_ID))
+        .thenReturn(
+            ConnectionStates.from(
+                ConnectionSpec.createDirect(
+                    TEST_CONNECTION_ID,
+                    TEST_CLUSTER_ID,
+                    new KafkaClusterConfig(
+                        "localhost:9092",
+                        null,
+                        null,
+                        " - ws_host_override=localhost"
+                    ),
+                    null
+                ),
+                null
+            )
+        );
+
+    var producerClientConfig = clientConfigurator.getProducerClientConfig(
+        TEST_CONNECTION_ID,
+        TEST_CLUSTER_ID,
+        false
+    ).asMap();
+
+    // Assert that the producer client config contains the producer-specific client.id including the
+    // configured client ID suffix; the sidecar version is set to unknown in the test profile
+    Assertions.assertEquals(
+        "Confluent for VS Code sidecar unknown - Producer - ws_host_override=localhost",
+        producerClientConfig.get("client.id")
+    );
+  }
+
+  @Test
   void getAdminClientConfigShouldIncludeOnlyAdminConfigProps() {
     var adminClientConfig = clientConfigurator.getAdminClientConfig(
         TEST_CONNECTION_ID,
@@ -101,6 +173,41 @@ public class ClientConfiguratorTest {
     // the sidecar version is set to unknown in the test profile
     Assertions.assertEquals(
         "Confluent for VS Code sidecar unknown - Admin",
+        adminClientConfig.get("client.id")
+    );
+  }
+
+  @Test
+  void getAdminClientConfigShouldIncludeClientIdPrefixIfSet() {
+    // Update the connection state to include a client ID prefix
+    Mockito
+        .when(connectionStateManager.getConnectionState(TEST_CONNECTION_ID))
+        .thenReturn(
+            ConnectionStates.from(
+                ConnectionSpec.createDirect(
+                    TEST_CONNECTION_ID,
+                    TEST_CLUSTER_ID,
+                    new KafkaClusterConfig(
+                        "localhost:9092",
+                        null,
+                        null,
+                        " - ws_host_override=localhost"
+                    ),
+                    null
+                ),
+                null
+            )
+        );
+
+    var adminClientConfig = clientConfigurator.getAdminClientConfig(
+        TEST_CONNECTION_ID,
+        TEST_CLUSTER_ID
+    ).asMap();
+
+    // Assert that the admin client config contains the admin-specific client.id including the
+    // configured client ID suffix; the sidecar version is set to unknown in the test profile
+    Assertions.assertEquals(
+        "Confluent for VS Code sidecar unknown - Admin - ws_host_override=localhost",
         adminClientConfig.get("client.id")
     );
   }
