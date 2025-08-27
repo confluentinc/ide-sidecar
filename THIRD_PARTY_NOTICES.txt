@@ -7,9 +7,9 @@
 
 The following 3rd-party software packages may be used by or distributed with git@github.com:confluentinc/ide-sidecar.git. Any information relevant to third-party vendors listed below are collected using common, reasonable means.
 
-Date generated: 2025-6-30
+Date generated: 2025-8-19
 
-Revision ID: 59de1e160427c741574d79c799abb9cbf3d8fff9
+Revision ID: 045d2f2e396b2c2422a9bff785f924d0141519d4
 
 ================================================================================
 ================================================================================
@@ -58,7 +58,8 @@ No licenses found
 - ArC - Runtime (3.20.0) [Apache-2.0]
 - assembly-plugin-boilerplate (7.7.0) [Apache-2.0]
 - Bean Validation API (2.0.1.Final) [Apache-2.0]
-- brotli4j (1.16.0) [Apache-2.0, MIT]
+- Brotli4j (1.16.0) [Apache-2.0, MIT]
+- Brotli4j (1.16.0) [Apache-2.0]
 - btf (1.3) [Multi-license: Apache-2.0 OR Lesser General Public License, version 3 or greater, LGPL-3.0-only, Apache-2.0]
 - Caffeine cache (3.1.8) [Apache-2.0, CC0-1.0]
 - CDI APIs (4.1.0) [Apache-2.0, GPL-2.0-with-classpath-exception, EPL-2.0]
@@ -78,7 +79,7 @@ No licenses found
 - error-prone annotations (2.36.0) [Apache-2.0]
 - everit-json-schema (1.14.3) [Apache-2.0]
 - FindBugs-jsr305 (3.0.2) [BSD-3-Clause, Apache-2.0, CC-BY-2.5]
-- graphql-java (22.2) [MIT, Apache-2.0, LGPL-2.1-only, EPL-2.0, LGPL-2.1-or-later]
+- graphql-java (22.2) [MIT, LGPL-2.1-only, Apache-2.0, LGPL-2.1-or-later, EPL-2.0]
 - graphql-java-extended-scalars (21.0) [MIT]
 - Gson (2.9.0) [Apache-2.0]
 - Guava InternalFutureFailureAccess and InternalFutures (1.0.1) [Apache-2.0]
@@ -136,7 +137,7 @@ No licenses found
 - kafka-protobuf-serializer (7.7.0) [Apache-2.0, Confluent, proprietary-license]
 - kafka-protobuf-types (7.7.0) [Apache-2.0, Confluent, proprietary-license]
 - kafka-schema-registry-client (7.7.0) [Apache-2.0]
-- kafka-schema-serializer (7.7.0) [Confluent, Apache-2.0, proprietary-license]
+- kafka-schema-serializer (7.7.0) [Apache-2.0, Confluent, proprietary-license]
 - Kotlin Reflect (2.0.21) [Apache-2.0]
 - Kotlin Script Runtime (2.0.21) [Apache-2.0]
 - Kotlin Scripting Common (2.0.21) [Apache-2.0]
@@ -160,7 +161,6 @@ No licenses found
 - MicroProfile OpenAPI API (4.0.2) [Apache-2.0]
 - minimal-json (0.9.5) [MIT]
 - msg-simple (1.2) [Multi-license: Apache-2.0 OR Lesser General Public License, version 3 or greater, LGPL-3.0-only, Apache-2.0]
-- native-linux-x86_64 (1.16.0) [Apache-2.0]
 - Netty/All-in-One (4.1.109.Final) [Apache-2.0]
 - Netty/Buffer (4.1.118.Final) [Apache-2.0]
 - Netty/Codec (4.1.118.Final) [Apache-2.0, cc-pd]
@@ -213,7 +213,7 @@ No licenses found
 - Quarkus - Core - Runtime (3.20.0) [Apache-2.0]
 - Quarkus - Credentials - Runtime (3.20.0) [Apache-2.0]
 - Quarkus - Development mode - SPI (3.20.0) [Apache-2.0]
-- Quarkus - FS Util (0.0.10) [public-domain, Apache-2.0]
+- Quarkus - FS Util (0.0.10) [Apache-2.0, public-domain]
 - Quarkus - Hibernate Validator - Runtime (3.20.0) [Apache-2.0]
 - Quarkus - IDE Launcher (3.20.0) [Apache-2.0]
 - Quarkus - Jackson - Runtime (3.20.0) [Apache-2.0]
@@ -315,16 +315,17 @@ No licenses found
 - Vert.x Auth Common (4.5.13) [EPL-1.0, Apache-2.0, EPL-2.0]
 - Vert.x Bridge Common (4.5.13) [EPL-1.0, Apache-2.0]
 - Vert.x Codgen (4.5.13) [EPL-1.0, Apache-2.0]
-- Vert.x Core (4.5.13) [Apache-2.0, EPL-2.0, EPL-1.0, MIT]
+- Vert.x Core (4.5.13) [EPL-2.0, EPL-1.0, Apache-2.0, MIT]
 - Vert.x URI Template (4.5.13) [EPL-1.0, Apache-2.0, EPL-2.0]
 - Vert.x Web (4.5.13) [EPL-2.0, Apache-2.0, EPL-1.0]
-- Vert.x Web Client (4.5.10) [EPL-1.0, Apache-2.0, EPL-2.0]
-- Vert.x Web Common (4.5.13) [Apache-2.0, EPL-1.0]
+- Vert.x Web Client (4.5.10) [Apache-2.0, EPL-1.0, EPL-2.0]
+- Vert.x Web Common (4.5.13) [EPL-1.0, Apache-2.0]
 - wildfly-common (2.0.1) [Apache-2.0]
 - wire-runtime (4.9.7) [Apache-2.0, BSD-3-Clause]
 - wire-schema (4.9.7) [Apache-2.0]
-- Yasson (3.0.4) [EPL-2.0, BSD-3-Clause, GPL-2.0-with-classpath-exception, EPL-1.0]
-- zstd-jni (1.5.6-4) [BSD-2-Clause]
+- Yasson (3.0.4) [BSD-3-Clause, EPL-2.0, GPL-2.0-with-classpath-exception, EPL-1.0]
+- zstd-jni (1.5.7-4) [BSD-2-Clause]
+- zstd-jni native (Copyright (c) 2016-present, Facebook, Inc. All rights reserved.) (1.5.7-4) [BSD-3-Clause]
 
 
 --------------------------------------------------------------------------------
@@ -3571,6 +3572,10 @@ Package Depth: Direct
 * Declared Licenses *
 Apache-2.0
 
+--------------------------------------------------------------------------------
+File matches:
+pom.xml
+--------------------------------------------------------------------------------
 
 Copyright 2021 Confluent Inc.
 
@@ -3726,7 +3731,7 @@ Authors: Emmanuel Bernard, Emmanuel Bernard, Hardy Ferentschik, Gunnar Morling, 
 Package Download URL: https://repo1.maven.org/maven2/javax/validation/validation-api/2.0.1.Final/validation-api-2.0.1.Final-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: brotli4j (1.16.0)
+Package Title: Brotli4j (1.16.0)
 
 Package Locator: mvn+com.aayushatharva.brotli4j:brotli4j$1.16.0
 
@@ -3809,6 +3814,45 @@ SOFTWARE.
 * Package Info *
 
 Package Download URL: https://repo1.maven.org/maven2/com/aayushatharva/brotli4j/brotli4j/1.16.0/brotli4j-1.16.0-sources.jar
+
+--------------------------------------------------------------------------------
+Package Title: Brotli4j (1.16.0)
+
+Package Locator: mvn+com.aayushatharva.brotli4j:native-linux-x86_64$1.16.0
+
+Package Depth: Transitive
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+Apache-2.0
+
+--------------------------------------------------------------------------------
+File matches:
+com/aayushatharva/brotli4j/linux/x86_64/NativeLoader.java
+META-INF/maven/com.aayushatharva.brotli4j/native-linux-x86_64/pom.xml
+parent-poms/mvn+com.aayushatharva.brotli4j:brotli4j-parent$1.16.0/pom.xml
+parent-poms/mvn+com.aayushatharva.brotli4j:natives$1.16.0/pom.xml
+pom.xml
+--------------------------------------------------------------------------------
+
+Copyright 2020-2023 Aayush Atharva
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+See the License for the specific language governing permissions and limitations under the License.
+
+
+* Package Info *
+
+Package Download URL: https://repo1.maven.org/maven2/com/aayushatharva/brotli4j/native-linux-x86_64/1.16.0/native-linux-x86_64-1.16.0-sources.jar
 
 --------------------------------------------------------------------------------
 Package Title: btf (1.3)
@@ -5999,7 +6043,7 @@ Apache-2.0
 
 --------------------------------------------------------------------------------
 File matches:
-org/apache/kafka/common/errors/InvalidFetchSizeException.java
+org/apache/kafka/common/config/ConfigValue.java
 --------------------------------------------------------------------------------
 
 Apache License
@@ -7529,7 +7573,19 @@ SOFTWARE.
 
 
 * Other Licenses *
-Apache-2.0, LGPL-2.1-only, EPL-2.0, LGPL-2.1-or-later
+LGPL-2.1-only, Apache-2.0, LGPL-2.1-or-later, EPL-2.0
+
+* LGPL-2.1-only *
+--------------------------------------------------------------------------------
+File matches:
+graphql/util/CyclicSchemaAnalyzer.java
+--------------------------------------------------------------------------------
+
+
+Copyright (C) 2013-2023 by Nikolay Ognyanov and Contributors.
+This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; version 2.1.
+This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 * Apache-2.0 *
 --------------------------------------------------------------------------------
@@ -7552,7 +7608,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 See the License for the specific language governing permissions and limitations under the License.
 
-* LGPL-2.1-only *
+* LGPL-2.1-or-later *
 --------------------------------------------------------------------------------
 File matches:
 graphql/util/CyclicSchemaAnalyzer.java
@@ -7560,7 +7616,7 @@ graphql/util/CyclicSchemaAnalyzer.java
 
 
 Copyright (C) 2013-2023 by Nikolay Ognyanov and Contributors.
-This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; version 2.1.
+This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; version 2.1 or any later version.
 This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
@@ -7624,18 +7680,6 @@ THE ACCOMPANYING PROGRAM IS PROVIDED UNDER THE TERMS OF THIS ECLIPSE PUBLIC LICE
    Simply including a copy of this Agreement, including this Exhibit A is not sufficient to license the Source Code under Secondary Licenses.
    If it is not possible or desirable to put the notice in a particular file, then You may include the notice in a location (such as a LICENSE file in a relevant directory) where a recipient would be likely to look for such a notice.
    You may add additional accurate notices of copyright ownership.
-
-* LGPL-2.1-or-later *
---------------------------------------------------------------------------------
-File matches:
-graphql/util/CyclicSchemaAnalyzer.java
---------------------------------------------------------------------------------
-
-
-Copyright (C) 2013-2023 by Nikolay Ognyanov and Contributors.
-This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; version 2.1 or any later version.
-This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
-You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 
 * Package Info *
@@ -21484,7 +21528,7 @@ proprietary-license
 
 --------------------------------------------------------------------------------
 File matches:
-io/confluent/kafka/formatter/json/JsonSchemaMessageFormatter.java
+io/confluent/kafka/serializers/json/KafkaJsonSchemaDeserializer.java
 --------------------------------------------------------------------------------
 
 
@@ -22210,7 +22254,48 @@ Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
-Confluent, Apache-2.0
+Apache-2.0, Confluent
+
+* Apache-2.0 *
+--------------------------------------------------------------------------------
+File matches:
+io/confluent/kafka/formatter/SchemaMessageDeserializer.java
+io/confluent/kafka/formatter/SchemaMessageFormatter.java
+io/confluent/kafka/formatter/SchemaMessageReader.java
+io/confluent/kafka/formatter/SchemaMessageSerializer.java
+io/confluent/kafka/serializers/AbstractKafkaSchemaSerDe.java
+io/confluent/kafka/serializers/AbstractKafkaSchemaSerDeConfig.java
+io/confluent/kafka/serializers/context/NullContextNameStrategy.java
+io/confluent/kafka/serializers/context/strategy/ContextNameStrategy.java
+io/confluent/kafka/serializers/subject/DefaultReferenceSubjectNameStrategy.java
+io/confluent/kafka/serializers/subject/QualifiedReferenceSubjectNameStrategy.java
+io/confluent/kafka/serializers/subject/RecordNameStrategy.java
+io/confluent/kafka/serializers/subject/strategy/ReferenceSubjectNameStrategy.java
+io/confluent/kafka/serializers/subject/strategy/SubjectNameStrategy.java
+io/confluent/kafka/serializers/subject/SubjectNameStrategy.java
+io/confluent/kafka/serializers/subject/TopicNameStrategy.java
+io/confluent/kafka/serializers/subject/TopicRecordNameStrategy.java
+META-INF/maven/io.confluent/kafka-schema-serializer/pom.xml
+parent-poms/mvn+io.confluent:common-parent$7.7.0/pom.xml
+parent-poms/mvn+io.confluent:common$7.7.0/pom.xml
+parent-poms/mvn+io.confluent:kafka-schema-registry-parent$7.7.0/pom.xml
+parent-poms/mvn+io.confluent:rest-utils-parent$7.7.0/pom.xml
+pom.xml
+--------------------------------------------------------------------------------
+
+Copyright 2020 Confluent Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+See the License for the specific language governing permissions and limitations under the License.
 
 * Confluent *
 
@@ -22328,47 +22413,6 @@ the entity on whose behalf you are receiving the Software.
       Agreement or the failure by Confluent to exercise any right hereunder
       will not be construed as a waiver of any subsequent breach of that right
       or as a waiver of any other right.
-
-* Apache-2.0 *
---------------------------------------------------------------------------------
-File matches:
-io/confluent/kafka/formatter/SchemaMessageDeserializer.java
-io/confluent/kafka/formatter/SchemaMessageFormatter.java
-io/confluent/kafka/formatter/SchemaMessageReader.java
-io/confluent/kafka/formatter/SchemaMessageSerializer.java
-io/confluent/kafka/serializers/AbstractKafkaSchemaSerDe.java
-io/confluent/kafka/serializers/AbstractKafkaSchemaSerDeConfig.java
-io/confluent/kafka/serializers/context/NullContextNameStrategy.java
-io/confluent/kafka/serializers/context/strategy/ContextNameStrategy.java
-io/confluent/kafka/serializers/subject/DefaultReferenceSubjectNameStrategy.java
-io/confluent/kafka/serializers/subject/QualifiedReferenceSubjectNameStrategy.java
-io/confluent/kafka/serializers/subject/RecordNameStrategy.java
-io/confluent/kafka/serializers/subject/strategy/ReferenceSubjectNameStrategy.java
-io/confluent/kafka/serializers/subject/strategy/SubjectNameStrategy.java
-io/confluent/kafka/serializers/subject/SubjectNameStrategy.java
-io/confluent/kafka/serializers/subject/TopicNameStrategy.java
-io/confluent/kafka/serializers/subject/TopicRecordNameStrategy.java
-META-INF/maven/io.confluent/kafka-schema-serializer/pom.xml
-parent-poms/mvn+io.confluent:common-parent$7.7.0/pom.xml
-parent-poms/mvn+io.confluent:common$7.7.0/pom.xml
-parent-poms/mvn+io.confluent:kafka-schema-registry-parent$7.7.0/pom.xml
-parent-poms/mvn+io.confluent:rest-utils-parent$7.7.0/pom.xml
-pom.xml
---------------------------------------------------------------------------------
-
-Copyright 2020 Confluent Inc.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-
-See the License for the specific language governing permissions and limitations under the License.
 
 
 * Other Licenses *
@@ -25774,45 +25818,6 @@ See the License for the specific language governing permissions and limitations 
 * Package Info *
 
 Package Download URL: https://repo1.maven.org/maven2/com/github/java-json-tools/msg-simple/1.2/msg-simple-1.2-sources.jar
-
---------------------------------------------------------------------------------
-Package Title: native-linux-x86_64 (1.16.0)
-
-Package Locator: mvn+com.aayushatharva.brotli4j:native-linux-x86_64$1.16.0
-
-Package Depth: Transitive
---------------------------------------------------------------------------------
-
-* Declared Licenses *
-Apache-2.0
-
---------------------------------------------------------------------------------
-File matches:
-com/aayushatharva/brotli4j/linux/x86_64/NativeLoader.java
-META-INF/maven/com.aayushatharva.brotli4j/native-linux-x86_64/pom.xml
-parent-poms/mvn+com.aayushatharva.brotli4j:brotli4j-parent$1.16.0/pom.xml
-parent-poms/mvn+com.aayushatharva.brotli4j:natives$1.16.0/pom.xml
-pom.xml
---------------------------------------------------------------------------------
-
-Copyright 2020-2023 Aayush Atharva
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-
-See the License for the specific language governing permissions and limitations under the License.
-
-
-* Package Info *
-
-Package Download URL: https://repo1.maven.org/maven2/com/aayushatharva/brotli4j/native-linux-x86_64/1.16.0/native-linux-x86_64-1.16.0-sources.jar
 
 --------------------------------------------------------------------------------
 Package Title: Netty/All-in-One (4.1.109.Final)
@@ -31119,9 +31124,8 @@ Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
-public-domain, Apache-2.0
+Apache-2.0, public-domain
 
-* public-domain *
 * Apache-2.0 *
 --------------------------------------------------------------------------------
 File matches:
@@ -31144,6 +31148,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 See the License for the specific language governing permissions and limitations under the License.
 
+* public-domain *
 
 * Package Info *
 
@@ -33441,10 +33446,6 @@ Package Depth: Direct
 * Declared Licenses *
 MIT
 
---------------------------------------------------------------------------------
-File matches:
-pom.xml
---------------------------------------------------------------------------------
 
 Copyright (c) <year> <copyright holders>
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -36027,528 +36028,7 @@ Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
-Apache-2.0, EPL-2.0, EPL-1.0
-
-* Apache-2.0 *
---------------------------------------------------------------------------------
-File matches:
-examples/BufferExamples.java
-examples/cli/AnnotatedCli.java
-examples/cli/CLIExamples.java
-examples/cli/MyCommand.java
-examples/cli/package-info.java
-examples/cli/TypedCLIExamples.java
-examples/CompletionStageInteropExamples.java
-examples/ConfigurableVerticleExamples.java
-examples/CoreExamples.java
-examples/DatagramExamples.java
-examples/DNSExamples.java
-examples/EventBusExamples.java
-examples/FileSystemExamples.java
-examples/HTTP2Examples.java
-examples/HTTPExamples.java
-examples/JsonPointerExamples.java
-examples/NetExamples.java
-examples/package-info.java
-examples/ParseToolsExamples.java
-examples/SharedDataExamples.java
-examples/StreamsExamples.java
-examples/VirtualThreadExamples.java
-io/vertx/core/AbstractVerticle.java
-io/vertx/core/AsyncResult.java
-io/vertx/core/buffer/Buffer.java
-io/vertx/core/buffer/impl/BufferImpl.java
-io/vertx/core/buffer/impl/PartialPooledByteBufAllocator.java
-io/vertx/core/buffer/impl/VertxByteBufAllocator.java
-io/vertx/core/buffer/impl/VertxHeapByteBuf.java
-io/vertx/core/buffer/impl/VertxUnsafeHeapByteBuf.java
-io/vertx/core/buffer/package-info.java
-io/vertx/core/cli/AmbiguousOptionException.java
-io/vertx/core/cli/annotations/Argument.java
-io/vertx/core/cli/annotations/CLIConfigurator.java
-io/vertx/core/cli/annotations/ConvertedBy.java
-io/vertx/core/cli/annotations/DefaultValue.java
-io/vertx/core/cli/annotations/Description.java
-io/vertx/core/cli/annotations/Hidden.java
-io/vertx/core/cli/annotations/Name.java
-io/vertx/core/cli/annotations/Option.java
-io/vertx/core/cli/annotations/package-info.java
-io/vertx/core/cli/annotations/ParsedAsList.java
-io/vertx/core/cli/annotations/Summary.java
-io/vertx/core/cli/Argument.java
-io/vertx/core/cli/CLI.java
-io/vertx/core/cli/CLIException.java
-io/vertx/core/cli/CommandLine.java
-io/vertx/core/cli/converters/BooleanConverter.java
-io/vertx/core/cli/converters/CharacterConverter.java
-io/vertx/core/cli/converters/ConstructorBasedConverter.java
-io/vertx/core/cli/converters/Converter.java
-io/vertx/core/cli/converters/Converters.java
-io/vertx/core/cli/converters/FromBasedConverter.java
-io/vertx/core/cli/converters/FromStringBasedConverter.java
-io/vertx/core/cli/converters/ValueOfBasedConverter.java
-io/vertx/core/cli/impl/DefaultCLI.java
-io/vertx/core/cli/impl/DefaultCommandLine.java
-io/vertx/core/cli/impl/DefaultParser.java
-io/vertx/core/cli/impl/ReflectionUtils.java
-io/vertx/core/cli/InvalidValueException.java
-io/vertx/core/cli/MissingOptionException.java
-io/vertx/core/cli/MissingValueException.java
-io/vertx/core/cli/Option.java
-io/vertx/core/cli/package-info.java
-io/vertx/core/cli/TypedArgument.java
-io/vertx/core/cli/TypedOption.java
-io/vertx/core/cli/UsageMessageFormatter.java
-io/vertx/core/Closeable.java
-io/vertx/core/CompositeFuture.java
-io/vertx/core/Context.java
-io/vertx/core/datagram/DatagramPacket.java
-io/vertx/core/datagram/DatagramSocket.java
-io/vertx/core/datagram/DatagramSocketOptions.java
-io/vertx/core/datagram/impl/DatagramPacketImpl.java
-io/vertx/core/datagram/impl/DatagramSocketImpl.java
-io/vertx/core/datagram/impl/InternetProtocolFamily.java
-io/vertx/core/datagram/impl/PacketWriteStreamImpl.java
-io/vertx/core/datagram/package-info.java
-io/vertx/core/DeploymentOptions.java
-io/vertx/core/dns/AddressResolverOptions.java
-io/vertx/core/dns/DnsClient.java
-io/vertx/core/dns/DnsClientOptions.java
-io/vertx/core/dns/DnsException.java
-io/vertx/core/dns/DnsResponseCode.java
-io/vertx/core/dns/impl/decoder/package-info.java
-io/vertx/core/dns/impl/decoder/RecordDecoder.java
-io/vertx/core/dns/impl/decoder/StartOfAuthorityRecord.java
-io/vertx/core/dns/impl/DnsClientImpl.java
-io/vertx/core/dns/impl/MxRecordImpl.java
-io/vertx/core/dns/impl/SrvRecordImpl.java
-io/vertx/core/dns/MxRecord.java
-io/vertx/core/dns/package-info.java
-io/vertx/core/dns/SrvRecord.java
-io/vertx/core/eventbus/AddressHelper.java
-io/vertx/core/eventbus/DeliveryContext.java
-io/vertx/core/eventbus/DeliveryOptions.java
-io/vertx/core/eventbus/EventBus.java
-io/vertx/core/eventbus/EventBusOptions.java
-io/vertx/core/eventbus/impl/BodyReadStream.java
-io/vertx/core/eventbus/impl/clustered/ClusteredEventBus.java
-io/vertx/core/eventbus/impl/clustered/ClusteredHandlerHolder.java
-io/vertx/core/eventbus/impl/clustered/ClusteredMessage.java
-io/vertx/core/eventbus/impl/clustered/ConnectionHolder.java
-io/vertx/core/eventbus/impl/clustered/Serializer.java
-io/vertx/core/eventbus/impl/CodecManager.java
-io/vertx/core/eventbus/impl/codecs/BooleanMessageCodec.java
-io/vertx/core/eventbus/impl/codecs/BufferMessageCodec.java
-io/vertx/core/eventbus/impl/codecs/ByteArrayMessageCodec.java
-io/vertx/core/eventbus/impl/codecs/ByteMessageCodec.java
-io/vertx/core/eventbus/impl/codecs/CharMessageCodec.java
-io/vertx/core/eventbus/impl/codecs/ClusterSerializableCodec.java
-io/vertx/core/eventbus/impl/codecs/DoubleMessageCodec.java
-io/vertx/core/eventbus/impl/codecs/FloatMessageCodec.java
-io/vertx/core/eventbus/impl/codecs/IntMessageCodec.java
-io/vertx/core/eventbus/impl/codecs/JsonArrayMessageCodec.java
-io/vertx/core/eventbus/impl/codecs/JsonObjectMessageCodec.java
-io/vertx/core/eventbus/impl/codecs/LongMessageCodec.java
-io/vertx/core/eventbus/impl/codecs/NullMessageCodec.java
-io/vertx/core/eventbus/impl/codecs/PingMessageCodec.java
-io/vertx/core/eventbus/impl/codecs/ReplyExceptionMessageCodec.java
-io/vertx/core/eventbus/impl/codecs/SerializableCodec.java
-io/vertx/core/eventbus/impl/codecs/ShortMessageCodec.java
-io/vertx/core/eventbus/impl/codecs/StringMessageCodec.java
-io/vertx/core/eventbus/impl/DefaultSerializableChecker.java
-io/vertx/core/eventbus/impl/DeliveryContextBase.java
-io/vertx/core/eventbus/impl/EventBusImpl.java
-io/vertx/core/eventbus/impl/EventBusInternal.java
-io/vertx/core/eventbus/impl/HandlerHolder.java
-io/vertx/core/eventbus/impl/HandlerRegistration.java
-io/vertx/core/eventbus/impl/MessageConsumerImpl.java
-io/vertx/core/eventbus/impl/MessageImpl.java
-io/vertx/core/eventbus/impl/MessageProducerImpl.java
-io/vertx/core/eventbus/impl/MessageTagExtractor.java
-io/vertx/core/eventbus/impl/OutboundDeliveryContext.java
-io/vertx/core/eventbus/impl/ReplyHandler.java
-io/vertx/core/eventbus/Message.java
-io/vertx/core/eventbus/MessageCodec.java
-io/vertx/core/eventbus/MessageConsumer.java
-io/vertx/core/eventbus/MessageProducer.java
-io/vertx/core/eventbus/package-info.java
-io/vertx/core/eventbus/ReplyException.java
-io/vertx/core/eventbus/ReplyFailure.java
-io/vertx/core/Expectation.java
-io/vertx/core/file/AsyncFile.java
-io/vertx/core/file/AsyncFileLock.java
-io/vertx/core/file/CopyOptions.java
-io/vertx/core/file/FileProps.java
-io/vertx/core/file/FileSystem.java
-io/vertx/core/file/FileSystemException.java
-io/vertx/core/file/FileSystemOptions.java
-io/vertx/core/file/FileSystemProps.java
-io/vertx/core/file/impl/AsyncFileImpl.java
-io/vertx/core/file/impl/AsyncFileLockImpl.java
-io/vertx/core/file/impl/FileCache.java
-io/vertx/core/file/impl/FilePropsImpl.java
-io/vertx/core/file/impl/FileResolverImpl.java
-io/vertx/core/file/impl/FileSystemImpl.java
-io/vertx/core/file/impl/FileSystemPropsImpl.java
-io/vertx/core/file/impl/WindowsFileSystem.java
-io/vertx/core/file/OpenOptions.java
-io/vertx/core/file/package-info.java
-io/vertx/core/Future.java
-io/vertx/core/Handler.java
-io/vertx/core/http/ClientAuth.java
-io/vertx/core/http/ClientWebSocket.java
-io/vertx/core/http/ConnectionPoolTooBusyException.java
-io/vertx/core/http/Cookie.java
-io/vertx/core/http/CookieSameSite.java
-io/vertx/core/http/GoAway.java
-io/vertx/core/http/Http2Settings.java
-io/vertx/core/http/HttpClient.java
-io/vertx/core/http/HttpClientBuilder.java
-io/vertx/core/http/HttpClientOptions.java
-io/vertx/core/http/HttpClientRequest.java
-io/vertx/core/http/HttpClientResponse.java
-io/vertx/core/http/HttpClosedException.java
-io/vertx/core/http/HttpConnection.java
-io/vertx/core/http/HttpFrame.java
-io/vertx/core/http/HttpHeaders.java
-io/vertx/core/http/HttpMethod.java
-io/vertx/core/http/HttpResponseExpectation.java
-io/vertx/core/http/HttpResponseHead.java
-io/vertx/core/http/HttpServer.java
-io/vertx/core/http/HttpServerFileUpload.java
-io/vertx/core/http/HttpServerOptions.java
-io/vertx/core/http/HttpServerRequest.java
-io/vertx/core/http/HttpServerResponse.java
-io/vertx/core/http/HttpVersion.java
-io/vertx/core/http/impl/AssembledFullHttpRequest.java
-io/vertx/core/http/impl/AssembledFullHttpResponse.java
-io/vertx/core/http/impl/AssembledHttpRequest.java
-io/vertx/core/http/impl/AssembledHttpResponse.java
-io/vertx/core/http/impl/AssembledLastHttpContent.java
-io/vertx/core/http/impl/cgbystrom/FlashPolicyHandler.java
-io/vertx/core/http/impl/ClientHttpEndpointBase.java
-io/vertx/core/http/impl/ClientWebSocketImpl.java
-io/vertx/core/http/impl/ClientWebSocketInternal.java
-io/vertx/core/http/impl/CookieImpl.java
-io/vertx/core/http/impl/CookieJar.java
-io/vertx/core/http/impl/EndpointKey.java
-io/vertx/core/http/impl/headers/HeadersAdaptor.java
-io/vertx/core/http/impl/headers/HeadersMultiMap.java
-io/vertx/core/http/impl/headers/Http2HeadersAdaptor.java
-io/vertx/core/http/impl/Http1xClientConnection.java
-io/vertx/core/http/impl/Http1xConnectionBase.java
-io/vertx/core/http/impl/Http1xOrH2CHandler.java
-io/vertx/core/http/impl/Http1xServerConnection.java
-io/vertx/core/http/impl/Http1xServerRequest.java
-io/vertx/core/http/impl/Http1xServerRequestHandler.java
-io/vertx/core/http/impl/Http1xServerResponse.java
-io/vertx/core/http/impl/Http1xUpgradeToH2CHandler.java
-io/vertx/core/http/impl/Http2ClientConnection.java
-io/vertx/core/http/impl/Http2ConnectionBase.java
-io/vertx/core/http/impl/Http2ServerConnection.java
-io/vertx/core/http/impl/Http2ServerRequest.java
-io/vertx/core/http/impl/Http2ServerResponse.java
-io/vertx/core/http/impl/Http2ServerStream.java
-io/vertx/core/http/impl/Http2ServerStreamHandler.java
-io/vertx/core/http/impl/Http2UpgradeClientConnection.java
-io/vertx/core/http/impl/HttpChannelConnector.java
-io/vertx/core/http/impl/HttpChunkContentCompressor.java
-io/vertx/core/http/impl/HttpClientBase.java
-io/vertx/core/http/impl/HttpClientConnection.java
-io/vertx/core/http/impl/HttpClientImpl.java
-io/vertx/core/http/impl/HttpClientInternal.java
-io/vertx/core/http/impl/HttpClientPush.java
-io/vertx/core/http/impl/HttpClientRequestBase.java
-io/vertx/core/http/impl/HttpClientRequestImpl.java
-io/vertx/core/http/impl/HttpClientRequestPushPromise.java
-io/vertx/core/http/impl/HttpClientResponseImpl.java
-io/vertx/core/http/impl/HttpClientStream.java
-io/vertx/core/http/impl/HttpEventHandler.java
-io/vertx/core/http/impl/HttpFrameImpl.java
-io/vertx/core/http/impl/HttpNetSocket.java
-io/vertx/core/http/impl/HttpRequestHead.java
-io/vertx/core/http/impl/HttpResponseHead.java
-io/vertx/core/http/impl/HttpServerConnection.java
-io/vertx/core/http/impl/HttpServerConnectionHandler.java
-io/vertx/core/http/impl/HttpServerFileUploadImpl.java
-io/vertx/core/http/impl/HttpServerImpl.java
-io/vertx/core/http/impl/HttpServerRequestInternal.java
-io/vertx/core/http/impl/HttpServerWorker.java
-io/vertx/core/http/impl/HttpUtils.java
-io/vertx/core/http/impl/MimeMapping.java
-io/vertx/core/http/impl/NettyFileUpload.java
-io/vertx/core/http/impl/NettyFileUploadDataFactory.java
-io/vertx/core/http/impl/ServerCookie.java
-io/vertx/core/http/impl/ServerWebSocketImpl.java
-io/vertx/core/http/impl/SharedClientHttpStreamEndpoint.java
-io/vertx/core/http/impl/SharedHttpClient.java
-io/vertx/core/http/impl/SharedWebSocketClient.java
-io/vertx/core/http/impl/VertxHttp2ClientUpgradeCodec.java
-io/vertx/core/http/impl/VertxHttp2ConnectionHandler.java
-io/vertx/core/http/impl/VertxHttp2ConnectionHandlerBuilder.java
-io/vertx/core/http/impl/VertxHttp2Stream.java
-io/vertx/core/http/impl/VertxHttpRequestDecoder.java
-io/vertx/core/http/impl/VertxHttpResponseEncoder.java
-io/vertx/core/http/impl/WebSocketClientImpl.java
-io/vertx/core/http/impl/WebSocketEndpoint.java
-io/vertx/core/http/impl/WebSocketHandshakeInboundHandler.java
-io/vertx/core/http/impl/WebSocketImpl.java
-io/vertx/core/http/impl/WebSocketImplBase.java
-io/vertx/core/http/impl/WebSocketInternal.java
-io/vertx/core/http/impl/ws/WebSocketFrameImpl.java
-io/vertx/core/http/impl/ws/WebSocketFrameInternal.java
-io/vertx/core/http/package-info.java
-io/vertx/core/http/PoolOptions.java
-io/vertx/core/http/RequestOptions.java
-io/vertx/core/http/ServerWebSocket.java
-io/vertx/core/http/ServerWebSocketHandshake.java
-io/vertx/core/http/StreamPriority.java
-io/vertx/core/http/StreamResetException.java
-io/vertx/core/http/UpgradeRejectedException.java
-io/vertx/core/http/WebSocket.java
-io/vertx/core/http/WebSocketBase.java
-io/vertx/core/http/WebSocketClient.java
-io/vertx/core/http/WebSocketClientOptions.java
-io/vertx/core/http/WebSocketConnectOptions.java
-io/vertx/core/http/WebSocketFrame.java
-io/vertx/core/http/WebSocketFrameType.java
-io/vertx/core/http/WebsocketVersion.java
-io/vertx/core/impl/AddressResolver.java
-io/vertx/core/impl/Args.java
-io/vertx/core/impl/Arguments.java
-io/vertx/core/impl/btc/BlockedThreadChecker.java
-io/vertx/core/impl/btc/BlockedThreadEvent.java
-io/vertx/core/impl/btc/ThreadInfo.java
-io/vertx/core/impl/ClassLoaderHolder.java
-io/vertx/core/impl/CloseFuture.java
-io/vertx/core/impl/ClusterSerializableUtils.java
-io/vertx/core/impl/ConcurrentHashSet.java
-io/vertx/core/impl/ContextBase.java
-io/vertx/core/impl/ContextImpl.java
-io/vertx/core/impl/ContextInternal.java
-io/vertx/core/impl/ContextLocalImpl.java
-io/vertx/core/impl/ConversionHelper.java
-io/vertx/core/impl/cpu/CpuCoreSensor.java
-io/vertx/core/impl/cpu/LICENSE
-io/vertx/core/impl/Deployment.java
-io/vertx/core/impl/DeploymentManager.java
-io/vertx/core/impl/DuplicatedContext.java
-io/vertx/core/impl/EventExecutor.java
-io/vertx/core/impl/EventLoopExecutor.java
-io/vertx/core/impl/FailoverCompleteHandler.java
-io/vertx/core/impl/future/CompositeFutureImpl.java
-io/vertx/core/impl/future/Composition.java
-io/vertx/core/impl/future/Eventually.java
-io/vertx/core/impl/future/Expect.java
-io/vertx/core/impl/future/FailedFuture.java
-io/vertx/core/impl/future/FixedMapping.java
-io/vertx/core/impl/future/FixedOtherwise.java
-io/vertx/core/impl/future/FutureBase.java
-io/vertx/core/impl/future/FutureImpl.java
-io/vertx/core/impl/future/FutureInternal.java
-io/vertx/core/impl/future/Listener.java
-io/vertx/core/impl/future/Mapping.java
-io/vertx/core/impl/future/Operation.java
-io/vertx/core/impl/future/Otherwise.java
-io/vertx/core/impl/future/PromiseImpl.java
-io/vertx/core/impl/future/PromiseInternal.java
-io/vertx/core/impl/future/SucceededFuture.java
-io/vertx/core/impl/future/Transformation.java
-io/vertx/core/impl/HAManager.java
-io/vertx/core/impl/IsolatingClassLoader.java
-io/vertx/core/impl/JavaVerticleFactory.java
-io/vertx/core/impl/launcher/CommandLineUtils.java
-io/vertx/core/impl/launcher/commands/BareCommand.java
-io/vertx/core/impl/launcher/commands/BareCommandFactory.java
-io/vertx/core/impl/launcher/commands/ClasspathHandler.java
-io/vertx/core/impl/launcher/commands/ExecUtils.java
-io/vertx/core/impl/launcher/commands/FileSelector.java
-io/vertx/core/impl/launcher/commands/ListCommand.java
-io/vertx/core/impl/launcher/commands/ListCommandFactory.java
-io/vertx/core/impl/launcher/commands/RunCommand.java
-io/vertx/core/impl/launcher/commands/RunCommandFactory.java
-io/vertx/core/impl/launcher/commands/StartCommand.java
-io/vertx/core/impl/launcher/commands/StartCommandFactory.java
-io/vertx/core/impl/launcher/commands/StopCommand.java
-io/vertx/core/impl/launcher/commands/StopCommandFactory.java
-io/vertx/core/impl/launcher/commands/VersionCommand.java
-io/vertx/core/impl/launcher/commands/VersionCommandFactory.java
-io/vertx/core/impl/launcher/commands/VertxIsolatedDeployer.java
-io/vertx/core/impl/launcher/commands/Watcher.java
-io/vertx/core/impl/launcher/ServiceCommandFactoryLoader.java
-io/vertx/core/impl/launcher/VertxCommandLauncher.java
-io/vertx/core/impl/launcher/VertxLifecycleHooks.java
-io/vertx/core/impl/LoaderManager.java
-io/vertx/core/impl/LocalSeq.java
-io/vertx/core/impl/logging/Logger.java
-io/vertx/core/impl/logging/LoggerAdapter.java
-io/vertx/core/impl/logging/LoggerFactory.java
-io/vertx/core/impl/NoStackTraceException.java
-io/vertx/core/impl/NoStackTraceThrowable.java
-io/vertx/core/impl/NoStackTraceTimeoutException.java
-io/vertx/core/impl/resolver/DefaultResolverProvider.java
-io/vertx/core/impl/resolver/DnsResolverProvider.java
-io/vertx/core/impl/SerializableUtils.java
-io/vertx/core/impl/SharedClientHolder.java
-io/vertx/core/impl/TaskQueue.java
-io/vertx/core/impl/ThreadPerTaskExecutorService.java
-io/vertx/core/impl/TimerImpl.java
-io/vertx/core/impl/transports/EpollTransport.java
-io/vertx/core/impl/transports/JDKTransport.java
-io/vertx/core/impl/transports/KQueueTransport.java
-io/vertx/core/impl/Utils.java
-io/vertx/core/impl/utils/ConcurrentCyclicSequence.java
-io/vertx/core/impl/verticle/CompilingClassLoader.java
-io/vertx/core/impl/verticle/CustomJavaFileObject.java
-io/vertx/core/impl/verticle/JavaSourceContext.java
-io/vertx/core/impl/verticle/MemoryFileManager.java
-io/vertx/core/impl/verticle/PackageHelper.java
-io/vertx/core/impl/VerticleManager.java
-io/vertx/core/impl/VertxBuilder.java
-io/vertx/core/impl/VertxImpl.java
-io/vertx/core/impl/VertxInternal.java
-io/vertx/core/impl/VertxThread.java
-io/vertx/core/impl/VertxWrapper.java
-io/vertx/core/impl/WorkerExecutor.java
-io/vertx/core/impl/WorkerExecutorImpl.java
-io/vertx/core/impl/WorkerExecutorInternal.java
-io/vertx/core/impl/WorkerPool.java
-io/vertx/core/impl/WorkerTask.java
-io/vertx/core/impl/WorkerTaskQueue.java
-io/vertx/core/json/DecodeException.java
-io/vertx/core/json/EncodeException.java
-io/vertx/core/json/impl/JsonUtil.java
-io/vertx/core/json/jackson/BufferDeserializer.java
-io/vertx/core/json/jackson/BufferSerializer.java
-io/vertx/core/json/jackson/ByteArrayDeserializer.java
-io/vertx/core/json/jackson/ByteArraySerializer.java
-io/vertx/core/json/jackson/DatabindCodec.java
-io/vertx/core/json/jackson/InstantDeserializer.java
-io/vertx/core/json/jackson/InstantSerializer.java
-io/vertx/core/json/jackson/JacksonCodec.java
-io/vertx/core/json/jackson/JacksonFactory.java
-io/vertx/core/json/jackson/JsonArraySerializer.java
-io/vertx/core/json/jackson/JsonObjectSerializer.java
-io/vertx/core/json/jackson/VertxModule.java
-io/vertx/core/json/Json.java
-io/vertx/core/json/JsonArray.java
-io/vertx/core/json/JsonObject.java
-io/vertx/core/json/pointer/impl/JsonPointerImpl.java
-io/vertx/core/json/pointer/impl/JsonPointerIteratorImpl.java
-io/vertx/core/json/pointer/JsonPointer.java
-io/vertx/core/json/pointer/JsonPointerIterator.java
-io/vertx/core/Launcher.java
-io/vertx/core/logging/JULLogDelegate.java
-io/vertx/core/logging/JULLogDelegateFactory.java
-io/vertx/core/logging/Log4j2LogDelegate.java
-io/vertx/core/logging/Log4j2LogDelegateFactory.java
-io/vertx/core/logging/Logger.java
-io/vertx/core/logging/LoggerFactory.java
-io/vertx/core/logging/SLF4JLogDelegate.java
-io/vertx/core/logging/SLF4JLogDelegateFactory.java
-io/vertx/core/logging/VertxLoggerFormatter.java
-io/vertx/core/metrics/impl/DummyVertxMetrics.java
-io/vertx/core/metrics/Measured.java
-io/vertx/core/metrics/MetricsOptions.java
-io/vertx/core/metrics/package-info.java
-io/vertx/core/MultiMap.java
-io/vertx/core/net/ClientOptionsBase.java
-io/vertx/core/net/impl/AsyncResolveConnectHelper.java
-io/vertx/core/net/impl/ChannelProvider.java
-io/vertx/core/net/impl/ConnectionBase.java
-io/vertx/core/net/impl/KeyStoreHelper.java
-io/vertx/core/net/impl/NetClientBuilder.java
-io/vertx/core/net/impl/NetClientImpl.java
-io/vertx/core/net/impl/NetServerImpl.java
-io/vertx/core/net/impl/NetSocketImpl.java
-io/vertx/core/net/impl/NetSocketInternal.java
-io/vertx/core/net/impl/pkcs1/LICENSE
-io/vertx/core/net/impl/pkcs1/PrivateKeyParser.java
-io/vertx/core/net/impl/pool/CombinerExecutor.java
-io/vertx/core/net/impl/pool/ConnectionManager.java
-io/vertx/core/net/impl/pool/ConnectionPool.java
-io/vertx/core/net/impl/pool/ConnectResult.java
-io/vertx/core/net/impl/pool/Endpoint.java
-io/vertx/core/net/impl/pool/EndpointProvider.java
-io/vertx/core/net/impl/pool/Executor.java
-io/vertx/core/net/impl/pool/Lease.java
-io/vertx/core/net/impl/pool/PoolConnection.java
-io/vertx/core/net/impl/pool/PoolConnector.java
-io/vertx/core/net/impl/pool/PoolWaiter.java
-io/vertx/core/net/impl/pool/SemaphoreExecutor.java
-io/vertx/core/net/impl/ProxyFilter.java
-io/vertx/core/net/impl/SelfSignedCertificateImpl.java
-io/vertx/core/net/impl/ServerChannelLoadBalancer.java
-io/vertx/core/net/impl/ServerID.java
-io/vertx/core/net/impl/SocketAddressImpl.java
-io/vertx/core/net/impl/SslChannelProvider.java
-io/vertx/core/net/impl/SslContextProvider.java
-io/vertx/core/net/impl/SslContextUpdate.java
-io/vertx/core/net/impl/SslHandshakeCompletionHandler.java
-io/vertx/core/net/impl/SSLHelper.java
-io/vertx/core/net/impl/TCPServerBase.java
-io/vertx/core/net/impl/TrustAllTrustManager.java
-io/vertx/core/net/impl/URIDecoder.java
-io/vertx/core/net/impl/VertxEventLoopGroup.java
-io/vertx/core/net/impl/VertxHandler.java
-io/vertx/core/net/impl/VertxSniHandler.java
-io/vertx/core/net/impl/VertxSslContext.java
-io/vertx/core/net/impl/VertxTrustManagerFactory.java
-io/vertx/core/net/JdkSSLEngineOptions.java
-io/vertx/core/net/JksOptions.java
-io/vertx/core/net/KeyCertOptions.java
-io/vertx/core/net/KeyManagerFactoryOptions.java
-io/vertx/core/net/KeyManagerFactoryWrapper.java
-io/vertx/core/net/KeyStoreOptions.java
-io/vertx/core/net/KeyStoreOptionsBase.java
-io/vertx/core/net/NetClient.java
-io/vertx/core/net/NetClientOptions.java
-io/vertx/core/net/NetServer.java
-io/vertx/core/net/NetServerOptions.java
-io/vertx/core/net/NetSocket.java
-io/vertx/core/net/NetworkOptions.java
-io/vertx/core/net/OpenSSLEngineOptions.java
-io/vertx/core/net/PemKeyCertOptions.java
-io/vertx/core/net/PemTrustOptions.java
-io/vertx/core/net/PfxOptions.java
-io/vertx/core/net/ProxyOptions.java
-io/vertx/core/net/ProxyType.java
-io/vertx/core/net/SelfSignedCertificate.java
-io/vertx/core/net/ServerOptionsBase.java
-io/vertx/core/net/SocketAddress.java
-io/vertx/core/net/SSLEngineOptions.java
-io/vertx/core/net/SSLOptions.java
-io/vertx/core/net/TCPSSLOptions.java
-io/vertx/core/net/TrafficShapingOptions.java
-io/vertx/core/net/TrustManagerFactoryOptions.java
-io/vertx/core/net/TrustManagerFactoryWrapper.java
-io/vertx/core/net/TrustOptions.java
-io/vertx/core/Promise.java
-io/vertx/core/ServiceHelper.java
-io/vertx/core/ThreadingModel.java
-io/vertx/core/TimeoutStream.java
-io/vertx/core/Timer.java
-io/vertx/core/Verticle.java
-io/vertx/core/Vertx.java
-io/vertx/core/VertxException.java
-io/vertx/core/VertxOptions.java
-io/vertx/core/WorkerExecutor.java
-META-INF/services/io.vertx.core.spi.launcher.CommandFactory
---------------------------------------------------------------------------------
-
-Copyright 2011-2017 Contributors to the Eclipse Foundation
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-
-See the License for the specific language governing permissions and limitations under the License.
+EPL-2.0, EPL-1.0, Apache-2.0
 
 * EPL-2.0 *
 --------------------------------------------------------------------------------
@@ -37158,6 +36638,527 @@ THE ACCOMPANYING PROGRAM IS PROVIDED UNDER THE TERMS OF THIS ECLIPSE PUBLIC LICE
    All Recipient's rights under this Agreement shall terminate if it fails to comply with any of the material terms or conditions of this Agreement and does not cure such failure in a reasonable period of time after becoming aware of such noncompliance. If all Recipient's rights under this Agreement terminate, Recipient agrees to cease use and distribution of the Program as soon as reasonably practicable. However, Recipient's obligations under this Agreement and any licenses granted by Recipient relating to the Program shall continue and survive.
    Everyone is permitted to copy and distribute copies of this Agreement, but in order to avoid inconsistency the Agreement is copyrighted and may only be modified in the following manner. The Agreement Steward reserves the right to publish new versions (including revisions) of this Agreement from time to time. No one other than the Agreement Steward has the right to modify this Agreement. The Eclipse Foundation is the initial Agreement Steward. The Eclipse Foundation may assign the responsibility to serve as the Agreement Steward to a suitable separate entity. Each new version of the Agreement will be given a distinguishing version number. The Program (including Contributions) may always be distributed subject to the version of the Agreement under which it was received. In addition, after a new version of the Agreement is published, Contributor may elect to distribute the Program (including its Contributions) under the new version. Except as expressly stated in Sections 2(a) and 2(b) above, Recipient receives no rights or licenses to the intellectual property of any Contributor under this Agreement, whether expressly, by implication, estoppel or otherwise. All rights in the Program not expressly granted under this Agreement are reserved.
    This Agreement is governed by the laws of the State of New York and the intellectual property laws of the United States of America. No party to this Agreement will bring a legal action under this Agreement more than one year after the cause of action arose. Each party waives its rights to a jury trial in any resulting litigation.
+
+* Apache-2.0 *
+--------------------------------------------------------------------------------
+File matches:
+examples/BufferExamples.java
+examples/cli/AnnotatedCli.java
+examples/cli/CLIExamples.java
+examples/cli/MyCommand.java
+examples/cli/package-info.java
+examples/cli/TypedCLIExamples.java
+examples/CompletionStageInteropExamples.java
+examples/ConfigurableVerticleExamples.java
+examples/CoreExamples.java
+examples/DatagramExamples.java
+examples/DNSExamples.java
+examples/EventBusExamples.java
+examples/FileSystemExamples.java
+examples/HTTP2Examples.java
+examples/HTTPExamples.java
+examples/JsonPointerExamples.java
+examples/NetExamples.java
+examples/package-info.java
+examples/ParseToolsExamples.java
+examples/SharedDataExamples.java
+examples/StreamsExamples.java
+examples/VirtualThreadExamples.java
+io/vertx/core/AbstractVerticle.java
+io/vertx/core/AsyncResult.java
+io/vertx/core/buffer/Buffer.java
+io/vertx/core/buffer/impl/BufferImpl.java
+io/vertx/core/buffer/impl/PartialPooledByteBufAllocator.java
+io/vertx/core/buffer/impl/VertxByteBufAllocator.java
+io/vertx/core/buffer/impl/VertxHeapByteBuf.java
+io/vertx/core/buffer/impl/VertxUnsafeHeapByteBuf.java
+io/vertx/core/buffer/package-info.java
+io/vertx/core/cli/AmbiguousOptionException.java
+io/vertx/core/cli/annotations/Argument.java
+io/vertx/core/cli/annotations/CLIConfigurator.java
+io/vertx/core/cli/annotations/ConvertedBy.java
+io/vertx/core/cli/annotations/DefaultValue.java
+io/vertx/core/cli/annotations/Description.java
+io/vertx/core/cli/annotations/Hidden.java
+io/vertx/core/cli/annotations/Name.java
+io/vertx/core/cli/annotations/Option.java
+io/vertx/core/cli/annotations/package-info.java
+io/vertx/core/cli/annotations/ParsedAsList.java
+io/vertx/core/cli/annotations/Summary.java
+io/vertx/core/cli/Argument.java
+io/vertx/core/cli/CLI.java
+io/vertx/core/cli/CLIException.java
+io/vertx/core/cli/CommandLine.java
+io/vertx/core/cli/converters/BooleanConverter.java
+io/vertx/core/cli/converters/CharacterConverter.java
+io/vertx/core/cli/converters/ConstructorBasedConverter.java
+io/vertx/core/cli/converters/Converter.java
+io/vertx/core/cli/converters/Converters.java
+io/vertx/core/cli/converters/FromBasedConverter.java
+io/vertx/core/cli/converters/FromStringBasedConverter.java
+io/vertx/core/cli/converters/ValueOfBasedConverter.java
+io/vertx/core/cli/impl/DefaultCLI.java
+io/vertx/core/cli/impl/DefaultCommandLine.java
+io/vertx/core/cli/impl/DefaultParser.java
+io/vertx/core/cli/impl/ReflectionUtils.java
+io/vertx/core/cli/InvalidValueException.java
+io/vertx/core/cli/MissingOptionException.java
+io/vertx/core/cli/MissingValueException.java
+io/vertx/core/cli/Option.java
+io/vertx/core/cli/package-info.java
+io/vertx/core/cli/TypedArgument.java
+io/vertx/core/cli/TypedOption.java
+io/vertx/core/cli/UsageMessageFormatter.java
+io/vertx/core/Closeable.java
+io/vertx/core/CompositeFuture.java
+io/vertx/core/Context.java
+io/vertx/core/datagram/DatagramPacket.java
+io/vertx/core/datagram/DatagramSocket.java
+io/vertx/core/datagram/DatagramSocketOptions.java
+io/vertx/core/datagram/impl/DatagramPacketImpl.java
+io/vertx/core/datagram/impl/DatagramSocketImpl.java
+io/vertx/core/datagram/impl/InternetProtocolFamily.java
+io/vertx/core/datagram/impl/PacketWriteStreamImpl.java
+io/vertx/core/datagram/package-info.java
+io/vertx/core/DeploymentOptions.java
+io/vertx/core/dns/AddressResolverOptions.java
+io/vertx/core/dns/DnsClient.java
+io/vertx/core/dns/DnsClientOptions.java
+io/vertx/core/dns/DnsException.java
+io/vertx/core/dns/DnsResponseCode.java
+io/vertx/core/dns/impl/decoder/package-info.java
+io/vertx/core/dns/impl/decoder/RecordDecoder.java
+io/vertx/core/dns/impl/decoder/StartOfAuthorityRecord.java
+io/vertx/core/dns/impl/DnsClientImpl.java
+io/vertx/core/dns/impl/MxRecordImpl.java
+io/vertx/core/dns/impl/SrvRecordImpl.java
+io/vertx/core/dns/MxRecord.java
+io/vertx/core/dns/package-info.java
+io/vertx/core/dns/SrvRecord.java
+io/vertx/core/eventbus/AddressHelper.java
+io/vertx/core/eventbus/DeliveryContext.java
+io/vertx/core/eventbus/DeliveryOptions.java
+io/vertx/core/eventbus/EventBus.java
+io/vertx/core/eventbus/EventBusOptions.java
+io/vertx/core/eventbus/impl/BodyReadStream.java
+io/vertx/core/eventbus/impl/clustered/ClusteredEventBus.java
+io/vertx/core/eventbus/impl/clustered/ClusteredHandlerHolder.java
+io/vertx/core/eventbus/impl/clustered/ClusteredMessage.java
+io/vertx/core/eventbus/impl/clustered/ConnectionHolder.java
+io/vertx/core/eventbus/impl/clustered/Serializer.java
+io/vertx/core/eventbus/impl/CodecManager.java
+io/vertx/core/eventbus/impl/codecs/BooleanMessageCodec.java
+io/vertx/core/eventbus/impl/codecs/BufferMessageCodec.java
+io/vertx/core/eventbus/impl/codecs/ByteArrayMessageCodec.java
+io/vertx/core/eventbus/impl/codecs/ByteMessageCodec.java
+io/vertx/core/eventbus/impl/codecs/CharMessageCodec.java
+io/vertx/core/eventbus/impl/codecs/ClusterSerializableCodec.java
+io/vertx/core/eventbus/impl/codecs/DoubleMessageCodec.java
+io/vertx/core/eventbus/impl/codecs/FloatMessageCodec.java
+io/vertx/core/eventbus/impl/codecs/IntMessageCodec.java
+io/vertx/core/eventbus/impl/codecs/JsonArrayMessageCodec.java
+io/vertx/core/eventbus/impl/codecs/JsonObjectMessageCodec.java
+io/vertx/core/eventbus/impl/codecs/LongMessageCodec.java
+io/vertx/core/eventbus/impl/codecs/NullMessageCodec.java
+io/vertx/core/eventbus/impl/codecs/PingMessageCodec.java
+io/vertx/core/eventbus/impl/codecs/ReplyExceptionMessageCodec.java
+io/vertx/core/eventbus/impl/codecs/SerializableCodec.java
+io/vertx/core/eventbus/impl/codecs/ShortMessageCodec.java
+io/vertx/core/eventbus/impl/codecs/StringMessageCodec.java
+io/vertx/core/eventbus/impl/DefaultSerializableChecker.java
+io/vertx/core/eventbus/impl/DeliveryContextBase.java
+io/vertx/core/eventbus/impl/EventBusImpl.java
+io/vertx/core/eventbus/impl/EventBusInternal.java
+io/vertx/core/eventbus/impl/HandlerHolder.java
+io/vertx/core/eventbus/impl/HandlerRegistration.java
+io/vertx/core/eventbus/impl/MessageConsumerImpl.java
+io/vertx/core/eventbus/impl/MessageImpl.java
+io/vertx/core/eventbus/impl/MessageProducerImpl.java
+io/vertx/core/eventbus/impl/MessageTagExtractor.java
+io/vertx/core/eventbus/impl/OutboundDeliveryContext.java
+io/vertx/core/eventbus/impl/ReplyHandler.java
+io/vertx/core/eventbus/Message.java
+io/vertx/core/eventbus/MessageCodec.java
+io/vertx/core/eventbus/MessageConsumer.java
+io/vertx/core/eventbus/MessageProducer.java
+io/vertx/core/eventbus/package-info.java
+io/vertx/core/eventbus/ReplyException.java
+io/vertx/core/eventbus/ReplyFailure.java
+io/vertx/core/Expectation.java
+io/vertx/core/file/AsyncFile.java
+io/vertx/core/file/AsyncFileLock.java
+io/vertx/core/file/CopyOptions.java
+io/vertx/core/file/FileProps.java
+io/vertx/core/file/FileSystem.java
+io/vertx/core/file/FileSystemException.java
+io/vertx/core/file/FileSystemOptions.java
+io/vertx/core/file/FileSystemProps.java
+io/vertx/core/file/impl/AsyncFileImpl.java
+io/vertx/core/file/impl/AsyncFileLockImpl.java
+io/vertx/core/file/impl/FileCache.java
+io/vertx/core/file/impl/FilePropsImpl.java
+io/vertx/core/file/impl/FileResolverImpl.java
+io/vertx/core/file/impl/FileSystemImpl.java
+io/vertx/core/file/impl/FileSystemPropsImpl.java
+io/vertx/core/file/impl/WindowsFileSystem.java
+io/vertx/core/file/OpenOptions.java
+io/vertx/core/file/package-info.java
+io/vertx/core/Future.java
+io/vertx/core/Handler.java
+io/vertx/core/http/ClientAuth.java
+io/vertx/core/http/ClientWebSocket.java
+io/vertx/core/http/ConnectionPoolTooBusyException.java
+io/vertx/core/http/Cookie.java
+io/vertx/core/http/CookieSameSite.java
+io/vertx/core/http/GoAway.java
+io/vertx/core/http/Http2Settings.java
+io/vertx/core/http/HttpClient.java
+io/vertx/core/http/HttpClientBuilder.java
+io/vertx/core/http/HttpClientOptions.java
+io/vertx/core/http/HttpClientRequest.java
+io/vertx/core/http/HttpClientResponse.java
+io/vertx/core/http/HttpClosedException.java
+io/vertx/core/http/HttpConnection.java
+io/vertx/core/http/HttpFrame.java
+io/vertx/core/http/HttpHeaders.java
+io/vertx/core/http/HttpMethod.java
+io/vertx/core/http/HttpResponseExpectation.java
+io/vertx/core/http/HttpResponseHead.java
+io/vertx/core/http/HttpServer.java
+io/vertx/core/http/HttpServerFileUpload.java
+io/vertx/core/http/HttpServerOptions.java
+io/vertx/core/http/HttpServerRequest.java
+io/vertx/core/http/HttpServerResponse.java
+io/vertx/core/http/HttpVersion.java
+io/vertx/core/http/impl/AssembledFullHttpRequest.java
+io/vertx/core/http/impl/AssembledFullHttpResponse.java
+io/vertx/core/http/impl/AssembledHttpRequest.java
+io/vertx/core/http/impl/AssembledHttpResponse.java
+io/vertx/core/http/impl/AssembledLastHttpContent.java
+io/vertx/core/http/impl/cgbystrom/FlashPolicyHandler.java
+io/vertx/core/http/impl/ClientHttpEndpointBase.java
+io/vertx/core/http/impl/ClientWebSocketImpl.java
+io/vertx/core/http/impl/ClientWebSocketInternal.java
+io/vertx/core/http/impl/CookieImpl.java
+io/vertx/core/http/impl/CookieJar.java
+io/vertx/core/http/impl/EndpointKey.java
+io/vertx/core/http/impl/headers/HeadersAdaptor.java
+io/vertx/core/http/impl/headers/HeadersMultiMap.java
+io/vertx/core/http/impl/headers/Http2HeadersAdaptor.java
+io/vertx/core/http/impl/Http1xClientConnection.java
+io/vertx/core/http/impl/Http1xConnectionBase.java
+io/vertx/core/http/impl/Http1xOrH2CHandler.java
+io/vertx/core/http/impl/Http1xServerConnection.java
+io/vertx/core/http/impl/Http1xServerRequest.java
+io/vertx/core/http/impl/Http1xServerRequestHandler.java
+io/vertx/core/http/impl/Http1xServerResponse.java
+io/vertx/core/http/impl/Http1xUpgradeToH2CHandler.java
+io/vertx/core/http/impl/Http2ClientConnection.java
+io/vertx/core/http/impl/Http2ConnectionBase.java
+io/vertx/core/http/impl/Http2ServerConnection.java
+io/vertx/core/http/impl/Http2ServerRequest.java
+io/vertx/core/http/impl/Http2ServerResponse.java
+io/vertx/core/http/impl/Http2ServerStream.java
+io/vertx/core/http/impl/Http2ServerStreamHandler.java
+io/vertx/core/http/impl/Http2UpgradeClientConnection.java
+io/vertx/core/http/impl/HttpChannelConnector.java
+io/vertx/core/http/impl/HttpChunkContentCompressor.java
+io/vertx/core/http/impl/HttpClientBase.java
+io/vertx/core/http/impl/HttpClientConnection.java
+io/vertx/core/http/impl/HttpClientImpl.java
+io/vertx/core/http/impl/HttpClientInternal.java
+io/vertx/core/http/impl/HttpClientPush.java
+io/vertx/core/http/impl/HttpClientRequestBase.java
+io/vertx/core/http/impl/HttpClientRequestImpl.java
+io/vertx/core/http/impl/HttpClientRequestPushPromise.java
+io/vertx/core/http/impl/HttpClientResponseImpl.java
+io/vertx/core/http/impl/HttpClientStream.java
+io/vertx/core/http/impl/HttpEventHandler.java
+io/vertx/core/http/impl/HttpFrameImpl.java
+io/vertx/core/http/impl/HttpNetSocket.java
+io/vertx/core/http/impl/HttpRequestHead.java
+io/vertx/core/http/impl/HttpResponseHead.java
+io/vertx/core/http/impl/HttpServerConnection.java
+io/vertx/core/http/impl/HttpServerConnectionHandler.java
+io/vertx/core/http/impl/HttpServerFileUploadImpl.java
+io/vertx/core/http/impl/HttpServerImpl.java
+io/vertx/core/http/impl/HttpServerRequestInternal.java
+io/vertx/core/http/impl/HttpServerWorker.java
+io/vertx/core/http/impl/HttpUtils.java
+io/vertx/core/http/impl/MimeMapping.java
+io/vertx/core/http/impl/NettyFileUpload.java
+io/vertx/core/http/impl/NettyFileUploadDataFactory.java
+io/vertx/core/http/impl/ServerCookie.java
+io/vertx/core/http/impl/ServerWebSocketImpl.java
+io/vertx/core/http/impl/SharedClientHttpStreamEndpoint.java
+io/vertx/core/http/impl/SharedHttpClient.java
+io/vertx/core/http/impl/SharedWebSocketClient.java
+io/vertx/core/http/impl/VertxHttp2ClientUpgradeCodec.java
+io/vertx/core/http/impl/VertxHttp2ConnectionHandler.java
+io/vertx/core/http/impl/VertxHttp2ConnectionHandlerBuilder.java
+io/vertx/core/http/impl/VertxHttp2Stream.java
+io/vertx/core/http/impl/VertxHttpRequestDecoder.java
+io/vertx/core/http/impl/VertxHttpResponseEncoder.java
+io/vertx/core/http/impl/WebSocketClientImpl.java
+io/vertx/core/http/impl/WebSocketEndpoint.java
+io/vertx/core/http/impl/WebSocketHandshakeInboundHandler.java
+io/vertx/core/http/impl/WebSocketImpl.java
+io/vertx/core/http/impl/WebSocketImplBase.java
+io/vertx/core/http/impl/WebSocketInternal.java
+io/vertx/core/http/impl/ws/WebSocketFrameImpl.java
+io/vertx/core/http/impl/ws/WebSocketFrameInternal.java
+io/vertx/core/http/package-info.java
+io/vertx/core/http/PoolOptions.java
+io/vertx/core/http/RequestOptions.java
+io/vertx/core/http/ServerWebSocket.java
+io/vertx/core/http/ServerWebSocketHandshake.java
+io/vertx/core/http/StreamPriority.java
+io/vertx/core/http/StreamResetException.java
+io/vertx/core/http/UpgradeRejectedException.java
+io/vertx/core/http/WebSocket.java
+io/vertx/core/http/WebSocketBase.java
+io/vertx/core/http/WebSocketClient.java
+io/vertx/core/http/WebSocketClientOptions.java
+io/vertx/core/http/WebSocketConnectOptions.java
+io/vertx/core/http/WebSocketFrame.java
+io/vertx/core/http/WebSocketFrameType.java
+io/vertx/core/http/WebsocketVersion.java
+io/vertx/core/impl/AddressResolver.java
+io/vertx/core/impl/Args.java
+io/vertx/core/impl/Arguments.java
+io/vertx/core/impl/btc/BlockedThreadChecker.java
+io/vertx/core/impl/btc/BlockedThreadEvent.java
+io/vertx/core/impl/btc/ThreadInfo.java
+io/vertx/core/impl/ClassLoaderHolder.java
+io/vertx/core/impl/CloseFuture.java
+io/vertx/core/impl/ClusterSerializableUtils.java
+io/vertx/core/impl/ConcurrentHashSet.java
+io/vertx/core/impl/ContextBase.java
+io/vertx/core/impl/ContextImpl.java
+io/vertx/core/impl/ContextInternal.java
+io/vertx/core/impl/ContextLocalImpl.java
+io/vertx/core/impl/ConversionHelper.java
+io/vertx/core/impl/cpu/CpuCoreSensor.java
+io/vertx/core/impl/cpu/LICENSE
+io/vertx/core/impl/Deployment.java
+io/vertx/core/impl/DeploymentManager.java
+io/vertx/core/impl/DuplicatedContext.java
+io/vertx/core/impl/EventExecutor.java
+io/vertx/core/impl/EventLoopExecutor.java
+io/vertx/core/impl/FailoverCompleteHandler.java
+io/vertx/core/impl/future/CompositeFutureImpl.java
+io/vertx/core/impl/future/Composition.java
+io/vertx/core/impl/future/Eventually.java
+io/vertx/core/impl/future/Expect.java
+io/vertx/core/impl/future/FailedFuture.java
+io/vertx/core/impl/future/FixedMapping.java
+io/vertx/core/impl/future/FixedOtherwise.java
+io/vertx/core/impl/future/FutureBase.java
+io/vertx/core/impl/future/FutureImpl.java
+io/vertx/core/impl/future/FutureInternal.java
+io/vertx/core/impl/future/Listener.java
+io/vertx/core/impl/future/Mapping.java
+io/vertx/core/impl/future/Operation.java
+io/vertx/core/impl/future/Otherwise.java
+io/vertx/core/impl/future/PromiseImpl.java
+io/vertx/core/impl/future/PromiseInternal.java
+io/vertx/core/impl/future/SucceededFuture.java
+io/vertx/core/impl/future/Transformation.java
+io/vertx/core/impl/HAManager.java
+io/vertx/core/impl/IsolatingClassLoader.java
+io/vertx/core/impl/JavaVerticleFactory.java
+io/vertx/core/impl/launcher/CommandLineUtils.java
+io/vertx/core/impl/launcher/commands/BareCommand.java
+io/vertx/core/impl/launcher/commands/BareCommandFactory.java
+io/vertx/core/impl/launcher/commands/ClasspathHandler.java
+io/vertx/core/impl/launcher/commands/ExecUtils.java
+io/vertx/core/impl/launcher/commands/FileSelector.java
+io/vertx/core/impl/launcher/commands/ListCommand.java
+io/vertx/core/impl/launcher/commands/ListCommandFactory.java
+io/vertx/core/impl/launcher/commands/RunCommand.java
+io/vertx/core/impl/launcher/commands/RunCommandFactory.java
+io/vertx/core/impl/launcher/commands/StartCommand.java
+io/vertx/core/impl/launcher/commands/StartCommandFactory.java
+io/vertx/core/impl/launcher/commands/StopCommand.java
+io/vertx/core/impl/launcher/commands/StopCommandFactory.java
+io/vertx/core/impl/launcher/commands/VersionCommand.java
+io/vertx/core/impl/launcher/commands/VersionCommandFactory.java
+io/vertx/core/impl/launcher/commands/VertxIsolatedDeployer.java
+io/vertx/core/impl/launcher/commands/Watcher.java
+io/vertx/core/impl/launcher/ServiceCommandFactoryLoader.java
+io/vertx/core/impl/launcher/VertxCommandLauncher.java
+io/vertx/core/impl/launcher/VertxLifecycleHooks.java
+io/vertx/core/impl/LoaderManager.java
+io/vertx/core/impl/LocalSeq.java
+io/vertx/core/impl/logging/Logger.java
+io/vertx/core/impl/logging/LoggerAdapter.java
+io/vertx/core/impl/logging/LoggerFactory.java
+io/vertx/core/impl/NoStackTraceException.java
+io/vertx/core/impl/NoStackTraceThrowable.java
+io/vertx/core/impl/NoStackTraceTimeoutException.java
+io/vertx/core/impl/resolver/DefaultResolverProvider.java
+io/vertx/core/impl/resolver/DnsResolverProvider.java
+io/vertx/core/impl/SerializableUtils.java
+io/vertx/core/impl/SharedClientHolder.java
+io/vertx/core/impl/TaskQueue.java
+io/vertx/core/impl/ThreadPerTaskExecutorService.java
+io/vertx/core/impl/TimerImpl.java
+io/vertx/core/impl/transports/EpollTransport.java
+io/vertx/core/impl/transports/JDKTransport.java
+io/vertx/core/impl/transports/KQueueTransport.java
+io/vertx/core/impl/Utils.java
+io/vertx/core/impl/utils/ConcurrentCyclicSequence.java
+io/vertx/core/impl/verticle/CompilingClassLoader.java
+io/vertx/core/impl/verticle/CustomJavaFileObject.java
+io/vertx/core/impl/verticle/JavaSourceContext.java
+io/vertx/core/impl/verticle/MemoryFileManager.java
+io/vertx/core/impl/verticle/PackageHelper.java
+io/vertx/core/impl/VerticleManager.java
+io/vertx/core/impl/VertxBuilder.java
+io/vertx/core/impl/VertxImpl.java
+io/vertx/core/impl/VertxInternal.java
+io/vertx/core/impl/VertxThread.java
+io/vertx/core/impl/VertxWrapper.java
+io/vertx/core/impl/WorkerExecutor.java
+io/vertx/core/impl/WorkerExecutorImpl.java
+io/vertx/core/impl/WorkerExecutorInternal.java
+io/vertx/core/impl/WorkerPool.java
+io/vertx/core/impl/WorkerTask.java
+io/vertx/core/impl/WorkerTaskQueue.java
+io/vertx/core/json/DecodeException.java
+io/vertx/core/json/EncodeException.java
+io/vertx/core/json/impl/JsonUtil.java
+io/vertx/core/json/jackson/BufferDeserializer.java
+io/vertx/core/json/jackson/BufferSerializer.java
+io/vertx/core/json/jackson/ByteArrayDeserializer.java
+io/vertx/core/json/jackson/ByteArraySerializer.java
+io/vertx/core/json/jackson/DatabindCodec.java
+io/vertx/core/json/jackson/InstantDeserializer.java
+io/vertx/core/json/jackson/InstantSerializer.java
+io/vertx/core/json/jackson/JacksonCodec.java
+io/vertx/core/json/jackson/JacksonFactory.java
+io/vertx/core/json/jackson/JsonArraySerializer.java
+io/vertx/core/json/jackson/JsonObjectSerializer.java
+io/vertx/core/json/jackson/VertxModule.java
+io/vertx/core/json/Json.java
+io/vertx/core/json/JsonArray.java
+io/vertx/core/json/JsonObject.java
+io/vertx/core/json/pointer/impl/JsonPointerImpl.java
+io/vertx/core/json/pointer/impl/JsonPointerIteratorImpl.java
+io/vertx/core/json/pointer/JsonPointer.java
+io/vertx/core/json/pointer/JsonPointerIterator.java
+io/vertx/core/Launcher.java
+io/vertx/core/logging/JULLogDelegate.java
+io/vertx/core/logging/JULLogDelegateFactory.java
+io/vertx/core/logging/Log4j2LogDelegate.java
+io/vertx/core/logging/Log4j2LogDelegateFactory.java
+io/vertx/core/logging/Logger.java
+io/vertx/core/logging/LoggerFactory.java
+io/vertx/core/logging/SLF4JLogDelegate.java
+io/vertx/core/logging/SLF4JLogDelegateFactory.java
+io/vertx/core/logging/VertxLoggerFormatter.java
+io/vertx/core/metrics/impl/DummyVertxMetrics.java
+io/vertx/core/metrics/Measured.java
+io/vertx/core/metrics/MetricsOptions.java
+io/vertx/core/metrics/package-info.java
+io/vertx/core/MultiMap.java
+io/vertx/core/net/ClientOptionsBase.java
+io/vertx/core/net/impl/AsyncResolveConnectHelper.java
+io/vertx/core/net/impl/ChannelProvider.java
+io/vertx/core/net/impl/ConnectionBase.java
+io/vertx/core/net/impl/KeyStoreHelper.java
+io/vertx/core/net/impl/NetClientBuilder.java
+io/vertx/core/net/impl/NetClientImpl.java
+io/vertx/core/net/impl/NetServerImpl.java
+io/vertx/core/net/impl/NetSocketImpl.java
+io/vertx/core/net/impl/NetSocketInternal.java
+io/vertx/core/net/impl/pkcs1/LICENSE
+io/vertx/core/net/impl/pkcs1/PrivateKeyParser.java
+io/vertx/core/net/impl/pool/CombinerExecutor.java
+io/vertx/core/net/impl/pool/ConnectionManager.java
+io/vertx/core/net/impl/pool/ConnectionPool.java
+io/vertx/core/net/impl/pool/ConnectResult.java
+io/vertx/core/net/impl/pool/Endpoint.java
+io/vertx/core/net/impl/pool/EndpointProvider.java
+io/vertx/core/net/impl/pool/Executor.java
+io/vertx/core/net/impl/pool/Lease.java
+io/vertx/core/net/impl/pool/PoolConnection.java
+io/vertx/core/net/impl/pool/PoolConnector.java
+io/vertx/core/net/impl/pool/PoolWaiter.java
+io/vertx/core/net/impl/pool/SemaphoreExecutor.java
+io/vertx/core/net/impl/ProxyFilter.java
+io/vertx/core/net/impl/SelfSignedCertificateImpl.java
+io/vertx/core/net/impl/ServerChannelLoadBalancer.java
+io/vertx/core/net/impl/ServerID.java
+io/vertx/core/net/impl/SocketAddressImpl.java
+io/vertx/core/net/impl/SslChannelProvider.java
+io/vertx/core/net/impl/SslContextProvider.java
+io/vertx/core/net/impl/SslContextUpdate.java
+io/vertx/core/net/impl/SslHandshakeCompletionHandler.java
+io/vertx/core/net/impl/SSLHelper.java
+io/vertx/core/net/impl/TCPServerBase.java
+io/vertx/core/net/impl/TrustAllTrustManager.java
+io/vertx/core/net/impl/URIDecoder.java
+io/vertx/core/net/impl/VertxEventLoopGroup.java
+io/vertx/core/net/impl/VertxHandler.java
+io/vertx/core/net/impl/VertxSniHandler.java
+io/vertx/core/net/impl/VertxSslContext.java
+io/vertx/core/net/impl/VertxTrustManagerFactory.java
+io/vertx/core/net/JdkSSLEngineOptions.java
+io/vertx/core/net/JksOptions.java
+io/vertx/core/net/KeyCertOptions.java
+io/vertx/core/net/KeyManagerFactoryOptions.java
+io/vertx/core/net/KeyManagerFactoryWrapper.java
+io/vertx/core/net/KeyStoreOptions.java
+io/vertx/core/net/KeyStoreOptionsBase.java
+io/vertx/core/net/NetClient.java
+io/vertx/core/net/NetClientOptions.java
+io/vertx/core/net/NetServer.java
+io/vertx/core/net/NetServerOptions.java
+io/vertx/core/net/NetSocket.java
+io/vertx/core/net/NetworkOptions.java
+io/vertx/core/net/OpenSSLEngineOptions.java
+io/vertx/core/net/PemKeyCertOptions.java
+io/vertx/core/net/PemTrustOptions.java
+io/vertx/core/net/PfxOptions.java
+io/vertx/core/net/ProxyOptions.java
+io/vertx/core/net/ProxyType.java
+io/vertx/core/net/SelfSignedCertificate.java
+io/vertx/core/net/ServerOptionsBase.java
+io/vertx/core/net/SocketAddress.java
+io/vertx/core/net/SSLEngineOptions.java
+io/vertx/core/net/SSLOptions.java
+io/vertx/core/net/TCPSSLOptions.java
+io/vertx/core/net/TrafficShapingOptions.java
+io/vertx/core/net/TrustManagerFactoryOptions.java
+io/vertx/core/net/TrustManagerFactoryWrapper.java
+io/vertx/core/net/TrustOptions.java
+io/vertx/core/Promise.java
+io/vertx/core/ServiceHelper.java
+io/vertx/core/ThreadingModel.java
+io/vertx/core/TimeoutStream.java
+io/vertx/core/Timer.java
+io/vertx/core/Verticle.java
+io/vertx/core/Vertx.java
+io/vertx/core/VertxException.java
+io/vertx/core/VertxOptions.java
+io/vertx/core/WorkerExecutor.java
+META-INF/services/io.vertx.core.spi.launcher.CommandFactory
+--------------------------------------------------------------------------------
+
+Copyright 2011-2017 Contributors to the Eclipse Foundation
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+See the License for the specific language governing permissions and limitations under the License.
 
 
 * Other Licenses *
@@ -37756,57 +37757,7 @@ Package Depth: Direct
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
-EPL-1.0, Apache-2.0
-
-* EPL-1.0 *
---------------------------------------------------------------------------------
-File matches:
-io/vertx/ext/web/client/HttpResponse.java
---------------------------------------------------------------------------------
-
-THE ACCOMPANYING PROGRAM IS PROVIDED UNDER THE TERMS OF THIS ECLIPSE PUBLIC LICENSE ("AGREEMENT"). ANY USE, REPRODUCTION OR DISTRIBUTION OF THE PROGRAM CONSTITUTES RECIPIENT'S ACCEPTANCE OF THIS AGREEMENT.
-   1. DEFINITIONS
-   "Contribution" means:
-      a) in the case of the initial Contributor, the initial code and documentation distributed under this Agreement, and
-      b) in the case of each subsequent Contributor:
-         i) changes to the Program, and
-         ii) additions to the Program;
-         where such changes and/or additions to the Program originate from and are distributed by that particular Contributor. A Contribution 'originates' from a Contributor if it was added to the Program by such Contributor itself or anyone acting on such Contributor's behalf. Contributions do not include additions to the Program which: (i) are separate modules of software distributed in conjunction with the Program under their own license agreement, and (ii) are not derivative works of the Program.
-   "Contributor" means any person or entity that distributes the Program.
-   "Licensed Patents" mean patent claims licensable by a Contributor which are necessarily infringed by the use or sale of its Contribution alone or when combined with the Program.
-   "Program" means the Contributions distributed in accordance with this Agreement.
-   "Recipient" means anyone who receives the Program under this Agreement, including all Contributors.
-   2. GRANT OF RIGHTS
-      a) Subject to the terms of this Agreement, each Contributor hereby grants Recipient a non-exclusive, worldwide, royalty-free copyright license to reproduce, prepare derivative works of, publicly display, publicly perform, distribute and sublicense the Contribution of such Contributor, if any, and such derivative works, in source code and object code form.
-      b) Subject to the terms of this Agreement, each Contributor hereby grants Recipient a non-exclusive, worldwide, royalty-free patent license under Licensed Patents to make, use, sell, offer to sell, import and otherwise transfer the Contribution of such Contributor, if any, in source code and object code form. This patent license shall apply to the combination of the Contribution and the Program if, at the time the Contribution is added by the Contributor, such addition of the Contribution causes such combination to be covered by the Licensed Patents. The patent license shall not apply to any other combinations which include the Contribution. No hardware per se is licensed hereunder.
-      c) Recipient understands that although each Contributor grants the licenses to its Contributions set forth herein, no assurances are provided by any Contributor that the Program does not infringe the patent or other intellectual property rights of any other entity. Each Contributor disclaims any liability to Recipient for claims brought by any other entity based on infringement of intellectual property rights or otherwise. As a condition to exercising the rights and licenses granted hereunder, each Recipient hereby assumes sole responsibility to secure any other intellectual property rights needed, if any. For example, if a third party patent license is required to allow Recipient to distribute the Program, it is Recipient's responsibility to acquire that license before distributing the Program.
-      d) Each Contributor represents that to its knowledge it has sufficient copyright rights in its Contribution, if any, to grant the copyright license set forth in this Agreement.
-   3. REQUIREMENTS
-   A Contributor may choose to distribute the Program in object code form under its own license agreement, provided that:
-      a) it complies with the terms and conditions of this Agreement; and
-      b) its license agreement:
-         i) effectively disclaims on behalf of all Contributors all warranties and conditions, express and implied, including warranties or conditions of title and non-infringement, and implied warranties or conditions of merchantability and fitness for a particular purpose;
-         ii) effectively excludes on behalf of all Contributors all liability for damages, including direct, indirect, special, incidental and consequential damages, such as lost profits;
-         iii) states that any provisions which differ from this Agreement are offered by that Contributor alone and not by any other party; and
-         iv) states that source code for the Program is available from such Contributor, and informs licensees how to obtain it in a reasonable manner on or through a medium customarily used for software exchange.
-   When the Program is made available in source code form:
-      a) it must be made available under this Agreement; and
-      b) a copy of this Agreement must be included with each copy of the Program.
-      Contributors may not remove or alter any copyright notices contained within the Program.
-   Each Contributor must identify itself as the originator of its Contribution, if any, in a manner that reasonably allows subsequent Recipients to identify the originator of the Contribution.
-   4. COMMERCIAL DISTRIBUTION
-   Commercial distributors of software may accept certain responsibilities with respect to end users, business partners and the like. While this license is intended to facilitate the commercial use of the Program, the Contributor who includes the Program in a commercial product offering should do so in a manner which does not create potential liability for other Contributors. Therefore, if a Contributor includes the Program in a commercial product offering, such Contributor ("Commercial Contributor") hereby agrees to defend and indemnify every other Contributor ("Indemnified Contributor") against any losses, damages and costs (collectively "Losses") arising from claims, lawsuits and other legal actions brought by a third party against the Indemnified Contributor to the extent caused by the acts or omissions of such Commercial Contributor in connection with its distribution of the Program in a commercial product offering. The obligations in this section do not apply to any claims or Losses relating to any actual or alleged intellectual property infringement. In order to qualify, an Indemnified Contributor must: a) promptly notify the Commercial Contributor in writing of such claim, and b) allow the Commercial Contributor to control, and cooperate with the Commercial Contributor in, the defense and any related settlement negotiations. The Indemnified Contributor may participate in any such claim at its own expense.
-   For example, a Contributor might include the Program in a commercial product offering, Product X. That Contributor is then a Commercial Contributor. If that Commercial Contributor then makes performance claims, or offers warranties related to Product X, those performance claims and warranties are such Commercial Contributor's responsibility alone. Under this section, the Commercial Contributor would have to defend claims against the other Contributors related to those performance claims and warranties, and if a court requires any other Contributor to pay any damages as a result, the Commercial Contributor must pay those damages.
-   5. NO WARRANTY
-   EXCEPT AS EXPRESSLY SET FORTH IN THIS AGREEMENT, THE PROGRAM IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED INCLUDING, WITHOUT LIMITATION, ANY WARRANTIES OR CONDITIONS OF TITLE, NON-INFRINGEMENT, MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Each Recipient is solely responsible for determining the appropriateness of using and distributing the Program and assumes all risks associated with its exercise of rights under this Agreement, including but not limited to the risks and costs of program errors, compliance with applicable laws, damage to or loss of data, programs or equipment, and unavailability or interruption of operations.
-   6. DISCLAIMER OF LIABILITY
-   EXCEPT AS EXPRESSLY SET FORTH IN THIS AGREEMENT, NEITHER RECIPIENT NOR ANY CONTRIBUTORS SHALL HAVE ANY LIABILITY FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING WITHOUT LIMITATION LOST PROFITS), HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OR DISTRIBUTION OF THE PROGRAM OR THE EXERCISE OF ANY RIGHTS GRANTED HEREUNDER, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
-   7. GENERAL
-   If any provision of this Agreement is invalid or unenforceable under applicable law, it shall not affect the validity or enforceability of the remainder of the terms of this Agreement, and without further action by the parties hereto, such provision shall be reformed to the minimum extent necessary to make such provision valid and enforceable.
-   If Recipient institutes patent litigation against any entity (including a cross-claim or counterclaim in a lawsuit) alleging that the Program itself (excluding combinations of the Program with other software or hardware) infringes such Recipient's patent(s), then such Recipient's rights granted under Section 2(b) shall terminate as of the date such litigation is filed.
-   All Recipient's rights under this Agreement shall terminate if it fails to comply with any of the material terms or conditions of this Agreement and does not cure such failure in a reasonable period of time after becoming aware of such noncompliance. If all Recipient's rights under this Agreement terminate, Recipient agrees to cease use and distribution of the Program as soon as reasonably practicable. However, Recipient's obligations under this Agreement and any licenses granted by Recipient relating to the Program shall continue and survive.
-   Everyone is permitted to copy and distribute copies of this Agreement, but in order to avoid inconsistency the Agreement is copyrighted and may only be modified in the following manner. The Agreement Steward reserves the right to publish new versions (including revisions) of this Agreement from time to time. No one other than the Agreement Steward has the right to modify this Agreement. The Eclipse Foundation is the initial Agreement Steward. The Eclipse Foundation may assign the responsibility to serve as the Agreement Steward to a suitable separate entity. Each new version of the Agreement will be given a distinguishing version number. The Program (including Contributions) may always be distributed subject to the version of the Agreement under which it was received. In addition, after a new version of the Agreement is published, Contributor may elect to distribute the Program (including its Contributions) under the new version. Except as expressly stated in Sections 2(a) and 2(b) above, Recipient receives no rights or licenses to the intellectual property of any Contributor under this Agreement, whether expressly, by implication, estoppel or otherwise. All rights in the Program not expressly granted under this Agreement are reserved.
-   This Agreement is governed by the laws of the State of New York and the intellectual property laws of the United States of America. No party to this Agreement will bring a legal action under this Agreement more than one year after the cause of action arose. Each party waives its rights to a jury trial in any resulting litigation.
+Apache-2.0, EPL-1.0
 
 * Apache-2.0 *
 --------------------------------------------------------------------------------
@@ -37874,13 +37825,63 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 See the License for the specific language governing permissions and limitations under the License.
 
+* EPL-1.0 *
+--------------------------------------------------------------------------------
+File matches:
+io/vertx/ext/web/client/HttpResponse.java
+--------------------------------------------------------------------------------
+
+THE ACCOMPANYING PROGRAM IS PROVIDED UNDER THE TERMS OF THIS ECLIPSE PUBLIC LICENSE ("AGREEMENT"). ANY USE, REPRODUCTION OR DISTRIBUTION OF THE PROGRAM CONSTITUTES RECIPIENT'S ACCEPTANCE OF THIS AGREEMENT.
+   1. DEFINITIONS
+   "Contribution" means:
+      a) in the case of the initial Contributor, the initial code and documentation distributed under this Agreement, and
+      b) in the case of each subsequent Contributor:
+         i) changes to the Program, and
+         ii) additions to the Program;
+         where such changes and/or additions to the Program originate from and are distributed by that particular Contributor. A Contribution 'originates' from a Contributor if it was added to the Program by such Contributor itself or anyone acting on such Contributor's behalf. Contributions do not include additions to the Program which: (i) are separate modules of software distributed in conjunction with the Program under their own license agreement, and (ii) are not derivative works of the Program.
+   "Contributor" means any person or entity that distributes the Program.
+   "Licensed Patents" mean patent claims licensable by a Contributor which are necessarily infringed by the use or sale of its Contribution alone or when combined with the Program.
+   "Program" means the Contributions distributed in accordance with this Agreement.
+   "Recipient" means anyone who receives the Program under this Agreement, including all Contributors.
+   2. GRANT OF RIGHTS
+      a) Subject to the terms of this Agreement, each Contributor hereby grants Recipient a non-exclusive, worldwide, royalty-free copyright license to reproduce, prepare derivative works of, publicly display, publicly perform, distribute and sublicense the Contribution of such Contributor, if any, and such derivative works, in source code and object code form.
+      b) Subject to the terms of this Agreement, each Contributor hereby grants Recipient a non-exclusive, worldwide, royalty-free patent license under Licensed Patents to make, use, sell, offer to sell, import and otherwise transfer the Contribution of such Contributor, if any, in source code and object code form. This patent license shall apply to the combination of the Contribution and the Program if, at the time the Contribution is added by the Contributor, such addition of the Contribution causes such combination to be covered by the Licensed Patents. The patent license shall not apply to any other combinations which include the Contribution. No hardware per se is licensed hereunder.
+      c) Recipient understands that although each Contributor grants the licenses to its Contributions set forth herein, no assurances are provided by any Contributor that the Program does not infringe the patent or other intellectual property rights of any other entity. Each Contributor disclaims any liability to Recipient for claims brought by any other entity based on infringement of intellectual property rights or otherwise. As a condition to exercising the rights and licenses granted hereunder, each Recipient hereby assumes sole responsibility to secure any other intellectual property rights needed, if any. For example, if a third party patent license is required to allow Recipient to distribute the Program, it is Recipient's responsibility to acquire that license before distributing the Program.
+      d) Each Contributor represents that to its knowledge it has sufficient copyright rights in its Contribution, if any, to grant the copyright license set forth in this Agreement.
+   3. REQUIREMENTS
+   A Contributor may choose to distribute the Program in object code form under its own license agreement, provided that:
+      a) it complies with the terms and conditions of this Agreement; and
+      b) its license agreement:
+         i) effectively disclaims on behalf of all Contributors all warranties and conditions, express and implied, including warranties or conditions of title and non-infringement, and implied warranties or conditions of merchantability and fitness for a particular purpose;
+         ii) effectively excludes on behalf of all Contributors all liability for damages, including direct, indirect, special, incidental and consequential damages, such as lost profits;
+         iii) states that any provisions which differ from this Agreement are offered by that Contributor alone and not by any other party; and
+         iv) states that source code for the Program is available from such Contributor, and informs licensees how to obtain it in a reasonable manner on or through a medium customarily used for software exchange.
+   When the Program is made available in source code form:
+      a) it must be made available under this Agreement; and
+      b) a copy of this Agreement must be included with each copy of the Program.
+      Contributors may not remove or alter any copyright notices contained within the Program.
+   Each Contributor must identify itself as the originator of its Contribution, if any, in a manner that reasonably allows subsequent Recipients to identify the originator of the Contribution.
+   4. COMMERCIAL DISTRIBUTION
+   Commercial distributors of software may accept certain responsibilities with respect to end users, business partners and the like. While this license is intended to facilitate the commercial use of the Program, the Contributor who includes the Program in a commercial product offering should do so in a manner which does not create potential liability for other Contributors. Therefore, if a Contributor includes the Program in a commercial product offering, such Contributor ("Commercial Contributor") hereby agrees to defend and indemnify every other Contributor ("Indemnified Contributor") against any losses, damages and costs (collectively "Losses") arising from claims, lawsuits and other legal actions brought by a third party against the Indemnified Contributor to the extent caused by the acts or omissions of such Commercial Contributor in connection with its distribution of the Program in a commercial product offering. The obligations in this section do not apply to any claims or Losses relating to any actual or alleged intellectual property infringement. In order to qualify, an Indemnified Contributor must: a) promptly notify the Commercial Contributor in writing of such claim, and b) allow the Commercial Contributor to control, and cooperate with the Commercial Contributor in, the defense and any related settlement negotiations. The Indemnified Contributor may participate in any such claim at its own expense.
+   For example, a Contributor might include the Program in a commercial product offering, Product X. That Contributor is then a Commercial Contributor. If that Commercial Contributor then makes performance claims, or offers warranties related to Product X, those performance claims and warranties are such Commercial Contributor's responsibility alone. Under this section, the Commercial Contributor would have to defend claims against the other Contributors related to those performance claims and warranties, and if a court requires any other Contributor to pay any damages as a result, the Commercial Contributor must pay those damages.
+   5. NO WARRANTY
+   EXCEPT AS EXPRESSLY SET FORTH IN THIS AGREEMENT, THE PROGRAM IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED INCLUDING, WITHOUT LIMITATION, ANY WARRANTIES OR CONDITIONS OF TITLE, NON-INFRINGEMENT, MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Each Recipient is solely responsible for determining the appropriateness of using and distributing the Program and assumes all risks associated with its exercise of rights under this Agreement, including but not limited to the risks and costs of program errors, compliance with applicable laws, damage to or loss of data, programs or equipment, and unavailability or interruption of operations.
+   6. DISCLAIMER OF LIABILITY
+   EXCEPT AS EXPRESSLY SET FORTH IN THIS AGREEMENT, NEITHER RECIPIENT NOR ANY CONTRIBUTORS SHALL HAVE ANY LIABILITY FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING WITHOUT LIMITATION LOST PROFITS), HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OR DISTRIBUTION OF THE PROGRAM OR THE EXERCISE OF ANY RIGHTS GRANTED HEREUNDER, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+   7. GENERAL
+   If any provision of this Agreement is invalid or unenforceable under applicable law, it shall not affect the validity or enforceability of the remainder of the terms of this Agreement, and without further action by the parties hereto, such provision shall be reformed to the minimum extent necessary to make such provision valid and enforceable.
+   If Recipient institutes patent litigation against any entity (including a cross-claim or counterclaim in a lawsuit) alleging that the Program itself (excluding combinations of the Program with other software or hardware) infringes such Recipient's patent(s), then such Recipient's rights granted under Section 2(b) shall terminate as of the date such litigation is filed.
+   All Recipient's rights under this Agreement shall terminate if it fails to comply with any of the material terms or conditions of this Agreement and does not cure such failure in a reasonable period of time after becoming aware of such noncompliance. If all Recipient's rights under this Agreement terminate, Recipient agrees to cease use and distribution of the Program as soon as reasonably practicable. However, Recipient's obligations under this Agreement and any licenses granted by Recipient relating to the Program shall continue and survive.
+   Everyone is permitted to copy and distribute copies of this Agreement, but in order to avoid inconsistency the Agreement is copyrighted and may only be modified in the following manner. The Agreement Steward reserves the right to publish new versions (including revisions) of this Agreement from time to time. No one other than the Agreement Steward has the right to modify this Agreement. The Eclipse Foundation is the initial Agreement Steward. The Eclipse Foundation may assign the responsibility to serve as the Agreement Steward to a suitable separate entity. Each new version of the Agreement will be given a distinguishing version number. The Program (including Contributions) may always be distributed subject to the version of the Agreement under which it was received. In addition, after a new version of the Agreement is published, Contributor may elect to distribute the Program (including its Contributions) under the new version. Except as expressly stated in Sections 2(a) and 2(b) above, Recipient receives no rights or licenses to the intellectual property of any Contributor under this Agreement, whether expressly, by implication, estoppel or otherwise. All rights in the Program not expressly granted under this Agreement are reserved.
+   This Agreement is governed by the laws of the State of New York and the intellectual property laws of the United States of America. No party to this Agreement will bring a legal action under this Agreement more than one year after the cause of action arose. Each party waives its rights to a jury trial in any resulting litigation.
+
 
 * Other Licenses *
 EPL-2.0
 
 --------------------------------------------------------------------------------
 File matches:
-io/vertx/ext/web/client/WebClientSession.java
+io/vertx/ext/web/client/impl/OAuth2AwareInterceptor.java
 --------------------------------------------------------------------------------
 
 
@@ -37952,42 +37953,7 @@ Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
-Apache-2.0, EPL-1.0
-
-* Apache-2.0 *
---------------------------------------------------------------------------------
-File matches:
-io/vertx/ext/web/codec/BodyCodec.java
-io/vertx/ext/web/codec/impl/BodyCodecImpl.java
-io/vertx/ext/web/codec/impl/StreamingBodyCodec.java
-io/vertx/ext/web/codec/spi/BodyStream.java
-io/vertx/ext/web/common/template/CachingTemplateEngine.java
-io/vertx/ext/web/common/template/impl/TemplateHolder.java
-io/vertx/ext/web/common/template/TemplateEngine.java
-io/vertx/ext/web/common/WebEnvironment.java
-io/vertx/ext/web/multipart/FormDataPart.java
-io/vertx/ext/web/multipart/impl/FormDataPartImpl.java
-io/vertx/ext/web/multipart/impl/MultipartFormImpl.java
-io/vertx/ext/web/multipart/MultipartForm.java
-parent-poms/mvn+io.vertx:vertx-ext-parent$38/pom.xml
-parent-poms/mvn+io.vertx:vertx-ext$38/pom.xml
-parent-poms/mvn+io.vertx:vertx-parent$19/pom.xml
-parent-poms/mvn+org.sonatype.oss:oss-parent$7/pom.xml
---------------------------------------------------------------------------------
-
-Copyright 2011-2013 The original author or authors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-
-See the License for the specific language governing permissions and limitations under the License.
+EPL-1.0, Apache-2.0
 
 * EPL-1.0 *
 --------------------------------------------------------------------------------
@@ -38052,6 +38018,41 @@ THE ACCOMPANYING PROGRAM IS PROVIDED UNDER THE TERMS OF THIS ECLIPSE PUBLIC LICE
    All Recipient's rights under this Agreement shall terminate if it fails to comply with any of the material terms or conditions of this Agreement and does not cure such failure in a reasonable period of time after becoming aware of such noncompliance. If all Recipient's rights under this Agreement terminate, Recipient agrees to cease use and distribution of the Program as soon as reasonably practicable. However, Recipient's obligations under this Agreement and any licenses granted by Recipient relating to the Program shall continue and survive.
    Everyone is permitted to copy and distribute copies of this Agreement, but in order to avoid inconsistency the Agreement is copyrighted and may only be modified in the following manner. The Agreement Steward reserves the right to publish new versions (including revisions) of this Agreement from time to time. No one other than the Agreement Steward has the right to modify this Agreement. The Eclipse Foundation is the initial Agreement Steward. The Eclipse Foundation may assign the responsibility to serve as the Agreement Steward to a suitable separate entity. Each new version of the Agreement will be given a distinguishing version number. The Program (including Contributions) may always be distributed subject to the version of the Agreement under which it was received. In addition, after a new version of the Agreement is published, Contributor may elect to distribute the Program (including its Contributions) under the new version. Except as expressly stated in Sections 2(a) and 2(b) above, Recipient receives no rights or licenses to the intellectual property of any Contributor under this Agreement, whether expressly, by implication, estoppel or otherwise. All rights in the Program not expressly granted under this Agreement are reserved.
    This Agreement is governed by the laws of the State of New York and the intellectual property laws of the United States of America. No party to this Agreement will bring a legal action under this Agreement more than one year after the cause of action arose. Each party waives its rights to a jury trial in any resulting litigation.
+
+* Apache-2.0 *
+--------------------------------------------------------------------------------
+File matches:
+io/vertx/ext/web/codec/BodyCodec.java
+io/vertx/ext/web/codec/impl/BodyCodecImpl.java
+io/vertx/ext/web/codec/impl/StreamingBodyCodec.java
+io/vertx/ext/web/codec/spi/BodyStream.java
+io/vertx/ext/web/common/template/CachingTemplateEngine.java
+io/vertx/ext/web/common/template/impl/TemplateHolder.java
+io/vertx/ext/web/common/template/TemplateEngine.java
+io/vertx/ext/web/common/WebEnvironment.java
+io/vertx/ext/web/multipart/FormDataPart.java
+io/vertx/ext/web/multipart/impl/FormDataPartImpl.java
+io/vertx/ext/web/multipart/impl/MultipartFormImpl.java
+io/vertx/ext/web/multipart/MultipartForm.java
+parent-poms/mvn+io.vertx:vertx-ext-parent$38/pom.xml
+parent-poms/mvn+io.vertx:vertx-ext$38/pom.xml
+parent-poms/mvn+io.vertx:vertx-parent$19/pom.xml
+parent-poms/mvn+org.sonatype.oss:oss-parent$7/pom.xml
+--------------------------------------------------------------------------------
+
+Copyright 2011-2013 The original author or authors
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+See the License for the specific language governing permissions and limitations under the License.
 
 
 * Package Info *
@@ -38486,274 +38487,7 @@ Package Depth: Transitive
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
-EPL-2.0, BSD-3-Clause, GPL-2.0-with-classpath-exception
-
-* EPL-2.0 *
---------------------------------------------------------------------------------
-File matches:
-META-INF/LICENSE.md
-META-INF/maven/org.eclipse/yasson/pom.xml
-META-INF/native-image/org.eclipse/yasson/native-image.properties
-META-INF/NOTICE.md
-module-info.java
-org/eclipse/yasson/FieldAccessStrategy.java
-org/eclipse/yasson/ImplementationClass.java
-org/eclipse/yasson/internal/AnnotationFinder.java
-org/eclipse/yasson/internal/AnnotationIntrospector.java
-org/eclipse/yasson/internal/BuiltInTypes.java
-org/eclipse/yasson/internal/ClassMultiReleaseExtension.java
-org/eclipse/yasson/internal/ClassParser.java
-org/eclipse/yasson/internal/ComponentMatcher.java
-org/eclipse/yasson/internal/components/AbstractComponentBinding.java
-org/eclipse/yasson/internal/components/AdapterBinding.java
-org/eclipse/yasson/internal/components/BeanManagerInstanceCreator.java
-org/eclipse/yasson/internal/components/ComponentBindings.java
-org/eclipse/yasson/internal/components/DefaultConstructorCreator.java
-org/eclipse/yasson/internal/components/DeserializerBinding.java
-org/eclipse/yasson/internal/components/JsonbComponentInstanceCreatorFactory.java
-org/eclipse/yasson/internal/components/SerializerBinding.java
-org/eclipse/yasson/internal/ConstructorPropertiesAnnotationIntrospector.java
-org/eclipse/yasson/internal/DeserializationContextImpl.java
-org/eclipse/yasson/internal/deserializer/AdapterDeserializer.java
-org/eclipse/yasson/internal/deserializer/ArrayDeserializer.java
-org/eclipse/yasson/internal/deserializer/ArrayInstanceCreator.java
-org/eclipse/yasson/internal/deserializer/CollectionDeserializer.java
-org/eclipse/yasson/internal/deserializer/CollectionInstanceCreator.java
-org/eclipse/yasson/internal/deserializer/ContextSwitcher.java
-org/eclipse/yasson/internal/deserializer/CyclicReferenceDeserializer.java
-org/eclipse/yasson/internal/deserializer/DefaultObjectInstanceCreator.java
-org/eclipse/yasson/internal/deserializer/DeferredDeserializer.java
-org/eclipse/yasson/internal/deserializer/DeserializationModelCreator.java
-org/eclipse/yasson/internal/deserializer/InheritanceInstanceCreator.java
-org/eclipse/yasson/internal/deserializer/JsonbCreatorDeserializer.java
-org/eclipse/yasson/internal/deserializer/JustReturn.java
-org/eclipse/yasson/internal/deserializer/MapDeserializer.java
-org/eclipse/yasson/internal/deserializer/MapInstanceCreator.java
-org/eclipse/yasson/internal/deserializer/ModelDeserializer.java
-org/eclipse/yasson/internal/deserializer/NullCheckDeserializer.java
-org/eclipse/yasson/internal/deserializer/ObjectDeserializer.java
-org/eclipse/yasson/internal/deserializer/OptionalDeserializer.java
-org/eclipse/yasson/internal/deserializer/PositionChecker.java
-org/eclipse/yasson/internal/deserializer/RequiredCreatorParameter.java
-org/eclipse/yasson/internal/deserializer/types/AbstractDateDeserializer.java
-org/eclipse/yasson/internal/deserializer/types/AbstractNumberDeserializer.java
-org/eclipse/yasson/internal/deserializer/types/BigDecimalDeserializer.java
-org/eclipse/yasson/internal/deserializer/types/BigIntegerDeserializer.java
-org/eclipse/yasson/internal/deserializer/types/BooleanDeserializer.java
-org/eclipse/yasson/internal/deserializer/types/ByteDeserializer.java
-org/eclipse/yasson/internal/deserializer/types/CalendarDeserializer.java
-org/eclipse/yasson/internal/deserializer/types/CharDeserializer.java
-org/eclipse/yasson/internal/deserializer/types/DateDeserializer.java
-org/eclipse/yasson/internal/deserializer/types/DoubleDeserializer.java
-org/eclipse/yasson/internal/deserializer/types/DurationDeserializer.java
-org/eclipse/yasson/internal/deserializer/types/EnumDeserializer.java
-org/eclipse/yasson/internal/deserializer/types/FloatDeserializer.java
-org/eclipse/yasson/internal/deserializer/types/InstantDeserializer.java
-org/eclipse/yasson/internal/deserializer/types/IntegerDeserializer.java
-org/eclipse/yasson/internal/deserializer/types/JsonValueDeserializer.java
-org/eclipse/yasson/internal/deserializer/types/LocalDateDeserializer.java
-org/eclipse/yasson/internal/deserializer/types/LocalDateTimeDeserializer.java
-org/eclipse/yasson/internal/deserializer/types/LocalTimeDeserializer.java
-org/eclipse/yasson/internal/deserializer/types/LongDeserializer.java
-org/eclipse/yasson/internal/deserializer/types/MonthDayTypeDeserializer.java
-org/eclipse/yasson/internal/deserializer/types/NumberDeserializer.java
-org/eclipse/yasson/internal/deserializer/types/ObjectTypeDeserializer.java
-org/eclipse/yasson/internal/deserializer/types/OffsetDateTimeDeserializer.java
-org/eclipse/yasson/internal/deserializer/types/OffsetTimeDeserializer.java
-org/eclipse/yasson/internal/deserializer/types/OptionalDoubleDeserializer.java
-org/eclipse/yasson/internal/deserializer/types/OptionalIntDeserializer.java
-org/eclipse/yasson/internal/deserializer/types/OptionalLongDeserializer.java
-org/eclipse/yasson/internal/deserializer/types/PathDeserializer.java
-org/eclipse/yasson/internal/deserializer/types/PeriodDeserializer.java
-org/eclipse/yasson/internal/deserializer/types/ShortDeserializer.java
-org/eclipse/yasson/internal/deserializer/types/SqlDateDeserializer.java
-org/eclipse/yasson/internal/deserializer/types/SqlTimestampDeserializer.java
-org/eclipse/yasson/internal/deserializer/types/StringDeserializer.java
-org/eclipse/yasson/internal/deserializer/types/TimeZoneDeserializer.java
-org/eclipse/yasson/internal/deserializer/types/TypeDeserializer.java
-org/eclipse/yasson/internal/deserializer/types/TypeDeserializerBuilder.java
-org/eclipse/yasson/internal/deserializer/types/TypeDeserializers.java
-org/eclipse/yasson/internal/deserializer/types/UriDeserializer.java
-org/eclipse/yasson/internal/deserializer/types/UrlDeserializer.java
-org/eclipse/yasson/internal/deserializer/types/UuidDeserializer.java
-org/eclipse/yasson/internal/deserializer/types/XmlGregorianCalendarDeserializer.java
-org/eclipse/yasson/internal/deserializer/types/YearMonthTypeDeserializer.java
-org/eclipse/yasson/internal/deserializer/types/ZonedDateTimeDeserializer.java
-org/eclipse/yasson/internal/deserializer/types/ZoneIdDeserializer.java
-org/eclipse/yasson/internal/deserializer/types/ZoneOffsetDeserializer.java
-org/eclipse/yasson/internal/deserializer/UserDefinedDeserializer.java
-org/eclipse/yasson/internal/deserializer/ValueExtractor.java
-org/eclipse/yasson/internal/deserializer/ValueSetterDeserializer.java
-org/eclipse/yasson/internal/deserializer/YassonParser.java
-org/eclipse/yasson/internal/InstanceCreator.java
-org/eclipse/yasson/internal/JsonbConfigProperties.java
-org/eclipse/yasson/internal/JsonbContext.java
-org/eclipse/yasson/internal/JsonbDateFormatter.java
-org/eclipse/yasson/internal/JsonBinding.java
-org/eclipse/yasson/internal/JsonBindingBuilder.java
-org/eclipse/yasson/internal/JsonbNumberFormatter.java
-org/eclipse/yasson/internal/jsonstructure/JsonArrayBuilder.java
-org/eclipse/yasson/internal/jsonstructure/JsonArrayIterator.java
-org/eclipse/yasson/internal/jsonstructure/JsonGeneratorToStructureAdapter.java
-org/eclipse/yasson/internal/jsonstructure/JsonObjectBuilder.java
-org/eclipse/yasson/internal/jsonstructure/JsonObjectIterator.java
-org/eclipse/yasson/internal/jsonstructure/JsonStructureBuilder.java
-org/eclipse/yasson/internal/jsonstructure/JsonStructureIterator.java
-org/eclipse/yasson/internal/jsonstructure/JsonStructureToParserAdapter.java
-org/eclipse/yasson/internal/MappingContext.java
-org/eclipse/yasson/internal/model/AnnotationTarget.java
-org/eclipse/yasson/internal/model/ClassModel.java
-org/eclipse/yasson/internal/model/CreatorModel.java
-org/eclipse/yasson/internal/model/customization/ClassCustomization.java
-org/eclipse/yasson/internal/model/customization/ComponentBoundCustomization.java
-org/eclipse/yasson/internal/model/customization/CreatorCustomization.java
-org/eclipse/yasson/internal/model/customization/Customization.java
-org/eclipse/yasson/internal/model/customization/CustomizationBase.java
-org/eclipse/yasson/internal/model/customization/PropertyCustomization.java
-org/eclipse/yasson/internal/model/customization/PropertyOrdering.java
-org/eclipse/yasson/internal/model/customization/StrategiesProvider.java
-org/eclipse/yasson/internal/model/customization/TypeInheritanceConfiguration.java
-org/eclipse/yasson/internal/model/customization/VisibilityStrategiesProvider.java
-org/eclipse/yasson/internal/model/JsonbAnnotatedElement.java
-org/eclipse/yasson/internal/model/JsonbCreator.java
-org/eclipse/yasson/internal/model/ModulesUtil.java
-org/eclipse/yasson/internal/model/Property.java
-org/eclipse/yasson/internal/model/PropertyModel.java
-org/eclipse/yasson/internal/model/ReverseTreeMap.java
-org/eclipse/yasson/internal/ProcessingContext.java
-org/eclipse/yasson/internal/properties/MessageKeys.java
-org/eclipse/yasson/internal/properties/Messages.java
-org/eclipse/yasson/internal/ReflectionUtils.java
-org/eclipse/yasson/internal/ResolvedParameterizedType.java
-org/eclipse/yasson/internal/SerializationContextImpl.java
-org/eclipse/yasson/internal/serializer/AbstractSerializer.java
-org/eclipse/yasson/internal/serializer/AdapterSerializer.java
-org/eclipse/yasson/internal/serializer/ArraySerializer.java
-org/eclipse/yasson/internal/serializer/CollectionSerializer.java
-org/eclipse/yasson/internal/serializer/CyclicReferenceSerializer.java
-org/eclipse/yasson/internal/serializer/KeyWriter.java
-org/eclipse/yasson/internal/serializer/MapSerializer.java
-org/eclipse/yasson/internal/serializer/ModelSerializer.java
-org/eclipse/yasson/internal/serializer/NullSerializer.java
-org/eclipse/yasson/internal/serializer/NullVisibilitySwitcher.java
-org/eclipse/yasson/internal/serializer/ObjectSerializer.java
-org/eclipse/yasson/internal/serializer/OptionalSerializer.java
-org/eclipse/yasson/internal/serializer/RecursionChecker.java
-org/eclipse/yasson/internal/serializer/SerializationModelCreator.java
-org/eclipse/yasson/internal/serializer/SerializerBuilderParams.java
-org/eclipse/yasson/internal/serializer/types/AbstractDateSerializer.java
-org/eclipse/yasson/internal/serializer/types/AbstractNumberSerializer.java
-org/eclipse/yasson/internal/serializer/types/BigDecimalSerializer.java
-org/eclipse/yasson/internal/serializer/types/BigIntegerSerializer.java
-org/eclipse/yasson/internal/serializer/types/BooleanSerializer.java
-org/eclipse/yasson/internal/serializer/types/ByteSerializer.java
-org/eclipse/yasson/internal/serializer/types/CalendarSerializer.java
-org/eclipse/yasson/internal/serializer/types/CharSerializer.java
-org/eclipse/yasson/internal/serializer/types/DateSerializer.java
-org/eclipse/yasson/internal/serializer/types/DoubleSerializer.java
-org/eclipse/yasson/internal/serializer/types/DurationSerializer.java
-org/eclipse/yasson/internal/serializer/types/EnumSerializer.java
-org/eclipse/yasson/internal/serializer/types/FloatSerializer.java
-org/eclipse/yasson/internal/serializer/types/InstantSerializer.java
-org/eclipse/yasson/internal/serializer/types/IntegerSerializer.java
-org/eclipse/yasson/internal/serializer/types/JsonValueSerializer.java
-org/eclipse/yasson/internal/serializer/types/LocalDateSerializer.java
-org/eclipse/yasson/internal/serializer/types/LocalDateTimeSerializer.java
-org/eclipse/yasson/internal/serializer/types/LocalTimeSerializer.java
-org/eclipse/yasson/internal/serializer/types/LongSerializer.java
-org/eclipse/yasson/internal/serializer/types/MonthDayTypeSerializer.java
-org/eclipse/yasson/internal/serializer/types/NumberSerializer.java
-org/eclipse/yasson/internal/serializer/types/ObjectTypeSerializer.java
-org/eclipse/yasson/internal/serializer/types/OffsetDateTimeSerializer.java
-org/eclipse/yasson/internal/serializer/types/OffsetTimeSerializer.java
-org/eclipse/yasson/internal/serializer/types/OptionalDoubleSerializer.java
-org/eclipse/yasson/internal/serializer/types/OptionalIntSerializer.java
-org/eclipse/yasson/internal/serializer/types/OptionalLongSerializer.java
-org/eclipse/yasson/internal/serializer/types/PathSerializer.java
-org/eclipse/yasson/internal/serializer/types/PeriodSerializer.java
-org/eclipse/yasson/internal/serializer/types/ShortSerializer.java
-org/eclipse/yasson/internal/serializer/types/SqlDateSerializer.java
-org/eclipse/yasson/internal/serializer/types/SqlTimestampSerializer.java
-org/eclipse/yasson/internal/serializer/types/StringSerializer.java
-org/eclipse/yasson/internal/serializer/types/TimeZoneSerializer.java
-org/eclipse/yasson/internal/serializer/types/TypeSerializer.java
-org/eclipse/yasson/internal/serializer/types/TypeSerializerBuilder.java
-org/eclipse/yasson/internal/serializer/types/TypeSerializers.java
-org/eclipse/yasson/internal/serializer/types/UriSerializer.java
-org/eclipse/yasson/internal/serializer/types/UrlSerializer.java
-org/eclipse/yasson/internal/serializer/types/UuidSerializer.java
-org/eclipse/yasson/internal/serializer/types/XmlGregorianCalendarSerializer.java
-org/eclipse/yasson/internal/serializer/types/YearMonthTypeSerializer.java
-org/eclipse/yasson/internal/serializer/types/ZonedDateTimeSerializer.java
-org/eclipse/yasson/internal/serializer/types/ZoneIdSerializer.java
-org/eclipse/yasson/internal/serializer/types/ZoneOffsetSerializer.java
-org/eclipse/yasson/internal/serializer/UserDefinedSerializer.java
-org/eclipse/yasson/internal/serializer/ValueGetterSerializer.java
-org/eclipse/yasson/internal/serializer/YassonGenerator.java
-org/eclipse/yasson/internal/VariableTypeInheritanceSearch.java
-org/eclipse/yasson/JsonBindingProvider.java
-org/eclipse/yasson/spi/JsonbComponentInstanceCreator.java
-org/eclipse/yasson/YassonConfig.java
-org/eclipse/yasson/YassonJsonb.java
-org/eclipse/yasson/YassonProperties.java
-parent-poms/mvn+org.eclipse.ee4j:project$1.0.9/pom.xml
-pom.xml
-yasson-messages.properties
---------------------------------------------------------------------------------
-
-THE ACCOMPANYING PROGRAM IS PROVIDED UNDER THE TERMS OF THIS ECLIPSE PUBLIC LICENSE ("AGREEMENT"). ANY USE, REPRODUCTION OR DISTRIBUTION OF THE PROGRAM CONSTITUTES RECIPIENT'S ACCEPTANCE OF THIS AGREEMENT.
-   1. DEFINITIONS
-   "Contribution" means:
-      a) in the case of the initial Contributor, the initial content Distributed under this Agreement, and
-      b) in the case of each subsequent Contributor:
-         i) changes to the Program, and
-         ii) additions to the Program;
-      where such changes and/or additions to the Program originate from and are Distributed by that particular Contributor. A Contribution "originates" from a Contributor if it was added to the Program by such Contributor itself or anyone acting on such Contributor's behalf. Contributions do not include changes or additions to the Program that are not Modified Works.
-   "Contributor" means any person or entity that Distributes the Program.
-   "Licensed Patents" mean patent claims licensable by a Contributor which are necessarily infringed by the use or sale of its Contribution alone or when combined with the Program.
-   "Program" means the Contributions Distributed in accordance with this Agreement.
-   "Recipient" means anyone who receives the Program under this Agreement or any Secondary License (as applicable), including Contributors.
-   "Derivative Works" shall mean any work, whether in Source Code or other form, that is based on (or derived from) the Program and for which the editorial revisions, annotations, elaborations, or other modifications represent, as a whole, an original work of authorship.
-   "Modified Works" shall mean any work in Source Code or other form that results from an addition to, deletion from, or modification of the contents of the Program, including, for purposes of clarity any new file in Source Code form that contains any contents of the Program. Modified Works shall not include works that contain only declarations, interfaces, types, classes, structures, or files of the Program solely in each case in order to link to, bind by name, or subclass the Program or Modified Works thereof.
-   "Distribute" means the acts of a) distributing or b) making available in any manner that enables the transfer of a copy.
-   "Source Code" means the form of a Program preferred for making modifications, including but not limited to software source code, documentation source, and configuration files.
-   "Secondary License" means either the GNU General Public License, Version 2.0, or any later versions of that license, including any exceptions or additional permissions as identified by the initial Contributor.
-   2. GRANT OF RIGHTS
-      a) Subject to the terms of this Agreement, each Contributor hereby grants Recipient a non-exclusive, worldwide, royalty-free copyright license to reproduce, prepare Derivative Works of, publicly display, publicly perform, Distribute and sublicense the Contribution of such Contributor, if any, and such Derivative Works.
-      b) Subject to the terms of this Agreement, each Contributor hereby grants Recipient a non-exclusive, worldwide, royalty-free patent license under Licensed Patents to make, use, sell, offer to sell, import and otherwise transfer the Contribution of such Contributor, if any, in Source Code or other form. This patent license shall apply to the combination of the Contribution and the Program if, at the time the Contribution is added by the Contributor, such addition of the Contribution causes such combination to be covered by the Licensed Patents. The patent license shall not apply to any other combinations which include the Contribution. No hardware per se is licensed hereunder.
-      c) Recipient understands that although each Contributor grants the licenses to its Contributions set forth herein, no assurances are provided by any Contributor that the Program does not infringe the patent or other intellectual property rights of any other entity. Each Contributor disclaims any liability to Recipient for claims brought by any other entity based on infringement of intellectual property rights or otherwise. As a condition to exercising the rights and licenses granted hereunder, each Recipient hereby assumes sole responsibility to secure any other intellectual property rights needed, if any. For example, if a third party patent license is required to allow Recipient to Distribute the Program, it is Recipient's responsibility to acquire that license before distributing the Program.
-      d) Each Contributor represents that to its knowledge it has sufficient copyright rights in its Contribution, if any, to grant the copyright license set forth in this Agreement.
-      e) Notwithstanding the terms of any Secondary License, no Contributor makes additional grants to any Recipient (other than those set forth in this Agreement) as a result of such Recipient's receipt of the Program under the terms of a Secondary License (if permitted under the terms of Section 3).
-   3. REQUIREMENTS
-      3.1 If a Contributor Distributes the Program in any form, then:
-         a) the Program must also be made available as Source Code, in accordance with section 3.2, and the Contributor must accompany the Program with a statement that the Source Code for the Program is available under this Agreement, and informs Recipients how to obtain it in a reasonable manner on or through a medium customarily used for software exchange; and
-         b) the Contributor may Distribute the Program under a license different than this Agreement, provided that such license:
-            i) effectively disclaims on behalf of all other Contributors all warranties and conditions, express and implied, including warranties or conditions of title and non-infringement, and implied warranties or conditions of merchantability and fitness for a particular purpose;
-            ii) effectively excludes on behalf of all other Contributors all liability for damages, including direct, indirect, special, incidental and consequential damages, such as lost profits;
-            iii) does not attempt to limit or alter the recipients' rights in the Source Code under section 3.2; and
-            iv) requires any subsequent distribution of the Program by any party to be under a license that satisfies the requirements of this section 3.
-      3.2 When the Program is Distributed as Source Code:
-         a) it must be made available under this Agreement, or if the Program (i) is combined with other material in a separate file or files made available under a Secondary License, and (ii) the initial Contributor attached to the Source Code the notice described in Exhibit A of this Agreement, then the Program may be made available under the terms of such Secondary Licenses, and
-         b) a copy of this Agreement must be included with each copy of the Program.
-      3.3 Contributors may not remove or alter any copyright, patent, trademark, attribution notices, disclaimers of warranty, or limitations of liability ("notices") contained within the Program from any copy of the Program which they Distribute, provided that Contributors may add their own appropriate notices.
-   4. COMMERCIAL DISTRIBUTION
-   Commercial distributors of software may accept certain responsibilities with respect to end users, business partners and the like. While this license is intended to facilitate the commercial use of the Program, the Contributor who includes the Program in a commercial product offering should do so in a manner which does not create potential liability for other Contributors. Therefore, if a Contributor includes the Program in a commercial product offering, such Contributor ("Commercial Contributor") hereby agrees to defend and indemnify every other Contributor ("Indemnified Contributor") against any losses, damages and costs (collectively "Losses") arising from claims, lawsuits and other legal actions brought by a third party against the Indemnified Contributor to the extent caused by the acts or omissions of such Commercial Contributor in connection with its distribution of the Program in a commercial product offering. The obligations in this section do not apply to any claims or Losses relating to any actual or alleged intellectual property infringement. In order to qualify, an Indemnified Contributor must: a) promptly notify the Commercial Contributor in writing of such claim, and b) allow the Commercial Contributor to control, and cooperate with the Commercial Contributor in, the defense and any related settlement negotiations. The Indemnified Contributor may participate in any such claim at its own expense.
-   For example, a Contributor might include the Program in a commercial product offering, Product X. That Contributor is then a Commercial Contributor. If that Commercial Contributor then makes performance claims, or offers warranties related to Product X, those performance claims and warranties are such Commercial Contributor's responsibility alone. Under this section, the Commercial Contributor would have to defend claims against the other Contributors related to those performance claims and warranties, and if a court requires any other Contributor to pay any damages as a result, the Commercial Contributor must pay those damages.
-   5. NO WARRANTY
-   EXCEPT AS EXPRESSLY SET FORTH IN THIS AGREEMENT, AND TO THE EXTENT PERMITTED BY APPLICABLE LAW, THE PROGRAM IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED INCLUDING, WITHOUT LIMITATION, ANY WARRANTIES OR CONDITIONS OF TITLE, NON-INFRINGEMENT, MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Each Recipient is solely responsible for determining the appropriateness of using and distributing the Program and assumes all risks associated with its exercise of rights under this Agreement, including but not limited to the risks and costs of program errors, compliance with applicable laws, damage to or loss of data, programs or equipment, and unavailability or interruption of operations.
-   6. DISCLAIMER OF LIABILITY
-   EXCEPT AS EXPRESSLY SET FORTH IN THIS AGREEMENT, AND TO THE EXTENT PERMITTED BY APPLICABLE LAW, NEITHER RECIPIENT NOR ANY CONTRIBUTORS SHALL HAVE ANY LIABILITY FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING WITHOUT LIMITATION LOST PROFITS), HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OR DISTRIBUTION OF THE PROGRAM OR THE EXERCISE OF ANY RIGHTS GRANTED HEREUNDER, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
-   7. GENERAL
-   If any provision of this Agreement is invalid or unenforceable under applicable law, it shall not affect the validity or enforceability of the remainder of the terms of this Agreement, and without further action by the parties hereto, such provision shall be reformed to the minimum extent necessary to make such provision valid and enforceable.
-   If Recipient institutes patent litigation against any entity (including a cross-claim or counterclaim in a lawsuit) alleging that the Program itself (excluding combinations of the Program with other software or hardware) infringes such Recipient's patent(s), then such Recipient's rights granted under Section 2(b) shall terminate as of the date such litigation is filed.
-   All Recipient's rights under this Agreement shall terminate if it fails to comply with any of the material terms or conditions of this Agreement and does not cure such failure in a reasonable period of time after becoming aware of such noncompliance. If all Recipient's rights under this Agreement terminate, Recipient agrees to cease use and distribution of the Program as soon as reasonably practicable. However, Recipient's obligations under this Agreement and any licenses granted by Recipient relating to the Program shall continue and survive.
-   Everyone is permitted to copy and distribute copies of this Agreement, but in order to avoid inconsistency the Agreement is copyrighted and may only be modified in the following manner. The Agreement Steward reserves the right to publish new versions (including revisions) of this Agreement from time to time. No one other than the Agreement Steward has the right to modify this Agreement. The Eclipse Foundation is the initial Agreement Steward. The Eclipse Foundation may assign the responsibility to serve as the Agreement Steward to a suitable separate entity. Each new version of the Agreement will be given a distinguishing version number. The Program (including Contributions) may always be Distributed subject to the version of the Agreement under which it was received. In addition, after a new version of the Agreement is published, Contributor may elect to Distribute the Program (including its Contributions) under the new version.
-   Except as expressly stated in Sections 2(a) and 2(b) above, Recipient receives no rights or licenses to the intellectual property of any Contributor under this Agreement, whether expressly, by implication, estoppel or otherwise. All rights in the Program not expressly granted under this Agreement are reserved. Nothing in this Agreement is intended to be enforceable by any entity that is not a Contributor or Recipient. No third-party beneficiary rights are created under this Agreement.
-   Exhibit A - Form of Secondary Licenses Notice
-   "This Source Code may also be made available under the following Secondary Licenses when the conditions for such availability set forth in the Eclipse Public License, v. 2.0 are satisfied: {name license(s), version(s), and exceptions or additional permissions here}."
-   Simply including a copy of this Agreement, including this Exhibit A is not sufficient to license the Source Code under Secondary Licenses.
-   If it is not possible or desirable to put the notice in a particular file, then You may include the notice in a location (such as a LICENSE file in a relevant directory) where a recipient would be likely to look for such a notice.
-   You may add additional accurate notices of copyright ownership.
+BSD-3-Clause, EPL-2.0, GPL-2.0-with-classpath-exception
 
 * BSD-3-Clause *
 --------------------------------------------------------------------------------
@@ -39068,6 +38802,273 @@ yasson-messages.properties
     Neither the name of the Eclipse Foundation, Inc. nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+* EPL-2.0 *
+--------------------------------------------------------------------------------
+File matches:
+META-INF/LICENSE.md
+META-INF/maven/org.eclipse/yasson/pom.xml
+META-INF/native-image/org.eclipse/yasson/native-image.properties
+META-INF/NOTICE.md
+module-info.java
+org/eclipse/yasson/FieldAccessStrategy.java
+org/eclipse/yasson/ImplementationClass.java
+org/eclipse/yasson/internal/AnnotationFinder.java
+org/eclipse/yasson/internal/AnnotationIntrospector.java
+org/eclipse/yasson/internal/BuiltInTypes.java
+org/eclipse/yasson/internal/ClassMultiReleaseExtension.java
+org/eclipse/yasson/internal/ClassParser.java
+org/eclipse/yasson/internal/ComponentMatcher.java
+org/eclipse/yasson/internal/components/AbstractComponentBinding.java
+org/eclipse/yasson/internal/components/AdapterBinding.java
+org/eclipse/yasson/internal/components/BeanManagerInstanceCreator.java
+org/eclipse/yasson/internal/components/ComponentBindings.java
+org/eclipse/yasson/internal/components/DefaultConstructorCreator.java
+org/eclipse/yasson/internal/components/DeserializerBinding.java
+org/eclipse/yasson/internal/components/JsonbComponentInstanceCreatorFactory.java
+org/eclipse/yasson/internal/components/SerializerBinding.java
+org/eclipse/yasson/internal/ConstructorPropertiesAnnotationIntrospector.java
+org/eclipse/yasson/internal/DeserializationContextImpl.java
+org/eclipse/yasson/internal/deserializer/AdapterDeserializer.java
+org/eclipse/yasson/internal/deserializer/ArrayDeserializer.java
+org/eclipse/yasson/internal/deserializer/ArrayInstanceCreator.java
+org/eclipse/yasson/internal/deserializer/CollectionDeserializer.java
+org/eclipse/yasson/internal/deserializer/CollectionInstanceCreator.java
+org/eclipse/yasson/internal/deserializer/ContextSwitcher.java
+org/eclipse/yasson/internal/deserializer/CyclicReferenceDeserializer.java
+org/eclipse/yasson/internal/deserializer/DefaultObjectInstanceCreator.java
+org/eclipse/yasson/internal/deserializer/DeferredDeserializer.java
+org/eclipse/yasson/internal/deserializer/DeserializationModelCreator.java
+org/eclipse/yasson/internal/deserializer/InheritanceInstanceCreator.java
+org/eclipse/yasson/internal/deserializer/JsonbCreatorDeserializer.java
+org/eclipse/yasson/internal/deserializer/JustReturn.java
+org/eclipse/yasson/internal/deserializer/MapDeserializer.java
+org/eclipse/yasson/internal/deserializer/MapInstanceCreator.java
+org/eclipse/yasson/internal/deserializer/ModelDeserializer.java
+org/eclipse/yasson/internal/deserializer/NullCheckDeserializer.java
+org/eclipse/yasson/internal/deserializer/ObjectDeserializer.java
+org/eclipse/yasson/internal/deserializer/OptionalDeserializer.java
+org/eclipse/yasson/internal/deserializer/PositionChecker.java
+org/eclipse/yasson/internal/deserializer/RequiredCreatorParameter.java
+org/eclipse/yasson/internal/deserializer/types/AbstractDateDeserializer.java
+org/eclipse/yasson/internal/deserializer/types/AbstractNumberDeserializer.java
+org/eclipse/yasson/internal/deserializer/types/BigDecimalDeserializer.java
+org/eclipse/yasson/internal/deserializer/types/BigIntegerDeserializer.java
+org/eclipse/yasson/internal/deserializer/types/BooleanDeserializer.java
+org/eclipse/yasson/internal/deserializer/types/ByteDeserializer.java
+org/eclipse/yasson/internal/deserializer/types/CalendarDeserializer.java
+org/eclipse/yasson/internal/deserializer/types/CharDeserializer.java
+org/eclipse/yasson/internal/deserializer/types/DateDeserializer.java
+org/eclipse/yasson/internal/deserializer/types/DoubleDeserializer.java
+org/eclipse/yasson/internal/deserializer/types/DurationDeserializer.java
+org/eclipse/yasson/internal/deserializer/types/EnumDeserializer.java
+org/eclipse/yasson/internal/deserializer/types/FloatDeserializer.java
+org/eclipse/yasson/internal/deserializer/types/InstantDeserializer.java
+org/eclipse/yasson/internal/deserializer/types/IntegerDeserializer.java
+org/eclipse/yasson/internal/deserializer/types/JsonValueDeserializer.java
+org/eclipse/yasson/internal/deserializer/types/LocalDateDeserializer.java
+org/eclipse/yasson/internal/deserializer/types/LocalDateTimeDeserializer.java
+org/eclipse/yasson/internal/deserializer/types/LocalTimeDeserializer.java
+org/eclipse/yasson/internal/deserializer/types/LongDeserializer.java
+org/eclipse/yasson/internal/deserializer/types/MonthDayTypeDeserializer.java
+org/eclipse/yasson/internal/deserializer/types/NumberDeserializer.java
+org/eclipse/yasson/internal/deserializer/types/ObjectTypeDeserializer.java
+org/eclipse/yasson/internal/deserializer/types/OffsetDateTimeDeserializer.java
+org/eclipse/yasson/internal/deserializer/types/OffsetTimeDeserializer.java
+org/eclipse/yasson/internal/deserializer/types/OptionalDoubleDeserializer.java
+org/eclipse/yasson/internal/deserializer/types/OptionalIntDeserializer.java
+org/eclipse/yasson/internal/deserializer/types/OptionalLongDeserializer.java
+org/eclipse/yasson/internal/deserializer/types/PathDeserializer.java
+org/eclipse/yasson/internal/deserializer/types/PeriodDeserializer.java
+org/eclipse/yasson/internal/deserializer/types/ShortDeserializer.java
+org/eclipse/yasson/internal/deserializer/types/SqlDateDeserializer.java
+org/eclipse/yasson/internal/deserializer/types/SqlTimestampDeserializer.java
+org/eclipse/yasson/internal/deserializer/types/StringDeserializer.java
+org/eclipse/yasson/internal/deserializer/types/TimeZoneDeserializer.java
+org/eclipse/yasson/internal/deserializer/types/TypeDeserializer.java
+org/eclipse/yasson/internal/deserializer/types/TypeDeserializerBuilder.java
+org/eclipse/yasson/internal/deserializer/types/TypeDeserializers.java
+org/eclipse/yasson/internal/deserializer/types/UriDeserializer.java
+org/eclipse/yasson/internal/deserializer/types/UrlDeserializer.java
+org/eclipse/yasson/internal/deserializer/types/UuidDeserializer.java
+org/eclipse/yasson/internal/deserializer/types/XmlGregorianCalendarDeserializer.java
+org/eclipse/yasson/internal/deserializer/types/YearMonthTypeDeserializer.java
+org/eclipse/yasson/internal/deserializer/types/ZonedDateTimeDeserializer.java
+org/eclipse/yasson/internal/deserializer/types/ZoneIdDeserializer.java
+org/eclipse/yasson/internal/deserializer/types/ZoneOffsetDeserializer.java
+org/eclipse/yasson/internal/deserializer/UserDefinedDeserializer.java
+org/eclipse/yasson/internal/deserializer/ValueExtractor.java
+org/eclipse/yasson/internal/deserializer/ValueSetterDeserializer.java
+org/eclipse/yasson/internal/deserializer/YassonParser.java
+org/eclipse/yasson/internal/InstanceCreator.java
+org/eclipse/yasson/internal/JsonbConfigProperties.java
+org/eclipse/yasson/internal/JsonbContext.java
+org/eclipse/yasson/internal/JsonbDateFormatter.java
+org/eclipse/yasson/internal/JsonBinding.java
+org/eclipse/yasson/internal/JsonBindingBuilder.java
+org/eclipse/yasson/internal/JsonbNumberFormatter.java
+org/eclipse/yasson/internal/jsonstructure/JsonArrayBuilder.java
+org/eclipse/yasson/internal/jsonstructure/JsonArrayIterator.java
+org/eclipse/yasson/internal/jsonstructure/JsonGeneratorToStructureAdapter.java
+org/eclipse/yasson/internal/jsonstructure/JsonObjectBuilder.java
+org/eclipse/yasson/internal/jsonstructure/JsonObjectIterator.java
+org/eclipse/yasson/internal/jsonstructure/JsonStructureBuilder.java
+org/eclipse/yasson/internal/jsonstructure/JsonStructureIterator.java
+org/eclipse/yasson/internal/jsonstructure/JsonStructureToParserAdapter.java
+org/eclipse/yasson/internal/MappingContext.java
+org/eclipse/yasson/internal/model/AnnotationTarget.java
+org/eclipse/yasson/internal/model/ClassModel.java
+org/eclipse/yasson/internal/model/CreatorModel.java
+org/eclipse/yasson/internal/model/customization/ClassCustomization.java
+org/eclipse/yasson/internal/model/customization/ComponentBoundCustomization.java
+org/eclipse/yasson/internal/model/customization/CreatorCustomization.java
+org/eclipse/yasson/internal/model/customization/Customization.java
+org/eclipse/yasson/internal/model/customization/CustomizationBase.java
+org/eclipse/yasson/internal/model/customization/PropertyCustomization.java
+org/eclipse/yasson/internal/model/customization/PropertyOrdering.java
+org/eclipse/yasson/internal/model/customization/StrategiesProvider.java
+org/eclipse/yasson/internal/model/customization/TypeInheritanceConfiguration.java
+org/eclipse/yasson/internal/model/customization/VisibilityStrategiesProvider.java
+org/eclipse/yasson/internal/model/JsonbAnnotatedElement.java
+org/eclipse/yasson/internal/model/JsonbCreator.java
+org/eclipse/yasson/internal/model/ModulesUtil.java
+org/eclipse/yasson/internal/model/Property.java
+org/eclipse/yasson/internal/model/PropertyModel.java
+org/eclipse/yasson/internal/model/ReverseTreeMap.java
+org/eclipse/yasson/internal/ProcessingContext.java
+org/eclipse/yasson/internal/properties/MessageKeys.java
+org/eclipse/yasson/internal/properties/Messages.java
+org/eclipse/yasson/internal/ReflectionUtils.java
+org/eclipse/yasson/internal/ResolvedParameterizedType.java
+org/eclipse/yasson/internal/SerializationContextImpl.java
+org/eclipse/yasson/internal/serializer/AbstractSerializer.java
+org/eclipse/yasson/internal/serializer/AdapterSerializer.java
+org/eclipse/yasson/internal/serializer/ArraySerializer.java
+org/eclipse/yasson/internal/serializer/CollectionSerializer.java
+org/eclipse/yasson/internal/serializer/CyclicReferenceSerializer.java
+org/eclipse/yasson/internal/serializer/KeyWriter.java
+org/eclipse/yasson/internal/serializer/MapSerializer.java
+org/eclipse/yasson/internal/serializer/ModelSerializer.java
+org/eclipse/yasson/internal/serializer/NullSerializer.java
+org/eclipse/yasson/internal/serializer/NullVisibilitySwitcher.java
+org/eclipse/yasson/internal/serializer/ObjectSerializer.java
+org/eclipse/yasson/internal/serializer/OptionalSerializer.java
+org/eclipse/yasson/internal/serializer/RecursionChecker.java
+org/eclipse/yasson/internal/serializer/SerializationModelCreator.java
+org/eclipse/yasson/internal/serializer/SerializerBuilderParams.java
+org/eclipse/yasson/internal/serializer/types/AbstractDateSerializer.java
+org/eclipse/yasson/internal/serializer/types/AbstractNumberSerializer.java
+org/eclipse/yasson/internal/serializer/types/BigDecimalSerializer.java
+org/eclipse/yasson/internal/serializer/types/BigIntegerSerializer.java
+org/eclipse/yasson/internal/serializer/types/BooleanSerializer.java
+org/eclipse/yasson/internal/serializer/types/ByteSerializer.java
+org/eclipse/yasson/internal/serializer/types/CalendarSerializer.java
+org/eclipse/yasson/internal/serializer/types/CharSerializer.java
+org/eclipse/yasson/internal/serializer/types/DateSerializer.java
+org/eclipse/yasson/internal/serializer/types/DoubleSerializer.java
+org/eclipse/yasson/internal/serializer/types/DurationSerializer.java
+org/eclipse/yasson/internal/serializer/types/EnumSerializer.java
+org/eclipse/yasson/internal/serializer/types/FloatSerializer.java
+org/eclipse/yasson/internal/serializer/types/InstantSerializer.java
+org/eclipse/yasson/internal/serializer/types/IntegerSerializer.java
+org/eclipse/yasson/internal/serializer/types/JsonValueSerializer.java
+org/eclipse/yasson/internal/serializer/types/LocalDateSerializer.java
+org/eclipse/yasson/internal/serializer/types/LocalDateTimeSerializer.java
+org/eclipse/yasson/internal/serializer/types/LocalTimeSerializer.java
+org/eclipse/yasson/internal/serializer/types/LongSerializer.java
+org/eclipse/yasson/internal/serializer/types/MonthDayTypeSerializer.java
+org/eclipse/yasson/internal/serializer/types/NumberSerializer.java
+org/eclipse/yasson/internal/serializer/types/ObjectTypeSerializer.java
+org/eclipse/yasson/internal/serializer/types/OffsetDateTimeSerializer.java
+org/eclipse/yasson/internal/serializer/types/OffsetTimeSerializer.java
+org/eclipse/yasson/internal/serializer/types/OptionalDoubleSerializer.java
+org/eclipse/yasson/internal/serializer/types/OptionalIntSerializer.java
+org/eclipse/yasson/internal/serializer/types/OptionalLongSerializer.java
+org/eclipse/yasson/internal/serializer/types/PathSerializer.java
+org/eclipse/yasson/internal/serializer/types/PeriodSerializer.java
+org/eclipse/yasson/internal/serializer/types/ShortSerializer.java
+org/eclipse/yasson/internal/serializer/types/SqlDateSerializer.java
+org/eclipse/yasson/internal/serializer/types/SqlTimestampSerializer.java
+org/eclipse/yasson/internal/serializer/types/StringSerializer.java
+org/eclipse/yasson/internal/serializer/types/TimeZoneSerializer.java
+org/eclipse/yasson/internal/serializer/types/TypeSerializer.java
+org/eclipse/yasson/internal/serializer/types/TypeSerializerBuilder.java
+org/eclipse/yasson/internal/serializer/types/TypeSerializers.java
+org/eclipse/yasson/internal/serializer/types/UriSerializer.java
+org/eclipse/yasson/internal/serializer/types/UrlSerializer.java
+org/eclipse/yasson/internal/serializer/types/UuidSerializer.java
+org/eclipse/yasson/internal/serializer/types/XmlGregorianCalendarSerializer.java
+org/eclipse/yasson/internal/serializer/types/YearMonthTypeSerializer.java
+org/eclipse/yasson/internal/serializer/types/ZonedDateTimeSerializer.java
+org/eclipse/yasson/internal/serializer/types/ZoneIdSerializer.java
+org/eclipse/yasson/internal/serializer/types/ZoneOffsetSerializer.java
+org/eclipse/yasson/internal/serializer/UserDefinedSerializer.java
+org/eclipse/yasson/internal/serializer/ValueGetterSerializer.java
+org/eclipse/yasson/internal/serializer/YassonGenerator.java
+org/eclipse/yasson/internal/VariableTypeInheritanceSearch.java
+org/eclipse/yasson/JsonBindingProvider.java
+org/eclipse/yasson/spi/JsonbComponentInstanceCreator.java
+org/eclipse/yasson/YassonConfig.java
+org/eclipse/yasson/YassonJsonb.java
+org/eclipse/yasson/YassonProperties.java
+parent-poms/mvn+org.eclipse.ee4j:project$1.0.9/pom.xml
+pom.xml
+yasson-messages.properties
+--------------------------------------------------------------------------------
+
+THE ACCOMPANYING PROGRAM IS PROVIDED UNDER THE TERMS OF THIS ECLIPSE PUBLIC LICENSE ("AGREEMENT"). ANY USE, REPRODUCTION OR DISTRIBUTION OF THE PROGRAM CONSTITUTES RECIPIENT'S ACCEPTANCE OF THIS AGREEMENT.
+   1. DEFINITIONS
+   "Contribution" means:
+      a) in the case of the initial Contributor, the initial content Distributed under this Agreement, and
+      b) in the case of each subsequent Contributor:
+         i) changes to the Program, and
+         ii) additions to the Program;
+      where such changes and/or additions to the Program originate from and are Distributed by that particular Contributor. A Contribution "originates" from a Contributor if it was added to the Program by such Contributor itself or anyone acting on such Contributor's behalf. Contributions do not include changes or additions to the Program that are not Modified Works.
+   "Contributor" means any person or entity that Distributes the Program.
+   "Licensed Patents" mean patent claims licensable by a Contributor which are necessarily infringed by the use or sale of its Contribution alone or when combined with the Program.
+   "Program" means the Contributions Distributed in accordance with this Agreement.
+   "Recipient" means anyone who receives the Program under this Agreement or any Secondary License (as applicable), including Contributors.
+   "Derivative Works" shall mean any work, whether in Source Code or other form, that is based on (or derived from) the Program and for which the editorial revisions, annotations, elaborations, or other modifications represent, as a whole, an original work of authorship.
+   "Modified Works" shall mean any work in Source Code or other form that results from an addition to, deletion from, or modification of the contents of the Program, including, for purposes of clarity any new file in Source Code form that contains any contents of the Program. Modified Works shall not include works that contain only declarations, interfaces, types, classes, structures, or files of the Program solely in each case in order to link to, bind by name, or subclass the Program or Modified Works thereof.
+   "Distribute" means the acts of a) distributing or b) making available in any manner that enables the transfer of a copy.
+   "Source Code" means the form of a Program preferred for making modifications, including but not limited to software source code, documentation source, and configuration files.
+   "Secondary License" means either the GNU General Public License, Version 2.0, or any later versions of that license, including any exceptions or additional permissions as identified by the initial Contributor.
+   2. GRANT OF RIGHTS
+      a) Subject to the terms of this Agreement, each Contributor hereby grants Recipient a non-exclusive, worldwide, royalty-free copyright license to reproduce, prepare Derivative Works of, publicly display, publicly perform, Distribute and sublicense the Contribution of such Contributor, if any, and such Derivative Works.
+      b) Subject to the terms of this Agreement, each Contributor hereby grants Recipient a non-exclusive, worldwide, royalty-free patent license under Licensed Patents to make, use, sell, offer to sell, import and otherwise transfer the Contribution of such Contributor, if any, in Source Code or other form. This patent license shall apply to the combination of the Contribution and the Program if, at the time the Contribution is added by the Contributor, such addition of the Contribution causes such combination to be covered by the Licensed Patents. The patent license shall not apply to any other combinations which include the Contribution. No hardware per se is licensed hereunder.
+      c) Recipient understands that although each Contributor grants the licenses to its Contributions set forth herein, no assurances are provided by any Contributor that the Program does not infringe the patent or other intellectual property rights of any other entity. Each Contributor disclaims any liability to Recipient for claims brought by any other entity based on infringement of intellectual property rights or otherwise. As a condition to exercising the rights and licenses granted hereunder, each Recipient hereby assumes sole responsibility to secure any other intellectual property rights needed, if any. For example, if a third party patent license is required to allow Recipient to Distribute the Program, it is Recipient's responsibility to acquire that license before distributing the Program.
+      d) Each Contributor represents that to its knowledge it has sufficient copyright rights in its Contribution, if any, to grant the copyright license set forth in this Agreement.
+      e) Notwithstanding the terms of any Secondary License, no Contributor makes additional grants to any Recipient (other than those set forth in this Agreement) as a result of such Recipient's receipt of the Program under the terms of a Secondary License (if permitted under the terms of Section 3).
+   3. REQUIREMENTS
+      3.1 If a Contributor Distributes the Program in any form, then:
+         a) the Program must also be made available as Source Code, in accordance with section 3.2, and the Contributor must accompany the Program with a statement that the Source Code for the Program is available under this Agreement, and informs Recipients how to obtain it in a reasonable manner on or through a medium customarily used for software exchange; and
+         b) the Contributor may Distribute the Program under a license different than this Agreement, provided that such license:
+            i) effectively disclaims on behalf of all other Contributors all warranties and conditions, express and implied, including warranties or conditions of title and non-infringement, and implied warranties or conditions of merchantability and fitness for a particular purpose;
+            ii) effectively excludes on behalf of all other Contributors all liability for damages, including direct, indirect, special, incidental and consequential damages, such as lost profits;
+            iii) does not attempt to limit or alter the recipients' rights in the Source Code under section 3.2; and
+            iv) requires any subsequent distribution of the Program by any party to be under a license that satisfies the requirements of this section 3.
+      3.2 When the Program is Distributed as Source Code:
+         a) it must be made available under this Agreement, or if the Program (i) is combined with other material in a separate file or files made available under a Secondary License, and (ii) the initial Contributor attached to the Source Code the notice described in Exhibit A of this Agreement, then the Program may be made available under the terms of such Secondary Licenses, and
+         b) a copy of this Agreement must be included with each copy of the Program.
+      3.3 Contributors may not remove or alter any copyright, patent, trademark, attribution notices, disclaimers of warranty, or limitations of liability ("notices") contained within the Program from any copy of the Program which they Distribute, provided that Contributors may add their own appropriate notices.
+   4. COMMERCIAL DISTRIBUTION
+   Commercial distributors of software may accept certain responsibilities with respect to end users, business partners and the like. While this license is intended to facilitate the commercial use of the Program, the Contributor who includes the Program in a commercial product offering should do so in a manner which does not create potential liability for other Contributors. Therefore, if a Contributor includes the Program in a commercial product offering, such Contributor ("Commercial Contributor") hereby agrees to defend and indemnify every other Contributor ("Indemnified Contributor") against any losses, damages and costs (collectively "Losses") arising from claims, lawsuits and other legal actions brought by a third party against the Indemnified Contributor to the extent caused by the acts or omissions of such Commercial Contributor in connection with its distribution of the Program in a commercial product offering. The obligations in this section do not apply to any claims or Losses relating to any actual or alleged intellectual property infringement. In order to qualify, an Indemnified Contributor must: a) promptly notify the Commercial Contributor in writing of such claim, and b) allow the Commercial Contributor to control, and cooperate with the Commercial Contributor in, the defense and any related settlement negotiations. The Indemnified Contributor may participate in any such claim at its own expense.
+   For example, a Contributor might include the Program in a commercial product offering, Product X. That Contributor is then a Commercial Contributor. If that Commercial Contributor then makes performance claims, or offers warranties related to Product X, those performance claims and warranties are such Commercial Contributor's responsibility alone. Under this section, the Commercial Contributor would have to defend claims against the other Contributors related to those performance claims and warranties, and if a court requires any other Contributor to pay any damages as a result, the Commercial Contributor must pay those damages.
+   5. NO WARRANTY
+   EXCEPT AS EXPRESSLY SET FORTH IN THIS AGREEMENT, AND TO THE EXTENT PERMITTED BY APPLICABLE LAW, THE PROGRAM IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED INCLUDING, WITHOUT LIMITATION, ANY WARRANTIES OR CONDITIONS OF TITLE, NON-INFRINGEMENT, MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Each Recipient is solely responsible for determining the appropriateness of using and distributing the Program and assumes all risks associated with its exercise of rights under this Agreement, including but not limited to the risks and costs of program errors, compliance with applicable laws, damage to or loss of data, programs or equipment, and unavailability or interruption of operations.
+   6. DISCLAIMER OF LIABILITY
+   EXCEPT AS EXPRESSLY SET FORTH IN THIS AGREEMENT, AND TO THE EXTENT PERMITTED BY APPLICABLE LAW, NEITHER RECIPIENT NOR ANY CONTRIBUTORS SHALL HAVE ANY LIABILITY FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING WITHOUT LIMITATION LOST PROFITS), HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OR DISTRIBUTION OF THE PROGRAM OR THE EXERCISE OF ANY RIGHTS GRANTED HEREUNDER, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+   7. GENERAL
+   If any provision of this Agreement is invalid or unenforceable under applicable law, it shall not affect the validity or enforceability of the remainder of the terms of this Agreement, and without further action by the parties hereto, such provision shall be reformed to the minimum extent necessary to make such provision valid and enforceable.
+   If Recipient institutes patent litigation against any entity (including a cross-claim or counterclaim in a lawsuit) alleging that the Program itself (excluding combinations of the Program with other software or hardware) infringes such Recipient's patent(s), then such Recipient's rights granted under Section 2(b) shall terminate as of the date such litigation is filed.
+   All Recipient's rights under this Agreement shall terminate if it fails to comply with any of the material terms or conditions of this Agreement and does not cure such failure in a reasonable period of time after becoming aware of such noncompliance. If all Recipient's rights under this Agreement terminate, Recipient agrees to cease use and distribution of the Program as soon as reasonably practicable. However, Recipient's obligations under this Agreement and any licenses granted by Recipient relating to the Program shall continue and survive.
+   Everyone is permitted to copy and distribute copies of this Agreement, but in order to avoid inconsistency the Agreement is copyrighted and may only be modified in the following manner. The Agreement Steward reserves the right to publish new versions (including revisions) of this Agreement from time to time. No one other than the Agreement Steward has the right to modify this Agreement. The Eclipse Foundation is the initial Agreement Steward. The Eclipse Foundation may assign the responsibility to serve as the Agreement Steward to a suitable separate entity. Each new version of the Agreement will be given a distinguishing version number. The Program (including Contributions) may always be Distributed subject to the version of the Agreement under which it was received. In addition, after a new version of the Agreement is published, Contributor may elect to Distribute the Program (including its Contributions) under the new version.
+   Except as expressly stated in Sections 2(a) and 2(b) above, Recipient receives no rights or licenses to the intellectual property of any Contributor under this Agreement, whether expressly, by implication, estoppel or otherwise. All rights in the Program not expressly granted under this Agreement are reserved. Nothing in this Agreement is intended to be enforceable by any entity that is not a Contributor or Recipient. No third-party beneficiary rights are created under this Agreement.
+   Exhibit A - Form of Secondary Licenses Notice
+   "This Source Code may also be made available under the following Secondary Licenses when the conditions for such availability set forth in the Eclipse Public License, v. 2.0 are satisfied: {name license(s), version(s), and exceptions or additional permissions here}."
+   Simply including a copy of this Agreement, including this Exhibit A is not sufficient to license the Source Code under Secondary Licenses.
+   If it is not possible or desirable to put the notice in a particular file, then You may include the notice in a location (such as a LICENSE file in a relevant directory) where a recipient would be likely to look for such a notice.
+   You may add additional accurate notices of copyright ownership.
+
 * GPL-2.0-with-classpath-exception *
 --------------------------------------------------------------------------------
 File matches:
@@ -39194,11 +39195,11 @@ Authors: Dmitry Kornilov, Roman Grigoriadi, David Kral, Andy Guibert
 Package Download URL: https://repo1.maven.org/maven2/org/eclipse/yasson/3.0.4/yasson-3.0.4-sources.jar
 
 --------------------------------------------------------------------------------
-Package Title: zstd-jni (1.5.6-4)
+Package Title: zstd-jni (1.5.7-4)
 
-Package Locator: mvn+com.github.luben:zstd-jni$1.5.6-4
+Package Locator: mvn+com.github.luben:zstd-jni$1.5.7-4
 
-Package Depth: Transitive
+Package Depth: Direct
 --------------------------------------------------------------------------------
 
 * Declared Licenses *
@@ -39238,7 +39239,47 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 Authors: Luben Karavelov
 
-Package Download URL: https://repo1.maven.org/maven2/com/github/luben/zstd-jni/1.5.6-4/zstd-jni-1.5.6-4-sources.jar
+Package Download URL: https://repo1.maven.org/maven2/com/github/luben/zstd-jni/1.5.7-4/zstd-jni-1.5.7-4-sources.jar
+
+--------------------------------------------------------------------------------
+Package Title: zstd-jni native (Copyright (c) 2016-present, Facebook, Inc. All rights reserved.) (1.5.7-4)
+
+Package Locator: user+2016203$1.5.7-4
+
+Package Depth: Direct
+--------------------------------------------------------------------------------
+
+* Declared Licenses *
+BSD-3-Clause
+
+
+Copyright (c) <year> <owner> . All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+   1. Redistributions of source code must retain the above copyright notice,
+      this list of conditions and the following disclaimer.
+
+   2. Redistributions in binary form must reproduce the above copyright notice,
+      this list of conditions and the following disclaimer in the documentation
+      and/or other materials provided with the distribution.
+
+   3. Neither the name of the copyright holder nor the names of its
+      contributors may be used to endorse or promote products derived from
+      this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 
 
 ================================================================================
@@ -43952,7 +43993,27 @@ BSD 3-Clause "New" or "Revised" License
 
 Copyright (c) 2018, 2024 Oracle and/or its affiliates. All rights reserved.
 
+Copyright (c) 2005, 2021 Oracle and/or its affiliates. All rights reserved.
+
+Copyright (c) 2003, 2021 Oracle and/or its affiliates. All rights reserved.
+
 Copyright (c) 2003, 2024 Oracle and/or its affiliates. All rights reserved.
+
+Copyright (c) 2004, 2024 Oracle and/or its affiliates. All rights reserved.
+
+Copyright (c) 2005, 2024 Oracle and/or its affiliates. All rights reserved.
+
+Copyright (c) 2009, 2021 Oracle and/or its affiliates. All rights reserved.
+
+Copyright (c) 2007, 2021 Oracle and/or its affiliates. All rights reserved.
+
+Copyright (c) 2017, 2024 Oracle and/or its affiliates. All rights reserved.
+
+Copyright (c) 2006, 2021 Oracle and/or its affiliates. All rights reserved.
+
+Copyright (c) 2018, 2023 Oracle and/or its affiliates. All rights reserved.
+
+Copyright (c) 2019 current.year} Eclipse Foundation. All rights reserved.<br>
 
 Copyright (c) 1997, 2024 Oracle and/or its affiliates. All rights reserved.
 
@@ -43992,37 +44053,17 @@ Copyright (c)  update}</update>
 
 Copyright (c)  ignoreyear}</ignoreYear>
 
-Copyright (c) 2003, 2021 Oracle and/or its affiliates. All rights reserved.
-
 Copyright (c) 2020, 2021 Oracle and/or its affiliates. All rights reserved.
-
-Copyright (c) 2004, 2024 Oracle and/or its affiliates. All rights reserved.
-
-Copyright (c) 2006, 2024 Oracle and/or its affiliates. All rights reserved.
-
-Copyright (c) 2005, 2021 Oracle and/or its affiliates. All rights reserved.
-
-Copyright (c) 2005, 2024 Oracle and/or its affiliates. All rights reserved.
 
 Copyright (c) 2005, 2023 Oracle and/or its affiliates. All rights reserved.
 
 Copyright (c) 2004, 2021 Oracle and/or its affiliates. All rights reserved.
 
-Copyright (c) 2017, 2024 Oracle and/or its affiliates. All rights reserved.
-
-Copyright (c) 2007, 2021 Oracle and/or its affiliates. All rights reserved.
-
 Copyright (c) 2015, 2024 Oracle and/or its affiliates. All rights reserved.
 
-Copyright (c) 2018, 2023 Oracle and/or its affiliates. All rights reserved.
-
-Copyright (c) 2019 current.year} Eclipse Foundation. All rights reserved.<br>
-
-Copyright (c) 2009, 2021 Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2006, 2024 Oracle and/or its affiliates. All rights reserved.
 
 Copyright (c) 2007, 2024 Oracle and/or its affiliates. All rights reserved.
-
-Copyright (c) 2006, 2021 Oracle and/or its affiliates. All rights reserved.
 
 Copyright (c) 2021 Oracle and/or its affiliates. All rights reserved.
 
@@ -44038,31 +44079,31 @@ Copyright (c) 2021, 2024 Oracle and/or its affiliates. All rights reserved.
 
 Copyright (c) 2016, 2024 Oracle and/or its affiliates. All rights reserved.
 
-Copyright (c) 2021, 2022 Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2019, 2020 Oracle and/or its affiliates. All rights reserved.
 
-Copyright (c) 2016, 2020 Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2021, 2022 Oracle and/or its affiliates. All rights reserved.
 
 Copyright (c) 2016, 2022 Oracle and/or its affiliates. All rights reserved.
 
 Copyright (c) 2015, 2022 Oracle and/or its affiliates. All rights reserved.
 
-Copyright (c) 2019, 2020 Payara Foundation and/or its affiliates. All rights reserved.
+Copyright (c) 2019, 2022 Oracle and/or its affiliates. All rights reserved.
+
+Copyright (c) 2016, 2020 Oracle and/or its affiliates. All rights reserved.
 
 Copyright (c) 2015, 2023 Oracle and/or its affiliates. All rights reserved.
 
-Copyright (c) 2019, 2022 Oracle and/or its affiliates. All rights reserved.
-
-Copyright (c) 2018, 2020 Oracle and/or its affiliates. All rights reserved.
-
-Copyright (c) 2016, 2023 Oracle and/or its affiliates. All rights reserved.
-
 Copyright (c) 2015, 2020 Oracle and/or its affiliates. All rights reserved.
 
-Copyright (c) 2019, 2020 Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2017, 2020 Oracle and/or its affiliates. All rights reserved.
+
+Copyright (c) 2019, 2020 Payara Foundation and/or its affiliates. All rights reserved.
 
 Copyright (c) 2017, 2022 Oracle and/or its affiliates. All rights reserved.
 
-Copyright (c) 2019, 2022 IBM and/or its affiliates. All rights reserved.
+Copyright (c) 2016, 2023 Oracle and/or its affiliates. All rights reserved.
+
+Copyright (c) 2018, 2020 Oracle and/or its affiliates. All rights reserved.
 
 Copyright (c)  maven-plugin.version>2.4</glassfish-copyright-maven-plugin.version>
 
@@ -44084,15 +44125,15 @@ Copyright (c)  maven-plugin.version}</version>
 
 Copyright (c)  exclude.txt</excludeFile>
 
-Copyright (c) 2017, 2020 Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2021, 2023 Oracle and/or its affiliates. All rights reserved.
+
+Copyright (c) 2019, 2022 IBM and/or its affiliates. All rights reserved.
 
 Copyright (c) 2018, 2022 Oracle and/or its affiliates. All rights reserved.
 
-Copyright (c) 2021, 2023 Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2019, 2023 Oracle and/or its affiliates. All rights reserved.
 
 Copyright (c) 2022 Oracle and/or its affiliates. All rights reserved.
-
-Copyright (c) 2019, 2023 Oracle and/or its affiliates. All rights reserved.
 
 Copyright (c) 2021 Markus KARG. All rights reserved.
 
@@ -44478,8 +44519,6 @@ Copyright (c) 2011-2022 Contributors to the Eclipse Foundation
 Copyright (c) 2011-2023 Contributors to the Eclipse Foundation
 
 Copyright (c) 2016, 2024 Oracle and/or its affiliates. All rights reserved.
-
-Copyright (c) 2011-2018 Contributors to the Eclipse Foundation
 Eclipse Public License - v 2.0
 THE ACCOMPANYING PROGRAM IS PROVIDED UNDER THE TERMS OF THIS ECLIPSE PUBLIC LICENSE ("AGREEMENT"). ANY USE, REPRODUCTION OR DISTRIBUTION OF THE PROGRAM CONSTITUTES RECIPIENT'S ACCEPTANCE OF THIS AGREEMENT.
    1. DEFINITIONS
@@ -45044,4 +45083,4 @@ Public Domain
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
-Report Generated by FOSSA on 2025-6-30
+Report Generated by FOSSA on 2025-8-19

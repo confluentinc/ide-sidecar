@@ -442,6 +442,11 @@
               "$ref" : "#/components/schemas/TLSConfig"
             } ],
             "nullable" : true
+          },
+          "client_id_suffix" : {
+            "description" : "The suffix to append to the Kafka client config option client.id when interacting with this Kafka cluster. Is useful when, for instance, connecting to WarpStream agents via Kubernetes port-forwarding.",
+            "type" : "string",
+            "nullable" : true
           }
         }
       },
@@ -1151,15 +1156,15 @@
       "HealthResponse" : {
         "type" : "object",
         "properties" : {
+          "status" : {
+            "enum" : [ "UP", "DOWN" ],
+            "type" : "string"
+          },
           "checks" : {
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/HealthCheck"
             }
-          },
-          "status" : {
-            "enum" : [ "UP", "DOWN" ],
-            "type" : "string"
           }
         }
       },
@@ -1170,11 +1175,11 @@
             "type" : "object",
             "nullable" : true
           },
-          "status" : {
-            "enum" : [ "UP", "DOWN" ],
+          "name" : {
             "type" : "string"
           },
-          "name" : {
+          "status" : {
+            "enum" : [ "UP", "DOWN" ],
             "type" : "string"
           }
         }
@@ -1867,7 +1872,7 @@
   },
   "info" : {
     "title" : "Confluent ide-sidecar API",
-    "version" : "0.235.0",
+    "version" : "0.242.0",
     "description" : "API for the Confluent ide-sidecar, part of Confluent for VS Code",
     "termsOfService" : "Your terms here",
     "contact" : {

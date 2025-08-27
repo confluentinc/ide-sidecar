@@ -11,7 +11,7 @@
 
   <groupId>io.confluent</groupId>
   <artifactId>ide-sidecar</artifactId>
-  <version>0.235.0</version>
+  <version>0.242.0</version>
   <packaging>jar</packaging>
   <name>IDE Sidecar</name>
   <description>Sidecar used by Confluent for VS Code.</description>
@@ -238,6 +238,11 @@
       <artifactId>snappy-java</artifactId>
       <groupId>org.xerial.snappy</groupId>
       <version>1.1.10.6</version>
+    </dependency>
+    <dependency>
+      <groupId>com.github.luben</groupId>
+      <artifactId>zstd-jni</artifactId>
+      <version>1.5.7-4</version>
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
