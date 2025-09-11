@@ -1,41 +1,5 @@
 package io.confluent.idesidecar.restapi.messageviewer;
 
-import static io.confluent.idesidecar.restapi.messageviewer.RecordDeserializer.getSchemaIdFromRawBytes;
-import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.Mockito.anyInt;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.TextNode;
-import io.confluent.idesidecar.restapi.clients.SchemaErrors;
-import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
-import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.RecordMetadata;
-import io.confluent.idesidecar.restapi.models.DataFormat;
-import io.confluent.idesidecar.restapi.proxy.KafkaRestProxyContext;
-import io.confluent.kafka.schemaregistry.avro.AvroSchema;
-import io.confluent.kafka.schemaregistry.avro.AvroSchemaProvider;
-import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
-import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
-import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
-import io.confluent.kafka.schemaregistry.json.JsonSchema;
-import io.confluent.kafka.schemaregistry.json.JsonSchemaProvider;
-import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchema;
-import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchemaProvider;
-import io.quarkus.test.junit.QuarkusTest;
-import jakarta.inject.Inject;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.SocketTimeoutException;
@@ -47,7 +11,15 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.stream.Stream;
+
 import org.junit.jupiter.api.AfterEach;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
@@ -56,6 +28,36 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.TextNode;
+
+import io.confluent.idesidecar.restapi.clients.SchemaErrors;
+import static io.confluent.idesidecar.restapi.messageviewer.RecordDeserializer.getSchemaIdFromRawBytes;
+import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
+import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.RecordMetadata;
+import io.confluent.idesidecar.restapi.models.DataFormat;
+import io.confluent.idesidecar.restapi.proxy.KafkaRestProxyContext;
+import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
+import io.confluent.kafka.schemaregistry.avro.AvroSchema;
+import io.confluent.kafka.schemaregistry.avro.AvroSchemaProvider;
+import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
+import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
+import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
+import io.confluent.kafka.schemaregistry.json.JsonSchema;
+import io.confluent.kafka.schemaregistry.json.JsonSchemaProvider;
+import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchema;
+import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchemaProvider;
+import io.quarkus.test.junit.QuarkusTest;
+import jakarta.inject.Inject;
 
 @QuarkusTest
 public class RecordDeserializerTest {
@@ -183,6 +185,37 @@ public class RecordDeserializerTest {
     assertNotNull(record);
     // Asserts for the top-level fields
     assertNotNull(record.errorMessage());
+  }
+
+  @Test
+  public void testDecodeAndDeserialize_AvroUnionTypes() throws IOException, RestClientException {
+    var parsedSchema = new AvroSchema(loadResource("message-viewer/schema-avro-union.json"));
+    var smsrc = (SimpleMockSchemaRegistryClient) schemaRegistryClient;
+    smsrc.register(100004, "union-test-subject-value", parsedSchema);
+
+    // Create AVRO record with union field
+    var record = new org.apache.avro.generic.GenericData.Record(parsedSchema.rawSchema());
+    record.put("name", "Snowball The Pig");
+    record.put("favorite_number", 12); // int in ["int", "null"] union
+
+    // Serialize and deserialize
+    try (var serializer = new io.confluent.kafka.serializers.KafkaAvroSerializer(smsrc)) {
+      // Configure with minimal required settings - schema.registry.url is required
+      serializer.configure(java.util.Map.of(
+          "schema.registry.url", "http://localhost:8081"  // Mock URL for testing
+      ), false);
+      var avroBytes = serializer.serialize("test-topic", record);
+
+      var result = recordDeserializer.deserialize(avroBytes, schemaRegistryClient, context, false);
+
+      // Verify union type preservation
+      assertNull(result.errorMessage());
+      assertEquals("Snowball The Pig", result.value().get("name").asText());
+      var favoriteNumber = result.value().get("favorite_number");
+      assertTrue(favoriteNumber.isObject() && favoriteNumber.has("int"),
+          "Union type should be preserved as {\"int\": 12}, but got: " + favoriteNumber);
+      assertEquals(12, favoriteNumber.get("int").asInt());
+    }
   }
 
   @Test
