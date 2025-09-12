@@ -7,6 +7,7 @@ import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.net.UnknownServiceException;
 import java.nio.ByteBuffer;
+import java.nio.charset.CharacterCodingException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
@@ -152,6 +153,7 @@ public class RecordDeserializer {
       var genericObject = avroDeserializer.deserialize(topicName, bytes);
       if (genericObject instanceof GenericData.Record avroRecord) {
         // Use AVRO's native JSON encoder which preserves union type information
+        // See https://github.com/confluentinc/ide-sidecar/issues/417 for more information
         var writer = new GenericDatumWriter<>(avroRecord.getSchema());
         var jsonEncoder = EncoderFactory.get().jsonEncoder(avroRecord.getSchema(), outputStream);
         writer.write(avroRecord, jsonEncoder);
