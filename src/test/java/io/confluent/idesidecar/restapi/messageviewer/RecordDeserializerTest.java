@@ -189,33 +189,29 @@ public class RecordDeserializerTest {
 
   @Test
   public void testDecodeAndDeserialize_AvroUnionTypes() throws IOException, RestClientException {
-    var parsedSchema = new AvroSchema(loadResource("message-viewer/schema-avro-union.json"));
+    var schemaStr = loadResource("message-viewer/schema-avro-union.json");
+    var parsedSchema = new AvroSchema(schemaStr);
     var smsrc = (SimpleMockSchemaRegistryClient) schemaRegistryClient;
-    smsrc.register(100004, "union-test-subject-value", parsedSchema);
-
-    // Create AVRO record with union field
-    var record = new org.apache.avro.generic.GenericData.Record(parsedSchema.rawSchema());
-    record.put("name", "Snowball The Pig");
-    record.put("favorite_number", 12); // int in ["int", "null"] union
-
-    // Serialize and deserialize
-    try (var serializer = new io.confluent.kafka.serializers.KafkaAvroSerializer(smsrc)) {
-      // Configure with minimal required settings - schema.registry.url is required
-      serializer.configure(java.util.Map.of(
-          "schema.registry.url", "http://localhost:8081"  // Mock URL for testing
-      ), false);
-      var avroBytes = serializer.serialize("test-topic", record);
-
-      var result = recordDeserializer.deserialize(avroBytes, schemaRegistryClient, context, false);
-
-      // Verify union type preservation
-      assertNull(result.errorMessage());
-      assertEquals("Snowball The Pig", result.value().get("name").asText());
-      var favoriteNumber = result.value().get("favorite_number");
-      assertTrue(favoriteNumber.isObject() && favoriteNumber.has("int"),
-          "Union type should be preserved as {\"int\": 12}, but got: " + favoriteNumber);
-      assertEquals(12, favoriteNumber.get("int").asInt());
-    }
+    // This is raw text with union types that is prefixed with 100004 schemaId.
+    var raw = "AAABhqQIVGVzdAAY";
+    var schemaId = smsrc.register(100004, "test-subject-value", parsedSchema);
+    var decodedBytes = Base64.getDecoder().decode(raw);
+    var actualSchemaId = RecordDeserializer.getSchemaIdFromRawBytes(decodedBytes);
+    assertEquals(schemaId, actualSchemaId);
+    var record = recordDeserializer.deserialize(
+        decodedBytes,
+        schemaRegistryClient,
+        context,
+        false
+    );
+    assertNotNull(record);
+    // Test the handleAvro() union type preservation
+    assertNull(record.errorMessage());
+    assertEquals("Test", record.value().get("name").asText());
+    var favoriteNumber = record.value().get("favorite_number");
+    assertTrue(favoriteNumber.isObject() && favoriteNumber.has("int"),
+        "Union type should be preserved as {\"int\": 12}, but got: " + favoriteNumber);
+    assertEquals(12, favoriteNumber.get("int").asInt());
   }
 
   @Test
