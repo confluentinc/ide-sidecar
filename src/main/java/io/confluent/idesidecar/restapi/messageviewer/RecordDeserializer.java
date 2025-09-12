@@ -1,19 +1,36 @@
 package io.confluent.idesidecar.restapi.messageviewer;
 
-import static io.confluent.idesidecar.restapi.util.ExceptionUtil.unwrap;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.net.ConnectException;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
+import java.net.UnknownServiceException;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
+
+import org.apache.avro.generic.GenericData;
+import org.apache.avro.generic.GenericDatumWriter;
+import org.apache.avro.io.EncoderFactory;
+import org.apache.kafka.common.errors.SerializationException;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.NullNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
-import com.fasterxml.jackson.dataformat.avro.AvroFactory;
-import com.fasterxml.jackson.dataformat.avro.AvroMapper;
-import com.fasterxml.jackson.dataformat.avro.AvroSchema;
 import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.JsonFormat;
+
 import graphql.VisibleForTesting;
 import io.confluent.idesidecar.restapi.clients.SchemaErrors;
 import io.confluent.idesidecar.restapi.kafkarest.SchemaFormat;
@@ -24,6 +41,7 @@ import io.confluent.idesidecar.restapi.models.KeyOrValueMetadata;
 import io.confluent.idesidecar.restapi.proxy.KafkaRestProxyContext;
 import io.confluent.idesidecar.restapi.util.ByteArrayJsonUtil;
 import io.confluent.idesidecar.restapi.util.ConfigUtil;
+import static io.confluent.idesidecar.restapi.util.ExceptionUtil.unwrap;
 import io.confluent.idesidecar.restapi.util.ObjectMapperFactory;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
@@ -38,26 +56,6 @@ import io.smallrye.mutiny.unchecked.Unchecked;
 import io.soabase.recordbuilder.core.RecordBuilder;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.net.ConnectException;
-import java.net.SocketTimeoutException;
-import java.net.UnknownHostException;
-import java.net.UnknownServiceException;
-import java.nio.ByteBuffer;
-import java.nio.charset.CharacterCodingException;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.util.Map;
-import java.util.Optional;
-import java.util.function.Function;
-import org.apache.avro.generic.GenericData;
-import org.apache.avro.generic.GenericDatumWriter;
-import org.apache.avro.io.EncoderFactory;
-import org.apache.kafka.common.errors.SerializationException;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
  * Utility class for decoding record keys and values.
@@ -69,7 +67,6 @@ public class RecordDeserializer {
   private static final Map<String, String> SERDE_CONFIGS = ConfigUtil
       .asMap("ide-sidecar.serde-configs");
   private static final ObjectMapper OBJECT_MAPPER = ObjectMapperFactory.getObjectMapper();
-  private static final ObjectMapper AVRO_OBJECT_MAPPER = new AvroMapper(new AvroFactory());
   public static final byte MAGIC_BYTE = 0x0;
   private static final Duration CACHE_FAILED_SCHEMA_ID_FETCH_DURATION = Duration.ofSeconds(30);
 
@@ -154,15 +151,15 @@ public class RecordDeserializer {
       avroDeserializer.configure(SERDE_CONFIGS, isKey);
       var genericObject = avroDeserializer.deserialize(topicName, bytes);
       if (genericObject instanceof GenericData.Record avroRecord) {
+        // Use AVRO's native JSON encoder which preserves union type information
         var writer = new GenericDatumWriter<>(avroRecord.getSchema());
-        var encoder = EncoderFactory.get().binaryEncoder(outputStream, null);
-        writer.write(avroRecord, encoder);
-        encoder.flush();
-        var jacksonAvroSchema = new AvroSchema(avroRecord.getSchema());
-        return AVRO_OBJECT_MAPPER
-            .readerFor(ObjectNode.class)
-            .with(jacksonAvroSchema)
-            .readValue(outputStream.toByteArray());
+        var jsonEncoder = EncoderFactory.get().jsonEncoder(avroRecord.getSchema(), outputStream);
+        writer.write(avroRecord, jsonEncoder);
+        jsonEncoder.flush();
+
+        // Parse the JSON string directly using Jackson's ObjectMapper
+        var jsonString = outputStream.toString(StandardCharsets.UTF_8);
+        return OBJECT_MAPPER.readTree(jsonString);
       } else {
         return OBJECT_MAPPER.valueToTree(genericObject);
       }
