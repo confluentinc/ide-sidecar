@@ -8,6 +8,7 @@ import java.net.UnknownHostException;
 import java.net.UnknownServiceException;
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -158,7 +159,7 @@ public class RecordDeserializer {
         jsonEncoder.flush();
 
         // Parse the JSON string directly using Jackson's ObjectMapper
-        var jsonString = outputStream.toString();
+        var jsonString = outputStream.toString(StandardCharsets.UTF_8);
         return OBJECT_MAPPER.readTree(jsonString);
       } else {
         return OBJECT_MAPPER.valueToTree(genericObject);
