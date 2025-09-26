@@ -186,6 +186,7 @@ public class DirectConnectionState extends ConnectionState {
               spec.kafkaClusterConfig().bootstrapServers(),
               cause.getMessage()
           );
+          Log.error(message, cause);
           if (cause instanceof ConfigException) {
             message = ("Unable to reach the Kafka cluster at %s. "
                 + "Check the bootstrap server addresses."
@@ -230,6 +231,7 @@ public class DirectConnectionState extends ConnectionState {
     }, error -> {
       var cause = unwrap(error);
       var message = "Failed to connect to Schema Registry: %s".formatted(cause.getMessage());
+      Log.error(message, cause);
       if (cause instanceof UnknownHostException) {
         message = "Unable to resolve the Schema Registry URL %s".formatted(
             spec.schemaRegistryConfig().uri()
@@ -285,7 +287,7 @@ public class DirectConnectionState extends ConnectionState {
           operation.apply(adminClient)
       );
     } catch (Throwable e) {
-      Log.debugf(
+      Log.infof(
           e,
           "Failed to connect to the Kafka cluster at %s: %s",
           kafkaClusterConfig.bootstrapServers(),
@@ -348,7 +350,7 @@ public class DirectConnectionState extends ConnectionState {
           operation.apply(srClient)
       );
     } catch (Throwable e) {
-      Log.debugf(
+      Log.infof(
           "Failed to connect to the Schema Registry at %s: %s",
           srConfig.uri(),
           e.getMessage(),
