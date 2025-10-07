@@ -352,7 +352,17 @@ public record ConnectionSpec(
       )
       @JsonProperty(value = "ssl")
       @Null
-      TLSConfig tlsConfig
+      TLSConfig tlsConfig,
+
+      @Schema(
+          description = "The suffix to append to the Kafka client config option client.id when " +
+              "interacting with this Kafka cluster. Is useful when, for instance, connecting to " +
+              "WarpStream agents via Kubernetes port-forwarding.",
+          nullable = true
+      )
+      @JsonProperty(value = "client_id_suffix")
+      @Null
+      String clientIdSuffix
   ) implements ConnectionSpecKafkaClusterConfigBuilder.With {
 
     // Constants used in annotations above
@@ -653,5 +663,3 @@ public record ConnectionSpec(
     );
   }
 }
-
-

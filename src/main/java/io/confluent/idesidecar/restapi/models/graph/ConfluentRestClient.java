@@ -258,6 +258,7 @@ public abstract class ConfluentRestClient {
           .onItem()
           .disjoint();
     } catch (ConnectionNotFoundException | ResourceFetchingException e) {
+      Log.error("Listing items failed with error", e);
       return Multi.createFrom().failure(e);
     }
   }
@@ -285,6 +286,7 @@ public abstract class ConfluentRestClient {
           .toCompletionStage();
       return Uni.createFrom().completionStage(response);
     } catch (ConnectionNotFoundException | ResourceFetchingException e) {
+      Log.error("Getting item failed with error", e);
       return Uni.createFrom().failure(e);
     }
   }
@@ -368,6 +370,7 @@ public abstract class ConfluentRestClient {
       String json,
       Throwable originalError
   ) {
+    Log.infof("Attempting to parse error from response payload: %s", json);
     try {
       var response = OBJECT_MAPPER.readTree(json);
       if (response instanceof ObjectNode obj) {
@@ -383,6 +386,7 @@ public abstract class ConfluentRestClient {
       }
       // continue
     } catch (IOException e) {
+      Log.errorf("Ran into error %s when parsing response payload: %s", e.getMessage(), json);
       // continue
     }
     Log.errorf("Could not parse response payload: %s", json);
