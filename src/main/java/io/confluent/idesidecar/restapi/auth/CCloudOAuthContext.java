@@ -548,14 +548,40 @@ public class CCloudOAuthContext implements AuthContext {
         .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
         .sendBuffer(Buffer.buffer(request.toJsonString()))
         .map(response -> {
+          ControlPlaneTokenExchangeResponse responseBody = null;
           try {
-            return OBJECT_MAPPER.readValue(
+            responseBody = OBJECT_MAPPER.readValue(
                 response.bodyAsString(),
-                ControlPlaneTokenExchangeResponse.class);
+                ControlPlaneTokenExchangeResponse.class
+            );
+            String setCookieHeader = response.getHeader("Set-Cookie");
+            String authToken = null;
+            if (setCookieHeader != null) {
+              for (String cookie : setCookieHeader.split(";")) {
+                cookie = cookie.trim();
+                if (cookie.startsWith("auth_token=")) {
+                  authToken = cookie.substring("auth_token=".length());
+                  break;
+                }
+              }
+            }
+            if (authToken == null) {
+              throw new CCloudAuthenticationFailedException(
+                  "auth_token cookie not found in response from Confluent Cloud.");
+            }
+
+            return new ControlPlaneTokenExchangeResponse(
+                authToken,
+                responseBody.error,
+                responseBody.user,
+                responseBody.organization,
+                responseBody.refreshToken(),
+                responseBody.identityProvider()
+            );
           } catch (JsonProcessingException e) {
             throw new CCloudAuthenticationFailedException(
-                "Could not parse the response from Confluent Cloud when exchanging the ID token for"
-                    + " the control plane token.", e);
+                "Could not parse the response from Confluent Cloud when exchanging "
+                    + "the ID token for the control plane token.", e);
           }
         });
   }
