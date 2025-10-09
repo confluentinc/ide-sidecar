@@ -50,7 +50,7 @@ class CCloudOAuthContextTest {
     ccloudTestUtil.registerWireMockRoutesForCCloudOAuth(
         FAKE_AUTHORIZATION_CODE, null, null);
   }
-//  ccloudTestUtil.registerCookieBasedOAuthRoutes(FAKE_AUTHORIZATION_CODE,)
+
 
   @AfterEach
   void cleanUp() {
