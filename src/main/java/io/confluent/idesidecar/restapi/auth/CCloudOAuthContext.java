@@ -557,18 +557,16 @@ public class CCloudOAuthContext implements AuthContext {
                 ControlPlaneTokenExchangeResponse.class
             );
             String setCookieHeader = response.getHeader("Set-Cookie");
-            HttpCookie authToken = null;
+            String authToken = null;
             if (setCookieHeader != null) {
-              authToken = HttpCookie.parse(setCookieHeader).get(0);
-            }
-
-            if (authToken == null) {
+              System.out.println("HERE" + HttpCookie.parse(setCookieHeader).get(0).getValue());
+             authToken = HttpCookie.parse(setCookieHeader).get(0).getValue();
+            } else {
               throw new CCloudAuthenticationFailedException(
                   "auth_token cookie not found in response from Confluent Cloud.");
             }
-
             return new ControlPlaneTokenExchangeResponse(
-                authToken.getValue(),
+                authToken,
                 responseBody.error,
                 responseBody.user,
                 responseBody.organization,

@@ -45,7 +45,20 @@ public class CCloudTestUtil {
   public void registerWireMockRoutesForCCloudOAuth(String authorizationCode) {
     registerWireMockRoutesForCCloudOAuth(authorizationCode, null, null);
   }
+  public void registerCookieBasedOAuthRoutes(String authCode, String refreshToken) {
+    String cookieValue = "session-token-12345";
 
+    wireMock.register(
+        WireMock.post("/oauth/token")
+            .withRequestBody(WireMock.containing(authCode))
+            .willReturn(
+                WireMock.aResponse()
+                    .withStatus(200)
+                    .withHeader("Set-Cookie", String.format("session-id=%s; Path=/; HttpOnly", cookieValue))
+                    .withBody((refreshToken))
+            )
+    );
+  }
   public AccessToken registerWireMockRoutesForCCloudOAuth(
       String authorizationCode, String ccloudOrganizationName, String ccloudOrganizationId) {
     var accessToken = AccessToken.newToken();
