@@ -1,6 +1,7 @@
 package io.confluent.idesidecar.restapi.auth;
 
 import static io.vertx.core.http.HttpHeaders.AUTHORIZATION;
+import static io.vertx.core.http.HttpHeaders.set;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -25,6 +26,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.HttpRequest;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
+import java.net.HttpCookie;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -555,23 +557,18 @@ public class CCloudOAuthContext implements AuthContext {
                 ControlPlaneTokenExchangeResponse.class
             );
             String setCookieHeader = response.getHeader("Set-Cookie");
-            String authToken = null;
+            HttpCookie authToken = null;
             if (setCookieHeader != null) {
-              for (String cookie : setCookieHeader.split(";")) {
-                cookie = cookie.trim();
-                if (cookie.startsWith("auth_token=")) {
-                  authToken = cookie.substring("auth_token=".length());
-                  break;
-                }
-              }
+              authToken = HttpCookie.parse(setCookieHeader).get(0);
             }
+
             if (authToken == null) {
               throw new CCloudAuthenticationFailedException(
                   "auth_token cookie not found in response from Confluent Cloud.");
             }
 
             return new ControlPlaneTokenExchangeResponse(
-                authToken,
+                authToken.getValue(),
                 responseBody.error,
                 responseBody.user,
                 responseBody.organization,
