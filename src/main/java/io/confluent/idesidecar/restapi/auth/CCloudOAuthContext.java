@@ -550,17 +550,19 @@ public class CCloudOAuthContext implements AuthContext {
         .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
         .sendBuffer(Buffer.buffer(request.toJsonString()))
         .map(response -> {
-          ControlPlaneTokenExchangeResponse responseBody = null;
           try {
+            ControlPlaneTokenExchangeResponse responseBody =
+                OBJECT_MAPPER.readValue(response.bodyAsString(), ControlPlaneTokenExchangeResponse.class);
+
             String setCookieHeader = response.getHeader("Set-Cookie");
             String authToken = null;
             if (setCookieHeader != null) {
-              System.out.println("HERE" + HttpCookie.parse(setCookieHeader).get(0).getValue());
-             authToken = HttpCookie.parse(setCookieHeader).get(0).getValue();
+              authToken = HttpCookie.parse(setCookieHeader).get(0).getValue();
             } else {
               throw new CCloudAuthenticationFailedException(
                   "auth_token cookie not found in response from Confluent Cloud.");
             }
+
             return new ControlPlaneTokenExchangeResponse(
                 authToken,
                 responseBody.error,
@@ -571,8 +573,7 @@ public class CCloudOAuthContext implements AuthContext {
             );
           } catch (JsonProcessingException e) {
             throw new CCloudAuthenticationFailedException(
-                "Could not parse the response from Confluent Cloud when exchanging "
-                    + "the ID token for the control plane token.", e);
+                "Could not parse the response from Confluent Cloud when retrieving the control plane token.", e);
           }
         });
   }
@@ -585,6 +586,7 @@ public class CCloudOAuthContext implements AuthContext {
         .sendBuffer(Buffer.buffer("{}"))
         .map(response -> {
           try {
+            System.out.println(response.bodyAsString());
             return OBJECT_MAPPER.readValue(
                 response.bodyAsString(),
                 DataPlaneTokenExchangeResponse.class);

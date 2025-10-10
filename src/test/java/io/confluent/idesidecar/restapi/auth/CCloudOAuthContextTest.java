@@ -116,6 +116,7 @@ class CCloudOAuthContextTest {
             .willReturn(
                 WireMock
                     .aResponse()
+                    .withHeader("Content-Type", "application/json")
                     .withStatus(201)
                     .withBody("{\"error\":{\"code\":401,\"message\":\"Unauthorized\"}}")
             ));
@@ -158,6 +159,7 @@ class CCloudOAuthContextTest {
             .willReturn(
                 WireMock
                     .aResponse()
+                    .withHeader("Content-Type", "application/json")
                     .withStatus(201)
                     .withBody("invalid_json")
             ));
@@ -200,8 +202,10 @@ class CCloudOAuthContextTest {
             .willReturn(
                 WireMock
                     .aResponse()
+                    .withHeader("Content-Type", "application/json")
+                    .withBody("{\"error\": \"invalid_request\", \"error_description\": \"Mock error response\"}")
                     .withStatus(201)
-                    .withBody("nope")
+
             ).atPriority(100));
 
     var testContext = new VertxTestContext();

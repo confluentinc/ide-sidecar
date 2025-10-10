@@ -45,6 +45,7 @@ public class CCloudTestUtil {
   public void registerWireMockRoutesForCCloudOAuth(String authorizationCode) {
     registerWireMockRoutesForCCloudOAuth(authorizationCode, null, null);
   }
+
   public AccessToken registerWireMockRoutesForCCloudOAuth(
       String authorizationCode, String ccloudOrganizationName, String ccloudOrganizationId) {
     var accessToken = AccessToken.newToken();
@@ -69,6 +70,7 @@ public class CCloudTestUtil {
                 WireMock
                     .aResponse()
                     .withStatus(200)
+                    .withHeader("set-cookie", "auth_token=%s; Path=/; SameSite=strict; secure; Max-Age=86400; HttpOnly; Secure" .formatted(controlPlaneToken))
                     .withBody(loadResource("ccloud-oauth-mock-responses/check-jwt.json")))
             .atPriority(100));
   }
@@ -169,7 +171,6 @@ public class CCloudTestUtil {
                 WireMock
                     .aResponse()
                     .withStatus(201)
-                    .withHeader("set-cookie", "session=%s; Path=/; Max-Age=86400, SameSite=strict HttpOnly; Secure".formatted(getRandomString()))
                     .withBody(MAPPER.valueToTree(controlPlaneToken).toString())));
     return controlPlaneToken;
   }
@@ -413,4 +414,3 @@ public class CCloudTestUtil {
 
   }
 }
-
