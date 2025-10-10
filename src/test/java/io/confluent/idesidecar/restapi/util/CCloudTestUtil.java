@@ -44,22 +44,6 @@ public class CCloudTestUtil {
 
   public void registerWireMockRoutesForCCloudOAuth(String authorizationCode) {
     registerWireMockRoutesForCCloudOAuth(authorizationCode, null, null);
-    registerCookieBasedOAuthRoutes(authorizationCode, "refresh-token");
-  }
-  public void registerCookieBasedOAuthRoutes(String authCode, String refreshToken) {
-    String cookieValue = "session-token-12345";
-
-    wireMock.register(
-        // right route? double check
-        WireMock.post("/oauth/token")
-            .withRequestBody(WireMock.containing(authCode))
-            .willReturn(
-                WireMock.aResponse()
-                    .withStatus(200)
-                    .withHeader("set-cookie", String.format("auth_token=%s; Path=/; HttpOnly", cookieValue))
-                    .withBody((refreshToken))
-            )
-    );
   }
   public AccessToken registerWireMockRoutesForCCloudOAuth(
       String authorizationCode, String ccloudOrganizationName, String ccloudOrganizationId) {
@@ -185,6 +169,7 @@ public class CCloudTestUtil {
                 WireMock
                     .aResponse()
                     .withStatus(201)
+                    .withHeader("set-cookie", "session=%s; Path=/; Max-Age=86400, SameSite=strict HttpOnly; Secure".formatted(getRandomString()))
                     .withBody(MAPPER.valueToTree(controlPlaneToken).toString())));
     return controlPlaneToken;
   }

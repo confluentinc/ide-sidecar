@@ -552,10 +552,6 @@ public class CCloudOAuthContext implements AuthContext {
         .map(response -> {
           ControlPlaneTokenExchangeResponse responseBody = null;
           try {
-            responseBody = OBJECT_MAPPER.readValue(
-                response.bodyAsString(),
-                ControlPlaneTokenExchangeResponse.class
-            );
             String setCookieHeader = response.getHeader("Set-Cookie");
             String authToken = null;
             if (setCookieHeader != null) {
