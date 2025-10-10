@@ -51,7 +51,6 @@ class CCloudOAuthContextTest {
         FAKE_AUTHORIZATION_CODE, null, null);
   }
 
-
   @AfterEach
   void cleanUp() {
     connectionStateManager.clearAllConnectionStates();
@@ -159,7 +158,6 @@ class CCloudOAuthContextTest {
             .willReturn(
                 WireMock
                     .aResponse()
-                    .withHeader("Content-Type", "application/json")
                     .withStatus(201)
                     .withBody("invalid_json")
             ));
@@ -202,12 +200,10 @@ class CCloudOAuthContextTest {
             .willReturn(
                 WireMock
                     .aResponse()
-                    .withHeader("Content-Type", "application/json")
                     .withBody("{\"error\": \"invalid_request\", \"error_description\": \"Mock error response\"}")
                     .withStatus(201)
 
             ).atPriority(100));
-
     var testContext = new VertxTestContext();
     var authContext = new CCloudOAuthContext();
 
