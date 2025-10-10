@@ -171,6 +171,7 @@ public class CCloudTestUtil {
                 WireMock
                     .aResponse()
                     .withStatus(201)
+                    .withHeader("Set-Cookie", "auth_token=" + controlPlaneToken.token())
                     .withBody(MAPPER.valueToTree(controlPlaneToken).toString())));
     return controlPlaneToken;
   }
