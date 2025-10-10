@@ -1,6 +1,7 @@
 package io.confluent.idesidecar.restapi.auth;
 
 import static io.vertx.core.http.HttpHeaders.AUTHORIZATION;
+import static io.vertx.core.http.HttpHeaders.set;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -25,6 +26,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.HttpRequest;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
+import java.net.HttpCookie;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -549,13 +551,29 @@ public class CCloudOAuthContext implements AuthContext {
         .sendBuffer(Buffer.buffer(request.toJsonString()))
         .map(response -> {
           try {
-            return OBJECT_MAPPER.readValue(
-                response.bodyAsString(),
-                ControlPlaneTokenExchangeResponse.class);
+            ControlPlaneTokenExchangeResponse responseBody =
+                OBJECT_MAPPER.readValue(response.bodyAsString(), ControlPlaneTokenExchangeResponse.class);
+
+            String setCookieHeader = response.getHeader("Set-Cookie");
+            String authToken = null;
+            if (setCookieHeader != null) {
+              authToken = HttpCookie.parse(setCookieHeader).get(0).getValue();
+            } else {
+              throw new CCloudAuthenticationFailedException(
+                  "auth_token cookie not found in response from Confluent Cloud.");
+            }
+
+            return new ControlPlaneTokenExchangeResponse(
+                authToken,
+                responseBody.error,
+                responseBody.user,
+                responseBody.organization,
+                responseBody.refreshToken(),
+                responseBody.identityProvider()
+            );
           } catch (JsonProcessingException e) {
             throw new CCloudAuthenticationFailedException(
-                "Could not parse the response from Confluent Cloud when exchanging the ID token for"
-                    + " the control plane token.", e);
+                "Could not parse the response from Confluent Cloud when retrieving the control plane token.", e);
           }
         });
   }
