@@ -586,7 +586,6 @@ public class CCloudOAuthContext implements AuthContext {
         .sendBuffer(Buffer.buffer("{}"))
         .map(response -> {
           try {
-            System.out.println(response.bodyAsString());
             return OBJECT_MAPPER.readValue(
                 response.bodyAsString(),
                 DataPlaneTokenExchangeResponse.class);
