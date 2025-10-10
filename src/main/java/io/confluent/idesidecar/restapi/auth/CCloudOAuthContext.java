@@ -1,7 +1,6 @@
 package io.confluent.idesidecar.restapi.auth;
 
 import static io.vertx.core.http.HttpHeaders.AUTHORIZATION;
-import static io.vertx.core.http.HttpHeaders.set;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -557,7 +556,12 @@ public class CCloudOAuthContext implements AuthContext {
             String setCookieHeader = response.getHeader("Set-Cookie");
             String authToken = null;
             if (setCookieHeader != null) {
-              authToken = HttpCookie.parse(setCookieHeader).get(0).getValue();
+              List<HttpCookie> cookies = HttpCookie.parse(setCookieHeader);
+              if (cookies.isEmpty()) {
+                throw new CCloudAuthenticationFailedException(
+                    "auth_token cookie not found in response from Confluent Cloud: Set-Cookie header present but no cookies parsed.");
+              }
+              authToken = cookies.get(0).getValue();
             } else {
               throw new CCloudAuthenticationFailedException(
                   "auth_token cookie not found in response from Confluent Cloud.");
