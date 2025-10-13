@@ -543,11 +543,11 @@ public class CCloudOAuthContext implements AuthContext {
   }
 
   public Future<ControlPlaneTokenExchangeResponse> exchangeControlPlaneToken(
-      String request) {
+      ExchangeControlPlaneTokenRequest request) {
     return webClientFactory.getWebClient()
         .postAbs(CCloudOAuthConfig.CCLOUD_CONTROL_PLANE_TOKEN_URI)
         .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-        .sendBuffer(Buffer.buffer(request))
+        .sendBuffer(Buffer.buffer(request.toJsonString()))
         .map(response -> {
           try {
             ControlPlaneTokenExchangeResponse responseBody =
