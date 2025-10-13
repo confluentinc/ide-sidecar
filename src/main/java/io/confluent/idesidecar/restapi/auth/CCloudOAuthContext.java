@@ -502,7 +502,7 @@ public class CCloudOAuthContext implements AuthContext {
 
     var request = new ExchangeControlPlaneTokenRequest(
         idTokenExchangeResponse.idToken(), ccloudOrganizationId);
-    return exchangeControlPlaneToken(request.toJsonString())
+    return exchangeControlPlaneToken(request)
         .compose(sessionTokenResult -> {
           if (sessionTokenResult.error() != null && !sessionTokenResult.error().isNull()) {
             throw new CCloudAuthenticationFailedException(
@@ -898,7 +898,7 @@ public class CCloudOAuthContext implements AuthContext {
   @RegisterForReflection
   @JsonInclude(JsonInclude.Include.NON_NULL)
   @JsonIgnoreProperties(ignoreUnknown = true)
-  private record ExchangeControlPlaneTokenRequest(
+  record ExchangeControlPlaneTokenRequest(
       @JsonProperty(value = "id_token", required = true) String idToken,
       @JsonProperty("org_resource_id") String orgResourceId
   ) {

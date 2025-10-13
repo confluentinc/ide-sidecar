@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
+import io.confluent.idesidecar.restapi.auth.CCloudOAuthContext.ExchangeControlPlaneTokenRequest;
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
 import io.confluent.idesidecar.restapi.util.CCloud;
 import io.confluent.idesidecar.restapi.util.CCloudTestUtil;
@@ -106,13 +107,26 @@ class CCloudOAuthContextTest {
   }
 
   @Test
-  void  exchangeControlPlaneTokenShouldFailIfCookieHeaderIsEmpty(){
+  void exchangeControlPlaneTokenShouldFailIfCookieHeaderIsEmpty() {
     var testContext = new VertxTestContext();
     var authContext = new CCloudOAuthContext();
 
-    String mockSetCookieHeader = "auth_token=; Path=/; SameSite=strict; secure; Max-Age=0; HttpOnly; Secure";
+    // Mock the /api/sessions endpoint to return empty Set-Cookie header
+    wireMock.register(
+        WireMock
+            .post("/api/sessions")
+            .willReturn(
+                WireMock
+                    .aResponse()
+                    .withHeader("Set-Cookie", "auth_token=; Path=/; Max-Age=0")
+                    .withStatus(201)
+                    .withBody("{}")
+            ));
 
-    authContext.exchangeControlPlaneToken(mockSetCookieHeader)
+    // Create a valid request with ID token but expect it to fail due to empty cookie
+    var request = new ExchangeControlPlaneTokenRequest("valid_id_token", null);
+
+    authContext.exchangeControlPlaneToken(request)
         .onComplete(
             testContext.failing(failure ->
                 testContext.verify(() -> {
@@ -129,6 +143,7 @@ class CCloudOAuthContextTest {
                   testContext.completeNow();
                 })));
   }
+
   @Test
   void createTokensFromAuthorizationCodeShouldReturnFailedFutureIfControlPlaneTokenExchangeFailed()
       throws Throwable {
