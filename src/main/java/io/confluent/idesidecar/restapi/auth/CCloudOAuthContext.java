@@ -502,7 +502,7 @@ public class CCloudOAuthContext implements AuthContext {
 
     var request = new ExchangeControlPlaneTokenRequest(
         idTokenExchangeResponse.idToken(), ccloudOrganizationId);
-    return exchangeControlPlaneToken(request)
+    return exchangeControlPlaneToken(request.toJsonString())
         .compose(sessionTokenResult -> {
           if (sessionTokenResult.error() != null && !sessionTokenResult.error().isNull()) {
             throw new CCloudAuthenticationFailedException(
@@ -542,12 +542,12 @@ public class CCloudOAuthContext implements AuthContext {
         });
   }
 
-  private Future<ControlPlaneTokenExchangeResponse> exchangeControlPlaneToken(
-      ExchangeControlPlaneTokenRequest request) {
+  public Future<ControlPlaneTokenExchangeResponse> exchangeControlPlaneToken(
+      String request) {
     return webClientFactory.getWebClient()
         .postAbs(CCloudOAuthConfig.CCLOUD_CONTROL_PLANE_TOKEN_URI)
         .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-        .sendBuffer(Buffer.buffer(request.toJsonString()))
+        .sendBuffer(Buffer.buffer(request))
         .map(response -> {
           try {
             ControlPlaneTokenExchangeResponse responseBody =
@@ -559,12 +559,20 @@ public class CCloudOAuthContext implements AuthContext {
               List<HttpCookie> cookies = HttpCookie.parse(setCookieHeader);
               if (cookies.isEmpty()) {
                 throw new CCloudAuthenticationFailedException(
-                    "auth_token cookie not found in response from Confluent Cloud: Set-Cookie header present but no cookies parsed.");
+                    "Set-Cookie header not found in response from Confluent Cloud: Set-Cookie header present but no cookies parsed.");
               }
-              authToken = cookies.get(0).getValue();
+              authToken = cookies.stream()
+                  .filter(cookie -> cookie.getName().equals("auth_token"))
+                  .findFirst()
+                  .orElseThrow(() ->
+                      new CCloudAuthenticationFailedException(
+                          "Set-Cookie header found in response from Confluent Cloud."
+                      )
+                  )
+                  .getValue();
             } else {
               throw new CCloudAuthenticationFailedException(
-                  "auth_token cookie not found in response from Confluent Cloud.");
+                  "Set-Cookie header not found in response from Confluent Cloud.");
             }
 
             return new ControlPlaneTokenExchangeResponse(

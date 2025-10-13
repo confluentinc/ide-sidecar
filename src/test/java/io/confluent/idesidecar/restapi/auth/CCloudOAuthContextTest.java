@@ -106,6 +106,30 @@ class CCloudOAuthContextTest {
   }
 
   @Test
+  void  exchangeControlPlaneTokenShouldFailIfCookieHeaderIsEmpty(){
+    var testContext = new VertxTestContext();
+    var authContext = new CCloudOAuthContext();
+
+    String mockSetCookieHeader = "auth_token=; Path=/; SameSite=strict; secure; Max-Age=0; HttpOnly; Secure";
+
+    authContext.exchangeControlPlaneToken(mockSetCookieHeader)
+        .onComplete(
+            testContext.failing(failure ->
+                testContext.verify(() -> {
+                  assertEquals(
+                      "Cookie header is missing or does not contain an auth_token.",
+                      failure.getMessage());
+                  assertEquals(
+                      "io.confluent.idesidecar.restapi.exceptions."
+                          + "CCloudAuthenticationFailedException",
+                      failure.getClass().getCanonicalName()
+                  );
+                  // Error related to sign in should be present
+                  assertNotNull(authContext.getErrors().signIn());
+                  testContext.completeNow();
+                })));
+  }
+  @Test
   void createTokensFromAuthorizationCodeShouldReturnFailedFutureIfControlPlaneTokenExchangeFailed()
       throws Throwable {
 
