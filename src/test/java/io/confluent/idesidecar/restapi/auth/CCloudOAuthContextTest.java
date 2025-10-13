@@ -106,6 +106,30 @@ class CCloudOAuthContextTest {
   }
 
   @Test
+  void  exchangeControlPlaneTokenShouldFailIfCookieHeaderIsEmpty(){
+    var testContext = new VertxTestContext();
+    var authContext = new CCloudOAuthContext();
+
+    String mockSetCookieHeader = "auth_token=; Path=/; SameSite=strict; secure; Max-Age=0; HttpOnly; Secure";
+
+    authContext.exchangeControlPlaneToken(mockSetCookieHeader)
+        .onComplete(
+            testContext.failing(failure ->
+                testContext.verify(() -> {
+                  assertEquals(
+                      "Cookie header is missing or does not contain an auth_token.",
+                      failure.getMessage());
+                  assertEquals(
+                      "io.confluent.idesidecar.restapi.exceptions."
+                          + "CCloudAuthenticationFailedException",
+                      failure.getClass().getCanonicalName()
+                  );
+                  // Error related to sign in should be present
+                  assertNotNull(authContext.getErrors().signIn());
+                  testContext.completeNow();
+                })));
+  }
+  @Test
   void createTokensFromAuthorizationCodeShouldReturnFailedFutureIfControlPlaneTokenExchangeFailed()
       throws Throwable {
 
@@ -115,6 +139,7 @@ class CCloudOAuthContextTest {
             .willReturn(
                 WireMock
                     .aResponse()
+                    .withHeader("Set-Cookie", "auth_token=" + "bad_token")
                     .withStatus(201)
                     .withBody("{\"error\":{\"code\":401,\"message\":\"Unauthorized\"}}")
             ));
@@ -169,8 +194,8 @@ class CCloudOAuthContextTest {
             testContext.failing(failure ->
                 testContext.verify(() -> {
                   assertEquals(
-                      "Could not parse the response from Confluent Cloud when exchanging "
-                          + "the ID token for the control plane token.",
+                      "Could not parse the response from Confluent Cloud when retrieving "
+                          + "the control plane token.",
                       failure.getMessage());
                   assertEquals(
                       "io.confluent.idesidecar.restapi.exceptions."
@@ -199,10 +224,10 @@ class CCloudOAuthContextTest {
             .willReturn(
                 WireMock
                     .aResponse()
+                    .withBody("{\"error\": \"invalid_request\", \"error_description\": \"Mock error response\"}")
                     .withStatus(201)
-                    .withBody("nope")
-            ).atPriority(100));
 
+            ).atPriority(100));
     var testContext = new VertxTestContext();
     var authContext = new CCloudOAuthContext();
 
@@ -211,8 +236,8 @@ class CCloudOAuthContextTest {
             testContext.failing(failure ->
                 testContext.verify(() -> {
                   assertEquals(
-                      "Could not parse the response from Confluent Cloud when retrieving "
-                          + "the ID token.",
+                      "Retrieving the ID token failed for the following reason: "
+                          + "invalid_request - Mock error response",
                       failure.getMessage());
                   assertEquals(
                       "io.confluent.idesidecar.restapi.exceptions."
