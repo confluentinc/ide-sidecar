@@ -111,7 +111,6 @@ class CCloudOAuthContextTest {
     var testContext = new VertxTestContext();
     var authContext = new CCloudOAuthContext();
 
-    // Mock the /api/sessions endpoint to return empty Set-Cookie header
     wireMock.register(
         WireMock
             .post("/api/sessions")
@@ -123,7 +122,6 @@ class CCloudOAuthContextTest {
                     .withBody("{}")
             ));
 
-    // Create a valid request with ID token but expect it to fail due to empty cookie
     var request = new ExchangeControlPlaneTokenRequest("valid_id_token", null);
 
     authContext.exchangeControlPlaneToken(request)
@@ -138,7 +136,6 @@ class CCloudOAuthContextTest {
                           + "CCloudAuthenticationFailedException",
                       failure.getClass().getCanonicalName()
                   );
-                  // Error related to sign in should be present
                   assertNotNull(authContext.getErrors().signIn());
                   testContext.completeNow();
                 })));
