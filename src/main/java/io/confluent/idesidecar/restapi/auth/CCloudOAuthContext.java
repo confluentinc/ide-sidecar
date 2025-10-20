@@ -25,6 +25,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.HttpRequest;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
+import java.net.HttpCookie;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -541,7 +542,7 @@ public class CCloudOAuthContext implements AuthContext {
         });
   }
 
-  private Future<ControlPlaneTokenExchangeResponse> exchangeControlPlaneToken(
+  public Future<ControlPlaneTokenExchangeResponse> exchangeControlPlaneToken(
       ExchangeControlPlaneTokenRequest request) {
     return webClientFactory.getWebClient()
         .postAbs(CCloudOAuthConfig.CCLOUD_CONTROL_PLANE_TOKEN_URI)
@@ -549,13 +550,30 @@ public class CCloudOAuthContext implements AuthContext {
         .sendBuffer(Buffer.buffer(request.toJsonString()))
         .map(response -> {
           try {
-            return OBJECT_MAPPER.readValue(
-                response.bodyAsString(),
-                ControlPlaneTokenExchangeResponse.class);
+            ControlPlaneTokenExchangeResponse responseBody =
+                OBJECT_MAPPER.readValue(response.bodyAsString(),
+                    ControlPlaneTokenExchangeResponse.class);
+
+            String setCookieHeader = response.getHeader("Set-Cookie");
+            if (setCookieHeader != null && !setCookieHeader.isEmpty()) {
+              List<HttpCookie> cookies = HttpCookie.parse(setCookieHeader);
+              String authToken = cookies.stream()
+                  .filter(cookie -> cookie.getName().equals("auth_token"))
+                  .findFirst()
+                  .orElseThrow(() ->
+                      new CCloudAuthenticationFailedException(
+                          "Auth token not found in response from Confluent Cloud: Set-Cookie header present but no token found."
+                      )
+                  )
+                  .getValue();
+              return responseBody.withToken(authToken);
+            } else {
+              throw new CCloudAuthenticationFailedException(
+                  "Set-Cookie header not found in response from Confluent Cloud.");
+            }
           } catch (JsonProcessingException e) {
             throw new CCloudAuthenticationFailedException(
-                "Could not parse the response from Confluent Cloud when exchanging the ID token for"
-                    + " the control plane token.", e);
+                "Could not parse the response from Confluent Cloud when retrieving the control plane token.", e);
           }
         });
   }
@@ -848,6 +866,16 @@ public class CCloudOAuthContext implements AuthContext {
       @JsonProperty(value = "refresh_token") String refreshToken,
       @JsonProperty(value = "identity_provider") JsonNode identityProvider) {
 
+    public ControlPlaneTokenExchangeResponse withToken(String token) {
+      return new ControlPlaneTokenExchangeResponse(
+          token,
+          error,
+          user,
+          organization,
+          refreshToken,
+          identityProvider);
+    }
+
   }
 
   @RegisterForReflection
@@ -868,7 +896,7 @@ public class CCloudOAuthContext implements AuthContext {
   @RegisterForReflection
   @JsonInclude(JsonInclude.Include.NON_NULL)
   @JsonIgnoreProperties(ignoreUnknown = true)
-  private record ExchangeControlPlaneTokenRequest(
+  record ExchangeControlPlaneTokenRequest(
       @JsonProperty(value = "id_token", required = true) String idToken,
       @JsonProperty("org_resource_id") String orgResourceId
   ) {
