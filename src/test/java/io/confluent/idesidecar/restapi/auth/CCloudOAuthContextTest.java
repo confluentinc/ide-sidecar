@@ -129,10 +129,11 @@ class CCloudOAuthContextTest {
             testContext.failing(failure ->
                 testContext.verify(() -> {
                   assertEquals(
-                      "Empty cookie header string",
+                      "Set-Cookie header not found in response from Confluent Cloud.",
                       failure.getMessage());
                   assertEquals(
-                      "java.lang.IllegalArgumentException",
+                      "io.confluent.idesidecar.restapi.exceptions."
+                          + "CCloudAuthenticationFailedException",
                       failure.getClass().getCanonicalName()
                   );
                   testContext.completeNow();

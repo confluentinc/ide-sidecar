@@ -555,7 +555,7 @@ public class CCloudOAuthContext implements AuthContext {
                     ControlPlaneTokenExchangeResponse.class);
 
             String setCookieHeader = response.getHeader("Set-Cookie");
-            if (setCookieHeader != null) {
+            if (setCookieHeader != null && !setCookieHeader.isEmpty()) {
               List<HttpCookie> cookies = HttpCookie.parse(setCookieHeader);
               String authToken = cookies.stream()
                   .filter(cookie -> cookie.getName().equals("auth_token"))
