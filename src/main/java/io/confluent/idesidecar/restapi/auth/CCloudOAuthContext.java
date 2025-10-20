@@ -555,10 +555,9 @@ public class CCloudOAuthContext implements AuthContext {
                     ControlPlaneTokenExchangeResponse.class);
 
             String setCookieHeader = response.getHeader("Set-Cookie");
-            String authToken;
             if (setCookieHeader != null) {
               List<HttpCookie> cookies = HttpCookie.parse(setCookieHeader);
-              authToken = cookies.stream()
+              String authToken = cookies.stream()
                   .filter(cookie -> cookie.getName().equals("auth_token"))
                   .findFirst()
                   .orElseThrow(() ->
@@ -567,12 +566,11 @@ public class CCloudOAuthContext implements AuthContext {
                       )
                   )
                   .getValue();
+              return responseBody.withToken(authToken);
             } else {
               throw new CCloudAuthenticationFailedException(
                   "Set-Cookie header not found in response from Confluent Cloud.");
             }
-
-            return responseBody.withToken(authToken);
           } catch (JsonProcessingException e) {
             throw new CCloudAuthenticationFailedException(
                 "Could not parse the response from Confluent Cloud when retrieving the control plane token.", e);
