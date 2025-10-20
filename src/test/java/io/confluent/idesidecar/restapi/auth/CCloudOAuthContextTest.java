@@ -137,9 +137,10 @@ class CCloudOAuthContextTest {
                   );
                   testContext.completeNow();
                 })));
-                assertTrue(testContext.awaitCompletion(AWAIT_COMPLETION_TIMEOUT_SEC, TimeUnit.SECONDS));
 
-                if (testContext.failed()) {
+            assertTrue(testContext.awaitCompletion(AWAIT_COMPLETION_TIMEOUT_SEC, TimeUnit.SECONDS));
+
+            if (testContext.failed()) {
                   throw testContext.causeOfFailure();
 
                 }
@@ -175,10 +176,10 @@ class CCloudOAuthContextTest {
                   );
                   testContext.completeNow();
                 })));
-              assertTrue(testContext.awaitCompletion(AWAIT_COMPLETION_TIMEOUT_SEC, TimeUnit.SECONDS));
+        assertTrue(testContext.awaitCompletion(AWAIT_COMPLETION_TIMEOUT_SEC, TimeUnit.SECONDS));
 
-              if (testContext.failed()) {
-                throw testContext.causeOfFailure();
+        if (testContext.failed()) {
+             throw testContext.causeOfFailure();
               }
   }
 

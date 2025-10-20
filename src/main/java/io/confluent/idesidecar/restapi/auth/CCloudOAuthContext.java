@@ -562,7 +562,7 @@ public class CCloudOAuthContext implements AuthContext {
                   .findFirst()
                   .orElseThrow(() ->
                       new CCloudAuthenticationFailedException(
-                          "Set-Cookie header not found in response from Confluent Cloud: Set-Cookie header present but no cookies parsed."
+                          "Auth token not found in response from Confluent Cloud: Set-Cookie header present but no token found."
                       )
                   )
                   .getValue();
