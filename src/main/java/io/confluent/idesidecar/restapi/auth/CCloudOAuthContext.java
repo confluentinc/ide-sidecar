@@ -551,22 +551,19 @@ public class CCloudOAuthContext implements AuthContext {
         .map(response -> {
           try {
             ControlPlaneTokenExchangeResponse responseBody =
-                OBJECT_MAPPER.readValue(response.bodyAsString(), ControlPlaneTokenExchangeResponse.class);
+                OBJECT_MAPPER.readValue(response.bodyAsString(),
+                    ControlPlaneTokenExchangeResponse.class);
 
             String setCookieHeader = response.getHeader("Set-Cookie");
-            String authToken = null;
+            String authToken;
             if (setCookieHeader != null) {
               List<HttpCookie> cookies = HttpCookie.parse(setCookieHeader);
-              if (cookies.isEmpty()) {
-                throw new CCloudAuthenticationFailedException(
-                    "Set-Cookie header not found in response from Confluent Cloud: Set-Cookie header present but no cookies parsed.");
-              }
               authToken = cookies.stream()
                   .filter(cookie -> cookie.getName().equals("auth_token"))
                   .findFirst()
                   .orElseThrow(() ->
                       new CCloudAuthenticationFailedException(
-                          "Set-Cookie header found in response from Confluent Cloud."
+                          "Set-Cookie header not found in response from Confluent Cloud: Set-Cookie header present but no cookies parsed."
                       )
                   )
                   .getValue();
@@ -575,14 +572,7 @@ public class CCloudOAuthContext implements AuthContext {
                   "Set-Cookie header not found in response from Confluent Cloud.");
             }
 
-            return new ControlPlaneTokenExchangeResponse(
-                authToken,
-                responseBody.error,
-                responseBody.user,
-                responseBody.organization,
-                responseBody.refreshToken(),
-                responseBody.identityProvider()
-            );
+            return responseBody.withToken(authToken);
           } catch (JsonProcessingException e) {
             throw new CCloudAuthenticationFailedException(
                 "Could not parse the response from Confluent Cloud when retrieving the control plane token.", e);
@@ -877,6 +867,16 @@ public class CCloudOAuthContext implements AuthContext {
       OrganizationDetails organization,
       @JsonProperty(value = "refresh_token") String refreshToken,
       @JsonProperty(value = "identity_provider") JsonNode identityProvider) {
+
+    public ControlPlaneTokenExchangeResponse withToken(String token) {
+      return new ControlPlaneTokenExchangeResponse(
+          token,
+          error,
+          user,
+          organization,
+          refreshToken,
+          identityProvider);
+    }
 
   }
 
