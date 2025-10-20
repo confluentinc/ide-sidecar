@@ -70,7 +70,7 @@ public class CCloudTestUtil {
                 WireMock
                     .aResponse()
                     .withStatus(200)
-                    .withHeader("set-cookie", "auth_token=%s; Path=/; SameSite=strict; secure; Max-Age=86400; HttpOnly; Secure" .formatted(controlPlaneToken))
+                    .withHeader("Set-Cookie", "auth_token=%s; Path=/; SameSite=strict; secure; Max-Age=86400; HttpOnly; Secure" .formatted(controlPlaneToken))
                     .withBody(loadResource("ccloud-oauth-mock-responses/check-jwt.json")))
             .atPriority(100));
   }
