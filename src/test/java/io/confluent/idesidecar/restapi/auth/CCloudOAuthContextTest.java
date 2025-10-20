@@ -142,7 +142,6 @@ class CCloudOAuthContextTest {
 
             if (testContext.failed()) {
                   throw testContext.causeOfFailure();
-
                 }
   }
 
