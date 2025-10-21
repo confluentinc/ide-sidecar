@@ -192,6 +192,7 @@ public class RecordDeserializer {
       protobufDeserializer.configure(SERDE_CONFIGS, isKey);
       var protobufMessage = (DynamicMessage) protobufDeserializer.deserialize(
           topicName,
+          headers,
           bytes
       );
 
