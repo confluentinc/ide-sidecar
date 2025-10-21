@@ -300,7 +300,8 @@ public class SimpleConsumer {
 
   PartitionConsumeRecord mapConsumerRecord(
       ConsumerRecord<byte[], byte[]> consumerRecord,
-      Integer messageMaxBytes) {
+      Integer messageMaxBytes
+  ) {
     var headers = getPartitionConsumeRecordHeaders(consumerRecord);
 
     // Determine if the key or value exceeds the maximum allowed size
@@ -310,20 +311,26 @@ public class SimpleConsumer {
         && consumerRecord.value().length > messageMaxBytes;
 
     Optional<DecodedResult> keyResult = keyExceeded
-        ? Optional.empty() : Optional
-        .of(recordDeserializer.deserialize(
-            consumerRecord.key(),
-            schemaRegistryClient,
-            context,
-            true)
+        ? Optional.empty()
+        : Optional.of(
+            recordDeserializer.deserialize(
+              consumerRecord.key(),
+              schemaRegistryClient,
+              context,
+              true,
+              headers
+            )
         );
     Optional<DecodedResult> valueResult = valueExceeded
-        ? Optional.empty() : Optional
-        .of(recordDeserializer.deserialize(
-            consumerRecord.value(),
-            schemaRegistryClient,
-            context,
-            false)
+        ? Optional.empty()
+        : Optional.of(
+            recordDeserializer.deserialize(
+              consumerRecord.value(),
+              schemaRegistryClient,
+              context,
+              false,
+              headers
+            )
         );
 
     return new PartitionConsumeRecord(
