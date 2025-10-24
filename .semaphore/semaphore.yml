@@ -41,7 +41,8 @@ blocks:
       epilogue:
         always:
           commands:
-            - emit-sonarqube-data --run_only_sonar_scan
+            - sem-version java 17
+            - emit-sonarqube-data --run_only_sonar_scan --enable_sonarqube_enterprise
       jobs:
         - name: "Build JARs and Unit Test"
           commands:
