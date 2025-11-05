@@ -1,36 +1,30 @@
-# IDE Sidecar - AI Coding Agent Instructions
+# IDE Sidecar
 
 ## Project Overview
 
-IDE Sidecar is a **Java 21 Quarkus application** that serves as the backend for Confluent's VS Code extension. It exposes REST and GraphQL APIs for managing connections to Kafka clusters and consuming/producing messages. The project is compiled to a **native executable using GraalVM** for fast startup and low memory footprint.
+IDE Sidecar is a **Java 21 Quarkus application** that serves as the backend for Confluent's VS Code extension. It exposes REST and GraphQL APIs for managing connections to Kafka clusters and consuming/producing messages, and handles websocket events. The project is compiled to a **native executable using GraalVM** for fast startup and low memory footprint.
 
 **Key Connection Types:**
 - `CCLOUD`: Confluent Cloud connections (OAuth-based authentication)
-- `LOCAL`: Confluent Local/standalone Kafka
-- `DIRECT`: Direct connections to Kafka clusters (supports multiple auth methods: Basic, SASL/SCRAM, Kerberos, OAuth, TLS)
+- `LOCAL`: Confluent Local (Docker containers for Kafka and Schema Registry)
+- `DIRECT`: Direct connections to Kafka clusters (supported auth methods: No auth, Username/Password, API Key/Secret, SASL/SCRAM, Kerberos, OAuth, mTLS) and Schema Registries (supported auth methods: No auth, Basic, API Key/Secret, OAuth)
+
+## Quick Reference
+
+**Key Directories:**
+- REST APIs: `src/main/java/io/confluent/idesidecar/restapi/resources/`
+- Websocket: `src/main/java/io/confluent/idesidecar/websocket/`
+- GraphQL APIs: `src/main/java/io/confluent/idesidecar/restapi/resources/graph/`
+- Processors: `src/main/java/io/confluent/idesidecar/restapi/proxy/`
+- Models: `src/main/java/io/confluent/idesidecar/restapi/models/`
+- Tests: `src/test/java/io/confluent/idesidecar/restapi/`
+
+**Key Commands:**
+- Dev mode: `make quarkus-dev`
+- Run tests: `make test`
+- Get auth token: `export DTX_ACCESS_TOKEN=$(curl -s http://localhost:26636/gateway/v1/handshake | jq -r .auth_secret)`
 
 ## Architecture
-
-### Processor Chain Pattern
-
-Request handling uses a **chain-of-responsibility pattern** via the `Processor<T, U>` class. Processors are chained using `Processor.chain(...)`:
-
-```java
-// Example from MessageViewerProcessorBeanProducers
-Processor.chain(
-    new ConnectionProcessor<>(connectionManager),
-    new KafkaClusterInfoProcessor<>(clusterCache),
-    new ConsumeStrategyProcessor(nativeStrategy, ccloudStrategy),
-    new EmptyProcessor<>()
-)
-```
-
-Each processor:
-1. Receives a context object (e.g., `KafkaRestProxyContext`, `ProxyContext`)
-2. Performs its operation (auth, cluster lookup, proxying)
-3. Passes the modified context to the next processor
-
-**Find processor implementations in:** `src/main/java/io/confluent/idesidecar/restapi/processors/` and `src/main/java/io/confluent/idesidecar/restapi/proxy/`
 
 ### GraphQL API Structure
 
@@ -39,14 +33,17 @@ GraphQL APIs are defined with `@GraphQLApi` annotation:
 - `ConfluentLocalQueryResource`: Local Kafka and Schema Registry
 - `DirectQueryResource`: Direct connection clusters
 
-Schema generation happens automatically. Find generated schemas in `src/generated/resources/`.
+Schema generation happens automatically. Find generated schemas in `src/generated/resources/schema.graphql`.
 
 ### REST API Structure
 
-REST endpoints use JAX-RS annotations (`@Path`, `@POST`, etc.):
+REST endpoints use Quarkus REST annotations (`@Path`, `@POST`, etc.):
 - `ConnectionsResource`: CRUD for connections (`/gateway/v1/connections`)
 - `KafkaConsumeResource`: Message viewer (`/gateway/v1/clusters/{cluster_id}/topics/{topic_name}/partitions/-/consume`)
-- `ClusterRestProxyResource`: Proxies requests to Kafka/SR clusters
+- `RestProxyResource`: Proxies requests to Kafka/SR clusters
+- `Preferences`: `/gateway/v1/preferences` for user preferences
+
+Many methods for defining HTTP routes and parsing requests/responses pre-exist in Quarkus, so focus on business logic.
 
 OpenAPI specs auto-generated to `src/generated/resources/openapi.{yaml,json}`.
 
@@ -72,6 +69,7 @@ sdk env install  # Uses .sdkmanrc in project root
 - `make quarkus-dev`: Dev mode with hot reload (port 26636)
 - `make quarkus-test`: Continuous testing mode
 - `make build`: Full build (compiles, tests, packages)
+- `make clean`: Clean build artifacts before rerunning tests.
 - `make test`: Run unit + integration tests (JVM mode)
 - `make test-native`: Build native executable and run integration tests against it
 - `make mvn-package-native`: Create native executable
@@ -105,7 +103,7 @@ In tests, use `@TestProfile(NoAccessFilterProfile.class)` to disable auth checks
 **Integration tests** (`*IT.java`):
 - Annotated with `@Tag("io.confluent.common.utils.IntegrationTest")`
 - Use `@ConnectWireMock` for mocking external HTTP services (CCloud APIs, Kafka REST Proxy)
-- Run against real Quarkus-managed containers via DevServices
+- Run against Confluent Platform test containers
 - WireMock runs on `${quarkus.wiremock.devservices.port}` in tests
 
 **Native integration tests**:
@@ -122,6 +120,8 @@ All config in `src/main/resources/application.yml`, with profile overrides:
 - `%dev`: Development mode (port 26636, JSON logging off)
 - `%test`: Test mode (uses WireMock, different ports to avoid conflicts)
 - Production: Default values (runs from native executable)
+
+Conflicting ports are a common source of test and build failures.
 
 **Important config sections:**
 - `ide-sidecar.connections.ccloud.*`: CCloud API endpoints
@@ -145,6 +145,31 @@ Uses SmallRye Mutiny (`Uni<T>`, `Multi<T>`):
 - Vert.x for HTTP clients and reactive routes
 
 **Common pattern**: REST endpoints return `Uni<Response>` for non-blocking I/O.
+
+## Processor Chain Pattern
+
+Request handling uses a **chain-of-responsibility pattern** via the `Processor<T, U>` class. Processors are chained using `Processor.chain(...)`:
+
+```java
+// Example from MessageViewerProcessorBeanProducers
+Processor.chain(
+    new ConnectionProcessor<>(connectionManager),
+    new KafkaClusterInfoProcessor<>(clusterCache),
+    new ConsumeStrategyProcessor(nativeStrategy, ccloudStrategy),
+    new EmptyProcessor<>()
+)
+```
+
+Each processor:
+1. Receives a context object:
+   - `ProxyContext`: Base context for all proxied requests
+   - `ClusterProxyContext`: Extends ProxyContext with cluster information
+   - `KafkaRestProxyContext`: Extends ClusterProxyContext for Kafka-specific requests
+2. Performs its operation (validates, authenticates, fetches data, proxies)
+3. Returns the modified context for the next processor
+4. Can fail fast by throwing `ProcessorFailedException`
+
+**Find processor implementations in:** `src/main/java/io/confluent/idesidecar/restapi/proxy/`
 
 ### Message Viewer (Consumer) Implementation
 
@@ -197,24 +222,29 @@ When adding new features:
 3. Chain in appropriate `*BeanProducers` class using `Processor.chain(...)`
 4. Add unit tests mocking dependencies
 
-**Add a new connection type configuration:**
-1. Extend `ConnectionSpec` record with new config record
-2. Add validation in the config record's `validate()` method
-3. Update `ConnectionStateManager` to handle new type
-4. Add fetcher implementation in `src/main/java/.../models/graph/`
-
 ## Important Files
 
-- `pom.xml`: Maven config, Quarkus version 3.20.0, Java 21
-- `Makefile` + `mk-files/*.mk`: Build automation
-- `service.yml`: Confluent tooling config
+**Configuration & Build:**
+- `pom.xml`: Maven config (Quarkus 3.20.0, Java 21, GraalVM native)
+- `Makefile` + `mk-files/*.mk`: Build automation and CI/CD tasks
+- `service.yml`: Confluent service catalog metadata
+- `.sdkmanrc`: SDKMAN! config for Java 21.0.2-graalce
+
+**Core Application Code:**
+- `src/main/java/io/confluent/idesidecar/websocket/`: Websocket event handling
 - `src/main/java/io/confluent/idesidecar/restapi/`:
-  - `connections/ConnectionStateManager.java`: Connection lifecycle
+  - `connections/ConnectionStateManager.java`: Connection lifecycle and state management
   - `models/ConnectionSpec.java`: Connection configuration DTOs
-  - `processors/Processor.java`: Base processor class
-  - `resources/*QueryResource.java`: GraphQL APIs
-  - `resources/*Resource.java`: REST APIs
-  - `application/*BeanProducers.java`: CDI producer beans
+  - `processors/Processor.java`: Base class for chain-of-responsibility pattern
+  - `proxy/*.java`: Processor implementations for request handling
+  - `resources/*QueryResource.java`: GraphQL API endpoints
+  - `resources/*Resource.java`: REST API endpoints (JAX-RS)
+  - `application/*BeanProducers.java`: CDI bean factory methods
+  - `messageviewer/strategy/`: Message consumption strategies (native vs CCloud)
+
+**Test Configuration:**
+- `src/test/resources/application-nativeit.yaml`: Native image test profile
+- `src/test/java/.../util/SidecarClient.java`: Test helper for API calls
 
 ## Release Process
 
@@ -230,6 +260,23 @@ Every merge to `main` triggers Semaphore CI/CD:
 - `pre-commit` hooks enforce secret scanning via `gitleaks`
 - Install locally: `pre-commit install`
 - NEVER commit secrets or API keys
+
+## Troubleshooting
+
+**Native build fails:**
+- Ensure GraalVM CE 21.0.2 installed: `sdk env install`
+- Check for missing `@RegisterForReflection` on DTOs
+- Review native-image agent hints in build output
+
+**Tests failing with WireMock:**
+- Check WireMock port: `${quarkus.wiremock.devservices.port}`
+- Verify mock responses in `src/test/resources/*-mock-responses/`
+- Use `@TestProfile(NoAccessFilterProfile.class)` to isolate auth issues
+
+**Connection issues in dev mode:**
+- Regenerate token: `export DTX_ACCESS_TOKEN=$(curl -s http://localhost:26636/gateway/v1/handshake | jq -r .auth_secret)`
+- Check connection state in Dev UI: `http://localhost:26636/q/dev-ui`
+- Enable debug logging in `application.yml` under `%dev` profile
 
 ## Additional Resources
 
