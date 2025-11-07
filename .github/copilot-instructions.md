@@ -24,6 +24,35 @@ IDE Sidecar is a **Java 21 Quarkus application** that serves as the backend for 
 - Run tests: `make test`
 - Get auth token: `export DTX_ACCESS_TOKEN=$(curl -s http://localhost:26636/gateway/v1/handshake | jq -r .auth_secret)`
 
+## Code Review Guidelines (GitHub PR Reviews)
+
+When reviewing pull requests for the ide-sidecar project:
+
+**Focus Areas for PR Reviews**
+
+- Single responsibility: Check that classes and methods maintain focused, single purposes
+- Testing coverage: Validate that new functionality includes appropriate unit/integration tests. In general, favor unit over integration tests, but make use of integration tests where necessary.
+- Test cases: Make sure that new features are reasonably tested and that all edge cases are covered with tests.
+- Error handling: Ensure that catch blocks never swallow exceptions and always log them using the log level ERROR.
+- Documentation: Code changes should be documented in Javadocs.
+- API changes: User-facing changes of the API endpoints should be versioned if possible.
+- Complexity: Avoid unnecessary complexity to keep the code maintainable and testable.
+
+**Javadoc Preservation**
+- Never delete existing Javadocs unless they contain significant errors or gaps.
+- Javadocs provide valuable context about business logic, architectural decisions, and edge cases.
+- When suggesting improvements, enhance Javadocs and comments rather than removing them
+
+**Style Preferences (Avoid Nitpicking)**
+- Focus reviews on substantive issues: logic, architecture, testing, and critical requirements.
+- Make sure that the changes follow the Google Java style guide.
+- Names of classes, methods, and variables should be as precise and short as possible to keep the code readable.
+- Make sure the PR does not introduce any duplicated code to the codebase.
+
+**Review Checklist**
+- Verify the PR description is clear and applicable checklist items are completed. Do not change the checklist items.
+- Verify the PR author has click-tested their changes against the native executable.
+
 ## Architecture
 
 ### GraphQL API Structure
