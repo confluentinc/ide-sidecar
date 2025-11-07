@@ -166,7 +166,7 @@ Uses Quarkus CDI (Jakarta EE). Common patterns:
 - `@Named("beanName")`: Named producer beans (see `*BeanProducers` classes)
 - `@Produces`: Producer methods in `*BeanProducers` classes
 
-### Reactive Programming
+## Reactive Programming
 
 Uses SmallRye Mutiny (`Uni<T>`, `Multi<T>`):
 - `Uni<T>`: Async single result (like `CompletableFuture`)
@@ -175,7 +175,7 @@ Uses SmallRye Mutiny (`Uni<T>`, `Multi<T>`):
 
 **Common pattern**: REST endpoints return `Uni<Response>` for non-blocking I/O.
 
-## Processor Chain Pattern
+### Processor Chain Pattern
 
 Request handling uses a **chain-of-responsibility pattern** via the `Processor<T, U>` class. Processors are chained using `Processor.chain(...)`:
 
