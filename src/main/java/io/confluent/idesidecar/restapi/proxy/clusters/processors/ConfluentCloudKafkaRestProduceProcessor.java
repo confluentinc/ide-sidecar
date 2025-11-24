@@ -3,7 +3,7 @@ package io.confluent.idesidecar.restapi.proxy.clusters.processors;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.idesidecar.restapi.connections.CCloudConnectionState;
 import io.confluent.idesidecar.restapi.exceptions.ProcessorFailedException;
-import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequest;
+import io.confluent.idesidecar.restapi.kafkarest.ProduceRequest;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceResponse;
 import io.confluent.idesidecar.restapi.processors.Processor;
 import io.confluent.idesidecar.restapi.proxy.KafkaRestProxyContext;

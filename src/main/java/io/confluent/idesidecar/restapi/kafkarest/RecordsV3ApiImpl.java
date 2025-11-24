@@ -2,7 +2,6 @@ package io.confluent.idesidecar.restapi.kafkarest;
 
 import static io.confluent.idesidecar.restapi.util.RequestHeadersConstants.CONNECTION_ID_HEADER;
 
-import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequest;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceResponse;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.RequestScoped;

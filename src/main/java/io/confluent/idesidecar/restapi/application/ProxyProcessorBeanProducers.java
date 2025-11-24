@@ -2,7 +2,7 @@ package io.confluent.idesidecar.restapi.application;
 
 import io.confluent.idesidecar.restapi.cache.ClusterCache;
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
-import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequest;
+import io.confluent.idesidecar.restapi.kafkarest.ProduceRequest;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceResponse;
 import io.confluent.idesidecar.restapi.processors.Processor;
 import io.confluent.idesidecar.restapi.proxy.CCloudApiProcessor;
