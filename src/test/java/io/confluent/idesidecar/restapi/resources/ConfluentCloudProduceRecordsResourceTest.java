@@ -234,4 +234,286 @@ public class ConfluentCloudProduceRecordsResourceTest {
     actualResponse.body("value.schema_id", is(100003));
     actualResponse.body("value.schema_version", is(3));
   }
+
+  @Test
+  void testProduceRecordToConfluentCloudWithNullKey() {
+    ccloudTestUtil.createAuthedConnection(CONNECTION_ID, ConnectionSpec.ConnectionType.CCLOUD);
+
+    // Expect a Kafka cluster exists
+    var mockKafkaCluster = expectKafkaClusterInCache(
+        clusterCache,
+        CONNECTION_ID,
+        KAFKA_CLUSTER_ID,
+        "http://localhost:%d".formatted(wireMockPort)
+    );
+    // Expect a Schema Registry cluster exists by cluster type
+    expectClusterInCache(
+        clusterCache,
+        CONNECTION_ID,
+        SCHEMA_REGISTRY_CLUSTER_ID,
+        "http://localhost:%d".formatted(wireMockPort),
+        ClusterType.SCHEMA_REGISTRY
+    );
+    // Expect a Schema Registry cluster exists
+    expectSchemaRegistryInCache(
+        clusterCache,
+        CONNECTION_ID,
+        SCHEMA_REGISTRY_CLUSTER_ID,
+        "http://localhost:%d".formatted(wireMockPort)
+    );
+    // Expect a Schema Registry for the Kafka cluster exists
+    expectSchemaRegistryForKafkaClusterInCache(
+        clusterCache,
+        CONNECTION_ID,
+        mockKafkaCluster,
+        SCHEMA_REGISTRY_CLUSTER_ID,
+        "http://localhost:%d".formatted(wireMockPort)
+    );
+
+    var dataPlaneToken =
+        ((CCloudConnectionState) connectionStateManager.getConnectionState(CONNECTION_ID))
+            .getOauthContext()
+            .getDataPlaneToken();
+
+    // We need to mock the expected Schema Registry interactions
+    wireMock.register(
+        WireMock
+            .get("/subjects/test-topic-value/versions/1?deleted=false")
+            .withHeader("Authorization",
+                new EqualToPattern("Bearer %s".formatted(dataPlaneToken.token())))
+            .willReturn(
+                WireMock.aResponse()
+                    .withStatus(200)
+                    .withHeader("Content-Type", "application/vnd.schemaregistry.v1+json")
+                    .withGzipDisabled(true)
+                    .withBody(
+                        loadResource(
+                            "ccloud-produce-records-mocks/get-schema-success-response.json")
+                    )
+            )
+    );
+    wireMock.register(
+        WireMock
+            .post("/subjects/test-topic-value?normalize=false&deleted=false")
+            .withHeader("Authorization",
+                new EqualToPattern("Bearer %s".formatted(dataPlaneToken.token())))
+            .willReturn(
+                WireMock.aResponse()
+                    .withStatus(200)
+                    .withHeader("Content-Type", "application/vnd.schemaregistry.v1+json")
+                    .withGzipDisabled(true)
+                    .withBody(
+                        loadResource(
+                            "ccloud-produce-records-mocks/get-schema-success-response.json")
+                    )
+            )
+    );
+
+    // We need to mock the Confluent Cloud REST API interactions
+    wireMock.register(
+        WireMock
+            .post(
+                "/kafka/v3/clusters/%s/topics/%s/records".formatted(KAFKA_CLUSTER_ID, "test-topic"))
+            .withRequestBody(
+                WireMock.equalToJson(
+                    loadResource(
+                        "ccloud-produce-records-mocks/produce-record-expected-request-null-key.json"),
+                    // Ignore order and extra elements
+                    true, true
+                )
+            )
+            .withHeader("Authorization",
+                new EqualToPattern("Bearer %s".formatted(dataPlaneToken.token()))
+            )
+            .willReturn(
+                WireMock.aResponse()
+                    .withStatus(200)
+                    .withHeader("Content-Type", "application/json")
+                    .withGzipDisabled(true)
+                    .withBody(
+                        loadResource(
+                            "ccloud-produce-records-mocks/produce-record-success-response.json")
+                    )
+            )
+    );
+
+    // Let's issue a request to produce a record with a null key
+    var actualResponse = given()
+        .when()
+        .headers(KAFKA_CLUSTER_REQUEST_HEADERS)
+        .header("Content-Type", "application/json")
+        .body(
+            ProduceRequest
+                .builder()
+                .key(
+                    ProduceRequestData
+                        .builder()
+                        .data(null)
+                        .build()
+                )
+                .value(
+                    ProduceRequestData
+                        .builder()
+                        .data(
+                            Map.of(
+                                "orderId", "order_7898",
+                                "customerId", "cust_456",
+                                "orderDate", "2024-01-15T10:15:00Z",
+                                "totalAmount", 129.99,
+                                "items", new Object[]{
+                                    Map.of(
+                                        "productId", "prod_001",
+                                        "quantity", 2,
+                                        "price", 64.99
+                                    )
+                                }
+                            )
+                        )
+                        .subject("test-topic-value")
+                        .subjectNameStrategy("topic_name")
+                        .schemaVersion(1)
+                        .build()
+                )
+                .build()
+        )
+        .post("/gateway/v1/clusters/%s/topics/%s/records".formatted(KAFKA_CLUSTER_ID, "test-topic"))
+        .then();
+
+    // Expected
+    actualResponse.statusCode(200);
+  }
+
+  @Test
+  void testProduceRecordToConfluentCloudWithNullValue() {
+    ccloudTestUtil.createAuthedConnection(CONNECTION_ID, ConnectionSpec.ConnectionType.CCLOUD);
+
+    // Expect a Kafka cluster exists
+    var mockKafkaCluster = expectKafkaClusterInCache(
+        clusterCache,
+        CONNECTION_ID,
+        KAFKA_CLUSTER_ID,
+        "http://localhost:%d".formatted(wireMockPort)
+    );
+    // Expect a Schema Registry cluster exists by cluster type
+    expectClusterInCache(
+        clusterCache,
+        CONNECTION_ID,
+        SCHEMA_REGISTRY_CLUSTER_ID,
+        "http://localhost:%d".formatted(wireMockPort),
+        ClusterType.SCHEMA_REGISTRY
+    );
+    // Expect a Schema Registry cluster exists
+    expectSchemaRegistryInCache(
+        clusterCache,
+        CONNECTION_ID,
+        SCHEMA_REGISTRY_CLUSTER_ID,
+        "http://localhost:%d".formatted(wireMockPort)
+    );
+    // Expect a Schema Registry for the Kafka cluster exists
+    expectSchemaRegistryForKafkaClusterInCache(
+        clusterCache,
+        CONNECTION_ID,
+        mockKafkaCluster,
+        SCHEMA_REGISTRY_CLUSTER_ID,
+        "http://localhost:%d".formatted(wireMockPort)
+    );
+
+    var dataPlaneToken =
+        ((CCloudConnectionState) connectionStateManager.getConnectionState(CONNECTION_ID))
+            .getOauthContext()
+            .getDataPlaneToken();
+
+    // We need to mock the expected Schema Registry interactions
+    wireMock.register(
+        WireMock
+            .get("/subjects/test-topic-value/versions/1?deleted=false")
+            .withHeader("Authorization",
+                new EqualToPattern("Bearer %s".formatted(dataPlaneToken.token())))
+            .willReturn(
+                WireMock.aResponse()
+                    .withStatus(200)
+                    .withHeader("Content-Type", "application/vnd.schemaregistry.v1+json")
+                    .withGzipDisabled(true)
+                    .withBody(
+                        loadResource(
+                            "ccloud-produce-records-mocks/get-schema-success-response.json")
+                    )
+            )
+    );
+    wireMock.register(
+        WireMock
+            .post("/subjects/test-topic-value?normalize=false&deleted=false")
+            .withHeader("Authorization",
+                new EqualToPattern("Bearer %s".formatted(dataPlaneToken.token())))
+            .willReturn(
+                WireMock.aResponse()
+                    .withStatus(200)
+                    .withHeader("Content-Type", "application/vnd.schemaregistry.v1+json")
+                    .withGzipDisabled(true)
+                    .withBody(
+                        loadResource(
+                            "ccloud-produce-records-mocks/get-schema-success-response.json")
+                    )
+            )
+    );
+
+    // We need to mock the Confluent Cloud REST API interactions
+    wireMock.register(
+        WireMock
+            .post(
+                "/kafka/v3/clusters/%s/topics/%s/records".formatted(KAFKA_CLUSTER_ID, "test-topic"))
+            .withRequestBody(
+                WireMock.equalToJson(
+                    loadResource(
+                        "ccloud-produce-records-mocks/produce-record-expected-request-null-value.json"),
+                    // Ignore order and extra elements
+                    true, true
+                )
+            )
+            .withHeader("Authorization",
+                new EqualToPattern("Bearer %s".formatted(dataPlaneToken.token()))
+            )
+            .willReturn(
+                WireMock.aResponse()
+                    .withStatus(200)
+                    .withHeader("Content-Type", "application/json")
+                    .withGzipDisabled(true)
+                    .withBody(
+                        loadResource(
+                            "ccloud-produce-records-mocks/produce-record-success-response.json")
+                    )
+            )
+    );
+
+    // Let's issue a request to produce a record with a null value
+    var actualResponse = given()
+        .when()
+        .headers(KAFKA_CLUSTER_REQUEST_HEADERS)
+        .header("Content-Type", "application/json")
+        .body(
+            ProduceRequest
+                .builder()
+                .key(
+                    ProduceRequestData
+                        .builder()
+                        .data(1234)
+                        .build()
+                )
+                .value(
+                    ProduceRequestData
+                        .builder()
+                        .data(null)
+                        .subject("test-topic-value")
+                        .subjectNameStrategy("topic_name")
+                        .schemaVersion(1)
+                        .build()
+                )
+                .build()
+        )
+        .post("/gateway/v1/clusters/%s/topics/%s/records".formatted(KAFKA_CLUSTER_ID, "test-topic"))
+        .then();
+
+    // Expected
+    actualResponse.statusCode(200);
+  }
 }
