@@ -40,7 +40,7 @@ public class ConfluentCloudProduceRecord extends GenericProduceRecord {
         null
     );
 
-    // For key
+    // Set the record key, while guarding against a NullPointerException
     if (c.keySchema().isPresent()) {
       produceRequest = produceRequest.withKey(
           new ProduceRequestData(
@@ -67,7 +67,7 @@ public class ConfluentCloudProduceRecord extends GenericProduceRecord {
       );
     }
 
-    // For value
+    // Set the record value, while guarding against a NullPointerException
     if (c.valueSchema().isPresent()) {
       produceRequest = produceRequest.withValue(
           new ProduceRequestData(
@@ -94,8 +94,7 @@ public class ConfluentCloudProduceRecord extends GenericProduceRecord {
       );
     }
 
-    var finalProduceRequest = produceRequest;
-
+    final var finalProduceRequest = produceRequest;
     return uniStage(
         () -> ccloudProduceProcessor.process(new KafkaRestProxyContext<>(
             c.connectionId(),
