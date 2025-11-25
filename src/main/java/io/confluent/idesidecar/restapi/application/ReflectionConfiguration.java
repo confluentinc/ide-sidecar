@@ -21,7 +21,6 @@ import io.confluent.kafka.schemaregistry.client.rest.entities.SchemaReference;
 import io.confluent.kafka.schemaregistry.client.rest.entities.SchemaRegistryServerVersion;
 import io.confluent.kafka.schemaregistry.client.rest.entities.SchemaString;
 import io.confluent.kafka.schemaregistry.client.rest.entities.SchemaTags;
-import io.confluent.kafka.schemaregistry.client.rest.entities.SchemaTypeConverter;
 import io.confluent.kafka.schemaregistry.client.rest.entities.ServerClusterId;
 import io.confluent.kafka.schemaregistry.client.rest.entities.SubjectVersion;
 import io.confluent.kafka.schemaregistry.client.rest.entities.requests.CompatibilityCheckResponse;
@@ -77,7 +76,6 @@ import org.apache.kafka.common.serialization.ByteArrayDeserializer;
         Schema.class,
         RegisterSchemaRequest.class,
         ProtobufSchema.class,
-        SchemaTypeConverter.class,
         Message.class,
         JsonSchema.class,
         AvroSchema.class,

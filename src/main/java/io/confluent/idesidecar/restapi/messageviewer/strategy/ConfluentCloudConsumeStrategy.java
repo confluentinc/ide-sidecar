@@ -13,6 +13,7 @@ import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPart
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeData;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeRecord;
+import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeRecordHeader;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.RecordMetadata;
 import io.confluent.idesidecar.restapi.proxy.KafkaRestProxyContext;
 import io.confluent.idesidecar.restapi.proxy.ProxyHttpClient;
@@ -206,20 +207,21 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
     var processedRecords = partitionConsumeData
         .records().stream()
         .map(record -> {
+          var decodedHeaders = decodeHeaders(record);
           var keyData = deserialize(
               record.key(),
               schemaRegistryClient,
               context,
-              true
+              true,
+              decodedHeaders
           );
           var valueData = deserialize(
               record.value(),
               schemaRegistryClient,
               context,
-              false
+              false,
+              decodedHeaders
           );
-
-          var decodedHeaders = decodeHeaders(record);
 
           return new PartitionConsumeRecord(
               record.partitionId(),
@@ -288,6 +290,7 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
    * @param data                 The JsonNode containing the message data.
    * @param schemaRegistryClient The SchemaRegistryClient to use for decoding.
    * @param context              The message viewer context.
+   * @param headers              The record headers.
    * @return The decoded value.
    */
   private RecordDeserializer.DecodedResult deserialize(
@@ -295,7 +298,8 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
       SchemaRegistryClient schemaRegistryClient,
       KafkaRestProxyContext
           <SimpleConsumeMultiPartitionRequest, SimpleConsumeMultiPartitionResponse> context,
-      boolean isKey
+      boolean isKey,
+      List<PartitionConsumeRecordHeader> headers
   ) {
     if (data.has("__raw__")) {
       // We know that Confluent Cloud encodes raw data in Base64, so decode appropriately.
@@ -306,7 +310,8 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
             context,
             isKey,
             // If deserialize fails, we want to return the raw data unchanged.
-            Optional.of(BASE64_ENCODER::encode)
+            Optional.of(BASE64_ENCODER::encode),
+            headers
         );
       } catch (IllegalArgumentException e) {
         // For whatever reason, we couldn't decode the Base64 string.
@@ -319,7 +324,8 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
           data.asText().getBytes(StandardCharsets.UTF_8),
           schemaRegistryClient,
           context,
-          isKey
+          isKey,
+          headers
       );
     }
   }
