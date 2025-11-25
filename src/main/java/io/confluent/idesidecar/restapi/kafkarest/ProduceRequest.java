@@ -3,7 +3,6 @@ package io.confluent.idesidecar.restapi.kafkarest;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequestHeader;
 import io.quarkus.runtime.annotations.RegisterForReflection;
-import jakarta.validation.Valid;
 import java.util.Date;
 import java.util.List;
 
