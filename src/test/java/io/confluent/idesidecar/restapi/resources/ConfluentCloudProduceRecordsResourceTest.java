@@ -13,6 +13,7 @@ import static org.hamcrest.Matchers.nullValue;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.matching.EqualToPattern;
+import io.confluent.idesidecar.restapi.auth.Token;
 import io.confluent.idesidecar.restapi.cache.ClusterCache;
 import io.confluent.idesidecar.restapi.connections.CCloudConnectionState;
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
@@ -51,6 +52,8 @@ public class ConfluentCloudProduceRecordsResourceTest {
 
   CCloudTestUtil ccloudTestUtil;
 
+  Token dataPlaneToken;
+
   private static final String KAFKA_CLUSTER_ID = "lkc-abcd123";
   private static final String CONNECTION_ID = "fake-connection-id";
   private static final String SCHEMA_REGISTRY_CLUSTER_ID = "lsrc-defg456";
@@ -61,17 +64,8 @@ public class ConfluentCloudProduceRecordsResourceTest {
 
   @BeforeEach
   void setUp() {
+    // Create authenticated CCloud connection
     ccloudTestUtil = new CCloudTestUtil(wireMock, connectionStateManager);
-  }
-
-  @AfterEach
-  void tearDown() {
-    connectionStateManager.clearAllConnectionStates();
-    wireMock.removeMappings();
-  }
-
-  @Test
-  void testProduceRecordToConfluentCloud() {
     ccloudTestUtil.createAuthedConnection(CONNECTION_ID, ConnectionSpec.ConnectionType.CCLOUD);
 
     // Expect a Kafka cluster exists
@@ -105,7 +99,7 @@ public class ConfluentCloudProduceRecordsResourceTest {
         "http://localhost:%d".formatted(wireMockPort)
     );
 
-    var dataPlaneToken =
+    dataPlaneToken =
         ((CCloudConnectionState) connectionStateManager.getConnectionState(CONNECTION_ID))
             .getOauthContext()
             .getDataPlaneToken();
@@ -143,7 +137,16 @@ public class ConfluentCloudProduceRecordsResourceTest {
                     )
             )
     );
+  }
 
+  @AfterEach
+  void tearDown() {
+    connectionStateManager.clearAllConnectionStates();
+    wireMock.removeMappings();
+  }
+
+  @Test
+  void testProduceRecordToConfluentCloud() {
     // We need to mock the Confluent Cloud REST API interactions
     wireMock.register(
         WireMock
@@ -237,78 +240,6 @@ public class ConfluentCloudProduceRecordsResourceTest {
 
   @Test
   void testProduceRecordToConfluentCloudWithNullKey() {
-    ccloudTestUtil.createAuthedConnection(CONNECTION_ID, ConnectionSpec.ConnectionType.CCLOUD);
-
-    // Expect a Kafka cluster exists
-    var mockKafkaCluster = expectKafkaClusterInCache(
-        clusterCache,
-        CONNECTION_ID,
-        KAFKA_CLUSTER_ID,
-        "http://localhost:%d".formatted(wireMockPort)
-    );
-    // Expect a Schema Registry cluster exists by cluster type
-    expectClusterInCache(
-        clusterCache,
-        CONNECTION_ID,
-        SCHEMA_REGISTRY_CLUSTER_ID,
-        "http://localhost:%d".formatted(wireMockPort),
-        ClusterType.SCHEMA_REGISTRY
-    );
-    // Expect a Schema Registry cluster exists
-    expectSchemaRegistryInCache(
-        clusterCache,
-        CONNECTION_ID,
-        SCHEMA_REGISTRY_CLUSTER_ID,
-        "http://localhost:%d".formatted(wireMockPort)
-    );
-    // Expect a Schema Registry for the Kafka cluster exists
-    expectSchemaRegistryForKafkaClusterInCache(
-        clusterCache,
-        CONNECTION_ID,
-        mockKafkaCluster,
-        SCHEMA_REGISTRY_CLUSTER_ID,
-        "http://localhost:%d".formatted(wireMockPort)
-    );
-
-    var dataPlaneToken =
-        ((CCloudConnectionState) connectionStateManager.getConnectionState(CONNECTION_ID))
-            .getOauthContext()
-            .getDataPlaneToken();
-
-    // We need to mock the expected Schema Registry interactions
-    wireMock.register(
-        WireMock
-            .get("/subjects/test-topic-value/versions/1?deleted=false")
-            .withHeader("Authorization",
-                new EqualToPattern("Bearer %s".formatted(dataPlaneToken.token())))
-            .willReturn(
-                WireMock.aResponse()
-                    .withStatus(200)
-                    .withHeader("Content-Type", "application/vnd.schemaregistry.v1+json")
-                    .withGzipDisabled(true)
-                    .withBody(
-                        loadResource(
-                            "ccloud-produce-records-mocks/get-schema-success-response.json")
-                    )
-            )
-    );
-    wireMock.register(
-        WireMock
-            .post("/subjects/test-topic-value?normalize=false&deleted=false")
-            .withHeader("Authorization",
-                new EqualToPattern("Bearer %s".formatted(dataPlaneToken.token())))
-            .willReturn(
-                WireMock.aResponse()
-                    .withStatus(200)
-                    .withHeader("Content-Type", "application/vnd.schemaregistry.v1+json")
-                    .withGzipDisabled(true)
-                    .withBody(
-                        loadResource(
-                            "ccloud-produce-records-mocks/get-schema-success-response.json")
-                    )
-            )
-    );
-
     // We need to mock the Confluent Cloud REST API interactions
     wireMock.register(
         WireMock
@@ -385,78 +316,6 @@ public class ConfluentCloudProduceRecordsResourceTest {
 
   @Test
   void testProduceRecordToConfluentCloudWithNullValue() {
-    ccloudTestUtil.createAuthedConnection(CONNECTION_ID, ConnectionSpec.ConnectionType.CCLOUD);
-
-    // Expect a Kafka cluster exists
-    var mockKafkaCluster = expectKafkaClusterInCache(
-        clusterCache,
-        CONNECTION_ID,
-        KAFKA_CLUSTER_ID,
-        "http://localhost:%d".formatted(wireMockPort)
-    );
-    // Expect a Schema Registry cluster exists by cluster type
-    expectClusterInCache(
-        clusterCache,
-        CONNECTION_ID,
-        SCHEMA_REGISTRY_CLUSTER_ID,
-        "http://localhost:%d".formatted(wireMockPort),
-        ClusterType.SCHEMA_REGISTRY
-    );
-    // Expect a Schema Registry cluster exists
-    expectSchemaRegistryInCache(
-        clusterCache,
-        CONNECTION_ID,
-        SCHEMA_REGISTRY_CLUSTER_ID,
-        "http://localhost:%d".formatted(wireMockPort)
-    );
-    // Expect a Schema Registry for the Kafka cluster exists
-    expectSchemaRegistryForKafkaClusterInCache(
-        clusterCache,
-        CONNECTION_ID,
-        mockKafkaCluster,
-        SCHEMA_REGISTRY_CLUSTER_ID,
-        "http://localhost:%d".formatted(wireMockPort)
-    );
-
-    var dataPlaneToken =
-        ((CCloudConnectionState) connectionStateManager.getConnectionState(CONNECTION_ID))
-            .getOauthContext()
-            .getDataPlaneToken();
-
-    // We need to mock the expected Schema Registry interactions
-    wireMock.register(
-        WireMock
-            .get("/subjects/test-topic-value/versions/1?deleted=false")
-            .withHeader("Authorization",
-                new EqualToPattern("Bearer %s".formatted(dataPlaneToken.token())))
-            .willReturn(
-                WireMock.aResponse()
-                    .withStatus(200)
-                    .withHeader("Content-Type", "application/vnd.schemaregistry.v1+json")
-                    .withGzipDisabled(true)
-                    .withBody(
-                        loadResource(
-                            "ccloud-produce-records-mocks/get-schema-success-response.json")
-                    )
-            )
-    );
-    wireMock.register(
-        WireMock
-            .post("/subjects/test-topic-value?normalize=false&deleted=false")
-            .withHeader("Authorization",
-                new EqualToPattern("Bearer %s".formatted(dataPlaneToken.token())))
-            .willReturn(
-                WireMock.aResponse()
-                    .withStatus(200)
-                    .withHeader("Content-Type", "application/vnd.schemaregistry.v1+json")
-                    .withGzipDisabled(true)
-                    .withBody(
-                        loadResource(
-                            "ccloud-produce-records-mocks/get-schema-success-response.json")
-                    )
-            )
-    );
-
     // We need to mock the Confluent Cloud REST API interactions
     wireMock.register(
         WireMock
