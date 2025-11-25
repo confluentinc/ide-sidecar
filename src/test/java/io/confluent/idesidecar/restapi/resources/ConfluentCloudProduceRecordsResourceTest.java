@@ -148,33 +148,9 @@ public class ConfluentCloudProduceRecordsResourceTest {
   @Test
   void testProduceRecordToConfluentCloud() {
     // We need to mock the Confluent Cloud REST API interactions
-    wireMock.register(
-        WireMock
-            .post(
-                "/kafka/v3/clusters/%s/topics/%s/records".formatted(KAFKA_CLUSTER_ID, "test-topic"))
-            .withRequestBody(
-                WireMock.equalToJson(
-                    loadResource(
-                        "ccloud-produce-records-mocks/produce-record-expected-request.json"),
-                    // Ignore order and extra elements
-                    true, true
-                )
-            )
-            .withHeader("Authorization",
-                new EqualToPattern("Bearer %s".formatted(dataPlaneToken.token()))
-            )
-            .willReturn(
-                WireMock.aResponse()
-                    .withStatus(200)
-                    .withHeader("Content-Type", "application/json")
-                    .withGzipDisabled(true)
-                    .withBody(
-                        loadResource(
-                            "ccloud-produce-records-mocks/produce-record-success-response.json")
-                    )
-            )
+    mockRecordsApiWithPayload(
+        "ccloud-produce-records-mocks/produce-record-expected-request.json"
     );
-
     // Let's issue a request to produce a record
     var actualResponse = given()
         .when()
@@ -241,33 +217,9 @@ public class ConfluentCloudProduceRecordsResourceTest {
   @Test
   void testProduceRecordToConfluentCloudWithNullKey() {
     // We need to mock the Confluent Cloud REST API interactions
-    wireMock.register(
-        WireMock
-            .post(
-                "/kafka/v3/clusters/%s/topics/%s/records".formatted(KAFKA_CLUSTER_ID, "test-topic"))
-            .withRequestBody(
-                WireMock.equalToJson(
-                    loadResource(
-                        "ccloud-produce-records-mocks/produce-record-expected-request-null-key.json"),
-                    // Ignore order and extra elements
-                    true, true
-                )
-            )
-            .withHeader("Authorization",
-                new EqualToPattern("Bearer %s".formatted(dataPlaneToken.token()))
-            )
-            .willReturn(
-                WireMock.aResponse()
-                    .withStatus(200)
-                    .withHeader("Content-Type", "application/json")
-                    .withGzipDisabled(true)
-                    .withBody(
-                        loadResource(
-                            "ccloud-produce-records-mocks/produce-record-success-response.json")
-                    )
-            )
+    mockRecordsApiWithPayload(
+        "ccloud-produce-records-mocks/produce-record-expected-request-null-key.json"
     );
-
     // Let's issue a request to produce a record with a null key
     var actualResponse = given()
         .when()
@@ -317,33 +269,9 @@ public class ConfluentCloudProduceRecordsResourceTest {
   @Test
   void testProduceRecordToConfluentCloudWithNullValue() {
     // We need to mock the Confluent Cloud REST API interactions
-    wireMock.register(
-        WireMock
-            .post(
-                "/kafka/v3/clusters/%s/topics/%s/records".formatted(KAFKA_CLUSTER_ID, "test-topic"))
-            .withRequestBody(
-                WireMock.equalToJson(
-                    loadResource(
-                        "ccloud-produce-records-mocks/produce-record-expected-request-null-value.json"),
-                    // Ignore order and extra elements
-                    true, true
-                )
-            )
-            .withHeader("Authorization",
-                new EqualToPattern("Bearer %s".formatted(dataPlaneToken.token()))
-            )
-            .willReturn(
-                WireMock.aResponse()
-                    .withStatus(200)
-                    .withHeader("Content-Type", "application/json")
-                    .withGzipDisabled(true)
-                    .withBody(
-                        loadResource(
-                            "ccloud-produce-records-mocks/produce-record-success-response.json")
-                    )
-            )
+    mockRecordsApiWithPayload(
+        "ccloud-produce-records-mocks/produce-record-expected-request-null-value.json"
     );
-
     // Let's issue a request to produce a record with a null value
     var actualResponse = given()
         .when()
@@ -374,5 +302,34 @@ public class ConfluentCloudProduceRecordsResourceTest {
 
     // Expected
     actualResponse.statusCode(200);
+  }
+
+  private void mockRecordsApiWithPayload(String pathToPayload) {
+    // We need to mock the Confluent Cloud REST API interactions
+    wireMock.register(
+        WireMock
+            .post(
+                "/kafka/v3/clusters/%s/topics/%s/records".formatted(KAFKA_CLUSTER_ID, "test-topic"))
+            .withRequestBody(
+                WireMock.equalToJson(
+                    loadResource(pathToPayload),
+                    // Ignore order and extra elements
+                    true, true
+                )
+            )
+            .withHeader("Authorization",
+                new EqualToPattern("Bearer %s".formatted(dataPlaneToken.token()))
+            )
+            .willReturn(
+                WireMock.aResponse()
+                    .withStatus(200)
+                    .withHeader("Content-Type", "application/json")
+                    .withGzipDisabled(true)
+                    .withBody(
+                        loadResource(
+                            "ccloud-produce-records-mocks/produce-record-success-response.json")
+                    )
+            )
+    );
   }
 }
