@@ -8,7 +8,7 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * Implements Confluent REST Proxy for Kafka's <i>ProduceRequest</i> class, so that we can use the
+ * Implements Confluent REST Proxy for Kafka's <i>ProduceRequest</i> model, so that we can use the
  * ide-sidecar's custom {@link ProduceRequestData} and make sure that the <i>data</i> field is
  * always included when serializing the {@link ProduceRequestData} to JSON, even when it is
  * <i>null</i>.
@@ -20,9 +20,9 @@ import java.util.List;
 @RegisterForReflection
 public record ProduceRequest(
     @JsonProperty("partition_id") Integer partitionId,
-    @Valid List<@Valid ProduceRequestHeader> headers,
-    @Valid ProduceRequestData key,
-    @Valid ProduceRequestData value,
+    List<ProduceRequestHeader> headers,
+    ProduceRequestData key,
+    ProduceRequestData value,
     Date timestamp
 ) {
 

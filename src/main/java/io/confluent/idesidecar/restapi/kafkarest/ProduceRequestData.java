@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 
 /**
- * Implements Confluent REST Proxy for Kafka's <i>ProduceRequestData</i> class, so that we can make
+ * Implements Confluent REST Proxy for Kafka's <i>ProduceRequestData</i> model, so that we can make
  * sure that the <i>data</i> field is always included when serializing the
  * {@link ProduceRequestData} to JSON, even when it is <i>null</i>.
  *
