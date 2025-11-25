@@ -1,7 +1,6 @@
 package io.confluent.idesidecar.restapi.kafkarest;
 
 import com.google.protobuf.ByteString;
-import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequest;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.soabase.recordbuilder.core.RecordBuilder;
 import java.util.Optional;

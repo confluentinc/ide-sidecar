@@ -2,8 +2,6 @@ package io.confluent.idesidecar.restapi.kafkarest;
 
 import static io.confluent.idesidecar.restapi.util.MutinyUtil.uniStage;
 
-import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequest;
-import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequestData;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceResponse;
 import io.confluent.idesidecar.restapi.processors.Processor;
 import io.confluent.idesidecar.restapi.proxy.KafkaRestProxyContext;
@@ -34,56 +32,75 @@ public class ConfluentCloudProduceRecord extends GenericProduceRecord {
 
   @Override
   protected Uni<ProduceContext> sendSerializedRecord(ProduceContext c) {
-    var produceRequest = new ProduceRequest();
-    produceRequest.setPartitionId(c.produceRequest().getPartitionId());
-    produceRequest.setHeaders(c.produceRequest().getHeaders());
+    var produceRequest = new ProduceRequest(
+        c.produceRequest().partitionId(),
+        c.produceRequest().headers(),
+        null,
+        null,
+        null
+    );
 
-    // For key
+    // Set the record key, while guarding against a NullPointerException
     if (c.keySchema().isPresent()) {
-      produceRequest.setKey(
-          ProduceRequestData
-              .builder()
-              .data(BASE64_ENCODER.encodeToString(c.serializedKey().toByteArray()))
-              .type(BINARY_TYPE)
-              .build()
+      produceRequest = produceRequest.withKey(
+          new ProduceRequestData(
+              BINARY_TYPE,
+              null,
+              null,
+              null,
+              null,
+              null,
+              encodeBase64OrNull(c.serializedKey() == null ? null : c.serializedKey().toByteArray())
+          )
       );
     } else {
-      produceRequest.setKey(
-          ProduceRequestData
-              .builder()
-              // Deserialize the serialized JSON
-              .data(deserializeJson(c.serializedKey().toByteArray(), true))
-              .type(JSON_TYPE)
-              .build()
+      produceRequest = produceRequest.withKey(
+          new ProduceRequestData(
+              JSON_TYPE,
+              null,
+              null,
+              null,
+              null,
+              null,
+              deserializeJson(c.serializedKey() == null ? null : c.serializedKey().toByteArray(), true)
+          )
       );
     }
 
-    // For value
+    // Set the record value, while guarding against a NullPointerException
     if (c.valueSchema().isPresent()) {
-      produceRequest.setValue(
-          ProduceRequestData
-              .builder()
-              .data(BASE64_ENCODER.encodeToString(c.serializedValue().toByteArray()))
-              .type(BINARY_TYPE)
-              .build()
+      produceRequest = produceRequest.withValue(
+          new ProduceRequestData(
+              BINARY_TYPE,
+              null,
+              null,
+              null,
+              null,
+              null,
+              encodeBase64OrNull(c.serializedValue() == null ? null : c.serializedValue().toByteArray())
+          )
       );
     } else {
-      produceRequest.setValue(
-          ProduceRequestData
-              .builder()
-              // Deserialize the serialized JSON
-              .data(deserializeJson(c.serializedValue().toByteArray(), false))
-              .type(JSON_TYPE)
-              .build()
+      produceRequest = produceRequest.withValue(
+          new ProduceRequestData(
+              JSON_TYPE,
+              null,
+              null,
+              null,
+              null,
+              null,
+              deserializeJson(c.serializedValue() == null ? null : c.serializedValue().toByteArray(), false)
+          )
       );
     }
 
+    final var finalProduceRequest = produceRequest;
     return uniStage(
         () -> ccloudProduceProcessor.process(new KafkaRestProxyContext<>(
             c.connectionId(),
             c.clusterId(),
             c.topicName(),
-            produceRequest
+            finalProduceRequest
         )).toCompletionStage()
     ).map(kafkaRestProxyContext -> c
         .with()
@@ -105,9 +122,19 @@ public class ConfluentCloudProduceRecord extends GenericProduceRecord {
   }
 
   private Object deserializeJson(byte[] serializedJsonBytes, boolean isKey) {
+    if (serializedJsonBytes == null) {
+      return null;
+    }
     try (var kafkaJsonDeserializer = new KafkaJsonDeserializer<>()) {
       kafkaJsonDeserializer.configure(Map.of(), isKey);
       return kafkaJsonDeserializer.deserialize(null, serializedJsonBytes);
     }
+  }
+
+  private String encodeBase64OrNull(byte[] bytes) {
+    if (bytes == null) {
+      return null;
+    }
+    return BASE64_ENCODER.encodeToString(bytes);
   }
 }
