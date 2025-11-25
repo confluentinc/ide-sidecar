@@ -1,6 +1,5 @@
 package io.confluent.idesidecar.restapi.kafkarest;
 
-import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequestData;
 import io.confluent.kafka.schemaregistry.ParsedSchema;
 import io.confluent.kafka.schemaregistry.SchemaProvider;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
@@ -50,7 +49,7 @@ public class SchemaManager {
       return Optional.of(getSchemaFromSchemaVersion(
           schemaRegistryClient,
           topicName,
-          produceRequestData.getSchemaVersion(),
+          produceRequestData.schemaVersion(),
           isKey
       ));
     }
@@ -59,9 +58,9 @@ public class SchemaManager {
       ensureSchemaRegistryClientExists(schemaRegistryClient);
       return Optional.of(getSchemaFromSubject(
           schemaRegistryClient,
-          produceRequestData.getSchemaVersion(),
-          produceRequestData.getSubject(),
-          produceRequestData.getSubjectNameStrategy()
+          produceRequestData.schemaVersion(),
+          produceRequestData.subject(),
+          produceRequestData.subjectNameStrategy()
       ));
     }
 
@@ -84,33 +83,33 @@ public class SchemaManager {
    */
   private static boolean onlySchemaVersion(ProduceRequestData produceRequestData) {
     // Only schemaVersion must be set
-    return produceRequestData.getSchemaVersion() != null
-        && produceRequestData.getSubject() == null
-        && produceRequestData.getSubjectNameStrategy() == null;
+    return produceRequestData.schemaVersion() != null
+        && produceRequestData.subject() == null
+        && produceRequestData.subjectNameStrategy() == null;
   }
 
   private static boolean schemaVersionWithSubjectAndSubjectNameStrategy(
       ProduceRequestData produceRequestData
   ) {
-    return produceRequestData.getSchemaVersion() != null
-        && produceRequestData.getSubject() != null
-        && produceRequestData.getSubjectNameStrategy() != null;
+    return produceRequestData.schemaVersion() != null
+        && produceRequestData.subject() != null
+        && produceRequestData.subjectNameStrategy() != null;
   }
 
   private static boolean produceRequestIsValid(ProduceRequestData produceRequestData) {
     // schema_id, type and schema must not be set
     var unsupportedFields = Stream.of(
-        produceRequestData.getSchemaId(),
-        produceRequestData.getType(),
-        produceRequestData.getSchema()
+        produceRequestData.schemaId(),
+        produceRequestData.type(),
+        produceRequestData.schema()
     );
     // All must be null
     var areUnsupportedFieldsSet = unsupportedFields.allMatch(Objects::isNull);
 
     // Subject and subject name strategy must be set together, or not at all
     var subjectAndSubjectNameStrategy = Stream.of(
-        produceRequestData.getSubject(),
-        produceRequestData.getSubjectNameStrategy()
+        produceRequestData.subject(),
+        produceRequestData.subjectNameStrategy()
     ).toList();
     var validSubject = subjectAndSubjectNameStrategy.stream().allMatch(Objects::isNull)
         || subjectAndSubjectNameStrategy.stream().noneMatch(Objects::isNull);
