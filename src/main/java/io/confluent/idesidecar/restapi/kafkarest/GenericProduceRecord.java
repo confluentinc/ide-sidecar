@@ -5,7 +5,6 @@ import static io.confluent.idesidecar.restapi.util.MutinyUtil.uniItem;
 
 import io.confluent.idesidecar.restapi.clients.KafkaProducerClients;
 import io.confluent.idesidecar.restapi.clients.SchemaRegistryClients;
-import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequest;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceResponse;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceResponseData;
 import io.confluent.idesidecar.restapi.util.ExceptionUtil;
@@ -102,8 +101,8 @@ public abstract class GenericProduceRecord {
    * @return A Uni that emits the context object if key or value data is provided.
    */
   private Uni<ProduceContext> ensureKeyOrValueDataExists(ProduceContext c) {
-    if (c.produceRequest().getKey().getData() == null
-        && c.produceRequest().getValue().getData() == null) {
+    if (c.produceRequest().key().data() == null
+        && c.produceRequest().value().data() == null) {
       return Uni.createFrom().failure(
           new BadRequestException("Key and value data cannot both be null")
       );
@@ -141,13 +140,13 @@ public abstract class GenericProduceRecord {
             () -> schemaManager.getSchema(
                 c.srClient(),
                 c.topicName(),
-                c.produceRequest().getKey(),
+                c.produceRequest().key(),
                 true
             ),
             () -> schemaManager.getSchema(
                 c.srClient(),
                 c.topicName(),
-                c.produceRequest().getValue(),
+                c.produceRequest().value(),
                 false
             )
         )
@@ -177,14 +176,14 @@ public abstract class GenericProduceRecord {
                 c.srClient(),
                 c.keySchema(),
                 c.topicName(),
-                c.produceRequest().getKey().getData(),
+                c.produceRequest().key().data(),
                 true
             ),
             () -> recordSerializer.serialize(
                 c.srClient(),
                 c.valueSchema(),
                 c.topicName(),
-                c.produceRequest().getValue().getData(),
+                c.produceRequest().value().data(),
                 false
             ))
         // If several failures have been collected,
@@ -222,7 +221,7 @@ public abstract class GenericProduceRecord {
 
   protected Set<Header> getRecordHeaders(ProduceRequest produceRequest) {
     return produceRequest
-        .getHeaders()
+        .headers()
         .stream()
         .map(h -> new RecordHeader(h.getName(), h.getValue()))
         .collect(Collectors.toUnmodifiableSet());

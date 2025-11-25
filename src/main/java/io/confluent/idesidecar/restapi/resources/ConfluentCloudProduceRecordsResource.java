@@ -3,7 +3,7 @@ package io.confluent.idesidecar.restapi.resources;
 import static io.confluent.idesidecar.restapi.util.RequestHeadersConstants.CONNECTION_ID_HEADER;
 
 import io.confluent.idesidecar.restapi.kafkarest.ConfluentCloudProduceRecord;
-import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequest;
+import io.confluent.idesidecar.restapi.kafkarest.ProduceRequest;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceResponse;
 import io.smallrye.common.annotation.Blocking;
 import io.smallrye.mutiny.Uni;

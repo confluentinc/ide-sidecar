@@ -1,0 +1,11 @@
+{
+  "key": {
+    "data": 1234,
+    "type": "JSON"
+  },
+  "value": {
+    "data": null,
+    "type": "BINARY"
+  },
+  "headers": []
+}

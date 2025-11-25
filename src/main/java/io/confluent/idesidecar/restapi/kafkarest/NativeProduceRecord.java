@@ -3,7 +3,6 @@ package io.confluent.idesidecar.restapi.kafkarest;
 import static io.confluent.idesidecar.restapi.util.MutinyUtil.uniItem;
 
 import com.google.protobuf.ByteString;
-import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRequest;
 import io.confluent.idesidecar.restapi.kafkarest.model.ProduceResponse;
 import io.confluent.idesidecar.restapi.util.MutinyUtil;
 import io.smallrye.mutiny.Uni;
@@ -44,8 +43,8 @@ public class NativeProduceRecord extends GenericProduceRecord {
             MutinyUtil.uniStage(sendSerializedRecord(
                 ctx.producer(),
                 ctx.topicName(),
-                ctx.produceRequest().getPartitionId(),
-                ctx.produceRequest().getTimestamp(),
+                ctx.produceRequest().partitionId(),
+                ctx.produceRequest().timestamp(),
                 Optional.ofNullable(ctx.serializedKey()).map(ByteString::toByteArray).orElse(null),
                 Optional.ofNullable(ctx.serializedValue()).map(ByteString::toByteArray)
                     .orElse(null),
@@ -84,7 +83,7 @@ public class NativeProduceRecord extends GenericProduceRecord {
         .getKafkaTopic(c.clusterId(), c.topicName(), false)
         // Then, check that the partition exists, if provided
         .chain(ignored -> Optional
-            .ofNullable(c.produceRequest().getPartitionId())
+            .ofNullable(c.produceRequest().partitionId())
             .map(partitionId ->
                 partitionManager.getKafkaPartition(c.clusterId(), c.topicName(), partitionId)
             )
