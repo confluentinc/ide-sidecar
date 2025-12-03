@@ -7,10 +7,13 @@ import io.confluent.idesidecar.restapi.application.SidecarAccessTokenBean;
 import io.confluent.idesidecar.restapi.cache.Clients;
 import io.confluent.idesidecar.restapi.cache.ClusterCache;
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
+import io.confluent.idesidecar.restapi.credentials.OAuthCredentials;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
 import io.confluent.idesidecar.restapi.util.RequestHeadersConstants;
+import io.confluent.kafka.schemaregistry.client.SchemaRegistryClientConfig;
 import io.confluent.kafka.schemaregistry.client.rest.RestService;
 import io.confluent.kafka.schemaregistry.client.security.SslFactory;
+import io.confluent.kafka.schemaregistry.client.security.bearerauth.oauth.OauthCredentialProvider;
 import io.quarkus.logging.Log;
 import io.vertx.core.MultiMap;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -125,6 +128,21 @@ public class SchemaRegistryClients extends Clients<SchemaRegistryClient> {
     var sslFactory = new SslFactory(configurationProperties);
     if (sslFactory.sslContext() != null) {
       restService.setSslSocketFactory(sslFactory.sslContext().getSocketFactory());
+    }
+
+    // SchemaRegistry's BearerAuthCredentialProviderFactory makes use of dynamic service loading,
+    // which does not seem to work with all GraalVM versions and might cause issues, like
+    // https://github.com/confluentinc/vscode/issues/2647, so we want to manually configure
+    // the OAuthCredentialProvider if the user chose to authenticate with the Schema Registry
+    // using OAuth.
+    if (
+        OAuthCredentials.OAUTHBEARER_CREDENTIALS_SOURCE.equals(
+            configurationProperties.get(SchemaRegistryClientConfig.BEARER_AUTH_CREDENTIALS_SOURCE)
+        )
+    ) {
+      var credentialProvider = new OauthCredentialProvider();
+      credentialProvider.configure(configurationProperties);
+      restService.setBearerAuthCredentialProvider(credentialProvider);
     }
 
     return new SidecarSchemaRegistryClient(
