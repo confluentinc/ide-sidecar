@@ -132,7 +132,8 @@ public class SchemaRegistryClients extends Clients<SchemaRegistryClient> {
         SR_CACHE_SIZE,
         SCHEMA_PROVIDERS,
         null,
-        null
+        null,
+        configurationProperties
     );
   }
 }
