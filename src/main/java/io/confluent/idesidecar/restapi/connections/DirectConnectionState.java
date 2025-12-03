@@ -400,21 +400,6 @@ public class DirectConnectionState extends ConnectionState {
       restService.setSslSocketFactory(sslFactory.sslContext().getSocketFactory());
     }
 
-    // SchemaRegistry's BearerAuthCredentialProviderFactory makes use of dynamic service loading,
-    // which does not seem to work with all GraalVM versions and might cause issues, like
-    // https://github.com/confluentinc/vscode/issues/2647, so we want to manually configure
-    // the OAuthCredentialProvider if the user chose to authenticate with the Schema Registry
-    // using OAuth.
-    if (
-        OAuthCredentials.OAUTHBEARER_CREDENTIALS_SOURCE.equals(
-            srClientConfig.get(SchemaRegistryClientConfig.BEARER_AUTH_CREDENTIALS_SOURCE)
-        )
-    ) {
-      var credentialProvider = new OauthCredentialProvider();
-      credentialProvider.configure(srClientConfig);
-      restService.setBearerAuthCredentialProvider(credentialProvider);
-    }
-
-    return new SidecarSchemaRegistryClient(restService, 10);
+    return new SidecarSchemaRegistryClient(restService, 10, srClientConfig);
   }
 }

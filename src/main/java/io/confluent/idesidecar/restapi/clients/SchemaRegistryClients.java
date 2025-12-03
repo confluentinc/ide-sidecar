@@ -130,27 +130,13 @@ public class SchemaRegistryClients extends Clients<SchemaRegistryClient> {
       restService.setSslSocketFactory(sslFactory.sslContext().getSocketFactory());
     }
 
-    // SchemaRegistry's BearerAuthCredentialProviderFactory makes use of dynamic service loading,
-    // which does not seem to work with all GraalVM versions and might cause issues, like
-    // https://github.com/confluentinc/vscode/issues/2647, so we want to manually configure
-    // the OAuthCredentialProvider if the user chose to authenticate with the Schema Registry
-    // using OAuth.
-    if (
-        OAuthCredentials.OAUTHBEARER_CREDENTIALS_SOURCE.equals(
-            configurationProperties.get(SchemaRegistryClientConfig.BEARER_AUTH_CREDENTIALS_SOURCE)
-        )
-    ) {
-      var credentialProvider = new OauthCredentialProvider();
-      credentialProvider.configure(configurationProperties);
-      restService.setBearerAuthCredentialProvider(credentialProvider);
-    }
-
     return new SidecarSchemaRegistryClient(
         restService,
         SR_CACHE_SIZE,
         SCHEMA_PROVIDERS,
         null,
-        null
+        null,
+        configurationProperties
     );
   }
 }
