@@ -7,6 +7,7 @@ import io.confluent.idesidecar.restapi.clients.ClientConfigurator;
 import io.confluent.idesidecar.restapi.clients.SchemaRegistryClient;
 import io.confluent.idesidecar.restapi.clients.SidecarSchemaRegistryClient;
 import io.confluent.idesidecar.restapi.credentials.Credentials;
+import io.confluent.idesidecar.restapi.credentials.OAuthCredentials;
 import io.confluent.idesidecar.restapi.credentials.TLSConfig;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
@@ -17,9 +18,11 @@ import io.confluent.idesidecar.restapi.models.ConnectionStatus.SchemaRegistrySta
 import io.confluent.idesidecar.restapi.models.ConnectionStatusBuilder;
 import io.confluent.idesidecar.restapi.models.ConnectionStatusKafkaClusterStatusBuilder;
 import io.confluent.idesidecar.restapi.models.ConnectionStatusSchemaRegistryStatusBuilder;
+import io.confluent.kafka.schemaregistry.client.SchemaRegistryClientConfig;
 import io.confluent.kafka.schemaregistry.client.rest.RestService;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 import io.confluent.kafka.schemaregistry.client.security.SslFactory;
+import io.confluent.kafka.schemaregistry.client.security.bearerauth.oauth.OauthCredentialProvider;
 import io.quarkus.logging.Log;
 import io.smallrye.common.constraint.NotNull;
 import io.smallrye.common.constraint.Nullable;
@@ -395,6 +398,21 @@ public class DirectConnectionState extends ConnectionState {
     var sslFactory = new SslFactory(srClientConfig);
     if (sslFactory.sslContext() != null) {
       restService.setSslSocketFactory(sslFactory.sslContext().getSocketFactory());
+    }
+
+    // SchemaRegistry's BearerAuthCredentialProviderFactory makes use of dynamic service loading,
+    // which does not seem to work with all GraalVM versions and might cause issues, like
+    // https://github.com/confluentinc/vscode/issues/2647, so we want to manually configure
+    // the OAuthCredentialProvider if the user chose to authenticate with the Schema Registry
+    // using OAuth.
+    if (
+        OAuthCredentials.OAUTHBEARER_CREDENTIALS_SOURCE.equals(
+            srClientConfig.get(SchemaRegistryClientConfig.BEARER_AUTH_CREDENTIALS_SOURCE)
+        )
+    ) {
+      var credentialProvider = new OauthCredentialProvider();
+      credentialProvider.configure(srClientConfig);
+      restService.setBearerAuthCredentialProvider(credentialProvider);
     }
 
     return new SidecarSchemaRegistryClient(restService, 10);
