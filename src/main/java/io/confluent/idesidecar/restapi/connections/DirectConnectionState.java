@@ -397,6 +397,6 @@ public class DirectConnectionState extends ConnectionState {
       restService.setSslSocketFactory(sslFactory.sslContext().getSocketFactory());
     }
 
-    return new SidecarSchemaRegistryClient(restService, 10);
+    return new SidecarSchemaRegistryClient(restService, 10, srClientConfig);
   }
 }
