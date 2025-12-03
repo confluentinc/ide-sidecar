@@ -7,6 +7,7 @@ import io.confluent.idesidecar.restapi.clients.ClientConfigurator;
 import io.confluent.idesidecar.restapi.clients.SchemaRegistryClient;
 import io.confluent.idesidecar.restapi.clients.SidecarSchemaRegistryClient;
 import io.confluent.idesidecar.restapi.credentials.Credentials;
+import io.confluent.idesidecar.restapi.credentials.OAuthCredentials;
 import io.confluent.idesidecar.restapi.credentials.TLSConfig;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
@@ -17,9 +18,11 @@ import io.confluent.idesidecar.restapi.models.ConnectionStatus.SchemaRegistrySta
 import io.confluent.idesidecar.restapi.models.ConnectionStatusBuilder;
 import io.confluent.idesidecar.restapi.models.ConnectionStatusKafkaClusterStatusBuilder;
 import io.confluent.idesidecar.restapi.models.ConnectionStatusSchemaRegistryStatusBuilder;
+import io.confluent.kafka.schemaregistry.client.SchemaRegistryClientConfig;
 import io.confluent.kafka.schemaregistry.client.rest.RestService;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 import io.confluent.kafka.schemaregistry.client.security.SslFactory;
+import io.confluent.kafka.schemaregistry.client.security.bearerauth.oauth.OauthCredentialProvider;
 import io.quarkus.logging.Log;
 import io.smallrye.common.constraint.NotNull;
 import io.smallrye.common.constraint.Nullable;
@@ -397,6 +400,6 @@ public class DirectConnectionState extends ConnectionState {
       restService.setSslSocketFactory(sslFactory.sslContext().getSocketFactory());
     }
 
-    return new SidecarSchemaRegistryClient(restService, 10);
+    return new SidecarSchemaRegistryClient(restService, 10, srClientConfig);
   }
 }

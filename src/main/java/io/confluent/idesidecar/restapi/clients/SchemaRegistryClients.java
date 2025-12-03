@@ -7,10 +7,13 @@ import io.confluent.idesidecar.restapi.application.SidecarAccessTokenBean;
 import io.confluent.idesidecar.restapi.cache.Clients;
 import io.confluent.idesidecar.restapi.cache.ClusterCache;
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
+import io.confluent.idesidecar.restapi.credentials.OAuthCredentials;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
 import io.confluent.idesidecar.restapi.util.RequestHeadersConstants;
+import io.confluent.kafka.schemaregistry.client.SchemaRegistryClientConfig;
 import io.confluent.kafka.schemaregistry.client.rest.RestService;
 import io.confluent.kafka.schemaregistry.client.security.SslFactory;
+import io.confluent.kafka.schemaregistry.client.security.bearerauth.oauth.OauthCredentialProvider;
 import io.quarkus.logging.Log;
 import io.vertx.core.MultiMap;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -132,7 +135,8 @@ public class SchemaRegistryClients extends Clients<SchemaRegistryClient> {
         SR_CACHE_SIZE,
         SCHEMA_PROVIDERS,
         null,
-        null
+        null,
+        configurationProperties
     );
   }
 }
