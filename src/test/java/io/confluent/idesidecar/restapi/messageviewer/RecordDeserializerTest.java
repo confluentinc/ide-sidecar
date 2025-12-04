@@ -112,11 +112,11 @@ public class RecordDeserializerTest {
   @ValueSource(booleans = {true, false})
   public void testDecodeAndDeserialize_NullOrEmptyBase64(boolean isKey) {
     assertNullResult(
-        recordDeserializer.deserialize(null, schemaRegistryClient, context, isKey));
+        recordDeserializer.deserialize(null, schemaRegistryClient, context, isKey, null));
     assertEmptyResult(
-        recordDeserializer.deserialize(new byte[]{}, schemaRegistryClient, context, isKey));
+        recordDeserializer.deserialize(new byte[]{}, schemaRegistryClient, context, isKey, null));
     assertEmptyResult(
-        recordDeserializer.deserialize("".getBytes(), schemaRegistryClient, context, isKey));
+        recordDeserializer.deserialize("".getBytes(), schemaRegistryClient, context, isKey, null));
   }
 
   private void assertNullResult(RecordDeserializer.DecodedResult result) {
@@ -144,7 +144,8 @@ public class RecordDeserializerTest {
         decodedBytes,
         schemaRegistryClient,
         context,
-        false
+        false,
+        null
     );
     assertNotNull(record);
     // Asserts for the top-level fields
@@ -180,7 +181,8 @@ public class RecordDeserializerTest {
         Arrays.copyOfRange(decodedBytes, 0, decodedBytes.length - 1),
         schemaRegistryClient,
         context,
-        false
+        false,
+        null
     );
     assertNotNull(record);
     // Asserts for the top-level fields
@@ -202,7 +204,8 @@ public class RecordDeserializerTest {
         decodedBytes,
         schemaRegistryClient,
         context,
-        false
+        false,
+        null
     );
     assertNotNull(record);
     // Test the handleAvro() union type preservation
@@ -230,7 +233,8 @@ public class RecordDeserializerTest {
         decodedBytes,
         schemaRegistryClient,
         context,
-        false
+        false,
+        null
     );
     assertNotNull(record);
     // Asserts for the top-level fields
@@ -264,7 +268,8 @@ public class RecordDeserializerTest {
         decodedBytes,
         schemaRegistryClient,
         context,
-        false
+        false,
+        null
     );
     assertNotNull(record);
 
@@ -300,7 +305,7 @@ public class RecordDeserializerTest {
   @ParameterizedTest
   @ValueSource(booleans = {true, false})
   void parseJsonNodeShouldReturnNullNodeWhenReceivingNullValue(boolean isKey) {
-    var resp = recordDeserializer.deserialize(null, null, context, isKey);
+    var resp = recordDeserializer.deserialize(null, null, context, isKey, null);
     assertTrue(resp.value().isNull());
     assertNull(resp.errorMessage());
   }
@@ -309,7 +314,7 @@ public class RecordDeserializerTest {
   @ValueSource(booleans = {true, false})
   void parseJsonNodeShouldReturnEmptyStringWhenReceivingEmptyByteArray(boolean isKey) {
     var emptyArray = new byte[0];
-    var resp = recordDeserializer.deserialize(emptyArray, null, context, isKey);
+    var resp = recordDeserializer.deserialize(emptyArray, null, context, isKey, null);
     assertEquals(new TextNode(""), resp.value());
     assertNull(resp.errorMessage());
   }
@@ -320,7 +325,7 @@ public class RecordDeserializerTest {
     var rawString = "Team DTX";
     var byteArray = rawString.getBytes(StandardCharsets.UTF_8);
 
-    var resp = recordDeserializer.deserialize(byteArray, null, context, isKey);
+    var resp = recordDeserializer.deserialize(byteArray, null, context, isKey, null);
 
     assertEquals("Team DTX", resp.value().asText());
   }
@@ -333,11 +338,11 @@ public class RecordDeserializerTest {
     var rawString = "{\"Team\" : \"DTX\"}";
     var byteArray = rawString.getBytes(StandardCharsets.UTF_8);
     var byteArrayWithMagicByte = new byte[1 + byteArray.length];
-    byteArrayWithMagicByte[0] = RecordDeserializer.MAGIC_BYTE;
+    byteArrayWithMagicByte[0] = RecordDeserializer.MAGIC_BYTE_V0;
     System.arraycopy(byteArray, 0, byteArrayWithMagicByte, 1, byteArray.length);
 
     // Expect parsing to fail, should return byte array as base64-encoded string
-    var resp = recordDeserializer.deserialize(byteArrayWithMagicByte, null, context, isKey);
+    var resp = recordDeserializer.deserialize(byteArrayWithMagicByte, null, context, isKey, null);
 
     // The \u0000 is the magic byte
     assertEquals("\u0000{\"Team\" : \"DTX\"}", resp.value().asText());
@@ -406,7 +411,8 @@ public class RecordDeserializerTest {
             smc,
             context,
             isKey,
-            Optional.of(Base64.getEncoder()::encode)
+            Optional.of(Base64.getEncoder()::encode),
+            null
         );
       } catch (Exception e) {
         fail(("Should not have thrown exception %s. Consider caching the error by the schema ID"
@@ -529,7 +535,8 @@ public class RecordDeserializerTest {
         VALID_SCHEMA_ID_BYTES,
         mockedSRClient,
         context,
-        isKey
+        isKey,
+        null
     );
 
     // Assert before trying to deserialize with the same schema ID
@@ -542,7 +549,8 @@ public class RecordDeserializerTest {
             VALID_SCHEMA_ID_BYTES,
             mockedSRClient,
             context,
-            isKey
+            isKey,
+            null
         );
       } catch (Exception e) {
         fail(("Should not have thrown exception %s. Consider caching the error by the schema ID"
@@ -581,7 +589,8 @@ public class RecordDeserializerTest {
                   mockedSRClient,
                   context,
                   // We don't care about isKey
-                  false
+                  false,
+                  null
               );
             } catch (RuntimeException e) {
               assertInstanceOf(input, e.getCause());
