@@ -13,14 +13,18 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
+import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeRecordHeader;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.io.EncoderFactory;
 import org.apache.kafka.common.errors.SerializationException;
+import org.apache.kafka.common.header.Headers;
+import org.apache.kafka.common.header.internals.RecordHeaders;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -68,9 +72,8 @@ public class RecordDeserializer {
   private static final Map<String, String> SERDE_CONFIGS = ConfigUtil
       .asMap("ide-sidecar.serde-configs");
   private static final ObjectMapper OBJECT_MAPPER = ObjectMapperFactory.getObjectMapper();
-  public static final byte MAGIC_BYTE = 0x0;
+  public static final byte MAGIC_BYTE_V0 = 0x0;
   private static final Duration CACHE_FAILED_SCHEMA_ID_FETCH_DURATION = Duration.ofSeconds(30);
-
   private final int schemaFetchMaxRetries;
   private final SchemaErrors schemaErrors;
   private final Duration schemaFetchRetryInitialBackoff;
@@ -143,14 +146,14 @@ public class RecordDeserializer {
    * @return The deserialized JsonNode.
    */
   private JsonNode handleAvro(
-      byte[] bytes, String topicName, SchemaRegistryClient sr, boolean isKey
+      byte[] bytes, String topicName, SchemaRegistryClient sr, boolean isKey, Headers headers
   ) {
     try (
         var outputStream = new ByteArrayOutputStream();
         var avroDeserializer = new KafkaAvroDeserializer(sr)
     ) {
       avroDeserializer.configure(SERDE_CONFIGS, isKey);
-      var genericObject = avroDeserializer.deserialize(topicName, bytes);
+      var genericObject = avroDeserializer.deserialize(topicName, headers, bytes);
       if (genericObject instanceof GenericData.Record avroRecord) {
         // Use AVRO's native JSON encoder which preserves union type information
         // See https://github.com/confluentinc/ide-sidecar/issues/417 for more information
@@ -182,11 +185,16 @@ public class RecordDeserializer {
       byte[] bytes,
       String topicName,
       SchemaRegistryClient sr,
-      boolean isKey
+      boolean isKey,
+      Headers headers
   ) throws JsonProcessingException, InvalidProtocolBufferException {
     try (var protobufDeserializer = new KafkaProtobufDeserializer<>(sr)) {
       protobufDeserializer.configure(SERDE_CONFIGS, isKey);
-      var protobufMessage = (DynamicMessage) protobufDeserializer.deserialize(topicName, bytes);
+      var protobufMessage = (DynamicMessage) protobufDeserializer.deserialize(
+          topicName,
+          headers,
+          bytes
+      );
 
       // Add the message and its nested types to the type registry
       // used by the JsonFormat printer.
@@ -217,11 +225,12 @@ public class RecordDeserializer {
       byte[] bytes,
       String topicName,
       SchemaRegistryClient sr,
-      boolean isKey
+      boolean isKey,
+      Headers headers
   ) {
     try (var jsonSchemaDeserializer = new KafkaJsonSchemaDeserializer<>(sr)) {
       jsonSchemaDeserializer.configure(SERDE_CONFIGS, isKey);
-      var jsonSchemaResult = jsonSchemaDeserializer.deserialize(topicName, bytes);
+      var jsonSchemaResult = jsonSchemaDeserializer.deserialize(topicName, headers, bytes);
       return OBJECT_MAPPER.valueToTree(jsonSchemaResult);
     }
   }
@@ -239,6 +248,7 @@ public class RecordDeserializer {
    * @param context              The message viewer context.
    * @param isKey                Whether the data is a key or value
    * @param encoderOnFailure     A function to apply to the byte array if deserialization fails.
+   * @param headers              The record headers.
    * @return A DecodedResult containing either: - A JsonNode representing the decoded and
    * deserialized data (for Schema Registry encoded data) - A TextNode containing the original
    * string representation of the byte array ( for other cases) The DecodedResult also includes any
@@ -250,7 +260,8 @@ public class RecordDeserializer {
       KafkaRestProxyContext
           <SimpleConsumeMultiPartitionRequest, SimpleConsumeMultiPartitionResponse> context,
       boolean isKey,
-      Optional<Function<byte[], byte[]>> encoderOnFailure
+      Optional<Function<byte[], byte[]>> encoderOnFailure,
+      List<PartitionConsumeRecordHeader> headers
   ) {
     var result = maybeTrivialCase(bytes, schemaRegistryClient);
     if (result.isPresent()) {
@@ -289,10 +300,16 @@ public class RecordDeserializer {
 
       var schemaType = SchemaFormat.fromSchemaType(parsedSchema.schemaType());
       var topicName = context.getTopicName();
+      var recordHeaders = new RecordHeaders();
+      if (headers != null) {
+        for (var header : headers) {
+          recordHeaders.add(header.key(), header.value().getBytes(StandardCharsets.UTF_8));
+        }
+      }
       var deserializedJsonNode = switch (schemaType) {
-        case AVRO -> handleAvro(bytes, topicName, schemaRegistryClient, isKey);
-        case PROTOBUF -> handleProtobuf(bytes, topicName, schemaRegistryClient, isKey);
-        case JSON -> handleJson(bytes, topicName, schemaRegistryClient, isKey);
+        case AVRO -> handleAvro(bytes, topicName, schemaRegistryClient, isKey, recordHeaders);
+        case PROTOBUF -> handleProtobuf(bytes, topicName, schemaRegistryClient, isKey, recordHeaders);
+        case JSON -> handleJson(bytes, topicName, schemaRegistryClient, isKey, recordHeaders);
       };
       return RecordDeserializerDecodedResultBuilder
           .builder()
@@ -372,9 +389,10 @@ public class RecordDeserializer {
       SchemaRegistryClient schemaRegistryClient,
       KafkaRestProxyContext
           <SimpleConsumeMultiPartitionRequest, SimpleConsumeMultiPartitionResponse> context,
-      boolean isKey
+      boolean isKey,
+      List<PartitionConsumeRecordHeader> headers
   ) {
-    return deserialize(bytes, schemaRegistryClient, context, isKey, Optional.empty());
+    return deserialize(bytes, schemaRegistryClient, context, isKey, Optional.empty(), headers);
   }
 
   private void cacheSchemaFetchError(
@@ -436,7 +454,7 @@ public class RecordDeserializer {
 
     // If the first byte is not the magic byte, we try to parse the data as a JSON object
     // or fall back to returning the raw bytes if parsing fails. Simple enough.
-    if (bytes[0] != MAGIC_BYTE) {
+    if (bytes[0] != MAGIC_BYTE_V0) {
       var wrappedJson = safeRead(bytes);
       return Optional.of(
           new DecodedResult(
