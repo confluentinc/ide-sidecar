@@ -1,6 +1,6 @@
 name: ide-sidecar
 lang: java
-lang_version: 21
+lang_version: "21"
 make:
   enable: false
 git:
