@@ -173,7 +173,7 @@ ide-sidecar:
     url-pattern: wss://flinkpls.{{ region }}.{{ provider }}.${ide-sidecar.connections.ccloud.base-path}/lsp
   proxy:
     ccloud-api-control-plane-regex: "(/artifact.*)|(/fcpm/v2.*)|(/metadata/security/v2alpha1/authorize)"
-    ccloud-api-flink-data-plane-regex: "(/sql/v1.*)"
+    ccloud-api-flink-data-plane-regex: "(/sql/v1.*)|(/ws/v1.*)"
   websockets:
     # How long do we allow a connection to be established w/o it saying HELLO?
     initial-grace-seconds: 60

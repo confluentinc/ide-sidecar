@@ -96,7 +96,8 @@ class FlinkDataPlaneProxyResourceTest {
 
   private static Stream<Arguments> pathSource() {
     return Stream.of(
-        Arguments.of("/sql/v1/organizations")
+        Arguments.of("/sql/v1/organizations"),
+        Arguments.of("/ws/v1/organizations/org-123/environments/env-456/workspaces/ws-789")
     );
   }
 

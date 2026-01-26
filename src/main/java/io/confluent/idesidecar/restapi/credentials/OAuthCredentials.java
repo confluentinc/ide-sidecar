@@ -76,6 +76,7 @@ public record OAuthCredentials(
   private static final int CLIENT_SECRET_MAX_LEN = 256;
   private static final int SCOPE_MAX_LEN = 256;
 
+  public static final String OAUTHBEARER_CREDENTIALS_SOURCE = "OAUTHBEARER";
   private static final String OAUTHBEARER_LOGIN_MODULE_CLASS =
       "org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule";
   private static final String OAUTHBEARER_CALLBACK_CLASS =
@@ -153,7 +154,7 @@ public record OAuthCredentials(
       SchemaRegistryConnectionOptions options
   ) {
     var config = new LinkedHashMap<String, String>();
-    config.put("bearer.auth.credentials.source", "OAUTHBEARER");
+    config.put("bearer.auth.credentials.source", OAUTHBEARER_CREDENTIALS_SOURCE);
     config.put("bearer.auth.issuer.endpoint.url", tokensUrl);
     config.put("bearer.auth.client.id", clientId);
     config.put("bearer.auth.client.secret", clientSecret.asString(options.redact()));
