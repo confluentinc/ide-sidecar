@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.io.EncoderFactory;
@@ -366,13 +367,13 @@ public class RecordDeserializer {
     // Adapted from io.confluent.kafka.schemaregistry.client.rest.RestService#isRetriable
     var status = e.getStatus();
     var isClientErrorToIgnore = (
-        status == 408
-            || status == 429
+        status == HttpResponseStatus.REQUEST_TIMEOUT.code()
+            || status == HttpResponseStatus.TOO_MANY_REQUESTS.code()
     );
     var isServerErrorToIgnore = (
-        status == 502
-            || status == 503
-            || status == 504
+        status == HttpResponseStatus.BAD_GATEWAY.code()
+            || status == HttpResponseStatus.SERVICE_UNAVAILABLE.code()
+            || status == HttpResponseStatus.GATEWAY_TIMEOUT.code()
     );
     return isClientErrorToIgnore || isServerErrorToIgnore;
   }
