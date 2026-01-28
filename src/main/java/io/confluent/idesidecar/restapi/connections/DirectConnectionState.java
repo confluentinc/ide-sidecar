@@ -28,7 +28,6 @@ import io.vertx.core.Future;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.time.Duration;
-import java.util.HashMap;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
