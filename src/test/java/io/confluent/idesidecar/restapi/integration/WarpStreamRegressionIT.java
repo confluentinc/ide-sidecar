@@ -21,7 +21,7 @@ public class WarpStreamRegressionIT {
       // `DescribeCluster.controller()` response. The sidecar's Internal Kafka REST
       // previously failed to handle this case correctly. This test class ensures that
       // the ClusterV3Suite passes since the sidecar now correctly handles this case.
-      new SHA256Digest("dc694b4ecb415b61264707a87da1b440b3178ee55283c5a38b9c59c1d856b819")
+      "v746"
   );
 
   static {
