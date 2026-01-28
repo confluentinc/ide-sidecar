@@ -295,8 +295,6 @@ public class RecordDeserializer {
           .await()
           .atMost(schemaFetchTimeout);
 
-
-
       var schemaType = SchemaFormat.fromSchemaType(parsedSchema.schemaType());
       var topicName = context.getTopicName();
       var deserializedJsonNode = switch (schemaType) {
