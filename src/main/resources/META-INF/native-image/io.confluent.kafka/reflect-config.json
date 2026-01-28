@@ -1,0 +1,253 @@
+[
+{
+  "name":"io.confluent.kafka.schemaregistry.client.rest.entities.Metadata",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"io.confluent.kafka.schemaregistry.client.rest.entities.Rule",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"io.confluent.kafka.schemaregistry.client.rest.entities.RuleKind",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"io.confluent.kafka.schemaregistry.client.rest.entities.RuleMode",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"io.confluent.kafka.schemaregistry.client.rest.entities.RuleSet",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"io.confluent.kafka.schemaregistry.client.rest.entities.SchemaEntity",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"io.confluent.kafka.schemaregistry.client.rest.entities.SchemaEntity$EntityType",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"io.confluent.kafka.schemaregistry.client.rest.entities.SchemaReference",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"io.confluent.kafka.schemaregistry.client.rest.entities.SchemaString",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"setDeleted","parameterTypes":["java.lang.Boolean"] }, {"name":"setGuid","parameterTypes":["java.lang.String"] }, {"name":"setSchemaString","parameterTypes":["java.lang.String"] }, {"name":"setSchemaType","parameterTypes":["java.lang.String"] }, {"name":"setSubject","parameterTypes":["java.lang.String"] }, {"name":"setTimestamp","parameterTypes":["java.lang.Long"] }, {"name":"setVersion","parameterTypes":["java.lang.Integer"] }]
+},
+{
+  "name":"io.confluent.kafka.schemaregistry.client.rest.entities.SchemaTags",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException"
+},
+{
+  "name":"io.confluent.kafka.serializers.context.NullContextNameStrategy",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"io.confluent.kafka.serializers.schema.id.DualSchemaIdDeserializer",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"io.confluent.kafka.serializers.schema.id.PrefixSchemaIdSerializer",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"io.confluent.kafka.serializers.subject.TopicNameStrategy",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.apache.kafka.clients.admin.AdminClient"
+},
+{
+  "name":"org.apache.kafka.clients.producer.KafkaProducer"
+},
+{
+  "name":"org.apache.kafka.common.errors.ApiException"
+},
+{
+  "name":"org.apache.kafka.common.errors.InvalidConfigurationException"
+},
+{
+  "name":"org.apache.kafka.common.errors.InvalidRequestException"
+},
+{
+  "name":"org.apache.kafka.common.errors.TimeoutException"
+},
+{
+  "name":"org.apache.kafka.common.errors.TopicExistsException"
+},
+{
+  "name":"org.apache.kafka.common.errors.UnknownTopicOrPartitionException"
+},
+{
+  "name":"org.apache.kafka.shaded.com.google.protobuf.AbstractProtobufList",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.apache.kafka.shaded.com.google.protobuf.BooleanArrayList",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.apache.kafka.shaded.com.google.protobuf.DoubleArrayList",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.apache.kafka.shaded.com.google.protobuf.FloatArrayList",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.apache.kafka.shaded.com.google.protobuf.IntArrayList",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.apache.kafka.shaded.com.google.protobuf.Internal$BooleanList",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.apache.kafka.shaded.com.google.protobuf.Internal$DoubleList",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.apache.kafka.shaded.com.google.protobuf.Internal$FloatList",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.apache.kafka.shaded.com.google.protobuf.Internal$IntList",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.apache.kafka.shaded.com.google.protobuf.Internal$LongList",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.apache.kafka.shaded.com.google.protobuf.Internal$ProtobufList",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.apache.kafka.shaded.com.google.protobuf.LazyStringArrayList",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.apache.kafka.shaded.com.google.protobuf.LazyStringList",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.apache.kafka.shaded.com.google.protobuf.LongArrayList",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.apache.kafka.shaded.com.google.protobuf.MapField$MutabilityAwareMap",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.apache.kafka.shaded.com.google.protobuf.PrimitiveNonBoxingCollection",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.apache.kafka.shaded.com.google.protobuf.ProtobufArrayList",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.apache.kafka.shaded.com.google.protobuf.ProtocolStringList",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.apache.kafka.shaded.com.google.protobuf.RepeatedFieldBuilder$BuilderExternalList",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.apache.kafka.shaded.com.google.protobuf.RepeatedFieldBuilder$MessageExternalList",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.apache.kafka.shaded.com.google.protobuf.RepeatedFieldBuilder$MessageOrBuilderExternalList",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.apache.kafka.shaded.com.google.protobuf.RepeatedFieldBuilderV3$BuilderExternalList",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.apache.kafka.shaded.com.google.protobuf.RepeatedFieldBuilderV3$MessageExternalList",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.apache.kafka.shaded.com.google.protobuf.RepeatedFieldBuilderV3$MessageOrBuilderExternalList",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.apache.kafka.shaded.com.google.protobuf.UnmodifiableLazyStringList",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+}
+]

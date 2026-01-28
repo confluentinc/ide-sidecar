@@ -17,6 +17,7 @@ import io.confluent.idesidecar.restapi.models.ConnectionStatus.SchemaRegistrySta
 import io.confluent.idesidecar.restapi.models.ConnectionStatusBuilder;
 import io.confluent.idesidecar.restapi.models.ConnectionStatusKafkaClusterStatusBuilder;
 import io.confluent.idesidecar.restapi.models.ConnectionStatusSchemaRegistryStatusBuilder;
+import io.confluent.idesidecar.restapi.util.SchemaRegistryUtil;
 import io.confluent.kafka.schemaregistry.client.rest.RestService;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 import io.confluent.kafka.schemaregistry.client.security.SslFactory;
@@ -27,6 +28,7 @@ import io.vertx.core.Future;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -386,7 +388,7 @@ public class DirectConnectionState extends ConnectionState {
     );
 
     var restService = new RestService(config.uri());
-    restService.configure(srClientConfig);
+    restService.configure(SchemaRegistryUtil.removeOAuthConfigs(srClientConfig));
     if (config.tlsConfig() != null && Boolean.FALSE.equals(config.tlsConfig().verifyHostname())) {
       // Disable hostname verification
       restService.setHostnameVerifier((hostname, session) -> true);
