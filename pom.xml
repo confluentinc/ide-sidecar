@@ -48,7 +48,7 @@
     <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
     <vertx.version>4.5.10</vertx.version>
     <netty.version>4.1.109.Final</netty.version>
-    <wiremock.version>1.5.3</wiremock.version>
+    <wiremock.version>1.5.1</wiremock.version>
     <commons-codec.version>1.17.0</commons-codec.version>
     <picocli.version>4.7.6</picocli.version>
     <maven.shared.utils.version>3.4.2</maven.shared.utils.version>
