@@ -2,7 +2,6 @@ package io.confluent.idesidecar.restapi.integration;
 
 import io.confluent.idesidecar.restapi.kafkarest.api.ClusterV3Suite;
 import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
-import io.confluent.idesidecar.restapi.util.SHA256Digest;
 import io.confluent.idesidecar.restapi.util.TestEnvironment;
 import io.confluent.idesidecar.restapi.util.WarpStreamTestEnvironment;
 import io.quarkus.test.junit.QuarkusIntegrationTest;
@@ -21,7 +20,7 @@ public class WarpStreamRegressionIT {
       // `DescribeCluster.controller()` response. The sidecar's Internal Kafka REST
       // previously failed to handle this case correctly. This test class ensures that
       // the ClusterV3Suite passes since the sidecar now correctly handles this case.
-      "v746"
+      "latest"
   );
 
   static {
