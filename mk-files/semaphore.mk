@@ -23,7 +23,7 @@ endif
 ci-bin-sem-cache-store:
 ifneq ($(SEMAPHORE_GIT_REF_TYPE),pull-request)
 	@echo "Storing semaphore caches"
-	$(MAKE) _ci-bin-sem-cache-store SEM_CACHE_KEY=$(os_name)_public_maven_cache SEM_CACHE_PATH=$(HOME)/.m2/repository
+	$(MAKE) sem-cache-store-entry SEM_CACHE_KEY=$(os_name)_public_maven_cache SEM_CACHE_PATH=$(HOME)/.m2/repository
 endif
 
 # cache restore allows fuzzy matching. When it finds multiple matches, it will select the most recent cache archive.
@@ -31,9 +31,9 @@ endif
 # Therefore, we store the cache with a timestamp in the key to avoid collisions.
 #
 # But caching can be expensive, so we'll only recache an item if the previous item was cached a while ago,
-# we arbitrarily put three days ago for now, see the logic in _ci-bin-sem-cache-store
-.PHONY: _ci-bin-sem-cache-store
-_ci-bin-sem-cache-store:
+# we arbitrarily put three days ago for now, see the logic in sem-cache-store-entry
+.PHONY: sem-cache-store-entry
+sem-cache-store-entry:
 	@stored_timestamp=$$(cache list | grep $(SEM_CACHE_KEY)_ | awk '{print $$1}' | awk -F_ '{print $$NF}' | sort -r | awk 'NR==1'); \
 	if [ -z "$$stored_timestamp" ]; then \
 		echo "Cache entry $(SEM_CACHE_KEY) does not exist in the cache, try to store it..."; \
