@@ -15,6 +15,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletionException;
 import java.util.function.Function;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -291,9 +292,10 @@ public class RecordDeserializer {
           .retry()
           .withBackOff(schemaFetchRetryInitialBackoff, schemaFetchRetryMaxBackoff)
           .atMost(schemaFetchMaxRetries)
-          .runSubscriptionOn(Infrastructure.getDefaultExecutor())
-          .await()
-          .atMost(schemaFetchTimeout);
+          .runSubscriptionOn(Infrastructure.getDefaultWorkerPool())
+          .subscribeAsCompletionStage()
+          .toCompletableFuture()
+          .join();
 
       var schemaType = SchemaFormat.fromSchemaType(parsedSchema.schemaType());
       var topicName = context.getTopicName();
@@ -307,6 +309,9 @@ public class RecordDeserializer {
           .value(deserializedJsonNode)
           .metadata(new KeyOrValueMetadata(schemaId, DataFormat.fromSchemaFormat(schemaType)))
           .build();
+    } catch (CompletionException e) {
+      Log.error(e.getCause());
+      throw new RuntimeException(e.getCause());
     } catch (Exception e) {
       var exc = unwrap(e);
       if (exc instanceof RestClientException || isNetworkRelatedException(exc)) {
