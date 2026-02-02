@@ -9,6 +9,7 @@ import io.confluent.idesidecar.restapi.cache.ClusterCache;
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
 import io.confluent.idesidecar.restapi.util.RequestHeadersConstants;
+import io.confluent.idesidecar.restapi.util.SchemaRegistryUtil;
 import io.confluent.kafka.schemaregistry.client.rest.RestService;
 import io.confluent.kafka.schemaregistry.client.security.SslFactory;
 import io.quarkus.logging.Log;
@@ -112,7 +113,7 @@ public class SchemaRegistryClients extends Clients<SchemaRegistryClient> {
       MultiMap headers
   ) {
     var restService = new RestService(srClusterUri);
-    restService.configure(configurationProperties);
+    restService.configure(SchemaRegistryUtil.removeOAuthConfigs(configurationProperties));
     if ("".equals(configurationProperties.get("ssl.endpoint.identification.algorithm"))) {
       // Disable hostname verification
       restService.setHostnameVerifier((hostname, session) -> true);

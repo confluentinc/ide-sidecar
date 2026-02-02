@@ -1,0 +1,2233 @@
+[
+  {
+    "name": "com.google.common.util.concurrent.AbstractFuture",
+    "fields": [
+      {
+        "name": "listeners"
+      },
+      {
+        "name": "value"
+      },
+      {
+        "name": "waiters"
+      }
+    ]
+  },
+  {
+    "name": "com.google.common.util.concurrent.AbstractFuture$Waiter",
+    "fields": [
+      {
+        "name": "next"
+      },
+      {
+        "name": "thread"
+      }
+    ]
+  },
+  {
+    "name": "com.google.errorprone.annotations.DoNotMock",
+    "methods": [
+      {
+        "name": "value",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "com.google.errorprone.annotations.concurrent.LazyInit",
+    "methods": [
+      {
+        "name": "value",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "com.google.protobuf.DescriptorMessageInfoFactory",
+    "methods": [
+      {
+        "name": "getInstance",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "com.google.protobuf.DescriptorProtos$EnumOptions",
+    "methods": [
+      {
+        "name": "getAllowAlias",
+        "parameterTypes": []
+      },
+      {
+        "name": "getDeprecated",
+        "parameterTypes": []
+      },
+      {
+        "name": "getDeprecatedLegacyJsonFieldConflicts",
+        "parameterTypes": []
+      },
+      {
+        "name": "getFeatures",
+        "parameterTypes": []
+      },
+      {
+        "name": "getUninterpretedOption",
+        "parameterTypes": [
+          "int"
+        ]
+      },
+      {
+        "name": "getUninterpretedOptionCount",
+        "parameterTypes": []
+      },
+      {
+        "name": "getUninterpretedOptionList",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasAllowAlias",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasDeprecated",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasDeprecatedLegacyJsonFieldConflicts",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasFeatures",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "com.google.protobuf.DescriptorProtos$EnumOptions$Builder",
+    "methods": [
+      {
+        "name": "addUninterpretedOption",
+        "parameterTypes": [
+          "com.google.protobuf.DescriptorProtos$UninterpretedOption"
+        ]
+      },
+      {
+        "name": "clearAllowAlias",
+        "parameterTypes": []
+      },
+      {
+        "name": "clearDeprecated",
+        "parameterTypes": []
+      },
+      {
+        "name": "clearDeprecatedLegacyJsonFieldConflicts",
+        "parameterTypes": []
+      },
+      {
+        "name": "clearFeatures",
+        "parameterTypes": []
+      },
+      {
+        "name": "clearUninterpretedOption",
+        "parameterTypes": []
+      },
+      {
+        "name": "getAllowAlias",
+        "parameterTypes": []
+      },
+      {
+        "name": "getDeprecated",
+        "parameterTypes": []
+      },
+      {
+        "name": "getDeprecatedLegacyJsonFieldConflicts",
+        "parameterTypes": []
+      },
+      {
+        "name": "getFeatures",
+        "parameterTypes": []
+      },
+      {
+        "name": "getFeaturesBuilder",
+        "parameterTypes": []
+      },
+      {
+        "name": "getUninterpretedOption",
+        "parameterTypes": [
+          "int"
+        ]
+      },
+      {
+        "name": "getUninterpretedOptionBuilder",
+        "parameterTypes": [
+          "int"
+        ]
+      },
+      {
+        "name": "getUninterpretedOptionCount",
+        "parameterTypes": []
+      },
+      {
+        "name": "getUninterpretedOptionList",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasAllowAlias",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasDeprecated",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasDeprecatedLegacyJsonFieldConflicts",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasFeatures",
+        "parameterTypes": []
+      },
+      {
+        "name": "setAllowAlias",
+        "parameterTypes": [
+          "boolean"
+        ]
+      },
+      {
+        "name": "setDeprecated",
+        "parameterTypes": [
+          "boolean"
+        ]
+      },
+      {
+        "name": "setDeprecatedLegacyJsonFieldConflicts",
+        "parameterTypes": [
+          "boolean"
+        ]
+      },
+      {
+        "name": "setFeatures",
+        "parameterTypes": [
+          "com.google.protobuf.DescriptorProtos$FeatureSet"
+        ]
+      },
+      {
+        "name": "setUninterpretedOption",
+        "parameterTypes": [
+          "int",
+          "com.google.protobuf.DescriptorProtos$UninterpretedOption"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "com.google.protobuf.DescriptorProtos$EnumValueOptions",
+    "methods": [
+      {
+        "name": "getDebugRedact",
+        "parameterTypes": []
+      },
+      {
+        "name": "getDeprecated",
+        "parameterTypes": []
+      },
+      {
+        "name": "getFeatureSupport",
+        "parameterTypes": []
+      },
+      {
+        "name": "getFeatures",
+        "parameterTypes": []
+      },
+      {
+        "name": "getUninterpretedOption",
+        "parameterTypes": [
+          "int"
+        ]
+      },
+      {
+        "name": "getUninterpretedOptionCount",
+        "parameterTypes": []
+      },
+      {
+        "name": "getUninterpretedOptionList",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasDebugRedact",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasDeprecated",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasFeatureSupport",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasFeatures",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "com.google.protobuf.DescriptorProtos$EnumValueOptions$Builder",
+    "methods": [
+      {
+        "name": "addUninterpretedOption",
+        "parameterTypes": [
+          "com.google.protobuf.DescriptorProtos$UninterpretedOption"
+        ]
+      },
+      {
+        "name": "clearDebugRedact",
+        "parameterTypes": []
+      },
+      {
+        "name": "clearDeprecated",
+        "parameterTypes": []
+      },
+      {
+        "name": "clearFeatureSupport",
+        "parameterTypes": []
+      },
+      {
+        "name": "clearFeatures",
+        "parameterTypes": []
+      },
+      {
+        "name": "clearUninterpretedOption",
+        "parameterTypes": []
+      },
+      {
+        "name": "getDebugRedact",
+        "parameterTypes": []
+      },
+      {
+        "name": "getDeprecated",
+        "parameterTypes": []
+      },
+      {
+        "name": "getFeatureSupport",
+        "parameterTypes": []
+      },
+      {
+        "name": "getFeatureSupportBuilder",
+        "parameterTypes": []
+      },
+      {
+        "name": "getFeatures",
+        "parameterTypes": []
+      },
+      {
+        "name": "getFeaturesBuilder",
+        "parameterTypes": []
+      },
+      {
+        "name": "getUninterpretedOption",
+        "parameterTypes": [
+          "int"
+        ]
+      },
+      {
+        "name": "getUninterpretedOptionBuilder",
+        "parameterTypes": [
+          "int"
+        ]
+      },
+      {
+        "name": "getUninterpretedOptionCount",
+        "parameterTypes": []
+      },
+      {
+        "name": "getUninterpretedOptionList",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasDebugRedact",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasDeprecated",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasFeatureSupport",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasFeatures",
+        "parameterTypes": []
+      },
+      {
+        "name": "setDebugRedact",
+        "parameterTypes": [
+          "boolean"
+        ]
+      },
+      {
+        "name": "setDeprecated",
+        "parameterTypes": [
+          "boolean"
+        ]
+      },
+      {
+        "name": "setFeatureSupport",
+        "parameterTypes": [
+          "com.google.protobuf.DescriptorProtos$FieldOptions$FeatureSupport"
+        ]
+      },
+      {
+        "name": "setFeatures",
+        "parameterTypes": [
+          "com.google.protobuf.DescriptorProtos$FeatureSet"
+        ]
+      },
+      {
+        "name": "setUninterpretedOption",
+        "parameterTypes": [
+          "int",
+          "com.google.protobuf.DescriptorProtos$UninterpretedOption"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "com.google.protobuf.DescriptorProtos$FeatureSet",
+    "methods": [
+      {
+        "name": "getDefaultSymbolVisibility",
+        "parameterTypes": []
+      },
+      {
+        "name": "getEnforceNamingStyle",
+        "parameterTypes": []
+      },
+      {
+        "name": "getEnumType",
+        "parameterTypes": []
+      },
+      {
+        "name": "getFieldPresence",
+        "parameterTypes": []
+      },
+      {
+        "name": "getJsonFormat",
+        "parameterTypes": []
+      },
+      {
+        "name": "getMessageEncoding",
+        "parameterTypes": []
+      },
+      {
+        "name": "getRepeatedFieldEncoding",
+        "parameterTypes": []
+      },
+      {
+        "name": "getUtf8Validation",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasDefaultSymbolVisibility",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasEnforceNamingStyle",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasEnumType",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasFieldPresence",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasJsonFormat",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasMessageEncoding",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasRepeatedFieldEncoding",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasUtf8Validation",
+        "parameterTypes": []
+      },
+      {
+        "name": "newBuilder",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "com.google.protobuf.DescriptorProtos$FeatureSet$Builder",
+    "methods": [
+      {
+        "name": "clearDefaultSymbolVisibility",
+        "parameterTypes": []
+      },
+      {
+        "name": "clearEnforceNamingStyle",
+        "parameterTypes": []
+      },
+      {
+        "name": "clearEnumType",
+        "parameterTypes": []
+      },
+      {
+        "name": "clearFieldPresence",
+        "parameterTypes": []
+      },
+      {
+        "name": "clearJsonFormat",
+        "parameterTypes": []
+      },
+      {
+        "name": "clearMessageEncoding",
+        "parameterTypes": []
+      },
+      {
+        "name": "clearRepeatedFieldEncoding",
+        "parameterTypes": []
+      },
+      {
+        "name": "clearUtf8Validation",
+        "parameterTypes": []
+      },
+      {
+        "name": "getDefaultSymbolVisibility",
+        "parameterTypes": []
+      },
+      {
+        "name": "getEnforceNamingStyle",
+        "parameterTypes": []
+      },
+      {
+        "name": "getEnumType",
+        "parameterTypes": []
+      },
+      {
+        "name": "getFieldPresence",
+        "parameterTypes": []
+      },
+      {
+        "name": "getJsonFormat",
+        "parameterTypes": []
+      },
+      {
+        "name": "getMessageEncoding",
+        "parameterTypes": []
+      },
+      {
+        "name": "getRepeatedFieldEncoding",
+        "parameterTypes": []
+      },
+      {
+        "name": "getUtf8Validation",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasDefaultSymbolVisibility",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasEnforceNamingStyle",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasEnumType",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasFieldPresence",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasJsonFormat",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasMessageEncoding",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasRepeatedFieldEncoding",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasUtf8Validation",
+        "parameterTypes": []
+      },
+      {
+        "name": "setDefaultSymbolVisibility",
+        "parameterTypes": [
+          "com.google.protobuf.DescriptorProtos$FeatureSet$VisibilityFeature$DefaultSymbolVisibility"
+        ]
+      },
+      {
+        "name": "setEnforceNamingStyle",
+        "parameterTypes": [
+          "com.google.protobuf.DescriptorProtos$FeatureSet$EnforceNamingStyle"
+        ]
+      },
+      {
+        "name": "setEnumType",
+        "parameterTypes": [
+          "com.google.protobuf.DescriptorProtos$FeatureSet$EnumType"
+        ]
+      },
+      {
+        "name": "setFieldPresence",
+        "parameterTypes": [
+          "com.google.protobuf.DescriptorProtos$FeatureSet$FieldPresence"
+        ]
+      },
+      {
+        "name": "setJsonFormat",
+        "parameterTypes": [
+          "com.google.protobuf.DescriptorProtos$FeatureSet$JsonFormat"
+        ]
+      },
+      {
+        "name": "setMessageEncoding",
+        "parameterTypes": [
+          "com.google.protobuf.DescriptorProtos$FeatureSet$MessageEncoding"
+        ]
+      },
+      {
+        "name": "setRepeatedFieldEncoding",
+        "parameterTypes": [
+          "com.google.protobuf.DescriptorProtos$FeatureSet$RepeatedFieldEncoding"
+        ]
+      },
+      {
+        "name": "setUtf8Validation",
+        "parameterTypes": [
+          "com.google.protobuf.DescriptorProtos$FeatureSet$Utf8Validation"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "com.google.protobuf.DescriptorProtos$FeatureSet$EnforceNamingStyle",
+    "methods": [
+      {
+        "name": "getValueDescriptor",
+        "parameterTypes": []
+      },
+      {
+        "name": "valueOf",
+        "parameterTypes": [
+          "com.google.protobuf.Descriptors$EnumValueDescriptor"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "com.google.protobuf.DescriptorProtos$FeatureSet$EnumType",
+    "methods": [
+      {
+        "name": "getValueDescriptor",
+        "parameterTypes": []
+      },
+      {
+        "name": "valueOf",
+        "parameterTypes": [
+          "com.google.protobuf.Descriptors$EnumValueDescriptor"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "com.google.protobuf.DescriptorProtos$FeatureSet$FieldPresence",
+    "methods": [
+      {
+        "name": "getValueDescriptor",
+        "parameterTypes": []
+      },
+      {
+        "name": "valueOf",
+        "parameterTypes": [
+          "com.google.protobuf.Descriptors$EnumValueDescriptor"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "com.google.protobuf.DescriptorProtos$FeatureSet$JsonFormat",
+    "methods": [
+      {
+        "name": "getValueDescriptor",
+        "parameterTypes": []
+      },
+      {
+        "name": "valueOf",
+        "parameterTypes": [
+          "com.google.protobuf.Descriptors$EnumValueDescriptor"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "com.google.protobuf.DescriptorProtos$FeatureSet$MessageEncoding",
+    "methods": [
+      {
+        "name": "getValueDescriptor",
+        "parameterTypes": []
+      },
+      {
+        "name": "valueOf",
+        "parameterTypes": [
+          "com.google.protobuf.Descriptors$EnumValueDescriptor"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "com.google.protobuf.DescriptorProtos$FeatureSet$RepeatedFieldEncoding",
+    "methods": [
+      {
+        "name": "getValueDescriptor",
+        "parameterTypes": []
+      },
+      {
+        "name": "valueOf",
+        "parameterTypes": [
+          "com.google.protobuf.Descriptors$EnumValueDescriptor"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "com.google.protobuf.DescriptorProtos$FeatureSet$Utf8Validation",
+    "methods": [
+      {
+        "name": "getValueDescriptor",
+        "parameterTypes": []
+      },
+      {
+        "name": "valueOf",
+        "parameterTypes": [
+          "com.google.protobuf.Descriptors$EnumValueDescriptor"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "com.google.protobuf.DescriptorProtos$FeatureSet$VisibilityFeature$DefaultSymbolVisibility",
+    "methods": [
+      {
+        "name": "getValueDescriptor",
+        "parameterTypes": []
+      },
+      {
+        "name": "valueOf",
+        "parameterTypes": [
+          "com.google.protobuf.Descriptors$EnumValueDescriptor"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "com.google.protobuf.DescriptorProtos$FieldOptions",
+    "methods": [
+      {
+        "name": "getCtype",
+        "parameterTypes": []
+      },
+      {
+        "name": "getDebugRedact",
+        "parameterTypes": []
+      },
+      {
+        "name": "getDeprecated",
+        "parameterTypes": []
+      },
+      {
+        "name": "getEditionDefaults",
+        "parameterTypes": [
+          "int"
+        ]
+      },
+      {
+        "name": "getEditionDefaultsCount",
+        "parameterTypes": []
+      },
+      {
+        "name": "getEditionDefaultsList",
+        "parameterTypes": []
+      },
+      {
+        "name": "getFeatureSupport",
+        "parameterTypes": []
+      },
+      {
+        "name": "getFeatures",
+        "parameterTypes": []
+      },
+      {
+        "name": "getJstype",
+        "parameterTypes": []
+      },
+      {
+        "name": "getLazy",
+        "parameterTypes": []
+      },
+      {
+        "name": "getPacked",
+        "parameterTypes": []
+      },
+      {
+        "name": "getRetention",
+        "parameterTypes": []
+      },
+      {
+        "name": "getTargets",
+        "parameterTypes": [
+          "int"
+        ]
+      },
+      {
+        "name": "getTargetsCount",
+        "parameterTypes": []
+      },
+      {
+        "name": "getTargetsList",
+        "parameterTypes": []
+      },
+      {
+        "name": "getUninterpretedOption",
+        "parameterTypes": [
+          "int"
+        ]
+      },
+      {
+        "name": "getUninterpretedOptionCount",
+        "parameterTypes": []
+      },
+      {
+        "name": "getUninterpretedOptionList",
+        "parameterTypes": []
+      },
+      {
+        "name": "getUnverifiedLazy",
+        "parameterTypes": []
+      },
+      {
+        "name": "getWeak",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasCtype",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasDebugRedact",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasDeprecated",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasFeatureSupport",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasFeatures",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasJstype",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasLazy",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasPacked",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasRetention",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasUnverifiedLazy",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasWeak",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "com.google.protobuf.DescriptorProtos$FieldOptions$Builder",
+    "methods": [
+      {
+        "name": "addEditionDefaults",
+        "parameterTypes": [
+          "com.google.protobuf.DescriptorProtos$FieldOptions$EditionDefault"
+        ]
+      },
+      {
+        "name": "addTargets",
+        "parameterTypes": [
+          "com.google.protobuf.DescriptorProtos$FieldOptions$OptionTargetType"
+        ]
+      },
+      {
+        "name": "addUninterpretedOption",
+        "parameterTypes": [
+          "com.google.protobuf.DescriptorProtos$UninterpretedOption"
+        ]
+      },
+      {
+        "name": "clearCtype",
+        "parameterTypes": []
+      },
+      {
+        "name": "clearDebugRedact",
+        "parameterTypes": []
+      },
+      {
+        "name": "clearDeprecated",
+        "parameterTypes": []
+      },
+      {
+        "name": "clearEditionDefaults",
+        "parameterTypes": []
+      },
+      {
+        "name": "clearFeatureSupport",
+        "parameterTypes": []
+      },
+      {
+        "name": "clearFeatures",
+        "parameterTypes": []
+      },
+      {
+        "name": "clearJstype",
+        "parameterTypes": []
+      },
+      {
+        "name": "clearLazy",
+        "parameterTypes": []
+      },
+      {
+        "name": "clearPacked",
+        "parameterTypes": []
+      },
+      {
+        "name": "clearRetention",
+        "parameterTypes": []
+      },
+      {
+        "name": "clearTargets",
+        "parameterTypes": []
+      },
+      {
+        "name": "clearUninterpretedOption",
+        "parameterTypes": []
+      },
+      {
+        "name": "clearUnverifiedLazy",
+        "parameterTypes": []
+      },
+      {
+        "name": "clearWeak",
+        "parameterTypes": []
+      },
+      {
+        "name": "getCtype",
+        "parameterTypes": []
+      },
+      {
+        "name": "getDebugRedact",
+        "parameterTypes": []
+      },
+      {
+        "name": "getDeprecated",
+        "parameterTypes": []
+      },
+      {
+        "name": "getEditionDefaults",
+        "parameterTypes": [
+          "int"
+        ]
+      },
+      {
+        "name": "getEditionDefaultsBuilder",
+        "parameterTypes": [
+          "int"
+        ]
+      },
+      {
+        "name": "getEditionDefaultsCount",
+        "parameterTypes": []
+      },
+      {
+        "name": "getEditionDefaultsList",
+        "parameterTypes": []
+      },
+      {
+        "name": "getFeatureSupport",
+        "parameterTypes": []
+      },
+      {
+        "name": "getFeatureSupportBuilder",
+        "parameterTypes": []
+      },
+      {
+        "name": "getFeatures",
+        "parameterTypes": []
+      },
+      {
+        "name": "getFeaturesBuilder",
+        "parameterTypes": []
+      },
+      {
+        "name": "getJstype",
+        "parameterTypes": []
+      },
+      {
+        "name": "getLazy",
+        "parameterTypes": []
+      },
+      {
+        "name": "getPacked",
+        "parameterTypes": []
+      },
+      {
+        "name": "getRetention",
+        "parameterTypes": []
+      },
+      {
+        "name": "getTargets",
+        "parameterTypes": [
+          "int"
+        ]
+      },
+      {
+        "name": "getTargetsCount",
+        "parameterTypes": []
+      },
+      {
+        "name": "getTargetsList",
+        "parameterTypes": []
+      },
+      {
+        "name": "getUninterpretedOption",
+        "parameterTypes": [
+          "int"
+        ]
+      },
+      {
+        "name": "getUninterpretedOptionBuilder",
+        "parameterTypes": [
+          "int"
+        ]
+      },
+      {
+        "name": "getUninterpretedOptionCount",
+        "parameterTypes": []
+      },
+      {
+        "name": "getUninterpretedOptionList",
+        "parameterTypes": []
+      },
+      {
+        "name": "getUnverifiedLazy",
+        "parameterTypes": []
+      },
+      {
+        "name": "getWeak",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasCtype",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasDebugRedact",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasDeprecated",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasFeatureSupport",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasFeatures",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasJstype",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasLazy",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasPacked",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasRetention",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasUnverifiedLazy",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasWeak",
+        "parameterTypes": []
+      },
+      {
+        "name": "setCtype",
+        "parameterTypes": [
+          "com.google.protobuf.DescriptorProtos$FieldOptions$CType"
+        ]
+      },
+      {
+        "name": "setDebugRedact",
+        "parameterTypes": [
+          "boolean"
+        ]
+      },
+      {
+        "name": "setDeprecated",
+        "parameterTypes": [
+          "boolean"
+        ]
+      },
+      {
+        "name": "setEditionDefaults",
+        "parameterTypes": [
+          "int",
+          "com.google.protobuf.DescriptorProtos$FieldOptions$EditionDefault"
+        ]
+      },
+      {
+        "name": "setFeatureSupport",
+        "parameterTypes": [
+          "com.google.protobuf.DescriptorProtos$FieldOptions$FeatureSupport"
+        ]
+      },
+      {
+        "name": "setFeatures",
+        "parameterTypes": [
+          "com.google.protobuf.DescriptorProtos$FeatureSet"
+        ]
+      },
+      {
+        "name": "setJstype",
+        "parameterTypes": [
+          "com.google.protobuf.DescriptorProtos$FieldOptions$JSType"
+        ]
+      },
+      {
+        "name": "setLazy",
+        "parameterTypes": [
+          "boolean"
+        ]
+      },
+      {
+        "name": "setPacked",
+        "parameterTypes": [
+          "boolean"
+        ]
+      },
+      {
+        "name": "setRetention",
+        "parameterTypes": [
+          "com.google.protobuf.DescriptorProtos$FieldOptions$OptionRetention"
+        ]
+      },
+      {
+        "name": "setTargets",
+        "parameterTypes": [
+          "int",
+          "com.google.protobuf.DescriptorProtos$FieldOptions$OptionTargetType"
+        ]
+      },
+      {
+        "name": "setUninterpretedOption",
+        "parameterTypes": [
+          "int",
+          "com.google.protobuf.DescriptorProtos$UninterpretedOption"
+        ]
+      },
+      {
+        "name": "setUnverifiedLazy",
+        "parameterTypes": [
+          "boolean"
+        ]
+      },
+      {
+        "name": "setWeak",
+        "parameterTypes": [
+          "boolean"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "com.google.protobuf.DescriptorProtos$FieldOptions$CType",
+    "methods": [
+      {
+        "name": "getValueDescriptor",
+        "parameterTypes": []
+      },
+      {
+        "name": "valueOf",
+        "parameterTypes": [
+          "com.google.protobuf.Descriptors$EnumValueDescriptor"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "com.google.protobuf.DescriptorProtos$FieldOptions$EditionDefault",
+    "methods": [
+      {
+        "name": "newBuilder",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "com.google.protobuf.DescriptorProtos$FieldOptions$FeatureSupport",
+    "methods": [
+      {
+        "name": "newBuilder",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "com.google.protobuf.DescriptorProtos$FieldOptions$JSType",
+    "methods": [
+      {
+        "name": "getValueDescriptor",
+        "parameterTypes": []
+      },
+      {
+        "name": "valueOf",
+        "parameterTypes": [
+          "com.google.protobuf.Descriptors$EnumValueDescriptor"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "com.google.protobuf.DescriptorProtos$FieldOptions$OptionRetention",
+    "methods": [
+      {
+        "name": "getValueDescriptor",
+        "parameterTypes": []
+      },
+      {
+        "name": "valueOf",
+        "parameterTypes": [
+          "com.google.protobuf.Descriptors$EnumValueDescriptor"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "com.google.protobuf.DescriptorProtos$FieldOptions$OptionTargetType",
+    "methods": [
+      {
+        "name": "getValueDescriptor",
+        "parameterTypes": []
+      },
+      {
+        "name": "valueOf",
+        "parameterTypes": [
+          "com.google.protobuf.Descriptors$EnumValueDescriptor"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "com.google.protobuf.DescriptorProtos$FileDescriptorProto",
+    "methods": [
+      {
+        "name": "getDependencyList",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "com.google.protobuf.DescriptorProtos$FileOptions",
+    "methods": [
+      {
+        "name": "getCcEnableArenas",
+        "parameterTypes": []
+      },
+      {
+        "name": "getCcGenericServices",
+        "parameterTypes": []
+      },
+      {
+        "name": "getCsharpNamespace",
+        "parameterTypes": []
+      },
+      {
+        "name": "getCsharpNamespaceBytes",
+        "parameterTypes": []
+      },
+      {
+        "name": "getDeprecated",
+        "parameterTypes": []
+      },
+      {
+        "name": "getFeatures",
+        "parameterTypes": []
+      },
+      {
+        "name": "getGoPackage",
+        "parameterTypes": []
+      },
+      {
+        "name": "getGoPackageBytes",
+        "parameterTypes": []
+      },
+      {
+        "name": "getJavaGenerateEqualsAndHash",
+        "parameterTypes": []
+      },
+      {
+        "name": "getJavaGenericServices",
+        "parameterTypes": []
+      },
+      {
+        "name": "getJavaMultipleFiles",
+        "parameterTypes": []
+      },
+      {
+        "name": "getJavaOuterClassname",
+        "parameterTypes": []
+      },
+      {
+        "name": "getJavaOuterClassnameBytes",
+        "parameterTypes": []
+      },
+      {
+        "name": "getJavaPackage",
+        "parameterTypes": []
+      },
+      {
+        "name": "getJavaPackageBytes",
+        "parameterTypes": []
+      },
+      {
+        "name": "getJavaStringCheckUtf8",
+        "parameterTypes": []
+      },
+      {
+        "name": "getObjcClassPrefix",
+        "parameterTypes": []
+      },
+      {
+        "name": "getObjcClassPrefixBytes",
+        "parameterTypes": []
+      },
+      {
+        "name": "getOptimizeFor",
+        "parameterTypes": []
+      },
+      {
+        "name": "getPhpClassPrefix",
+        "parameterTypes": []
+      },
+      {
+        "name": "getPhpClassPrefixBytes",
+        "parameterTypes": []
+      },
+      {
+        "name": "getPhpMetadataNamespace",
+        "parameterTypes": []
+      },
+      {
+        "name": "getPhpMetadataNamespaceBytes",
+        "parameterTypes": []
+      },
+      {
+        "name": "getPhpNamespace",
+        "parameterTypes": []
+      },
+      {
+        "name": "getPhpNamespaceBytes",
+        "parameterTypes": []
+      },
+      {
+        "name": "getPyGenericServices",
+        "parameterTypes": []
+      },
+      {
+        "name": "getRubyPackage",
+        "parameterTypes": []
+      },
+      {
+        "name": "getRubyPackageBytes",
+        "parameterTypes": []
+      },
+      {
+        "name": "getSwiftPrefix",
+        "parameterTypes": []
+      },
+      {
+        "name": "getSwiftPrefixBytes",
+        "parameterTypes": []
+      },
+      {
+        "name": "getUninterpretedOption",
+        "parameterTypes": [
+          "int"
+        ]
+      },
+      {
+        "name": "getUninterpretedOptionCount",
+        "parameterTypes": []
+      },
+      {
+        "name": "getUninterpretedOptionList",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasCcEnableArenas",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasCcGenericServices",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasCsharpNamespace",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasDeprecated",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasFeatures",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasGoPackage",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasJavaGenerateEqualsAndHash",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasJavaGenericServices",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasJavaMultipleFiles",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasJavaOuterClassname",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasJavaPackage",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasJavaStringCheckUtf8",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasObjcClassPrefix",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasOptimizeFor",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasPhpClassPrefix",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasPhpMetadataNamespace",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasPhpNamespace",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasPyGenericServices",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasRubyPackage",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasSwiftPrefix",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "com.google.protobuf.DescriptorProtos$FileOptions$Builder",
+    "methods": [
+      {
+        "name": "addUninterpretedOption",
+        "parameterTypes": [
+          "com.google.protobuf.DescriptorProtos$UninterpretedOption"
+        ]
+      },
+      {
+        "name": "clearCcEnableArenas",
+        "parameterTypes": []
+      },
+      {
+        "name": "clearCcGenericServices",
+        "parameterTypes": []
+      },
+      {
+        "name": "clearCsharpNamespace",
+        "parameterTypes": []
+      },
+      {
+        "name": "clearDeprecated",
+        "parameterTypes": []
+      },
+      {
+        "name": "clearFeatures",
+        "parameterTypes": []
+      },
+      {
+        "name": "clearGoPackage",
+        "parameterTypes": []
+      },
+      {
+        "name": "clearJavaGenerateEqualsAndHash",
+        "parameterTypes": []
+      },
+      {
+        "name": "clearJavaGenericServices",
+        "parameterTypes": []
+      },
+      {
+        "name": "clearJavaMultipleFiles",
+        "parameterTypes": []
+      },
+      {
+        "name": "clearJavaOuterClassname",
+        "parameterTypes": []
+      },
+      {
+        "name": "clearJavaPackage",
+        "parameterTypes": []
+      },
+      {
+        "name": "clearJavaStringCheckUtf8",
+        "parameterTypes": []
+      },
+      {
+        "name": "clearObjcClassPrefix",
+        "parameterTypes": []
+      },
+      {
+        "name": "clearOptimizeFor",
+        "parameterTypes": []
+      },
+      {
+        "name": "clearPhpClassPrefix",
+        "parameterTypes": []
+      },
+      {
+        "name": "clearPhpMetadataNamespace",
+        "parameterTypes": []
+      },
+      {
+        "name": "clearPhpNamespace",
+        "parameterTypes": []
+      },
+      {
+        "name": "clearPyGenericServices",
+        "parameterTypes": []
+      },
+      {
+        "name": "clearRubyPackage",
+        "parameterTypes": []
+      },
+      {
+        "name": "clearSwiftPrefix",
+        "parameterTypes": []
+      },
+      {
+        "name": "clearUninterpretedOption",
+        "parameterTypes": []
+      },
+      {
+        "name": "getCcEnableArenas",
+        "parameterTypes": []
+      },
+      {
+        "name": "getCcGenericServices",
+        "parameterTypes": []
+      },
+      {
+        "name": "getCsharpNamespace",
+        "parameterTypes": []
+      },
+      {
+        "name": "getDeprecated",
+        "parameterTypes": []
+      },
+      {
+        "name": "getFeatures",
+        "parameterTypes": []
+      },
+      {
+        "name": "getFeaturesBuilder",
+        "parameterTypes": []
+      },
+      {
+        "name": "getGoPackage",
+        "parameterTypes": []
+      },
+      {
+        "name": "getJavaGenerateEqualsAndHash",
+        "parameterTypes": []
+      },
+      {
+        "name": "getJavaGenericServices",
+        "parameterTypes": []
+      },
+      {
+        "name": "getJavaMultipleFiles",
+        "parameterTypes": []
+      },
+      {
+        "name": "getJavaOuterClassname",
+        "parameterTypes": []
+      },
+      {
+        "name": "getJavaPackage",
+        "parameterTypes": []
+      },
+      {
+        "name": "getJavaStringCheckUtf8",
+        "parameterTypes": []
+      },
+      {
+        "name": "getObjcClassPrefix",
+        "parameterTypes": []
+      },
+      {
+        "name": "getOptimizeFor",
+        "parameterTypes": []
+      },
+      {
+        "name": "getPhpClassPrefix",
+        "parameterTypes": []
+      },
+      {
+        "name": "getPhpMetadataNamespace",
+        "parameterTypes": []
+      },
+      {
+        "name": "getPhpNamespace",
+        "parameterTypes": []
+      },
+      {
+        "name": "getPyGenericServices",
+        "parameterTypes": []
+      },
+      {
+        "name": "getRubyPackage",
+        "parameterTypes": []
+      },
+      {
+        "name": "getSwiftPrefix",
+        "parameterTypes": []
+      },
+      {
+        "name": "getUninterpretedOption",
+        "parameterTypes": [
+          "int"
+        ]
+      },
+      {
+        "name": "getUninterpretedOptionBuilder",
+        "parameterTypes": [
+          "int"
+        ]
+      },
+      {
+        "name": "getUninterpretedOptionCount",
+        "parameterTypes": []
+      },
+      {
+        "name": "getUninterpretedOptionList",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasCcEnableArenas",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasCcGenericServices",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasCsharpNamespace",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasDeprecated",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasFeatures",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasGoPackage",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasJavaGenerateEqualsAndHash",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasJavaGenericServices",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasJavaMultipleFiles",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasJavaOuterClassname",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasJavaPackage",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasJavaStringCheckUtf8",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasObjcClassPrefix",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasOptimizeFor",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasPhpClassPrefix",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasPhpMetadataNamespace",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasPhpNamespace",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasPyGenericServices",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasRubyPackage",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasSwiftPrefix",
+        "parameterTypes": []
+      },
+      {
+        "name": "setCcEnableArenas",
+        "parameterTypes": [
+          "boolean"
+        ]
+      },
+      {
+        "name": "setCcGenericServices",
+        "parameterTypes": [
+          "boolean"
+        ]
+      },
+      {
+        "name": "setCsharpNamespace",
+        "parameterTypes": [
+          "java.lang.String"
+        ]
+      },
+      {
+        "name": "setCsharpNamespaceBytes",
+        "parameterTypes": [
+          "com.google.protobuf.ByteString"
+        ]
+      },
+      {
+        "name": "setDeprecated",
+        "parameterTypes": [
+          "boolean"
+        ]
+      },
+      {
+        "name": "setFeatures",
+        "parameterTypes": [
+          "com.google.protobuf.DescriptorProtos$FeatureSet"
+        ]
+      },
+      {
+        "name": "setGoPackage",
+        "parameterTypes": [
+          "java.lang.String"
+        ]
+      },
+      {
+        "name": "setGoPackageBytes",
+        "parameterTypes": [
+          "com.google.protobuf.ByteString"
+        ]
+      },
+      {
+        "name": "setJavaGenerateEqualsAndHash",
+        "parameterTypes": [
+          "boolean"
+        ]
+      },
+      {
+        "name": "setJavaGenericServices",
+        "parameterTypes": [
+          "boolean"
+        ]
+      },
+      {
+        "name": "setJavaMultipleFiles",
+        "parameterTypes": [
+          "boolean"
+        ]
+      },
+      {
+        "name": "setJavaOuterClassname",
+        "parameterTypes": [
+          "java.lang.String"
+        ]
+      },
+      {
+        "name": "setJavaOuterClassnameBytes",
+        "parameterTypes": [
+          "com.google.protobuf.ByteString"
+        ]
+      },
+      {
+        "name": "setJavaPackage",
+        "parameterTypes": [
+          "java.lang.String"
+        ]
+      },
+      {
+        "name": "setJavaPackageBytes",
+        "parameterTypes": [
+          "com.google.protobuf.ByteString"
+        ]
+      },
+      {
+        "name": "setJavaStringCheckUtf8",
+        "parameterTypes": [
+          "boolean"
+        ]
+      },
+      {
+        "name": "setObjcClassPrefix",
+        "parameterTypes": [
+          "java.lang.String"
+        ]
+      },
+      {
+        "name": "setObjcClassPrefixBytes",
+        "parameterTypes": [
+          "com.google.protobuf.ByteString"
+        ]
+      },
+      {
+        "name": "setOptimizeFor",
+        "parameterTypes": [
+          "com.google.protobuf.DescriptorProtos$FileOptions$OptimizeMode"
+        ]
+      },
+      {
+        "name": "setPhpClassPrefix",
+        "parameterTypes": [
+          "java.lang.String"
+        ]
+      },
+      {
+        "name": "setPhpClassPrefixBytes",
+        "parameterTypes": [
+          "com.google.protobuf.ByteString"
+        ]
+      },
+      {
+        "name": "setPhpMetadataNamespace",
+        "parameterTypes": [
+          "java.lang.String"
+        ]
+      },
+      {
+        "name": "setPhpMetadataNamespaceBytes",
+        "parameterTypes": [
+          "com.google.protobuf.ByteString"
+        ]
+      },
+      {
+        "name": "setPhpNamespace",
+        "parameterTypes": [
+          "java.lang.String"
+        ]
+      },
+      {
+        "name": "setPhpNamespaceBytes",
+        "parameterTypes": [
+          "com.google.protobuf.ByteString"
+        ]
+      },
+      {
+        "name": "setPyGenericServices",
+        "parameterTypes": [
+          "boolean"
+        ]
+      },
+      {
+        "name": "setRubyPackage",
+        "parameterTypes": [
+          "java.lang.String"
+        ]
+      },
+      {
+        "name": "setRubyPackageBytes",
+        "parameterTypes": [
+          "com.google.protobuf.ByteString"
+        ]
+      },
+      {
+        "name": "setSwiftPrefix",
+        "parameterTypes": [
+          "java.lang.String"
+        ]
+      },
+      {
+        "name": "setSwiftPrefixBytes",
+        "parameterTypes": [
+          "com.google.protobuf.ByteString"
+        ]
+      },
+      {
+        "name": "setUninterpretedOption",
+        "parameterTypes": [
+          "int",
+          "com.google.protobuf.DescriptorProtos$UninterpretedOption"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "com.google.protobuf.DescriptorProtos$FileOptions$OptimizeMode",
+    "methods": [
+      {
+        "name": "getValueDescriptor",
+        "parameterTypes": []
+      },
+      {
+        "name": "valueOf",
+        "parameterTypes": [
+          "com.google.protobuf.Descriptors$EnumValueDescriptor"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "com.google.protobuf.DescriptorProtos$MessageOptions",
+    "methods": [
+      {
+        "name": "getDeprecated",
+        "parameterTypes": []
+      },
+      {
+        "name": "getDeprecatedLegacyJsonFieldConflicts",
+        "parameterTypes": []
+      },
+      {
+        "name": "getFeatures",
+        "parameterTypes": []
+      },
+      {
+        "name": "getMapEntry",
+        "parameterTypes": []
+      },
+      {
+        "name": "getMessageSetWireFormat",
+        "parameterTypes": []
+      },
+      {
+        "name": "getNoStandardDescriptorAccessor",
+        "parameterTypes": []
+      },
+      {
+        "name": "getUninterpretedOption",
+        "parameterTypes": [
+          "int"
+        ]
+      },
+      {
+        "name": "getUninterpretedOptionCount",
+        "parameterTypes": []
+      },
+      {
+        "name": "getUninterpretedOptionList",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasDeprecated",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasDeprecatedLegacyJsonFieldConflicts",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasFeatures",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasMapEntry",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasMessageSetWireFormat",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasNoStandardDescriptorAccessor",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "com.google.protobuf.DescriptorProtos$MessageOptions$Builder",
+    "methods": [
+      {
+        "name": "addUninterpretedOption",
+        "parameterTypes": [
+          "com.google.protobuf.DescriptorProtos$UninterpretedOption"
+        ]
+      },
+      {
+        "name": "clearDeprecated",
+        "parameterTypes": []
+      },
+      {
+        "name": "clearDeprecatedLegacyJsonFieldConflicts",
+        "parameterTypes": []
+      },
+      {
+        "name": "clearFeatures",
+        "parameterTypes": []
+      },
+      {
+        "name": "clearMapEntry",
+        "parameterTypes": []
+      },
+      {
+        "name": "clearMessageSetWireFormat",
+        "parameterTypes": []
+      },
+      {
+        "name": "clearNoStandardDescriptorAccessor",
+        "parameterTypes": []
+      },
+      {
+        "name": "clearUninterpretedOption",
+        "parameterTypes": []
+      },
+      {
+        "name": "getDeprecated",
+        "parameterTypes": []
+      },
+      {
+        "name": "getDeprecatedLegacyJsonFieldConflicts",
+        "parameterTypes": []
+      },
+      {
+        "name": "getFeatures",
+        "parameterTypes": []
+      },
+      {
+        "name": "getFeaturesBuilder",
+        "parameterTypes": []
+      },
+      {
+        "name": "getMapEntry",
+        "parameterTypes": []
+      },
+      {
+        "name": "getMessageSetWireFormat",
+        "parameterTypes": []
+      },
+      {
+        "name": "getNoStandardDescriptorAccessor",
+        "parameterTypes": []
+      },
+      {
+        "name": "getUninterpretedOption",
+        "parameterTypes": [
+          "int"
+        ]
+      },
+      {
+        "name": "getUninterpretedOptionBuilder",
+        "parameterTypes": [
+          "int"
+        ]
+      },
+      {
+        "name": "getUninterpretedOptionCount",
+        "parameterTypes": []
+      },
+      {
+        "name": "getUninterpretedOptionList",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasDeprecated",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasDeprecatedLegacyJsonFieldConflicts",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasFeatures",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasMapEntry",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasMessageSetWireFormat",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasNoStandardDescriptorAccessor",
+        "parameterTypes": []
+      },
+      {
+        "name": "setDeprecated",
+        "parameterTypes": [
+          "boolean"
+        ]
+      },
+      {
+        "name": "setDeprecatedLegacyJsonFieldConflicts",
+        "parameterTypes": [
+          "boolean"
+        ]
+      },
+      {
+        "name": "setFeatures",
+        "parameterTypes": [
+          "com.google.protobuf.DescriptorProtos$FeatureSet"
+        ]
+      },
+      {
+        "name": "setMapEntry",
+        "parameterTypes": [
+          "boolean"
+        ]
+      },
+      {
+        "name": "setMessageSetWireFormat",
+        "parameterTypes": [
+          "boolean"
+        ]
+      },
+      {
+        "name": "setNoStandardDescriptorAccessor",
+        "parameterTypes": [
+          "boolean"
+        ]
+      },
+      {
+        "name": "setUninterpretedOption",
+        "parameterTypes": [
+          "int",
+          "com.google.protobuf.DescriptorProtos$UninterpretedOption"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "com.google.protobuf.DescriptorProtos$UninterpretedOption",
+    "methods": [
+      {
+        "name": "newBuilder",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "com.google.protobuf.Extension"
+  },
+  {
+    "name": "com.google.protobuf.ExtensionRegistry",
+    "methods": [
+      {
+        "name": "add",
+        "parameterTypes": [
+          "com.google.protobuf.Extension"
+        ]
+      },
+      {
+        "name": "getEmptyRegistry",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "com.google.protobuf.GeneratedMessage$ExtendableMessage",
+    "methods": [
+      {
+        "name": "getExtensionFields",
+        "parameterTypes": []
+      }
+    ]
+  }
+]

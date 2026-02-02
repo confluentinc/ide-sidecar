@@ -22,10 +22,7 @@ public class WarpStreamContainer extends GenericContainer<WarpStreamContainer> {
     super.waitingFor(
         new WaitAllStrategy()
             .withStrategy(
-                Wait.forLogMessage(".*started agent.*\\n", 1)
-            )
-            .withStrategy(
-                Wait.forLogMessage(".*started schema registry agent.*\\n", 1)
+                Wait.forLogMessage(".*You now have WarpStream Kafka.*", 1)
             )
     );
   }
