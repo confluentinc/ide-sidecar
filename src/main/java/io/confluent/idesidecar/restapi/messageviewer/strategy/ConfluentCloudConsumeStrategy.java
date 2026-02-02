@@ -33,6 +33,8 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
+import org.apache.kafka.common.header.Headers;
+import org.apache.kafka.common.header.internals.RecordHeaders;
 
 /**
  * Requests & handles the response from Confluent Cloud for message viewer functionality.
@@ -206,20 +208,21 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
     var processedRecords = partitionConsumeData
         .records().stream()
         .map(record -> {
+          var decodedHeaders = decodeHeaders(record);
           var keyData = deserialize(
               record.key(),
               schemaRegistryClient,
               context,
-              true
+              true,
+              decodedHeaders
           );
           var valueData = deserialize(
               record.value(),
               schemaRegistryClient,
               context,
-              false
+              false,
+              decodedHeaders
           );
-
-          var decodedHeaders = decodeHeaders(record);
 
           return new PartitionConsumeRecord(
               record.partitionId(),
@@ -295,7 +298,8 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
       SchemaRegistryClient schemaRegistryClient,
       KafkaRestProxyContext
           <SimpleConsumeMultiPartitionRequest, SimpleConsumeMultiPartitionResponse> context,
-      boolean isKey
+      boolean isKey,
+      List<SimpleConsumeMultiPartitionResponse.PartitionConsumeRecordHeader> headers
   ) {
     if (data.has("__raw__")) {
       // We know that Confluent Cloud encodes raw data in Base64, so decode appropriately.
@@ -306,7 +310,8 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
             context,
             isKey,
             // If deserialize fails, we want to return the raw data unchanged.
-            Optional.of(BASE64_ENCODER::encode)
+            Optional.of(BASE64_ENCODER::encode),
+            toKafkaHeaders(headers)
         );
       } catch (IllegalArgumentException e) {
         // For whatever reason, we couldn't decode the Base64 string.
@@ -339,5 +344,25 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
         + "/kafka/v3/clusters/" + ctx.getClusterId()
         + "/internal/topics/" + ctx.getTopicName()
         + "/partitions/-/records:consume_guarantee_progress";
+  }
+
+  /**
+   * Converts a list of PartitionConsumeRecordHeader to Kafka Headers.
+   *
+   * @param headersList the list of PartitionConsumeRecordHeader
+   * @return an {@link Headers} object
+   */
+  Headers toKafkaHeaders(
+      List<SimpleConsumeMultiPartitionResponse.PartitionConsumeRecordHeader> headersList) {
+    var kafkaHeaders = new RecordHeaders();
+    if (headersList != null) {
+      for (var header : headersList) {
+        kafkaHeaders.add(
+            header.key(),
+            header.value() != null ? header.value().getBytes(StandardCharsets.UTF_8) : null
+        );
+      }
+    }
+    return kafkaHeaders;
   }
 }

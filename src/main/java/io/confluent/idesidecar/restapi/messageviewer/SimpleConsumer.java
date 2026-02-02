@@ -311,19 +311,25 @@ public class SimpleConsumer {
 
     Optional<DecodedResult> keyResult = keyExceeded
         ? Optional.empty() : Optional
-        .of(recordDeserializer.deserialize(
-            consumerRecord.key(),
-            schemaRegistryClient,
-            context,
-            true)
+        .of(
+            recordDeserializer.deserialize(
+              consumerRecord.key(),
+              schemaRegistryClient,
+              context,
+              true,
+              consumerRecord.headers()
+            )
         );
     Optional<DecodedResult> valueResult = valueExceeded
         ? Optional.empty() : Optional
-        .of(recordDeserializer.deserialize(
-            consumerRecord.value(),
-            schemaRegistryClient,
-            context,
-            false)
+        .of(
+            recordDeserializer.deserialize(
+              consumerRecord.value(),
+              schemaRegistryClient,
+              context,
+              false,
+              consumerRecord.headers()
+            )
         );
 
     return new PartitionConsumeRecord(
