@@ -309,9 +309,6 @@ public class RecordDeserializer {
           .value(deserializedJsonNode)
           .metadata(new KeyOrValueMetadata(schemaId, DataFormat.fromSchemaFormat(schemaType)))
           .build();
-    } catch (CompletionException e) {
-      Log.error(e.getCause());
-      throw new RuntimeException(e.getCause());
     } catch (Exception e) {
       var exc = unwrap(e);
       if (exc instanceof RestClientException || isNetworkRelatedException(exc)) {
@@ -340,6 +337,8 @@ public class RecordDeserializer {
             e.getMessage(),
             new KeyOrValueMetadata(schemaId, wrappedJson.dataFormat())
         );
+      } else if (e instanceof CompletionException) {
+        throw new RuntimeException(exc);
       }
       // If we reach this point, we have an unexpected exception, so we log and rethrow it.
       Log.error(e);
