@@ -90,7 +90,6 @@ public class SimpleMockSchemaRegistryClient extends MockSchemaRegistryClient {
 
   @Override
   public ParsedSchema getSchemaById(int id) throws IOException, RestClientException {
-    System.out.println("Hitting getSchemaById");
     if (unauthenticated.contains(id)) {
       throw new RestClientException("User is denied operation on this server (mock).", 403, 40301);
     }
@@ -117,7 +116,6 @@ public class SimpleMockSchemaRegistryClient extends MockSchemaRegistryClient {
   @Override
   public ParsedSchema getSchemaByGuid(String guid, String format)
       throws IOException, RestClientException {
-    System.out.println("Hitting getSchemaByGuid");
     if (unauthenticatedGuids.contains(guid)) {
       throw new RestClientException("User is denied operation on this server (mock).", 403, 40301);
     }
