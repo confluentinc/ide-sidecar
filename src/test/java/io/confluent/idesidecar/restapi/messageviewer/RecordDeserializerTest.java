@@ -18,6 +18,7 @@ import java.util.stream.Stream;
 import io.confluent.kafka.serializers.schema.id.SchemaId;
 import org.junit.jupiter.api.AfterEach;
 
+import static io.confluent.kafka.serializers.schema.id.SchemaId.MAGIC_BYTE_V0;
 import static io.confluent.kafka.serializers.schema.id.SchemaId.MAGIC_BYTE_V1;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -299,6 +300,48 @@ public class RecordDeserializerTest {
   }
 
   @Test
+  public void testDecodeAndDeserializeProtobuf_ValidBase64_GUID()
+      throws IOException, RestClientException {
+    var schemaStr = loadResource("message-viewer/schema-protobuf.proto");
+    var parsedSchema = new ProtobufSchema(schemaStr);
+    var smsrc = (SimpleMockSchemaRegistryClient) schemaRegistryClient;
+
+    // This is raw text of actual record from the stag cluster which is prefixed with 100003 schemaId.
+    var raw = "AAiU4NGBkiwQ/+8fGgZJdGVtXzMhoh+XbDtrFEAqFwoHQ2l0eV84MxIIU3RhdGVfNTQYjv8E";
+    var decodedBytes = Base64.getDecoder().decode(raw);
+
+    var schemaId = new SchemaId("PROTOBUF", null, "e4f3e923-9833-4eb0-b0d0-6b3383fae51d");
+    smsrc.register(schemaId.getGuid().toString(), "test-subject-value", parsedSchema);
+    var headers = new RecordHeaders();
+    headers.add(
+          SchemaId.VALUE_SCHEMA_ID_HEADER,
+          schemaId.guidToBytes()
+      );
+    var record = recordDeserializer.deserialize(
+        decodedBytes,
+        schemaRegistryClient,
+        context,
+        false,
+        headers
+    );
+    assertNotNull(record);
+    // Asserts for the top-level fields
+    assertEquals("1516663762964", record.value().get("ordertime").asText(),
+        "ordertime does not match");
+    assertEquals(522239, record.value().get("orderid").asInt(), "orderid does not match");
+    assertEquals("Item_3", record.value().get("itemid").asText(), "itemid does not match");
+    assertEquals(5.10471887276063, record.value().get("orderunits").asDouble(),
+        "orderunits does not match");
+
+    // Asserts for the nested 'address' object
+    var addressNode = record.value().get("address");
+    assertNotNull(addressNode, "address is null");
+    assertEquals("City_83", addressNode.get("city").asText(), "city does not match");
+    assertEquals("State_54", addressNode.get("state").asText(), "state does not match");
+    assertEquals("81806", addressNode.get("zipcode").asText(), "zipcode does not match");
+  }
+
+  @Test
   public void testDecodeAndDeserializeJsonSR_ValidBase64() throws IOException, RestClientException {
     var schemaStr = loadResource("message-viewer/schema-json.json");
     var parsedSchema = new JsonSchema(schemaStr);
@@ -480,7 +523,7 @@ public class RecordDeserializerTest {
     var rawString = "{\"Team\" : \"DTX\"}";
     var byteArray = rawString.getBytes(StandardCharsets.UTF_8);
     var byteArrayWithMagicByte = new byte[1 + byteArray.length];
-    byteArrayWithMagicByte[0] = RecordDeserializer.MAGIC_BYTE;
+    byteArrayWithMagicByte[0] = MAGIC_BYTE_V0;
     System.arraycopy(byteArray, 0, byteArrayWithMagicByte, 1, byteArray.length);
 
     // Expect parsing to fail, should return byte array as base64-encoded string
