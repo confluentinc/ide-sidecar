@@ -12,12 +12,12 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import io.confluent.kafka.serializers.schema.id.SchemaId;
 import org.junit.jupiter.api.AfterEach;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,6 +42,8 @@ import com.fasterxml.jackson.databind.node.TextNode;
 
 import io.confluent.idesidecar.restapi.clients.SchemaErrors;
 import static io.confluent.idesidecar.restapi.messageviewer.RecordDeserializer.getSchemaIdFromRawBytes;
+import static io.confluent.idesidecar.restapi.messageviewer.RecordDeserializer.getSchemaGuidFromHeaders;
+import org.apache.kafka.common.header.internals.RecordHeaders;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.RecordMetadata;
 import io.confluent.idesidecar.restapi.models.DataFormat;
@@ -136,7 +138,7 @@ public class RecordDeserializerTest {
     var smsrc = (SimpleMockSchemaRegistryClient) schemaRegistryClient;
     // This is raw text of actual record from the stag cluster which is prefixed with 100002 schemaId.
     var raw = "AAABhqKm2oqJtVgGDkl0ZW1fODY0Pkl7kE0hQAxDaXR5XzkOU3RhdGVfOf73Cg==";
-    var schemaId = smsrc.register(100002, "test-subject-value", parsedSchema);
+    var schemaId = Optional.of(smsrc.register(100002, "test-subject-value", parsedSchema));
     var decodedBytes = Base64.getDecoder().decode(raw);
     var actualSchemaId = RecordDeserializer.getSchemaIdFromRawBytes(decodedBytes);
     assertEquals(schemaId, actualSchemaId);
@@ -171,7 +173,7 @@ public class RecordDeserializerTest {
     var smsrc = (SimpleMockSchemaRegistryClient) schemaRegistryClient;
     // This is raw text of actual record from the stag cluster which is prefixed with 100002 schemaId.
     var raw = "AAABhqKm2oqJtVgGDkl0ZW1fODY0Pkl7kE0hQAxDaXR5XzkOU3RhdGVfOf73Cg==";
-    var schemaId = smsrc.register(100002, "test-subject-value", parsedSchema);
+    var schemaId = Optional.of(smsrc.register(100002, "test-subject-value", parsedSchema));
     var decodedBytes = Base64.getDecoder().decode(raw);
     var actualSchemaId = RecordDeserializer.getSchemaIdFromRawBytes(decodedBytes);
     assertEquals(schemaId, actualSchemaId);
@@ -194,7 +196,7 @@ public class RecordDeserializerTest {
     var smsrc = (SimpleMockSchemaRegistryClient) schemaRegistryClient;
     // This is raw text with union types that is prefixed with 100004 schemaId.
     var raw = "AAABhqQIVGVzdAAY";
-    var schemaId = smsrc.register(100004, "test-subject-value", parsedSchema);
+    var schemaId = Optional.of(smsrc.register(100004, "test-subject-value", parsedSchema));
     var decodedBytes = Base64.getDecoder().decode(raw);
     var actualSchemaId = RecordDeserializer.getSchemaIdFromRawBytes(decodedBytes);
     assertEquals(schemaId, actualSchemaId);
@@ -222,7 +224,7 @@ public class RecordDeserializerTest {
     var smsrc = (SimpleMockSchemaRegistryClient) schemaRegistryClient;
     // This is raw text of actual record from the stag cluster which is prefixed with 100003 schemaId.
     var raw = "AAABhqMACJTg0YGSLBD/7x8aBkl0ZW1fMyGiH5dsO2sUQCoXCgdDaXR5XzgzEghTdGF0ZV81NBiO/wQ=";
-    var schemaId = smsrc.register(100003, "test-subject-value", parsedSchema);
+    var schemaId = Optional.of(smsrc.register(100003, "test-subject-value", parsedSchema));
     var decodedBytes = Base64.getDecoder().decode(raw);
     var actualSchemaId = RecordDeserializer.getSchemaIdFromRawBytes(decodedBytes);
     assertEquals(schemaId, actualSchemaId);
@@ -255,7 +257,7 @@ public class RecordDeserializerTest {
     var parsedSchema = new JsonSchema(schemaStr);
     var smsrc = (SimpleMockSchemaRegistryClient) schemaRegistryClient;
     // This is raw text of actual record from the stag cluster which is prefixed with 100001 schemaId.
-    var schemaId = smsrc.register(100001, "test-subject-value", parsedSchema);
+    var schemaId = Optional.of(smsrc.register(100001, "test-subject-value", parsedSchema));
     var rawValue = "AAABhqF7Im9yZGVydGltZSI6MTUxNzk3MDEyNjg2OSwib3JkZXJpZCI6MTE0LCJpdGVtaWQiOiJJdGVtXzciLCJvcmRlcnVuaXRzIjo4LjcwMTc4NjYyODExMjk2NSwiYWRkcmVzcyI6eyJjaXR5IjoiQ2l0eV8iLCJzdGF0ZSI6IlN0YXRlXzI2IiwiemlwY29kZSI6Njc1ODB9fQ==";
     var decodedBytes = Base64.getDecoder().decode(rawValue);
     var actualSchemaId = RecordDeserializer.getSchemaIdFromRawBytes(decodedBytes);
@@ -287,14 +289,90 @@ public class RecordDeserializerTest {
   @Test
   public void testGetSchemaIdFromRawBytes_ValidBytes() {
     byte[] validBytes = new byte[]{0, 0, 0, 0, 1};
-    assertEquals(1, getSchemaIdFromRawBytes(validBytes));
+    assertEquals(Optional.of(1), getSchemaIdFromRawBytes(validBytes));
   }
 
   @Test
   public void testGetSchemaIdFromRawBytes_InvalidBytes() {
-    assertThrows(IllegalArgumentException.class, () -> getSchemaIdFromRawBytes(null));
-    assertThrows(IllegalArgumentException.class,
-        () -> getSchemaIdFromRawBytes(new byte[]{0, 1, 2}));
+    // Pass null as byte array
+    assertEquals(Optional.empty(), getSchemaIdFromRawBytes(null));
+    // Pass byte array with length less than 5
+    assertEquals(Optional.empty(), getSchemaIdFromRawBytes(new byte[]{0, 1, 2}));
+  }
+
+  @Test
+  public void testGetSchemaIdFromRawBytes_NoMagicByte() {
+    // Bytes that don't start with magic byte should return empty
+    assertEquals(Optional.empty(), getSchemaIdFromRawBytes(new byte[]{1, 0, 0, 0, 1}));
+  }
+
+  @Test
+  public void testGetSchemaGuidFromHeaders_NullHeaders() {
+    assertEquals(Optional.empty(), getSchemaGuidFromHeaders(null, true));
+    assertEquals(Optional.empty(), getSchemaGuidFromHeaders(null, false));
+  }
+
+  @Test
+  public void testGetSchemaGuidFromHeaders_EmptyHeaders() {
+    var headers = new RecordHeaders();
+    assertEquals(Optional.empty(), getSchemaGuidFromHeaders(headers, true));
+    assertEquals(Optional.empty(), getSchemaGuidFromHeaders(headers, false));
+  }
+
+  @Test
+  public void testGetSchemaGuidFromHeaders_KeySchemaGuid() {
+    var headers = new RecordHeaders();
+    var expectedGuid = "569b9021-fe77-473c-b598-9c7d64eb0694";
+    headers.add(SchemaId.KEY_SCHEMA_ID_HEADER, expectedGuid.getBytes(StandardCharsets.UTF_8));
+
+    assertEquals(Optional.of(expectedGuid), getSchemaGuidFromHeaders(headers, true));
+    // Should not find it when looking for value GUID
+    assertEquals(Optional.empty(), getSchemaGuidFromHeaders(headers, false));
+  }
+
+  @Test
+  public void testGetSchemaGuidFromHeaders_ValueSchemaGuid() {
+    var headers = new RecordHeaders();
+    var expectedGuid = "569b9021-fe77-473c-b598-9c7d64eb0694";
+    headers.add(SchemaId.VALUE_SCHEMA_ID_HEADER, expectedGuid.getBytes(StandardCharsets.UTF_8));
+
+    assertEquals(Optional.of(expectedGuid), getSchemaGuidFromHeaders(headers, false));
+    // Should not find it when looking for key GUID
+    assertEquals(Optional.empty(), getSchemaGuidFromHeaders(headers, true));
+  }
+
+  @Test
+  public void testGetSchemaGuidFromHeaders_BothKeyAndValueGuids() {
+    var headers = new RecordHeaders();
+    var keyGuid = "569b9021-1234-473c-b598-9c7d64eb0694";
+    var valueGuid = "569b9021-5678-473c-b598-9c7d64eb0694";
+    headers.add(SchemaId.KEY_SCHEMA_ID_HEADER, keyGuid.getBytes(StandardCharsets.UTF_8));
+    headers.add(SchemaId.VALUE_SCHEMA_ID_HEADER, valueGuid.getBytes(StandardCharsets.UTF_8));
+
+    assertEquals(Optional.of(keyGuid), getSchemaGuidFromHeaders(headers, true));
+    assertEquals(Optional.of(valueGuid), getSchemaGuidFromHeaders(headers, false));
+  }
+
+  @Test
+  public void testGetSchemaGuidFromHeaders_NullHeaderValue() {
+    var headers = new RecordHeaders();
+    headers.add(SchemaId.KEY_SCHEMA_ID_HEADER, null);
+
+    assertEquals(Optional.empty(), getSchemaGuidFromHeaders(headers, true));
+  }
+
+  @Test
+  public void testGetSchemaGuidFromHeaders_MultipleHeaders_ReturnsLast() {
+    var headers = new RecordHeaders();
+    var firstGuid = "169b9021-1234-473c-b598-9c7d64eb0694";
+    var secondGuid = "269b9021-1234-473c-b598-9c7d64eb0694";
+    var thirdGuid = "369b9021-1234-473c-b598-9c7d64eb0694";
+    headers.add(SchemaId.VALUE_SCHEMA_ID_HEADER, firstGuid.getBytes(StandardCharsets.UTF_8));
+    headers.add(SchemaId.VALUE_SCHEMA_ID_HEADER, secondGuid.getBytes(StandardCharsets.UTF_8));
+    headers.add(SchemaId.VALUE_SCHEMA_ID_HEADER, thirdGuid.getBytes(StandardCharsets.UTF_8));
+
+    // Should return the last header value
+    assertEquals(Optional.of(thirdGuid), getSchemaGuidFromHeaders(headers, false));
   }
 
   @ParameterizedTest
@@ -343,7 +421,7 @@ public class RecordDeserializerTest {
     assertEquals("\u0000{\"Team\" : \"DTX\"}", resp.value().asText());
     assertEquals(DataFormat.UTF8_STRING, resp.metadata().dataFormat());
     assertNull(resp.metadata().schemaId());
-    assertEquals("The value references a schema but we can't find the schema registry",
+    assertEquals("The value references a schema but no schema registry is available",
         resp.errorMessage());
   }
 
@@ -574,7 +652,7 @@ public class RecordDeserializerTest {
 
           // Simulate a persistent failure that we don't expect
           for (int i = 0; i < 10; i++) {
-//            var recordDeserializer = getDeserializer(3);
+            // var recordDeserializer = getDeserializer(3);
             try {
               recordDeserializer.deserialize(
                   VALID_SCHEMA_ID_BYTES,
