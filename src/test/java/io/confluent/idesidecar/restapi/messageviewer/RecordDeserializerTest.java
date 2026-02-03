@@ -1,19 +1,24 @@
 package io.confluent.idesidecar.restapi.messageviewer;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.net.UnknownServiceException;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Stream;
 
 import io.confluent.kafka.serializers.schema.id.SchemaId;
 import org.junit.jupiter.api.AfterEach;
+
+import static io.confluent.kafka.serializers.schema.id.SchemaId.MAGIC_BYTE_V1;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -147,6 +152,48 @@ public class RecordDeserializerTest {
         schemaRegistryClient,
         context,
         false
+    );
+    assertNotNull(record);
+    // Asserts for the top-level fields
+    assertEquals(1518951552659L, record.value().get("ordertime").asLong(),
+        "ordertime does not match");
+    assertNull(record.errorMessage());
+    assertEquals(3, record.value().get("orderid").asInt(), "orderid does not match");
+    assertEquals("Item_86", record.value().get("itemid").asText(), "itemid does not match");
+    assertEquals(8.651492932024759, record.value().get("orderunits").asDouble(),
+        "orderunits does not match");
+
+    // Asserts for the nested 'address' object
+    var addressNode = record.value().get("address");
+    assertNotNull(addressNode, "address is null");
+    assertEquals("City_9", addressNode.get("city").asText(), "city does not match");
+    assertEquals("State_9", addressNode.get("state").asText(), "state does not match");
+    assertEquals(89599, addressNode.get("zipcode").asInt(), "zipcode does not match");
+  }
+
+  @Test
+  public void testDecodeAndDeserialize_ValidBase64_GUID() throws IOException, RestClientException {
+    var schemaStr = loadResource("message-viewer/schema-avro.json");
+    var parsedSchema = new AvroSchema(schemaStr);
+    var smsrc = (SimpleMockSchemaRegistryClient) schemaRegistryClient;
+    // This is raw text of actual record from the stag cluster which is prefixed with 100002 schemaId.
+    var raw = "ptqKibVYBg5JdGVtXzg2ND5Je5BNIUAMQ2l0eV85DlN0YXRlXzn+9wo=";
+    var decodedBytes = Base64.getDecoder().decode(raw);
+
+    var schemaId = new SchemaId("AVRO", null, "e4f3e923-9833-4eb0-b0d0-6b3383fae51d");
+    smsrc.register(schemaId.getGuid().toString(), "test-subject-value", parsedSchema);
+    var headers = new RecordHeaders();
+    headers.add(
+        SchemaId.VALUE_SCHEMA_ID_HEADER,
+        schemaId.guidToBytes()
+    );
+
+    var record = recordDeserializer.deserialize(
+        decodedBytes,
+        schemaRegistryClient,
+        context,
+        false,
+        headers
     );
     assertNotNull(record);
     // Asserts for the top-level fields
@@ -323,7 +370,7 @@ public class RecordDeserializerTest {
   public void testGetSchemaGuidFromHeaders_KeySchemaGuid() {
     var headers = new RecordHeaders();
     var expectedGuid = "569b9021-fe77-473c-b598-9c7d64eb0694";
-    headers.add(SchemaId.KEY_SCHEMA_ID_HEADER, expectedGuid.getBytes(StandardCharsets.UTF_8));
+    headers.add(SchemaId.KEY_SCHEMA_ID_HEADER, schemaIdHeaderValue(expectedGuid));
 
     assertEquals(Optional.of(expectedGuid), getSchemaGuidFromHeaders(headers, true));
     // Should not find it when looking for value GUID
@@ -334,7 +381,7 @@ public class RecordDeserializerTest {
   public void testGetSchemaGuidFromHeaders_ValueSchemaGuid() {
     var headers = new RecordHeaders();
     var expectedGuid = "569b9021-fe77-473c-b598-9c7d64eb0694";
-    headers.add(SchemaId.VALUE_SCHEMA_ID_HEADER, expectedGuid.getBytes(StandardCharsets.UTF_8));
+    headers.add(SchemaId.VALUE_SCHEMA_ID_HEADER, schemaIdHeaderValue(expectedGuid));
 
     assertEquals(Optional.of(expectedGuid), getSchemaGuidFromHeaders(headers, false));
     // Should not find it when looking for key GUID
@@ -346,8 +393,8 @@ public class RecordDeserializerTest {
     var headers = new RecordHeaders();
     var keyGuid = "569b9021-1234-473c-b598-9c7d64eb0694";
     var valueGuid = "569b9021-5678-473c-b598-9c7d64eb0694";
-    headers.add(SchemaId.KEY_SCHEMA_ID_HEADER, keyGuid.getBytes(StandardCharsets.UTF_8));
-    headers.add(SchemaId.VALUE_SCHEMA_ID_HEADER, valueGuid.getBytes(StandardCharsets.UTF_8));
+    headers.add(SchemaId.KEY_SCHEMA_ID_HEADER, schemaIdHeaderValue(keyGuid));
+    headers.add(SchemaId.VALUE_SCHEMA_ID_HEADER, schemaIdHeaderValue(valueGuid));
 
     assertEquals(Optional.of(keyGuid), getSchemaGuidFromHeaders(headers, true));
     assertEquals(Optional.of(valueGuid), getSchemaGuidFromHeaders(headers, false));
@@ -362,17 +409,39 @@ public class RecordDeserializerTest {
   }
 
   @Test
+  public void testGetSchemaGuidFromHeaders_TooShortHeaderValue() {
+    var headers = new RecordHeaders();
+    // Header with only 1 byte (the prefix) should return empty
+    headers.add(SchemaId.KEY_SCHEMA_ID_HEADER, new byte[]{0x01});
+
+    assertEquals(Optional.empty(), getSchemaGuidFromHeaders(headers, true));
+  }
+
+  @Test
   public void testGetSchemaGuidFromHeaders_MultipleHeaders_ReturnsLast() {
     var headers = new RecordHeaders();
     var firstGuid = "169b9021-1234-473c-b598-9c7d64eb0694";
     var secondGuid = "269b9021-1234-473c-b598-9c7d64eb0694";
     var thirdGuid = "369b9021-1234-473c-b598-9c7d64eb0694";
-    headers.add(SchemaId.VALUE_SCHEMA_ID_HEADER, firstGuid.getBytes(StandardCharsets.UTF_8));
-    headers.add(SchemaId.VALUE_SCHEMA_ID_HEADER, secondGuid.getBytes(StandardCharsets.UTF_8));
-    headers.add(SchemaId.VALUE_SCHEMA_ID_HEADER, thirdGuid.getBytes(StandardCharsets.UTF_8));
+    headers.add(SchemaId.VALUE_SCHEMA_ID_HEADER, schemaIdHeaderValue(firstGuid));
+    headers.add(SchemaId.VALUE_SCHEMA_ID_HEADER, schemaIdHeaderValue(secondGuid));
+    headers.add(SchemaId.VALUE_SCHEMA_ID_HEADER, schemaIdHeaderValue(thirdGuid));
 
     // Should return the last header value
     assertEquals(Optional.of(thirdGuid), getSchemaGuidFromHeaders(headers, false));
+  }
+
+  /**
+   * Creates a schema ID header value with the type indicator prefix byte and base64 encoded GUID.
+   * The header format is: [type byte][base64 encoded guid]
+   */
+  private static byte[] schemaIdHeaderValue(String guid) {
+    var base64Guid = Base64.getEncoder().encodeToString(guid.getBytes(StandardCharsets.UTF_8));
+    var base64Bytes = base64Guid.getBytes(StandardCharsets.UTF_8);
+    var result = new byte[1 + base64Bytes.length];
+    result[0] = 0x01; // Type indicator byte
+    System.arraycopy(base64Bytes, 0, result, 1, base64Bytes.length);
+    return result;
   }
 
   @ParameterizedTest

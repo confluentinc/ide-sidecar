@@ -15,6 +15,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletionException;
 import java.util.function.Function;
 
@@ -61,6 +62,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 import static io.confluent.kafka.serializers.schema.id.SchemaId.KEY_SCHEMA_ID_HEADER;
+import static io.confluent.kafka.serializers.schema.id.SchemaId.MAGIC_BYTE_V0;
+import static io.confluent.kafka.serializers.schema.id.SchemaId.MAGIC_BYTE_V1;
 import static io.confluent.kafka.serializers.schema.id.SchemaId.VALUE_SCHEMA_ID_HEADER;
 
 
@@ -74,7 +77,6 @@ public class RecordDeserializer {
   private static final Map<String, String> SERDE_CONFIGS = ConfigUtil
       .asMap("ide-sidecar.serde-configs");
   private static final ObjectMapper OBJECT_MAPPER = ObjectMapperFactory.getObjectMapper();
-  public static final byte MAGIC_BYTE = 0x0;
   private static final Duration CACHE_FAILED_SCHEMA_ID_FETCH_DURATION = Duration.ofSeconds(30);
 
   private final int schemaFetchMaxRetries;
@@ -125,16 +127,27 @@ public class RecordDeserializer {
    * @return An Optional containing the schema GUID if present, or empty otherwise.
    */
   @VisibleForTesting
-  static Optional<String> getSchemaGuidFromHeaders(Headers headers, boolean isKey) {
+  static Optional<UUID> getSchemaGuidFromHeaders(Headers headers, boolean isKey) {
     if (headers == null) {
       return Optional.empty();
     }
     var headerName = isKey ? KEY_SCHEMA_ID_HEADER : VALUE_SCHEMA_ID_HEADER;
     var header = headers.lastHeader(headerName);
-    if (header == null || header.value() == null) {
+    if (header == null || header.value() == null || header.value().length < 17) {
       return Optional.empty();
     }
-    return Optional.of(new String(header.value(), StandardCharsets.UTF_8));
+
+    var buffer = ByteBuffer.wrap(header.value());
+    var idVersion = buffer.get();
+    // Check if the first byte matches the expected magic byte for GUID version
+    if (idVersion != MAGIC_BYTE_V1) {
+      return Optional.empty();
+    }
+    // Extract the GUID from the rest of the byte array
+    var msb = buffer.getLong();
+    var lsb = buffer.getLong();
+
+    return Optional.of(new UUID(msb, lsb));
   }
 
   /**
@@ -148,7 +161,7 @@ public class RecordDeserializer {
    */
   @VisibleForTesting
   static Optional<Integer> getSchemaIdFromRawBytes(byte[] rawBytes) {
-    if (rawBytes == null || rawBytes.length < 5 || rawBytes[0] != MAGIC_BYTE) {
+    if (rawBytes == null || rawBytes.length < 5 || rawBytes[0] != MAGIC_BYTE_V0) {
       return Optional.empty();
     }
     var buffer = ByteBuffer.wrap(rawBytes, 1, 4);
@@ -316,7 +329,7 @@ public class RecordDeserializer {
         schemaRegistryClient == null && hasSchemaInfo
             ? "The value references a schema but no schema registry is available"
             : null,
-        new KeyOrValueMetadata(null, wrappedJson.dataFormat())
+        new KeyOrValueMetadata(null, null, wrappedJson.dataFormat())
     );
   }
 
@@ -331,7 +344,7 @@ public class RecordDeserializer {
       boolean isKey,
       Optional<Function<byte[], byte[]>> encoderOnFailure,
       Headers headers,
-      Optional<String> schemaGuid,
+      Optional<UUID> schemaGuid,
       Optional<Integer> schemaId
   ) {
     String connectionId = context.getConnectionId();
@@ -360,7 +373,7 @@ public class RecordDeserializer {
           .item(
               Unchecked.supplier(
                   () -> schemaGuid.isPresent()
-                      ? schemaRegistryClient.getSchemaByGuid(schemaGuid.get(), null)
+                      ? schemaRegistryClient.getSchemaByGuid(schemaGuid.get().toString(), null)
                       : schemaRegistryClient.getSchemaById(schemaId.orElseThrow())
               )
           )
@@ -383,7 +396,13 @@ public class RecordDeserializer {
       return RecordDeserializerDecodedResultBuilder
           .builder()
           .value(deserializedJsonNode)
-          .metadata(new KeyOrValueMetadata(schemaId.orElse(null), DataFormat.fromSchemaFormat(schemaType)))
+          .metadata(
+              new KeyOrValueMetadata(
+                  schemaId.orElse(null),
+                  schemaGuid.orElse(null),
+                  DataFormat.fromSchemaFormat(schemaType)
+              )
+          )
           .build();
     } catch (Exception e) {
       var exc = unwrap(e);
@@ -397,7 +416,11 @@ public class RecordDeserializer {
         return new DecodedResult(
             wrappedJson.data(),
             e.getMessage(),
-            new KeyOrValueMetadata(schemaId.orElse(null), wrappedJson.dataFormat())
+            new KeyOrValueMetadata(
+                schemaId.orElse(null),
+                schemaGuid.orElse(null),
+                wrappedJson.dataFormat()
+            )
         );
       } else if (exc instanceof SerializationException || exc instanceof IOException) {
         // We don't cache SerializationException because it's not a schema fetch error
@@ -408,7 +431,11 @@ public class RecordDeserializer {
         return new DecodedResult(
             wrappedJson.data(),
             e.getMessage(),
-            new KeyOrValueMetadata(schemaId.orElse(null), wrappedJson.dataFormat())
+            new KeyOrValueMetadata(
+                schemaId.orElse(null),
+                schemaGuid.orElse(null),
+                wrappedJson.dataFormat()
+            )
         );
       } else if (e instanceof CompletionException) {
         throw new RuntimeException(exc);
