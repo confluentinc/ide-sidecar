@@ -19,6 +19,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletionException;
 import java.util.function.Function;
 
+import io.confluent.kafka.serializers.schema.id.SchemaId;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumWriter;

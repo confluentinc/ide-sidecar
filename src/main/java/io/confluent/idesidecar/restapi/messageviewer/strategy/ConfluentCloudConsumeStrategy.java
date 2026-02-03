@@ -13,6 +13,7 @@ import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPart
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeData;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeRecord;
+import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeRecordHeader;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.RecordMetadata;
 import io.confluent.idesidecar.restapi.proxy.KafkaRestProxyContext;
 import io.confluent.idesidecar.restapi.proxy.ProxyHttpClient;
@@ -229,7 +230,7 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
               record.offset(),
               record.timestamp(),
               record.timestampType(),
-              decodedHeaders,
+              toRecordHeaders(decodedHeaders),
               keyData.value(),
               valueData.value(),
               new RecordMetadata(
@@ -250,37 +251,36 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
     );
   }
 
-  private List<SimpleConsumeMultiPartitionResponse.PartitionConsumeRecordHeader>
-  decodeHeaders(PartitionConsumeRecord record) {
-    return record
-        .headers()
-        .stream()
-        .map(header -> {
-          String decodedValue;
-          try {
-            decodedValue = new String(
-                BASE64_DECODER.decode(header.value()), StandardCharsets.UTF_8
-            );
-          } catch (IllegalArgumentException e) {
-            // For whatever reason, we couldn't decode the Base64 encoded header value.
-            // Perhaps the API changed or the data is corrupted. Either way,
-            // we log a debug and return the raw value.
-            Log.debugf(e, "Failed to base64 decode header value '%s' from Confluent Cloud" +
-                    "(partition: %d, offset: %d)",
-                header.value(),
-                record.partitionId(),
-                record.offset()
-            );
-            decodedValue = header.value();
-          }
-
-          return new SimpleConsumeMultiPartitionResponse.PartitionConsumeRecordHeader(
-              // Key is untouched, as it is not base64 encoded.
-              header.key(),
-              decodedValue
-          );
-        })
-        .toList();
+  /**
+   * Decodes the Base64 encoded header values from Confluent Cloud and converts the values to byte
+   * arrays.
+   *
+   * @param record The PartitionConsumeRecord containing the headers to decode.
+   * @return The decoded Headers.
+   */
+  private Headers decodeHeaders(PartitionConsumeRecord record) {
+    var headers = new RecordHeaders();
+    for (var header : record.headers()) {
+      byte[] decodedValue;
+      try {
+        decodedValue = BASE64_DECODER.decode(header.value());
+      } catch (IllegalArgumentException e) {
+        // For whatever reason, we couldn't decode the Base64 encoded header value.
+        // Perhaps the API changed or the data is corrupted. Either way,
+        // we log a debug and return the raw value as bytes.
+        Log.debugf(e, "Failed to base64 decode header value '%s' from Confluent Cloud" +
+                "(partition: %d, offset: %d)",
+            header.value(),
+            record.partitionId(),
+            record.offset()
+        );
+        decodedValue = header.value() != null
+            ? header.value().getBytes(StandardCharsets.UTF_8)
+            : null;
+      }
+      headers.add(header.key(), decodedValue);
+    }
+    return headers;
   }
 
   /**
@@ -299,7 +299,7 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
       KafkaRestProxyContext
           <SimpleConsumeMultiPartitionRequest, SimpleConsumeMultiPartitionResponse> context,
       boolean isKey,
-      List<SimpleConsumeMultiPartitionResponse.PartitionConsumeRecordHeader> headers
+      Headers headers
   ) {
     if (data.has("__raw__")) {
       // We know that Confluent Cloud encodes raw data in Base64, so decode appropriately.
@@ -311,7 +311,7 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
             isKey,
             // If deserialize fails, we want to return the raw data unchanged.
             Optional.of(BASE64_ENCODER::encode),
-            toKafkaHeaders(headers)
+            headers
         );
       } catch (IllegalArgumentException e) {
         // For whatever reason, we couldn't decode the Base64 string.
@@ -347,22 +347,22 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
   }
 
   /**
-   * Converts a list of PartitionConsumeRecordHeader to Kafka Headers.
+   * Converts Kafka Headers to a list of PartitionConsumeRecordHeader. Converts header values
+   * from byte arrays to strings.
    *
-   * @param headersList the list of PartitionConsumeRecordHeader
-   * @return an {@link Headers} object
+   * @param headers the Kafka Headers
+   * @return a list of PartitionConsumeRecordHeader
    */
-  Headers toKafkaHeaders(
-      List<SimpleConsumeMultiPartitionResponse.PartitionConsumeRecordHeader> headersList) {
-    var kafkaHeaders = new RecordHeaders();
-    if (headersList != null) {
-      for (var header : headersList) {
-        kafkaHeaders.add(
+  private List<PartitionConsumeRecordHeader> toRecordHeaders(Headers headers) {
+    var result = new ArrayList<PartitionConsumeRecordHeader>();
+    for (var header : headers) {
+      result.add(
+          new PartitionConsumeRecordHeader(
             header.key(),
-            header.value() != null ? header.value().getBytes(StandardCharsets.UTF_8) : null
-        );
-      }
+            header.value() != null ? new String(header.value(), StandardCharsets.UTF_8) : null
+          )
+      );
     }
-    return kafkaHeaders;
+    return result;
   }
 }
