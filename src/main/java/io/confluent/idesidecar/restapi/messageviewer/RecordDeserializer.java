@@ -19,7 +19,6 @@ import java.util.UUID;
 import java.util.concurrent.CompletionException;
 import java.util.function.Function;
 
-import io.confluent.kafka.serializers.schema.id.SchemaId;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumWriter;
@@ -66,7 +65,6 @@ import static io.confluent.kafka.serializers.schema.id.SchemaId.KEY_SCHEMA_ID_HE
 import static io.confluent.kafka.serializers.schema.id.SchemaId.MAGIC_BYTE_V0;
 import static io.confluent.kafka.serializers.schema.id.SchemaId.MAGIC_BYTE_V1;
 import static io.confluent.kafka.serializers.schema.id.SchemaId.VALUE_SCHEMA_ID_HEADER;
-
 
 /**
  * Utility class for decoding record keys and values.
@@ -121,7 +119,8 @@ public class RecordDeserializer {
   }
 
   /**
-   * Extracts the schema GUID from the Kafka record headers.
+   * Extracts the schema GUID from the Kafka record headers. We assume the raw bytes of the header
+   * value starts with the magic byte (0x1) and has a length of at least 17 bytes.
    *
    * @param headers The Kafka record headers.
    * @param isKey   Whether the data is a key or value.

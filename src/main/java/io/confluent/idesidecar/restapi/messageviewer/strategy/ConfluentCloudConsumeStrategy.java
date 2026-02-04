@@ -255,12 +255,12 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
    * Decodes the Base64 encoded header values from Confluent Cloud and converts the values to byte
    * arrays.
    *
-   * @param record The PartitionConsumeRecord containing the headers to decode.
+   * @param partitionConsumeRecord The PartitionConsumeRecord containing the headers to decode.
    * @return The decoded Headers.
    */
-  private Headers decodeHeaders(PartitionConsumeRecord record) {
+  private Headers decodeHeaders(PartitionConsumeRecord partitionConsumeRecord) {
     var headers = new RecordHeaders();
-    for (var header : record.headers()) {
+    for (var header : partitionConsumeRecord.headers()) {
       byte[] decodedValue;
       try {
         decodedValue = BASE64_DECODER.decode(header.value());
@@ -271,8 +271,8 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
         Log.debugf(e, "Failed to base64 decode header value '%s' from Confluent Cloud" +
                 "(partition: %d, offset: %d)",
             header.value(),
-            record.partitionId(),
-            record.offset()
+            partitionConsumeRecord.partitionId(),
+            partitionConsumeRecord.offset()
         );
         decodedValue = header.value() != null
             ? header.value().getBytes(StandardCharsets.UTF_8)
