@@ -15,11 +15,15 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.CompletionException;
 import java.util.function.Function;
 
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.io.EncoderFactory;
+import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.errors.SerializationException;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
@@ -49,7 +53,6 @@ import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientExcept
 import io.confluent.kafka.serializers.KafkaAvroDeserializer;
 import io.confluent.kafka.serializers.json.KafkaJsonSchemaDeserializer;
 import io.confluent.kafka.serializers.protobuf.KafkaProtobufDeserializer;
-import io.netty.handler.codec.http.HttpResponseStatus;
 import io.quarkus.logging.Log;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.infrastructure.Infrastructure;
@@ -57,6 +60,11 @@ import io.smallrye.mutiny.unchecked.Unchecked;
 import io.soabase.recordbuilder.core.RecordBuilder;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+
+import static io.confluent.kafka.serializers.schema.id.SchemaId.KEY_SCHEMA_ID_HEADER;
+import static io.confluent.kafka.serializers.schema.id.SchemaId.MAGIC_BYTE_V0;
+import static io.confluent.kafka.serializers.schema.id.SchemaId.MAGIC_BYTE_V1;
+import static io.confluent.kafka.serializers.schema.id.SchemaId.VALUE_SCHEMA_ID_HEADER;
 
 /**
  * Utility class for decoding record keys and values.
@@ -68,14 +76,12 @@ public class RecordDeserializer {
   private static final Map<String, String> SERDE_CONFIGS = ConfigUtil
       .asMap("ide-sidecar.serde-configs");
   private static final ObjectMapper OBJECT_MAPPER = ObjectMapperFactory.getObjectMapper();
-  public static final byte MAGIC_BYTE = 0x0;
   private static final Duration CACHE_FAILED_SCHEMA_ID_FETCH_DURATION = Duration.ofSeconds(30);
 
   private final int schemaFetchMaxRetries;
   private final SchemaErrors schemaErrors;
   private final Duration schemaFetchRetryInitialBackoff;
   private final Duration schemaFetchRetryMaxBackoff;
-  private final Duration schemaFetchTimeout;
 
   @Inject
   public RecordDeserializer(
@@ -83,15 +89,12 @@ public class RecordDeserializer {
       long schemaFetchRetryInitialBackoffMs,
       @ConfigProperty(name = "ide-sidecar.schema-fetch-retry.max-backoff-ms")
       long schemaFetchRetryMaxBackoffMs,
-      @ConfigProperty(name = "ide-sidecar.schema-fetch-retry.timeout-ms")
-      long schemaFetchTimeoutMs,
       @ConfigProperty(name = "ide-sidecar.schema-fetch-retry.max-retries")
       int schemaFetchMaxRetries,
       SchemaErrors schemaErrors
   ) {
     this.schemaFetchRetryInitialBackoff = Duration.ofMillis(schemaFetchRetryInitialBackoffMs);
     this.schemaFetchRetryMaxBackoff = Duration.ofMillis(schemaFetchRetryMaxBackoffMs);
-    this.schemaFetchTimeout = Duration.ofMillis(schemaFetchTimeoutMs);
     this.schemaFetchMaxRetries = schemaFetchMaxRetries;
     this.schemaErrors = schemaErrors;
   }
@@ -115,22 +118,54 @@ public class RecordDeserializer {
     }
   }
 
-
   /**
-   * Extracts the schema ID from the raw bytes.
+   * Extracts the schema GUID from the Kafka record headers. We assume the raw bytes of the header
+   * value starts with the magic byte (0x1) and has a length of at least 17 bytes.
    *
-   * @param rawBytes The raw bytes containing the schema ID.
-   * @return The extracted schema ID.
-   * @throws IllegalArgumentException If the raw bytes are invalid for extracting the schema ID.
+   * @param headers The Kafka record headers.
+   * @param isKey   Whether the data is a key or value.
+   * @return An Optional containing the schema GUID if present, or empty otherwise.
    */
   @VisibleForTesting
-  static int getSchemaIdFromRawBytes(byte[] rawBytes) {
-    if (rawBytes == null || rawBytes.length < 5) {
-      throw new IllegalArgumentException("Invalid raw bytes for extracting schema ID.");
+  static Optional<UUID> getSchemaGuidFromHeaders(Headers headers, boolean isKey) {
+    if (headers == null) {
+      return Optional.empty();
     }
-    // The first byte is the magic byte, so we skip it
-    ByteBuffer buffer = ByteBuffer.wrap(rawBytes, 1, 4);
-    return buffer.getInt();
+    var headerName = isKey ? KEY_SCHEMA_ID_HEADER : VALUE_SCHEMA_ID_HEADER;
+    var header = headers.lastHeader(headerName);
+    if (header == null || header.value() == null || header.value().length < 17) {
+      return Optional.empty();
+    }
+
+    var buffer = ByteBuffer.wrap(header.value());
+    var idVersion = buffer.get();
+    // Check if the first byte matches the expected magic byte for GUID version
+    if (idVersion != MAGIC_BYTE_V1) {
+      return Optional.empty();
+    }
+    // Extract the GUID from the rest of the byte array
+    var msb = buffer.getLong();
+    var lsb = buffer.getLong();
+
+    return Optional.of(new UUID(msb, lsb));
+  }
+
+  /**
+   * Extracts the schema ID from the raw bytes if they are Schema Registry encoded. We assume the
+   * raw bytes are Schema Registry encoded if they start with the magic byte (0x0) and have a length
+   * of at least 5 bytes.
+   *
+   * @param rawBytes The raw bytes potentially containing the schema ID.
+   * @return An Optional containing the schema ID if the bytes start with the magic byte,
+   *         or empty if the bytes are null, too short, or don't start with the magic byte.
+   */
+  @VisibleForTesting
+  static Optional<Integer> getSchemaIdFromRawBytes(byte[] rawBytes) {
+    if (rawBytes == null || rawBytes.length < 5 || rawBytes[0] != MAGIC_BYTE_V0) {
+      return Optional.empty();
+    }
+    var buffer = ByteBuffer.wrap(rawBytes, 1, 4);
+    return Optional.of(buffer.getInt());
   }
 
   /**
@@ -140,17 +175,18 @@ public class RecordDeserializer {
    * @param topicName topicName.
    * @param sr        The SchemaRegistryClient used for deserialization.
    * @param isKey     Whether the bytes are a key or value.
+   * @param headers   The Kafka record headers (may contain schema ID).
    * @return The deserialized JsonNode.
    */
   private JsonNode handleAvro(
-      byte[] bytes, String topicName, SchemaRegistryClient sr, boolean isKey
+      byte[] bytes, String topicName, SchemaRegistryClient sr, boolean isKey, Headers headers
   ) {
     try (
         var outputStream = new ByteArrayOutputStream();
         var avroDeserializer = new KafkaAvroDeserializer(sr)
     ) {
       avroDeserializer.configure(SERDE_CONFIGS, isKey);
-      var genericObject = avroDeserializer.deserialize(topicName, bytes);
+      var genericObject = avroDeserializer.deserialize(topicName, headers, bytes);
       if (genericObject instanceof GenericData.Record avroRecord) {
         // Use AVRO's native JSON encoder which preserves union type information
         // See https://github.com/confluentinc/ide-sidecar/issues/417 for more information
@@ -173,20 +209,22 @@ public class RecordDeserializer {
   /**
    * Handles deserialization of Protobuf-encoded bytes.
    *
-   * @param bytes The Protobuf-encoded bytes to deserialize.
-   * @param sr    The SchemaRegistryClient used for deserialization.
-   * @param isKey Whether the bytes are a key or value.
+   * @param bytes   The Protobuf-encoded bytes to deserialize.
+   * @param sr      The SchemaRegistryClient used for deserialization.
+   * @param isKey   Whether the bytes are a key or value.
+   * @param headers The Kafka record headers (may contain schema ID).
    * @return The deserialized JsonNode.
    */
   private JsonNode handleProtobuf(
       byte[] bytes,
       String topicName,
       SchemaRegistryClient sr,
-      boolean isKey
+      boolean isKey,
+      Headers headers
   ) throws JsonProcessingException, InvalidProtocolBufferException {
     try (var protobufDeserializer = new KafkaProtobufDeserializer<>(sr)) {
       protobufDeserializer.configure(SERDE_CONFIGS, isKey);
-      var protobufMessage = (DynamicMessage) protobufDeserializer.deserialize(topicName, bytes);
+      var protobufMessage = (DynamicMessage) protobufDeserializer.deserialize(topicName, headers, bytes);
 
       // Add the message and its nested types to the type registry
       // used by the JsonFormat printer.
@@ -208,30 +246,36 @@ public class RecordDeserializer {
   /**
    * Handles deserialization of JSON Schema-encoded bytes.
    *
-   * @param bytes The JSON Schema-encoded bytes to deserialize.
-   * @param sr    The SchemaRegistryClient used for deserialization.
-   * @param isKey Whether the bytes are a key or value.
+   * @param bytes   The JSON Schema-encoded bytes to deserialize.
+   * @param sr      The SchemaRegistryClient used for deserialization.
+   * @param isKey   Whether the bytes are a key or value.
+   * @param headers The Kafka record headers (may contain schema ID).
    * @return The deserialized JsonNode.
    */
   private JsonNode handleJson(
       byte[] bytes,
       String topicName,
       SchemaRegistryClient sr,
-      boolean isKey
+      boolean isKey,
+      Headers headers
   ) {
     try (var jsonSchemaDeserializer = new KafkaJsonSchemaDeserializer<>(sr)) {
       jsonSchemaDeserializer.configure(SERDE_CONFIGS, isKey);
-      var jsonSchemaResult = jsonSchemaDeserializer.deserialize(topicName, bytes);
+      var jsonSchemaResult = jsonSchemaDeserializer.deserialize(topicName, headers, bytes);
       return OBJECT_MAPPER.valueToTree(jsonSchemaResult);
     }
   }
 
   /**
-   * Parses a byte array into a JsonNode, handling various data formats: 1. Schema Registry encoded
-   * data, supported formats: protobuf, avro, & JsonSchema. 2. Plain string data If the byte array
-   * is Schema Registry encoded (starts with the MAGIC_BYTE), it is decoded and deserialized using
-   * the provided SchemaRegistryClient. Otherwise, it is treated as a plain string and wrapped in a
-   * TextNode.
+   * Parses a byte array into a JsonNode, handling various data formats.
+   *
+   * <p>The deserialization follows this priority order:
+   * <ol>
+   *   <li>If bytes are null or empty, return appropriate trivial result</li>
+   *   <li>If headers contain a schema GUID, use it to fetch the schema from the registry</li>
+   *   <li>If bytes start with the magic byte and contain a schema ID, use it to fetch the schema</li>
+   *   <li>Otherwise, decode the bytes as plain JSON, UTF-8 string, or raw bytes</li>
+   * </ol>
    *
    * @param bytes                The byte array to parse
    * @param schemaRegistryClient The SchemaRegistryClient used for deserialization of Schema
@@ -239,10 +283,8 @@ public class RecordDeserializer {
    * @param context              The message viewer context.
    * @param isKey                Whether the data is a key or value
    * @param encoderOnFailure     A function to apply to the byte array if deserialization fails.
-   * @return A DecodedResult containing either: - A JsonNode representing the decoded and
-   * deserialized data (for Schema Registry encoded data) - A TextNode containing the original
-   * string representation of the byte array ( for other cases) The DecodedResult also includes any
-   * error message encountered during processing
+   * @param headers              The Kafka record headers (may contain schema GUID).
+   * @return A DecodedResult containing the decoded data and any error message
    */
   public DecodedResult deserialize(
       byte[] bytes,
@@ -250,27 +292,77 @@ public class RecordDeserializer {
       KafkaRestProxyContext
           <SimpleConsumeMultiPartitionRequest, SimpleConsumeMultiPartitionResponse> context,
       boolean isKey,
-      Optional<Function<byte[], byte[]>> encoderOnFailure
+      Optional<Function<byte[], byte[]>> encoderOnFailure,
+      Headers headers
   ) {
-    var result = maybeTrivialCase(bytes, schemaRegistryClient);
-    if (result.isPresent()) {
-      return result.get();
+    // Handle null and empty bytes
+    if (bytes == null) {
+      return new DecodedResult(NullNode.getInstance(), null, null);
     }
-    int schemaId = getSchemaIdFromRawBytes(bytes);
-    String connectionId = context.getConnectionId();
-    // Check if schema retrieval has failed recently
-    var error = schemaErrors.readSchemaIdByConnectionId(
-        connectionId,
-        context.getClusterId(),
-        schemaId
-    );
-    if (error != null) {
-      return new DecodedResult(
-          // If the schema fetch failed, we can't decode the data, so we just return the raw bytes.
-          // We apply the encoderOnFailure function to the bytes before returning them.
-          onFailure(encoderOnFailure, bytes).data,
-          error.message()
+    if (bytes.length == 0) {
+      return new DecodedResult(new TextNode(""), null, null);
+    }
+
+    // Try to deserialize with a schema if available
+    // Priority 1: Schema GUID from headers
+    // Priority 2: Schema ID from raw bytes
+    var schemaGuid = getSchemaGuidFromHeaders(headers, isKey);
+    var schemaId = getSchemaIdFromRawBytes(bytes);
+    var hasSchemaInfo = schemaGuid.isPresent() || schemaId.isPresent();
+    if (schemaRegistryClient != null && hasSchemaInfo) {
+      return deserializeWithSchema(
+          bytes,
+          schemaRegistryClient,
+          context,
+          isKey,
+          encoderOnFailure,
+          headers,
+          schemaGuid,
+          schemaId
       );
+    }
+
+    // In the absence of any schema info, try to decode as JSON data
+    var wrappedJson = safeRead(bytes);
+    return new DecodedResult(
+        wrappedJson.data(),
+        schemaRegistryClient == null && hasSchemaInfo
+            ? "The value references a schema but no schema registry is available"
+            : null,
+        new KeyOrValueMetadata(null, null, wrappedJson.dataFormat())
+    );
+  }
+
+  /**
+   * Deserializes bytes using schema information from either GUID or ID.
+   */
+  private DecodedResult deserializeWithSchema(
+      byte[] bytes,
+      SchemaRegistryClient schemaRegistryClient,
+      KafkaRestProxyContext
+          <SimpleConsumeMultiPartitionRequest, SimpleConsumeMultiPartitionResponse> context,
+      boolean isKey,
+      Optional<Function<byte[], byte[]>> encoderOnFailure,
+      Headers headers,
+      Optional<UUID> schemaGuid,
+      Optional<Integer> schemaId
+  ) {
+    String connectionId = context.getConnectionId();
+
+    // Check if schema retrieval has failed recently
+    // TODO: Include GUID in cache key
+    if (schemaId.isPresent()) {
+      var error = schemaErrors.readSchemaIdByConnectionId(
+          connectionId,
+          context.getClusterId(),
+          schemaId.get()
+      );
+      if (error != null) {
+        return new DecodedResult(
+            onFailure(encoderOnFailure, bytes).data,
+            error.message()
+        );
+      }
     }
 
     try {
@@ -278,26 +370,39 @@ public class RecordDeserializer {
       // and retry if the operation fails due to a retryable exception.
       var parsedSchema = Uni
           .createFrom()
-          .item(Unchecked.supplier(() -> schemaRegistryClient.getSchemaById(schemaId)))
+          .item(
+              Unchecked.supplier(
+                  () -> schemaGuid.isPresent()
+                      ? schemaRegistryClient.getSchemaByGuid(schemaGuid.get().toString(), null)
+                      : schemaRegistryClient.getSchemaById(schemaId.orElseThrow())
+              )
+          )
           .onFailure(this::isRetryableException)
           .retry()
           .withBackOff(schemaFetchRetryInitialBackoff, schemaFetchRetryMaxBackoff)
           .atMost(schemaFetchMaxRetries)
-          .runSubscriptionOn(Infrastructure.getDefaultExecutor())
-          .await()
-          .atMost(schemaFetchTimeout);
+          .runSubscriptionOn(Infrastructure.getDefaultWorkerPool())
+          .subscribeAsCompletionStage()
+          .toCompletableFuture()
+          .join();
 
       var schemaType = SchemaFormat.fromSchemaType(parsedSchema.schemaType());
       var topicName = context.getTopicName();
       var deserializedJsonNode = switch (schemaType) {
-        case AVRO -> handleAvro(bytes, topicName, schemaRegistryClient, isKey);
-        case PROTOBUF -> handleProtobuf(bytes, topicName, schemaRegistryClient, isKey);
-        case JSON -> handleJson(bytes, topicName, schemaRegistryClient, isKey);
+        case AVRO -> handleAvro(bytes, topicName, schemaRegistryClient, isKey, headers);
+        case PROTOBUF -> handleProtobuf(bytes, topicName, schemaRegistryClient, isKey, headers);
+        case JSON -> handleJson(bytes, topicName, schemaRegistryClient, isKey, headers);
       };
       return RecordDeserializerDecodedResultBuilder
           .builder()
           .value(deserializedJsonNode)
-          .metadata(new KeyOrValueMetadata(schemaId, DataFormat.fromSchemaFormat(schemaType)))
+          .metadata(
+              new KeyOrValueMetadata(
+                  schemaId.orElse(null),
+                  schemaGuid.orElse(null),
+                  DataFormat.fromSchemaFormat(schemaType)
+              )
+          )
           .build();
     } catch (Exception e) {
       var exc = unwrap(e);
@@ -306,17 +411,18 @@ public class RecordDeserializer {
         //            network-related IOExceptions, to prevent the sidecar from
         //            bombarding the Schema Registry servers with requests for every
         //            consumed message when we encounter a schema fetch error.
-        cacheSchemaFetchError(exc, schemaId, context);
+        schemaId.ifPresent(id -> cacheSchemaFetchError(exc, id, context));
         var wrappedJson = onFailure(encoderOnFailure, bytes);
         return new DecodedResult(
             wrappedJson.data(),
             e.getMessage(),
-            new KeyOrValueMetadata(schemaId, wrappedJson.dataFormat())
+            new KeyOrValueMetadata(
+                schemaId.orElse(null),
+                schemaGuid.orElse(null),
+                wrappedJson.dataFormat()
+            )
         );
-      } else if (
-          exc instanceof SerializationException
-              || exc instanceof IOException
-      ) {
+      } else if (exc instanceof SerializationException || exc instanceof IOException) {
         // We don't cache SerializationException because it's not a schema fetch error
         // but rather a deserialization error, scoped to the specific message.
         Log.errorf(e, "Failed to deserialize record. " +
@@ -325,10 +431,17 @@ public class RecordDeserializer {
         return new DecodedResult(
             wrappedJson.data(),
             e.getMessage(),
-            new KeyOrValueMetadata(schemaId, wrappedJson.dataFormat())
+            new KeyOrValueMetadata(
+                schemaId.orElse(null),
+                schemaGuid.orElse(null),
+                wrappedJson.dataFormat()
+            )
         );
+      } else if (e instanceof CompletionException) {
+        throw new RuntimeException(exc);
       }
-      // If we reach this point, we have an unexpected exception, so we rethrow it.
+      // If we reach this point, we have an unexpected exception, so we log and rethrow it.
+      Log.error(e);
       throw new RuntimeException("Failed to deserialize record", e);
     }
   }
@@ -374,7 +487,29 @@ public class RecordDeserializer {
           <SimpleConsumeMultiPartitionRequest, SimpleConsumeMultiPartitionResponse> context,
       boolean isKey
   ) {
-    return deserialize(bytes, schemaRegistryClient, context, isKey, Optional.empty());
+    return deserialize(bytes, schemaRegistryClient, context, isKey, Optional.empty(), null);
+  }
+
+  public DecodedResult deserialize(
+      byte[] bytes,
+      SchemaRegistryClient schemaRegistryClient,
+      KafkaRestProxyContext
+          <SimpleConsumeMultiPartitionRequest, SimpleConsumeMultiPartitionResponse> context,
+      boolean isKey,
+      Optional<Function<byte[], byte[]>> encoderOnFailure
+  ) {
+    return deserialize(bytes, schemaRegistryClient, context, isKey, encoderOnFailure, null);
+  }
+
+  public DecodedResult deserialize(
+      byte[] bytes,
+      SchemaRegistryClient schemaRegistryClient,
+      KafkaRestProxyContext
+          <SimpleConsumeMultiPartitionRequest, SimpleConsumeMultiPartitionResponse> context,
+      boolean isKey,
+      Headers headers
+  ) {
+    return deserialize(bytes, schemaRegistryClient, context, isKey, Optional.empty(), headers);
   }
 
   private void cacheSchemaFetchError(
@@ -403,66 +538,6 @@ public class RecordDeserializer {
         context.getClusterId(),
         errorMessage
     );
-  }
-
-  /**
-   * Handles the trivial cases of deserialization: null, empty, or non-Schema Registry encoded
-   * data.
-   *
-   * @param bytes                The byte array to parse
-   * @param schemaRegistryClient The SchemaRegistryClient used for deserialization of Schema
-   *                             Registry encoded data
-   * @return An Optional containing a DecodedResult if the base cases are met, or empty otherwise
-   */
-  private static Optional<DecodedResult> maybeTrivialCase(
-      byte[] bytes,
-      SchemaRegistryClient schemaRegistryClient
-  ) {
-    // If the byte array is null or empty, we return a NullNode or an empty string, respectively.
-    if (bytes == null) {
-      return Optional.of(new DecodedResult(
-          NullNode.getInstance(),
-          null,
-          null
-      ));
-    }
-    if (bytes.length == 0) {
-      return Optional.of(new DecodedResult(
-          new TextNode(""),
-          null,
-          null
-      ));
-    }
-
-    // If the first byte is not the magic byte, we try to parse the data as a JSON object
-    // or fall back to returning the raw bytes if parsing fails. Simple enough.
-    if (bytes[0] != MAGIC_BYTE) {
-      var wrappedJson = safeRead(bytes);
-      return Optional.of(
-          new DecodedResult(
-              wrappedJson.data(),
-              null,
-              new KeyOrValueMetadata(null, wrappedJson.dataFormat())
-          )
-      );
-    }
-
-    // If the first byte is the magic byte, but we weren't provided a schema registry client,
-    // we can't decode the data, so we just return the raw bytes.
-    if (schemaRegistryClient == null) {
-      var wrappedJson = safeRead(bytes);
-      return Optional.of(new DecodedResult(
-          wrappedJson.data(),
-          "The value references a schema but we can't find the schema registry",
-          new KeyOrValueMetadata(
-              null,
-              wrappedJson.dataFormat()
-          )
-      ));
-    }
-
-    // Alright, let's move on to more complex cases.
-    return Optional.empty();
   }
 
   record WrappedJson(
