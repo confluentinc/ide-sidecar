@@ -50,9 +50,6 @@ public class SimpleMockSchemaRegistryClient extends MockSchemaRegistryClient {
     return requiredSchemaId;
   }
 
-  /**
-   * Registers a schema with both a GUID.
-   */
   public String register(String guid, String subject, ParsedSchema schema)
       throws IOException, RestClientException {
     schemaCache.computeIfAbsent(subject, k -> new HashMap<>()).put(schema, guid);

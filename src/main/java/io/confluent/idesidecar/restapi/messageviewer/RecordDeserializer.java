@@ -133,6 +133,7 @@ public class RecordDeserializer {
     }
     var headerName = isKey ? KEY_SCHEMA_ID_HEADER : VALUE_SCHEMA_ID_HEADER;
     var header = headers.lastHeader(headerName);
+    // The header value must hold at least 17 bytes: The leading magic byte and the 16-byte GUID.
     if (header == null || header.value() == null || header.value().length < 17) {
       return Optional.empty();
     }
