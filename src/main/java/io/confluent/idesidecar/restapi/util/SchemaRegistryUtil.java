@@ -6,7 +6,7 @@ import java.util.Map;
 public final class SchemaRegistryUtil {
 
   private SchemaRegistryUtil() {
-
+    // Utility class, no instantiation needed
   }
 
   /**
