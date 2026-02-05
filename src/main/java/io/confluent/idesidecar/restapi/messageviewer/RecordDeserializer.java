@@ -351,12 +351,12 @@ public class RecordDeserializer {
     String connectionId = context.getConnectionId();
 
     // Check if schema retrieval has failed recently
-    // TODO: Include GUID in cache key
-    if (schemaId.isPresent()) {
+    if (schemaId.isPresent() || schemaGuid.isPresent()) {
       var error = schemaErrors.readSchemaIdByConnectionId(
           connectionId,
           context.getClusterId(),
-          schemaId.get()
+          schemaId,
+          schemaGuid
       );
       if (error != null) {
         return new DecodedResult(
@@ -412,7 +412,7 @@ public class RecordDeserializer {
         //            network-related IOExceptions, to prevent the sidecar from
         //            bombarding the Schema Registry servers with requests for every
         //            consumed message when we encounter a schema fetch error.
-        schemaId.ifPresent(id -> cacheSchemaFetchError(exc, id, context));
+        cacheSchemaFetchError(exc, schemaId, schemaGuid, context);
         var wrappedJson = onFailure(encoderOnFailure, bytes);
         return new DecodedResult(
             wrappedJson.data(),
@@ -514,7 +514,10 @@ public class RecordDeserializer {
   }
 
   private void cacheSchemaFetchError(
-      Throwable e, int schemaId, KafkaRestProxyContext
+      Throwable e,
+      Optional<Integer> schemaId,
+      Optional<UUID> schemaGuid,
+      KafkaRestProxyContext
           <SimpleConsumeMultiPartitionRequest, SimpleConsumeMultiPartitionResponse> context
   ) {
     var retryTime = Instant.now().plus(CACHE_FAILED_SCHEMA_ID_FETCH_DURATION);
@@ -528,14 +531,17 @@ public class RecordDeserializer {
         e.getMessage(),
         e
     );
-    SchemaErrors.Error errorMessage = new SchemaErrors.Error(String.format(
-        "Failed to retrieve schema with ID %d: %s",
-        schemaId,
-        e.getMessage()
-    ));
+    var errorMessage = new SchemaErrors.Error(
+        "Failed to retrieve schema with ID=%d GUID=%s: %s".formatted(
+            schemaId.orElse(null),
+            schemaGuid.orElse(null),
+            e.getMessage()
+        )
+    );
     schemaErrors.writeSchemaIdByConnectionId(
         context.getConnectionId(),
         schemaId,
+        schemaGuid,
         context.getClusterId(),
         errorMessage
     );
