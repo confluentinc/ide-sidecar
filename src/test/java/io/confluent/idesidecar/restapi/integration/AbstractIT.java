@@ -161,7 +161,6 @@ public abstract class AbstractIT extends SidecarClient implements ITSuite {
     var deserializer = new RecordDeserializer(
         1,
         1,
-        10000,
         3,
         new SchemaErrors()
     );
