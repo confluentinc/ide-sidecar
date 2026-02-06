@@ -1886,7 +1886,7 @@
   } ],
   "info" : {
     "title" : "Confluent ide-sidecar API",
-    "version" : "0.254.0",
+    "version" : "0.255.0",
     "description" : "API for the Confluent ide-sidecar, part of Confluent for VS Code",
     "termsOfService" : "Your terms here",
     "contact" : {
