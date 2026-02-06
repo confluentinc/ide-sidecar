@@ -5,7 +5,7 @@ description:
   before sharing with the team, or when user mentions "review PR", "help with PR", "review changes",
   "self-review", "review local changes", or "check my PR". Provides generic PR Review skill with
   project-specific patterns and tech stack-related requirements.
-tools: [Read, Bash, Grep, Glob, Task]
+allowed-tools: Read, Bash, Grep, Glob, Task
 ---
 
 # PR Review Skill
