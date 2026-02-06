@@ -62,7 +62,7 @@ git diff main
 # Get PR details if PR number or URL provided
 gh pr view <PR_NUMBER> --json number,title,body,author,baseRefName,headRefName,additions,deletions,changedFiles,state,reviewDecision
 
-# If PR number or URL provided, try current branch
+# If PR number or URL not provided, try current branch
 gh pr view --json number,title,body,author,baseRefName,headRefName,additions,deletions,changedFiles,state,reviewDecision
 
 # Get the diff
@@ -104,7 +104,7 @@ Apply the ide-sidecar code review standards:
 |------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **Single Responsibility** | Do classes and methods maintain focused, single purposes?                                                                                                                          |
 | **Security** | Are there any security concerns (e.g., hardcoded secrets, command injection, OWASP Top 10)?                                                                                        |
-| **GraalVM Compatibility** | Are there any issues that would prevent successful native compilation (e.g., missing `@RegisterForReflection`, native library usage, usage of dynamiy loading of Java services)?   |
+| **GraalVM Compatibility** | Are there any issues that would prevent successful native compilation (e.g., missing `@RegisterForReflection`, native library usage, usage of dynamic loading of Java services)?   |
 | **Testing Coverage** | Does new functionality include appropriate tests? Favor unit over integration tests, but use integration tests where necessary. We're aiming for a test coverage of 80% or higher. |
 | **Test Cases** | Are features reasonably tested? Are edge cases covered?                                                                                                                            |
 | **Error Handling** | Do catch blocks NEVER swallow exceptions? Are exceptions logged at ERROR level?                                                                                                    |
