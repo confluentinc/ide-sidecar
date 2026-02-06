@@ -13,11 +13,11 @@ import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPart
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeData;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeRecord;
-import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.PartitionConsumeRecordHeader;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.RecordMetadata;
 import io.confluent.idesidecar.restapi.proxy.KafkaRestProxyContext;
 import io.confluent.idesidecar.restapi.proxy.ProxyHttpClient;
 import io.confluent.idesidecar.restapi.util.ObjectMapperFactory;
+import io.confluent.idesidecar.restapi.util.SchemaRegistryUtil;
 import io.confluent.idesidecar.restapi.util.WebClientFactory;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.quarkus.logging.Log;
@@ -32,7 +32,6 @@ import jakarta.ws.rs.core.MediaType;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
-import java.util.List;
 import java.util.Optional;
 import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.header.internals.RecordHeaders;
@@ -230,7 +229,7 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
               record.offset(),
               record.timestamp(),
               record.timestampType(),
-              toRecordHeaders(decodedHeaders),
+              SchemaRegistryUtil.toRecordHeaders(decodedHeaders),
               keyData.value(),
               valueData.value(),
               new RecordMetadata(
@@ -344,25 +343,5 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
         + "/kafka/v3/clusters/" + ctx.getClusterId()
         + "/internal/topics/" + ctx.getTopicName()
         + "/partitions/-/records:consume_guarantee_progress";
-  }
-
-  /**
-   * Converts Kafka Headers to a list of PartitionConsumeRecordHeader. Converts header values
-   * from byte arrays to strings.
-   *
-   * @param headers the Kafka Headers
-   * @return a list of PartitionConsumeRecordHeader
-   */
-  private List<PartitionConsumeRecordHeader> toRecordHeaders(Headers headers) {
-    var result = new ArrayList<PartitionConsumeRecordHeader>();
-    for (var header : headers) {
-      result.add(
-          new PartitionConsumeRecordHeader(
-            header.key(),
-            header.value() != null ? new String(header.value(), StandardCharsets.UTF_8) : null
-          )
-      );
-    }
-    return result;
   }
 }

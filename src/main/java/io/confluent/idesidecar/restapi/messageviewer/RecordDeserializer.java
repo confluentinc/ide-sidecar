@@ -127,7 +127,7 @@ public class RecordDeserializer {
    * @return An Optional containing the schema GUID if present, or empty otherwise.
    */
   @VisibleForTesting
-  static Optional<UUID> getSchemaGuidFromHeaders(Headers headers, boolean isKey) {
+  public static Optional<UUID> getSchemaGuidFromHeaders(Headers headers, boolean isKey) {
     if (headers == null) {
       return Optional.empty();
     }
