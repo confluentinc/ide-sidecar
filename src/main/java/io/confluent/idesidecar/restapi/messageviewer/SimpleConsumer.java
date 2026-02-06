@@ -336,7 +336,7 @@ public class SimpleConsumer {
         consumerRecord.offset(),
         consumerRecord.timestamp(),
         TimestampType.valueOf(consumerRecord.timestampType().name()),
-        SchemaRegistryUtil.toRecordHeaders(consumerRecord.headers()),
+        SchemaRegistryUtil.decodeKafkaHeaders(consumerRecord.headers()),
         keyResult.map(DecodedResult::value).orElse(null),
         valueResult.map(DecodedResult::value).orElse(null),
         new RecordMetadata(

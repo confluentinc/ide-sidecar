@@ -229,7 +229,7 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
               record.offset(),
               record.timestamp(),
               record.timestampType(),
-              SchemaRegistryUtil.toRecordHeaders(decodedHeaders),
+              SchemaRegistryUtil.decodeKafkaHeaders(decodedHeaders),
               keyData.value(),
               valueData.value(),
               new RecordMetadata(

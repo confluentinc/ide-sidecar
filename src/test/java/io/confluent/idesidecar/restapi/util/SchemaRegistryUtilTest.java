@@ -64,9 +64,9 @@ class SchemaRegistryUtilTest {
     }
 
     @Test
-    void toRecordHeaders_shouldReturnEmptyListForEmptyHeaders() {
+    void decodeKafkaHeaders_shouldReturnEmptyListForEmptyHeaders() {
       var headers = new RecordHeaders();
-      var result = SchemaRegistryUtil.toRecordHeaders(headers);
+      var result = SchemaRegistryUtil.decodeKafkaHeaders(headers);
       assertTrue(result.isEmpty());
     }
 
@@ -76,7 +76,7 @@ class SchemaRegistryUtilTest {
       headers.add("content-type", "application/json".getBytes(StandardCharsets.UTF_8));
       headers.add("custom-header", "custom-value".getBytes(StandardCharsets.UTF_8));
 
-      var result = SchemaRegistryUtil.toRecordHeaders(headers);
+      var result = SchemaRegistryUtil.decodeKafkaHeaders(headers);
 
       assertEquals(2, result.size());
       assertEquals(new PartitionConsumeRecordHeader("content-type", "application/json"), result.get(0));
@@ -84,23 +84,23 @@ class SchemaRegistryUtilTest {
     }
 
     @Test
-    void toRecordHeaders_shouldHandleNullHeaderValue() {
+    void decodeKafkaHeaders_shouldHandleNullHeaderValue() {
       var headers = new RecordHeaders();
       headers.add("null-header", null);
 
-      var result = SchemaRegistryUtil.toRecordHeaders(headers);
+      var result = SchemaRegistryUtil.decodeKafkaHeaders(headers);
 
       assertEquals(1, result.size());
       assertEquals(new PartitionConsumeRecordHeader("null-header", null), result.get(0));
     }
 
     @Test
-    void toRecordHeaders_shouldDecodeKeySchemaIdHeaderAsUuid() {
+    void decodeKafkaHeaders_shouldDecodeKeySchemaIdHeaderAsUuid() {
       var uuid = UUID.randomUUID();
       var headers = new RecordHeaders();
       headers.add(KEY_SCHEMA_ID_HEADER, createSchemaGuidBytes(uuid));
 
-      var result = SchemaRegistryUtil.toRecordHeaders(headers);
+      var result = SchemaRegistryUtil.decodeKafkaHeaders(headers);
 
       assertEquals(1, result.size());
       assertEquals(KEY_SCHEMA_ID_HEADER, result.get(0).key());
@@ -108,12 +108,12 @@ class SchemaRegistryUtilTest {
     }
 
     @Test
-    void toRecordHeaders_shouldDecodeValueSchemaIdHeaderAsUuid() {
+    void decodeKafkaHeaders_shouldDecodeValueSchemaIdHeaderAsUuid() {
       var uuid = UUID.randomUUID();
       var headers = new RecordHeaders();
       headers.add(VALUE_SCHEMA_ID_HEADER, createSchemaGuidBytes(uuid));
 
-      var result = SchemaRegistryUtil.toRecordHeaders(headers);
+      var result = SchemaRegistryUtil.decodeKafkaHeaders(headers);
 
       assertEquals(1, result.size());
       assertEquals(VALUE_SCHEMA_ID_HEADER, result.get(0).key());
@@ -121,12 +121,12 @@ class SchemaRegistryUtilTest {
     }
 
     @Test
-    void toRecordHeaders_shouldReturnEmptyStringForInvalidKeySchemaIdHeader() {
+    void decodeKafkaHeaders_shouldReturnEmptyStringForInvalidKeySchemaIdHeader() {
       var headers = new RecordHeaders();
       // Too short value (less than 17 bytes)
       headers.add(KEY_SCHEMA_ID_HEADER, new byte[]{0x01, 0x02, 0x03});
 
-      var result = SchemaRegistryUtil.toRecordHeaders(headers);
+      var result = SchemaRegistryUtil.decodeKafkaHeaders(headers);
 
       assertEquals(1, result.size());
       assertEquals(KEY_SCHEMA_ID_HEADER, result.get(0).key());
@@ -134,12 +134,12 @@ class SchemaRegistryUtilTest {
     }
 
     @Test
-    void toRecordHeaders_shouldReturnEmptyStringForInvalidValueSchemaIdHeader() {
+    void decodeKafkaHeaders_shouldReturnEmptyStringForInvalidValueSchemaIdHeader() {
       var headers = new RecordHeaders();
       // Too short value (less than 17 bytes)
       headers.add(VALUE_SCHEMA_ID_HEADER, new byte[]{0x01, 0x02, 0x03});
 
-      var result = SchemaRegistryUtil.toRecordHeaders(headers);
+      var result = SchemaRegistryUtil.decodeKafkaHeaders(headers);
 
       assertEquals(1, result.size());
       assertEquals(VALUE_SCHEMA_ID_HEADER, result.get(0).key());
@@ -147,7 +147,7 @@ class SchemaRegistryUtilTest {
     }
 
     @Test
-    void toRecordHeaders_shouldReturnEmptyStringForWrongMagicByte() {
+    void decodeKafkaHeaders_shouldReturnEmptyStringForWrongMagicByte() {
       var uuid = UUID.randomUUID();
       var headers = new RecordHeaders();
       var bytes = createSchemaGuidBytes(uuid);
@@ -155,7 +155,7 @@ class SchemaRegistryUtilTest {
 
       headers.add(KEY_SCHEMA_ID_HEADER, bytes);
 
-      var result = SchemaRegistryUtil.toRecordHeaders(headers);
+      var result = SchemaRegistryUtil.decodeKafkaHeaders(headers);
 
       assertEquals(1, result.size());
       assertEquals(KEY_SCHEMA_ID_HEADER, result.get(0).key());
@@ -163,7 +163,7 @@ class SchemaRegistryUtilTest {
     }
 
     @Test
-    void toRecordHeaders_shouldHandleMixedHeaders() {
+    void decodeKafkaHeaders_shouldHandleMixedHeaders() {
       var keyUuid = UUID.randomUUID();
       var valueUuid = UUID.randomUUID();
       var headers = new RecordHeaders();
@@ -172,7 +172,7 @@ class SchemaRegistryUtilTest {
       headers.add("another-header", "another-value".getBytes(StandardCharsets.UTF_8));
       headers.add(VALUE_SCHEMA_ID_HEADER, createSchemaGuidBytes(valueUuid));
 
-      var result = SchemaRegistryUtil.toRecordHeaders(headers);
+      var result = SchemaRegistryUtil.decodeKafkaHeaders(headers);
 
       assertEquals(4, result.size());
       assertEquals(new PartitionConsumeRecordHeader("custom-header", "custom-value"), result.get(0));

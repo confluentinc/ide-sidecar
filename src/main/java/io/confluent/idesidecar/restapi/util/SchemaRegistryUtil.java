@@ -37,13 +37,21 @@ public final class SchemaRegistryUtil {
   }
 
   /**
-   * Converts Kafka Headers to a list of PartitionConsumeRecordHeader. Converts header values
-   * from byte arrays to strings.
+   * Converts Kafka Headers to a list of PartitionConsumeRecordHeader with decoded string values.
    *
-   * @param headers the Kafka Headers
-   * @return a list of PartitionConsumeRecordHeader
+   * <p>Header values are decoded as follows:
+   * <ul>
+   *   <li>For schema ID headers ({@code confluent.key.schemaId} and {@code confluent.value.schemaId}):
+   *       the value is decoded as a schema GUID and converted to a UUID string. If the GUID cannot
+   *       be extracted (invalid format or insufficient bytes), an empty string is returned.</li>
+   *   <li>For other headers with non-null values: the byte array is decoded as a UTF-8 string.</li>
+   *   <li>For headers with null values: the decoded value is null.</li>
+   * </ul>
+   *
+   * @param headers the Kafka Headers to convert
+   * @return a list of PartitionConsumeRecordHeader with decoded string values
    */
-  public static List<PartitionConsumeRecordHeader> toRecordHeaders(Headers headers) {
+  public static List<PartitionConsumeRecordHeader> decodeKafkaHeaders(Headers headers) {
     var result = new ArrayList<PartitionConsumeRecordHeader>();
     for (var header : headers) {
       String decodedValue = null;
