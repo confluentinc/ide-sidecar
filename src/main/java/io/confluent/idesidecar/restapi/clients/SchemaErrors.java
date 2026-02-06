@@ -8,6 +8,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.ObservesAsync;
 import java.time.Duration;
 import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import org.eclipse.microprofile.config.ConfigProvider;
 
@@ -36,7 +38,7 @@ public class SchemaErrors {
   /**
    * Represents a unique schema identifier within a cluster.
    */
-  private record SchemaId(String clusterId, int schemaId) {
+  private record SchemaId(String clusterId, Optional<Integer> schemaId, Optional<UUID> schemaGuid) {
 
   }
 
@@ -72,15 +74,23 @@ public class SchemaErrors {
    * Reads a schema error from the cache.
    *
    * @param connectionId The connection identifier.
+   * @param clusterId    The cluster identifier.
    * @param schemaId     The schema identifier.
+   * @param schemaGuid   The schema GUID.
    * @return The schema error, or null if not found.
    */
 
-  public Error readSchemaIdByConnectionId(String connectionId, String clusterId, int schemaId) {
+  public Error readSchemaIdByConnectionId(
+      String connectionId,
+      String clusterId,
+      Optional<Integer> schemaId,
+      Optional<UUID> schemaGuid
+  ) {
     var cId = new ConnectionId(connectionId);
     var sId = new SchemaId(
         clusterId,
-        schemaId
+        schemaId,
+        schemaGuid
     );
     return getSubCache(cId).getIfPresent(sId);
   }
@@ -94,14 +104,16 @@ public class SchemaErrors {
    */
   public void writeSchemaIdByConnectionId(
       String connectionId,
-      int schemaId,
+      Optional<Integer> schemaId,
+      Optional<UUID> schemaGuid,
       String clusterId,
       Error error
   ) {
     var cId = new ConnectionId(connectionId);
     var sId = new SchemaId(
         clusterId,
-        schemaId
+        schemaId,
+        schemaGuid
     );
     getSubCache(cId).put(sId, error);
   }

@@ -10,6 +10,7 @@ import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPart
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.RecordMetadata;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.TimestampType;
 import io.confluent.idesidecar.restapi.proxy.KafkaRestProxyContext;
+import io.confluent.idesidecar.restapi.util.SchemaRegistryUtil;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -301,8 +302,6 @@ public class SimpleConsumer {
   PartitionConsumeRecord mapConsumerRecord(
       ConsumerRecord<byte[], byte[]> consumerRecord,
       Integer messageMaxBytes) {
-    var headers = getPartitionConsumeRecordHeaders(consumerRecord);
-
     // Determine if the key or value exceeds the maximum allowed size
     boolean keyExceeded = consumerRecord.key() != null
         && consumerRecord.key().length > messageMaxBytes;
@@ -311,19 +310,25 @@ public class SimpleConsumer {
 
     Optional<DecodedResult> keyResult = keyExceeded
         ? Optional.empty() : Optional
-        .of(recordDeserializer.deserialize(
-            consumerRecord.key(),
-            schemaRegistryClient,
-            context,
-            true)
+        .of(
+            recordDeserializer.deserialize(
+              consumerRecord.key(),
+              schemaRegistryClient,
+              context,
+              true,
+              consumerRecord.headers()
+            )
         );
     Optional<DecodedResult> valueResult = valueExceeded
         ? Optional.empty() : Optional
-        .of(recordDeserializer.deserialize(
-            consumerRecord.value(),
-            schemaRegistryClient,
-            context,
-            false)
+        .of(
+            recordDeserializer.deserialize(
+              consumerRecord.value(),
+              schemaRegistryClient,
+              context,
+              false,
+              consumerRecord.headers()
+            )
         );
 
     return new PartitionConsumeRecord(
@@ -331,7 +336,7 @@ public class SimpleConsumer {
         consumerRecord.offset(),
         consumerRecord.timestamp(),
         TimestampType.valueOf(consumerRecord.timestampType().name()),
-        headers,
+        SchemaRegistryUtil.toRecordHeaders(consumerRecord.headers()),
         keyResult.map(DecodedResult::value).orElse(null),
         valueResult.map(DecodedResult::value).orElse(null),
         new RecordMetadata(
