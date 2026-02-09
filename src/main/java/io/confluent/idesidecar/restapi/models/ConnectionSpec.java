@@ -337,8 +337,7 @@ public record ConnectionSpec(
               OAuthCredentials.class,
               ScramCredentials.class,
               KerberosCredentials.class,
-          },
-          nullable = true
+          }
       )
       @Null
       Credentials credentials,
@@ -425,8 +424,7 @@ public record ConnectionSpec(
               BasicCredentials.class,
               ApiKeyAndSecret.class,
               OAuthCredentials.class,
-          },
-          nullable = true
+          }
       )
       @Null
       Credentials credentials,
