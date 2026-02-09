@@ -423,7 +423,6 @@
           },
           "credentials" : {
             "description" : "The credentials for the Kafka cluster, or null if no authentication is required",
-            "enum" : [ null ],
             "oneOf" : [ {
               "$ref" : "#/components/schemas/BasicCredentials"
             }, {
@@ -903,7 +902,6 @@
           },
           "credentials" : {
             "description" : "The credentials for the Schema Registry, or null if no authentication is required",
-            "enum" : [ null ],
             "oneOf" : [ {
               "$ref" : "#/components/schemas/BasicCredentials"
             }, {
