@@ -80,7 +80,7 @@ public record OAuthCredentials(
   private static final String OAUTHBEARER_LOGIN_MODULE_CLASS =
       "org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule";
   private static final String OAUTHBEARER_CALLBACK_CLASS =
-      "org.apache.kafka.common.security.oauthbearer.secured.OAuthBearerLoginCallbackHandler";
+      "org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginCallbackHandler";
 
   public OAuthCredentials(
       String tokensUrl,
@@ -107,6 +107,9 @@ public record OAuthCredentials(
   public Optional<Map<String, String>> kafkaClientProperties(
       KafkaConnectionOptions options
   ) {
+    // Add token URL to list of allowed URLs
+    System.setProperty("org.apache.kafka.sasl.oauthbearer.allowed.urls", tokensUrl);
+
     var jaasConfig = "%s required clientId=\"%s\"".formatted(
         OAUTHBEARER_LOGIN_MODULE_CLASS,
         clientId
@@ -153,6 +156,9 @@ public record OAuthCredentials(
   public Optional<Map<String, String>> schemaRegistryClientProperties(
       SchemaRegistryConnectionOptions options
   ) {
+    // Add token URL to list of allowed URLs
+    System.setProperty("org.apache.kafka.sasl.oauthbearer.allowed.urls", tokensUrl);
+
     var config = new LinkedHashMap<String, String>();
     config.put("bearer.auth.credentials.source", OAUTHBEARER_CREDENTIALS_SOURCE);
     config.put("bearer.auth.issuer.endpoint.url", tokensUrl);
