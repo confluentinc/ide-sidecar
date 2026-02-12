@@ -70,6 +70,9 @@ gh pr diff <PR_NUMBER>
 
 # Get existing review comments if any
 gh pr view <PR_NUMBER> --json reviews,comments
+
+# Lookup GitHub issues referenced in the PR description
+gh issue view <ISSUE_NUMBER> --json body,comments
 ```
 
 ### Step 2: Understand the Context
