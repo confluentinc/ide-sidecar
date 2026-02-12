@@ -18,6 +18,8 @@ import java.util.Optional;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
+import static org.apache.kafka.common.config.internals.BrokerSecurityConfigs.ALLOWED_SASL_OAUTHBEARER_URLS_CONFIG;
+
 @Schema(description = "OAuth 2.0 authentication credentials")
 @RecordBuilder
 public record OAuthCredentials(
@@ -108,7 +110,7 @@ public record OAuthCredentials(
       KafkaConnectionOptions options
   ) {
     // Add token URL to list of allowed URLs
-    System.setProperty("org.apache.kafka.sasl.oauthbearer.allowed.urls", tokensUrl);
+    addTokensUrlToAllowedUrls(tokensUrl);
 
     var jaasConfig = "%s required clientId=\"%s\"".formatted(
         OAUTHBEARER_LOGIN_MODULE_CLASS,
@@ -157,7 +159,7 @@ public record OAuthCredentials(
       SchemaRegistryConnectionOptions options
   ) {
     // Add token URL to list of allowed URLs
-    System.setProperty("org.apache.kafka.sasl.oauthbearer.allowed.urls", tokensUrl);
+    addTokensUrlToAllowedUrls(tokensUrl);
 
     var config = new LinkedHashMap<String, String>();
     config.put("bearer.auth.credentials.source", OAUTHBEARER_CREDENTIALS_SOURCE);
@@ -260,6 +262,28 @@ public record OAuthCredentials(
               .withDetail("%s connect timeout in milliseconds must be positive", what)
               .withSource("%s.connect_timeout_millis", path)
       );
+    }
+  }
+
+  /**
+   * Adds the given token URL to the system property {@code sasl.oauthbearer.allowed.urls},
+   * which controls the URLs that the Kafka/SR client is allowed to connect to for OAuth token
+   * retrieval.
+   *
+   * <p>If the system property is not set, it will be initialized with the given URL.
+   * If the URL is already present in the property, no changes are made.
+   * Otherwise, the URL is appended to the existing comma-separated list.
+   *
+   * <p>This method is synchronized to ensure thread-safe updates to the system property.
+   *
+   * @param tokensUrl the OAuth token endpoint URL to add to the allowed URLs list
+   */
+  synchronized void addTokensUrlToAllowedUrls(String tokensUrl) {
+    var allowedUrls = System.getProperty(ALLOWED_SASL_OAUTHBEARER_URLS_CONFIG);
+    if (allowedUrls == null) {
+      System.setProperty(ALLOWED_SASL_OAUTHBEARER_URLS_CONFIG, tokensUrl);
+    } else if (!allowedUrls.contains(tokensUrl)) {
+      System.setProperty(ALLOWED_SASL_OAUTHBEARER_URLS_CONFIG, allowedUrls + "," + tokensUrl);
     }
   }
 }
