@@ -16,6 +16,11 @@ semaphore:
   # Semaphore would end up triggering builds for both, the main branch push,
   # and for the new tag created. We want to skip builds for tags altogether.
   triggers: ['branches', 'pull_requests']
+  managed_sections:
+    - version
+    - name
+    - agent
+    - global_job_config
 codeowners:
   enable: true
 contact:
