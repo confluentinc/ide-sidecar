@@ -4,6 +4,7 @@ import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.matchesPattern;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 
@@ -49,7 +50,10 @@ public interface ConsumerGroupV3Suite extends ITSuite {
             notNullValue())
         .body(
             "data.find { it.consumer_group_id == '%s' }.kind".formatted(groupId),
-            equalTo("KafkaConsumerGroup"));
+            equalTo("KafkaConsumerGroup"))
+        .body(
+            "data.find { it.consumer_group_id == '%s' }.state".formatted(groupId),
+            matchesPattern("[A-Z_]+"));
   }
 
   @Test
@@ -66,7 +70,7 @@ public interface ConsumerGroupV3Suite extends ITSuite {
         .statusCode(200)
         .body("kind", equalTo("KafkaConsumerGroup"))
         .body("consumer_group_id", equalTo(groupId))
-        .body("state", notNullValue())
+        .body("state", matchesPattern("[A-Z_]+"))
         .body("coordinator", notNullValue())
         .body("consumer.related", notNullValue())
         .body("lag_summary.related", notNullValue());
