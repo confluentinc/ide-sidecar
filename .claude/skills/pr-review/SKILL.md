@@ -78,24 +78,27 @@ gh issue view <ISSUE_NUMBER> --json body,comments
 ### Step 2: Understand the Context
 
 1. **Read the PR description** - Verify it clearly explains:
-  - What changes were made
-  - Why the changes were needed
-  - How to test the changes
+
+- What changes were made
+- Why the changes were needed
+- How to test the changes
 
 2. **Identify changed files** - Categorize them:
-  - Source code (`src/main/java/...`)
-  - Tests (`src/test/java/...`)
-  - Configuration (`application.yml`, `pom.xml`)
-  - Documentation (`*.md`)
-  - Configuration of GraalVM (`src/main/resources/META-INF/native-image/...`)
-  - Static resources (`src/main/resources/...`)
-  - OpenAPI/GraphQL schema files (`src/generated/resources/...`)
-  - CI configuration (`.semaphore/...`)
+
+- Source code (`src/main/java/...`)
+- Tests (`src/test/java/...`)
+- Configuration (`application.yml`, `pom.xml`)
+- Documentation (`*.md`)
+- Configuration of GraalVM (`src/main/resources/META-INF/native-image/...`)
+- Static resources (`src/main/resources/...`)
+- OpenAPI/GraphQL schema files (`src/generated/resources/...`)
+- CI configuration (`.semaphore/...`)
 
 3. **Summarize the PR** - Provide a brief summary of:
-  - The purpose and scope of the changes
-  - Key files and components affected
-  - Any architectural decisions made
+
+- The purpose and scope of the changes
+- Key files and components affected
+- Any architectural decisions made
 
 ### Step 3: Review Against Project Guidelines
 
@@ -103,17 +106,17 @@ Apply the ide-sidecar code review standards:
 
 #### Focus Areas
 
-| Area | What to Check                                                                                                                                                                      |
-|------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Single Responsibility** | Do classes and methods maintain focused, single purposes?                                                                                                                          |
-| **Security** | Are there any security concerns (e.g., hardcoded secrets, command injection, OWASP Top 10)?                                                                                        |
-| **GraalVM Compatibility** | Are there any issues that would prevent successful native compilation (e.g., missing `@RegisterForReflection`, native library usage, usage of dynamic loading of Java services)?   |
-| **Testing Coverage** | Does new functionality include appropriate tests? Favor unit over integration tests, but use integration tests where necessary. We're aiming for a test coverage of 80% or higher. |
-| **Test Cases** | Are features reasonably tested? Are edge cases covered?                                                                                                                            |
-| **Error Handling** | Do catch blocks NEVER swallow exceptions? Are exceptions logged at ERROR level?                                                                                                    |
-| **API Changes** | Are user-facing API endpoint changes versioned if possible? Do API changes follow the [API Design Guide](https://github.com/confluentinc/api/blob/master/DESIGN_GUIDE.md)?         |
-| **Documentation** | Are code changes documented in Javadocs?                                                                                                                                           |
-| **Complexity** | Is unnecessary complexity avoided to keep code maintainable and testable?                                                                                                          |
+| Area                      | What to Check                                                                                                                                                                                                                                               |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Single Responsibility** | Do classes and methods maintain focused, single purposes?                                                                                                                                                                                                   |
+| **Security**              | Are there any security concerns (e.g., hardcoded secrets, command injection, OWASP Top 10)?                                                                                                                                                                 |
+| **GraalVM Compatibility** | Are there any issues that would prevent successful native compilation (e.g., missing `@RegisterForReflection`, native library usage, usage of dynamic loading of Java services)? Use `/graalvm-docs` to verify native image patterns against official docs. |
+| **Testing Coverage**      | Does new functionality include appropriate tests? Favor unit over integration tests, but use integration tests where necessary. We're aiming for a test coverage of 80% or higher.                                                                          |
+| **Test Cases**            | Are features reasonably tested? Are edge cases covered?                                                                                                                                                                                                     |
+| **Error Handling**        | Do catch blocks NEVER swallow exceptions? Are exceptions logged at ERROR level?                                                                                                                                                                             |
+| **API Changes**           | Are user-facing API endpoint changes versioned if possible? Do API changes follow the [API Design Guide](https://github.com/confluentinc/api/blob/master/DESIGN_GUIDE.md)?                                                                                  |
+| **Documentation**         | Are code changes documented in Javadocs?                                                                                                                                                                                                                    |
+| **Complexity**            | Is unnecessary complexity avoided to keep code maintainable and testable?                                                                                                                                                                                   |
 
 #### Javadoc and Comment Preservation
 
@@ -138,13 +141,14 @@ Apply the ide-sidecar code review standards:
 
 Scan the diff for these patterns:
 
-1. **Missing `@RegisterForReflection`** - Required for DTOs/records accessed via reflection in native builds
+1. **Missing `@RegisterForReflection`** - Required for DTOs/records accessed via reflection in native builds (use `/graalvm-docs` to verify patterns)
 2. **Exception swallowing** - Empty catch blocks or catches that don't log at ERROR level
 3. **Resource leaks** - Unclosed streams, connections, or Kafka clients
-4. **Thread safety** - Shared mutable state without synchronization
-5. **Breaking API changes** - REST/GraphQL endpoint modifications without versioning
-6. **Security concerns** - Hardcoded secrets, command injection, OWASP Top 10 vulnerabilities
-7. **Null safety** - Missing null checks on external inputs
+4. **CDI and reactive patterns** - Verify correct use of scopes, producers, and Mutiny operators (use `/quarkus-docs` to verify)
+5. **Thread safety** - Shared mutable state without synchronization
+6. **Breaking API changes** - REST/GraphQL endpoint modifications without versioning
+7. **Security concerns** - Hardcoded secrets, command injection, OWASP Top 10 vulnerabilities
+8. **Null safety** - Missing null checks on external inputs
 
 ### Step 5: Provide Structured Feedback
 
@@ -169,12 +173,15 @@ Output the review in this format:
 ### Findings
 
 #### Issues (Must Fix)
+
 {List blocking issues with `file:line` references, or "None found"}
 
 #### Suggestions (Consider)
+
 {List non-blocking suggestions for improvement, or "None"}
 
 #### Positive Observations
+
 {Call out good patterns, thorough testing, or well-written code}
 
 ### Test Coverage Assessment
@@ -192,3 +199,18 @@ Output the review in this format:
 **{APPROVE / REQUEST CHANGES / NEEDS DISCUSSION}**
 
 {Brief rationale for the recommendation}
+
+---
+
+## Tips
+
+- Use `/graalvm-docs` to verify GraalVM native image patterns against official docs — catches
+  missing `@RegisterForReflection`, incorrect `reflect-config.json` entries, and native library
+  issues that only surface in `make test-native`
+- Use `/quarkus-docs` to verify Quarkus patterns against official docs when reviewing CDI wiring,
+  Mutiny reactive chains, JAX-RS endpoints, or test configuration — catches incorrect scope
+  annotations, misused Mutiny operators, and test profile issues
+- When changes touch `application.yml` native config, `META-INF/native-image/`, or
+  `ReflectionConfiguration.java`, always flag for `make test-native` verification
+- When changes add new CDI beans or modify producer methods, verify the wiring follows the
+  `*BeanProducers.java` pattern established in the project
