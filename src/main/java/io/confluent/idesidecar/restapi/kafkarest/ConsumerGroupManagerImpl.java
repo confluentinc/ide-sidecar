@@ -15,9 +15,11 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import org.apache.kafka.clients.admin.ConsumerGroupDescription;
 import org.apache.kafka.clients.admin.ListOffsetsResult.ListOffsetsResultInfo;
-import org.apache.kafka.clients.consumer.OffsetAndMetadata;
-import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.clients.admin.OffsetSpec;
+import org.apache.kafka.clients.consumer.OffsetAndMetadata;
+import org.apache.kafka.common.ConsumerGroupState;
+import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.errors.GroupIdNotFoundException;
 
 /**
  * RequestScoped bean for managing Kafka consumer groups. Creating the bean as
@@ -74,7 +76,16 @@ public class ConsumerGroupManagerImpl implements ConsumerGroupManager {
                 .all()
                 .toCompletionStage()
         ))
-        .map(descriptions -> descriptions.get(consumerGroupId));
+        .map(descriptions -> {
+          var desc = descriptions.get(consumerGroupId);
+          // Kafka returns a DEAD description for non-existent groups
+          // rather than throwing an exception
+          if (desc.state() == ConsumerGroupState.DEAD) {
+            throw new GroupIdNotFoundException(
+                "Consumer group '%s' not found.".formatted(consumerGroupId));
+          }
+          return desc;
+        });
   }
 
   @Override
