@@ -10,6 +10,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 import org.apache.kafka.common.errors.ApiException;
+import org.apache.kafka.common.errors.GroupIdNotFoundException;
 import org.apache.kafka.common.errors.InvalidConfigurationException;
 import org.apache.kafka.common.errors.InvalidRequestException;
 import org.apache.kafka.common.errors.TimeoutException;
@@ -164,6 +165,19 @@ public class ExceptionMappers {
         .build();
   }
 
+
+  @ServerExceptionMapper
+  public Response mapGroupIdNotFoundException(GroupIdNotFoundException exception) {
+    var error = io.confluent.idesidecar.restapi.kafkarest.model.Error
+        .builder()
+        .errorCode(Status.NOT_FOUND.getStatusCode())
+        .message(exception.getMessage()).build();
+    return Response
+        .status(Status.NOT_FOUND)
+        .entity(error)
+        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+        .build();
+  }
 
   @ServerExceptionMapper
   public Response mapUnknownTopicException(UnknownTopicOrPartitionException exception) {
