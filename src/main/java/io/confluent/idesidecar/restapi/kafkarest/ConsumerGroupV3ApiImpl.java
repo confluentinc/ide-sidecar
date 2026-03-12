@@ -335,7 +335,7 @@ public class ConsumerGroupV3ApiImpl implements ConsumerGroupV3Api {
         .isSimple(description.isSimpleConsumerGroup())
         .partitionAssignor(
             Optional.ofNullable(description.partitionAssignor()).orElse(""))
-        .state(description.state().toString())
+        .state(description.state().name())
         .coordinator(forController(clusterId, description.coordinator().id()))
         .consumer(forConsumers(clusterId, description.groupId()))
         .lagSummary(forConsumerGroupLagSummary(clusterId, description.groupId()))
