@@ -70,6 +70,65 @@ public final class RelationshipUtil {
     ));
   }
 
+  public static Relationship forConsumerGroup(String clusterId, String groupId) {
+    return createRelationship(
+        "%s/internal/kafka/v3/clusters/%s/consumer-groups/%s".formatted(
+            SIDECAR_HOST, clusterId, groupId));
+  }
+
+  public static Relationship forConsumers(String clusterId, String groupId) {
+    return createRelationship(
+        "%s/internal/kafka/v3/clusters/%s/consumer-groups/%s/consumers".formatted(
+            SIDECAR_HOST, clusterId, groupId));
+  }
+
+  public static Relationship forConsumer(
+      String clusterId, String groupId, String consumerId
+  ) {
+    return createRelationship(
+        "%s/internal/kafka/v3/clusters/%s/consumer-groups/%s/consumers/%s".formatted(
+            SIDECAR_HOST, clusterId, groupId, consumerId));
+  }
+
+  public static Relationship forConsumerGroupLagSummary(
+      String clusterId, String groupId
+  ) {
+    return createRelationship(
+        "%s/internal/kafka/v3/clusters/%s/consumer-groups/%s/lag-summary".formatted(
+            SIDECAR_HOST, clusterId, groupId));
+  }
+
+  public static Relationship forConsumerLags(String clusterId, String groupId) {
+    return createRelationship(
+        "%s/internal/kafka/v3/clusters/%s/consumer-groups/%s/lags".formatted(
+            SIDECAR_HOST, clusterId, groupId));
+  }
+
+  public static Relationship forConsumerLag(
+      String clusterId, String groupId, String topicName, Integer partitionId
+  ) {
+    return createRelationship(
+        "%s/internal/kafka/v3/clusters/%s/consumer-groups/%s/lags/%s/partitions/%d"
+            .formatted(SIDECAR_HOST, clusterId, groupId, topicName, partitionId));
+  }
+
+  public static Relationship forConsumerAssignments(
+      String clusterId, String groupId, String consumerId
+  ) {
+    return createRelationship(
+        "%s/internal/kafka/v3/clusters/%s/consumer-groups/%s/consumers/%s/assignments"
+            .formatted(SIDECAR_HOST, clusterId, groupId, consumerId));
+  }
+
+  public static Relationship forConsumerAssignment(
+      String clusterId, String groupId, String consumerId,
+      String topicName, Integer partitionId
+  ) {
+    return createRelationship(
+        "%s/internal/kafka/v3/clusters/%s/consumer-groups/%s/consumers/%s/assignments/%s/partitions/%d"
+            .formatted(SIDECAR_HOST, clusterId, groupId, consumerId, topicName, partitionId));
+  }
+
   public static Relationship forTopics(String clusterId) {
     return createRelationship("%s/internal/kafka/v3/clusters/%s/topics".formatted(
         SIDECAR_HOST, clusterId
