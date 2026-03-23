@@ -80,7 +80,7 @@ public class ConsumerGroupManagerImpl implements ConsumerGroupManager {
           var desc = descriptions.get(consumerGroupId);
           // Kafka returns a DEAD description for non-existent groups
           // rather than throwing an exception
-          if (desc.state() == ConsumerGroupState.DEAD) {
+          if (desc.groupState() == GroupState.DEAD) {
             throw new GroupIdNotFoundException(
                 "Consumer group '%s' not found.".formatted(consumerGroupId));
           }
