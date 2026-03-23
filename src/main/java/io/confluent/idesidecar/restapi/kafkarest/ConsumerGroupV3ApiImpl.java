@@ -11,8 +11,6 @@ import static io.confluent.idesidecar.restapi.kafkarest.RelationshipUtil.forCons
 import static io.confluent.idesidecar.restapi.kafkarest.RelationshipUtil.forConsumers;
 import static io.confluent.idesidecar.restapi.kafkarest.RelationshipUtil.forController;
 import static io.confluent.idesidecar.restapi.kafkarest.RelationshipUtil.forPartition;
-import static io.confluent.idesidecar.restapi.util.MutinyUtil.uniItem;
-
 import io.confluent.idesidecar.restapi.kafkarest.api.ConsumerGroupV3Api;
 import io.confluent.idesidecar.restapi.kafkarest.model.ConsumerAssignmentData;
 import io.confluent.idesidecar.restapi.kafkarest.model.ConsumerAssignmentDataList;
