@@ -331,4 +331,5 @@ mp:
           io.confluent.idesidecar.restapi.kafkarest.TopicConfigV3ApiImpl,
           io.confluent.idesidecar.restapi.kafkarest.PartitionV3ApiImpl,
           io.confluent.idesidecar.restapi.kafkarest.RecordsV3ApiImpl,
-          io.confluent.idesidecar.restapi.kafkarest.TopicV3ApiImpl
+          io.confluent.idesidecar.restapi.kafkarest.TopicV3ApiImpl,
+          io.confluent.idesidecar.restapi.kafkarest.ConsumerGroupV3ApiImpl
