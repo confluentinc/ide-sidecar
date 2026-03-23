@@ -51,7 +51,7 @@ public class ConsumerGroupManagerImpl implements ConsumerGroupManager {
         ))
         .chain(listings -> {
           var groupIds = listings.stream()
-              .map(listing -> listing.groupId())
+              .map(ConsumerGroupListing::groupId)
               .toList();
           if (groupIds.isEmpty()) {
             return Uni.createFrom().item(List.of());
