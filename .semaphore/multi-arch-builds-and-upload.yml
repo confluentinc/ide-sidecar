@@ -126,9 +126,9 @@ blocks:
           # Restore caches for GraalVM and Chocolatey
           - cache restore graal_download_zip
           - cache restore choco_temp_dir
-          # Login to Vault
-          - $Env:VAULT_ADDR = "https://vault.cireops.gcp.internal.confluent.cloud"
-          - vault login -no-print token=$(vault write -field=token "auth/semaphore_self_hosted/login" role="default" jwt="$Env:SEMAPHORE_OIDC_TOKEN")
+          # Login to Vault V3
+          - $Env:VAULT_ADDR = "https://non-prod.vault.internal.confluent.cloud"
+          - vault login -no-print token=$(vault write -field=token "auth/semaphore/login" role="ide-sidecar" jwt="$Env:SEMAPHORE_OIDC_TOKEN")
           # Install GraalVM
           - |
             if (-not (Test-Path graalvm-community-jdk-21.0.2_windows-x64_bin.zip)) {
@@ -168,13 +168,10 @@ blocks:
             - powershell -Command "Invoke-WebRequest -Uri https://dot.net/v1/dotnet-install.ps1 -OutFile dotnet-install.ps1"
             - powershell -ExecutionPolicy Bypass -File dotnet-install.ps1 -Channel 8.0
             - $env:DOTNET_ROOT = "C:\Users\semaphore\AppData\Local\Microsoft\dotnet\"
-            # Fetch Azure client ID, client secret, and tenant ID from Vault
-            - vault kv get -field=azure_client_id v1/ci/kv/vscodeextension/release > client_id.txt
-            - vault kv get -field=azure_tenant_id v1/ci/kv/vscodeextension/release > tenant_id.txt
-            - vault kv get -field=azure_client_secret v1/ci/kv/vscodeextension/release > client_secret.txt
-            - $Env:APP_CLIENT_ID = Get-Content ./client_id.txt -Raw
-            - $Env:APP_CLIENT_SECRET = Get-Content ./client_secret.txt -Raw
-            - $Env:APP_TENANT_ID = Get-Content ./tenant_id.txt -Raw
+            # Fetch Azure client ID, client secret, and tenant ID from Vault V3
+            - $Env:APP_CLIENT_ID = $(vault kv get -field=azure_client_id stag/kv/semaphore/vscodeextension/release)
+            - $Env:APP_CLIENT_SECRET = $(vault kv get -field=azure_client_secret stag/kv/semaphore/vscodeextension/release)
+            - $Env:APP_TENANT_ID = $(vault kv get -field=azure_tenant_id stag/kv/semaphore/vscodeextension/release)
             # Sign the native libraries for Windows
             - |
               Write-Host "Signing native libraries";
