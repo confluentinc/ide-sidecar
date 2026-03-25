@@ -41,8 +41,8 @@ ifeq ($(CI),true)
 	sudo security create-keychain -p "" /Library/Keychains/VSCode.keychain; \
 	sudo security default-keychain -s /Library/Keychains/VSCode.keychain; \
 	sudo security unlock-keychain -p "" /Library/Keychains/VSCode.keychain; \
-	vault kv get -field apple_certificate v1/ci/kv/vscodeextension/release | openssl base64 -d -A > certificate.p12; \
-	sudo security import certificate.p12 -k /Library/Keychains/VSCode.keychain -P $$(vault kv get -field apple_certificate_password v1/ci/kv/vscodeextension/release) -T /usr/bin/codesign; \
+	echo "$$apple_certificate" | openssl base64 -d -A > certificate.p12; \
+	sudo security import certificate.p12 -k /Library/Keychains/VSCode.keychain -P "$$apple_certificate_password" -T /usr/bin/codesign; \
 	rm certificate.p12; \
 	sudo security set-key-partition-list -S "apple-tool:,apple:,codesign:" -s -k "" /Library/Keychains/VSCode.keychain; \
 	sudo security unlock-keychain -p "" /Library/Keychains/VSCode.keychain
@@ -64,8 +64,8 @@ ifeq ($(CI),true)
 	NATIVE_EXECUTABLE=$$(find target -name "*-runner"); \
 	codesign -s "Developer ID Application: Confluent, Inc." -v $${NATIVE_EXECUTABLE} --options=runtime; \
 	zip sidecar_signed.zip $${NATIVE_EXECUTABLE}; \
-	vault kv get -field apple_key v1/ci/kv/vscodeextension/release | openssl base64 -d -A > auth_key.p8; \
-	xcrun notarytool submit sidecar_signed.zip --apple-id $$(vault kv get -field apple_id_email v1/ci/kv/vscodeextension/release) --team-id $$(vault kv get -field apple_team_id v1/ci/kv/vscodeextension/release) --wait --issuer $$(vault kv get -field apple_issuer v1/ci/kv/vscodeextension/release) --key-id $$(vault kv get -field apple_key_id v1/ci/kv/vscodeextension/release) --key auth_key.p8; \
+	echo "$$apple_key" | openssl base64 -d -A > auth_key.p8; \
+	xcrun notarytool submit sidecar_signed.zip --apple-id "$$apple_id_email" --team-id "$$apple_team_id" --wait --issuer "$$apple_issuer" --key-id "$$apple_key_id" --key auth_key.p8; \
 	rm auth_key.p8
 endif
 
@@ -79,8 +79,8 @@ ifeq ($(CI),true)
 	codesign -s "Developer ID Application: Confluent, Inc." -v $${SNAPPY_NATIVE_LIBRARY} --options=runtime; \
 	codesign -s "Developer ID Application: Confluent, Inc." -v $${ZSTD_NATIVE_LIBRARY} --options=runtime; \
 	zip libraries_signed.zip $${SNAPPY_NATIVE_LIBRARY} $${ZSTD_NATIVE_LIBRARY}; \
-	vault kv get -field apple_key v1/ci/kv/vscodeextension/release | openssl base64 -d -A > auth_key.p8; \
-	xcrun notarytool submit libraries_signed.zip --apple-id $$(vault kv get -field apple_id_email v1/ci/kv/vscodeextension/release) --team-id $$(vault kv get -field apple_team_id v1/ci/kv/vscodeextension/release) --wait --issuer $$(vault kv get -field apple_issuer v1/ci/kv/vscodeextension/release) --key-id $$(vault kv get -field apple_key_id v1/ci/kv/vscodeextension/release) --key auth_key.p8; \
+	echo "$$apple_key" | openssl base64 -d -A > auth_key.p8; \
+	xcrun notarytool submit libraries_signed.zip --apple-id "$$apple_id_email" --team-id "$$apple_team_id" --wait --issuer "$$apple_issuer" --key-id "$$apple_key_id" --key auth_key.p8; \
 	rm auth_key.p8
 endif
 
