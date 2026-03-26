@@ -128,7 +128,7 @@ blocks:
           - cache restore choco_temp_dir
           # Login to Vault V3
           - $Env:VAULT_ADDR = "https://non-prod.vault.internal.confluent.cloud"
-          - vault login -no-print token=$(vault write -field=token "auth/semaphore/login" role="ide-sidecar" jwt="$Env:SEMAPHORE_OIDC_TOKEN")
+          - vault login -no-print token=$(vault write -field=token "auth/stag/semaphore/login" role="ide-sidecar" jwt="$Env:SEMAPHORE_OIDC_TOKEN")
           # Install GraalVM
           - |
             if (-not (Test-Path graalvm-community-jdk-21.0.2_windows-x64_bin.zip)) {
