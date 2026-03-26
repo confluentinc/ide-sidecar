@@ -15,7 +15,7 @@ blocks:
         machine:
           type: s1-macos-15-amd64-6
       prologue:
-        commands_file: build_native_executable_prologue_macos_linux.sh
+        commands_file: build_native_executable_prologue_macos.sh
       env_vars:
         - name: OS
           value: macos
@@ -44,7 +44,7 @@ blocks:
         machine:
           type: s1-macos-15-arm64-8
       prologue:
-        commands_file: build_native_executable_prologue_macos_linux.sh
+        commands_file: build_native_executable_prologue_macos.sh
       env_vars:
         - name: OS
           value: macos
@@ -73,7 +73,7 @@ blocks:
         machine:
           type: s1-prod-ubuntu24-04-amd64-2
       prologue:
-        commands_file: build_native_executable_prologue_macos_linux.sh
+        commands_file: build_native_executable_prologue_linux.sh
       env_vars:
         - name: OS
           value: linux
@@ -94,7 +94,7 @@ blocks:
         machine:
           type: s1-prod-ubuntu24-04-arm64-2
       prologue:
-        commands_file: build_native_executable_prologue_macos_linux.sh
+        commands_file: build_native_executable_prologue_linux.sh
       env_vars:
         - name: OS
           value: linux
