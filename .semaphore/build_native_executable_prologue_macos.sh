@@ -7,7 +7,7 @@ git fetch --all --tags
 git checkout $(sem-context get release_version)
 . vault-get-secret vscodeextension/release
 # Install SDKMAN! (https://sdkman.io/install)
-# SDKMAN! requires bash 4+
+# SDKMAN! requires bash 4+, but macOS comes with bash 3.2. We need to install a newer version of bash and use it to install SDKMAN!
 brew install bash
 curl -s "https://get.sdkman.io?rcupdate=false" | bash
 source "$HOME/.sdkman/bin/sdkman-init.sh"
