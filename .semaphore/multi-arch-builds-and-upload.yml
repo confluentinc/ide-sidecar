@@ -164,10 +164,11 @@ blocks:
         - name: "Build Native Executable (Windows x64)"
           commands:
             # Install Azure Sign Tool
+            - $Env:DOTNET_ROOT = "C:\dotnet"
             - dotnet tool install --global AzureSignTool
+            - $Env:PATH = "$Env:USERPROFILE\.dotnet\tools;$Env:PATH"
             - powershell -Command "Invoke-WebRequest -Uri https://dot.net/v1/dotnet-install.ps1 -OutFile dotnet-install.ps1"
             - powershell -ExecutionPolicy Bypass -File dotnet-install.ps1 -Channel 8.0
-            - $env:DOTNET_ROOT = "C:\Users\semaphore\AppData\Local\Microsoft\dotnet\"
             # Fetch Azure client ID, client secret, and tenant ID from Vault V3
             - $Env:APP_CLIENT_ID = $(vault kv get -field=azure_client_id stag/kv/semaphore/vscodeextension/release)
             - $Env:APP_CLIENT_SECRET = $(vault kv get -field=azure_client_secret stag/kv/semaphore/vscodeextension/release)
