@@ -130,14 +130,15 @@ public class ConsumerGroupV3ApiImpl implements ConsumerGroupV3Api {
                     .build())
                 .clusterId(clusterId)
                 .consumerGroupId(consumerGroupId)
-                .maxLagConsumerId("")
-                .maxLagClientId("")
-                .maxLagTopicName("")
-                .maxLagPartitionId(0)
+                .maxLagConsumerId(null)
+                .maxLagInstanceId(null)
+                .maxLagClientId(null)
+                .maxLagTopicName(null)
+                .maxLagPartitionId(null)
                 .maxLag(0L)
                 .totalLag(0L)
-                .maxLagConsumer(forConsumer(clusterId, consumerGroupId, ""))
-                .maxLagPartition(forPartition(clusterId, "", 0))
+                .maxLagConsumer(null)
+                .maxLagPartition(null)
                 .build();
           }
 
