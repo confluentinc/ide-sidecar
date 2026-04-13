@@ -1,4 +1,3 @@
-
 ---
 "%test":
   ide-sidecar:
@@ -27,7 +26,8 @@
           retry:
             initial-backoff-ms: 50
             max-backoff-ms: 200
-            max-attempts: 3
+            max-retries: 3
+            jitter-factor: 0.0
       confluent-local:
         resources:
           clusters-list-uri: http://localhost:${quarkus.wiremock.devservices.port}/v3/clusters
@@ -147,7 +147,7 @@ ide-sidecar:
         retry:
           initial-backoff-ms: 500
           max-backoff-ms: 10000
-          max-attempts: 5
+          max-retries: 5
           jitter-factor: 0.2
 
     confluent-local:
