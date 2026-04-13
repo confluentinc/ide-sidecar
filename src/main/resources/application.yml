@@ -21,6 +21,13 @@
           lkc-list-uri: http://localhost:${quarkus.wiremock.devservices.port}/api/cmk/v2/clusters?environment=%s
           sr-list-uri: http://localhost:${quarkus.wiremock.devservices.port}/api/srcm/v3/clusters?environment=%s
           flink-compute-pools-uri: http://localhost:${quarkus.wiremock.devservices.port}/api/fcpm/v2/compute-pools?environment=%s
+        rate-limit:
+          # effectively unlimited for tests
+          permits-per-second: 1000.0
+          retry:
+            initial-backoff-ms: 50
+            max-backoff-ms: 200
+            max-attempts: 3
       confluent-local:
         resources:
           clusters-list-uri: http://localhost:${quarkus.wiremock.devservices.port}/v3/clusters
@@ -133,6 +140,15 @@ ide-sidecar:
         lkc-list-uri: https://${ide-sidecar.connections.ccloud.base-path}/api/cmk/v2/clusters?environment=%s
         sr-list-uri: https://${ide-sidecar.connections.ccloud.base-path}/api/srcm/v3/clusters?environment=%s
         flink-compute-pools-uri: https://${ide-sidecar.connections.ccloud.base-path}/api/fcpm/v2/compute-pools?environment=%s
+      # rate limiting for outbound CCloud API requests (5 req/sec hard limit)
+      rate-limit:
+        # target rate below the hard limit to leave headroom for auth calls
+        permits-per-second: 4.0
+        retry:
+          initial-backoff-ms: 500
+          max-backoff-ms: 10000
+          max-attempts: 5
+          jitter-factor: 0.2
 
     confluent-local:
       # We assume that the user is running the confluent-local image with
@@ -300,8 +316,8 @@ quarkus:
     print-data-fetcher-exception: true
     root-path: /gateway/v1/graphql
     show-runtime-exception-message:
-      -  io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException
-      -  io.confluent.idesidecar.restapi.exceptions.ResourceFetchingException
+      - io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException
+      - io.confluent.idesidecar.restapi.exceptions.ResourceFetchingException
   scheduler:
     start-mode: forced
   swagger-ui:
