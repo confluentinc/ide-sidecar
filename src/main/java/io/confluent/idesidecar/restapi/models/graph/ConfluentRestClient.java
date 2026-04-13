@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
+import io.confluent.idesidecar.restapi.exceptions.CCloudRateLimitException;
 import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
 import io.confluent.idesidecar.restapi.exceptions.ErrorResponse;
 import io.confluent.idesidecar.restapi.exceptions.Failure;
@@ -19,11 +20,14 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
 import io.vertx.core.MultiMap;
+import io.vertx.ext.web.client.HttpResponse;
 import jakarta.inject.Inject;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
  * A class that provides a common interface for interacting with APIs that follow the Confluent API
@@ -42,6 +46,39 @@ public abstract class ConfluentRestClient {
 
   @Inject
   UriUtil uriUtil;
+
+  @ConfigProperty(
+      name = "ide-sidecar.connections.ccloud.rate-limit.retry.initial-backoff-ms",
+      defaultValue = "500"
+  )
+  long retryInitialBackoffMs;
+
+  @ConfigProperty(
+      name = "ide-sidecar.connections.ccloud.rate-limit.retry.max-backoff-ms",
+      defaultValue = "10000"
+  )
+  long retryMaxBackoffMs;
+
+  @ConfigProperty(
+      name = "ide-sidecar.connections.ccloud.rate-limit.retry.max-attempts",
+      defaultValue = "5"
+  )
+  int retryMaxAttempts;
+
+  @ConfigProperty(
+      name = "ide-sidecar.connections.ccloud.rate-limit.retry.jitter-factor",
+      defaultValue = "0.2"
+  )
+  double retryJitterFactor;
+
+  /**
+   * Acquire a rate-limit permit before making an outbound API call. The default implementation is
+   * a no-op; subclasses (e.g., {@link ConfluentCloudRestClient}) override this to gate CCloud
+   * requests through a rate limiter.
+   */
+  protected Uni<Void> acquireRateLimitPermit() {
+    return Uni.createFrom().voidItem();
+  }
 
   /**
    * The state used for requesting paginated responses. The first state should just be the original
@@ -243,15 +280,29 @@ public abstract class ConfluentRestClient {
           .repeating()
           .completionStage(
               () -> new PaginationState(firstUrl, limits),
-              // Make request for more results
-              state -> webClientFactory
-                  .getWebClient()
-                  .getAbs(state.nextUrl)
-                  .putHeaders(headers)
-                  .send()
-                  .map(result -> responseParser.parse(result.bodyAsString(), state)
+              // acquire a rate-limit permit, then make request for more results
+              state -> acquireRateLimitPermit()
+                  .chain(() -> Uni.createFrom().completionStage(
+                      webClientFactory
+                          .getWebClient()
+                          .getAbs(state.nextUrl)
+                          .putHeaders(headers)
+                          .send()
+                          .map(result -> {
+                            checkResponse(result, state.nextUrl);
+                            return responseParser.parse(result.bodyAsString(), state);
+                          })
+                          .toCompletionStage()
+                  ))
+                  .onFailure(CCloudRateLimitException.class)
+                  .retry()
+                  .withBackOff(
+                      Duration.ofMillis(retryInitialBackoffMs),
+                      Duration.ofMillis(retryMaxBackoffMs)
                   )
-                  .toCompletionStage()
+                  .withJitter(retryJitterFactor)
+                  .atMost(retryMaxAttempts)
+                  .subscribeAsCompletionStage()
           )
           .whilst(PageOfResults::hasNextPage) // include the last page
           .map(PageOfResults::items) // extract the items from the page
@@ -277,18 +328,73 @@ public abstract class ConfluentRestClient {
       ItemParser<T> responseParser
   ) {
     try {
-      var response = webClientFactory
-          .getWebClient()
-          .getAbs(url)
-          .putHeaders(headers)
-          .send()
-          .map(result -> responseParser.parse(url, result.bodyAsString()))
-          .toCompletionStage();
-      return Uni.createFrom().completionStage(response);
+      return acquireRateLimitPermit()
+          .chain(() -> Uni.createFrom().completionStage(
+              webClientFactory
+                  .getWebClient()
+                  .getAbs(url)
+                  .putHeaders(headers)
+                  .send()
+                  .map(result -> {
+                    checkResponse(result, url);
+                    return responseParser.parse(url, result.bodyAsString());
+                  })
+                  .toCompletionStage()
+          ))
+          .onFailure(CCloudRateLimitException.class)
+          .retry()
+          .withBackOff(
+              Duration.ofMillis(retryInitialBackoffMs),
+              Duration.ofMillis(retryMaxBackoffMs)
+          )
+          .withJitter(retryJitterFactor)
+          .atMost(retryMaxAttempts);
     } catch (ConnectionNotFoundException | ResourceFetchingException e) {
       Log.error("Getting item failed with error", e);
       return Uni.createFrom().failure(e);
     }
+  }
+
+  /**
+   * Check the HTTP response status code before attempting to parse the body. Throws
+   * {@link CCloudRateLimitException} on 429 (triggering retry) and
+   * {@link ResourceFetchingException} on other error status codes.
+   *
+   * @param response the HTTP response to check
+   * @param url      the request URL, for inclusion in error messages
+   * @throws CCloudRateLimitException   if the response is 429 Too Many Requests
+   * @throws ResourceFetchingException if the response is any other 4xx or 5xx error
+   */
+  protected void checkResponse(HttpResponse<?> response, String url) {
+    int status = response.statusCode();
+    if (status == 429) {
+      int retryAfter = parseRetryAfterHeader(response);
+      Log.warnf("Rate limited by %s (retry-after: %ds)", url, retryAfter);
+      throw new CCloudRateLimitException(url, retryAfter);
+    }
+    if (status >= 400) {
+      var body = response.bodyAsString();
+      throw parseErrorOrFail(
+          url,
+          body,
+          new RuntimeException("HTTP %d from %s".formatted(status, url))
+      );
+    }
+  }
+
+  /**
+   * Parse the Retry-After header from an HTTP response, returning -1 if absent or unparseable.
+   */
+  private static int parseRetryAfterHeader(HttpResponse<?> response) {
+    var header = response.getHeader("Retry-After");
+    if (header != null) {
+      try {
+        return Integer.parseInt(header.trim());
+      } catch (NumberFormatException e) {
+        // Retry-After can also be an HTTP-date, which we don't parse
+      }
+    }
+    return -1;
   }
 
   /**
