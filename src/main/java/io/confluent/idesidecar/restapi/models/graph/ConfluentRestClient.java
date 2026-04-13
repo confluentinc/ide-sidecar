@@ -60,10 +60,10 @@ public abstract class ConfluentRestClient {
   long retryMaxBackoffMs;
 
   @ConfigProperty(
-      name = "ide-sidecar.connections.ccloud.rate-limit.retry.max-attempts",
+      name = "ide-sidecar.connections.ccloud.rate-limit.retry.max-retries",
       defaultValue = "5"
   )
-  int retryMaxAttempts;
+  int retryMaxRetries;
 
   @ConfigProperty(
       name = "ide-sidecar.connections.ccloud.rate-limit.retry.jitter-factor",
@@ -301,7 +301,7 @@ public abstract class ConfluentRestClient {
                       Duration.ofMillis(retryMaxBackoffMs)
                   )
                   .withJitter(retryJitterFactor)
-                  .atMost(retryMaxAttempts)
+                  .atMost(retryMaxRetries)
                   .subscribeAsCompletionStage()
           )
           .whilst(PageOfResults::hasNextPage) // include the last page
@@ -348,7 +348,7 @@ public abstract class ConfluentRestClient {
               Duration.ofMillis(retryMaxBackoffMs)
           )
           .withJitter(retryJitterFactor)
-          .atMost(retryMaxAttempts);
+          .atMost(retryMaxRetries);
     } catch (ConnectionNotFoundException | ResourceFetchingException e) {
       Log.error("Getting item failed with error", e);
       return Uni.createFrom().failure(e);
