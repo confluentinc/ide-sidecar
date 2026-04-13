@@ -40,6 +40,11 @@ public class CCloudApiRateLimiter {
       )
       double permitsPerSecond
   ) {
+    if (permitsPerSecond <= 0) {
+      throw new IllegalArgumentException(
+          "permits-per-second must be positive, got: " + permitsPerSecond
+      );
+    }
     this.permitsPerSecond = permitsPerSecond;
     this.state = new AtomicReference<>(
         new TokenBucketState(permitsPerSecond, System.nanoTime())
