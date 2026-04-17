@@ -1,6 +1,6 @@
-# IDE Sidecar 
+# IDE Sidecar
 
-![Release](release.svg) 
+![Release](release.svg)
 
 👋 Welcome to **IDE Sidecar**, the sidecar application used by
 [Confluent for VS Code](https://github.com/confluentinc/vscode).
@@ -51,7 +51,7 @@ get it reviewed, and then merge it. Every new commit (except those with `[ci ski
 description) will cause Semaphore CI/CD to build the `main` branch and create a GitHub release. For successful builds,
 Semaphore will create native executables for all supported operating systems and platforms via
 [promotions](https://github.com/confluentinc/ide-sidecar/blob/main/.semaphore/semaphore.yml#L78).
-Semaphore CI uploads the native executables as GitHub release assets, so that the 
+Semaphore CI uploads the native executables as GitHub release assets, so that the
 [confluentinc/vscode](https://github.com/confluentinc/vscode) CI job can pull these executables.
 
 At the moment, we build native executables for the following operating systems and platforms:
@@ -66,7 +66,11 @@ At the moment, we build native executables for the following operating systems a
 
 This project is licensed under the Apache License, Version 2.0. See [LICENSE.txt](./LICENSE.txt) for the full license text.
 
-The LICENSE.txt and NOTICE.txt covers the source code distributions of this project. 
-The LICENSE.txt and NOTICE-binary.txt covers the binary distribution (native executable) of this project. 
-The THIRD_PARTY_NOTICES.txt file contains the list of third-party software that is included in the 
+The LICENSE.txt and NOTICE.txt covers the source code distributions of this project.
+The LICENSE.txt and NOTICE-binary.txt covers the binary distribution (native executable) of this project.
+The THIRD_PARTY_NOTICES.txt file contains the list of third-party software that is included in the
 binary distribution of this project, along with the full text of applicable licenses.
+
+## Test
+
+test
