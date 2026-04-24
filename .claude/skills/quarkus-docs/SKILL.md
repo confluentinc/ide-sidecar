@@ -6,7 +6,13 @@ description:
   Triggers on questions like "how does @Inject work", "Uni vs Multi", "Quarkus test profile",
   "application.yml config", "@ApplicationScoped vs @Singleton", "@Produces bean", "@Observes event",
   "CDI observer pattern", "Mutiny transform", "Vert.x HTTP client", or "Quarkus guide for X".
-allowed-tools: Read, Bash, Glob, Grep, WebFetch, WebSearch
+allowed-tools:
+  - Read
+  - Bash
+  - Glob
+  - Grep
+  - WebFetch
+  - WebSearch
 argument-hint: "[topic]"
 ---
 
