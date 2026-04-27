@@ -6,7 +6,13 @@ description:
   "native image build error", "reflection-config.json", "native library loading", "GraalVM
   substitution", "--initialize-at-run-time", "native executable test", "native build args",
   "ClassNotFoundException in native", or "make test-native".
-allowed-tools: Read, Bash, Glob, Grep, WebFetch, WebSearch
+allowed-tools:
+  - Read
+  - Bash
+  - Glob
+  - Grep
+  - WebFetch
+  - WebSearch
 argument-hint: "[topic or error message]"
 ---
 
