@@ -37,4 +37,28 @@ class ApiKeyAndSecretTest extends RedactedTestBase<ApiKeyAndSecret> {
     creds.validate(errors, "path", "what");
     assertEquals(0, errors.size());
   }
+
+  @Test
+  void keyAtMaxLengthShouldPassValidation() {
+    var key = "x".repeat(256);
+    var creds = new ApiKeyAndSecret(key, new ApiSecret("api-secret".toCharArray()));
+
+    var errors = new ArrayList<Error>();
+    creds.validate(errors, "path", "what");
+    assertEquals(0, errors.size());
+  }
+
+  @Test
+  void keyLongerThanMaxLengthShouldFailValidation() {
+    var key = "x".repeat(257);
+    var creds = new ApiKeyAndSecret(key, new ApiSecret("api-secret".toCharArray()));
+
+    var errors = new ArrayList<Error>();
+    creds.validate(errors, "path", "what");
+    assertEquals(1, errors.size());
+    assertEquals(
+        "what key may not be longer than 256 characters",
+        errors.get(0).detail()
+    );
+  }
 }

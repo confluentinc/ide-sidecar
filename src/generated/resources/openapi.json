@@ -9,7 +9,7 @@
         "properties" : {
           "api_key" : {
             "description" : "The API key to use when connecting to the external service.",
-            "maxLength" : 96,
+            "maxLength" : 256,
             "minLength" : 1,
             "type" : "string"
           },
@@ -62,7 +62,7 @@
         "properties" : {
           "username" : {
             "description" : "The username to use when connecting to the external service.",
-            "maxLength" : 96,
+            "maxLength" : 256,
             "minLength" : 1,
             "type" : "string"
           },

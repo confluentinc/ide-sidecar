@@ -30,8 +30,9 @@ public record BasicCredentials(
     Password password
 ) implements Credentials {
 
-  // WarpStream likes using > 64 characters for the username
-  private static final int USERNAME_MAX_LEN = 96;
+  // Some managed Kafka services use long usernames that combine multiple identifiers
+  // (e.g. tenancy + user + resource ID), which can easily exceed 96 characters.
+  private static final int USERNAME_MAX_LEN = 256;
 
   private static final String PLAIN_LOGIN_MODULE_CLASS =
       "org.apache.kafka.common.security.plain.PlainLoginModule";
