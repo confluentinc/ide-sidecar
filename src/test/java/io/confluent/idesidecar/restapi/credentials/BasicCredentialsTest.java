@@ -37,4 +37,28 @@ class BasicCredentialsTest extends RedactedTestBase<BasicCredentials> {
     creds.validate(errors, "path", "what");
     assertEquals(0, errors.size());
   }
+
+  @Test
+  void usernameAtMaxLengthShouldPassValidation() {
+    var username = "x".repeat(256);
+    var creds = new BasicCredentials(username, new Password("my-secret".toCharArray()));
+
+    var errors = new ArrayList<Error>();
+    creds.validate(errors, "path", "what");
+    assertEquals(0, errors.size());
+  }
+
+  @Test
+  void usernameLongerThanMaxLengthShouldFailValidation() {
+    var username = "x".repeat(257);
+    var creds = new BasicCredentials(username, new Password("my-secret".toCharArray()));
+
+    var errors = new ArrayList<Error>();
+    creds.validate(errors, "path", "what");
+    assertEquals(1, errors.size());
+    assertEquals(
+        "what username may not be longer than 256 characters",
+        errors.get(0).detail()
+    );
+  }
 }
