@@ -22,7 +22,7 @@
           flink-compute-pools-uri: http://localhost:${quarkus.wiremock.devservices.port}/api/fcpm/v2/compute-pools?environment=%s
         rate-limit:
           # effectively unlimited for tests
-          default-permits-per-second: 1000.0
+          default-permits-per-second: 1000
           retry:
             initial-backoff-ms: 50
             max-backoff-ms: 200
@@ -143,7 +143,7 @@ ide-sidecar:
       # rate limiting for outbound CCloud API requests
       rate-limit:
         # fallback rate used before the first response with X-RateLimit-* headers
-        default-permits-per-second: 4.0
+        default-permits-per-second: 4
         retry:
           initial-backoff-ms: 500
           max-backoff-ms: 10000

@@ -34,20 +34,20 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 @RegisterForReflection
 public class CCloudApiRateLimiter {
 
-  private final double defaultPermitsPerSecond;
+  private final int defaultPermitsPerSecond;
   private final ConcurrentHashMap<String, Bucket> buckets = new ConcurrentHashMap<>();
 
   /**
-   * @param defaultPermitsPerSecond fallback rate before the first server response with
-   *     {@code X-RateLimit-*} headers arrives for a given bucket. Kept as a {@code double} so
-   *     very-slow APIs can be configured at fractional rates (e.g., 0.5 req/sec); must be positive.
+   * @param defaultPermitsPerSecond fallback rate (req/sec) before the first server response with
+   *     {@code X-RateLimit-*} headers arrives for a given bucket; must be positive. After the
+   *     first response lands, the server-reported integer {@code X-RateLimit-Limit} takes over.
    */
   public CCloudApiRateLimiter(
       @ConfigProperty(
           name = "ide-sidecar.connections.ccloud.rate-limit.default-permits-per-second",
-          defaultValue = "4.0"
+          defaultValue = "4"
       )
-      double defaultPermitsPerSecond
+      int defaultPermitsPerSecond
   ) {
     if (defaultPermitsPerSecond <= 0) {
       throw new IllegalArgumentException(
@@ -159,13 +159,13 @@ public class CCloudApiRateLimiter {
     private static final double EPOCH_RESET_THRESHOLD_SECONDS = 31_536_000.0;
 
     private final String key;
-    private final double defaultPermitsPerSecond;
+    private final int defaultPermitsPerSecond;
     private final AtomicReference<RateLimitState> latestState = new AtomicReference<>(null);
     private final AtomicInteger inflight = new AtomicInteger(0);
     private final AtomicLong lastAdmitNanos = new AtomicLong(0);
     private final AtomicBoolean wasExhausted = new AtomicBoolean(false);
 
-    Bucket(String key, double defaultPermitsPerSecond) {
+    Bucket(String key, int defaultPermitsPerSecond) {
       this.key = key;
       this.defaultPermitsPerSecond = defaultPermitsPerSecond;
     }
