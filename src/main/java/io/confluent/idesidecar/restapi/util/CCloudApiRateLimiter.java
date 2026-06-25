@@ -34,15 +34,25 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 @RegisterForReflection
 public class CCloudApiRateLimiter {
 
+  private final boolean enabled;
   private final int defaultPermitsPerSecond;
   private final ConcurrentHashMap<String, Bucket> buckets = new ConcurrentHashMap<>();
 
   /**
+   * @param enabled when false, all public methods short-circuit so no proactive pacing happens
+   *     (useful for A/B comparison against the unthrottled baseline). The 429 retry chain in
+   *     {@code ConfluentRestClient} is independent and still fires; set
+   *     {@code rate-limit.retry.max-retries: 0} to also disable retry.
    * @param defaultPermitsPerSecond fallback rate (req/sec) before the first server response with
    *     {@code X-RateLimit-*} headers arrives for a given bucket; must be positive. After the
    *     first response lands, the server-reported integer {@code X-RateLimit-Limit} takes over.
    */
   public CCloudApiRateLimiter(
+      @ConfigProperty(
+          name = "ide-sidecar.connections.ccloud.rate-limit.enabled",
+          defaultValue = "true"
+      )
+      boolean enabled,
       @ConfigProperty(
           name = "ide-sidecar.connections.ccloud.rate-limit.default-permits-per-second",
           defaultValue = "4"
@@ -54,7 +64,12 @@ public class CCloudApiRateLimiter {
           "default-permits-per-second must be positive, got: " + defaultPermitsPerSecond
       );
     }
+    this.enabled = enabled;
     this.defaultPermitsPerSecond = defaultPermitsPerSecond;
+    if (!enabled) {
+      Log.info("CCloud API rate limiting is disabled via "
+          + "ide-sidecar.connections.ccloud.rate-limit.enabled=false");
+    }
   }
 
   /**
@@ -64,6 +79,9 @@ public class CCloudApiRateLimiter {
    * {@link #recordRateLimitedResponse}, or {@link #notifyRequestCompleted} for the same URL.
    */
   public Uni<Void> acquire(String url) {
+    if (!enabled) {
+      return Uni.createFrom().voidItem();
+    }
     return bucketFor(url).acquire();
   }
 
@@ -72,6 +90,9 @@ public class CCloudApiRateLimiter {
    * them to the matching bucket; otherwise just release the inflight permit.
    */
   public void recordResponse(String url, HttpResponse<?> response) {
+    if (!enabled) {
+      return;
+    }
     bucketFor(url).recordResponse(response);
   }
 
@@ -80,6 +101,9 @@ public class CCloudApiRateLimiter {
    * or unparseable) and feed an exhaustion state to the matching bucket.
    */
   public void recordRateLimitedResponse(String url, HttpResponse<?> response) {
+    if (!enabled) {
+      return;
+    }
     bucketFor(url).recordRateLimitedResponse(response);
   }
 
@@ -88,6 +112,9 @@ public class CCloudApiRateLimiter {
    * request fails before any response headers are available (network error, etc.).
    */
   public void notifyRequestCompleted(String url) {
+    if (!enabled) {
+      return;
+    }
     bucketFor(url).notifyRequestCompleted();
   }
 

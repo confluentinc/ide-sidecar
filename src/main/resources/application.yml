@@ -142,6 +142,9 @@ ide-sidecar:
         flink-compute-pools-uri: https://${ide-sidecar.connections.ccloud.base-path}/api/fcpm/v2/compute-pools?environment=%s
       # rate limiting for outbound CCloud API requests
       rate-limit:
+        # set to false to skip proactive pacing entirely (e.g. for A/B comparison);
+        # the 429 retry chain is independent and still fires - set retry.max-retries: 0 to also disable that
+        enabled: true
         # fallback rate used before the first response with X-RateLimit-* headers
         default-permits-per-second: 4
         retry:
