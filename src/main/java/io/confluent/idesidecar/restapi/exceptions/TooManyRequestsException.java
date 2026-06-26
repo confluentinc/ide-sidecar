@@ -3,22 +3,23 @@ package io.confluent.idesidecar.restapi.exceptions;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 
 /**
- * Exception thrown when a CCloud API returns HTTP 429 (Too Many Requests). This is a transient,
- * retryable condition; callers should retry with exponential backoff.
+ * Exception thrown when an upstream API returns HTTP 429 (Too Many Requests). Transient and
+ * retryable; callers should retry with exponential backoff. Confluent Cloud is the in-tree
+ * consumer, but the type itself is API-agnostic.
  */
 @RegisterForReflection
-public class CCloudRateLimitException extends RuntimeException {
+public class TooManyRequestsException extends RuntimeException {
 
   private final int retryAfterSeconds;
 
-  public CCloudRateLimitException(String url, int retryAfterSeconds) {
-    super("CCloud API rate limit exceeded for %s (retry-after: %ds)".formatted(
+  public TooManyRequestsException(String url, int retryAfterSeconds) {
+    super("Too Many Requests (HTTP 429) from %s (retry-after: %ds)".formatted(
         url, retryAfterSeconds
     ));
     this.retryAfterSeconds = retryAfterSeconds;
   }
 
-  public CCloudRateLimitException(String url) {
+  public TooManyRequestsException(String url) {
     this(url, -1);
   }
 

@@ -7,7 +7,7 @@ import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
-import io.confluent.idesidecar.restapi.exceptions.CCloudRateLimitException;
+import io.confluent.idesidecar.restapi.exceptions.TooManyRequestsException;
 import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
 import io.confluent.idesidecar.restapi.exceptions.ErrorResponse;
 import io.confluent.idesidecar.restapi.exceptions.Failure;
@@ -89,7 +89,7 @@ public abstract class ConfluentRestClient {
   }
 
   /**
-   * Called when an HTTP 429 is received, before the {@link CCloudRateLimitException} is thrown.
+   * Called when an HTTP 429 is received, before the {@link TooManyRequestsException} is thrown.
    * Default is a no-op.
    */
   protected void onRateLimitResponse(String url, HttpResponse<?> response) {
@@ -113,13 +113,13 @@ public abstract class ConfluentRestClient {
    * held, so {@link #withRateLimitRetry} releases it via {@link #onRequestFailed}.
    */
   private boolean isUnhandledRequestFailure(Throwable t) {
-    return !(t instanceof CCloudRateLimitException);
+    return !(t instanceof TooManyRequestsException);
   }
 
   /**
    * Wrap a request {@link Uni} with the standard rate-limit failure handling: release the permit
-   * for any failure other than {@link CCloudRateLimitException} (which already released via
-   * {@link #onRateLimitResponse}), then retry on {@link CCloudRateLimitException} with the
+   * for any failure other than {@link TooManyRequestsException} (which already released via
+   * {@link #onRateLimitResponse}), then retry on {@link TooManyRequestsException} with the
    * configured backoff/jitter policy. Logs at ERROR on retry exhaustion so operators can
    * distinguish exhausted retries from a single unretried 429.
    */
@@ -127,7 +127,7 @@ public abstract class ConfluentRestClient {
     return uni
         .onFailure(this::isUnhandledRequestFailure)
         .invoke(t -> onRequestFailed(url))
-        .onFailure(CCloudRateLimitException.class)
+        .onFailure(TooManyRequestsException.class)
         .retry()
         .withBackOff(
             Duration.ofMillis(retryInitialBackoffMs),
@@ -135,7 +135,7 @@ public abstract class ConfluentRestClient {
         )
         .withJitter(retryJitterFactor)
         .atMost(retryMaxRetries)
-        .onFailure(CCloudRateLimitException.class)
+        .onFailure(TooManyRequestsException.class)
         .invoke(t -> Log.errorf(
             "Rate-limit retries exhausted for %s after %d retries; propagating failure",
             url, retryMaxRetries
@@ -415,14 +415,14 @@ public abstract class ConfluentRestClient {
 
   /**
    * Check the HTTP response status code before attempting to parse the body. Throws
-   * {@link CCloudRateLimitException} on 429 (triggering retry) and
+   * {@link TooManyRequestsException} on 429 (triggering retry) and
    * {@link ResourceFetchingException} on other error status codes. The 429 path releases the
    * rate-limit permit via {@link #onRateLimitResponse} before throwing; other failures leave the
    * permit held for {@link #withRateLimitRetry} to release via {@link #onRequestFailed}.
    *
    * @param response the HTTP response to check
    * @param url      the request URL, for inclusion in error messages
-   * @throws CCloudRateLimitException  if the response is 429 Too Many Requests
+   * @throws TooManyRequestsException  if the response is 429 Too Many Requests
    * @throws ResourceFetchingException if the response is any other 4xx or 5xx error
    */
   protected void checkResponse(HttpResponse<?> response, String url) {
@@ -437,7 +437,7 @@ public abstract class ConfluentRestClient {
           response.getHeader(RateLimitState.HEADER_REMAINING),
           response.getHeader(RateLimitState.HEADER_RESET)
       );
-      throw new CCloudRateLimitException(url, retryAfter);
+      throw new TooManyRequestsException(url, retryAfter);
     }
     if (status >= 400) {
       var body = response.bodyAsString();
