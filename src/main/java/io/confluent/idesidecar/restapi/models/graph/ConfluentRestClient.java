@@ -107,19 +107,20 @@ public abstract class ConfluentRestClient {
   }
 
   /**
-   * True for failures that have NOT already released the rate-limit permit. 429 releases via
-   * {@link #onRateLimitResponse}; 4xx/5xx releases via {@link #onRequestFailed} inside
-   * {@link #checkResponse}. Anything else (DNS, TLS, connect timeout, etc.) bypasses both and
-   * needs the upstream chain to release the permit.
+   * True for failures that have NOT already released the rate-limit permit. Only 429s release the
+   * permit before throwing (via {@link #onRateLimitResponse} inside {@link #checkResponse}); every
+   * other failure mode (parser error, non-429 HTTP status, network/DNS/TLS) leaves the permit
+   * held, so {@link #withRateLimitRetry} releases it via {@link #onRequestFailed}.
    */
   private boolean isUnhandledRequestFailure(Throwable t) {
-    return !(t instanceof CCloudRateLimitException) && !(t instanceof ResourceFetchingException);
+    return !(t instanceof CCloudRateLimitException);
   }
 
   /**
    * Wrap a request {@link Uni} with the standard rate-limit failure handling: release the permit
-   * on pre-checkResponse network failures, then retry on {@link CCloudRateLimitException} with
-   * the configured backoff/jitter policy. Logs at ERROR on retry exhaustion so operators can
+   * for any failure other than {@link CCloudRateLimitException} (which already released via
+   * {@link #onRateLimitResponse}), then retry on {@link CCloudRateLimitException} with the
+   * configured backoff/jitter policy. Logs at ERROR on retry exhaustion so operators can
    * distinguish exhausted retries from a single unretried 429.
    */
   private <T> Uni<T> withRateLimitRetry(String url, Uni<T> uni) {
@@ -415,11 +416,13 @@ public abstract class ConfluentRestClient {
   /**
    * Check the HTTP response status code before attempting to parse the body. Throws
    * {@link CCloudRateLimitException} on 429 (triggering retry) and
-   * {@link ResourceFetchingException} on other error status codes.
+   * {@link ResourceFetchingException} on other error status codes. The 429 path releases the
+   * rate-limit permit via {@link #onRateLimitResponse} before throwing; other failures leave the
+   * permit held for {@link #withRateLimitRetry} to release via {@link #onRequestFailed}.
    *
    * @param response the HTTP response to check
    * @param url      the request URL, for inclusion in error messages
-   * @throws CCloudRateLimitException   if the response is 429 Too Many Requests
+   * @throws CCloudRateLimitException  if the response is 429 Too Many Requests
    * @throws ResourceFetchingException if the response is any other 4xx or 5xx error
    */
   protected void checkResponse(HttpResponse<?> response, String url) {
@@ -437,8 +440,6 @@ public abstract class ConfluentRestClient {
       throw new CCloudRateLimitException(url, retryAfter);
     }
     if (status >= 400) {
-      // release the permit before throwing; otherwise the inflight counter leaks per failure
-      onRequestFailed(url);
       var body = response.bodyAsString();
       throw parseErrorOrFail(
           url,
