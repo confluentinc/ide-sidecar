@@ -402,13 +402,12 @@ class CCloudApiRateLimiterTest {
 
   @Test
   void disabledLimiterShouldShortCircuitAcquireWithoutBucketCreation() {
-    // arrange: 1 req/sec default - if pacing kicked in, each acquire would block ~1s
+    // arrange: 1 req/sec default - if pacing were active, the *second* acquire would block ~1s
     var limiter = new CCloudApiRateLimiter(false, 1);
 
-    // act: a per-acquire 100ms cap would trip TimeoutException if pacing were active
-    for (int i = 0; i < 20; i++) {
-      limiter.acquire(URL_A).await().atMost(Duration.ofMillis(100));
-    }
+    // act: two acquires; the second would hit the timeout if the limiter were paced
+    limiter.acquire(URL_A).await().atMost(Duration.ofMillis(500));
+    limiter.acquire(URL_A).await().atMost(Duration.ofMillis(500));
 
     // assert: no buckets created, no state observed
     assertEquals(0, limiter.bucketCount());

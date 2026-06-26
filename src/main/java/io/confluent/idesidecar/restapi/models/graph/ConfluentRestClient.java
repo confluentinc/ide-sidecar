@@ -7,13 +7,11 @@ import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
-import io.confluent.idesidecar.restapi.exceptions.TooManyRequestsException;
 import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
 import io.confluent.idesidecar.restapi.exceptions.ErrorResponse;
 import io.confluent.idesidecar.restapi.exceptions.Failure;
 import io.confluent.idesidecar.restapi.exceptions.ResourceFetchingException;
 import io.confluent.idesidecar.restapi.util.ObjectMapperFactory;
-import io.confluent.idesidecar.restapi.util.RateLimitState;
 import io.confluent.idesidecar.restapi.util.UriUtil;
 import io.confluent.idesidecar.restapi.util.WebClientFactory;
 import io.quarkus.logging.Log;
@@ -24,10 +22,10 @@ import io.vertx.core.MultiMap;
 import io.vertx.ext.web.client.HttpResponse;
 import jakarta.inject.Inject;
 import java.io.IOException;
-import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
@@ -48,98 +46,23 @@ public abstract class ConfluentRestClient {
   @Inject
   UriUtil uriUtil;
 
-  @ConfigProperty(
-      name = "ide-sidecar.connections.ccloud.rate-limit.retry.initial-backoff-ms",
-      defaultValue = "500"
-  )
-  long retryInitialBackoffMs;
-
-  @ConfigProperty(
-      name = "ide-sidecar.connections.ccloud.rate-limit.retry.max-backoff-ms",
-      defaultValue = "10000"
-  )
-  long retryMaxBackoffMs;
-
-  @ConfigProperty(
-      name = "ide-sidecar.connections.ccloud.rate-limit.retry.max-retries",
-      defaultValue = "5"
-  )
-  int retryMaxRetries;
-
-  @ConfigProperty(
-      name = "ide-sidecar.connections.ccloud.rate-limit.retry.jitter-factor",
-      defaultValue = "0.2"
-  )
-  double retryJitterFactor;
-
   /**
-   * Acquire a rate-limit permit for the bucket associated with {@code url}. Default is a no-op;
-   * the URL is supplied so per-endpoint limiters can route to the right bucket.
-   */
-  protected Uni<Void> acquireRateLimitPermit(String url) {
-    return Uni.createFrom().voidItem();
-  }
-
-  /**
-   * Called after a successful HTTP response, scoped to the bucket for {@code url}. Default is a
-   * no-op.
+   * Called after a successful HTTP response, once the body has been parsed. Default is a no-op;
+   * subclasses can override to consume response metadata (e.g., rate-limit headers). Fires AFTER
+   * the parser so a parser failure won't trigger an erroneous "success" signal here.
    */
   protected void onResponseReceived(String url, HttpResponse<?> response) {
     // no-op by default
   }
 
   /**
-   * Called when an HTTP 429 is received, before the {@link TooManyRequestsException} is thrown.
-   * Default is a no-op.
+   * Template method for subclasses to wrap each outbound request with cross-cutting behavior
+   * (rate limiting, retries, circuit breaking, etc.). The {@code uniSupplier} is invoked fresh
+   * each time the wrapper subscribes, so retries get a new send rather than replaying a
+   * completed {@code CompletionStage}. Default invokes the supplier once and returns its Uni.
    */
-  protected void onRateLimitResponse(String url, HttpResponse<?> response) {
-    // no-op by default
-  }
-
-  /**
-   * Called when a request terminates without going through {@link #onResponseReceived} or
-   * {@link #onRateLimitResponse} (network failure or non-429 4xx/5xx). Override to release the
-   * rate-limit permit; without it, the inflight counter leaks and progressively starves
-   * subsequent acquires. Default is a no-op.
-   */
-  protected void onRequestFailed(String url) {
-    // no-op by default
-  }
-
-  /**
-   * True for failures that have NOT already released the rate-limit permit. Only 429s release the
-   * permit before throwing (via {@link #onRateLimitResponse} inside {@link #checkResponse}); every
-   * other failure mode (parser error, non-429 HTTP status, network/DNS/TLS) leaves the permit
-   * held, so {@link #withRateLimitRetry} releases it via {@link #onRequestFailed}.
-   */
-  private boolean isUnhandledRequestFailure(Throwable t) {
-    return !(t instanceof TooManyRequestsException);
-  }
-
-  /**
-   * Wrap a request {@link Uni} with the standard rate-limit failure handling: release the permit
-   * for any failure other than {@link TooManyRequestsException} (which already released via
-   * {@link #onRateLimitResponse}), then retry on {@link TooManyRequestsException} with the
-   * configured backoff/jitter policy. Logs at ERROR on retry exhaustion so operators can
-   * distinguish exhausted retries from a single unretried 429.
-   */
-  private <T> Uni<T> withRateLimitRetry(String url, Uni<T> uni) {
-    return uni
-        .onFailure(this::isUnhandledRequestFailure)
-        .invoke(t -> onRequestFailed(url))
-        .onFailure(TooManyRequestsException.class)
-        .retry()
-        .withBackOff(
-            Duration.ofMillis(retryInitialBackoffMs),
-            Duration.ofMillis(retryMaxBackoffMs)
-        )
-        .withJitter(retryJitterFactor)
-        .atMost(retryMaxRetries)
-        .onFailure(TooManyRequestsException.class)
-        .invoke(t -> Log.errorf(
-            "Rate-limit retries exhausted for %s after %d retries; propagating failure",
-            url, retryMaxRetries
-        ));
+  protected <T> Uni<T> wrapRequest(String url, Supplier<Uni<T>> uniSupplier) {
+    return uniSupplier.get();
   }
 
   /**
@@ -342,26 +265,24 @@ public abstract class ConfluentRestClient {
           .repeating()
           .completionStage(
               () -> new PaginationState(firstUrl, limits),
-              state -> withRateLimitRetry(
+              state -> wrapRequest(
                   state.nextUrl,
-                  acquireRateLimitPermit(state.nextUrl)
-                      .chain(() -> Uni.createFrom().completionStage(
-                          webClientFactory
-                              .getWebClient()
-                              .getAbs(state.nextUrl)
-                              .putHeaders(headers)
-                              .send()
-                              .map(result -> {
-                                checkResponse(result, state.nextUrl);
-                                // parse before releasing the permit; the upstream
-                                // onFailure->onRequestFailed would otherwise double-release on
-                                // a parser failure
-                                var page = responseParser.parse(result.bodyAsString(), state);
-                                onResponseReceived(state.nextUrl, result);
-                                return page;
-                              })
-                              .toCompletionStage()
-                      ))
+                  () -> Uni.createFrom().completionStage(
+                      webClientFactory
+                          .getWebClient()
+                          .getAbs(state.nextUrl)
+                          .putHeaders(headers)
+                          .send()
+                          .map(result -> {
+                            checkResponse(result, state.nextUrl);
+                            // parse before firing onResponseReceived; a subclass may treat that
+                            // hook as a success signal, which shouldn't fire on parser failure
+                            var page = responseParser.parse(result.bodyAsString(), state);
+                            onResponseReceived(state.nextUrl, result);
+                            return page;
+                          })
+                          .toCompletionStage()
+                  )
               ).subscribeAsCompletionStage()
           )
           .whilst(PageOfResults::hasNextPage) // include the last page
@@ -388,24 +309,23 @@ public abstract class ConfluentRestClient {
       ItemParser<T> responseParser
   ) {
     try {
-      return withRateLimitRetry(
+      return wrapRequest(
           url,
-          acquireRateLimitPermit(url)
-              .chain(() -> Uni.createFrom().completionStage(
-                  webClientFactory
-                      .getWebClient()
-                      .getAbs(url)
-                      .putHeaders(headers)
-                      .send()
-                      .map(result -> {
-                        checkResponse(result, url);
-                        // parse before releasing the permit; see listItems
-                        var item = responseParser.parse(url, result.bodyAsString());
-                        onResponseReceived(url, result);
-                        return item;
-                      })
-                      .toCompletionStage()
-              ))
+          () -> Uni.createFrom().completionStage(
+              webClientFactory
+                  .getWebClient()
+                  .getAbs(url)
+                  .putHeaders(headers)
+                  .send()
+                  .map(result -> {
+                    checkResponse(result, url);
+                    // parse before firing onResponseReceived; see listItems
+                    var item = responseParser.parse(url, result.bodyAsString());
+                    onResponseReceived(url, result);
+                    return item;
+                  })
+                  .toCompletionStage()
+          )
       );
     } catch (ConnectionNotFoundException | ResourceFetchingException e) {
       Log.error("Getting item failed with error", e);
@@ -415,30 +335,15 @@ public abstract class ConfluentRestClient {
 
   /**
    * Check the HTTP response status code before attempting to parse the body. Throws
-   * {@link TooManyRequestsException} on 429 (triggering retry) and
-   * {@link ResourceFetchingException} on other error status codes. The 429 path releases the
-   * rate-limit permit via {@link #onRateLimitResponse} before throwing; other failures leave the
-   * permit held for {@link #withRateLimitRetry} to release via {@link #onRequestFailed}.
+   * {@link ResourceFetchingException} on any 4xx/5xx response. Subclasses can override to handle
+   * specific status codes (e.g., 429) before delegating to {@code super.checkResponse(...)}.
    *
    * @param response the HTTP response to check
    * @param url      the request URL, for inclusion in error messages
-   * @throws TooManyRequestsException  if the response is 429 Too Many Requests
-   * @throws ResourceFetchingException if the response is any other 4xx or 5xx error
+   * @throws ResourceFetchingException if the response is a 4xx or 5xx error
    */
   protected void checkResponse(HttpResponse<?> response, String url) {
     int status = response.statusCode();
-    if (status == 429) {
-      onRateLimitResponse(url, response);
-      int retryAfter = RateLimitState.parseRetryAfterHeader(response);
-      Log.warnf(
-          "Rate limited by %s (retry-after: %ds, X-RateLimit-Limit=%s, Remaining=%s, Reset=%s)",
-          url, retryAfter,
-          response.getHeader(RateLimitState.HEADER_LIMIT),
-          response.getHeader(RateLimitState.HEADER_REMAINING),
-          response.getHeader(RateLimitState.HEADER_RESET)
-      );
-      throw new TooManyRequestsException(url, retryAfter);
-    }
     if (status >= 400) {
       var body = response.bodyAsString();
       throw parseErrorOrFail(
