@@ -10,9 +10,12 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
+import com.github.tomakehurst.wiremock.stubbing.Scenario;
 import io.confluent.idesidecar.restapi.auth.CCloudOAuthContext.ExchangeControlPlaneTokenRequest;
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
+import io.confluent.idesidecar.restapi.exceptions.TooManyRequestsException;
 import io.confluent.idesidecar.restapi.util.CCloud;
+import io.confluent.idesidecar.restapi.util.CCloudApiRateLimiter;
 import io.confluent.idesidecar.restapi.util.CCloudTestUtil;
 import io.quarkiverse.wiremock.devservice.ConnectWireMock;
 import io.quarkus.test.junit.QuarkusTest;
@@ -37,11 +40,17 @@ class CCloudOAuthContextTest {
   @Inject
   ConnectionStateManager connectionStateManager;
 
+  @Inject
+  CCloudApiRateLimiter rateLimiter;
+
   WireMock wireMock;
 
   CCloudTestUtil ccloudTestUtil;
 
   private static final int AWAIT_COMPLETION_TIMEOUT_SEC = 5;
+  // Rate-limit tests pay ~1s of bucket-wait per 429 (resetSeconds clamps to 1.0 minimum), so a
+  // single retry + a sustained-429 exhaustion sequence both need a more generous deadline.
+  private static final int RATE_LIMIT_TIMEOUT_SEC = 15;
 
   private static final String FAKE_AUTHORIZATION_CODE = "fake_authorization_code";
 
@@ -50,6 +59,9 @@ class CCloudOAuthContextTest {
     ccloudTestUtil = new CCloudTestUtil(wireMock, connectionStateManager);
     ccloudTestUtil.registerWireMockRoutesForCCloudOAuth(
         FAKE_AUTHORIZATION_CODE, null, null);
+    // Limiter is @ApplicationScoped: clear leftover bucket state from prior tests so per-test
+    // 429 sequences start from a clean slate.
+    rateLimiter.reset();
   }
 
   @AfterEach
@@ -766,6 +778,94 @@ class CCloudOAuthContextTest {
   void getUserEmailShouldReturnPlaceholderIfNotAuthenticated() {
     var authContext = new CCloudOAuthContext();
     assertEquals("UNKNOWN", authContext.getUserEmail());
+  }
+
+  /**
+   * Verifies that when {@code /oauth/token} returns 429 on the first call and the default
+   * success response on the retry, the auth flow completes transparently. Exercises the full
+   * sendWithRateLimit → applyRetry chain wired into the auth path.
+   */
+  @Test
+  void shouldRetryOnOAuthToken429AndSucceed() throws Throwable {
+    // arrange: override /oauth/token to return 429 once, then advance scenario state so the
+    // default low-priority stub serves the retry with the proper auth body
+    wireMock.register(
+        WireMock.post("/oauth/token")
+            .inScenario("oauth-token-rate-limit")
+            .whenScenarioStateIs(Scenario.STARTED)
+            .willReturn(
+                WireMock.aResponse()
+                    .withStatus(429)
+                    .withHeader("Retry-After", "1")
+                    .withHeader("X-RateLimit-Limit", "10")
+                    .withHeader("X-RateLimit-Remaining", "0")
+                    .withHeader("X-RateLimit-Reset", "1")
+                    .withBody("{\"error\":\"rate_limited\","
+                        + "\"error_description\":\"too many requests\"}"))
+            .willSetStateTo("retried")
+            .atPriority(100)
+    );
+
+    var testContext = new VertxTestContext();
+    var authContext = new CCloudOAuthContext();
+
+    // act + assert: auth completes despite the initial 429
+    authContext.createTokensFromAuthorizationCode(FAKE_AUTHORIZATION_CODE, null)
+        .onComplete(
+            testContext.succeeding(authenticatedContext ->
+                testContext.verify(() -> {
+                  assertNotNull(authenticatedContext.getControlPlaneToken());
+                  assertNotNull(authenticatedContext.getDataPlaneToken());
+                  assertNull(authenticatedContext.getErrors().signIn());
+                  testContext.completeNow();
+                })));
+
+    assertTrue(testContext.awaitCompletion(RATE_LIMIT_TIMEOUT_SEC, TimeUnit.SECONDS));
+    if (testContext.failed()) {
+      throw testContext.causeOfFailure();
+    }
+  }
+
+  /**
+   * Verifies that sustained 429 responses from {@code /oauth/token} surface as a failed Future
+   * carrying {@link TooManyRequestsException} after retries are exhausted, rather than hanging
+   * indefinitely or being swallowed.
+   */
+  @Test
+  void shouldFailAuthAfterRetryExhaustionOn429() throws Throwable {
+    // arrange: /oauth/token always returns 429 (high priority overrides the default success stub)
+    wireMock.register(
+        WireMock.post("/oauth/token")
+            .willReturn(
+                WireMock.aResponse()
+                    .withStatus(429)
+                    .withHeader("Retry-After", "1")
+                    .withHeader("X-RateLimit-Limit", "10")
+                    .withHeader("X-RateLimit-Remaining", "0")
+                    .withHeader("X-RateLimit-Reset", "1")
+                    .withBody("{\"error\":\"rate_limited\","
+                        + "\"error_description\":\"too many requests\"}"))
+            .atPriority(100)
+    );
+
+    var testContext = new VertxTestContext();
+    var authContext = new CCloudOAuthContext();
+
+    // act + assert: future fails with TooManyRequestsException after retries exhaust
+    authContext.createTokensFromAuthorizationCode(FAKE_AUTHORIZATION_CODE, null)
+        .onComplete(
+            testContext.failing(failure ->
+                testContext.verify(() -> {
+                  assertEquals(
+                      TooManyRequestsException.class.getCanonicalName(),
+                      failure.getClass().getCanonicalName());
+                  testContext.completeNow();
+                })));
+
+    assertTrue(testContext.awaitCompletion(RATE_LIMIT_TIMEOUT_SEC, TimeUnit.SECONDS));
+    if (testContext.failed()) {
+      throw testContext.causeOfFailure();
+    }
   }
 
   boolean isValidURL(String url) {
