@@ -4,6 +4,7 @@ import io.confluent.idesidecar.restapi.connections.CCloudConnectionState;
 import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
 import io.confluent.idesidecar.restapi.exceptions.TooManyRequestsException;
 import io.confluent.idesidecar.restapi.util.CCloudApiRateLimiter;
+import io.confluent.idesidecar.restapi.util.CCloudHttpRetryPolicy;
 import io.confluent.idesidecar.restapi.util.RateLimitState;
 import io.quarkus.logging.Log;
 import io.quarkus.runtime.annotations.RegisterForReflection;
@@ -11,9 +12,7 @@ import io.smallrye.mutiny.Uni;
 import io.vertx.core.MultiMap;
 import io.vertx.ext.web.client.HttpResponse;
 import jakarta.inject.Inject;
-import java.time.Duration;
 import java.util.function.Supplier;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
  * Base REST client for CCloud API calls. Adds CCloud-specific auth headers and the
@@ -26,29 +25,8 @@ public abstract class ConfluentCloudRestClient extends ConfluentRestClient {
   @Inject
   CCloudApiRateLimiter rateLimiter;
 
-  @ConfigProperty(
-      name = "ide-sidecar.connections.ccloud.rate-limit.retry.initial-backoff-ms",
-      defaultValue = "500"
-  )
-  long retryInitialBackoffMs;
-
-  @ConfigProperty(
-      name = "ide-sidecar.connections.ccloud.rate-limit.retry.max-backoff-ms",
-      defaultValue = "10000"
-  )
-  long retryMaxBackoffMs;
-
-  @ConfigProperty(
-      name = "ide-sidecar.connections.ccloud.rate-limit.retry.max-retries",
-      defaultValue = "5"
-  )
-  int retryMaxRetries;
-
-  @ConfigProperty(
-      name = "ide-sidecar.connections.ccloud.rate-limit.retry.jitter-factor",
-      defaultValue = "0.2"
-  )
-  double retryJitterFactor;
+  @Inject
+  CCloudHttpRetryPolicy retryPolicy;
 
   @Override
   protected MultiMap headersFor(String connectionId) throws ConnectionNotFoundException {
@@ -73,23 +51,12 @@ public abstract class ConfluentCloudRestClient extends ConfluentRestClient {
    */
   @Override
   protected <T> Uni<T> wrapRequest(String url, Supplier<Uni<T>> uniSupplier) {
-    return rateLimiter.acquire(url)
-        .chain(uniSupplier::get)
-        .onFailure(t -> !(t instanceof TooManyRequestsException))
-        .invoke(t -> rateLimiter.notifyRequestCompleted(url))
-        .onFailure(TooManyRequestsException.class)
-        .retry()
-        .withBackOff(
-            Duration.ofMillis(retryInitialBackoffMs),
-            Duration.ofMillis(retryMaxBackoffMs)
-        )
-        .withJitter(retryJitterFactor)
-        .atMost(retryMaxRetries)
-        .onFailure(TooManyRequestsException.class)
-        .invoke(t -> Log.errorf(
-            "Rate-limit retries exhausted for %s after %d retries; propagating failure",
-            url, retryMaxRetries
-        ));
+    return retryPolicy.applyRetry(url,
+        rateLimiter.acquire(url)
+            .chain(uniSupplier::get)
+            .onFailure(t -> !(t instanceof TooManyRequestsException))
+            .invoke(t -> rateLimiter.notifyRequestCompleted(url))
+    );
   }
 
   /**
