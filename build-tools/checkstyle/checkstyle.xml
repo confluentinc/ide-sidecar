@@ -11,5 +11,9 @@
         <module name="FinalClass">
             <property name="severity" value="error"/>
         </module>
+        <module name="UnusedImports">
+            <property name="severity" value="error"/>
+            <property name="processJavadoc" value="true"/>
+        </module>
     </module>
 </module>
