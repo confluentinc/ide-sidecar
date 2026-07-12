@@ -11,7 +11,6 @@ import jakarta.websocket.CloseReason.CloseCodes;
 import jakarta.websocket.ContainerProvider;
 import jakarta.websocket.OnClose;
 import jakarta.websocket.OnMessage;
-import jakarta.websocket.OnOpen;
 import jakarta.websocket.Session;
 import java.io.IOException;
 import java.net.URI;
