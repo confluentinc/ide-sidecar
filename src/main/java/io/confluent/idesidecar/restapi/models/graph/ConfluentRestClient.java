@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
  * A class that provides a common interface for interacting with APIs that follow the Confluent API
