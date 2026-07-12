@@ -12,7 +12,7 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
  * Centralizes the exponential-backoff + jitter retry policy applied to outbound CCloud calls
  * that throw {@link TooManyRequestsException}. Used by both the GraphQL fetcher path
  * ({@code ConfluentCloudRestClient.wrapRequest}) and the auth path
- * ({@code CCloudOAuthContext.sendWithRateLimit}) so both follow the same retry contract.
+ * ({@code CCloudHttpSender.send}) so both follow the same retry contract.
  *
  * <p>The acquire/release lifecycle around the limiter is intentionally NOT in this class -
  * callers wire that explicitly so the read order of cause-and-effect at each call site is

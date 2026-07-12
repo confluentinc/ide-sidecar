@@ -783,7 +783,8 @@ class CCloudOAuthContextTest {
   /**
    * Verifies that when {@code /oauth/token} returns 429 on the first call and the default
    * success response on the retry, the auth flow completes transparently. Exercises the full
-   * sendWithRateLimit → applyRetry chain wired into the auth path.
+   * {@link io.confluent.idesidecar.restapi.util.CCloudHttpSender#send} chain wired into the
+   * auth path.
    */
   @Test
   void shouldRetryOnOAuthToken429AndSucceed() throws Throwable {

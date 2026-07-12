@@ -9,23 +9,18 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.idesidecar.restapi.exceptions.CCloudAuthenticationFailedException;
-import io.confluent.idesidecar.restapi.exceptions.TooManyRequestsException;
 import io.confluent.idesidecar.restapi.models.ConnectionStatus;
 import io.confluent.idesidecar.restapi.util.CCloud;
-import io.confluent.idesidecar.restapi.util.CCloudApiRateLimiter;
-import io.confluent.idesidecar.restapi.util.CCloudHttpRetryPolicy;
+import io.confluent.idesidecar.restapi.util.CCloudHttpSender;
 import io.confluent.idesidecar.restapi.util.ObjectMapperFactory;
-import io.confluent.idesidecar.restapi.util.RateLimitState;
 import io.confluent.idesidecar.restapi.util.UriUtil;
 import io.confluent.idesidecar.restapi.util.WebClientFactory;
 import io.quarkus.arc.Arc;
 import io.quarkus.logging.Log;
 import io.quarkus.runtime.annotations.RegisterForReflection;
-import io.smallrye.mutiny.Uni;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;
-import io.vertx.core.Promise;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.HttpRequest;
@@ -74,8 +69,7 @@ public class CCloudOAuthContext implements AuthContext {
   private final AtomicReference<Tokens> tokens = new AtomicReference<>(new Tokens());
   private final UriUtil uriUtil = new UriUtil();
   private final WebClientFactory webClientFactory;
-  private final CCloudApiRateLimiter rateLimiter;
-  private final CCloudHttpRetryPolicy retryPolicy;
+  private final CCloudHttpSender httpSender;
   private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
   private final WriteLock writeLock = readWriteLock.writeLock();
   private final ReadLock readLock = readWriteLock.readLock();
@@ -92,17 +86,19 @@ public class CCloudOAuthContext implements AuthContext {
     codeChallenge = createCodeChallenge();
 
     // Look up application-scoped beans via Arc when the CDI container is available; fall back to
-    // a manual WebClientFactory + null rate-limit beans for non-CDI tests that construct this
-    // context directly. {@link #sendWithRateLimit} skips pacing when the rate-limit beans are null.
+    // a manual WebClientFactory + null httpSender for non-CDI tests that construct this context
+    // directly. {@link #send} passes through without pacing when httpSender is null.
     var container = Arc.container();
     if (container != null) {
       webClientFactory = container.select(WebClientFactory.class).get();
-      rateLimiter = container.select(CCloudApiRateLimiter.class).get();
-      retryPolicy = container.select(CCloudHttpRetryPolicy.class).get();
+      httpSender = container.select(CCloudHttpSender.class).get();
     } else {
+      // WARN so a hit from an unexpected production path (partial Arc init, misconfigured native
+      // image) is visible rather than silently disabling rate limiting.
+      Log.warnf("Arc container unavailable during CCloudOAuthContext init; CCloud rate limiting"
+          + " and 429 retry are disabled for this context. Expected only in non-CDI tests.");
       webClientFactory = new WebClientFactory();
-      rateLimiter = null;
-      retryPolicy = null;
+      httpSender = null;
     }
   }
 
@@ -140,7 +136,7 @@ public class CCloudOAuthContext implements AuthContext {
       }
 
       var uri = CCloudOAuthConfig.CCLOUD_CONTROL_PLANE_CHECK_JWT_URI;
-      return sendWithRateLimit(uri, () -> webClientFactory.getWebClient()
+      return send(uri, () -> webClientFactory.getWebClient()
           .getAbs(uri)
           .putHeaders(getControlPlaneAuthenticationHeaders())
           // Synchronously tries to DNS resolve the hostname before sending the request.
@@ -468,56 +464,18 @@ public class CCloudOAuthContext implements AuthContext {
   }
 
   /**
-   * Bridge a Future-based webClient send through the CCloud rate limiter and retry policy. The
-   * sender is invoked fresh on each subscribe so retry-on-429 actually re-sends rather than
-   * replaying a completed Future. The limiter sees:
-   * <ul>
-   *   <li>acquire on subscribe (inflight++)</li>
-   *   <li>{@code recordRateLimitedResponse} on 429 (decrements inflight, stores exhausted state);
-   *       a {@link TooManyRequestsException} is then thrown so the retry chain fires</li>
-   *   <li>{@code recordResponse} on every non-429 response (decrements inflight, records
-   *       {@code X-RateLimit-*} state if headers present)</li>
-   *   <li>{@code notifyRequestCompleted} on pre-response failure (DNS/TLS/etc.)</li>
-   * </ul>
-   *
-   * <p>If the CDI container wasn't available at construction time (non-Quarkus tests calling
-   * {@code new CCloudOAuthContext()}), the rate-limit beans are null and we just invoke the
-   * sender directly without pacing.
+   * Route a Future-based send through {@link CCloudHttpSender} when available; passthrough when
+   * {@code httpSender} is null (non-CDI test construction).
    */
-  private Future<HttpResponse<Buffer>> sendWithRateLimit(
+  private Future<HttpResponse<Buffer>> send(
       String url,
       Supplier<Future<HttpResponse<Buffer>>> sender) {
-    if (rateLimiter == null || retryPolicy == null) {
-      return sender.get();
-    }
-    Promise<HttpResponse<Buffer>> promise = Promise.promise();
-    retryPolicy.applyRetry(url,
-        rateLimiter.acquire(url)
-            .chain(() -> Uni.createFrom().completionStage(sender.get().toCompletionStage()))
-            .invoke(response -> {
-              if (response.statusCode() == 429) {
-                rateLimiter.recordRateLimitedResponse(url, response);
-                int retryAfter = RateLimitState.parseRetryAfterHeader(response);
-                Log.warnf(
-                    "Rate limited by %s (retry-after: %ds, X-RateLimit-Limit=%s, Remaining=%s, "
-                        + "Reset=%s)",
-                    url, retryAfter,
-                    response.getHeader(RateLimitState.HEADER_LIMIT),
-                    response.getHeader(RateLimitState.HEADER_REMAINING),
-                    response.getHeader(RateLimitState.HEADER_RESET));
-                throw new TooManyRequestsException(url, retryAfter);
-              }
-              rateLimiter.recordResponse(url, response);
-            })
-            .onFailure(t -> !(t instanceof TooManyRequestsException))
-            .invoke(t -> rateLimiter.notifyRequestCompleted(url))
-    ).subscribe().with(promise::complete, promise::fail);
-    return promise.future();
+    return httpSender != null ? httpSender.send(url, sender) : sender.get();
   }
 
   private Future<IdTokenExchangeResponse> performTokenExchange(String requestBody) {
     var uri = CCloudOAuthConfig.CCLOUD_OAUTH_TOKEN_URI;
-    return sendWithRateLimit(uri, () -> webClientFactory.getWebClient()
+    return send(uri, () -> webClientFactory.getWebClient()
         .postAbs(uri)
         .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED)
         .sendBuffer(Buffer.buffer(requestBody)))
@@ -611,7 +569,7 @@ public class CCloudOAuthContext implements AuthContext {
   public Future<ControlPlaneTokenExchangeResponse> exchangeControlPlaneToken(
       ExchangeControlPlaneTokenRequest request) {
     var uri = CCloudOAuthConfig.CCLOUD_CONTROL_PLANE_TOKEN_URI;
-    return sendWithRateLimit(uri, () -> webClientFactory.getWebClient()
+    return send(uri, () -> webClientFactory.getWebClient()
         .postAbs(uri)
         .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
         .sendBuffer(Buffer.buffer(request.toJsonString())))
@@ -647,7 +605,7 @@ public class CCloudOAuthContext implements AuthContext {
 
   private Future<DataPlaneTokenExchangeResponse> exchangeDataPlaneToken(String controlPlaneToken) {
     var uri = CCloudOAuthConfig.CCLOUD_DATA_PLANE_TOKEN_URI;
-    return sendWithRateLimit(uri, () -> webClientFactory.getWebClient()
+    return send(uri, () -> webClientFactory.getWebClient()
         .postAbs(uri)
         .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
         .putHeader(HttpHeaders.AUTHORIZATION, String.format("Bearer %s", controlPlaneToken))
