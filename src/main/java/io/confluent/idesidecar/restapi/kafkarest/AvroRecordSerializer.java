@@ -120,7 +120,7 @@ public final class AvroRecordSerializer {
           extends Conversion<NonRecordContainer> {
     final T parent;
 
-    public NonRecordContainerConversion(T parent) {
+    NonRecordContainerConversion(T parent) {
       this.parent = parent;
     }
 
