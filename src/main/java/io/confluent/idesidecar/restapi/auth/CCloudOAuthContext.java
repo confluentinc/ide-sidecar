@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.idesidecar.restapi.exceptions.CCloudAuthenticationFailedException;
 import io.confluent.idesidecar.restapi.models.ConnectionStatus;
 import io.confluent.idesidecar.restapi.util.CCloud;
+import io.confluent.idesidecar.restapi.util.CCloudHttpSender;
 import io.confluent.idesidecar.restapi.util.ObjectMapperFactory;
 import io.confluent.idesidecar.restapi.util.UriUtil;
 import io.confluent.idesidecar.restapi.util.WebClientFactory;
@@ -23,6 +24,7 @@ import io.vertx.core.MultiMap;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.HttpRequest;
+import io.vertx.ext.web.client.HttpResponse;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import java.net.HttpCookie;
@@ -38,6 +40,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 import org.apache.commons.codec.binary.Base64;
 
@@ -66,6 +69,7 @@ public class CCloudOAuthContext implements AuthContext {
   private final AtomicReference<Tokens> tokens = new AtomicReference<>(new Tokens());
   private final UriUtil uriUtil = new UriUtil();
   private final WebClientFactory webClientFactory;
+  private final CCloudHttpSender httpSender;
   private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
   private final WriteLock writeLock = readWriteLock.writeLock();
   private final ReadLock readLock = readWriteLock.readLock();
@@ -81,13 +85,21 @@ public class CCloudOAuthContext implements AuthContext {
     codeVerifier = createRandomEncodedString(CODE_VERIFIER_LENGTH);
     codeChallenge = createCodeChallenge();
 
-    // If the ArC container is available, select the application-scoped instance of the
-    // `WebClientFactory` so that we can re-use it; otherwise, create a new instance without
-    // dependency injection
+    // Look up application-scoped beans via Arc when the CDI container is available; fall back to
+    // a manual WebClientFactory + null httpSender for non-CDI tests that construct this context
+    // directly. {@link #send} passes through without pacing when httpSender is null.
     var container = Arc.container();
-    webClientFactory = (container != null)
-        ? container.select(WebClientFactory.class).get()
-        : new WebClientFactory();
+    if (container != null) {
+      webClientFactory = container.select(WebClientFactory.class).get();
+      httpSender = container.select(CCloudHttpSender.class).get();
+    } else {
+      // WARN so a hit from an unexpected production path (partial Arc init, misconfigured native
+      // image) is visible rather than silently disabling rate limiting.
+      Log.warnf("Arc container unavailable during CCloudOAuthContext init; CCloud rate limiting"
+          + " and 429 retry are disabled for this context. Expected only in non-CDI tests.");
+      webClientFactory = new WebClientFactory();
+      httpSender = null;
+    }
   }
 
   /**
@@ -123,12 +135,13 @@ public class CCloudOAuthContext implements AuthContext {
         return Future.failedFuture(new CCloudAuthenticationFailedException(errorMessage));
       }
 
-      return webClientFactory.getWebClient()
-          .getAbs(CCloudOAuthConfig.CCLOUD_CONTROL_PLANE_CHECK_JWT_URI)
+      var uri = CCloudOAuthConfig.CCLOUD_CONTROL_PLANE_CHECK_JWT_URI;
+      return send(uri, () -> webClientFactory.getWebClient()
+          .getAbs(uri)
           .putHeaders(getControlPlaneAuthenticationHeaders())
-          // Synchronously tries to DNS resolve the hostname before sending the request
+          // Synchronously tries to DNS resolve the hostname before sending the request.
           // Calling threads beware!
-          .send()
+          .send())
           .map(result -> {
             try {
               var response = OBJECT_MAPPER.readValue(result.bodyAsString(), CheckJwtResponse.class);
@@ -450,11 +463,22 @@ public class CCloudOAuthContext implements AuthContext {
     return performTokenExchange(requestBody);
   }
 
+  /**
+   * Route a Future-based send through {@link CCloudHttpSender} when available; passthrough when
+   * {@code httpSender} is null (non-CDI test construction).
+   */
+  private Future<HttpResponse<Buffer>> send(
+      String url,
+      Supplier<Future<HttpResponse<Buffer>>> sender) {
+    return httpSender != null ? httpSender.send(url, sender) : sender.get();
+  }
+
   private Future<IdTokenExchangeResponse> performTokenExchange(String requestBody) {
-    return webClientFactory.getWebClient()
-        .postAbs(CCloudOAuthConfig.CCLOUD_OAUTH_TOKEN_URI)
+    var uri = CCloudOAuthConfig.CCLOUD_OAUTH_TOKEN_URI;
+    return send(uri, () -> webClientFactory.getWebClient()
+        .postAbs(uri)
         .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED)
-        .sendBuffer(Buffer.buffer(requestBody))
+        .sendBuffer(Buffer.buffer(requestBody)))
         .map(response -> {
           try {
             return OBJECT_MAPPER.readValue(response.bodyAsString(), IdTokenExchangeResponse.class);
@@ -544,10 +568,11 @@ public class CCloudOAuthContext implements AuthContext {
 
   public Future<ControlPlaneTokenExchangeResponse> exchangeControlPlaneToken(
       ExchangeControlPlaneTokenRequest request) {
-    return webClientFactory.getWebClient()
-        .postAbs(CCloudOAuthConfig.CCLOUD_CONTROL_PLANE_TOKEN_URI)
+    var uri = CCloudOAuthConfig.CCLOUD_CONTROL_PLANE_TOKEN_URI;
+    return send(uri, () -> webClientFactory.getWebClient()
+        .postAbs(uri)
         .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-        .sendBuffer(Buffer.buffer(request.toJsonString()))
+        .sendBuffer(Buffer.buffer(request.toJsonString())))
         .map(response -> {
           try {
             ControlPlaneTokenExchangeResponse responseBody =
@@ -579,11 +604,12 @@ public class CCloudOAuthContext implements AuthContext {
   }
 
   private Future<DataPlaneTokenExchangeResponse> exchangeDataPlaneToken(String controlPlaneToken) {
-    return webClientFactory.getWebClient()
-        .postAbs(CCloudOAuthConfig.CCLOUD_DATA_PLANE_TOKEN_URI)
+    var uri = CCloudOAuthConfig.CCLOUD_DATA_PLANE_TOKEN_URI;
+    return send(uri, () -> webClientFactory.getWebClient()
+        .postAbs(uri)
         .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
         .putHeader(HttpHeaders.AUTHORIZATION, String.format("Bearer %s", controlPlaneToken))
-        .sendBuffer(Buffer.buffer("{}"))
+        .sendBuffer(Buffer.buffer("{}")))
         .map(response -> {
           try {
             return OBJECT_MAPPER.readValue(

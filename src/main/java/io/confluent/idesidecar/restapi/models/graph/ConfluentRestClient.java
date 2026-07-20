@@ -19,11 +19,13 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
 import io.vertx.core.MultiMap;
+import io.vertx.ext.web.client.HttpResponse;
 import jakarta.inject.Inject;
 import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 /**
  * A class that provides a common interface for interacting with APIs that follow the Confluent API
@@ -42,6 +44,25 @@ public abstract class ConfluentRestClient {
 
   @Inject
   UriUtil uriUtil;
+
+  /**
+   * Called after a successful HTTP response, once the body has been parsed. Default is a no-op;
+   * subclasses can override to consume response metadata (e.g., rate-limit headers). Fires AFTER
+   * the parser so a parser failure won't trigger an erroneous "success" signal here.
+   */
+  protected void onResponseReceived(String url, HttpResponse<?> response) {
+    // no-op by default
+  }
+
+  /**
+   * Template method for subclasses to wrap each outbound request with cross-cutting behavior
+   * (rate limiting, retries, circuit breaking, etc.). The {@code uniSupplier} is invoked fresh
+   * each time the wrapper subscribes, so retries get a new send rather than replaying a
+   * completed {@code CompletionStage}. Default invokes the supplier once and returns its Uni.
+   */
+  protected <T> Uni<T> wrapRequest(String url, Supplier<Uni<T>> uniSupplier) {
+    return uniSupplier.get();
+  }
 
   /**
    * The state used for requesting paginated responses. The first state should just be the original
@@ -243,15 +264,25 @@ public abstract class ConfluentRestClient {
           .repeating()
           .completionStage(
               () -> new PaginationState(firstUrl, limits),
-              // Make request for more results
-              state -> webClientFactory
-                  .getWebClient()
-                  .getAbs(state.nextUrl)
-                  .putHeaders(headers)
-                  .send()
-                  .map(result -> responseParser.parse(result.bodyAsString(), state)
+              state -> wrapRequest(
+                  state.nextUrl,
+                  () -> Uni.createFrom().completionStage(
+                      webClientFactory
+                          .getWebClient()
+                          .getAbs(state.nextUrl)
+                          .putHeaders(headers)
+                          .send()
+                          .map(result -> {
+                            checkResponse(result, state.nextUrl);
+                            // parse before firing onResponseReceived; a subclass may treat that
+                            // hook as a success signal, which shouldn't fire on parser failure
+                            var page = responseParser.parse(result.bodyAsString(), state);
+                            onResponseReceived(state.nextUrl, result);
+                            return page;
+                          })
+                          .toCompletionStage()
                   )
-                  .toCompletionStage()
+              ).subscribeAsCompletionStage()
           )
           .whilst(PageOfResults::hasNextPage) // include the last page
           .map(PageOfResults::items) // extract the items from the page
@@ -277,17 +308,48 @@ public abstract class ConfluentRestClient {
       ItemParser<T> responseParser
   ) {
     try {
-      var response = webClientFactory
-          .getWebClient()
-          .getAbs(url)
-          .putHeaders(headers)
-          .send()
-          .map(result -> responseParser.parse(url, result.bodyAsString()))
-          .toCompletionStage();
-      return Uni.createFrom().completionStage(response);
+      return wrapRequest(
+          url,
+          () -> Uni.createFrom().completionStage(
+              webClientFactory
+                  .getWebClient()
+                  .getAbs(url)
+                  .putHeaders(headers)
+                  .send()
+                  .map(result -> {
+                    checkResponse(result, url);
+                    // parse before firing onResponseReceived; see listItems
+                    var item = responseParser.parse(url, result.bodyAsString());
+                    onResponseReceived(url, result);
+                    return item;
+                  })
+                  .toCompletionStage()
+          )
+      );
     } catch (ConnectionNotFoundException | ResourceFetchingException e) {
       Log.error("Getting item failed with error", e);
       return Uni.createFrom().failure(e);
+    }
+  }
+
+  /**
+   * Check the HTTP response status code before attempting to parse the body. Throws
+   * {@link ResourceFetchingException} on any 4xx/5xx response. Subclasses can override to handle
+   * specific status codes (e.g., 429) before delegating to {@code super.checkResponse(...)}.
+   *
+   * @param response the HTTP response to check
+   * @param url      the request URL, for inclusion in error messages
+   * @throws ResourceFetchingException if the response is a 4xx or 5xx error
+   */
+  protected void checkResponse(HttpResponse<?> response, String url) {
+    int status = response.statusCode();
+    if (status >= 400) {
+      var body = response.bodyAsString();
+      throw parseErrorOrFail(
+          url,
+          body,
+          new RuntimeException("HTTP %d from %s".formatted(status, url))
+      );
     }
   }
 
