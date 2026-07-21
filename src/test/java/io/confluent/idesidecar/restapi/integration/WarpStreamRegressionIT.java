@@ -16,11 +16,12 @@ import org.junit.jupiter.api.Tag;
 public class WarpStreamRegressionIT {
 
   private static final WarpStreamTestEnvironment TEST_ENVIRONMENT = new WarpStreamTestEnvironment(
-      // This is a WarpStream version that is known to return `null` as part of the
-      // `DescribeCluster.controller()` response. The sidecar's Internal Kafka REST
-      // previously failed to handle this case correctly. This test class ensures that
-      // the ClusterV3Suite passes since the sidecar now correctly handles this case.
-      "latest"
+      // Pin the stable channel rather than `latest`: `latest` is a moving tag that tracks the
+      // newest (possibly pre-release) agent, so a republish can break CI on every branch at once.
+      // This suite verifies that the sidecar's Internal Kafka REST (the ClusterV3Suite) works
+      // against WarpStream; it originally regression-guarded a version that returned `null` for
+      // `DescribeCluster.controller()`, an edge case newer stable builds may no longer exercise.
+      "latest-stable"
   );
 
   static {
