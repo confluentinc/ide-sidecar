@@ -16,12 +16,13 @@ import org.junit.jupiter.api.Tag;
 public class WarpStreamRegressionIT {
 
   private static final WarpStreamTestEnvironment TEST_ENVIRONMENT = new WarpStreamTestEnvironment(
-      // Pin the stable channel rather than `latest`: `latest` is a moving tag that tracks the
-      // newest (possibly pre-release) agent, so a republish can break CI on every branch at once.
-      // This suite verifies that the sidecar's Internal Kafka REST (the ClusterV3Suite) works
-      // against WarpStream; it originally regression-guarded a version that returned `null` for
-      // `DescribeCluster.controller()`, an edge case newer stable builds may no longer exercise.
-      "latest-stable"
+      // Pin an explicit agent version rather than a moving tag (`latest`/`latest-stable`): a tag
+      // republish can pull a broken agent and break CI on every branch at once. v822's `playground`
+      // crashes on startup (its Tableflow agent fails to load an embedded DuckDB dependency); v821
+      // is the newest version that boots cleanly. This suite checks the sidecar's Internal Kafka
+      // REST (ClusterV3Suite) against WarpStream; the null/empty `DescribeCluster.controller()` case
+      // it originally guarded is now covered directly in ClusterManagerImplTest.
+      "v821"
   );
 
   static {
