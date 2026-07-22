@@ -545,6 +545,25 @@
           <suppressionsLocation>${build-tools.dir}/checkstyle/suppressions.xml</suppressionsLocation>
           <includeTestSourceDirectory>false</includeTestSourceDirectory>
         </configuration>
+        <executions>
+          <!--
+            Enforce a small set of error-severity checks (see build-tools/checkstyle/checkstyle.xml)
+            at validate phase so the build fails locally and in CI on things like unused imports.
+            The top-level google_checks.xml config is kept for the reporting/manual `mvn
+            checkstyle:check` flow, which surfaces the broader Google-style warnings without
+            gating.
+          -->
+          <execution>
+            <id>enforce-critical-checks</id>
+            <phase>validate</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+            <configuration>
+              <configLocation>${build-tools.dir}/checkstyle/checkstyle.xml</configLocation>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
       <plugin>
         <groupId>com.github.spotbugs</groupId>

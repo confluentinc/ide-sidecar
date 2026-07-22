@@ -1,6 +1,5 @@
 package io.confluent.idesidecar.restapi.messageviewer.strategy;
 
-import io.confluent.idesidecar.restapi.exceptions.ProcessorFailedException;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequest;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
 import io.confluent.idesidecar.restapi.processors.Processor;
