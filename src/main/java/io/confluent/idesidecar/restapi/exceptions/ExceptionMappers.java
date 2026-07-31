@@ -1,6 +1,8 @@
 package io.confluent.idesidecar.restapi.exceptions;
 
+import io.confluent.idesidecar.restapi.kafkarest.RecordSerializationException;
 import io.confluent.idesidecar.restapi.kafkarest.UnknownAlterConfigOperation;
+import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRecordError;
 import io.confluent.idesidecar.restapi.util.UuidFactory;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 import jakarta.inject.Inject;
@@ -272,6 +274,22 @@ public class ExceptionMappers {
 
   @ServerExceptionMapper
   public Response mapBadRequestException(BadRequestException exception) {
+    if (exception instanceof RecordSerializationException serializationException) {
+      var error = ProduceRecordError
+          .builder()
+          .errorCode(Status.BAD_REQUEST.getStatusCode())
+          .message(exception.getMessage())
+          .messagePart(ProduceRecordError.MessagePartEnum.fromValue(
+              serializationException.getMessagePart().getValue()
+          ))
+          .build();
+      return Response
+          .status(Status.BAD_REQUEST)
+          .entity(error)
+          .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+          .build();
+    }
+
     var error = io.confluent.idesidecar.restapi.kafkarest.model.Error
         .builder()
         .errorCode(Status.BAD_REQUEST.getStatusCode())

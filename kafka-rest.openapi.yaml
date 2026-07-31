@@ -2256,6 +2256,19 @@ components:
           type: string
           nullable: true
 
+    ProduceRecordError:
+      allOf:
+        - $ref: '#/components/schemas/Error'
+        - type: object
+          properties:
+            message_part:
+              type: string
+              description: The part of the record that failed local serialization.
+              enum:
+                - key
+                - value
+                - both
+
     PartitionData:
       allOf:
         - $ref: '#/components/schemas/Resource'
@@ -4345,17 +4358,23 @@ components:
 
     BadRequestErrorResponse_ProduceRecords:
       description: 'Indicates a bad request error. It could be caused by an unexpected request
-        body format or other forms of request validation failure.'
+        body format, record serialization error, or other forms of request validation failure.'
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: '#/components/schemas/ProduceRecordError'
           examples:
             header_not_base64_encoded:
               description: "Thrown when headers in the produce-record are not base64 encoded."
               value:
                 error_code: 400
                 message: "Cannot deserialize value of type `byte[]` from String \"\": Unexpected end of base64-encoded String: base64 variant 'MIME-NO-LINEFEEDS' expects padding (one or more '=' characters) at the end. This Base64Variant might have been incorrectly configured"
+            key_serialization_failed:
+              description: "Thrown when the record key cannot be serialized."
+              value:
+                error_code: 400
+                message: "Failed to serialize key when producing message to topic my-topic"
+                message_part: key
 
     UnprocessableEntity_ProduceRecord:
       description: 'Indicates a bad request error. It could be caused by an unexpected request
