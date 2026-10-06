@@ -198,23 +198,50 @@ public abstract class GenericProduceRecord {
         .onFailure()
         .recoverWithUni(t -> {
           if (t instanceof CompositeException e) {
-            return Uni.createFrom().failure(new BadRequestException(
-                "Failed to serialize both key and value: %s".formatted(
-                    e
-                        .getCauses()
-                        .stream()
-                        .map(ExceptionUtil::unwrapWithCombinedMessage)
-                        .map(Throwable::getMessage)
-                        .collect(Collectors.joining(", "))
-                ), e)
+            var message = "Failed to serialize both key and value: %s".formatted(
+                e
+                    .getCauses()
+                    .stream()
+                    .map(ExceptionUtil::unwrapWithCombinedMessage)
+                    .map(Throwable::getMessage)
+                    .collect(Collectors.joining(", "))
+            );
+            return Uni.createFrom().failure(
+                new RecordSerializationException(
+                    message,
+                    e,
+                    RecordSerializationException.MessagePart.BOTH
+                )
             );
           } else {
             var rootCause = unwrapWithCombinedMessage(t);
+            var serializationException = findRecordSerializationException(t);
+            if (serializationException.isPresent()) {
+              return Uni.createFrom().failure(
+                  new RecordSerializationException(
+                      rootCause.getMessage(),
+                      rootCause,
+                      serializationException.get().getMessagePart()
+                  )
+              );
+            }
             return Uni.createFrom().failure(
                 new BadRequestException(rootCause.getMessage(), rootCause)
             );
           }
         });
+  }
+
+  private Optional<RecordSerializationException> findRecordSerializationException(
+      Throwable throwable
+  ) {
+    if (throwable instanceof RecordSerializationException exception) {
+      return Optional.of(exception);
+    }
+    if (throwable.getCause() != null) {
+      return findRecordSerializationException(throwable.getCause());
+    }
+    return Optional.empty();
   }
 
   protected abstract Uni<ProduceContext> sendSerializedRecord(ProduceContext c);

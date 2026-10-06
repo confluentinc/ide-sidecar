@@ -71,15 +71,18 @@ public class RecordSerializer {
             serializeProtobuf(client, parsedSchema, serdeConfigs, topicName, jsonNode, isKey);
       };
     } catch (RuntimeException e) {
-      // Wrap the exception with key/value information in the exception message.
+      // Wrap the exception with machine-readable key/value information.
       var what = isKey ? "key" : "value";
       Log.errorf(e,
           "Failed to serialize %s when producing message to topic %s", what, topicName
       );
-      throw new RuntimeException(
+      throw new RecordSerializationException(
           "Failed to serialize %s when producing message to topic %s: %s"
               .formatted(what, topicName, e.getMessage()),
-          e
+          e,
+          isKey
+              ? RecordSerializationException.MessagePart.KEY
+              : RecordSerializationException.MessagePart.VALUE
       );
     }
   }
