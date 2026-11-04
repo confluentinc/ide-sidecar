@@ -27,7 +27,12 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 @ApplicationScoped
 public class SchemaRegistryClients extends Clients<SchemaRegistryClient> {
 
-  private static final int SR_CACHE_SIZE = 10;
+  /**
+   * Matches the serializers' default {@code max.schemas.per.subject}. No TTL is needed because
+   * schema IDs are immutable, and each client is dropped when its connection is updated,
+   * disconnected, or deleted.
+   */
+  private static final int SR_CACHE_SIZE = 1000;
 
   @Inject
   ConnectionStateManager connectionStateManager;
@@ -128,6 +133,17 @@ public class SchemaRegistryClients extends Clients<SchemaRegistryClient> {
       restService.setSslSocketFactory(sslFactory.sslContext().getSocketFactory());
     }
 
+    return newCachingClient(restService, configurationProperties);
+  }
+
+  /**
+   * Wrap the given {@link RestService} in a client whose caches each hold up to
+   * {@link #SR_CACHE_SIZE} entries.
+   */
+  static SidecarSchemaRegistryClient newCachingClient(
+      RestService restService,
+      Map<String, Object> configurationProperties
+  ) {
     return new SidecarSchemaRegistryClient(
         restService,
         SR_CACHE_SIZE,
