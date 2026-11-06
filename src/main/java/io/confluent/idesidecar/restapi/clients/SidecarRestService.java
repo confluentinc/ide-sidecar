@@ -167,8 +167,8 @@ public class SidecarRestService extends RestService {
       return Optional.of("the longest allowed wait is " + RetryAfterException.describe(maxWait));
     }
     var deadline = DEADLINE.get();
-    if (deadline != null && wait.compareTo(Duration.between(Instant.now(), deadline)) > 0) {
-      var left = Duration.between(Instant.now(), deadline);
+    var left = deadline == null ? null : Duration.between(Instant.now(), deadline);
+    if (left != null && wait.compareTo(left) > 0) {
       return Optional.of("only %s were left to wait".formatted(RetryAfterException.describe(left)));
     }
     return Optional.empty();
