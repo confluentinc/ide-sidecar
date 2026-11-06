@@ -9,9 +9,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.sun.net.httpserver.HttpServer;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
+import io.confluent.kafka.schemaregistry.client.security.bearerauth.BearerAuthCredentialProvider;
 import java.io.IOException;
 import java.io.InterruptedIOException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
@@ -23,7 +27,9 @@ import java.util.Deque;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.net.ssl.SSLSocketFactory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -174,6 +180,42 @@ class SidecarRestServiceTest {
   }
 
   @Test
+  void shouldSendBearerTokenOnEveryAttempt() throws Exception {
+    var restService = startService(NO_BACKOFF, new Reply(503, null), new Reply(200, null));
+    restService.setBearerAuthCredentialProvider(new BearerAuthCredentialProvider() {
+      @Override
+      public String getBearerToken(URL url) {
+        return "oauth-token";
+      }
+
+      @Override
+      public void configure(Map<String, ?> configs) {
+      }
+    });
+
+    restService.getSchemaTypes();
+
+    assertEquals(2, requests.size());
+    requests.forEach(request -> assertEquals("Bearer oauth-token", request.authorization()));
+  }
+
+  @Test
+  void shouldUseConfiguredSslSocketFactoryOnEveryAttempt() throws Exception {
+    var restService = startService(NO_BACKOFF);
+    var httpsService = new SidecarRestService(
+        "https://localhost:%d".formatted(server.getAddress().getPort())
+    );
+    httpsService.configure(NO_BACKOFF);
+    var sslSockets = new AtomicInteger();
+    httpsService.setSslSocketFactory(new RecordingSslSocketFactory(sslSockets));
+
+    assertThrows(IOException.class, httpsService::getSchemaTypes);
+
+    // every attempt (1 try and 3 retries) goes through the configured factory
+    assertTrue(sslSockets.get() >= 4, "factory used " + sslSockets.get() + " times");
+  }
+
+  @Test
   void shouldReadRetryAfterAsHttpDate() throws Exception {
     var inAnHour = DateTimeFormatter.RFC_1123_DATE_TIME.format(
         ZonedDateTime.now(ZoneOffset.UTC).plusHours(1)
@@ -230,6 +272,66 @@ class SidecarRestServiceTest {
     assertInstanceOf(InterruptedIOException.class, failure.get());
     assertSame(Boolean.TRUE, stillInterrupted.get());
     assertEquals(1, requests.size());
+  }
+
+  /**
+   * Counts the sockets the client asks for, then fails them so no TLS handshake is needed.
+   */
+  private static class RecordingSslSocketFactory extends SSLSocketFactory {
+
+    private final AtomicInteger created;
+
+    RecordingSslSocketFactory(AtomicInteger created) {
+      this.created = created;
+    }
+
+    private Socket record() throws IOException {
+      created.incrementAndGet();
+      throw new IOException("recorded");
+    }
+
+    @Override
+    public Socket createSocket() throws IOException {
+      return record();
+    }
+
+    @Override
+    public Socket createSocket(Socket socket, String host, int port, boolean autoClose)
+        throws IOException {
+      return record();
+    }
+
+    @Override
+    public Socket createSocket(String host, int port) throws IOException {
+      return record();
+    }
+
+    @Override
+    public Socket createSocket(String host, int port, InetAddress local, int localPort)
+        throws IOException {
+      return record();
+    }
+
+    @Override
+    public Socket createSocket(InetAddress host, int port) throws IOException {
+      return record();
+    }
+
+    @Override
+    public Socket createSocket(InetAddress host, int port, InetAddress local, int localPort)
+        throws IOException {
+      return record();
+    }
+
+    @Override
+    public String[] getDefaultCipherSuites() {
+      return new String[0];
+    }
+
+    @Override
+    public String[] getSupportedCipherSuites() {
+      return new String[0];
+    }
   }
 
   private SidecarRestService startService(Map<String, Object> config, Reply... scripted)
