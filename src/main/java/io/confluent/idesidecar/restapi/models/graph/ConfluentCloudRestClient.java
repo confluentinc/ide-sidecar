@@ -3,6 +3,7 @@ package io.confluent.idesidecar.restapi.models.graph;
 import io.confluent.idesidecar.restapi.connections.CCloudConnectionState;
 import io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException;
 import io.confluent.idesidecar.restapi.exceptions.TooManyRequestsException;
+import io.confluent.idesidecar.restapi.exceptions.TransientServerErrorException;
 import io.confluent.idesidecar.restapi.util.CCloudApiRateLimiter;
 import io.confluent.idesidecar.restapi.util.CCloudHttpRetryPolicy;
 import io.confluent.idesidecar.restapi.util.RateLimitState;
@@ -43,12 +44,13 @@ public abstract class ConfluentCloudRestClient extends ConfluentRestClient {
   }
 
   /**
-   * Wrap each outbound request with CCloud's adaptive rate-limit permit acquisition and 429
-   * retry. The supplier produces the inner uni (send + checkResponse + parse + onResponseReceived)
-   * fresh on each subscribe so retries get a new send rather than a replayed CompletionStage.
-   * Each attempt runs under its own rate-limiter permit, and 429s are retried per
-   * {@link CCloudHttpRetryPolicy}, which waits out {@code Retry-After} and logs at ERROR when it
-   * gives up.
+   * Wrap each outbound request with CCloud's adaptive rate limiting and retries. The supplier
+   * produces the inner uni (send + checkResponse + parse + onResponseReceived) fresh on each
+   * subscribe so retries get a new send rather than a replayed CompletionStage. Each attempt runs
+   * under its own rate-limiter permit. 429s, 502/503/504 responses, refused connections and
+   * failed DNS lookups are retried per {@link CCloudHttpRetryPolicy#applyIdempotentRetry}, which
+   * waits out {@code Retry-After} and logs at ERROR when it gives up. That's only safe because
+   * every request here is a GET from {@code listItems} or {@code getItem}.
    */
   @Override
   protected <T> Uni<T> wrapRequest(String url, Supplier<Uni<T>> uniSupplier) {
@@ -61,7 +63,12 @@ public abstract class ConfluentCloudRestClient extends ConfluentRestClient {
    */
   @Override
   protected <T> Uni<T> wrapRequest(String url, Instant startedAt, Supplier<Uni<T>> uniSupplier) {
-    return retryPolicy.applyRetry(url, startedAt, rateLimiter.withPermit(url, uniSupplier));
+    // every fetch here is a GET, so 5xx and connect failures are safe to retry too
+    return retryPolicy
+        .applyIdempotentRetry(url, startedAt, rateLimiter.withPermit(url, uniSupplier))
+        // a 5xx that wasn't retried away fails with the same error it always has
+        .onFailure(TransientServerErrorException.class)
+        .transform(Throwable::getCause);
   }
 
   /**
@@ -75,9 +82,11 @@ public abstract class ConfluentCloudRestClient extends ConfluentRestClient {
   }
 
   /**
-   * Handle 429 responses before delegating non-429 errors to the base. On 429 we record the
-   * exhausted state (stores reset-window info), log with full header detail,
-   * and throw {@link TooManyRequestsException} so {@link #wrapRequest}'s retry chain fires.
+   * Handle 429 responses before delegating other errors to the base. On 429 we record the
+   * exhausted state (stores reset-window info), log with full header detail, and throw
+   * {@link TooManyRequestsException} so {@link #wrapRequest}'s retry chain fires. The base's error
+   * for a 502, 503 or 504 is wrapped in a {@link TransientServerErrorException} so it's retried
+   * too, and {@link #wrapRequest} unwraps it if the retries run out.
    */
   @Override
   protected void checkResponse(HttpResponse<?> response, String url) {
@@ -93,6 +102,16 @@ public abstract class ConfluentCloudRestClient extends ConfluentRestClient {
       );
       throw new TooManyRequestsException(url, retryAfter);
     }
-    super.checkResponse(response, url);
+    try {
+      super.checkResponse(response, url);
+    } catch (RuntimeException error) {
+      var status = response.statusCode();
+      if (status == 502 || status == 503 || status == 504) {
+        throw new TransientServerErrorException(
+            url, status, RateLimitState.parseRetryAfterHeader(response), error
+        );
+      }
+      throw error;
+    }
   }
 }
