@@ -28,6 +28,7 @@
             max-backoff-ms: 200
             max-retries: 3
             jitter-factor: 0.0
+            max-total-ms: 10000
       confluent-local:
         resources:
           clusters-list-uri: http://localhost:${quarkus.wiremock.devservices.port}/v3/clusters
@@ -148,10 +149,13 @@ ide-sidecar:
         # fallback rate used before the first response with X-RateLimit-* headers
         default-permits-per-second: 4
         retry:
-          initial-backoff-ms: 500
+          initial-backoff-ms: 1000
           max-backoff-ms: 10000
           max-retries: 5
           jitter-factor: 0.2
+          # stop retrying a request (or a paged fetch) once the next wait would end this long after
+          # it started; with one 20s request timeout on top, it stays within 60s
+          max-total-ms: 40000
 
     confluent-local:
       # We assume that the user is running the confluent-local image with
