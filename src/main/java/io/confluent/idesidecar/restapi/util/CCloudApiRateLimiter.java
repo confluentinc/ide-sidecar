@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
@@ -33,6 +34,13 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 @ApplicationScoped
 @RegisterForReflection
 public class CCloudApiRateLimiter {
+
+  /**
+   * The longest a 429 pauses its endpoint for. The retry policy fails fast on a longer
+   * {@code Retry-After}, but the pause applies to every later request to that endpoint, so an
+   * hours-long value shouldn't stall them all.
+   */
+  static final int MAX_RATE_LIMITED_PAUSE_SECONDS = 60;
 
   private final boolean enabled;
   private final int defaultPermitsPerSecond;
@@ -73,12 +81,35 @@ public class CCloudApiRateLimiter {
   }
 
   /**
-   * Acquire a single rate-limit permit from the bucket for {@code url}. Returns immediately if
-   * throughput is safe, or returns a {@link Uni} that completes after the necessary delay.
-   * Callers must follow each {@link #acquire} with exactly one of {@link #recordResponse},
-   * {@link #recordRateLimitedResponse}, or {@link #notifyRequestCompleted} for the same URL.
+   * Run {@code attempt} under a permit from {@code url}'s bucket. The permit is taken when the
+   * returned {@link Uni} is subscribed, so each retry takes its own and re-reads the bucket, and
+   * it's released exactly once when the attempt ends: with an item, a failure, or a cancellation.
+   * Feed responses to {@link #recordResponse} or {@link #recordRateLimitedResponse}, which update
+   * the bucket's pacing but don't release the permit.
    */
-  public Uni<Void> acquire(String url) {
+  public <T> Uni<T> withPermit(String url, Supplier<Uni<T>> attempt) {
+    if (!enabled) {
+      return Uni.createFrom().deferred(() -> attempt.get());
+    }
+    return Uni.createFrom().deferred(() -> {
+      var bucket = bucketFor(url);
+      var released = new AtomicBoolean();
+      return bucket.acquire()
+          .chain(() -> attempt.get())
+          .onTermination().invoke(() -> {
+            if (released.compareAndSet(false, true)) {
+              bucket.notifyRequestCompleted();
+            }
+          });
+    });
+  }
+
+  /**
+   * Acquire a single rate-limit permit from the bucket for {@code url}, right away rather than on
+   * subscription. Each call must be followed by exactly one {@link #notifyRequestCompleted};
+   * request code uses {@link #withPermit}, which does both.
+   */
+  Uni<Void> acquire(String url) {
     if (!enabled) {
       return Uni.createFrom().voidItem();
     }
@@ -87,7 +118,7 @@ public class CCloudApiRateLimiter {
 
   /**
    * Record a successful HTTP response: parse {@code X-RateLimit-*} headers if present and feed
-   * them to the matching bucket; otherwise just release the inflight permit.
+   * them to the matching bucket.
    */
   public void recordResponse(String url, HttpResponse<?> response) {
     if (!enabled) {
@@ -108,14 +139,21 @@ public class CCloudApiRateLimiter {
   }
 
   /**
-   * Release the inflight permit for {@code url}'s bucket without updating its state. Use when a
-   * request fails before any response headers are available (network error, etc.).
+   * Release a permit taken with {@link #acquire}.
    */
-  public void notifyRequestCompleted(String url) {
+  void notifyRequestCompleted(String url) {
     if (!enabled) {
       return;
     }
     bucketFor(url).notifyRequestCompleted();
+  }
+
+  /**
+   * The number of permits currently taken from {@code url}'s bucket.
+   */
+  int inflight(String url) {
+    var bucket = buckets.get(bucketKey(url));
+    return bucket == null ? 0 : bucket.inflight.get();
   }
 
   /** Returns the latest observed state for {@code url}'s bucket, or null if none yet. */
@@ -225,8 +263,6 @@ public class CCloudApiRateLimiter {
       var state = RateLimitState.fromHeaders(response);
       if (state != null) {
         update(normalizeReset(state));
-      } else {
-        notifyRequestCompleted();
       }
     }
 
@@ -234,7 +270,7 @@ public class CCloudApiRateLimiter {
       int retryAfter = RateLimitState.parseRetryAfterHeader(response);
       update(new RateLimitState(
           -1, 0,
-          retryAfter > 0 ? retryAfter : 1.0,
+          retryAfter >= 0 ? Math.min(retryAfter, MAX_RATE_LIMITED_PAUSE_SECONDS) : 1.0,
           System.nanoTime()
       ));
     }
@@ -244,7 +280,6 @@ public class CCloudApiRateLimiter {
     }
 
     private void update(RateLimitState state) {
-      inflight.decrementAndGet();
       latestState.getAndUpdate(current ->
           current == null || state.receivedAtNanos() >= current.receivedAtNanos()
               ? state
