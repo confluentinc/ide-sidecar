@@ -41,7 +41,9 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.JsonFormat;
 
 import graphql.VisibleForTesting;
+import io.confluent.idesidecar.restapi.clients.RetryAfterException;
 import io.confluent.idesidecar.restapi.clients.SchemaErrors;
+import io.confluent.idesidecar.restapi.clients.SidecarRestService;
 import io.confluent.idesidecar.restapi.kafkarest.SchemaFormat;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequest;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
@@ -384,13 +386,19 @@ public class RecordDeserializer {
       // (max.retries, default 3), so one schema ID can cost up to
       // (1 + schemaFetchMaxRetries) * 4 requests. The timeout bounds how long we wait for all of
       // them, and with the client's default waits between its retries it usually fires first.
+      // The timeout doesn't stop the worker thread, so the client also gets the deadline: it
+      // won't wait out a Retry-After past it.
+      var deadline = Instant.now().plus(schemaFetchTimeout);
       var parsedSchema = Uni
           .createFrom()
           .item(
               Unchecked.supplier(
-                  () -> schemaGuid.isPresent()
-                      ? schemaRegistryClient.getSchemaByGuid(schemaGuid.get().toString(), null)
-                      : schemaRegistryClient.getSchemaById(schemaId.orElseThrow())
+                  () -> SidecarRestService.withDeadline(
+                      deadline,
+                      () -> schemaGuid.isPresent()
+                          ? schemaRegistryClient.getSchemaByGuid(schemaGuid.get().toString(), null)
+                          : schemaRegistryClient.getSchemaById(schemaId.orElseThrow())
+                  )
               )
           )
           .onFailure().invoke(lastFetchFailure::set)
@@ -470,6 +478,10 @@ public class RecordDeserializer {
 
   private boolean isRetryableException(Throwable throwable) {
     var exc = unwrap(throwable);
+    if (exc instanceof RetryAfterException) {
+      // the server's last Retry-After hasn't passed, and our backoff here is much shorter
+      return false;
+    }
     return (
         isNetworkRelatedException(exc) ||
             (exc instanceof RestClientException
