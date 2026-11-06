@@ -3,6 +3,11 @@ package io.confluent.idesidecar.restapi.util;
 import io.quarkus.logging.Log;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import io.vertx.ext.web.client.HttpResponse;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 
 /**
  * Immutable snapshot of rate-limit information parsed from CCloud API response headers. Used by
@@ -82,5 +87,32 @@ public record RateLimitState(
       }
     }
     return -1;
+  }
+
+  /**
+   * Parse a {@code Retry-After} value, either delay-seconds or an HTTP-date (RFC 9110 section
+   * 10.2.3), as whole seconds after {@code now}. A date in the past means no wait (0). Returns -1
+   * if the value is absent or unparseable.
+   */
+  public static int parseRetryAfter(String header, Instant now) {
+    if (header == null || header.isBlank()) {
+      return -1;
+    }
+    var value = header.trim();
+    if (value.chars().allMatch(c -> c >= '0' && c <= '9')) {
+      // more than 10 digits is past Integer.MAX_VALUE, and could overflow a long
+      return value.length() > 10
+          ? Integer.MAX_VALUE
+          : (int) Math.min(Long.parseLong(value), Integer.MAX_VALUE);
+    }
+    try {
+      var date = ZonedDateTime.parse(value, DateTimeFormatter.RFC_1123_DATE_TIME).toInstant();
+      var millis = Duration.between(now, date).toMillis();
+      return millis <= 0 ? 0 : (int) Math.min((millis + 999) / 1000, Integer.MAX_VALUE);
+    } catch (DateTimeParseException e) {
+      // logged at DEBUG: a malformed value only means we fall back to our own backoff
+      Log.debugf("Ignoring unparseable Retry-After header: %s", value);
+      return -1;
+    }
   }
 }
