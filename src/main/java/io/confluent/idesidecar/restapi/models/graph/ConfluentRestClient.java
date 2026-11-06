@@ -22,6 +22,7 @@ import io.vertx.core.MultiMap;
 import io.vertx.ext.web.client.HttpResponse;
 import jakarta.inject.Inject;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -65,6 +66,15 @@ public abstract class ConfluentRestClient {
   }
 
   /**
+   * Like {@link #wrapRequest(String, Supplier)}, for one request in an operation that started at
+   * {@code startedAt}, such as one page of a paged fetch, so retries across the whole operation
+   * share one time budget.
+   */
+  protected <T> Uni<T> wrapRequest(String url, Instant startedAt, Supplier<Uni<T>> uniSupplier) {
+    return wrapRequest(url, uniSupplier);
+  }
+
+  /**
    * The state used for requesting paginated responses. The first state should just be the original
    * request URL, with the URL of the next page determining whether there are additional pages.
    *
@@ -82,6 +92,11 @@ public abstract class ConfluentRestClient {
     volatile String nextUrl;
 
     public final PageLimits limits;
+
+    /**
+     * When the first page was requested, so retries across all pages share one time budget.
+     */
+    final Instant startedAt = Instant.now();
 
     private final AtomicInteger nextPageNumber = new AtomicInteger();
 
@@ -266,6 +281,7 @@ public abstract class ConfluentRestClient {
               () -> new PaginationState(firstUrl, limits),
               state -> wrapRequest(
                   state.nextUrl,
+                  state.startedAt,
                   () -> Uni.createFrom().completionStage(
                       webClientFactory
                           .getWebClient()
