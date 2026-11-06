@@ -1,6 +1,7 @@
 package io.confluent.idesidecar.restapi.messageviewer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -11,11 +12,11 @@ import static org.mockito.Mockito.when;
 
 import com.sun.net.httpserver.HttpServer;
 import io.confluent.idesidecar.restapi.clients.SchemaErrors;
+import io.confluent.idesidecar.restapi.clients.SidecarRestService;
 import io.confluent.idesidecar.restapi.clients.SidecarSchemaRegistryClient;
 import io.confluent.idesidecar.restapi.proxy.KafkaRestProxyContext;
 import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClientConfig;
-import io.confluent.kafka.schemaregistry.client.rest.RestService;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 import io.quarkus.test.junit.QuarkusTest;
 import java.net.InetSocketAddress;
@@ -155,6 +156,36 @@ class RecordDeserializerSchemaFetchBoundsTest {
     );
   }
 
+  @Test
+  void shouldFailWithoutRetryingWhenRetryAfterExceedsTimeout() throws Exception {
+    var requests = new AtomicInteger();
+    var server = alwaysTooManyRequests(requests, "30");
+    var deserializer = new RecordDeserializer(1, 1, PRODUCTION_MAX_RETRIES, 5_000, schemaErrors);
+
+    try {
+      var restService = new SidecarRestService(
+          "http://localhost:%d".formatted(server.getAddress().getPort())
+      );
+      restService.configure(Map.of());
+      var client = new SidecarSchemaRegistryClient(restService, 10, Map.of());
+      var started = System.nanoTime();
+
+      var result = deserializer.deserialize(RECORD_WITH_SCHEMA_ID, client, context, false);
+
+      var elapsed = Duration.ofNanos(System.nanoTime() - started);
+      assertTrue(elapsed.toMillis() < 5_000, "took " + elapsed);
+      assertEquals(1, requests.get());
+      assertTrue(
+          result.errorMessage().contains("asked to retry after 30s"),
+          result.errorMessage()
+      );
+      assertFalse(result.errorMessage().contains("gave up after"), result.errorMessage());
+      assertLoggedAtErrorContaining("asked to retry after 30s");
+    } finally {
+      server.stop(0);
+    }
+  }
+
   private void assertRequestCap(int maxRetries, int expectedRequests) throws Exception {
     var requests = new AtomicInteger();
     var server = alwaysTooManyRequests(requests);
@@ -178,12 +209,20 @@ class RecordDeserializerSchemaFetchBoundsTest {
   }
 
   private static HttpServer alwaysTooManyRequests(AtomicInteger requests) throws Exception {
+    return alwaysTooManyRequests(requests, null);
+  }
+
+  private static HttpServer alwaysTooManyRequests(AtomicInteger requests, String retryAfter)
+      throws Exception {
     var server = HttpServer.create(new InetSocketAddress("localhost", 0), 0);
     var body = "{\"error_code\":429,\"message\":\"Too Many Requests\"}"
         .getBytes(StandardCharsets.UTF_8);
     server.createContext("/", exchange -> {
       requests.incrementAndGet();
       exchange.getResponseHeaders().add("Content-Type", "application/json");
+      if (retryAfter != null) {
+        exchange.getResponseHeaders().add("Retry-After", retryAfter);
+      }
       exchange.sendResponseHeaders(429, body.length);
       exchange.getResponseBody().write(body);
       exchange.close();
@@ -197,7 +236,7 @@ class RecordDeserializerSchemaFetchBoundsTest {
    * every request without waiting out the client's backoff.
    */
   private static SidecarSchemaRegistryClient clientWithoutRetryWaits(int port) {
-    var restService = new RestService("http://localhost:%d".formatted(port));
+    var restService = new SidecarRestService("http://localhost:%d".formatted(port));
     restService.configure(Map.of("retries.wait.ms", 0, "retries.max.wait.ms", 0));
     return new SidecarSchemaRegistryClient(restService, 10, Map.of());
   }
