@@ -1,10 +1,17 @@
 package io.confluent.idesidecar.restapi.proxy;
 
+import io.confluent.idesidecar.restapi.exceptions.Failure;
 import io.confluent.idesidecar.restapi.exceptions.ProcessorFailedException;
+import io.confluent.idesidecar.restapi.util.TimeUtil;
 import io.confluent.idesidecar.restapi.util.WebClientFactory;
+import io.netty.channel.ConnectTimeoutException;
+import io.quarkus.logging.Log;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.ext.web.client.WebClient;
+import java.net.URI;
+import java.time.Duration;
+import java.util.concurrent.TimeoutException;
 
 /**
  * HTTP client used when proxying requests to the Kafka REST and Schema Registry APIs.
@@ -19,12 +26,23 @@ public class ProxyHttpClient<T extends ProxyContext> {
     this.vertx = vertx;
   }
 
+  /**
+   * Send the proxied request with the default request timeout.
+   */
   public Future<T> send(T context) {
+    return send(context, WebClientFactory.WEBCLIENT_REQUEST_TIMEOUT_SECONDS);
+  }
+
+  /**
+   * Send the proxied request, failing with 504 if the server sends nothing for {@code timeout}.
+   */
+  public Future<T> send(T context, Duration timeout) {
     var webClient = context.getWebClientOptions() != null
         ? WebClient.create(vertx, context.getWebClientOptions())
         : webClientFactory.getWebClient();
     return webClient
         .requestAbs(context.getProxyRequestMethod(), context.getProxyRequestAbsoluteUrl())
+        .timeout(timeout.toMillis())
         .putHeaders(context.getProxyRequestHeaders())
         .sendBuffer(context.getProxyRequestBody())
         .compose(
@@ -37,12 +55,35 @@ public class ProxyHttpClient<T extends ProxyContext> {
               return Future.succeededFuture(context);
             },
             // If failure, stop the chain and return a failed future.
-            // This covers cases where the request was not sent to the server, or we failed to
-            // get a response.
+            // This covers cases where the request was not sent to the server, we failed to
+            // get a response, or the server sent nothing for the whole timeout.
             throwable -> {
-              var failure = context
-                  .error("proxy_error", throwable.getMessage())
-                  .failf(500, "Something went wrong while proxying request");
+              Log.errorf(
+                  throwable,
+                  "Proxied %s %s failed",
+                  context.getProxyRequestMethod(),
+                  context.getProxyRequestAbsoluteUrl()
+              );
+              var host = URI.create(context.getProxyRequestAbsoluteUrl()).getHost();
+              Failure failure;
+              if (throwable instanceof TimeoutException) {
+                failure = context
+                    .error("proxy_timeout", throwable.getMessage())
+                    .failf(
+                        504,
+                        "%s didn't respond within %s",
+                        host,
+                        TimeUtil.humanReadableDuration(timeout)
+                    );
+              } else if (throwable instanceof ConnectTimeoutException) {
+                failure = context
+                    .error("proxy_timeout", throwable.getMessage())
+                    .failf(504, "Couldn't connect to %s in time", host);
+              } else {
+                failure = context
+                    .error("proxy_error", throwable.getMessage())
+                    .failf(500, "Something went wrong while proxying request");
+              }
               return Future.failedFuture(new ProcessorFailedException(failure));
             }
         );

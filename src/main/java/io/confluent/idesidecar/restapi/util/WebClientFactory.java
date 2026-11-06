@@ -26,6 +26,7 @@ import java.security.cert.CertificateException;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
+import java.util.stream.Stream;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 import org.eclipse.microprofile.config.ConfigProvider;
@@ -45,12 +46,41 @@ public class WebClientFactory {
   static final String CERT_FOOTER = LINE_SEPARATOR + "-----END CERTIFICATE-----" + LINE_SEPARATOR;
   static final List<String> WINDOWS_TRUST_STORE_NAMES = List.of("WINDOWS-MY", "WINDOWS-ROOT");
 
-  static final Duration WEBCLIENT_CONNECT_TIMEOUT_SECONDS = Duration.ofSeconds(
-      ConfigProvider
-          .getConfig()
-          .getValue(
-              "ide-sidecar.webclient.connect-timeout-seconds",
-              Long.class));
+  static final Duration WEBCLIENT_CONNECT_TIMEOUT_SECONDS =
+      secondsConfig("ide-sidecar.webclient.connect-timeout-seconds");
+
+  /**
+   * How long a request may go without receiving any data before it fails. Set it on each request
+   * with {@code HttpRequest.timeout(...)}, so a stalled server fails the send instead of hanging.
+   */
+  public static final Duration WEBCLIENT_REQUEST_TIMEOUT_SECONDS =
+      secondsConfig("ide-sidecar.webclient.request-timeout-seconds");
+
+  /**
+   * {@link #WEBCLIENT_REQUEST_TIMEOUT_SECONDS} in the milliseconds {@code HttpRequest.timeout}
+   * takes.
+   */
+  public static final long WEBCLIENT_REQUEST_TIMEOUT_MS =
+      WEBCLIENT_REQUEST_TIMEOUT_SECONDS.toMillis();
+
+  /**
+   * The request timeout for CCloud consume, which may hold a request open while there are no
+   * records.
+   */
+  public static final Duration WEBCLIENT_CCLOUD_CONSUME_TIMEOUT_SECONDS =
+      secondsConfig("ide-sidecar.webclient.ccloud-consume-timeout-seconds");
+
+  /**
+   * Closes a connection that has a request in flight but no traffic for this long. It's a backstop
+   * for requests without their own timeout, so it's kept at least 30s above the longest request
+   * timeout and never cuts off a request before that request's own timeout fires.
+   */
+  static final Duration WEBCLIENT_IDLE_TIMEOUT_SECONDS = Stream.of(
+          secondsConfig("ide-sidecar.webclient.idle-timeout-seconds"),
+          WEBCLIENT_REQUEST_TIMEOUT_SECONDS.plusSeconds(30),
+          WEBCLIENT_CCLOUD_CONSUME_TIMEOUT_SECONDS.plusSeconds(30))
+      .max(Duration::compareTo)
+      .orElseThrow();
 
   /**
    * It's important that we use the Quarkus-managed Vertx instance here and not create a new Vertx
@@ -117,6 +147,7 @@ public class WebClientFactory {
   public WebClientOptions getDefaultWebClientOptions() {
     var clientOptions = new WebClientOptions();
     clientOptions.setConnectTimeout((int) WEBCLIENT_CONNECT_TIMEOUT_SECONDS.toMillis());
+    clientOptions.setIdleTimeout((int) WEBCLIENT_IDLE_TIMEOUT_SECONDS.toSeconds());
     clientOptions.setUserAgent(sidecarInfo.getUserAgent());
     if (OperatingSystemType.current() == OperatingSystemType.Windows) {
       var pemTrustOptions = new PemTrustOptions();
@@ -132,6 +163,13 @@ public class WebClientFactory {
     }
 
     return clientOptions;
+  }
+
+  /**
+   * Read a whole number of seconds from config.
+   */
+  private static Duration secondsConfig(String key) {
+    return Duration.ofSeconds(ConfigProvider.getConfig().getValue(key, Long.class));
   }
 
   private Vertx getVertx() {
