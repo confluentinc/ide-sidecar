@@ -64,17 +64,21 @@ public class ProxyHttpClient<T extends ProxyContext> {
                   context.getProxyRequestMethod(),
                   context.getProxyRequestAbsoluteUrl()
               );
+              var host = URI.create(context.getProxyRequestAbsoluteUrl()).getHost();
               Failure failure;
-              if (throwable instanceof TimeoutException
-                  || throwable instanceof ConnectTimeoutException) {
+              if (throwable instanceof TimeoutException) {
                 failure = context
                     .error("proxy_timeout", throwable.getMessage())
                     .failf(
                         504,
                         "%s didn't respond within %s",
-                        URI.create(context.getProxyRequestAbsoluteUrl()).getHost(),
+                        host,
                         TimeUtil.humanReadableDuration(timeout)
                     );
+              } else if (throwable instanceof ConnectTimeoutException) {
+                failure = context
+                    .error("proxy_timeout", throwable.getMessage())
+                    .failf(504, "Couldn't connect to %s in time", host);
               } else {
                 failure = context
                     .error("proxy_error", throwable.getMessage())
