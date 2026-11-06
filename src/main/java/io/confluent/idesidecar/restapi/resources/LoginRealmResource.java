@@ -1,15 +1,22 @@
 package io.confluent.idesidecar.restapi.resources;
 
+import io.confluent.idesidecar.restapi.exceptions.Failure;
+import io.confluent.idesidecar.restapi.util.TimeUtil;
 import io.confluent.idesidecar.restapi.util.UriUtil;
 import io.confluent.idesidecar.restapi.util.WebClientFactory;
+import io.quarkus.logging.Log;
 import io.smallrye.mutiny.Uni;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
 import jakarta.ws.rs.core.UriInfo;
+import java.util.UUID;
+import java.util.concurrent.TimeoutException;
 import org.eclipse.microprofile.config.ConfigProvider;
 
 /**
@@ -34,6 +41,7 @@ public class LoginRealmResource {
 
     var loginRealm = webClientFactory.getWebClient()
         .getAbs(CONFLUENT_CLOUD_LOGIN_REALM_URI.concat(queryParameters))
+        .timeout(WebClientFactory.WEBCLIENT_REQUEST_TIMEOUT_MS)
         .send()
         .map(response ->
             Response
@@ -46,6 +54,25 @@ public class LoginRealmResource {
                 .build())
         .toCompletionStage();
 
-    return Uni.createFrom().completionStage(loginRealm);
+    return Uni.createFrom().completionStage(loginRealm)
+        .onFailure(TimeoutException.class)
+        .recoverWithItem(timeout -> {
+          Log.errorf(timeout, "Confluent Cloud login realm lookup timed out");
+          var failure = new Failure(
+              (TimeoutException) timeout,
+              Status.GATEWAY_TIMEOUT,
+              "login_realm_timeout",
+              "Confluent Cloud didn't respond within %s".formatted(
+                  TimeUtil.humanReadableDuration(WebClientFactory.WEBCLIENT_REQUEST_TIMEOUT_SECONDS)
+              ),
+              UUID.randomUUID().toString(),
+              null
+          );
+          return Response
+              .status(Status.GATEWAY_TIMEOUT)
+              .entity(failure)
+              .type(MediaType.APPLICATION_JSON)
+              .build();
+        });
   }
 }
