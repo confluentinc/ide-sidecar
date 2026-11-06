@@ -5,6 +5,7 @@ import static io.confluent.idesidecar.restapi.util.ExceptionUtil.unwrap;
 import io.confluent.idesidecar.restapi.auth.AuthErrors;
 import io.confluent.idesidecar.restapi.clients.ClientConfigurator;
 import io.confluent.idesidecar.restapi.clients.SchemaRegistryClient;
+import io.confluent.idesidecar.restapi.clients.SidecarRestService;
 import io.confluent.idesidecar.restapi.clients.SidecarSchemaRegistryClient;
 import io.confluent.idesidecar.restapi.credentials.Credentials;
 import io.confluent.idesidecar.restapi.credentials.TLSConfig;
@@ -18,7 +19,6 @@ import io.confluent.idesidecar.restapi.models.ConnectionStatusBuilder;
 import io.confluent.idesidecar.restapi.models.ConnectionStatusKafkaClusterStatusBuilder;
 import io.confluent.idesidecar.restapi.models.ConnectionStatusSchemaRegistryStatusBuilder;
 import io.confluent.idesidecar.restapi.util.SchemaRegistryUtil;
-import io.confluent.kafka.schemaregistry.client.rest.RestService;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 import io.confluent.kafka.schemaregistry.client.security.SslFactory;
 import io.quarkus.logging.Log;
@@ -28,6 +28,7 @@ import io.vertx.core.Future;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -222,7 +223,7 @@ public class DirectConnectionState extends ConnectionState {
     return withSchemaRegistryClient(srClient -> {
       // There is a configuration, so validate the connection by creating a SchemaRegistryClient
       // and getting all schema types
-      srClient.getSchemaTypes();
+      SidecarRestService.withDeadline(Instant.now().plus(TIMEOUT), srClient::getSchemaTypes);
       return Future.succeededFuture(
           ConnectionStatusSchemaRegistryStatusBuilder
               .builder()
@@ -386,7 +387,7 @@ public class DirectConnectionState extends ConnectionState {
         TIMEOUT
     );
 
-    var restService = new RestService(config.uri());
+    var restService = new SidecarRestService(config.uri());
     restService.configure(SchemaRegistryUtil.removeOAuthConfigs(srClientConfig));
     if (config.tlsConfig() != null && Boolean.FALSE.equals(config.tlsConfig().verifyHostname())) {
       // Disable hostname verification

@@ -5,6 +5,7 @@ import static io.confluent.idesidecar.restapi.util.SanitizeHeadersUtil.sanitizeH
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.confluent.idesidecar.restapi.clients.SchemaRegistryClients;
+import io.confluent.idesidecar.restapi.clients.SidecarRestService;
 import io.confluent.idesidecar.restapi.processors.Processor;
 import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
 import io.confluent.idesidecar.restapi.util.WebClientFactory;
@@ -18,6 +19,8 @@ import jakarta.inject.Inject;
 import jakarta.json.Json;
 import jakarta.ws.rs.core.Response;
 import java.io.IOException;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -29,6 +32,12 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 @ApplicationScoped
 public class ClusterProxyRequestProcessor extends
     Processor<ClusterProxyContext, Future<ClusterProxyContext>> {
+
+  /**
+   * How long one proxied Schema Registry request may spend waiting out {@code Retry-After}, kept
+   * under the extension's own timeout for sidecar calls so the extension sees our error.
+   */
+  static final Duration SCHEMA_REGISTRY_DEADLINE = Duration.ofSeconds(20);
 
   @Inject
   SchemaRegistryClients clients;
@@ -66,16 +75,19 @@ public class ClusterProxyRequestProcessor extends
   private Future<ClusterProxyContext> processSchemaRegistry(ClusterProxyContext context) {
     var client = clients.getClient(context.getConnectionId(), context.getClusterId());
     try {
-      var resp = client.httpRequest(
-          context.getRequestUri(),
-          context.getProxyRequestMethod().toString(),
-          Optional
-              .ofNullable(context.getProxyRequestBody())
-              .map(Buffer::getBytes)
-              .orElse(null),
-          sanitizeHeaders(context.getProxyRequestHeaders(), httpHeaderExclusions),
-          new TypeReference<JsonNode>() {
-          }
+      var resp = SidecarRestService.withDeadline(
+          Instant.now().plus(SCHEMA_REGISTRY_DEADLINE),
+          () -> client.httpRequest(
+              context.getRequestUri(),
+              context.getProxyRequestMethod().toString(),
+              Optional
+                  .ofNullable(context.getProxyRequestBody())
+                  .map(Buffer::getBytes)
+                  .orElse(null),
+              sanitizeHeaders(context.getProxyRequestHeaders(), httpHeaderExclusions),
+              new TypeReference<JsonNode>() {
+              }
+          )
       );
 
       // If we get here, all went well
