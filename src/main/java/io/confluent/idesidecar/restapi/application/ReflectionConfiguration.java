@@ -4,6 +4,7 @@ import com.google.protobuf.Any;
 import com.google.protobuf.Message;
 import com.sun.security.auth.module.JndiLoginModule;
 import com.sun.security.auth.module.KeyStoreLoginModule;
+import io.confluent.idesidecar.restapi.kafkarest.model.ProduceRecordError;
 import io.confluent.kafka.schemaregistry.avro.AvroSchema;
 import io.confluent.kafka.schemaregistry.client.rest.entities.Config;
 import io.confluent.kafka.schemaregistry.client.rest.entities.ErrorMessage;
@@ -61,7 +62,7 @@ import org.apache.kafka.common.security.scram.internals.ScramServerCallbackHandl
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 
 /**
- * Registers external classes for reflection.
+ * Registers classes for reflection that Quarkus cannot infer automatically.
  *
  * @see <a
  * href="https://quarkus.io/guides/writing-native-applications-tips#registering-for-reflection">Registering
@@ -69,6 +70,9 @@ import org.apache.kafka.common.serialization.ByteArrayDeserializer;
  */
 @RegisterForReflection(
     targets = {
+        // Generated Kafka REST model returned through a raw Response entity
+        ProduceRecordError.class,
+        ProduceRecordError.MessagePartEnum.class,
         ByteArrayDeserializer.class,
         CooperativeStickyAssignor.class,
         RangeAssignor.class,

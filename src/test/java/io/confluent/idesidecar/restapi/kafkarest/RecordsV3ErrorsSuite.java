@@ -192,6 +192,7 @@ public interface RecordsV3ErrorsSuite extends RecordsV3BaseSuite {
             produceRecordThen(
                 null, topic, badData, keySchema.getVersion(), null, null, Set.of())
                 .statusCode(400)
+                .body("message_part", equalTo("key"))
                 .body("message", containsString("Failed to parse data"))
         );
 
@@ -207,6 +208,7 @@ public interface RecordsV3ErrorsSuite extends RecordsV3BaseSuite {
             produceRecordThen(
                 null, topic, null, null, badData, valueSchema.getVersion(), Set.of())
                 .statusCode(400)
+                .body("message_part", equalTo("value"))
                 .body("message", containsString("Failed to parse data"))
         );
   }
