@@ -79,7 +79,7 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
         <SimpleConsumeMultiPartitionRequest, SimpleConsumeMultiPartitionResponse>
         >(webClientFactory, vertx);
     return proxyHttpClient
-        .send(context)
+        .send(context, WebClientFactory.WEBCLIENT_CCLOUD_CONSUME_TIMEOUT_SECONDS)
         .compose(processedCtx -> vertx
             .createSharedWorkerExecutor("consume-worker")
             .executeBlocking(() -> postProcess(processedCtx))
