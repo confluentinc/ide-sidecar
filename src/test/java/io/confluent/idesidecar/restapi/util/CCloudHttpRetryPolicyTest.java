@@ -1,17 +1,23 @@
 package io.confluent.idesidecar.restapi.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.confluent.idesidecar.restapi.exceptions.TooManyRequestsException;
+import io.confluent.idesidecar.restapi.exceptions.TransientServerErrorException;
+import io.netty.channel.ConnectTimeoutException;
 import io.smallrye.mutiny.Uni;
+import java.net.ConnectException;
+import java.net.UnknownHostException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+import javax.net.ssl.SSLHandshakeException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -144,6 +150,80 @@ class CCloudHttpRetryPolicyTest {
     );
 
     assertEquals(1, attempts.get());
+  }
+
+  @Test
+  void idempotentRetryShouldRetryUnavailableServersAndConnectFailures() {
+    assertTrue(CCloudHttpRetryPolicy.isRetryableForIdempotentRequest(
+        new TransientServerErrorException(URL, 503, -1, new RuntimeException("503"))
+    ));
+    assertTrue(CCloudHttpRetryPolicy.isRetryableForIdempotentRequest(
+        new CompletionException(new ConnectException("refused"))
+    ));
+    assertTrue(CCloudHttpRetryPolicy.isRetryableForIdempotentRequest(
+        new UnknownHostException("api.confluent.cloud")
+    ));
+    assertTrue(CCloudHttpRetryPolicy.isRetryableForIdempotentRequest(
+        new TooManyRequestsException(URL, 1)
+    ));
+  }
+
+  @Test
+  void idempotentRetryShouldNotRetryTimeoutsOrTlsFailures() {
+    assertFalse(CCloudHttpRetryPolicy.isRetryableForIdempotentRequest(
+        new ConnectTimeoutException("connect timed out")
+    ));
+    assertFalse(CCloudHttpRetryPolicy.isRetryableForIdempotentRequest(
+        new TimeoutException("no data for 20s")
+    ));
+    assertFalse(CCloudHttpRetryPolicy.isRetryableForIdempotentRequest(
+        new SSLHandshakeException("bad certificate")
+    ));
+    assertFalse(CCloudHttpRetryPolicy.isRetryableForIdempotentRequest(
+        new IllegalStateException("not a network failure")
+    ));
+    var refusedDuringTls = new ConnectException("refused");
+    refusedDuringTls.initCause(new SSLHandshakeException("bad certificate"));
+    assertFalse(CCloudHttpRetryPolicy.isRetryableForIdempotentRequest(refusedDuringTls));
+    var dnsTimeout = new UnknownHostException("api.confluent.cloud");
+    dnsTimeout.initCause(new TimeoutException("DNS query timed out"));
+    assertFalse(CCloudHttpRetryPolicy.isRetryableForIdempotentRequest(dnsTimeout));
+  }
+
+  @Test
+  void applyRetryShouldNotRetryConnectFailuresForNonIdempotentRequests() {
+    shortenWaits();
+    var attempts = new AtomicInteger();
+    var source = Uni.createFrom().<String>deferred(() -> {
+      attempts.incrementAndGet();
+      return Uni.createFrom().failure(new ConnectException("refused"));
+    });
+
+    var thrown = assertThrows(
+        CompletionException.class,
+        () -> policy.applyRetry(URL, source).await().atMost(Duration.ofSeconds(5))
+    );
+
+    assertInstanceOf(ConnectException.class, thrown.getCause());
+
+    assertEquals(1, attempts.get());
+  }
+
+  @Test
+  void idempotentRetryShouldPropagateTheLastFailureWhenRetriesRunOut() {
+    shortenWaits();
+    var attempts = new AtomicInteger();
+    var source = Uni.createFrom().<String>deferred(() -> Uni.createFrom().failure(
+        new ConnectException("refused " + attempts.incrementAndGet())
+    ));
+
+    var thrown = assertThrows(
+        CompletionException.class,
+        () -> policy.applyIdempotentRetry(URL, null, source).await().atMost(Duration.ofSeconds(5))
+    );
+
+    assertEquals(3, attempts.get());
+    assertEquals("refused 3", thrown.getCause().getMessage());
   }
 
   private Duration backoffWithoutRetryAfter(int retries) {
