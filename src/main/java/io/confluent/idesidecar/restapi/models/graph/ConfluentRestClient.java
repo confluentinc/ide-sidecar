@@ -270,6 +270,7 @@ public abstract class ConfluentRestClient {
                       webClientFactory
                           .getWebClient()
                           .getAbs(state.nextUrl)
+                          .timeout(WebClientFactory.WEBCLIENT_REQUEST_TIMEOUT_MS)
                           .putHeaders(headers)
                           .send()
                           .map(result -> {
@@ -314,6 +315,7 @@ public abstract class ConfluentRestClient {
               webClientFactory
                   .getWebClient()
                   .getAbs(url)
+                  .timeout(WebClientFactory.WEBCLIENT_REQUEST_TIMEOUT_MS)
                   .putHeaders(headers)
                   .send()
                   .map(result -> {
