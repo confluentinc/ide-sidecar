@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.stubbing.Scenario;
 import io.confluent.idesidecar.restapi.auth.CCloudOAuthContext.ExchangeControlPlaneTokenRequest;
@@ -28,6 +29,7 @@ import jakarta.inject.Inject;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -954,6 +956,126 @@ class CCloudOAuthContextTest {
     assertEquals("rotated-refresh-token", authContext.getRefreshToken().token());
   }
 
+  @Test
+  void tokenLifetimeShouldComeFromTheJwtsIssuedAtAndExpiry() {
+    var now = Instant.parse("2026-11-06T12:00:00Z");
+
+    var token = jwt("{\"iat\":1000,\"exp\":1900}");
+
+    var lifetime = CCloudOAuthContext.tokenLifetime(token, "test", now);
+
+    assertEquals(Duration.ofSeconds(900), lifetime);
+  }
+
+  @Test
+  void tokenLifetimeShouldUseExpiryAloneWhenThereIsNoIssuedAt() {
+    var now = Instant.parse("2026-11-06T12:00:00Z");
+    var exp = now.plusSeconds(300).getEpochSecond();
+
+    var token = jwt("{\"exp\":%d}".formatted(exp));
+
+    var lifetime = CCloudOAuthContext.tokenLifetime(token, "test", now);
+
+    assertEquals(Duration.ofSeconds(300), lifetime);
+  }
+
+  @Test
+  void tokenLifetimeShouldFallBackToTheConfiguredLifetimeWithoutAnExpiry() {
+    var now = Instant.parse("2026-11-06T12:00:00Z");
+    var fallback = CCloudOAuthConfig.CCLOUD_CONTROL_PLANE_TOKEN_LIFE_TIME_SEC;
+
+    assertEquals(fallback, CCloudOAuthContext.tokenLifetime(jwt("{\"sub\":\"u\"}"), "test", now));
+    assertEquals(fallback, CCloudOAuthContext.tokenLifetime("not-a-jwt", "test", now));
+    var expiredBeforeIssued = jwt("{\"iat\":2000,\"exp\":1000}");
+    assertEquals(fallback, CCloudOAuthContext.tokenLifetime(expiredBeforeIssued, "test", now));
+  }
+
+  @Test
+  void refreshShouldBeDueBetween70And90PercentOfTheShortestLifetime() {
+    var now = Instant.parse("2026-11-06T12:00:00Z");
+    var lifetime = Duration.ofSeconds(300);
+
+    assertEquals(now.plusSeconds(210), CCloudOAuthContext.refreshDueAt(now, lifetime, 0.0));
+    assertEquals(now.plusSeconds(270), CCloudOAuthContext.refreshDueAt(now, lifetime, 1.0));
+  }
+
+  @Test
+  void refreshShouldBeSingleFlight() throws Throwable {
+    var authContext = Mockito.spy(new CCloudOAuthContext());
+    authContext.createTokensFromAuthorizationCode(FAKE_AUTHORIZATION_CODE, null)
+        .toCompletionStage().toCompletableFuture().get(5, TimeUnit.SECONDS);
+    // past the refresh point, so only the running refresh can stop a scheduled one
+    Mockito.doReturn(authContext.expiresAt().orElseThrow().minusSeconds(1))
+        .when(authContext).now();
+    assertTrue(authContext.shouldAttemptTokenRefresh());
+    delayRefreshTokenExchanges(CCloudTestUtil.AccessToken.newToken());
+    wireMock.resetRequests();
+
+    var first = authContext.refresh(null);
+    var second = authContext.refresh(null);
+    var third = authContext.refreshIgnoreFailures(null);
+
+    assertTrue(authContext.isRefreshInFlight());
+    assertFalse(authContext.shouldAttemptTokenRefresh());
+    // only the number of token exchanges matters here, not whether the refresh succeeds
+    awaitCompletion(first);
+    awaitCompletion(second);
+    awaitCompletion(third);
+    assertFalse(authContext.isRefreshInFlight());
+    wireMock.verifyThat(
+        1,
+        WireMock.postRequestedFor(WireMock.urlEqualTo("/oauth/token"))
+            .withRequestBody(WireMock.containing("refresh_token="))
+    );
+  }
+
+  @Test
+  void refreshForAnotherOrganizationShouldWaitAndUseTheRotatedRefreshToken() throws Throwable {
+    var authContext = new CCloudOAuthContext();
+    authContext.createTokensFromAuthorizationCode(FAKE_AUTHORIZATION_CODE, null)
+        .toCompletionStage().toCompletableFuture().get(5, TimeUnit.SECONDS);
+    var rotated = CCloudTestUtil.AccessToken.newToken();
+    delayRefreshTokenExchanges(rotated);
+    wireMock.resetRequests();
+
+    var first = authContext.refresh(null);
+    var second = authContext.refreshIgnoreFailures("org-2");
+
+    awaitCompletion(first);
+    awaitCompletion(second);
+    var exchanges = wireMock.find(
+        WireMock.postRequestedFor(WireMock.urlEqualTo("/oauth/token"))
+            .withRequestBody(WireMock.containing("refresh_token="))
+    );
+    assertEquals(2, exchanges.size());
+    assertTrue(
+        exchanges.get(1).getBodyAsString().contains("refresh_token=" + rotated.refresh_token()),
+        exchanges.get(1).getBodyAsString()
+    );
+  }
+
+  @Test
+  void refreshThatFailsAtOnceShouldNotLeaveARefreshInFlight() throws Throwable {
+    var authContext = new CCloudOAuthContext();
+
+    awaitFailure(authContext.refresh(null));
+    awaitFailure(authContext.refresh(null));
+
+    assertFalse(authContext.isRefreshInFlight());
+  }
+
+  private void delayRefreshTokenExchanges(CCloudTestUtil.AccessToken response) {
+    wireMock.register(
+        WireMock.post("/oauth/token")
+            .withRequestBody(WireMock.containing("refresh_token="))
+            .atPriority(1)
+            .willReturn(WireMock.aResponse()
+                .withStatus(201)
+                .withFixedDelay(1_000)
+                .withBody(new ObjectMapper().valueToTree(response).toString()))
+    );
+  }
+
   private void failTokenExchanges() {
     wireMock.register(
         WireMock.post("/oauth/token")
@@ -962,12 +1084,27 @@ class CCloudOAuthContextTest {
     );
   }
 
+  private static void awaitCompletion(Future<?> future) throws Exception {
+    future
+        .map(result -> (Object) result)
+        .recover(Future::succeededFuture)
+        .toCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+  }
+
   private static void awaitFailure(Future<?> future) throws Exception {
     var outcome = future
         .map(result -> (Object) result)
         .recover(Future::succeededFuture)
         .toCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
     assertTrue(outcome instanceof Throwable, "expected a failure, got " + outcome);
+  }
+
+  private static String jwt(String claims) {
+    var encoder = java.util.Base64.getUrlEncoder().withoutPadding();
+    return "%s.%s.signature".formatted(
+        encoder.encodeToString("{\"alg\":\"none\"}".getBytes(StandardCharsets.UTF_8)),
+        encoder.encodeToString(claims.getBytes(StandardCharsets.UTF_8))
+    );
   }
 
   private static CCloudOAuthContext.RefreshFailures failures(int attempts, Instant firstFailedAt) {
