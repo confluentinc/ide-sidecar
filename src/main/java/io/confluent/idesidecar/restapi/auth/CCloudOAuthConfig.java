@@ -18,6 +18,35 @@ public final class CCloudOAuthConfig {
   public static final Integer MAX_TOKEN_REFRESH_ATTEMPTS = ConfigProvider.getConfig()
       .getValue("ide-sidecar.connections.ccloud.refresh-token.max-refresh-attempts", Integer.class);
 
+  public static final Duration TOKEN_REFRESH_FAILURE_BUDGET = Duration.ofSeconds(
+      ConfigProvider
+          .getConfig()
+          .getValue(
+              "ide-sidecar.connections.ccloud.refresh-token.failure-budget-seconds",
+              Long.class));
+
+  public static final Duration TOKEN_REFRESH_INITIAL_BACKOFF = Duration.ofSeconds(
+      ConfigProvider
+          .getConfig()
+          .getValue(
+              "ide-sidecar.connections.ccloud.refresh-token.retry.initial-backoff-seconds",
+              Long.class));
+
+  public static final double TOKEN_REFRESH_BACKOFF_MULTIPLIER = ConfigProvider.getConfig()
+      .getValue(
+          "ide-sidecar.connections.ccloud.refresh-token.retry.backoff-multiplier",
+          Double.class);
+
+  public static final Duration TOKEN_REFRESH_MAX_BACKOFF = Duration.ofSeconds(
+      ConfigProvider
+          .getConfig()
+          .getValue(
+              "ide-sidecar.connections.ccloud.refresh-token.retry.max-backoff-seconds",
+              Long.class));
+
+  public static final double TOKEN_REFRESH_JITTER_FACTOR = ConfigProvider.getConfig()
+      .getValue("ide-sidecar.connections.ccloud.refresh-token.retry.jitter-factor", Double.class);
+
   public static final String CCLOUD_OAUTH_REDIRECT_URI = ConfigProvider.getConfig()
       .getValue("ide-sidecar.connections.ccloud.oauth.redirect-uri", String.class);
 
