@@ -235,7 +235,8 @@ public class CCloudOAuthContext implements AuthContext {
    * Start a refresh, or join the one already running for the same organization, so this
    * connection never runs two at once. CCloud rotates the refresh token on each use, so a second
    * refresh sent with the old token would fail. A refresh for a different organization starts
-   * once the running one finishes, and reads the refresh token only then.
+   * once the running one finishes, and reads the refresh token only then. Several such waiters
+   * race to start next, in no particular order.
    */
   private Future<AuthContext> refreshOnce(String organizationId, boolean countFailures) {
     Promise<AuthContext> promise = Promise.promise();
@@ -524,8 +525,10 @@ public class CCloudOAuthContext implements AuthContext {
     try {
       claims = OBJECT_MAPPER.readTree(java.util.Base64.getUrlDecoder().decode(parts[1]));
     } catch (IllegalArgumentException | IOException e) {
+      // the exception's message can quote the claims, so log only its type
       Log.warnf(
-          e, "Couldn't read the %s token's claims; assuming it lasts %s", tokenName, fallback
+          "Couldn't read the %s token's claims (%s); assuming it lasts %s",
+          tokenName, e.getClass().getSimpleName(), fallback
       );
       return fallback;
     }
