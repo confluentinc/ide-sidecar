@@ -320,11 +320,10 @@ public class CCloudOAuthContext implements AuthContext {
 
   /**
    * Check if we should attempt a token refresh. We will attempt a token refresh iff: (1) The
-   * refresh token is valid and has not yet reached its absolute lifetime, (2) we have not yet
-   * attempted more than
-   * <code>ide-sidecar.connections.ccloud.refresh-token.max-refresh-attempts</code>
-   * token refresh attempts, and (3) at least one token of the connection will expire before the
-   * next run of this job.
+   * refresh token is valid and has not yet reached its absolute lifetime, (2) no failed refresh
+   * has made the connection fail (see {@link #isTransientRefreshFailure}), (3) we're not still
+   * waiting out the backoff after a failed refresh, and (4) at least one token of the connection
+   * will expire before the next run of this job.
    *
    * @return if we should attempt the token refresh.
    */
@@ -417,7 +416,7 @@ public class CCloudOAuthContext implements AuthContext {
    * When the next token refresh may start after a failed one, or empty if the last one didn't
    * fail.
    */
-  public Optional<Instant> getNextTokenRefreshAttemptAt() {
+  Optional<Instant> getNextTokenRefreshAttemptAt() {
     return Optional.ofNullable(tokens.get().refreshFailures.nextAttemptAt());
   }
 
