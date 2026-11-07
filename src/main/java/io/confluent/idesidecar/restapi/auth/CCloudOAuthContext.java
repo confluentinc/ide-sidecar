@@ -32,10 +32,12 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
@@ -292,12 +294,15 @@ public class CCloudOAuthContext implements AuthContext {
           .onSuccess(result -> {
             // Reset any existing errors
             tokens.updateAndGet(oldTokens ->
-                oldTokens.withErrors(
-                    oldTokens.errors
-                        .withoutSignIn()
-                        .withoutTokenRefresh()
-                        .withoutAuthStatusCheck()
-                )
+                oldTokens
+                    .withErrors(
+                        oldTokens.errors
+                            .withoutSignIn()
+                            .withoutTokenRefresh()
+                            .withoutAuthStatusCheck()
+                    )
+                    // a new sign-in starts with no failed refreshes
+                    .withSuccessfulTokenRefreshAttempt()
             );
             Log.infof(
                 "User has successfully authenticated with CCloud (email=%s,organization_id=%s).",
@@ -327,14 +332,17 @@ public class CCloudOAuthContext implements AuthContext {
     readLock.lock();
     try {
       // Perform token refresh only if auth context will expire before next run of this job
-      var now = Instant.now();
+      var now = now();
       var expiresAt = expiresAt();
       var nextExecution = now.plus(CCloudOAuthConfig.TOKEN_REFRESH_INTERVAL_SECONDS);
       var atLeastOneTokenWillExpireBeforeNextRun = expiresAt.isPresent()
           && expiresAt.get().compareTo(nextExecution) < 0;
+      var nextAttemptAt = tokens.get().refreshFailures.nextAttemptAt();
+      var backingOff = nextAttemptAt != null && now.isBefore(nextAttemptAt);
 
       return !hasReachedEndOfLifetime()
           && !hasNonTransientError()
+          && !backingOff
           && atLeastOneTokenWillExpireBeforeNextRun;
     } finally {
       readLock.unlock();
@@ -365,7 +373,7 @@ public class CCloudOAuthContext implements AuthContext {
    */
   public boolean hasReachedEndOfLifetime() {
     var endOfLifetime = getEndOfLifetime();
-    return endOfLifetime != null && Instant.now().compareTo(endOfLifetime) >= 0;
+    return endOfLifetime != null && now().compareTo(endOfLifetime) >= 0;
   }
 
   public UserDetails getUser() {
@@ -402,12 +410,84 @@ public class CCloudOAuthContext implements AuthContext {
   }
 
   public Integer getFailedTokenRefreshAttempts() {
-    return tokens.get().failedTokenRefreshAttempts;
+    return tokens.get().refreshFailures.attempts();
+  }
+
+  /**
+   * When the next token refresh may start after a failed one, or empty if the last one didn't
+   * fail.
+   */
+  public Optional<Instant> getNextTokenRefreshAttemptAt() {
+    return Optional.ofNullable(tokens.get().refreshFailures.nextAttemptAt());
+  }
+
+  /**
+   * The current time, read through a method so tests can control it.
+   */
+  Instant now() {
+    return Instant.now();
+  }
+
+  /**
+   * Consecutive failed token refreshes since the last successful one or sign-in, when the first
+   * of them failed, and when the next attempt may start.
+   */
+  record RefreshFailures(int attempts, Instant firstFailedAt, Instant nextAttemptAt) {
+
+    static final RefreshFailures NONE = new RefreshFailures(0, null, null);
+
+    /**
+     * The failures after one more at {@code now}, with {@code random} in [0, 1) for the jitter.
+     */
+    RefreshFailures after(Instant now, double random) {
+      var count = attempts + 1;
+      return new RefreshFailures(
+          count,
+          firstFailedAt != null ? firstFailedAt : now,
+          now.plus(refreshBackoff(count, random))
+      );
+    }
+  }
+
+  /**
+   * How long to wait after the given number of consecutive failed refreshes: the initial backoff,
+   * multiplied for each failure after the first and capped, plus up to the jitter factor on top.
+   */
+  static Duration refreshBackoff(int failedAttempts, double random) {
+    var millis = Math.min(
+        CCloudOAuthConfig.TOKEN_REFRESH_MAX_BACKOFF.toMillis(),
+        CCloudOAuthConfig.TOKEN_REFRESH_INITIAL_BACKOFF.toMillis()
+            * Math.pow(CCloudOAuthConfig.TOKEN_REFRESH_BACKOFF_MULTIPLIER, failedAttempts - 1)
+    );
+    return Duration.ofMillis(
+        Math.round(millis * (1 + CCloudOAuthConfig.TOKEN_REFRESH_JITTER_FACTOR * random))
+    );
+  }
+
+  /**
+   * Whether a failed refresh should be retried: not after the attempt limit or once the failures
+   * have gone on longer than the budget, and never for a refresh token the server rejected.
+   */
+  static boolean isTransientRefreshFailure(
+      RefreshFailures failures,
+      Throwable error,
+      Instant now
+  ) {
+    var message = error.getMessage();
+    return failures.attempts() < CCloudOAuthConfig.MAX_TOKEN_REFRESH_ATTEMPTS
+        && Duration.between(failures.firstFailedAt(), now)
+            .compareTo(CCloudOAuthConfig.TOKEN_REFRESH_FAILURE_BUDGET) < 0
+        && (message == null || !message.contains("Unknown or invalid refresh token."));
   }
 
   private Handler<Throwable> onFailedTokenRefresh() {
-    return failure ->
-        tokens.updateAndGet(oldTokens -> oldTokens.withFailedTokenRefreshAttempt(failure));
+    return failure -> {
+      // outside the update, which can run more than once
+      var now = now();
+      var random = ThreadLocalRandom.current().nextDouble();
+      tokens.updateAndGet(oldTokens ->
+          oldTokens.withFailedTokenRefreshAttempt(failure, now, random));
+    };
   }
 
   private Handler<AuthContext> onSuccessfulTokenRefresh() {
@@ -518,11 +598,14 @@ public class CCloudOAuthContext implements AuthContext {
     }
 
     final var now = Instant.now();
+    // the refresh token lasts until the connection's end of lifetime, whatever expires_in says
     tokens.updateAndGet(oldTokens ->
         oldTokens.withRefreshToken(
             new Token(
                 idTokenExchangeResponse.refreshToken(),
-                now.plusSeconds(idTokenExchangeResponse.expiresIn())
+                oldTokens.endOfLifetime != null
+                    ? oldTokens.endOfLifetime
+                    : now.plus(CCloudOAuthConfig.CCLOUD_REFRESH_TOKEN_ABSOLUTE_LIFETIME)
             )
         ));
 
@@ -671,7 +754,7 @@ public class CCloudOAuthContext implements AuthContext {
       OrganizationDetails organization,
       Instant endOfLifetime,
       AuthErrors errors,
-      Integer failedTokenRefreshAttempts
+      RefreshFailures refreshFailures
   ) {
 
     Tokens() {
@@ -683,7 +766,7 @@ public class CCloudOAuthContext implements AuthContext {
           null,
           null,
           new AuthErrors(),
-          0);
+          RefreshFailures.NONE);
     }
 
     Optional<Instant> expiresAt() {
@@ -703,7 +786,7 @@ public class CCloudOAuthContext implements AuthContext {
           organization,
           endOfLifetime,
           errors,
-          failedTokenRefreshAttempts);
+          refreshFailures);
     }
 
     Tokens withControlPlaneToken(Token controlPlaneToken) {
@@ -715,7 +798,7 @@ public class CCloudOAuthContext implements AuthContext {
           organization,
           endOfLifetime,
           errors,
-          failedTokenRefreshAttempts);
+          refreshFailures);
     }
 
     Tokens withDataPlaneToken(Token dataPlaneToken) {
@@ -727,7 +810,7 @@ public class CCloudOAuthContext implements AuthContext {
           organization,
           endOfLifetime,
           errors,
-          failedTokenRefreshAttempts);
+          refreshFailures);
     }
 
     Tokens withUser(UserDetails user) {
@@ -739,7 +822,7 @@ public class CCloudOAuthContext implements AuthContext {
           organization,
           endOfLifetime,
           errors,
-          failedTokenRefreshAttempts);
+          refreshFailures);
     }
 
     Tokens withOrganization(OrganizationDetails organization) {
@@ -751,7 +834,7 @@ public class CCloudOAuthContext implements AuthContext {
           organization,
           endOfLifetime,
           errors,
-          failedTokenRefreshAttempts);
+          refreshFailures);
     }
 
     Tokens withEndOfLifetime(Instant endOfLifetime) {
@@ -763,7 +846,7 @@ public class CCloudOAuthContext implements AuthContext {
           organization,
           endOfLifetime,
           errors,
-          failedTokenRefreshAttempts);
+          refreshFailures);
     }
 
     Tokens withErrors(AuthErrors errors) {
@@ -775,7 +858,7 @@ public class CCloudOAuthContext implements AuthContext {
           organization,
           endOfLifetime,
           errors,
-          failedTokenRefreshAttempts);
+          refreshFailures);
     }
 
     Tokens withSuccessfulTokenRefreshAttempt() {
@@ -788,14 +871,12 @@ public class CCloudOAuthContext implements AuthContext {
           endOfLifetime,
           // Reset any errors related to the token refresh
           errors.withoutTokenRefresh(),
-          // Reset the number of failed token refresh attempts
-          0);
+          // Reset the failed token refresh attempts and their backoff
+          RefreshFailures.NONE);
     }
 
-    Tokens withFailedTokenRefreshAttempt(Throwable error) {
-      boolean isTransient =
-          failedTokenRefreshAttempts < CCloudOAuthConfig.MAX_TOKEN_REFRESH_ATTEMPTS
-              && !error.getMessage().contains("Unknown or invalid refresh token.");
+    Tokens withFailedTokenRefreshAttempt(Throwable error, Instant now, double random) {
+      var failures = refreshFailures.after(now, random);
       return new Tokens(
           refreshToken,
           controlPlaneToken,
@@ -804,9 +885,11 @@ public class CCloudOAuthContext implements AuthContext {
           organization,
           endOfLifetime,
           // Add error related to the token refresh
-          errors.withTokenRefresh(error.getMessage(), isTransient),
-          // Bump the number of failed token refresh attempts
-          failedTokenRefreshAttempts + 1);
+          errors.withTokenRefresh(
+              error.getMessage(),
+              isTransientRefreshFailure(failures, error, now)
+          ),
+          failures);
     }
   }
 
