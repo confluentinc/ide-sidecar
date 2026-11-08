@@ -17,9 +17,16 @@ import io.smallrye.common.constraint.NotNull;
 import io.smallrye.common.constraint.Nullable;
 import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
+import io.vertx.core.Promise;
 import io.vertx.core.http.HttpHeaders;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.HashSet;
+import java.util.Objects;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
+import org.eclipse.microprofile.config.ConfigProvider;
 
 /**
  * Implementation of the connection state for Confluent Cloud ({@link ConnectionType#CCLOUD}).
@@ -37,7 +44,31 @@ public class CCloudConnectionState extends ConnectionState {
       null
   );
 
+  /**
+   * How long a successful {@code check_jwt} is trusted before it's sent again, while the
+   * connection stays healthy. Up to {@link #CHECK_JWT_JITTER_FACTOR} more is added at random, so
+   * connections don't all check at once.
+   */
+  static final Duration CHECK_JWT_HEALTHY_INTERVAL = Duration.ofSeconds(
+      ConfigProvider.getConfig().getValue(
+          "ide-sidecar.connections.ccloud.check-jwt.healthy-interval-seconds", Long.class
+      ));
+
+  static final double CHECK_JWT_JITTER_FACTOR = ConfigProvider.getConfig().getValue(
+      "ide-sidecar.connections.ccloud.check-jwt.jitter-factor", Double.class
+  );
+
   private final CCloudOAuthContext oauthContext = new CCloudOAuthContext();
+
+  /**
+   * The last {@code check_jwt} that found the connection healthy, or null.
+   */
+  private final AtomicReference<HealthyCheck> lastHealthyCheck = new AtomicReference<>();
+
+  /**
+   * The {@code check_jwt} running for this connection, or null.
+   */
+  private final AtomicReference<RunningCheck> runningCheck = new AtomicReference<>();
 
   CCloudConnectionState() {
     super(null, null);
@@ -125,8 +156,7 @@ public class CCloudConnectionState extends ConnectionState {
       );
     } else {
       var lastStatus = getStatus();
-      return oauthContext
-          .checkAuthenticationStatus()
+      return checkAuthenticationStatus()
           .map(canAuthenticateWithConfluentCloud -> {
             if (!canAuthenticateWithConfluentCloud) {
               return expiredStatus();
@@ -194,6 +224,92 @@ public class CCloudConnectionState extends ConnectionState {
     return status != null
         && status.ccloud() != null
         && status.ccloud().state() == ConnectedState.SUCCESS;
+  }
+
+  /**
+   * Whether the connection can make CCloud API requests. Sends {@code check_jwt} at most once per
+   * healthy interval while the connection stays healthy with the same control-plane token, and
+   * every time otherwise. A status refresh that comes while a check is running joins it.
+   */
+  private Future<Boolean> checkAuthenticationStatus() {
+    var token = oauthContext.getControlPlaneToken();
+    var tokenValue = token != null ? token.token() : null;
+    var now = now();
+    var healthy = lastHealthyCheck.get();
+    if (healthy != null
+        && token != null
+        && Objects.equals(healthy.controlPlaneToken(), tokenValue)
+        && now.isBefore(healthy.nextCheckAt())
+        && token.expiresAt().isAfter(now)) {
+      return Future.succeededFuture(true);
+    }
+
+    Promise<Boolean> promise = Promise.promise();
+    var mine = new RunningCheck(tokenValue, promise.future());
+    while (true) {
+      var running = runningCheck.get();
+      if (running != null && Objects.equals(running.controlPlaneToken(), tokenValue)) {
+        return running.future();
+      }
+      // a check for an older token (say, before a new sign-in) can't answer for this one
+      if (runningCheck.compareAndSet(running, mine)) {
+        break;
+      }
+    }
+    Future<Boolean> check;
+    try {
+      // a failure reaches every caller that joined, so each can tell a timeout from a rejection
+      check = oauthContext.checkAuthenticationStatus();
+    } catch (RuntimeException e) {
+      runningCheck.compareAndSet(mine, null);
+      Log.errorf(e, "Couldn't check the CCloud session of connection %s", getId());
+      promise.complete(false);
+      return promise.future();
+    }
+    var jitter = 1 + CHECK_JWT_JITTER_FACTOR * ThreadLocalRandom.current().nextDouble();
+    check.onComplete(result -> {
+      var isHealthy = result.succeeded() && Boolean.TRUE.equals(result.result());
+      // counted from when the check was sent, so a slow answer doesn't stretch the interval
+      lastHealthyCheck.set(isHealthy
+          ? new HealthyCheck(
+              tokenValue,
+              now.plusMillis(Math.round(checkJwtHealthyInterval().toMillis() * jitter))
+          )
+          : null);
+      runningCheck.compareAndSet(mine, null);
+      promise.handle(result);
+    });
+    return promise.future();
+  }
+
+  /**
+   * How long a healthy {@code check_jwt} result is reused, read through a method so tests can
+   * control it.
+   */
+  Duration checkJwtHealthyInterval() {
+    return CHECK_JWT_HEALTHY_INTERVAL;
+  }
+
+  /**
+   * The current time, read through a method so tests can control it.
+   */
+  Instant now() {
+    return Instant.now();
+  }
+
+  /**
+   * A {@code check_jwt} that found the connection healthy with the given control-plane token, and
+   * when to check again.
+   */
+  private record HealthyCheck(String controlPlaneToken, Instant nextCheckAt) {
+
+  }
+
+  /**
+   * The {@code check_jwt} running for the given control-plane token.
+   */
+  private record RunningCheck(String controlPlaneToken, Future<Boolean> future) {
+
   }
 
   /**
