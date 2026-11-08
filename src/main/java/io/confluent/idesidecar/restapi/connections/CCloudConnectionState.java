@@ -269,10 +269,11 @@ public class CCloudConnectionState extends ConnectionState {
     var jitter = 1 + CHECK_JWT_JITTER_FACTOR * ThreadLocalRandom.current().nextDouble();
     check.onComplete(result -> {
       var isHealthy = result.succeeded() && Boolean.TRUE.equals(result.result());
+      // counted from when the check was sent, so a slow answer doesn't stretch the interval
       lastHealthyCheck.set(isHealthy
           ? new HealthyCheck(
               tokenValue,
-              now().plusMillis(Math.round(checkJwtHealthyInterval().toMillis() * jitter))
+              now.plusMillis(Math.round(checkJwtHealthyInterval().toMillis() * jitter))
           )
           : null);
       runningCheck.compareAndSet(mine, null);

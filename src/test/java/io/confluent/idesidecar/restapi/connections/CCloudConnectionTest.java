@@ -385,6 +385,29 @@ public class CCloudConnectionTest {
   }
 
   @Test
+  void shouldCountTheHealthyIntervalFromWhenTheCheckWasSent() throws Exception {
+    // arrange: a check sent at the start that answers 20s later
+    var slowCheck = Promise.<Boolean>promise();
+    var connectionState = signedInConnectionState(slowCheck.future());
+    var start = Instant.now();
+    doReturn(start).when(connectionState).now();
+    var firstRefresh = connectionState.refreshStatus();
+    doReturn(start.plusSeconds(20)).when(connectionState).now();
+    slowCheck.complete(true);
+    awaitStatus(firstRefresh);
+    var longestInterval = Duration.ofMillis(Math.round(
+        HEALTHY_INTERVAL.toMillis() * (1 + CCloudConnectionState.CHECK_JWT_JITTER_FACTOR)
+    ));
+    doReturn(start.plus(longestInterval)).when(connectionState).now();
+
+    // act
+    awaitStatus(connectionState.refreshStatus());
+
+    // assert
+    verify(connectionState.getOauthContext(), times(2)).checkAuthenticationStatus();
+  }
+
+  @Test
   void shouldKeepTheStatusButCheckAgainAfterACheckJwtTimesOut() throws Exception {
     // arrange
     var connectionState = signedInConnectionState(Future.succeededFuture(true));
