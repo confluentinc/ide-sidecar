@@ -71,22 +71,13 @@ public record RateLimitState(
   }
 
   /**
-   * Parse the {@code Retry-After} header as integer seconds. Returns -1 if absent or unparseable
-   * (the header can also be an HTTP-date, which is not parsed here).
+   * Parse the response's {@code Retry-After} header as whole seconds from now. Returns -1 if
+   * absent or unparseable.
+   *
+   * @see #parseRetryAfter(String, Instant)
    */
   public static int parseRetryAfterHeader(HttpResponse<?> response) {
-    var header = response.getHeader(HEADER_RETRY_AFTER);
-    if (header != null) {
-      try {
-        return Integer.parseInt(header.trim());
-      } catch (NumberFormatException e) {
-        // Retry-After can also be an HTTP-date per RFC 7231 §7.1.3, which we don't parse.
-        // Logged at DEBUG so operators can still distinguish HTTP-date from genuinely malformed
-        // values if they're investigating throttling behavior.
-        Log.debugf("Retry-After header is not an integer (likely an HTTP-date): %s", header);
-      }
-    }
-    return -1;
+    return parseRetryAfter(response.getHeader(HEADER_RETRY_AFTER), Instant.now());
   }
 
   /**
