@@ -1,5 +1,6 @@
 package io.confluent.idesidecar.restapi.auth;
 
+import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -846,6 +847,25 @@ class CCloudOAuthContextTest {
   }
 
   @Test
+  void signInShouldScheduleTheRefreshFromTheShorterTokenLifetime() throws Throwable {
+    // arrange: a 300s control-plane token and a 900s data-plane token
+    serveSignInTokens(jwt("{\"iat\":1000,\"exp\":1300}"), jwt("{\"iat\":1000,\"exp\":1900}"));
+    var authContext = Mockito.spy(new CCloudOAuthContext());
+    var signedInAt = Instant.now();
+    Mockito.doReturn(signedInAt).when(authContext).now();
+
+    // act
+    authContext.createTokensFromAuthorizationCode(FAKE_AUTHORIZATION_CODE, null)
+        .toCompletionStage().toCompletableFuture().get(5, TimeUnit.SECONDS);
+
+    // assert: due between 70% and 90% of 300s, so between 210s and 270s after sign-in
+    Mockito.doReturn(signedInAt.plusSeconds(209)).when(authContext).now();
+    assertFalse(authContext.shouldAttemptTokenRefresh());
+    Mockito.doReturn(signedInAt.plusSeconds(271)).when(authContext).now();
+    assertTrue(authContext.shouldAttemptTokenRefresh());
+  }
+
+  @Test
   void refreshShouldBeSingleFlight() throws Throwable {
     var authContext = Mockito.spy(new CCloudOAuthContext());
     authContext.createTokensFromAuthorizationCode(FAKE_AUTHORIZATION_CODE, null)
@@ -919,6 +939,27 @@ class CCloudOAuthContextTest {
                 .withStatus(201)
                 .withFixedDelay(1_000)
                 .withBody(new ObjectMapper().valueToTree(response).toString()))
+    );
+  }
+
+  private void serveSignInTokens(String controlPlaneJwt, String dataPlaneJwt) {
+    var session = loadResource("ccloud-oauth-mock-responses/control-plane-token.json")
+        .replace("\"token\": \"foo\"", "\"token\": \"%s\"".formatted(controlPlaneJwt));
+    wireMock.register(
+        WireMock.post("/api/sessions")
+            .atPriority(1)
+            .willReturn(WireMock.aResponse()
+                .withStatus(201)
+                .withHeader("Set-Cookie", "auth_token=" + controlPlaneJwt)
+                .withBody(session))
+    );
+    wireMock.register(
+        WireMock.post("/api/access_tokens")
+            .atPriority(1)
+            .willReturn(WireMock.aResponse()
+                .withStatus(201)
+                .withBody("{\"error\":null,\"regional_token\":\"r\",\"token\":\"%s\"}"
+                    .formatted(dataPlaneJwt)))
     );
   }
 
