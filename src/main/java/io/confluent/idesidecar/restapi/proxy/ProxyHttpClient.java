@@ -64,28 +64,52 @@ public class ProxyHttpClient<T extends ProxyContext> {
                   context.getProxyRequestMethod(),
                   context.getProxyRequestAbsoluteUrl()
               );
-              var host = URI.create(context.getProxyRequestAbsoluteUrl()).getHost();
-              Failure failure;
-              if (throwable instanceof TimeoutException) {
-                failure = context
-                    .error("proxy_timeout", throwable.getMessage())
-                    .failf(
-                        504,
-                        "%s didn't respond within %s",
-                        host,
-                        TimeUtil.humanReadableDuration(timeout)
-                    );
-              } else if (throwable instanceof ConnectTimeoutException) {
-                failure = context
-                    .error("proxy_timeout", throwable.getMessage())
-                    .failf(504, "Couldn't connect to %s in time", host);
-              } else {
-                failure = context
-                    .error("proxy_error", throwable.getMessage())
-                    .failf(500, "Something went wrong while proxying request");
-              }
-              return Future.failedFuture(new ProcessorFailedException(failure));
+              return Future.failedFuture(
+                  new ProcessorFailedException(toFailure(context, throwable, timeout))
+              );
             }
         );
+  }
+
+  /**
+   * Map a failed send to the response the caller sees: 504 when the server stalled or couldn't be
+   * reached in time, and 500 otherwise.
+   */
+  static Failure toFailure(ProxyContext context, Throwable throwable, Duration timeout) {
+    if (throwable instanceof TimeoutException) {
+      return context
+          .error("proxy_timeout", throwable.getMessage())
+          .failf(
+              504,
+              "%s didn't respond within %s",
+              hostOf(context.getProxyRequestAbsoluteUrl()),
+              TimeUtil.humanReadableDuration(timeout)
+          );
+    } else if (throwable instanceof ConnectTimeoutException) {
+      return context
+          .error("proxy_timeout", throwable.getMessage())
+          .failf(
+              504,
+              "Couldn't connect to %s in time",
+              hostOf(context.getProxyRequestAbsoluteUrl())
+          );
+    }
+    return context
+        .error("proxy_error", throwable.getMessage())
+        .failf(500, "Something went wrong while proxying request");
+  }
+
+  /**
+   * The URL's host, or the whole URL when {@link URI} can't parse it (Vert.x's parser is more
+   * lenient).
+   */
+  private static String hostOf(String url) {
+    try {
+      var host = URI.create(url).getHost();
+      return host != null ? host : url;
+    } catch (IllegalArgumentException e) {
+      Log.errorf(e, "Couldn't read the host of proxied URL %s", url);
+      return url;
+    }
   }
 }
