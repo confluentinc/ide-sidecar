@@ -100,16 +100,18 @@ public class CCloudHttpRetryPolicy {
    * either, since a retry won't fix them.
    */
   static boolean isRetryableForIdempotentRequest(Throwable failure) {
+    // only when thrown directly, as the Retry-After lookup and the caller's unwrap expect
+    if (failure instanceof TooManyRequestsException
+        || failure instanceof TransientServerErrorException) {
+      return true;
+    }
     var retryable = false;
     for (var cause = failure; cause != null; cause = cause.getCause()) {
       if (isTimeoutOrTlsFailure(cause)) {
         // even when wrapped in, or wrapping, a connect or DNS failure
         return false;
       }
-      retryable |= cause instanceof TooManyRequestsException
-          || cause instanceof TransientServerErrorException
-          || cause instanceof ConnectException
-          || cause instanceof UnknownHostException;
+      retryable |= cause instanceof ConnectException || cause instanceof UnknownHostException;
     }
     return retryable;
   }
