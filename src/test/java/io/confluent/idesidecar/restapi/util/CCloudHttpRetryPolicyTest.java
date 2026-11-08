@@ -168,6 +168,17 @@ class CCloudHttpRetryPolicyTest {
   }
 
   @Test
+  void idempotentRetryShouldOnlyRetry429sAnd5xxThrownDirectly() {
+    // the Retry-After lookup and the unwrap on exhaustion read only the top-level exception
+    assertFalse(CCloudHttpRetryPolicy.isRetryableForIdempotentRequest(new CompletionException(
+        new TransientServerErrorException(URL, 503, 30, new RuntimeException("503"))
+    )));
+    assertFalse(CCloudHttpRetryPolicy.isRetryableForIdempotentRequest(
+        new CompletionException(new TooManyRequestsException(URL, 30))
+    ));
+  }
+
+  @Test
   void idempotentRetryShouldNotRetryTimeoutsOrTlsFailures() {
     assertFalse(CCloudHttpRetryPolicy.isRetryableForIdempotentRequest(
         new ConnectTimeoutException("connect timed out")
