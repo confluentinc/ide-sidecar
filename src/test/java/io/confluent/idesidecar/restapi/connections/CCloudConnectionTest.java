@@ -2,6 +2,7 @@ package io.confluent.idesidecar.restapi.connections;
 
 import static io.confluent.idesidecar.restapi.connections.CCloudConnectionState.INITIAL_STATUS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -16,8 +17,10 @@ import io.confluent.idesidecar.restapi.models.ConnectionStatus;
 import io.confluent.idesidecar.restapi.models.ConnectionStatus.ConnectedState;
 import io.quarkus.test.junit.QuarkusTest;
 import io.vertx.core.Future;
+import io.vertx.core.impl.NoStackTraceTimeoutException;
 import io.vertx.junit5.VertxTestContext;
 import java.time.Instant;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 
@@ -25,6 +28,7 @@ import org.junit.jupiter.api.Test;
 public class CCloudConnectionTest {
 
   private static final int AWAIT_COMPLETION_TIMEOUT_SEC = 5;
+  private static final String CHECK_JWT_TIMEOUT = "The timeout period of 20000ms has been exceeded";
 
   @Test
   void getStatusShouldReturnInitialStatusForNewConnections() {
@@ -268,6 +272,47 @@ public class CCloudConnectionTest {
   }
 
   @Test
+  void refreshStatusShouldKeepLastStatusIfAuthStatusCheckTimesOut() throws Throwable {
+    var connectionState = spyCCloudConnectionState(true, true, true, true, false, false);
+    var authContext = ((CCloudConnectionState) connectionState).getOauthContext();
+    var healthy = refreshStatus(connectionState);
+    when(authContext.checkAuthenticationStatus()).thenReturn(Future.failedFuture(
+        new CompletionException(new NoStackTraceTimeoutException(CHECK_JWT_TIMEOUT))
+    ));
+
+    var afterTimeout = refreshStatus(connectionState);
+
+    assertEquals(ConnectedState.SUCCESS, healthy.ccloud().state());
+    assertSame(healthy, afterTimeout);
+    assertSame(healthy, connectionState.getStatus());
+  }
+
+  @Test
+  void refreshStatusShouldReturnExpiredIfFirstAuthStatusCheckTimesOut() throws Throwable {
+    var connectionState = spyCCloudConnectionState(true, true, true, true, false, false);
+    var authContext = ((CCloudConnectionState) connectionState).getOauthContext();
+    when(authContext.checkAuthenticationStatus())
+        .thenReturn(Future.failedFuture(new NoStackTraceTimeoutException(CHECK_JWT_TIMEOUT)));
+
+    var status = refreshStatus(connectionState);
+
+    assertEquals(ConnectedState.EXPIRED, status.ccloud().state());
+  }
+
+  @Test
+  void refreshStatusShouldReturnExpiredIfAuthStatusCheckFailsWithoutTimeout() throws Throwable {
+    var connectionState = spyCCloudConnectionState(true, true, true, true, false, false);
+    var authContext = ((CCloudConnectionState) connectionState).getOauthContext();
+    refreshStatus(connectionState);
+    when(authContext.checkAuthenticationStatus())
+        .thenReturn(Future.failedFuture(new IllegalStateException("connection reset")));
+
+    var status = refreshStatus(connectionState);
+
+    assertEquals(ConnectedState.EXPIRED, status.ccloud().state());
+  }
+
+  @Test
   void getInternalIdReturnsTheOauthStateParameter() {
     var connectionState = (CCloudConnectionState) ConnectionStates.from(
         new ConnectionSpec("1", "foo", ConnectionType.CCLOUD),
@@ -277,6 +322,14 @@ public class CCloudConnectionTest {
     assertEquals(
         connectionState.getOauthContext().getOauthState(),
         connectionState.getInternalId());
+  }
+
+  private static ConnectionStatus refreshStatus(ConnectionState connectionState)
+      throws Exception {
+    return connectionState.refreshStatus()
+        .toCompletionStage()
+        .toCompletableFuture()
+        .get(AWAIT_COMPLETION_TIMEOUT_SEC, TimeUnit.SECONDS);
   }
 
   ConnectionState spyCCloudConnectionState(
