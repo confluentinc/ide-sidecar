@@ -260,15 +260,13 @@ class CCloudApiRateLimiterTest {
   }
 
   @Test
-  void recordRateLimitedResponseShouldCapTheEndpointPause() {
+  void recordRateLimitedResponseShouldCapTheEndpointPauseAtTheRetryBudget() {
     var limiter = new CCloudApiRateLimiter(true, 4);
 
     limiter.recordRateLimitedResponse(URL_A, mockResponse(429, "Retry-After", "3600"));
 
-    assertEquals(
-        CCloudApiRateLimiter.MAX_RATE_LIMITED_PAUSE_SECONDS,
-        limiter.getLatestState(URL_A).resetSeconds()
-    );
+    // the default max-total-ms
+    assertEquals(40.0, limiter.getLatestState(URL_A).resetSeconds());
   }
 
   @Test
