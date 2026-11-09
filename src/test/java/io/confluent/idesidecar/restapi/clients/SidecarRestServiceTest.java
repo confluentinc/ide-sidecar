@@ -247,6 +247,40 @@ class SidecarRestServiceTest {
 
   @Test
   @Timeout(10)
+  void shouldStopReadingWhenTheDeadlinePasses() throws Exception {
+    var restService = startService(NO_BACKOFF);
+    answerAfter(Duration.ofSeconds(3));
+    var started = System.nanoTime();
+
+    assertThrows(
+        IOException.class,
+        () -> SidecarRestService.withDeadline(
+            Instant.now().plusMillis(500),
+            restService::getSchemaTypes
+        )
+    );
+
+    var elapsed = Duration.ofNanos(System.nanoTime() - started);
+    assertTrue(elapsed.toMillis() < 2_000, "took " + elapsed);
+  }
+
+  @Test
+  void shouldNotSendWhenTheDeadlineHasPassed() throws Exception {
+    var restService = startService(NO_BACKOFF, new Reply(200, null));
+
+    assertThrows(
+        IOException.class,
+        () -> SidecarRestService.withDeadline(
+            Instant.now().minusMillis(1),
+            restService::getSchemaTypes
+        )
+    );
+
+    assertEquals(0, requests.size());
+  }
+
+  @Test
+  @Timeout(10)
   void shouldStopWaitingWhenInterrupted() throws Exception {
     var restService = startService(NO_BACKOFF, new Reply(429, "5"), new Reply(200, null));
     var failure = new AtomicReference<Throwable>();
@@ -332,6 +366,25 @@ class SidecarRestServiceTest {
     public String[] getSupportedCipherSuites() {
       return new String[0];
     }
+  }
+
+  /**
+   * Make the server answer every request with a 200 only after {@code delay}.
+   */
+  private void answerAfter(Duration delay) {
+    server.removeContext("/");
+    server.createContext("/", exchange -> {
+      requests.add(new Request(System.nanoTime(), null));
+      try {
+        Thread.sleep(delay);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
+      var body = OK_BODY.getBytes(StandardCharsets.UTF_8);
+      exchange.sendResponseHeaders(200, body.length);
+      exchange.getResponseBody().write(body);
+      exchange.close();
+    });
   }
 
   private SidecarRestService startService(Map<String, Object> config, Reply... scripted)

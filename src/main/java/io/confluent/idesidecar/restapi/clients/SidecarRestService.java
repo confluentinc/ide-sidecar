@@ -9,6 +9,7 @@ import io.quarkus.logging.Log;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.HttpURLConnection;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.time.Duration;
 import java.time.Instant;
@@ -27,7 +28,8 @@ import java.util.concurrent.ThreadLocalRandom;
  * ({@code retries.wait.ms} doubling up to {@code retries.max.wait.ms}). On 429 or 503 with a
  * {@code Retry-After}, the wait is that value instead. A {@code Retry-After} longer than
  * {@code retries.max.wait.ms}, or a wait that would pass the caller's deadline (see
- * {@link #withDeadline}), fails right away instead of retrying early.
+ * {@link #withDeadline}), fails right away instead of retrying early. Under a deadline, each
+ * request's connect and read timeouts are also cut to the time left.
  */
 public class SidecarRestService extends RestService {
 
@@ -63,7 +65,8 @@ public class SidecarRestService extends RestService {
   }
 
   /**
-   * Run {@code call} on this thread so that no request it makes waits past {@code deadline}.
+   * Run {@code call} on this thread so that no request it makes, and no wait between its retries,
+   * runs past {@code deadline}.
    */
   public static <T> T withDeadline(Instant deadline, SchemaRegistryCall<T> call)
       throws IOException, RestClientException {
@@ -97,8 +100,27 @@ public class SidecarRestService extends RestService {
       Map<String, String> requestProperties
   ) throws IOException {
     var built = super.buildConnection(url, method, requestProperties);
+    var deadline = DEADLINE.get();
+    if (deadline != null) {
+      var leftMs = Duration.between(Instant.now(), deadline).toMillis();
+      if (leftMs <= 0) {
+        throw new SocketTimeoutException(
+            "The deadline for Schema Registry request %s has passed".formatted(url.getPath())
+        );
+      }
+      // a slow server can't hold the request past the deadline, only the waits between tries
+      built.setConnectTimeout(atMost(built.getConnectTimeout(), leftMs));
+      built.setReadTimeout(atMost(built.getReadTimeout(), leftMs));
+    }
     connection.set(built);
     return built;
+  }
+
+  /**
+   * The smaller of an {@link HttpURLConnection} timeout, where 0 means none, and {@code maxMs}.
+   */
+  private static int atMost(int timeoutMs, long maxMs) {
+    return (int) (timeoutMs == 0 ? maxMs : Math.min(timeoutMs, maxMs));
   }
 
   @Override
