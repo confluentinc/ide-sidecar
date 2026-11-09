@@ -564,6 +564,29 @@ public class CCloudConnectionTest {
     verify(connectionState.getOauthContext(), times(1)).checkAuthenticationStatus();
   }
 
+  @Test
+  void shouldKeepTheStatusForEveryRefreshThatJoinedACheckThatTimedOut() throws Exception {
+    // arrange: a healthy connection whose next check can't connect in time
+    var connectionState = signedInConnectionState(Future.succeededFuture(true));
+    var start = Instant.now();
+    doReturn(start).when(connectionState).now();
+    var healthy = awaitStatus(connectionState.refreshStatus());
+    Promise<Boolean> stillConnecting = Promise.promise();
+    when(connectionState.getOauthContext().checkAuthenticationStatus())
+        .thenReturn(stillConnecting.future());
+    doReturn(start.plus(HEALTHY_INTERVAL.multipliedBy(2))).when(connectionState).now();
+
+    // act
+    var first = connectionState.refreshStatus();
+    var second = connectionState.refreshStatus();
+    stillConnecting.fail(new ConnectTimeoutException("connection timed out after 10000 ms"));
+
+    // assert
+    assertSame(healthy, awaitStatus(first));
+    assertSame(healthy, awaitStatus(second));
+    verify(connectionState.getOauthContext(), times(2)).checkAuthenticationStatus();
+  }
+
   /**
    * A connection with all three tokens, valid for the next 5 minutes, whose {@code check_jwt}
    * returns {@code checkResult}.
