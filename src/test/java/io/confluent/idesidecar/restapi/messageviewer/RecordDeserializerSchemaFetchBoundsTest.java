@@ -17,7 +17,6 @@ import io.confluent.idesidecar.restapi.clients.SidecarSchemaRegistryClient;
 import io.confluent.idesidecar.restapi.proxy.KafkaRestProxyContext;
 import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClientConfig;
-import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 import io.quarkus.test.junit.QuarkusTest;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
@@ -31,15 +30,14 @@ import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logmanager.ExtLogRecord;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /**
- * Bounds on the schema fetch behind the message viewer: the sidecar retries each fetch, and the
- * Schema Registry client retries each of those attempts again. Runs as a Quarkus test so that
+ * Bounds on the schema fetch behind the message viewer: the Schema Registry client owns the
+ * retries, and the viewer's timeout bounds them. Runs as a Quarkus test so that
  * {@code Log} calls reach the JBoss log manager the log assertions read from.
  */
 @QuarkusTest
@@ -50,15 +48,10 @@ class RecordDeserializerSchemaFetchBoundsTest {
   // magic byte 0, then schema ID 10008
   private static final byte[] RECORD_WITH_SCHEMA_ID = new byte[]{0, 0, 0, 39, 24};
   // the sidecar doesn't override the Schema Registry client's max.retries
-  private static final int CLIENT_SENDS_PER_ATTEMPT =
+  private static final int CLIENT_SENDS_PER_FETCH =
       1 + SchemaRegistryClientConfig.MAX_RETRIES_DEFAULT;
-  // application.yml default for ide-sidecar.schema-fetch-retry.max-retries
-  private static final int PRODUCTION_MAX_RETRIES = 5;
   // long enough that only the retry limits end the request-cap tests
   private static final long GENEROUS_TIMEOUT_MS = 10_000;
-
-  @ConfigProperty(name = "ide-sidecar.schema-fetch-retry.max-retries")
-  int testProfileMaxRetries;
 
   private final KafkaRestProxyContext context = new KafkaRestProxyContext(
       null, null, null, null, null, CONNECTION_ID, "cluster-1", "topic-1"
@@ -94,13 +87,23 @@ class RecordDeserializerSchemaFetchBoundsTest {
   }
 
   @Test
-  void shouldCapRequestsForFailingSchemaIdInTestProfile() throws Exception {
-    assertRequestCap(testProfileMaxRetries, 16);
-  }
+  void shouldLeaveRetriesToTheSchemaRegistryClient() throws Exception {
+    var requests = new AtomicInteger();
+    var server = alwaysTooManyRequests(requests);
+    var deserializer = new RecordDeserializer(GENEROUS_TIMEOUT_MS, schemaErrors);
 
-  @Test
-  void shouldCapRequestsForFailingSchemaIdWithProductionRetries() throws Exception {
-    assertRequestCap(PRODUCTION_MAX_RETRIES, 24);
+    try {
+      var client = clientWithoutRetryWaits(server.getAddress().getPort());
+
+      var result = deserializer.deserialize(RECORD_WITH_SCHEMA_ID, client, context, false);
+
+      // only the client's own tries: 1 plus its max.retries
+      assertEquals(CLIENT_SENDS_PER_FETCH, requests.get());
+      assertTrue(result.errorMessage().contains("gave up after retrying"), result.errorMessage());
+      assertLoggedAtErrorContaining("gave up after retrying");
+    } finally {
+      server.stop(0);
+    }
   }
 
   @Test
@@ -111,7 +114,7 @@ class RecordDeserializerSchemaFetchBoundsTest {
       neverReleased.await();
       return null;
     });
-    var deserializer = new RecordDeserializer(1, 1, 3, 200, schemaErrors);
+    var deserializer = new RecordDeserializer(200, schemaErrors);
 
     try {
       var started = System.nanoTime();
@@ -134,33 +137,11 @@ class RecordDeserializerSchemaFetchBoundsTest {
   }
 
   @Test
-  void shouldStopRetryingAndReportLastErrorAfterTimeout() throws Exception {
-    var calls = new AtomicInteger();
-    var client = mock(CachedSchemaRegistryClient.class);
-    when(client.getSchemaById(anyInt())).thenAnswer(invocation -> {
-      calls.incrementAndGet();
-      Thread.sleep(50);
-      throw new RestClientException("Too Many Requests", 429, 429);
-    });
-    var deserializer = new RecordDeserializer(1, 1, 100, 300, schemaErrors);
-
-    var result = deserializer.deserialize(RECORD_WITH_SCHEMA_ID, client, context, false);
-    var callsAtTimeout = calls.get();
-    Thread.sleep(500);
-
-    // at most the attempt already running when the timeout fired
-    assertTrue(calls.get() <= callsAtTimeout + 1, "kept retrying: " + calls.get());
-    assertTrue(
-        result.errorMessage().contains("timed out after 0.3s; last error: Too Many Requests"),
-        result.errorMessage()
-    );
-  }
-
-  @Test
-  void shouldFailWithoutRetryingWhenRetryAfterExceedsTimeout() throws Exception {
+  void shouldFailWithoutRetryingWhenRetryAfterOutlastsTheTimeout() throws Exception {
+    // 15s is under the client's 20s limit on Retry-After, but not under the 5s timeout here
     var requests = new AtomicInteger();
-    var server = alwaysTooManyRequests(requests, "30");
-    var deserializer = new RecordDeserializer(1, 1, PRODUCTION_MAX_RETRIES, 5_000, schemaErrors);
+    var server = alwaysTooManyRequests(requests, "15");
+    var deserializer = new RecordDeserializer(5_000, schemaErrors);
 
     try {
       var restService = new SidecarRestService(
@@ -176,33 +157,11 @@ class RecordDeserializerSchemaFetchBoundsTest {
       assertTrue(elapsed.toMillis() < 5_000, "took " + elapsed);
       assertEquals(1, requests.get());
       assertTrue(
-          result.errorMessage().contains("asked to retry after 30s"),
+          result.errorMessage().contains("asked to retry after 15s"),
           result.errorMessage()
       );
       assertFalse(result.errorMessage().contains("gave up after"), result.errorMessage());
-      assertLoggedAtErrorContaining("asked to retry after 30s");
-    } finally {
-      server.stop(0);
-    }
-  }
-
-  private void assertRequestCap(int maxRetries, int expectedRequests) throws Exception {
-    var requests = new AtomicInteger();
-    var server = alwaysTooManyRequests(requests);
-    var deserializer = new RecordDeserializer(1, 1, maxRetries, GENEROUS_TIMEOUT_MS, schemaErrors);
-
-    try {
-      var client = clientWithoutRetryWaits(server.getAddress().getPort());
-
-      var result = deserializer.deserialize(RECORD_WITH_SCHEMA_ID, client, context, false);
-
-      assertEquals(expectedRequests, (1 + maxRetries) * CLIENT_SENDS_PER_ATTEMPT);
-      assertEquals(expectedRequests, requests.get());
-      assertTrue(
-          result.errorMessage().contains("gave up after %d attempts".formatted(1 + maxRetries)),
-          result.errorMessage()
-      );
-      assertLoggedAtErrorContaining("gave up after %d attempts".formatted(1 + maxRetries));
+      assertLoggedAtErrorContaining("asked to retry after 15s");
     } finally {
       server.stop(0);
     }
