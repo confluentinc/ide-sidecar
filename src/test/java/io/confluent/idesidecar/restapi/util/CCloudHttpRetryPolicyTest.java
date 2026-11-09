@@ -1,6 +1,7 @@
 package io.confluent.idesidecar.restapi.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -8,6 +9,8 @@ import io.confluent.idesidecar.restapi.exceptions.TooManyRequestsException;
 import io.smallrye.mutiny.Uni;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,6 +29,7 @@ class CCloudHttpRetryPolicyTest {
     policy.maxBackoffMs = 10_000;
     policy.maxRetries = 5;
     policy.jitterFactor = 0.2;
+    policy.maxTotalMs = 40_000;
   }
 
   @Test
@@ -98,12 +102,30 @@ class CCloudHttpRetryPolicyTest {
     });
     var startedLongAgo = Instant.now().minusMillis(policy.maxTotalMs);
 
-    assertThrows(
-        TooManyRequestsException.class,
+    var thrown = assertThrows(
+        CompletionException.class,
         () -> policy.applyRetry(URL, startedLongAgo, source).await().atMost(Duration.ofSeconds(5))
     );
 
-    assertEquals(1, attempts.get());
+    assertInstanceOf(TimeoutException.class, thrown.getCause());
+    assertEquals(0, attempts.get());
+  }
+
+  @Test
+  void applyRetryShouldGiveUpOnARequestThatOutlastsTheBudget() {
+    policy.maxTotalMs = 200;
+    var started = System.nanoTime();
+
+    var thrown = assertThrows(
+        CompletionException.class,
+        () -> policy.applyRetry(URL, Uni.createFrom().nothing())
+            .await().atMost(Duration.ofSeconds(5))
+    );
+
+    var elapsed = Duration.ofNanos(System.nanoTime() - started);
+    assertInstanceOf(TimeoutException.class, thrown.getCause());
+    assertTrue(elapsed.toMillis() >= 200, "gave up before the budget: " + elapsed);
+    assertTrue(elapsed.toMillis() < 2_000, "took " + elapsed);
   }
 
   @Test
