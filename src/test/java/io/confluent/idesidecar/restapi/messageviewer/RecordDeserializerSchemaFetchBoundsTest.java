@@ -99,8 +99,8 @@ class RecordDeserializerSchemaFetchBoundsTest {
 
       // only the client's own tries: 1 plus its max.retries
       assertEquals(CLIENT_SENDS_PER_FETCH, requests.get());
-      assertTrue(result.errorMessage().contains("gave up after retrying"), result.errorMessage());
-      assertLoggedAtErrorContaining("gave up after retrying");
+      assertTrue(result.errorMessage().contains("gave up: "), result.errorMessage());
+      assertLoggedAtErrorContaining("gave up: ");
     } finally {
       server.stop(0);
     }
@@ -160,7 +160,7 @@ class RecordDeserializerSchemaFetchBoundsTest {
           result.errorMessage().contains("asked to retry after 15s"),
           result.errorMessage()
       );
-      assertFalse(result.errorMessage().contains("gave up after"), result.errorMessage());
+      assertFalse(result.errorMessage().contains("gave up"), result.errorMessage());
       assertLoggedAtErrorContaining("asked to retry after 15s");
     } finally {
       server.stop(0);
