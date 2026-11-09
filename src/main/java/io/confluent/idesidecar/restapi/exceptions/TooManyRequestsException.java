@@ -13,8 +13,8 @@ public class TooManyRequestsException extends RuntimeException {
   private final int retryAfterSeconds;
 
   public TooManyRequestsException(String url, int retryAfterSeconds) {
-    super("Too Many Requests (HTTP 429) from %s (retry-after: %ds)".formatted(
-        url, retryAfterSeconds
+    super("Too Many Requests (HTTP 429) from %s%s".formatted(
+        url, retryAfterSeconds >= 0 ? " (retry-after: %ds)".formatted(retryAfterSeconds) : ""
     ));
     this.retryAfterSeconds = retryAfterSeconds;
   }

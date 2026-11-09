@@ -103,7 +103,9 @@ public class CCloudHttpRetryPolicy {
   }
 
   private TimeoutException budgetSpent(String url) {
-    var message = "Gave up on %s after its %dms budget".formatted(url, maxTotalMs);
+    var message = "Gave up on %s after %s".formatted(
+        url, TimeUtil.humanReadableDuration(Duration.ofMillis(maxTotalMs))
+    );
     Log.error(message);
     return new TimeoutException(message);
   }
