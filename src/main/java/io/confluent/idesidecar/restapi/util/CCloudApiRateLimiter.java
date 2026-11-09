@@ -257,8 +257,11 @@ public class CCloudApiRateLimiter {
               "Rate limiter %s: waiting %dms for permit (inflight=%d)",
               key, (Object) waitMs, (Object) inflight.get()
           );
+          var reserved = target;
           return Uni.createFrom().voidItem()
-              .onItem().delayIt().by(Duration.ofMillis(waitMs));
+              .onItem().delayIt().by(Duration.ofMillis(waitMs))
+              // a waiter that gives up hands its slot back, unless another has queued behind it
+              .onCancellation().invoke(() -> lastAdmitNanos.compareAndSet(reserved, lastAdmit));
         }
       }
     }

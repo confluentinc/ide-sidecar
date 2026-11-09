@@ -270,6 +270,25 @@ class CCloudApiRateLimiterTest {
   }
 
   @Test
+  void aWaiterThatGivesUpShouldHandBackItsSlot() {
+    // arrange: a 429 pauses the endpoint for 1s, and one waiter gives up during the pause
+    var limiter = new CCloudApiRateLimiter(true, 1000);
+    limiter.acquire(URL_A).await().atMost(Duration.ofSeconds(2));
+    limiter.recordRateLimitedResponse(URL_A, mockResponse(429, "Retry-After", "1"));
+    limiter.notifyRequestCompleted(URL_A);
+    limiter.acquire(URL_A).subscribe().with(ignored -> { }).cancel();
+    limiter.notifyRequestCompleted(URL_A);
+    var start = Instant.now();
+
+    // act
+    limiter.acquire(URL_A).await().atMost(Duration.ofSeconds(5));
+
+    // assert: about 1s, not 2s behind the slot the first waiter gave up
+    var elapsed = Duration.between(start, Instant.now());
+    assertTrue(elapsed.toMillis() < 1_500, "waited " + elapsed);
+  }
+
+  @Test
   void parseRetryAfterHeaderShouldReadHttpDate() {
     var inAMinute = DateTimeFormatter.RFC_1123_DATE_TIME.format(
         ZonedDateTime.now(ZoneOffset.UTC).plusMinutes(1)
