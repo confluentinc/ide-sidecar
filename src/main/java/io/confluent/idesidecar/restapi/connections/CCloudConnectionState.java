@@ -12,6 +12,7 @@ import io.confluent.idesidecar.restapi.models.ConnectionStatus.CCloudStatus;
 import io.confluent.idesidecar.restapi.models.ConnectionStatus.ConnectedState;
 import io.confluent.idesidecar.restapi.models.ConnectionStatusBuilder;
 import io.confluent.idesidecar.restapi.resources.ConnectionsResource;
+import io.netty.channel.ConnectTimeoutException;
 import io.quarkus.logging.Log;
 import io.smallrye.common.constraint.NotNull;
 import io.smallrye.common.constraint.Nullable;
@@ -69,9 +70,8 @@ public class CCloudConnectionState extends ConnectionState {
    *   </li>
    *   <li>
    *     {@link ConnectedState#EXPIRED}, if the connection holds all tokens but cannot perform API
-   *     requests against the CCloud API. A check that times out keeps a previous
-   *     {@link ConnectedState#SUCCESS} instead, since a stalled request says nothing about the
-   *     session.
+   *     requests against the CCloud API. A check that times out, or can't connect in time, keeps a
+   *     previous {@link ConnectedState#SUCCESS} instead, since that says nothing about the session.
    *   </li>
    *   <li>
    *     {@link ConnectedState#FAILED}, if the connection experienced a non-transient error
@@ -147,8 +147,8 @@ public class CCloudConnectionState extends ConnectionState {
                 ).build();
           })
           .recover(failure -> {
-            // a response that stalled past the request timeout says nothing about the session, so
-            // don't report a healthy connection as expired because of it
+            // a request that stalled, or couldn't connect in time, says nothing about the session,
+            // so don't report a healthy connection as expired because of it
             if (isTimeout(failure) && isConnected(lastStatus)) {
               Log.errorf(
                   "Timed out checking the CCloud session of connection ID=%s; keeping its last "
@@ -183,7 +183,9 @@ public class CCloudConnectionState extends ConnectionState {
 
   private static boolean isTimeout(Throwable failure) {
     for (var cause = failure; cause != null; cause = cause.getCause()) {
-      if (cause instanceof TimeoutException) {
+      // Netty's connect timeout is a ConnectException, but a refused connection is too, so match
+      // the timeout's own type
+      if (cause instanceof TimeoutException || cause instanceof ConnectTimeoutException) {
         return true;
       }
     }
