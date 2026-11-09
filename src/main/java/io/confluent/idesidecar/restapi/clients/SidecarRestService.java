@@ -29,7 +29,8 @@ import java.util.concurrent.ThreadLocalRandom;
  * {@code Retry-After}, the wait is that value instead. A {@code Retry-After} longer than
  * {@code retries.max.wait.ms}, or a wait that would pass the caller's deadline (see
  * {@link #withDeadline}), fails right away instead of retrying early. Under a deadline, each
- * request's connect and read timeouts are also cut to the time left.
+ * request's connect and read timeouts are also cut to the time left, on the default
+ * {@link HttpURLConnection} path.
  */
 public class SidecarRestService extends RestService {
 
@@ -108,7 +109,7 @@ public class SidecarRestService extends RestService {
             "The deadline for Schema Registry request %s has passed".formatted(url.getPath())
         );
       }
-      // a slow server can't hold the request past the deadline, only the waits between tries
+      // each connect and each read waits at most until the deadline (a read timeout is per read)
       built.setConnectTimeout(atMost(built.getConnectTimeout(), leftMs));
       built.setReadTimeout(atMost(built.getReadTimeout(), leftMs));
     }
