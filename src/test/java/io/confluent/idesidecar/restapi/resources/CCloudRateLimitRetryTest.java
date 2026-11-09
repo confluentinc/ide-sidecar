@@ -3,6 +3,7 @@ package io.confluent.idesidecar.restapi.resources;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static io.confluent.idesidecar.restapi.testutil.QueryResourceUtil.queryGraphQLRaw;
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -208,9 +209,8 @@ public class CCloudRateLimitRetryTest extends ConfluentQueryResourceTestBase {
   }
 
   /**
-   * Verifies that a persistent 429 is surfaced as a GraphQL DataFetchingException. The specific
-   * rate-limit message is logged server-side but SmallRye GraphQL only exposes allowed exception
-   * types to clients.
+   * Verifies that a persistent 429 is surfaced as a GraphQL DataFetchingException whose message
+   * says the request was rate limited.
    */
   @Test
   void shouldSurfaceRateLimitAsDataFetchingException() {
@@ -235,7 +235,9 @@ public class CCloudRateLimitRetryTest extends ConfluentQueryResourceTestBase {
 
     queryGraphQLRaw(ENVIRONMENTS_QUERY)
         .body("errors", notNullValue())
-        .body("errors[0].extensions.classification", is("DataFetchingException"));
+        .body("errors[0].extensions.classification", is("DataFetchingException"))
+        .body("errors[0].message", containsString("Too Many Requests (HTTP 429) from"))
+        .body("errors[0].message", containsString("retry-after: 30s"));
 
     // Retry-After: 30 is past the test profile's 10s retry budget, so it fails without waiting
     var elapsed = Duration.ofNanos(System.nanoTime() - started);
