@@ -3,6 +3,9 @@
   ide-sidecar:
     connections:
       ccloud:
+        # check on every status refresh, so tests see a changed check_jwt stub at once
+        check-jwt:
+          healthy-interval-seconds: 0
         control-plane-base-url: http://localhost:${quarkus.wiremock.devservices.port}
         id-token:
           exchange-uri:
@@ -101,6 +104,11 @@ ide-sidecar:
       base-path: confluent.cloud
       check-token-expiration:
         interval-seconds: 5
+      # while a connection is healthy, send check_jwt at most this often, plus up to the jitter
+      # factor on top; an unhealthy connection is checked on every status refresh
+      check-jwt:
+        healthy-interval-seconds: 60
+        jitter-factor: 0.2
       control-plane-base-url: https://api.${ide-sidecar.connections.ccloud.base-path}
       control-plane-token:
         exchange-uri: https://${ide-sidecar.connections.ccloud.base-path}/api/sessions
