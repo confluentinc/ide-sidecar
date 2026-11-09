@@ -42,7 +42,10 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
@@ -271,7 +274,7 @@ public class CCloudOAuthContext implements AuthContext {
     Future<AuthContext> chain;
     writeLock.lock();
     try {
-      chain = bareRefresh(organizationId)
+      chain = withDeadline(bareRefresh(organizationId))
           // Reset any existing error related to token refresh flow
           .onSuccess(onSuccessfulTokenRefresh());
       if (countFailures) {
@@ -293,6 +296,46 @@ public class CCloudOAuthContext implements AuthContext {
       promise.handle(result);
     });
     return promise.future();
+  }
+
+  /**
+   * Fail {@code refresh} once {@link #refreshDeadline()} has passed, so it can't hold the
+   * single-flight slot forever. The refresh itself keeps going, and stores tokens as each step
+   * succeeds: CCloud may already have rotated the refresh token, so a late success is kept and
+   * clears the failure count, and a late failure is only logged, since the timeout counted it.
+   */
+  private Future<AuthContext> withDeadline(Future<AuthContext> refresh) {
+    Promise<AuthContext> bounded = Promise.promise();
+    var deadline = refreshDeadline();
+    var timer = CompletableFuture.runAsync(
+        () -> {
+          var message = "The CCloud token refresh didn't finish within %s"
+              .formatted(TimeUtil.humanReadableDuration(deadline));
+          if (bounded.tryFail(new TimeoutException(message))) {
+            Log.error(message);
+          }
+        },
+        CompletableFuture.delayedExecutor(deadline.toMillis(), TimeUnit.MILLISECONDS)
+    );
+    refresh.onComplete(result -> {
+      timer.cancel(false);
+      var inTime = result.succeeded()
+          ? bounded.tryComplete(result.result())
+          : bounded.tryFail(result.cause());
+      if (inTime) {
+        return;
+      }
+      if (result.succeeded()) {
+        Log.warn("A CCloud token refresh finished after its deadline; keeping its new tokens");
+        onSuccessfulTokenRefresh().handle(result.result());
+      } else {
+        Log.errorf(
+            result.cause(),
+            "A CCloud token refresh failed after its deadline had already counted it as failed"
+        );
+      }
+    });
+    return bounded.future();
   }
 
   /**
@@ -507,6 +550,14 @@ public class CCloudOAuthContext implements AuthContext {
    */
   Instant now() {
     return Instant.now();
+  }
+
+  /**
+   * How long a refresh may run before it counts as failed, read through a method so tests can
+   * shorten it.
+   */
+  Duration refreshDeadline() {
+    return CCloudOAuthConfig.TOKEN_REFRESH_DEADLINE;
   }
 
   /**
