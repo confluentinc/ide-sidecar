@@ -36,11 +36,15 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 public class CCloudApiRateLimiter {
 
   /**
-   * The longest a 429 pauses its endpoint for. The retry policy fails fast on a longer
-   * {@code Retry-After}, but the pause applies to every later request to that endpoint, so an
-   * hours-long value shouldn't stall them all.
+   * The longest a 429 pauses its endpoint for: the retry budget, since every request gives up
+   * once that has passed. The pause applies to every later request to that endpoint, so an
+   * hours-long {@code Retry-After} shouldn't stall them all.
    */
-  static final int MAX_RATE_LIMITED_PAUSE_SECONDS = 60;
+  @ConfigProperty(
+      name = "ide-sidecar.connections.ccloud.rate-limit.retry.max-total-ms",
+      defaultValue = "40000"
+  )
+  long maxRateLimitedPauseMs = 40_000;
 
   private final boolean enabled;
   private final int defaultPermitsPerSecond;
@@ -135,7 +139,7 @@ public class CCloudApiRateLimiter {
     if (!enabled) {
       return;
     }
-    bucketFor(url).recordRateLimitedResponse(response);
+    bucketFor(url).recordRateLimitedResponse(response, maxRateLimitedPauseMs / 1000.0);
   }
 
   /**
@@ -266,11 +270,11 @@ public class CCloudApiRateLimiter {
       }
     }
 
-    void recordRateLimitedResponse(HttpResponse<?> response) {
+    void recordRateLimitedResponse(HttpResponse<?> response, double maxPauseSeconds) {
       int retryAfter = RateLimitState.parseRetryAfterHeader(response);
       update(new RateLimitState(
           -1, 0,
-          retryAfter >= 0 ? Math.min(retryAfter, MAX_RATE_LIMITED_PAUSE_SECONDS) : 1.0,
+          retryAfter >= 0 ? Math.min(retryAfter, maxPauseSeconds) : 1.0,
           System.nanoTime()
       ));
     }
