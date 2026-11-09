@@ -8,10 +8,20 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import io.confluent.idesidecar.restapi.exceptions.TooManyRequestsException;
+import io.smallrye.mutiny.TimeoutException;
+import io.smallrye.mutiny.Uni;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.ext.web.client.HttpResponse;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 
 class CCloudApiRateLimiterTest {
@@ -85,12 +95,14 @@ class CCloudApiRateLimiterTest {
     var limiter = new CCloudApiRateLimiter(true, 4);
     limiter.acquire(URL_A).await().atMost(Duration.ofSeconds(2));
     limiter.recordResponse(URL_A, rateLimitResponse(100, 100, 60));
+    limiter.notifyRequestCompleted(URL_A);
 
     // act
     var start = Instant.now();
     for (int i = 0; i < 5; i++) {
       limiter.acquire(URL_A).await().atMost(Duration.ofSeconds(2));
       limiter.recordResponse(URL_A, rateLimitResponse(100, 95 - i, 59));
+      limiter.notifyRequestCompleted(URL_A);
     }
     var elapsed = Duration.between(start, Instant.now());
 
@@ -107,6 +119,7 @@ class CCloudApiRateLimiterTest {
     var limiter = new CCloudApiRateLimiter(true, 1000);
     limiter.acquire(URL_A).await().atMost(Duration.ofSeconds(2));
     limiter.recordResponse(URL_A, rateLimitResponse(10, 2, 10));
+    limiter.notifyRequestCompleted(URL_A);
 
     // act: next acquire should delay (10s / 3 ≈ 3.3s interval)
     var start = Instant.now();
@@ -128,6 +141,7 @@ class CCloudApiRateLimiterTest {
     var limiter = new CCloudApiRateLimiter(true, 1000);
     limiter.acquire(URL_A).await().atMost(Duration.ofSeconds(2));
     limiter.recordResponse(URL_A, rateLimitResponse(10, 0, 2));
+    limiter.notifyRequestCompleted(URL_A);
 
     // act
     var start = Instant.now();
@@ -152,6 +166,7 @@ class CCloudApiRateLimiterTest {
     // act
     limiter.acquire(URL_A).await().atMost(Duration.ofSeconds(2));
     limiter.recordResponse(URL_A, rateLimitResponse(100, 90, 60));
+    limiter.notifyRequestCompleted(URL_A);
 
     // assert
     var state = limiter.getLatestState(URL_A);
@@ -174,6 +189,7 @@ class CCloudApiRateLimiterTest {
 
     // act
     limiter.recordResponse(URL_A, rateLimitResponse(100, 42, 30));
+    limiter.notifyRequestCompleted(URL_A);
 
     // assert
     var state = limiter.getLatestState(URL_A);
@@ -184,13 +200,14 @@ class CCloudApiRateLimiterTest {
   }
 
   @Test
-  void recordResponseShouldOnlyDecrementWhenHeadersAbsent() {
+  void recordResponseShouldKeepNoStateWhenHeadersAbsent() {
     // arrange
     var limiter = new CCloudApiRateLimiter(true, 4);
     limiter.acquire(URL_A).await().atMost(Duration.ofSeconds(2));
 
     // act
     limiter.recordResponse(URL_A, mockResponse(200));
+    limiter.notifyRequestCompleted(URL_A);
 
     // assert: no headers means no observed state for this bucket
     assertNull(limiter.getLatestState(URL_A));
@@ -204,6 +221,7 @@ class CCloudApiRateLimiterTest {
 
     // act
     limiter.recordRateLimitedResponse(URL_A, mockResponse(429, "Retry-After", "7"));
+    limiter.notifyRequestCompleted(URL_A);
 
     // assert
     var state = limiter.getLatestState(URL_A);
@@ -220,6 +238,7 @@ class CCloudApiRateLimiterTest {
 
     // act
     limiter.recordRateLimitedResponse(URL_A, mockResponse(429));
+    limiter.notifyRequestCompleted(URL_A);
 
     // assert: falls back to a 1s exhaustion window
     var state = limiter.getLatestState(URL_A);
@@ -229,10 +248,56 @@ class CCloudApiRateLimiterTest {
   }
 
   @Test
-  void parseRetryAfterHeaderShouldReturnMinusOneOnHttpDate() {
-    var response = mockResponse(429, "Retry-After", "Wed, 21 Oct 2026 07:28:00 GMT");
+  void recordRateLimitedResponseShouldHonorRetryAfterOfZero() {
+    // arrange
+    var limiter = new CCloudApiRateLimiter(true, 4);
 
-    assertEquals(-1, RateLimitState.parseRetryAfterHeader(response));
+    // act
+    limiter.recordRateLimitedResponse(URL_A, mockResponse(429, "Retry-After", "0"));
+
+    // assert: no forced 1s pause
+    assertEquals(0.0, limiter.getLatestState(URL_A).resetSeconds());
+  }
+
+  @Test
+  void recordRateLimitedResponseShouldCapTheEndpointPauseAtTheRetryBudget() {
+    var limiter = new CCloudApiRateLimiter(true, 4);
+
+    limiter.recordRateLimitedResponse(URL_A, mockResponse(429, "Retry-After", "3600"));
+
+    // the default max-total-ms
+    assertEquals(40.0, limiter.getLatestState(URL_A).resetSeconds());
+  }
+
+  @Test
+  void aWaiterThatGivesUpShouldHandBackItsSlot() {
+    // arrange: a 429 pauses the endpoint for 1s, and one waiter gives up during the pause
+    var limiter = new CCloudApiRateLimiter(true, 1000);
+    limiter.acquire(URL_A).await().atMost(Duration.ofSeconds(2));
+    limiter.recordRateLimitedResponse(URL_A, mockResponse(429, "Retry-After", "1"));
+    limiter.notifyRequestCompleted(URL_A);
+    limiter.acquire(URL_A).subscribe().with(ignored -> { }).cancel();
+    limiter.notifyRequestCompleted(URL_A);
+    var start = Instant.now();
+
+    // act
+    limiter.acquire(URL_A).await().atMost(Duration.ofSeconds(5));
+
+    // assert: about 1s, not 2s behind the slot the first waiter gave up
+    var elapsed = Duration.between(start, Instant.now());
+    assertTrue(elapsed.toMillis() < 1_500, "waited " + elapsed);
+  }
+
+  @Test
+  void parseRetryAfterHeaderShouldReadHttpDate() {
+    var inAMinute = DateTimeFormatter.RFC_1123_DATE_TIME.format(
+        ZonedDateTime.now(ZoneOffset.UTC).plusMinutes(1)
+    );
+    var response = mockResponse(429, "Retry-After", inAMinute);
+
+    var seconds = RateLimitState.parseRetryAfterHeader(response);
+
+    assertTrue(seconds > 50 && seconds <= 60, "parsed as " + seconds);
   }
 
   @Test
@@ -241,6 +306,7 @@ class CCloudApiRateLimiterTest {
     var limiter = new CCloudApiRateLimiter(true, 1000);
     limiter.acquire(URL_A).await().atMost(Duration.ofSeconds(2));
     limiter.recordResponse(URL_A, rateLimitResponse(5, 0, 60));
+    limiter.notifyRequestCompleted(URL_A);
 
     // act + assert: bucket A is exhausted (60s pause expected); bucket B is still in default mode
     var stateA = limiter.getLatestState(URL_A);
@@ -274,6 +340,7 @@ class CCloudApiRateLimiterTest {
     // act
     limiter.acquire(URL_A).await().atMost(Duration.ofSeconds(2));
     limiter.recordResponse(URL_A, rateLimitResponse(50, 17, 5));
+    limiter.notifyRequestCompleted(URL_A);
 
     // assert: querying state by either URL form returns the same bucket
     var stateA = limiter.getLatestState(URL_A);
@@ -309,12 +376,91 @@ class CCloudApiRateLimiterTest {
   }
 
   @Test
+  void permitShouldBalanceInflightAcrossRetries() {
+    // arrange: an attempt that fails twice, then succeeds
+    var limiter = new CCloudApiRateLimiter(true, 1000);
+    var attempts = new AtomicInteger();
+    var inflightDuringAttempts = new CopyOnWriteArrayList<Integer>();
+
+    // act
+    var result = limiter
+        .withPermit(URL_A, () -> {
+          inflightDuringAttempts.add(limiter.inflight(URL_A));
+          return attempts.incrementAndGet() < 3
+              ? Uni.createFrom().failure(new TooManyRequestsException(URL_A, 0))
+              : Uni.createFrom().item("ok");
+        })
+        .onFailure().retry().atMost(3)
+        .await().atMost(Duration.ofSeconds(5));
+
+    // assert: each retry acquired and released its own permit
+    assertEquals("ok", result);
+    assertEquals(3, attempts.get());
+    assertEquals(List.of(1, 1, 1), inflightDuringAttempts);
+    assertEquals(0, limiter.inflight(URL_A));
+  }
+
+  @Test
+  void disabledLimiterShouldStillRunEachAttemptFresh() {
+    var limiter = new CCloudApiRateLimiter(false, 4);
+    var attempts = new AtomicInteger();
+
+    var result = limiter
+        .withPermit(URL_A, () -> attempts.incrementAndGet() < 2
+            ? Uni.createFrom().failure(new IllegalStateException("retry me"))
+            : Uni.createFrom().item("ok"))
+        .onFailure().retry().atMost(1)
+        .await().atMost(Duration.ofSeconds(2));
+
+    assertEquals("ok", result);
+    assertEquals(2, attempts.get());
+    assertEquals(0, limiter.bucketCount());
+  }
+
+  @Test
+  void permitShouldBeReleasedWhenTheCallerCancels() {
+    // arrange: an attempt that never completes
+    var limiter = new CCloudApiRateLimiter(true, 1000);
+    var subscribed = new CountDownLatch(1);
+    var never = limiter.withPermit(
+        URL_A,
+        () -> Uni.createFrom().emitter(emitter -> subscribed.countDown())
+    );
+
+    // act: a caller with a short deadline gives up, which cancels the request
+    assertThrows(
+        TimeoutException.class,
+        () -> never.await().atMost(Duration.ofMillis(200))
+    );
+
+    // assert
+    assertEquals(0, subscribed.getCount());
+    assertEquals(0, limiter.inflight(URL_A));
+  }
+
+  @Test
+  void permitShouldBeReleasedWhenTheAttemptFails() {
+    var limiter = new CCloudApiRateLimiter(true, 1000);
+
+    assertThrows(
+        IllegalStateException.class,
+        () -> limiter
+            .withPermit(URL_A, () -> Uni.createFrom().failure(new IllegalStateException("boom")))
+            .await().atMost(Duration.ofSeconds(2))
+    );
+
+    assertEquals(0, limiter.inflight(URL_A));
+  }
+
+  @Test
   void resetShouldClearAllBuckets() {
     var limiter = new CCloudApiRateLimiter(true, 1000);
     limiter.acquire(URL_A).await().atMost(Duration.ofSeconds(2));
     limiter.recordResponse(URL_A, rateLimitResponse(5, 0, 60));
+    limiter.notifyRequestCompleted(URL_A);
     limiter.acquire(URL_B).await().atMost(Duration.ofSeconds(2));
     limiter.recordResponse(URL_B, rateLimitResponse(20, 19, 1));
+    limiter.notifyRequestCompleted(URL_B);
     assertEquals(2, limiter.bucketCount());
 
     limiter.reset();
@@ -357,6 +503,7 @@ class CCloudApiRateLimiterTest {
     var limiter = new CCloudApiRateLimiter(true, 1000);
     limiter.acquire(URL_A).await().atMost(Duration.ofSeconds(2));
     limiter.recordResponse(URL_A, rateLimitResponse(5, 2, 1));
+    limiter.notifyRequestCompleted(URL_A);
 
     // saturate inflight beyond the server-reported remaining; this mimics the initial fan-out
     // case where many acquires happen before any response feeds updated state back
@@ -422,7 +569,9 @@ class CCloudApiRateLimiterTest {
     // act: full record cycle that would normally populate bucket state
     limiter.acquire(URL_A).await().atMost(Duration.ofMillis(100));
     limiter.recordResponse(URL_A, rateLimitResponse(100, 50, 30));
+    limiter.notifyRequestCompleted(URL_A);
     limiter.recordRateLimitedResponse(URL_B, mockResponse(429, "Retry-After", "1"));
+    limiter.notifyRequestCompleted(URL_B);
     limiter.notifyRequestCompleted(URL_A);
 
     // assert: no state retained for either URL
