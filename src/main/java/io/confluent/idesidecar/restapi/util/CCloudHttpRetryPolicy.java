@@ -9,6 +9,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.DoubleSupplier;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -19,7 +20,9 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
  * from {@code initial-backoff-ms} up to {@code max-backoff-ms}), plus up to
  * {@code jitter-factor} more on top. A request stops retrying after {@code max-retries}, or as
  * soon as the next wait would end more than {@code max-total-ms} after the operation started, and
- * then fails with the last 429, {@code Retry-After} included. Used by both the GraphQL fetcher
+ * then fails with the last 429, {@code Retry-After} included. The operation as a whole, including
+ * rate-limiter waits and the attempt in flight, also fails with a {@link TimeoutException} once
+ * {@code max-total-ms} has passed. Used by both the GraphQL fetcher
  * path ({@code ConfluentCloudRestClient.wrapRequest}) and the auth path
  * ({@code CCloudHttpSender.send}).
  *
@@ -70,16 +73,35 @@ public class CCloudHttpRetryPolicy {
   /**
    * Retry {@code source} on 429s, with the time budget starting at {@code startedAt}, such as
    * when the first page of a paged fetch was requested. A null {@code startedAt} starts the
-   * budget when {@code source} is subscribed. Logs at ERROR when it gives up.
+   * budget when {@code source} is subscribed. Fails with a {@link TimeoutException} once the
+   * budget has passed. Logs at ERROR when it gives up.
    */
   public <T> Uni<T> applyRetry(String url, Instant startedAt, Uni<T> source) {
+    // per subscription, so a resubscribed source starts over
+    return Uni.createFrom().deferred(() -> {
+      var deadline = (startedAt != null ? startedAt : Instant.now()).plusMillis(maxTotalMs);
+      var left = Duration.between(Instant.now(), deadline);
+      if (!left.isPositive()) {
+        return Uni.createFrom().failure(budgetSpent(url));
+      }
+      return retryWithin(url, deadline, source)
+          // a hard stop, so nested fetches add up to a known worst case
+          .ifNoItem().after(left).failWith(() -> budgetSpent(url));
+    });
+  }
+
+  private TimeoutException budgetSpent(String url) {
+    var message = "Gave up on %s after its %dms budget".formatted(url, maxTotalMs);
+    Log.error(message);
+    return new TimeoutException(message);
+  }
+
+  private <T> Uni<T> retryWithin(String url, Instant deadline, Uni<T> source) {
     return source
         .onFailure(TooManyRequestsException.class)
         .retry()
         .when(failures -> {
-          // per subscription, so a resubscribed source starts over
           var retries = new AtomicInteger();
-          var deadline = (startedAt != null ? startedAt : Instant.now()).plusMillis(maxTotalMs);
           return failures.onItem().transformToUniAndConcatenate(failure -> {
             var tooManyRequests = (TooManyRequestsException) failure;
             var retry = retries.getAndIncrement();
