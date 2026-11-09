@@ -282,7 +282,8 @@ public class CCloudOAuthContext implements AuthContext {
    * Fail {@code refresh} once {@link #refreshDeadline()} has passed, so it can't hold the
    * single-flight slot forever. The refresh itself keeps going, and stores tokens as each step
    * succeeds: CCloud may already have rotated the refresh token, so a late success is kept and
-   * clears the failure count, and a late failure is only logged, since the timeout counted it.
+   * clears the failure count, and a late failure is only logged, since the timeout already
+   * stood for it.
    */
   private Future<AuthContext> withDeadline(Future<AuthContext> refresh) {
     Promise<AuthContext> bounded = Promise.promise();
@@ -311,7 +312,7 @@ public class CCloudOAuthContext implements AuthContext {
       } else {
         Log.errorf(
             result.cause(),
-            "A CCloud token refresh failed after its deadline had already counted it as failed"
+            "A CCloud token refresh failed after its deadline had passed"
         );
       }
     });
