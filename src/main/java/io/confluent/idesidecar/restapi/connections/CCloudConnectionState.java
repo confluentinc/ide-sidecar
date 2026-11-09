@@ -271,14 +271,16 @@ public class CCloudConnectionState extends ConnectionState {
     var jitter = 1 + CHECK_JWT_JITTER_FACTOR * ThreadLocalRandom.current().nextDouble();
     check.onComplete(result -> {
       var isHealthy = result.succeeded() && Boolean.TRUE.equals(result.result());
-      // counted from when the check was sent, so a slow answer doesn't stretch the interval
-      lastHealthyCheck.set(isHealthy
-          ? new HealthyCheck(
-              tokenValue,
-              now.plusMillis(Math.round(checkJwtHealthyInterval().toMillis() * jitter))
-          )
-          : null);
-      runningCheck.compareAndSet(mine, null);
+      // a check for a newer token replaced this one, so its result is the one to keep
+      if (runningCheck.compareAndSet(mine, null)) {
+        // counted from when the check was sent, so a slow answer doesn't stretch the interval
+        lastHealthyCheck.set(isHealthy
+            ? new HealthyCheck(
+                tokenValue,
+                now.plusMillis(Math.round(checkJwtHealthyInterval().toMillis() * jitter))
+            )
+            : null);
+      }
       promise.handle(result);
     });
     return promise.future();
