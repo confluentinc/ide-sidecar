@@ -569,6 +569,26 @@ public class CCloudConnectionTest {
   }
 
   @Test
+  void shouldNotLetAnOlderTokensCheckReplaceANewerHealthyResult() throws Exception {
+    // arrange: a slow check for the first token, then a healthy one for a newer token
+    Promise<Boolean> slow = Promise.promise();
+    var connectionState = signedInConnectionState(slow.future());
+    connectionState.refreshStatus();
+    when(connectionState.getOauthContext().getControlPlaneToken())
+        .thenReturn(new Token("refreshed", Instant.now().plusSeconds(300)));
+    when(connectionState.getOauthContext().checkAuthenticationStatus())
+        .thenReturn(Future.succeededFuture(true));
+    awaitStatus(connectionState.refreshStatus());
+
+    // act: the older token's check fails late, then the next refresh comes
+    slow.fail(new IllegalStateException("older token rejected"));
+    awaitStatus(connectionState.refreshStatus());
+
+    // assert: the newer token's healthy result is still reused
+    verify(connectionState.getOauthContext(), times(2)).checkAuthenticationStatus();
+  }
+
+  @Test
   void shouldCheckJwtEveryTickWhileTheConnectionIsExpired() throws Exception {
     var connectionState = signedInConnectionState(Future.succeededFuture(false));
 
