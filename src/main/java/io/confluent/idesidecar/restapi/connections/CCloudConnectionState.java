@@ -12,6 +12,7 @@ import io.confluent.idesidecar.restapi.models.ConnectionStatus.CCloudStatus;
 import io.confluent.idesidecar.restapi.models.ConnectionStatus.ConnectedState;
 import io.confluent.idesidecar.restapi.models.ConnectionStatusBuilder;
 import io.confluent.idesidecar.restapi.resources.ConnectionsResource;
+import io.netty.channel.ConnectTimeoutException;
 import io.quarkus.logging.Log;
 import io.smallrye.common.constraint.NotNull;
 import io.smallrye.common.constraint.Nullable;
@@ -19,6 +20,7 @@ import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpHeaders;
 import java.util.HashSet;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Implementation of the connection state for Confluent Cloud ({@link ConnectionType#CCLOUD}).
@@ -68,7 +70,8 @@ public class CCloudConnectionState extends ConnectionState {
    *   </li>
    *   <li>
    *     {@link ConnectedState#EXPIRED}, if the connection holds all tokens but cannot perform API
-   *     requests against the CCloud API.
+   *     requests against the CCloud API. A check that times out, or can't connect in time, keeps a
+   *     previous {@link ConnectedState#SUCCESS} instead, since that says nothing about the session.
    *   </li>
    *   <li>
    *     {@link ConnectedState#FAILED}, if the connection experienced a non-transient error
@@ -121,41 +124,78 @@ public class CCloudConnectionState extends ConnectionState {
               .build()
       );
     } else {
+      var lastStatus = getStatus();
       return oauthContext
           .checkAuthenticationStatus()
-          // Consider token as invalid if any exception is thrown while we check the status
-          .recover(failure -> Future.succeededFuture(false))
           .map(canAuthenticateWithConfluentCloud -> {
+            if (!canAuthenticateWithConfluentCloud) {
+              return expiredStatus();
+            }
             // Need to re-read errors which might have been updated during the auth status check
             var errors = getAuthErrors(oauthContext);
-            if (canAuthenticateWithConfluentCloud) {
-              // Generate the updated status
-              var user = oauthContext.getUser();
-              return ConnectionStatusBuilder
-                  .builder()
-                  .ccloud(
-                      new CCloudStatus(
-                          ConnectedState.SUCCESS,
-                          oauthContext.getEndOfLifetime(),
-                          user != null ? user.asUserInfo() : null,
-                          errors
-                      )
-                  ).build();
-            } else {
-              // And return updated status
-              return ConnectionStatusBuilder
-                  .builder()
-                  .ccloud(
-                      new CCloudStatus(
-                          ConnectedState.EXPIRED,
-                          null,
-                          null,
-                          errors
-                      )
-                  ).build();
+            // Generate the updated status
+            var user = oauthContext.getUser();
+            return ConnectionStatusBuilder
+                .builder()
+                .ccloud(
+                    new CCloudStatus(
+                        ConnectedState.SUCCESS,
+                        oauthContext.getEndOfLifetime(),
+                        user != null ? user.asUserInfo() : null,
+                        errors
+                    )
+                ).build();
+          })
+          .recover(failure -> {
+            // a request that stalled, or couldn't connect in time, says nothing about the session,
+            // so don't report a healthy connection as expired because of it
+            if (isTimeout(failure) && isConnected(lastStatus)) {
+              Log.errorf(
+                  "Timed out checking the CCloud session of connection ID=%s; keeping its last "
+                      + "status: %s",
+                  getId(),
+                  failure.getMessage());
+              return Future.succeededFuture(lastStatus);
             }
+            // Consider token as invalid if any other exception is thrown while we check the status
+            Log.errorf(
+                "Couldn't check the CCloud session of connection ID=%s: %s",
+                getId(),
+                failure.getMessage());
+            return Future.succeededFuture(expiredStatus());
           });
     }
+  }
+
+  private ConnectionStatus expiredStatus() {
+    // Need to re-read errors which might have been updated during the auth status check
+    return ConnectionStatusBuilder
+        .builder()
+        .ccloud(
+            new CCloudStatus(
+                ConnectedState.EXPIRED,
+                null,
+                null,
+                getAuthErrors(oauthContext)
+            )
+        ).build();
+  }
+
+  private static boolean isTimeout(Throwable failure) {
+    for (var cause = failure; cause != null; cause = cause.getCause()) {
+      // Netty's connect timeout is a ConnectException, but a refused connection is too, so match
+      // the timeout's own type
+      if (cause instanceof TimeoutException || cause instanceof ConnectTimeoutException) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean isConnected(ConnectionStatus status) {
+    return status != null
+        && status.ccloud() != null
+        && status.ccloud().state() == ConnectedState.SUCCESS;
   }
 
   /**
