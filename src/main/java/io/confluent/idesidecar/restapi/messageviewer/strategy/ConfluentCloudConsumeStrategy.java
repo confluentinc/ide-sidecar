@@ -17,6 +17,7 @@ import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPart
 import io.confluent.idesidecar.restapi.proxy.KafkaRestProxyContext;
 import io.confluent.idesidecar.restapi.proxy.ProxyHttpClient;
 import io.confluent.idesidecar.restapi.util.ObjectMapperFactory;
+import io.confluent.idesidecar.restapi.util.RateLimitState;
 import io.confluent.idesidecar.restapi.util.SchemaRegistryUtil;
 import io.confluent.idesidecar.restapi.util.WebClientFactory;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
@@ -32,6 +33,7 @@ import jakarta.ws.rs.core.MediaType;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Map;
 import java.util.Optional;
 import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.header.internals.RecordHeaders;
@@ -105,7 +107,8 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
               context.getProxyResponseStatusCode(),
               "Error fetching the messages from ccloud: %s".formatted(
                   context.getProxyResponseBody())
-          )
+          ),
+          retryAfterOf(context)
       );
     }
     final String rawTopicRowsResponse = context.getProxyResponseBody().toString();
@@ -134,6 +137,15 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
               rawTopicRowsResponse)
       );
     }
+  }
+
+  /**
+   * The upstream {@code Retry-After}, so a rate-limited consume tells the caller when to try again.
+   */
+  private static Map<String, String> retryAfterOf(KafkaRestProxyContext<?, ?> context) {
+    var headers = context.getProxyResponseHeaders();
+    var retryAfter = headers == null ? null : headers.get(RateLimitState.HEADER_RETRY_AFTER);
+    return retryAfter == null ? Map.of() : Map.of(RateLimitState.HEADER_RETRY_AFTER, retryAfter);
   }
 
   /**
