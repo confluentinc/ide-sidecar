@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
+import org.awaitility.Awaitility;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -1075,6 +1076,54 @@ class CCloudOAuthContextTest {
   }
 
   @Test
+  void refreshThatOutlastsItsDeadlineShouldFailAndFreeTheSlot() throws Throwable {
+    var authContext = signedInWithShortRefreshDeadline();
+    delayRefreshTokenExchanges(CCloudTestUtil.AccessToken.newToken());
+    var started = System.nanoTime();
+
+    awaitFailure(authContext.refresh(null));
+
+    var elapsed = Duration.ofNanos(System.nanoTime() - started);
+    assertTrue(elapsed.toMillis() < 900, "waited for the slow exchange: " + elapsed);
+    assertFalse(authContext.isRefreshInFlight());
+    assertEquals(1, authContext.getFailedTokenRefreshAttempts());
+  }
+
+  @Test
+  void refreshThatSucceedsAfterItsDeadlineShouldKeepTheNewTokens() throws Throwable {
+    var authContext = signedInWithShortRefreshDeadline();
+    var rotated = CCloudTestUtil.AccessToken.newToken();
+    delayRefreshTokenExchanges(rotated);
+    ccloudTestUtil.expectControlPlaneAndDataPlaneTokenExchangeRequest(
+        rotated.id_token(), null, null
+    );
+
+    awaitFailure(authContext.refresh(null));
+
+    // CCloud has rotated the refresh token, so the late answer must not be dropped
+    Awaitility.await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+      assertEquals(rotated.refresh_token(), authContext.getRefreshToken().token());
+      assertEquals(0, authContext.getFailedTokenRefreshAttempts());
+    });
+  }
+
+  @Test
+  void refreshThatFailsAfterItsDeadlineShouldCountOnce() throws Throwable {
+    var authContext = signedInWithShortRefreshDeadline();
+    wireMock.register(
+        WireMock.post("/oauth/token")
+            .withRequestBody(WireMock.containing("refresh_token="))
+            .atPriority(1)
+            .willReturn(WireMock.aResponse().withStatus(503).withFixedDelay(500).withBody("{}"))
+    );
+
+    awaitFailure(authContext.refresh(null));
+    Thread.sleep(1_000);
+
+    assertEquals(1, authContext.getFailedTokenRefreshAttempts());
+  }
+
+  @Test
   void refreshThatFailsAtOnceShouldNotLeaveARefreshInFlight() throws Throwable {
     var authContext = new CCloudOAuthContext();
 
@@ -1082,6 +1131,18 @@ class CCloudOAuthContextTest {
     awaitFailure(authContext.refresh(null));
 
     assertFalse(authContext.isRefreshInFlight());
+  }
+
+  /**
+   * A signed-in context whose refreshes count as failed after 200ms.
+   */
+  private CCloudOAuthContext signedInWithShortRefreshDeadline() throws Exception {
+    var authContext = Mockito.spy(new CCloudOAuthContext());
+    authContext.createTokensFromAuthorizationCode(FAKE_AUTHORIZATION_CODE, null)
+        .toCompletionStage().toCompletableFuture().get(5, TimeUnit.SECONDS);
+    Mockito.doReturn(Duration.ofMillis(200)).when(authContext).refreshDeadline();
+    wireMock.resetRequests();
+    return authContext;
   }
 
   private void delayRefreshTokenExchanges(CCloudTestUtil.AccessToken response) {
