@@ -153,7 +153,8 @@ ide-sidecar:
           jitter-factor: 0.2
           # a hard limit on one request or paged fetch, rate-limiter waits, retries and the last
           # attempt included; a GraphQL query runs at most two fetches in a row (environments,
-          # then their clusters), so it stays within 80s, under the extension's 90s. Also caps
+          # then their clusters), so it stays within 80s, under the extension's 90s. Token
+          # requests only stop retrying at it, so a sent request's answer isn't dropped. Also caps
           # how long a 429 pauses its endpoint.
           max-total-ms: 40000
 

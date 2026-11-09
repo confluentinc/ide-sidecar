@@ -22,8 +22,8 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
  * soon as the next wait would end more than {@code max-total-ms} after the operation started, and
  * then fails with the last 429, {@code Retry-After} included. The operation as a whole, including
  * rate-limiter waits and the attempt in flight, also fails with a {@link TimeoutException} once
- * {@code max-total-ms} has passed. Used by both the GraphQL fetcher
- * path ({@code ConfluentCloudRestClient.wrapRequest}) and the auth path
+ * {@code max-total-ms} has passed, except through {@link #applyRetryWithoutCutoff}. Used by both
+ * the GraphQL fetcher path ({@code ConfluentCloudRestClient.wrapRequest}) and the auth path
  * ({@code CCloudHttpSender.send}).
  *
  * <p>Rate-limiter permits are taken per attempt by
@@ -68,6 +68,18 @@ public class CCloudHttpRetryPolicy {
    */
   public <T> Uni<T> applyRetry(String url, Uni<T> source) {
     return applyRetry(url, null, source);
+  }
+
+  /**
+   * Like {@link #applyRetry(String, Uni)}, for a request whose answer mustn't be dropped once it's
+   * sent, such as a token exchange that rotates the refresh token. The budget only stops new
+   * retries; an attempt in flight runs to its own request timeout.
+   */
+  public <T> Uni<T> applyRetryWithoutCutoff(String url, Uni<T> source) {
+    // per subscription, so a resubscribed source starts over
+    return Uni.createFrom().deferred(
+        () -> retryWithin(url, Instant.now().plusMillis(maxTotalMs), source)
+    );
   }
 
   /**
