@@ -42,7 +42,7 @@ public class CCloudHttpSender {
       String url,
       Supplier<Future<HttpResponse<Buffer>>> sender) {
     Promise<HttpResponse<Buffer>> promise = Promise.promise();
-    retryPolicy.applyRetry(url,
+    retryPolicy.applyRetryWithoutCutoff(url,
         rateLimiter.withPermit(
             url,
             // record the response inside the attempt, so the bucket's state is updated before the
