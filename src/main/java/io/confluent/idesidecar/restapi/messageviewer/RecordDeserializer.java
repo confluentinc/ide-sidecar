@@ -573,7 +573,7 @@ public class RecordDeserializer {
       return "timed out after %s".formatted(TimeUtil.humanReadableDuration(schemaFetchTimeout));
     }
     if (isRetryableException(e)) {
-      return "gave up after retrying";
+      return "gave up";
     }
     return null;
   }
