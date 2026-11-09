@@ -2,12 +2,19 @@ package io.confluent.idesidecar.restapi.messageviewer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.wildfly.common.Assert.assertNotNull;
 import static org.wildfly.common.Assert.assertTrue;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.confluent.idesidecar.restapi.exceptions.ProcessorFailedException;
+import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequest;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse.TimestampType;
+import io.confluent.idesidecar.restapi.messageviewer.strategy.ConfluentCloudConsumeStrategy;
+import io.confluent.idesidecar.restapi.proxy.KafkaRestProxyContext;
+import io.vertx.core.MultiMap;
+import io.vertx.core.buffer.Buffer;
 import java.io.IOException;
 import java.util.Objects;
 import org.junit.jupiter.api.Test;
@@ -65,4 +72,46 @@ public class ConfluentCloudConsumeStrategyTest {
     assertFalse(recordData1.exceededFields().value());
   }
 
+  @Test
+  void shouldKeepRetryAfterWhenConfluentCloudRateLimitsTheConsume() {
+    var context = rejectedConsume(429, "7");
+
+    var thrown = assertThrows(
+        ProcessorFailedException.class,
+        () -> new ConfluentCloudConsumeStrategy().postProcess(context)
+    );
+
+    assertEquals("429", thrown.getFailure().status());
+    assertEquals("7", thrown.getResponseHeaders().get("Retry-After"));
+  }
+
+  @Test
+  void shouldNotAddRetryAfterWhenConfluentCloudSentNone() {
+    var context = rejectedConsume(500, null);
+
+    var thrown = assertThrows(
+        ProcessorFailedException.class,
+        () -> new ConfluentCloudConsumeStrategy().postProcess(context)
+    );
+
+    assertTrue(thrown.getResponseHeaders().isEmpty());
+  }
+
+  private static KafkaRestProxyContext
+      <SimpleConsumeMultiPartitionRequest, SimpleConsumeMultiPartitionResponse> rejectedConsume(
+      int status, String retryAfter
+  ) {
+    var context = new KafkaRestProxyContext
+        <SimpleConsumeMultiPartitionRequest, SimpleConsumeMultiPartitionResponse>(
+        "ccloud-1", "lkc-1", "orders", null
+    );
+    var headers = MultiMap.caseInsensitiveMultiMap();
+    if (retryAfter != null) {
+      headers.add("Retry-After", retryAfter);
+    }
+    context.setProxyResponseStatusCode(status);
+    context.setProxyResponseHeaders(headers);
+    context.setProxyResponseBody(Buffer.buffer("{\"error_code\":%d}".formatted(status)));
+    return context;
+  }
 }
