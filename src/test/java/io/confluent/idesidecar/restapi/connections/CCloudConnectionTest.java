@@ -15,10 +15,12 @@ import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
 import io.confluent.idesidecar.restapi.models.ConnectionStatus;
 import io.confluent.idesidecar.restapi.models.ConnectionStatus.ConnectedState;
+import io.netty.channel.ConnectTimeoutException;
 import io.quarkus.test.junit.QuarkusTest;
 import io.vertx.core.Future;
 import io.vertx.core.impl.NoStackTraceTimeoutException;
 import io.vertx.junit5.VertxTestContext;
+import java.net.ConnectException;
 import java.time.Instant;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
@@ -285,6 +287,33 @@ public class CCloudConnectionTest {
     assertEquals(ConnectedState.SUCCESS, healthy.ccloud().state());
     assertSame(healthy, afterTimeout);
     assertSame(healthy, connectionState.getStatus());
+  }
+
+  @Test
+  void refreshStatusShouldKeepLastStatusIfAuthStatusCheckCannotConnectInTime() throws Throwable {
+    var connectionState = spyCCloudConnectionState(true, true, true, true, false, false);
+    var authContext = ((CCloudConnectionState) connectionState).getOauthContext();
+    var healthy = refreshStatus(connectionState);
+    when(authContext.checkAuthenticationStatus()).thenReturn(Future.failedFuture(
+        new ConnectTimeoutException("connection timed out after 10000 ms")
+    ));
+
+    var afterTimeout = refreshStatus(connectionState);
+
+    assertSame(healthy, afterTimeout);
+  }
+
+  @Test
+  void refreshStatusShouldReturnExpiredIfAuthStatusCheckConnectionIsRefused() throws Throwable {
+    var connectionState = spyCCloudConnectionState(true, true, true, true, false, false);
+    var authContext = ((CCloudConnectionState) connectionState).getOauthContext();
+    refreshStatus(connectionState);
+    when(authContext.checkAuthenticationStatus())
+        .thenReturn(Future.failedFuture(new ConnectException("Connection refused")));
+
+    var status = refreshStatus(connectionState);
+
+    assertEquals(ConnectedState.EXPIRED, status.ccloud().state());
   }
 
   @Test
