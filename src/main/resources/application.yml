@@ -151,8 +151,10 @@ ide-sidecar:
           max-backoff-ms: 10000
           max-retries: 5
           jitter-factor: 0.2
-          # stop retrying a request (or a paged fetch) once the next wait would end this long after
-          # it started; with one 20s request timeout on top, it stays within 60s
+          # a hard limit on one request or paged fetch, rate-limiter waits, retries and the last
+          # attempt included; a GraphQL query runs at most two fetches in a row (environments,
+          # then their clusters), so it stays within 80s, under the extension's 90s. Also caps
+          # how long a 429 pauses its endpoint.
           max-total-ms: 40000
 
     confluent-local:
