@@ -524,8 +524,9 @@ public class RecordDeserializerTest {
     return Stream.of(
         Arguments.of(clientWithAuthError, true, 0),
         Arguments.of(clientWithAuthError, false, 0),
-        Arguments.of(clientWithNetworkError, true, 3),
-        Arguments.of(clientWithNetworkError, false, 3)
+        // the Schema Registry client retries network errors, not the deserializer
+        Arguments.of(clientWithNetworkError, true, 0),
+        Arguments.of(clientWithNetworkError, false, 0)
     );
   }
 
@@ -566,7 +567,7 @@ public class RecordDeserializerTest {
 
   @TestFactory
   public Stream<DynamicTest>
-  testDeserializeRetriesAndCachesSchemaFetchFailuresUponUnhappyStatusCodes() {
+  testDeserializeCachesSchemaFetchFailuresUponUnhappyStatusCodes() {
     record TestCase(
         int statusCode,
         int maxRetries,
@@ -580,8 +581,8 @@ public class RecordDeserializerTest {
       }
 
       static TestCase retryable(int statusCode) {
-        // Expect 4 tries - 1 initial try + 3 retries
-        return new TestCase(statusCode, 3, 4, null);
+        // Expect only 1 try: the Schema Registry client retries these, not the deserializer
+        return new TestCase(statusCode, 3, 1, null);
       }
 
       TestCase withIsKey(Boolean isKey) {
@@ -633,7 +634,7 @@ public class RecordDeserializerTest {
 
   @TestFactory
   public Stream<DynamicTest>
-  testDeserializeRetriesAndCachesSchemaFetchFailuresUponNetworkErrors() {
+  testDeserializeCachesSchemaFetchFailuresUponNetworkErrors() {
     return Stream.of(
             // Test a bunch of exceptions that are considered network errors (all extend IOException)
             ConnectException.class,
@@ -646,9 +647,10 @@ public class RecordDeserializerTest {
           when(mockedSRClient.getSchemaById(anyInt()))
               .thenThrow(input.getDeclaredConstructor().newInstance());
 
+          // the Schema Registry client retries network errors, not the deserializer
           assertSchemaFetchFailuresCached(
               3,
-              4,
+              1,
               // We don't care about isKey
               false,
               mockedSRClient
