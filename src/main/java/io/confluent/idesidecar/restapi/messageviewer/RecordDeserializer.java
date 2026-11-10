@@ -18,7 +18,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletionException;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -41,7 +40,9 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.JsonFormat;
 
 import graphql.VisibleForTesting;
+import io.confluent.idesidecar.restapi.clients.RetryAfterException;
 import io.confluent.idesidecar.restapi.clients.SchemaErrors;
+import io.confluent.idesidecar.restapi.clients.SidecarRestService;
 import io.confluent.idesidecar.restapi.kafkarest.SchemaFormat;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionRequest;
 import io.confluent.idesidecar.restapi.messageviewer.data.SimpleConsumeMultiPartitionResponse;
@@ -84,27 +85,15 @@ public class RecordDeserializer {
   private static final ObjectMapper OBJECT_MAPPER = ObjectMapperFactory.getObjectMapper();
   private static final Duration CACHE_FAILED_SCHEMA_ID_FETCH_DURATION = Duration.ofSeconds(30);
 
-  private final int schemaFetchMaxRetries;
   private final SchemaErrors schemaErrors;
-  private final Duration schemaFetchRetryInitialBackoff;
-  private final Duration schemaFetchRetryMaxBackoff;
   private final Duration schemaFetchTimeout;
 
   @Inject
   public RecordDeserializer(
-      @ConfigProperty(name = "ide-sidecar.schema-fetch-retry.initial-backoff-ms")
-      long schemaFetchRetryInitialBackoffMs,
-      @ConfigProperty(name = "ide-sidecar.schema-fetch-retry.max-backoff-ms")
-      long schemaFetchRetryMaxBackoffMs,
-      @ConfigProperty(name = "ide-sidecar.schema-fetch-retry.max-retries")
-      int schemaFetchMaxRetries,
       @ConfigProperty(name = "ide-sidecar.schema-fetch-retry.timeout-ms")
       long schemaFetchTimeoutMs,
       SchemaErrors schemaErrors
   ) {
-    this.schemaFetchRetryInitialBackoff = Duration.ofMillis(schemaFetchRetryInitialBackoffMs);
-    this.schemaFetchRetryMaxBackoff = Duration.ofMillis(schemaFetchRetryMaxBackoffMs);
-    this.schemaFetchMaxRetries = schemaFetchMaxRetries;
     this.schemaFetchTimeout = Duration.ofMillis(schemaFetchTimeoutMs);
     this.schemaErrors = schemaErrors;
   }
@@ -376,28 +365,24 @@ public class RecordDeserializer {
       }
     }
 
-    var lastFetchFailure = new AtomicReference<Throwable>();
     var schemaFetched = false;
     try {
-      // Attempt to get the schema from the schema registry and retry if the operation fails due
-      // to a retryable exception. The Schema Registry client retries each attempt on its own
-      // (max.retries, default 3), so one schema ID can cost up to
-      // (1 + schemaFetchMaxRetries) * 4 requests. The timeout bounds how long we wait for all of
-      // them, and with the client's default waits between its retries it usually fires first.
+      // The Schema Registry client owns the retries (SidecarRestService: max.retries, backoff and
+      // Retry-After), so one schema ID costs at most 1 + max.retries requests. It also gets the
+      // deadline, so neither a Retry-After wait nor a slow response outlasts the timeout here.
+      var deadline = Instant.now().plus(schemaFetchTimeout);
       var parsedSchema = Uni
           .createFrom()
           .item(
               Unchecked.supplier(
-                  () -> schemaGuid.isPresent()
-                      ? schemaRegistryClient.getSchemaByGuid(schemaGuid.get().toString(), null)
-                      : schemaRegistryClient.getSchemaById(schemaId.orElseThrow())
+                  () -> SidecarRestService.withDeadline(
+                      deadline,
+                      () -> schemaGuid.isPresent()
+                          ? schemaRegistryClient.getSchemaByGuid(schemaGuid.get().toString(), null)
+                          : schemaRegistryClient.getSchemaById(schemaId.orElseThrow())
+                  )
               )
           )
-          .onFailure().invoke(lastFetchFailure::set)
-          .onFailure(this::isRetryableException)
-          .retry()
-          .withBackOff(schemaFetchRetryInitialBackoff, schemaFetchRetryMaxBackoff)
-          .atMost(schemaFetchMaxRetries)
           .runSubscriptionOn(Infrastructure.getDefaultWorkerPool())
           .ifNoItem().after(schemaFetchTimeout).fail()
           .subscribeAsCompletionStage()
@@ -432,7 +417,7 @@ public class RecordDeserializer {
         //            timeouts, to prevent the sidecar from bombarding the Schema Registry
         //            servers with requests for every consumed message when we encounter a
         //            schema fetch error.
-        var reason = schemaFetched ? null : describeFetchFailure(exc, lastFetchFailure.get());
+        var reason = schemaFetched ? null : describeFetchFailure(exc);
         var error = cacheSchemaFetchError(exc, reason, schemaId, schemaGuid, context);
         var wrappedJson = onFailure(encoderOnFailure, bytes);
         return new DecodedResult(
@@ -470,6 +455,10 @@ public class RecordDeserializer {
 
   private boolean isRetryableException(Throwable throwable) {
     var exc = unwrap(throwable);
+    if (exc instanceof RetryAfterException) {
+      // the client didn't wait out the server's Retry-After; its own message says why
+      return false;
+    }
     return (
         isNetworkRelatedException(exc) ||
             (exc instanceof RestClientException
@@ -579,17 +568,12 @@ public class RecordDeserializer {
    * Say why the schema fetch stopped when it timed out or ran out of retries, or return null when
    * it failed outright.
    */
-  private String describeFetchFailure(Throwable e, Throwable lastFailure) {
+  private String describeFetchFailure(Throwable e) {
     if (e instanceof TimeoutException) {
-      var timedOut = "timed out after %s".formatted(
-          TimeUtil.humanReadableDuration(schemaFetchTimeout)
-      );
-      return lastFailure == null
-          ? timedOut
-          : "%s; last error: %s".formatted(timedOut, unwrap(lastFailure).getMessage());
+      return "timed out after %s".formatted(TimeUtil.humanReadableDuration(schemaFetchTimeout));
     }
     if (isRetryableException(e)) {
-      return "gave up after %d attempts".formatted(1 + schemaFetchMaxRetries);
+      return "gave up";
     }
     return null;
   }
