@@ -83,4 +83,6 @@ promotions:
   - name: "Third Party Notices PR"
     pipeline_file: third-party-notices.yml
     auto_promote:
-      when: "branch =~ '.*' and change_in(['/pom.xml', '/NOTICE.txt'], {default_branch: 'main', branch_range: '$SEMAPHORE_GIT_COMMIT_RANGE', pipeline_file: 'ignore'})"
+      # no branch_range: with one set, spc v1.13.2+ fails every PR pipeline at initialization
+      # (https://github.com/semaphoreci/spc/pull/62)
+      when: "branch =~ '.*' and change_in(['/pom.xml', '/NOTICE.txt'], {default_branch: 'main', pipeline_file: 'ignore'})"
