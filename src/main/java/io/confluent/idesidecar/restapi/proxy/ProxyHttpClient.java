@@ -8,7 +8,6 @@ import io.netty.channel.ConnectTimeoutException;
 import io.quarkus.logging.Log;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
-import io.vertx.ext.web.client.WebClient;
 import java.net.URI;
 import java.time.Duration;
 import java.util.concurrent.TimeoutException;
@@ -34,11 +33,11 @@ public class ProxyHttpClient<T extends ProxyContext> {
   }
 
   /**
-   * Send the proxied request, failing with 504 if the server sends nothing for {@code timeout}.
+   * Send the proxied request, failing with 504 if it doesn't finish within {@code timeout}.
    */
   public Future<T> send(T context, Duration timeout) {
     var webClient = context.getWebClientOptions() != null
-        ? WebClient.create(vertx, context.getWebClientOptions())
+        ? WebClientFactory.createWebClient(vertx, context.getWebClientOptions())
         : webClientFactory.getWebClient();
     return webClient
         .requestAbs(context.getProxyRequestMethod(), context.getProxyRequestAbsoluteUrl())
@@ -56,7 +55,7 @@ public class ProxyHttpClient<T extends ProxyContext> {
             },
             // If failure, stop the chain and return a failed future.
             // This covers cases where the request was not sent to the server, we failed to
-            // get a response, or the server sent nothing for the whole timeout.
+            // get a response, or the exchange didn't finish within the timeout.
             throwable -> {
               Log.errorf(
                   throwable,

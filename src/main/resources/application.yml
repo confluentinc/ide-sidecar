@@ -248,7 +248,7 @@ ide-sidecar:
       - Accept-Encoding
   webclient:
     connect-timeout-seconds: 10
-    # How long a request may go without receiving any data before it fails
+    # How long a whole request may take, from getting a connection to the end of the response
     request-timeout-seconds: 20
     # Backstop that closes a connection after this long with a request in flight and no traffic;
     # raised to 30s above the longest request timeout if set lower
