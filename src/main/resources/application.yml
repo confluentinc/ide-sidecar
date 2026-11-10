@@ -134,6 +134,9 @@ ide-sidecar:
         # connection fails and the user signs in again
         max-refresh-attempts: 10
         failure-budget-seconds: 600
+        # a refresh still running this long after it started counts as failed; one that starts at
+        # the earliest refresh point (70% of a 300s token) is settled by the time the token expires
+        deadline-seconds: 90
         # wait between failed refreshes: initial, growing by the multiplier up to the max, plus
         # up to the jitter factor on top
         retry:
