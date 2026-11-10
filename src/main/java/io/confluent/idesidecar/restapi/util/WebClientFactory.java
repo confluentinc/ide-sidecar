@@ -50,8 +50,9 @@ public class WebClientFactory {
       secondsConfig("ide-sidecar.webclient.connect-timeout-seconds");
 
   /**
-   * How long a request may go without receiving any data before it fails. Set it on each request
-   * with {@code HttpRequest.timeout(...)}, so a stalled server fails the send instead of hanging.
+   * How long a whole request may take, from getting a connection to the end of the response.
+   * Set it on each request with {@code HttpRequest.timeout(...)}, so a stalled server fails the
+   * send instead of hanging.
    */
   public static final Duration WEBCLIENT_REQUEST_TIMEOUT_SECONDS =
       secondsConfig("ide-sidecar.webclient.request-timeout-seconds");
@@ -102,10 +103,18 @@ public class WebClientFactory {
 
   public synchronized WebClient getWebClient() {
     if (webClient == null) {
-      webClient = WebClient.create(getVertx(), getDefaultWebClientOptions());
+      webClient = createWebClient(getVertx(), getDefaultWebClientOptions());
     }
 
     return webClient;
+  }
+
+  /**
+   * Create a {@link WebClient} whose request timeouts cap the whole exchange, not just each
+   * silence. Use it for every WebClient the sidecar sends requests through.
+   */
+  public static WebClient createWebClient(Vertx vertx, WebClientOptions options) {
+    return RequestDeadlineInterceptor.install(WebClient.create(vertx, options), vertx);
   }
 
   /**
@@ -139,7 +148,7 @@ public class WebClientFactory {
       clientOptions.setPemTrustOptions(pemTrustOptions);
     }
 
-    webClient = WebClient.create(getVertx(), clientOptions);
+    webClient = createWebClient(getVertx(), clientOptions);
 
     Log.debugf("Updated the Vert.x web client config to: %s", clientOptions);
   }
