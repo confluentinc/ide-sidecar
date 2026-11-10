@@ -1,16 +1,17 @@
 package io.confluent.idesidecar.restapi.util;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import io.smallrye.mutiny.Uni;
 import io.vertx.core.Future;
+import io.vertx.core.Promise;
+import io.vertx.core.buffer.Buffer;
+import io.vertx.ext.web.client.HttpResponse;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.junit.jupiter.api.Test;
@@ -22,10 +23,9 @@ class CCloudHttpSenderTest {
   @Test
   void shouldReleaseTheRateLimiterSlotWhenARequestTimesOut() throws Exception {
     var sender = new CCloudHttpSender();
-    sender.rateLimiter = mock(CCloudApiRateLimiter.class);
+    sender.rateLimiter = new CCloudApiRateLimiter(true, 1000);
     sender.retryPolicy = mock(CCloudHttpRetryPolicy.class);
-    when(sender.rateLimiter.acquire(URL)).thenReturn(Uni.createFrom().voidItem());
-    when(sender.retryPolicy.applyRetry(eq(URL), any()))
+    when(sender.retryPolicy.applyRetryWithoutCutoff(eq(URL), any()))
         .thenAnswer(invocation -> invocation.getArgument(1));
 
     var result = sender.send(URL, () -> Future.failedFuture(new TimeoutException("stalled")));
@@ -37,7 +37,26 @@ class CCloudHttpSenderTest {
         .toCompletableFuture()
         .get(5, TimeUnit.SECONDS);
     assertInstanceOf(TimeoutException.class, failure);
-    verify(sender.rateLimiter, times(1)).notifyRequestCompleted(URL);
-    verify(sender.rateLimiter, never()).recordResponse(any(), any());
+    assertEquals(0, sender.rateLimiter.inflight(URL));
+  }
+
+  @Test
+  void shouldNotCutOffARequestThatIsAlreadySentWhenTheBudgetRunsOut() throws Exception {
+    var sender = new CCloudHttpSender();
+    sender.rateLimiter = new CCloudApiRateLimiter(true, 1000);
+    sender.retryPolicy = new CCloudHttpRetryPolicy();
+    sender.retryPolicy.maxTotalMs = 200;
+    HttpResponse<Buffer> ok = mock();
+    when(ok.statusCode()).thenReturn(200);
+    Promise<HttpResponse<Buffer>> slow = Promise.promise();
+    CompletableFuture.delayedExecutor(500, TimeUnit.MILLISECONDS).execute(() -> slow.complete(ok));
+
+    // a token exchange's answer can carry a rotated refresh token, so it mustn't be dropped
+    var response = sender.send(URL, slow::future)
+        .toCompletionStage()
+        .toCompletableFuture()
+        .get(5, TimeUnit.SECONDS);
+
+    assertEquals(200, response.statusCode());
   }
 }
