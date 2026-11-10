@@ -41,6 +41,7 @@ import org.junit.jupiter.api.Test;
 class WebClientRequestTimeoutTest {
 
   private static final String FAKE_AUTHORIZATION_CODE = "fake_authorization_code";
+  private static final String CHECK_JWT_BODY = "{\"error\":null}";
 
   @Inject
   WebClientFactory webClientFactory;
@@ -163,6 +164,28 @@ class WebClientRequestTimeoutTest {
   }
 
   @Test
+  void checkJwtShouldTimeOutWhenCCloudTricklesItsAnswerPastTheTimeout() throws Exception {
+    var authContext = new CCloudOAuthContext();
+    awaitResult(authContext.createTokensFromAuthorizationCode(FAKE_AUTHORIZATION_CODE, null));
+    wireMock.register(WireMock.get("/api/check_jwt").atPriority(1).willReturn(
+        WireMock.aResponse().withStatus(200).withBody(CHECK_JWT_BODY).withChunkedDribbleDelay(
+            CHECK_JWT_BODY.length(), ShortWebClientTimeoutProfile.STALL_MS
+        )
+    ));
+    var started = System.nanoTime();
+
+    var failure = awaitFailure(authContext.checkAuthenticationStatus());
+
+    assertGaveUpInTime(started);
+    var elapsed = Duration.ofNanos(System.nanoTime() - started);
+    assertTrue(
+        elapsed.toMillis() < ShortWebClientTimeoutProfile.REQUEST_TIMEOUT_MS + 1_000,
+        "took " + elapsed
+    );
+    assertInstanceOf(TimeoutException.class, failure);
+  }
+
+  @Test
   void tokenRefreshShouldCountAStalledExchangeAsAFailedAttempt() throws Exception {
     var authContext = new CCloudOAuthContext();
     awaitResult(authContext.createTokensFromAuthorizationCode(FAKE_AUTHORIZATION_CODE, null));
@@ -178,7 +201,7 @@ class WebClientRequestTimeoutTest {
   private void stall(MappingBuilder request) {
     wireMock.register(request.willReturn(WireMock.aResponse().withStatus(200)
         .withFixedDelay(ShortWebClientTimeoutProfile.STALL_MS)
-        .withBody("{\"error\":null}")));
+        .withBody(CHECK_JWT_BODY)));
   }
 
   private static void assertGaveUpInTime(long startedNanos) {
