@@ -102,6 +102,13 @@ public class CCloudTestUtil {
   }
 
   public AccessToken expectRefreshTokenExchangeRequest(String refreshToken) {
+    return expectRefreshTokenExchangeRequest(refreshToken, 0);
+  }
+
+  /**
+   * Like {@link #expectRefreshTokenExchangeRequest(String)}, answering after {@code delayMs}.
+   */
+  public AccessToken expectRefreshTokenExchangeRequest(String refreshToken, int delayMs) {
     var refreshedAccessToken = AccessToken.newToken();
     wireMock.register(
         WireMock
@@ -112,6 +119,7 @@ public class CCloudTestUtil {
                 WireMock
                     .aResponse()
                     .withStatus(201)
+                    .withFixedDelay(delayMs)
                     .withBody(MAPPER.valueToTree(refreshedAccessToken).toString()))
             .atPriority(100));
     return refreshedAccessToken;
