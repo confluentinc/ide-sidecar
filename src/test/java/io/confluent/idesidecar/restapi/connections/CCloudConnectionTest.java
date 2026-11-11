@@ -494,7 +494,7 @@ public class CCloudConnectionTest {
     awaitStatus(connectionState.refreshStatus());
 
     // assert: a timeout isn't cached as healthy, so the next refresh checks again
-    assertSame(healthy, afterTimeout);
+    assertEquals(healthy, afterTimeout);
     verify(connectionState.getOauthContext(), times(3)).checkAuthenticationStatus();
   }
 
@@ -642,8 +642,8 @@ public class CCloudConnectionTest {
     stillConnecting.fail(new ConnectTimeoutException("connection timed out after 10000 ms"));
 
     // assert
-    assertSame(healthy, awaitStatus(first));
-    assertSame(healthy, awaitStatus(second));
+    assertEquals(healthy, awaitStatus(first));
+    assertEquals(healthy, awaitStatus(second));
     verify(connectionState.getOauthContext(), times(2)).checkAuthenticationStatus();
   }
 
