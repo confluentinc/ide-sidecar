@@ -28,6 +28,7 @@ import jakarta.inject.Inject;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -790,6 +791,54 @@ class CCloudOAuthContextTest {
         new RuntimeException("invalid_grant - Unknown or invalid refresh token."),
         now
     ));
+  }
+
+  @Test
+  void refreshFailureShouldBeTransientForAFailureWithNoMessage() {
+    var now = Instant.parse("2026-11-06T12:00:00Z");
+
+    assertTrue(CCloudOAuthContext.isTransientRefreshFailure(
+        failures(1, now), new RuntimeException((String) null), now
+    ));
+  }
+
+  @Test
+  void refreshFailureMessageShouldSayWhyItGaveUp() {
+    var firstFailedAt = Instant.parse("2026-11-06T12:00:00Z");
+    var now = firstFailedAt.plus(Duration.ofMinutes(6));
+
+    var message = CCloudOAuthContext.refreshFailureMessage(
+        failures(CCloudOAuthConfig.MAX_TOKEN_REFRESH_ATTEMPTS, firstFailedAt),
+        new RuntimeException("The timeout of 20000ms ran out"),
+        now
+    );
+
+    assertEquals(
+        "Gave up refreshing the Confluent Cloud tokens after 10 failed attempts over 6m; "
+            + "sign in again. Last error: The timeout of 20000ms ran out",
+        message
+    );
+  }
+
+  @Test
+  void refreshFailureMessageShouldPassOnAFailureThatWillBeRetried() {
+    var now = Instant.parse("2026-11-06T12:00:00Z");
+
+    var message = CCloudOAuthContext.refreshFailureMessage(
+        failures(1, now), new RuntimeException("Connection refused"), now
+    );
+
+    assertEquals("Connection refused", message);
+  }
+
+  @Test
+  void refreshTokenShouldExpireAtTheEndOfTheSessionLifetime() throws Throwable {
+    var authContext = new CCloudOAuthContext();
+
+    authContext.createTokensFromAuthorizationCode(FAKE_AUTHORIZATION_CODE, null)
+        .toCompletionStage().toCompletableFuture().get(5, TimeUnit.SECONDS);
+
+    assertEquals(authContext.getEndOfLifetime(), authContext.getRefreshToken().expiresAt());
   }
 
   @Test
