@@ -110,8 +110,8 @@ public record RateLimitState(
       var millis = Duration.between(now, date).toMillis();
       return millis <= 0 ? 0 : (int) Math.min((millis + 999) / 1000, Integer.MAX_VALUE);
     } catch (DateTimeParseException e) {
-      // logged at DEBUG: a malformed value only means we fall back to our own backoff
-      Log.debugf("Ignoring unparseable Retry-After header: %s", value);
+      // we fall back to our own backoff
+      Log.errorf(e, "Ignoring unparseable Retry-After header: %s", value);
       return -1;
     }
   }
