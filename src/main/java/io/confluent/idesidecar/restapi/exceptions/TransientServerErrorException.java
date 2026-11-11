@@ -27,7 +27,11 @@ public class TransientServerErrorException extends RuntimeException {
       RuntimeException error
   ) {
     super(
-        "HTTP %d from %s (retry-after: %ds)".formatted(status, url, retryAfterSeconds),
+        "HTTP %d from %s%s".formatted(
+            status,
+            url,
+            retryAfterSeconds >= 0 ? " (retry-after: %ds)".formatted(retryAfterSeconds) : ""
+        ),
         Objects.requireNonNull(error)
     );
     this.status = status;
