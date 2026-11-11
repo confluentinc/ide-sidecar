@@ -332,6 +332,7 @@ quarkus:
       - io.confluent.idesidecar.restapi.exceptions.ConnectionNotFoundException
       - io.confluent.idesidecar.restapi.exceptions.ResourceFetchingException
       - io.confluent.idesidecar.restapi.exceptions.TooManyRequestsException
+      - io.confluent.idesidecar.restapi.exceptions.TransientServerErrorException
   scheduler:
     start-mode: forced
   swagger-ui:

@@ -13,6 +13,7 @@ import io.confluent.idesidecar.restapi.auth.Token;
 import io.confluent.idesidecar.restapi.connections.ConnectionState.StateChangedListener;
 import io.confluent.idesidecar.restapi.auth.AuthErrors;
 import io.confluent.idesidecar.restapi.exceptions.TooManyRequestsException;
+import io.confluent.idesidecar.restapi.exceptions.TransientServerErrorException;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
 import io.confluent.idesidecar.restapi.models.ConnectionStatus;
@@ -295,6 +296,22 @@ public class CCloudConnectionTest {
         afterTimeout.ccloud().requiresAuthenticationAt());
     assertEquals(CHECK_JWT_TIMEOUT, afterTimeout.ccloud().errors().authStatusCheck().message());
     assertSame(afterTimeout, connectionState.getStatus());
+  }
+
+  @Test
+  void refreshStatusShouldKeepLastStatusIfCCloudAnswersTheCheckWithAServerError() throws Throwable {
+    var connectionState = spyCCloudConnectionState(true, true, true, true, false, false);
+    var authContext = ((CCloudConnectionState) connectionState).getOauthContext();
+    refreshStatus(connectionState);
+    when(authContext.checkAuthenticationStatus()).thenReturn(Future.failedFuture(
+        new TransientServerErrorException(
+            "https://confluent.cloud/api/check_jwt", 503, -1, new RuntimeException("503")
+        )
+    ));
+
+    var afterServerError = refreshStatus(connectionState);
+
+    assertEquals(ConnectedState.SUCCESS, afterServerError.ccloud().state());
   }
 
   @Test

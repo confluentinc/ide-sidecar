@@ -229,13 +229,16 @@ public class CCloudHttpRetryPolicy {
             );
             if (wait.isEmpty()) {
               Log.errorf(
-                  "Not retrying %s after %d retries (Retry-After: %ds): %s",
+                  "Not retrying %s after %d retries%s, because %s: %s",
                   url,
                   retry,
-                  retryAfterSeconds,
+                  retryAfterSeconds >= 0
+                      ? " (Retry-After: %ds)".formatted(retryAfterSeconds)
+                      : "",
                   retry >= maxRetries
                       ? "retries ran out"
-                      : "the next wait would pass the %dms budget".formatted(maxTotalMs)
+                      : "the next wait would pass the %dms budget".formatted(maxTotalMs),
+                  failure.getMessage()
               );
               return Uni.createFrom().failure(failure);
             }
