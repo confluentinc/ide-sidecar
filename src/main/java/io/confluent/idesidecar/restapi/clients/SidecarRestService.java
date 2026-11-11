@@ -121,7 +121,7 @@ public class SidecarRestService extends RestService {
    * The smaller of an {@link HttpURLConnection} timeout, where 0 means none, and {@code maxMs}.
    */
   private static int atMost(int timeoutMs, long maxMs) {
-    return (int) (timeoutMs == 0 ? maxMs : Math.min(timeoutMs, maxMs));
+    return (int) Math.min(timeoutMs == 0 ? maxMs : Math.min(timeoutMs, maxMs), Integer.MAX_VALUE);
   }
 
   @Override

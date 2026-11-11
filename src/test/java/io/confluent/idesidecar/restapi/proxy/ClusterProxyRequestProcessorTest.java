@@ -27,6 +27,7 @@ import io.vertx.core.http.HttpMethod;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
@@ -63,6 +64,18 @@ class ClusterProxyRequestProcessorTest {
     var failure = failureOf(result);
     assertEquals("504", failure.status());
     assertEquals("proxy_timeout", failure.errors().getFirst().code());
+    assertEquals("Schema Registry didn't respond in time", failure.title());
+  }
+
+  @Test
+  void shouldNameTheDeadlineWhenItEndedTheRequest() {
+    var failure = ClusterProxyRequestProcessor.toFailure(
+        directSchemaRegistryContext(),
+        new SocketTimeoutException("Read timed out"),
+        Instant.now().minusMillis(1)
+    );
+
+    assertEquals("504", failure.status());
     assertEquals("Schema Registry didn't respond within 20s", failure.title());
   }
 
