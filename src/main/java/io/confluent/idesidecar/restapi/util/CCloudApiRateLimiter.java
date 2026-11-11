@@ -242,10 +242,15 @@ public class CCloudApiRateLimiter {
     Uni<Void> acquire() {
       long now = System.nanoTime();
       long minIntervalNanos = computeMinIntervalNanos(now);
+      long pauseEndsNanos = pauseEndNanos();
 
       while (true) {
         long lastAdmit = lastAdmitNanos.get();
-        long target = Math.max(now, lastAdmit + minIntervalNanos);
+        // behind a 429, everyone waits for the pause to end and then goes at the default rate,
+        // instead of each waiting a whole pause after the one before
+        long target = pauseEndsNanos >= 0
+            ? Math.max(now, Math.max(pauseEndsNanos, lastAdmit + defaultIntervalNanos()))
+            : Math.max(now, lastAdmit + minIntervalNanos);
         if (lastAdmitNanos.compareAndSet(lastAdmit, target)) {
           inflight.incrementAndGet();
           long waitNanos = target - now;
@@ -321,6 +326,21 @@ public class CCloudApiRateLimiter {
           key, raw.resetSeconds(), relative
       );
       return new RateLimitState(raw.limit(), raw.remaining(), relative, raw.receivedAtNanos());
+    }
+
+    /**
+     * When the pause after a 429 or an exhausted budget ends, or -1 if the bucket isn't exhausted.
+     */
+    private long pauseEndNanos() {
+      var state = latestState.get();
+      if (state == null || state.remaining() > 0) {
+        return -1;
+      }
+      return state.receivedAtNanos() + (long) (state.resetSeconds() * NANOS_PER_SECOND);
+    }
+
+    private long defaultIntervalNanos() {
+      return (long) (NANOS_PER_SECOND / defaultPermitsPerSecond);
     }
 
     private long computeMinIntervalNanos(long now) {

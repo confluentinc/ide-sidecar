@@ -11,6 +11,7 @@ import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.DoubleSupplier;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
@@ -78,7 +79,7 @@ public class CCloudHttpRetryPolicy {
   public <T> Uni<T> applyRetryWithoutCutoff(String url, Uni<T> source) {
     // per subscription, so a resubscribed source starts over
     return Uni.createFrom().deferred(
-        () -> retryWithin(url, Instant.now().plusMillis(maxTotalMs), source)
+        () -> retryWithin(url, Instant.now().plusMillis(maxTotalMs), source, new Attempts())
     );
   }
 
@@ -93,31 +94,49 @@ public class CCloudHttpRetryPolicy {
     return Uni.createFrom().deferred(() -> {
       var deadline = (startedAt != null ? startedAt : Instant.now()).plusMillis(maxTotalMs);
       var left = Duration.between(Instant.now(), deadline);
+      var attempts = new Attempts();
       if (!left.isPositive()) {
-        return Uni.createFrom().failure(budgetSpent(url));
+        return Uni.createFrom().failure(budgetSpent(url, attempts));
       }
-      return retryWithin(url, deadline, source)
+      return retryWithin(url, deadline, source, attempts)
           // a hard stop, so nested fetches add up to a known worst case
-          .ifNoItem().after(left).failWith(() -> budgetSpent(url));
+          .ifNoItem().after(left).failWith(() -> budgetSpent(url, attempts));
     });
   }
 
-  private TimeoutException budgetSpent(String url) {
-    var message = "Gave up on %s after %s".formatted(
-        url, TimeUtil.humanReadableDuration(Duration.ofMillis(maxTotalMs))
+  private TimeoutException budgetSpent(String url, Attempts attempts) {
+    var retries = attempts.retries.get();
+    var lastFailure = attempts.lastFailure.get();
+    var message = "Gave up on %s after %s (%d %s%s)".formatted(
+        url,
+        TimeUtil.humanReadableDuration(Duration.ofMillis(maxTotalMs)),
+        retries,
+        retries == 1 ? "retry" : "retries",
+        lastFailure == null ? "" : "; last failure: " + lastFailure.getMessage()
     );
     Log.error(message);
     return new TimeoutException(message);
   }
 
-  private <T> Uni<T> retryWithin(String url, Instant deadline, Uni<T> source) {
+  /**
+   * The retries one call has made so far, and the last failure it retried.
+   */
+  private record Attempts(AtomicInteger retries, AtomicReference<Throwable> lastFailure) {
+
+    Attempts() {
+      this(new AtomicInteger(), new AtomicReference<>());
+    }
+  }
+
+  private <T> Uni<T> retryWithin(String url, Instant deadline, Uni<T> source, Attempts attempts) {
     return source
         .onFailure(TooManyRequestsException.class)
         .retry()
         .when(failures -> {
-          var retries = new AtomicInteger();
+          var retries = attempts.retries;
           return failures.onItem().transformToUniAndConcatenate(failure -> {
             var tooManyRequests = (TooManyRequestsException) failure;
+            attempts.lastFailure.set(failure);
             var retry = retries.getAndIncrement();
             var wait = nextDelay(
                 retry,
