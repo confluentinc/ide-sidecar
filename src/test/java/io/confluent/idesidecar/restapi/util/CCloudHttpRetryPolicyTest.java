@@ -108,7 +108,7 @@ class CCloudHttpRetryPolicyTest {
     );
 
     assertInstanceOf(TimeoutException.class, thrown.getCause());
-    assertEquals("Gave up on " + URL + " after 5s", thrown.getCause().getMessage());
+    assertEquals("Gave up on " + URL + " after 5s (0 retries)", thrown.getCause().getMessage());
     assertEquals(0, attempts.get());
   }
 
