@@ -15,6 +15,7 @@ import io.confluent.idesidecar.restapi.util.CCloud;
 import io.confluent.idesidecar.restapi.util.CCloudHttpSender;
 import io.confluent.idesidecar.restapi.util.ObjectMapperFactory;
 import io.confluent.idesidecar.restapi.util.RateLimitState;
+import io.confluent.idesidecar.restapi.util.TimeUtil;
 import io.confluent.idesidecar.restapi.util.UriUtil;
 import io.confluent.idesidecar.restapi.util.WebClientFactory;
 import io.quarkus.arc.Arc;
@@ -499,13 +500,39 @@ public class CCloudOAuthContext implements AuthContext {
         && (message == null || !message.contains("Unknown or invalid refresh token."));
   }
 
+  /**
+   * The error a failed refresh records: the failure's own message while refreshes will be
+   * retried, and why they stopped once they won't.
+   */
+  static String refreshFailureMessage(RefreshFailures failures, Throwable error, Instant now) {
+    if (isTransientRefreshFailure(failures, error, now)) {
+      return error.getMessage();
+    }
+    return ("Gave up refreshing the Confluent Cloud tokens after %d failed %s over %s; "
+        + "sign in again. Last error: %s").formatted(
+        failures.attempts(),
+        failures.attempts() == 1 ? "attempt" : "attempts",
+        TimeUtil.humanReadableDuration(Duration.between(failures.firstFailedAt(), now)),
+        error.getMessage()
+    );
+  }
+
   private Handler<Throwable> onFailedTokenRefresh() {
     return failure -> {
       // outside the update, which can run more than once
       var now = now();
       var random = ThreadLocalRandom.current().nextDouble();
-      tokens.updateAndGet(oldTokens ->
-          oldTokens.withFailedTokenRefreshAttempt(failure, now, random));
+      var before = new AtomicReference<Tokens>();
+      var after = tokens.updateAndGet(oldTokens -> {
+        before.set(oldTokens);
+        return oldTokens.withFailedTokenRefreshAttempt(failure, now, random);
+      });
+      var gaveUp = after.errors.tokenRefresh();
+      var gaveUpBefore = before.get().errors.tokenRefresh();
+      if (gaveUp != null && Boolean.FALSE.equals(gaveUp.isTransient())
+          && (gaveUpBefore == null || !Boolean.FALSE.equals(gaveUpBefore.isTransient()))) {
+        Log.errorf(failure, "%s", gaveUp.message());
+      }
     };
   }
 
@@ -905,7 +932,7 @@ public class CCloudOAuthContext implements AuthContext {
           endOfLifetime,
           // Add error related to the token refresh
           errors.withTokenRefresh(
-              error.getMessage(),
+              refreshFailureMessage(failures, error, now),
               isTransientRefreshFailure(failures, error, now)
           ),
           failures);
