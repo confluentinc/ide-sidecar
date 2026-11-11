@@ -2,12 +2,14 @@ package io.confluent.idesidecar.restapi.proxy;
 
 import io.confluent.idesidecar.restapi.exceptions.Failure;
 import io.confluent.idesidecar.restapi.exceptions.ProcessorFailedException;
+import io.confluent.idesidecar.restapi.util.ExceptionUtil;
 import io.confluent.idesidecar.restapi.util.TimeUtil;
 import io.confluent.idesidecar.restapi.util.WebClientFactory;
 import io.netty.channel.ConnectTimeoutException;
 import io.quarkus.logging.Log;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
+import jakarta.ws.rs.core.Response;
 import java.net.URI;
 import java.time.Duration;
 import java.util.concurrent.TimeoutException;
@@ -75,27 +77,32 @@ public class ProxyHttpClient<T extends ProxyContext> {
    * reached in time, and 500 otherwise.
    */
   static Failure toFailure(ProxyContext context, Throwable throwable, Duration timeout) {
-    if (throwable instanceof TimeoutException) {
+    var connectTimeout = ExceptionUtil.findCause(throwable, ConnectTimeoutException.class);
+    var requestTimeout = ExceptionUtil.findCause(throwable, TimeoutException.class);
+    if (connectTimeout == null && requestTimeout != null) {
       return context
-          .error("proxy_timeout", throwable.getMessage())
+          .error("proxy_timeout", requestTimeout.getMessage())
           .failf(
-              504,
+              Response.Status.GATEWAY_TIMEOUT.getStatusCode(),
               "%s didn't respond within %s",
               hostOf(context.getProxyRequestAbsoluteUrl()),
               TimeUtil.humanReadableDuration(timeout)
           );
-    } else if (throwable instanceof ConnectTimeoutException) {
+    } else if (connectTimeout != null) {
       return context
-          .error("proxy_timeout", throwable.getMessage())
+          .error("proxy_timeout", connectTimeout.getMessage())
           .failf(
-              504,
+              Response.Status.GATEWAY_TIMEOUT.getStatusCode(),
               "Couldn't connect to %s in time",
               hostOf(context.getProxyRequestAbsoluteUrl())
           );
     }
     return context
         .error("proxy_error", throwable.getMessage())
-        .failf(500, "Something went wrong while proxying request");
+        .failf(
+            Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(),
+            "Something went wrong while proxying request"
+        );
   }
 
   /**
