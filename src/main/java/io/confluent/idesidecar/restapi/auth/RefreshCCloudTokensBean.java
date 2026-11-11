@@ -68,8 +68,10 @@ public class RefreshCCloudTokensBean {
         )
         .onFailure(failure ->
             Log.errorf(
-                "Refreshing tokens of connection with ID=%s failed: %s",
+                failure,
+                "Refreshing tokens of connection with ID=%s failed (%d in a row): %s",
                 connectionState.getSpec().id(),
+                connectionState.getOauthContext().getFailedTokenRefreshAttempts(),
                 failure.getMessage()
             )
         );
