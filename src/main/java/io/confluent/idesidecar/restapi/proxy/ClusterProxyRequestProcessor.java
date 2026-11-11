@@ -11,6 +11,7 @@ import io.confluent.idesidecar.restapi.exceptions.Failure;
 import io.confluent.idesidecar.restapi.exceptions.ProcessorFailedException;
 import io.confluent.idesidecar.restapi.processors.Processor;
 import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
+import io.confluent.idesidecar.restapi.util.RateLimitState;
 import io.confluent.idesidecar.restapi.util.TimeUtil;
 import io.confluent.idesidecar.restapi.util.WebClientFactory;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
@@ -81,9 +82,10 @@ public class ClusterProxyRequestProcessor extends
 
   private Future<ClusterProxyContext> processSchemaRegistry(ClusterProxyContext context) {
     var client = clients.getClient(context.getConnectionId(), context.getClusterId());
+    var deadline = Instant.now().plus(SCHEMA_REGISTRY_DEADLINE);
     try {
       var resp = SidecarRestService.withDeadline(
-          Instant.now().plus(SCHEMA_REGISTRY_DEADLINE),
+          deadline,
           () -> client.httpRequest(
               context.getRequestUri(),
               context.getProxyRequestMethod().toString(),
@@ -112,8 +114,14 @@ public class ClusterProxyRequestProcessor extends
           e, "Schema Registry request %s for connection %s failed",
           context.getRequestUri(), context.getConnectionId()
       );
-      return Future.failedFuture(new ProcessorFailedException(toFailure(context, e)));
+      return Future.failedFuture(new ProcessorFailedException(toFailure(context, e, deadline)));
     } catch (RestClientException e) {
+      if (e instanceof RetryAfterException || e.getStatus() >= 500) {
+        Log.errorf(
+            e, "Schema Registry request %s for connection %s failed with %d",
+            context.getRequestUri(), context.getConnectionId(), e.getStatus()
+        );
+      }
       context.setProxyResponseStatusCode(
           e.getStatus()
       );
@@ -130,7 +138,10 @@ public class ClusterProxyRequestProcessor extends
 
       var headers = HttpHeaders.headers().add("Content-Type", "application/json");
       if (e instanceof RetryAfterException retryAfter) {
-        headers.add("Retry-After", Long.toString(retryAfter.getRetryAfter().toSeconds()));
+        headers.add(
+            RateLimitState.HEADER_RETRY_AFTER,
+            Long.toString(retryAfter.getRetryAfter().toSeconds())
+        );
       }
       context.setProxyResponseHeaders(headers);
     }
@@ -140,14 +151,20 @@ public class ClusterProxyRequestProcessor extends
 
   /**
    * Map a request that got no answer to the response the caller sees: 504 with error code
-   * {@code proxy_timeout} when Schema Registry didn't answer in time, and 500 otherwise.
+   * {@code proxy_timeout} when Schema Registry didn't answer in time, and 500 otherwise. Only a
+   * timeout that ended at {@code deadline} names it; an earlier one came from the client's own
+   * connect or read timeout.
    */
-  private static Failure toFailure(ClusterProxyContext context, IOException e) {
+  static Failure toFailure(ClusterProxyContext context, IOException e, Instant deadline) {
     var detail = Objects.requireNonNullElse(e.getMessage(), e.getClass().getSimpleName());
     if (e instanceof SocketTimeoutException) {
-      return context
-          .error("proxy_timeout", detail)
-          .failf(
+      var timeout = context.error("proxy_timeout", detail);
+      return Instant.now().isBefore(deadline)
+          ? timeout.failf(
+              Response.Status.GATEWAY_TIMEOUT.getStatusCode(),
+              "Schema Registry didn't respond in time"
+          )
+          : timeout.failf(
               Response.Status.GATEWAY_TIMEOUT.getStatusCode(),
               "Schema Registry didn't respond within %s",
               TimeUtil.humanReadableDuration(SCHEMA_REGISTRY_DEADLINE)
