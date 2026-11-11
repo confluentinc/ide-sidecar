@@ -248,6 +248,23 @@ public class CCloudRateLimitRetryTest extends ConfluentQueryResourceTestBase {
   }
 
   @Test
+  void shouldSurfaceASpentBudgetInGraphQLErrors() {
+    // arrange: the environments fetch stalls past the test profile's 10s retry budget
+    wireMock.register(
+        WireMock
+            .get(uriUtil.getPath(envListUri))
+            .withHeader("Authorization", equalTo("Bearer %s".formatted(bearerToken)))
+            .willReturn(WireMock.aResponse().withStatus(200).withFixedDelay(12_000))
+    );
+
+    // act and assert
+    queryGraphQLRaw(ENVIRONMENTS_QUERY)
+        .body("errors", notNullValue())
+        .body("errors[0].message", containsString("Gave up on "))
+        .body("errors[0].message", containsString(" after 10s (0 retries)"));
+  }
+
+  @Test
   void shouldWaitRetryAfterBeforeRetrying() {
     // arrange: one 429 asking for 2s, then success
     wireMock.register(

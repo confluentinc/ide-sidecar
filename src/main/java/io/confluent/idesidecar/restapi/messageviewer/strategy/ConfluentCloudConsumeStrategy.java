@@ -140,7 +140,8 @@ public class ConfluentCloudConsumeStrategy implements ConsumeStrategy {
   }
 
   /**
-   * The upstream {@code Retry-After}, so a rate-limited consume tells the caller when to try again.
+   * The upstream {@code Retry-After} of any failed consume that carries one (a 429 or a 503,
+   * say), so the caller knows when to try again.
    */
   private static Map<String, String> retryAfterOf(KafkaRestProxyContext<?, ?> context) {
     var headers = context.getProxyResponseHeaders();
