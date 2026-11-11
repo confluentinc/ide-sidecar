@@ -4,6 +4,7 @@ import static io.confluent.idesidecar.restapi.util.ExceptionUtil.unwrap;
 
 import io.confluent.idesidecar.restapi.auth.AuthErrors;
 import io.confluent.idesidecar.restapi.clients.ClientConfigurator;
+import io.confluent.idesidecar.restapi.clients.RetryAfterException;
 import io.confluent.idesidecar.restapi.clients.SchemaRegistryClient;
 import io.confluent.idesidecar.restapi.clients.SidecarRestService;
 import io.confluent.idesidecar.restapi.clients.SidecarSchemaRegistryClient;
@@ -232,17 +233,10 @@ public class DirectConnectionState extends ConnectionState {
       );
     }, error -> {
       var cause = unwrap(error);
-      var message = "Failed to connect to Schema Registry: %s".formatted(cause.getMessage());
-      Log.error(message, cause);
-      if (cause instanceof UnknownHostException) {
-        message = "Unable to resolve the Schema Registry URL %s".formatted(
-            spec.schemaRegistryConfig().uri()
-        );
-      } else if (cause instanceof IOException || cause instanceof RestClientException) {
-        message = "Unable to reach the Schema Registry URL %s".formatted(
-            spec.schemaRegistryConfig().uri()
-        );
-      }
+      Log.error(
+          "Failed to connect to Schema Registry: %s".formatted(cause.getMessage()), cause
+      );
+      var message = schemaRegistryErrorMessage(cause, spec.schemaRegistryConfig().uri());
       // The connection failed, so successfully return the failed state
       return Future.succeededFuture(
           ConnectionStatusSchemaRegistryStatusBuilder
@@ -256,6 +250,21 @@ public class DirectConnectionState extends ConnectionState {
       // There is no Schema Registry configuration, so return no status for SR
       return Future.succeededFuture(null);
     });
+  }
+
+  /**
+   * The error a failed Schema Registry status check shows for {@code cause}.
+   */
+  static String schemaRegistryErrorMessage(Throwable cause, String uri) {
+    if (cause instanceof RetryAfterException) {
+      // Schema Registry was reached, and asked us to wait
+      return "%s (%s)".formatted(cause.getMessage(), uri);
+    } else if (cause instanceof UnknownHostException) {
+      return "Unable to resolve the Schema Registry URL %s".formatted(uri);
+    } else if (cause instanceof IOException || cause instanceof RestClientException) {
+      return "Unable to reach the Schema Registry URL %s".formatted(uri);
+    }
+    return "Failed to connect to Schema Registry: %s".formatted(cause.getMessage());
   }
 
   public interface ClientOperation<ClientT, T> {
