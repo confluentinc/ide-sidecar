@@ -279,9 +279,12 @@ public class CCloudConnectionState extends ConnectionState {
       // a failure reaches every caller that joined, so each can tell a timeout from a rejection
       check = oauthContext.checkAuthenticationStatus();
     } catch (RuntimeException e) {
-      runningCheck.compareAndSet(mine, null);
+      if (runningCheck.compareAndSet(mine, null)) {
+        lastHealthyCheck.set(null);
+      }
       Log.errorf(e, "Couldn't check the CCloud session of connection %s", getId());
-      promise.complete(false);
+      // fail, so a caller that joined sees the cause, as with any other failed check
+      promise.fail(e);
       return promise.future();
     }
     var jitter = 1 + CHECK_JWT_JITTER_FACTOR * ThreadLocalRandom.current().nextDouble();
