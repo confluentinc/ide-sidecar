@@ -11,6 +11,8 @@ import static org.mockito.Mockito.when;
 import io.confluent.idesidecar.restapi.auth.CCloudOAuthContext;
 import io.confluent.idesidecar.restapi.auth.Token;
 import io.confluent.idesidecar.restapi.connections.ConnectionState.StateChangedListener;
+import io.confluent.idesidecar.restapi.auth.AuthErrors;
+import io.confluent.idesidecar.restapi.exceptions.TooManyRequestsException;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
 import io.confluent.idesidecar.restapi.models.ConnectionStatus;
@@ -274,19 +276,39 @@ public class CCloudConnectionTest {
   }
 
   @Test
-  void refreshStatusShouldKeepLastStatusIfAuthStatusCheckTimesOut() throws Throwable {
+  void refreshStatusShouldKeepLastStatusWithTheNewErrorIfAuthStatusCheckTimesOut()
+      throws Throwable {
     var connectionState = spyCCloudConnectionState(true, true, true, true, false, false);
     var authContext = ((CCloudConnectionState) connectionState).getOauthContext();
     var healthy = refreshStatus(connectionState);
     when(authContext.checkAuthenticationStatus()).thenReturn(Future.failedFuture(
         new CompletionException(new NoStackTraceTimeoutException(CHECK_JWT_TIMEOUT))
     ));
+    when(authContext.getErrors())
+        .thenReturn(new AuthErrors().withAuthStatusCheck(CHECK_JWT_TIMEOUT));
 
     var afterTimeout = refreshStatus(connectionState);
 
     assertEquals(ConnectedState.SUCCESS, healthy.ccloud().state());
-    assertSame(healthy, afterTimeout);
-    assertSame(healthy, connectionState.getStatus());
+    assertEquals(ConnectedState.SUCCESS, afterTimeout.ccloud().state());
+    assertEquals(healthy.ccloud().requiresAuthenticationAt(),
+        afterTimeout.ccloud().requiresAuthenticationAt());
+    assertEquals(CHECK_JWT_TIMEOUT, afterTimeout.ccloud().errors().authStatusCheck().message());
+    assertSame(afterTimeout, connectionState.getStatus());
+  }
+
+  @Test
+  void refreshStatusShouldKeepLastStatusIfAuthStatusCheckIsRateLimited() throws Throwable {
+    var connectionState = spyCCloudConnectionState(true, true, true, true, false, false);
+    var authContext = ((CCloudConnectionState) connectionState).getOauthContext();
+    refreshStatus(connectionState);
+    when(authContext.checkAuthenticationStatus()).thenReturn(Future.failedFuture(
+        new TooManyRequestsException("https://confluent.cloud/api/check_jwt", 30)
+    ));
+
+    var afterRateLimit = refreshStatus(connectionState);
+
+    assertEquals(ConnectedState.SUCCESS, afterRateLimit.ccloud().state());
   }
 
   @Test
@@ -300,7 +322,8 @@ public class CCloudConnectionTest {
 
     var afterTimeout = refreshStatus(connectionState);
 
-    assertSame(healthy, afterTimeout);
+    assertEquals(ConnectedState.SUCCESS, healthy.ccloud().state());
+    assertEquals(ConnectedState.SUCCESS, afterTimeout.ccloud().state());
   }
 
   @Test

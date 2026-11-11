@@ -4,6 +4,7 @@ import static io.confluent.idesidecar.restapi.util.RequestHeadersConstants.TARGE
 
 import io.confluent.idesidecar.restapi.auth.AuthErrors;
 import io.confluent.idesidecar.restapi.auth.CCloudOAuthContext;
+import io.confluent.idesidecar.restapi.exceptions.TooManyRequestsException;
 import io.confluent.idesidecar.restapi.models.ConnectionMetadata;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
@@ -12,7 +13,7 @@ import io.confluent.idesidecar.restapi.models.ConnectionStatus.CCloudStatus;
 import io.confluent.idesidecar.restapi.models.ConnectionStatus.ConnectedState;
 import io.confluent.idesidecar.restapi.models.ConnectionStatusBuilder;
 import io.confluent.idesidecar.restapi.resources.ConnectionsResource;
-import io.netty.channel.ConnectTimeoutException;
+import io.confluent.idesidecar.restapi.util.ExceptionUtil;
 import io.quarkus.logging.Log;
 import io.smallrye.common.constraint.NotNull;
 import io.smallrye.common.constraint.Nullable;
@@ -20,7 +21,6 @@ import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpHeaders;
 import java.util.HashSet;
-import java.util.concurrent.TimeoutException;
 
 /**
  * Implementation of the connection state for Confluent Cloud ({@link ConnectionType#CCLOUD}).
@@ -147,18 +147,19 @@ public class CCloudConnectionState extends ConnectionState {
                 ).build();
           })
           .recover(failure -> {
-            // a request that stalled, or couldn't connect in time, says nothing about the session,
-            // so don't report a healthy connection as expired because of it
-            if (isTimeout(failure) && isConnected(lastStatus)) {
+            // a check that stalled, couldn't connect in time, or was rate limited says nothing
+            // about the session, so don't report a healthy connection as expired because of it
+            if (saysNothingAboutTheSession(failure) && isConnected(lastStatus)) {
               Log.errorf(
-                  "Timed out checking the CCloud session of connection ID=%s; keeping its last "
-                      + "status: %s",
+                  failure,
+                  "Couldn't check the CCloud session of connection ID=%s; keeping it connected: %s",
                   getId(),
                   failure.getMessage());
-              return Future.succeededFuture(lastStatus);
+              return Future.succeededFuture(withCurrentErrors(lastStatus));
             }
             // Consider token as invalid if any other exception is thrown while we check the status
             Log.errorf(
+                failure,
                 "Couldn't check the CCloud session of connection ID=%s: %s",
                 getId(),
                 failure.getMessage());
@@ -181,15 +182,27 @@ public class CCloudConnectionState extends ConnectionState {
         ).build();
   }
 
-  private static boolean isTimeout(Throwable failure) {
-    for (var cause = failure; cause != null; cause = cause.getCause()) {
-      // Netty's connect timeout is a ConnectException, but a refused connection is too, so match
-      // the timeout's own type
-      if (cause instanceof TimeoutException || cause instanceof ConnectTimeoutException) {
-        return true;
-      }
-    }
-    return false;
+  /**
+   * {@code status}, with the auth errors as they are now, so the error from a check that didn't
+   * change the status still shows.
+   */
+  private ConnectionStatus withCurrentErrors(ConnectionStatus status) {
+    var ccloud = status.ccloud();
+    return ConnectionStatusBuilder
+        .builder()
+        .ccloud(
+            new CCloudStatus(
+                ccloud.state(),
+                ccloud.requiresAuthenticationAt(),
+                ccloud.user(),
+                getAuthErrors(oauthContext)
+            )
+        ).build();
+  }
+
+  private static boolean saysNothingAboutTheSession(Throwable failure) {
+    return ExceptionUtil.isTimeout(failure)
+        || ExceptionUtil.findCause(failure, TooManyRequestsException.class) != null;
   }
 
   private static boolean isConnected(ConnectionStatus status) {

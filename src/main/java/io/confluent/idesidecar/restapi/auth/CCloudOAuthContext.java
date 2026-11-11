@@ -146,7 +146,13 @@ public class CCloudOAuthContext implements AuthContext {
           .map(result -> {
             try {
               var response = OBJECT_MAPPER.readValue(result.bodyAsString(), CheckJwtResponse.class);
-              if (response.error() != null && !response.error().isNull()) {
+              if (response.error() == null) {
+                throw new CCloudAuthenticationFailedException(
+                    "Confluent Cloud's response when verifying the authentication status of this "
+                        + "connection had no error field."
+                );
+              }
+              if (!response.error().isNull()) {
                 Log.errorf("Error in CCloud response while verifying the auth status "
                     + "of this connection: %s", response.error());
                 // depending on what kinds of errors we get from CCloud, we might want to
