@@ -7,6 +7,7 @@ import io.quarkus.test.junit.QuarkusTest;
 import io.vertx.core.impl.NoStackTraceTimeoutException;
 import java.io.IOException;
 import java.time.Duration;
+import java.util.concurrent.CompletionException;
 import org.junit.jupiter.api.Test;
 
 // Quarkus, because the code under test logs through io.quarkus.logging.Log
@@ -28,6 +29,20 @@ class ProxyHttpClientTest {
     assertEquals("504", failure.status());
     assertEquals("proxy_timeout", failure.errors().get(0).code());
     assertEquals(HOST + " didn't respond within 20s", failure.title());
+  }
+
+  @Test
+  void toFailureShouldReturnGatewayTimeoutForAWrappedTimeout() {
+    var failure = ProxyHttpClient.toFailure(
+        context(URL),
+        new CompletionException(
+            new NoStackTraceTimeoutException("The timeout period of 20000ms has been exceeded")
+        ),
+        TIMEOUT
+    );
+
+    assertEquals("504", failure.status());
+    assertEquals("proxy_timeout", failure.errors().get(0).code());
   }
 
   @Test
