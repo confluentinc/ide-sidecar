@@ -243,6 +243,8 @@ public class CCloudOAuthContext implements AuthContext {
 
   /**
    * Like {@link #refresh(String)}, but a failure doesn't count as a failed token refresh attempt.
+   * A call that joins a refresh already running shares that refresh's result, so whether its
+   * failure counts depends on the call that started it.
    */
   public Future<AuthContext> refreshIgnoreFailures(String organizationId) {
     return refreshOnce(organizationId, false);
@@ -285,6 +287,10 @@ public class CCloudOAuthContext implements AuthContext {
       // don't leave a refresh that never started marked as running
       inFlightRefresh.compareAndSet(mine, null);
       Log.errorf(e, "Couldn't start the CCloud token refresh");
+      if (countFailures) {
+        // so it backs off, and counts toward giving up, like any other failed refresh
+        onFailedTokenRefresh().handle(e);
+      }
       promise.fail(e);
       return promise.future();
     } finally {
@@ -599,7 +605,7 @@ public class CCloudOAuthContext implements AuthContext {
       claims = OBJECT_MAPPER.readTree(java.util.Base64.getUrlDecoder().decode(parts[1]));
     } catch (IllegalArgumentException | IOException e) {
       // the exception's message can quote the claims, so log only its type
-      Log.warnf(
+      Log.errorf(
           "Couldn't read the %s token's claims (%s); assuming it lasts %s",
           tokenName, e.getClass().getSimpleName(), fallback
       );
@@ -738,7 +744,7 @@ public class CCloudOAuthContext implements AuthContext {
         oldTokens.withEndOfLifetime(
             Instant.now().plus(CCloudOAuthConfig.CCLOUD_REFRESH_TOKEN_ABSOLUTE_LIFETIME)));
 
-    return performTokenExchange(requestBody);
+    return performTokenExchange(requestBody, WebClientFactory.WEBCLIENT_REQUEST_TIMEOUT_SECONDS);
   }
 
   private Future<IdTokenExchangeResponse> createTokensFromRefreshToken() {
@@ -754,7 +760,9 @@ public class CCloudOAuthContext implements AuthContext {
         CCloudOAuthConfig.CCLOUD_OAUTH_REDIRECT_URI
     );
 
-    return performTokenExchange(requestBody);
+    // CCloud rotates the refresh token as it answers, so give a slow answer until the refresh
+    // deadline rather than drop the new token at the usual request timeout
+    return performTokenExchange(requestBody, refreshDeadline());
   }
 
   /**
@@ -767,11 +775,14 @@ public class CCloudOAuthContext implements AuthContext {
     return httpSender != null ? httpSender.send(url, sender) : sender.get();
   }
 
-  private Future<IdTokenExchangeResponse> performTokenExchange(String requestBody) {
+  private Future<IdTokenExchangeResponse> performTokenExchange(
+      String requestBody,
+      Duration timeout
+  ) {
     var uri = CCloudOAuthConfig.CCLOUD_OAUTH_TOKEN_URI;
     return send(uri, () -> webClientFactory.getWebClient()
         .postAbs(uri)
-        .timeout(WebClientFactory.WEBCLIENT_REQUEST_TIMEOUT_MS)
+        .timeout(timeout.toMillis())
         .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED)
         .sendBuffer(Buffer.buffer(requestBody)))
         .map(response -> {

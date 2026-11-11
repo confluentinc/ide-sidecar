@@ -1042,15 +1042,15 @@ class CCloudOAuthContextTest {
   @Test
   void refreshThatSucceedsAfterItsDeadlineShouldKeepTheNewTokens() throws Throwable {
     var authContext = signedInWithShortRefreshDeadline();
-    var rotated = CCloudTestUtil.AccessToken.newToken();
-    delayRefreshTokenExchanges(rotated);
-    ccloudTestUtil.expectControlPlaneAndDataPlaneTokenExchangeRequest(
-        rotated.id_token(), null, null
+    var rotated = ccloudTestUtil.expectRefreshTokenExchangeRequest(
+        authContext.getRefreshToken().token()
     );
+    // the control plane token arrives after the deadline
+    serveSignInTokens("control-plane-token", "data-plane-token", 1_000);
 
     awaitFailure(authContext.refresh(null));
 
-    // CCloud has rotated the refresh token, so the late answer must not be dropped
+    // the refresh finishes late, and keeps its tokens and clears the failure it was counted as
     Awaitility.await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
       assertEquals(rotated.refresh_token(), authContext.getRefreshToken().token());
       assertEquals(0, authContext.getFailedTokenRefreshAttempts());
@@ -1108,6 +1108,10 @@ class CCloudOAuthContextTest {
   }
 
   private void serveSignInTokens(String controlPlaneJwt, String dataPlaneJwt) {
+    serveSignInTokens(controlPlaneJwt, dataPlaneJwt, 0);
+  }
+
+  private void serveSignInTokens(String controlPlaneJwt, String dataPlaneJwt, int delayMs) {
     var session = loadResource("ccloud-oauth-mock-responses/control-plane-token.json")
         .replace("\"token\": \"foo\"", "\"token\": \"%s\"".formatted(controlPlaneJwt));
     wireMock.register(
@@ -1115,6 +1119,7 @@ class CCloudOAuthContextTest {
             .atPriority(1)
             .willReturn(WireMock.aResponse()
                 .withStatus(201)
+                .withFixedDelay(delayMs)
                 .withHeader("Set-Cookie", "auth_token=" + controlPlaneJwt)
                 .withBody(session))
     );
