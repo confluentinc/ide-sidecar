@@ -9,10 +9,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.idesidecar.restapi.exceptions.CCloudAuthenticationFailedException;
+import io.confluent.idesidecar.restapi.exceptions.TransientServerErrorException;
 import io.confluent.idesidecar.restapi.models.ConnectionStatus;
 import io.confluent.idesidecar.restapi.util.CCloud;
 import io.confluent.idesidecar.restapi.util.CCloudHttpSender;
 import io.confluent.idesidecar.restapi.util.ObjectMapperFactory;
+import io.confluent.idesidecar.restapi.util.RateLimitState;
 import io.confluent.idesidecar.restapi.util.UriUtil;
 import io.confluent.idesidecar.restapi.util.WebClientFactory;
 import io.quarkus.arc.Arc;
@@ -144,6 +146,18 @@ public class CCloudOAuthContext implements AuthContext {
           // Calling threads beware!
           .send())
           .map(result -> {
+            if (result.statusCode() >= 500) {
+              // says nothing about the session, so the caller can keep its last status
+              throw new TransientServerErrorException(
+                  uri,
+                  result.statusCode(),
+                  RateLimitState.parseRetryAfterHeader(result),
+                  new CCloudAuthenticationFailedException((
+                      "Confluent Cloud answered HTTP %d when verifying the authentication status "
+                          + "of this connection."
+                  ).formatted(result.statusCode()))
+              );
+            }
             try {
               var response = OBJECT_MAPPER.readValue(result.bodyAsString(), CheckJwtResponse.class);
               if (response.error() == null) {

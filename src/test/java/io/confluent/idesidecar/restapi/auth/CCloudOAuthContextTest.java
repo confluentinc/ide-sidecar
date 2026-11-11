@@ -16,6 +16,7 @@ import io.confluent.idesidecar.restapi.auth.CCloudOAuthContext.ExchangeControlPl
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
 import io.confluent.idesidecar.restapi.exceptions.CCloudAuthenticationFailedException;
 import io.confluent.idesidecar.restapi.exceptions.TooManyRequestsException;
+import io.confluent.idesidecar.restapi.exceptions.TransientServerErrorException;
 import io.confluent.idesidecar.restapi.util.CCloud;
 import io.confluent.idesidecar.restapi.util.CCloudApiRateLimiter;
 import io.confluent.idesidecar.restapi.util.CCloudTestUtil;
@@ -574,6 +575,32 @@ class CCloudOAuthContextTest {
 
     assertTrue(testContext.awaitCompletion(AWAIT_COMPLETION_TIMEOUT_SEC, TimeUnit.SECONDS));
 
+    if (testContext.failed()) {
+      throw testContext.causeOfFailure();
+    }
+  }
+
+  @Test
+  void checkAuthenticationStatusShouldReportAServerErrorAsTransient() throws Throwable {
+    var testContext = new VertxTestContext();
+    var authContext = new CCloudOAuthContext();
+    wireMock.register(
+        WireMock.get("/api/check_jwt")
+            .willReturn(WireMock.aResponse().withStatus(503).withBody("<html>busy</html>"))
+            .atPriority(50)
+    );
+
+    authContext.createTokensFromAuthorizationCode(FAKE_AUTHORIZATION_CODE, null)
+        .compose(AuthContext::checkAuthenticationStatus)
+        .onComplete(
+            testContext.failing(failure ->
+                testContext.verify(() -> {
+                  var serverError = assertInstanceOf(TransientServerErrorException.class, failure);
+                  assertEquals(503, serverError.getStatus());
+                  testContext.completeNow();
+                })));
+
+    assertTrue(testContext.awaitCompletion(AWAIT_COMPLETION_TIMEOUT_SEC, TimeUnit.SECONDS));
     if (testContext.failed()) {
       throw testContext.causeOfFailure();
     }

@@ -5,6 +5,7 @@ import static io.confluent.idesidecar.restapi.util.RequestHeadersConstants.TARGE
 import io.confluent.idesidecar.restapi.auth.AuthErrors;
 import io.confluent.idesidecar.restapi.auth.CCloudOAuthContext;
 import io.confluent.idesidecar.restapi.exceptions.TooManyRequestsException;
+import io.confluent.idesidecar.restapi.exceptions.TransientServerErrorException;
 import io.confluent.idesidecar.restapi.models.ConnectionMetadata;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
@@ -147,8 +148,9 @@ public class CCloudConnectionState extends ConnectionState {
                 ).build();
           })
           .recover(failure -> {
-            // a check that stalled, couldn't connect in time, or was rate limited says nothing
-            // about the session, so don't report a healthy connection as expired because of it
+            // a check that stalled, couldn't connect in time, was rate limited, or got a server
+            // error says nothing about the session, so don't report a healthy connection as
+            // expired because of it
             if (saysNothingAboutTheSession(failure) && isConnected(lastStatus)) {
               Log.errorf(
                   failure,
@@ -202,7 +204,8 @@ public class CCloudConnectionState extends ConnectionState {
 
   private static boolean saysNothingAboutTheSession(Throwable failure) {
     return ExceptionUtil.isTimeout(failure)
-        || ExceptionUtil.findCause(failure, TooManyRequestsException.class) != null;
+        || ExceptionUtil.findCause(failure, TooManyRequestsException.class) != null
+        || ExceptionUtil.findCause(failure, TransientServerErrorException.class) != null;
   }
 
   private static boolean isConnected(ConnectionStatus status) {
