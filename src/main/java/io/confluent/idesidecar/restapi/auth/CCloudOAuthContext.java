@@ -508,11 +508,13 @@ public class CCloudOAuthContext implements AuthContext {
     if (isTransientRefreshFailure(failures, error, now)) {
       return error.getMessage();
     }
-    return ("Gave up refreshing the Confluent Cloud tokens after %d failed %s over %s; "
+    var elapsed = Duration.between(failures.firstFailedAt(), now);
+    return ("Gave up refreshing the Confluent Cloud tokens after %d failed %s%s; "
         + "sign in again. Last error: %s").formatted(
         failures.attempts(),
         failures.attempts() == 1 ? "attempt" : "attempts",
-        TimeUtil.humanReadableDuration(Duration.between(failures.firstFailedAt(), now)),
+        // an immediate rejection took no time worth naming
+        elapsed.toSeconds() < 1 ? "" : " over " + TimeUtil.humanReadableDuration(elapsed),
         error.getMessage()
     );
   }
