@@ -25,6 +25,7 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;
 import io.vertx.core.Promise;
+import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.HttpRequest;
@@ -42,9 +43,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -82,6 +81,7 @@ public class CCloudOAuthContext implements AuthContext {
   private final UriUtil uriUtil = new UriUtil();
   private final WebClientFactory webClientFactory;
   private final CCloudHttpSender httpSender;
+  private final Vertx vertx;
   private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
   private final WriteLock writeLock = readWriteLock.writeLock();
   private final ReadLock readLock = readWriteLock.readLock();
@@ -104,6 +104,7 @@ public class CCloudOAuthContext implements AuthContext {
     if (container != null) {
       webClientFactory = container.select(WebClientFactory.class).get();
       httpSender = container.select(CCloudHttpSender.class).get();
+      vertx = container.select(Vertx.class).get();
     } else {
       // WARN so a hit from an unexpected production path (partial Arc init, misconfigured native
       // image) is visible rather than silently disabling rate limiting.
@@ -111,6 +112,7 @@ public class CCloudOAuthContext implements AuthContext {
           + " and 429 retry are disabled for this context. Expected only in non-CDI tests.");
       webClientFactory = new WebClientFactory();
       httpSender = null;
+      vertx = Vertx.vertx();
     }
   }
 
@@ -331,18 +333,17 @@ public class CCloudOAuthContext implements AuthContext {
   private Future<AuthContext> withDeadline(Future<AuthContext> refresh) {
     Promise<AuthContext> bounded = Promise.promise();
     var deadline = refreshDeadline();
-    var timer = CompletableFuture.runAsync(
-        () -> {
-          var message = "The CCloud token refresh didn't finish within %s"
-              .formatted(TimeUtil.humanReadableDuration(deadline));
-          if (bounded.tryFail(new TimeoutException(message))) {
-            Log.error(message);
-          }
-        },
-        CompletableFuture.delayedExecutor(deadline.toMillis(), TimeUnit.MILLISECONDS)
-    );
+    // on this thread's Vert.x context, where the refresh's own callbacks run too, so the timeout
+    // and a late result are handled one at a time
+    var timerId = vertx.setTimer(deadline.toMillis(), id -> {
+      var message = "The CCloud token refresh didn't finish within %s"
+          .formatted(TimeUtil.humanReadableDuration(deadline));
+      if (bounded.tryFail(new TimeoutException(message))) {
+        Log.error(message);
+      }
+    });
     refresh.onComplete(result -> {
-      timer.cancel(false);
+      vertx.cancelTimer(timerId);
       var inTime = result.succeeded()
           ? bounded.tryComplete(result.result())
           : bounded.tryFail(result.cause());
