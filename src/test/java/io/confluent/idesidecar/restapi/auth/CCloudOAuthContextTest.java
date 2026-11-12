@@ -1108,6 +1108,23 @@ class CCloudOAuthContextTest {
   }
 
   @Test
+  void aRefreshPastItsDeadlineShouldHoldTheSlotUntilItEnds() throws Throwable {
+    var authContext = signedInWithShortRefreshDeadline();
+    ccloudTestUtil.expectRefreshTokenExchangeRequest(authContext.getRefreshToken().token());
+    // the control plane token arrives after the deadline
+    serveSignInTokens("control-plane-token", "data-plane-token", 1_000);
+
+    awaitFailure(authContext.refresh(null));
+    awaitFailure(authContext.refresh(null));
+
+    // CCloud rotated the refresh token, so a second refresh mustn't send the old one meanwhile
+    assertTrue(authContext.isRefreshInFlight());
+    wireMock.verifyThat(1, WireMock.postRequestedFor(WireMock.urlPathEqualTo("/oauth/token")));
+    Awaitility.await().atMost(Duration.ofSeconds(5))
+        .until(() -> !authContext.isRefreshInFlight());
+  }
+
+  @Test
   void refreshThatFailsAfterItsDeadlineShouldCountOnce() throws Throwable {
     var authContext = signedInWithShortRefreshDeadline();
     wireMock.register(
