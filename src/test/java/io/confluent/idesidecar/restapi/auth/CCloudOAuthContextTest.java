@@ -22,14 +22,18 @@ import io.confluent.idesidecar.restapi.util.CCloudApiRateLimiter;
 import io.confluent.idesidecar.restapi.util.CCloudTestUtil;
 import io.quarkiverse.wiremock.devservice.ConnectWireMock;
 import io.quarkus.test.junit.QuarkusTest;
+import io.vertx.core.Future;
 import io.vertx.junit5.VertxTestContext;
 import jakarta.inject.Inject;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.IntStream;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -728,6 +732,246 @@ class CCloudOAuthContextTest {
     if (testContext.failed()) {
       throw testContext.causeOfFailure();
     }
+  }
+
+  @Test
+  void refreshBackoffShouldGrowByOnePointSixUpToTheCap() {
+    var waits = IntStream.rangeClosed(1, 9)
+        .mapToObj(attempt -> CCloudOAuthContext.refreshBackoff(attempt, 0.0).toMillis())
+        .toList();
+
+    assertEquals(
+        List.of(5_000L, 8_000L, 12_800L, 20_480L, 32_768L, 52_429L, 60_000L, 60_000L, 60_000L),
+        waits
+    );
+  }
+
+  @Test
+  void refreshBackoffShouldAddUpToTwentyPercentJitter() {
+    assertEquals(6_000L, CCloudOAuthContext.refreshBackoff(1, 1.0).toMillis());
+    assertEquals(72_000L, CCloudOAuthContext.refreshBackoff(9, 1.0).toMillis());
+  }
+
+  @Test
+  void refreshFailuresShouldTrackTheFirstFailureAndTheNextAttempt() {
+    var first = Instant.parse("2026-11-06T12:00:00Z");
+    var second = first.plusSeconds(10);
+
+    var failures = CCloudOAuthContext.RefreshFailures.NONE
+        .after(first, 0.0)
+        .after(second, 0.0);
+
+    assertEquals(2, failures.attempts());
+    assertEquals(first, failures.firstFailedAt());
+    assertEquals(second.plusSeconds(8), failures.nextAttemptAt());
+  }
+
+  @Test
+  void refreshFailureShouldStayTransientUntilTheLimitOrBudgetRunsOut() {
+    var now = Instant.parse("2026-11-06T12:00:00Z");
+    var error = new RuntimeException("Service Unavailable");
+
+    var limit = CCloudOAuthConfig.MAX_TOKEN_REFRESH_ATTEMPTS;
+    assertTrue(CCloudOAuthContext.isTransientRefreshFailure(failures(limit - 1, now), error, now));
+    assertFalse(CCloudOAuthContext.isTransientRefreshFailure(failures(limit, now), error, now));
+    assertFalse(CCloudOAuthContext.isTransientRefreshFailure(
+        failures(2, now.minus(CCloudOAuthConfig.TOKEN_REFRESH_FAILURE_BUDGET)), error, now
+    ));
+    assertTrue(CCloudOAuthContext.isTransientRefreshFailure(
+        failures(1, now), new RuntimeException(), now
+    ));
+  }
+
+  @Test
+  void refreshFailureShouldBeNonTransientForAnInvalidRefreshToken() {
+    var now = Instant.parse("2026-11-06T12:00:00Z");
+
+    assertFalse(CCloudOAuthContext.isTransientRefreshFailure(
+        failures(1, now),
+        new RuntimeException("invalid_grant - Unknown or invalid refresh token."),
+        now
+    ));
+  }
+
+  @Test
+  void refreshFailureShouldBeTransientForAFailureWithNoMessage() {
+    var now = Instant.parse("2026-11-06T12:00:00Z");
+
+    assertTrue(CCloudOAuthContext.isTransientRefreshFailure(
+        failures(1, now), new RuntimeException((String) null), now
+    ));
+  }
+
+  @Test
+  void refreshFailureMessageShouldSayWhyItGaveUp() {
+    var firstFailedAt = Instant.parse("2026-11-06T12:00:00Z");
+    var now = firstFailedAt.plus(Duration.ofMinutes(6));
+
+    var message = CCloudOAuthContext.refreshFailureMessage(
+        failures(CCloudOAuthConfig.MAX_TOKEN_REFRESH_ATTEMPTS, firstFailedAt),
+        new RuntimeException("The timeout of 20000ms ran out"),
+        now
+    );
+
+    assertEquals(
+        "Gave up refreshing the Confluent Cloud tokens after 10 failed attempts over 6m; "
+            + "sign in again. Last error: The timeout of 20000ms ran out",
+        message
+    );
+  }
+
+  @Test
+  void refreshFailureMessageShouldLeaveOutTheTimeForAnImmediateRejection() {
+    var now = Instant.parse("2026-11-06T12:00:00Z");
+
+    var message = CCloudOAuthContext.refreshFailureMessage(
+        failures(1, now),
+        new RuntimeException("invalid_grant - Unknown or invalid refresh token."),
+        now
+    );
+
+    assertEquals(
+        "Gave up refreshing the Confluent Cloud tokens after 1 failed attempt; sign in again. "
+            + "Last error: invalid_grant - Unknown or invalid refresh token.",
+        message
+    );
+  }
+
+  @Test
+  void refreshFailureMessageShouldPassOnAFailureThatWillBeRetried() {
+    var now = Instant.parse("2026-11-06T12:00:00Z");
+
+    var message = CCloudOAuthContext.refreshFailureMessage(
+        failures(1, now), new RuntimeException("Connection refused"), now
+    );
+
+    assertEquals("Connection refused", message);
+  }
+
+  @Test
+  void refreshTokenShouldExpireAtTheEndOfTheSessionLifetime() throws Throwable {
+    var authContext = new CCloudOAuthContext();
+
+    authContext.createTokensFromAuthorizationCode(FAKE_AUTHORIZATION_CODE, null)
+        .toCompletionStage().toCompletableFuture().get(5, TimeUnit.SECONDS);
+
+    assertEquals(authContext.getEndOfLifetime(), authContext.getRefreshToken().expiresAt());
+  }
+
+  @Test
+  void shouldNotAttemptTokenRefreshWhileBackingOff() throws Throwable {
+    var authContext = Mockito.spy(new CCloudOAuthContext());
+    authContext.createTokensFromAuthorizationCode(FAKE_AUTHORIZATION_CODE, null)
+        .toCompletionStage().toCompletableFuture().get(5, TimeUnit.SECONDS);
+    // just before the tokens expire, so a refresh is due
+    var failedAt = authContext.expiresAt().orElseThrow().minusSeconds(1);
+    Mockito.doReturn(failedAt).when(authContext).now();
+    failTokenExchanges();
+
+    awaitFailure(authContext.refresh(null));
+
+    var nextAttempt = authContext.getNextTokenRefreshAttemptAt().orElseThrow();
+    assertTrue(nextAttempt.isAfter(failedAt.plusSeconds(4)), "next attempt " + nextAttempt);
+    assertFalse(authContext.shouldAttemptTokenRefresh());
+    Mockito.doReturn(nextAttempt).when(authContext).now();
+    assertTrue(authContext.shouldAttemptTokenRefresh());
+  }
+
+  @Test
+  void connectionShouldFailOnceRefreshFailuresOutlastTheBudgetUntilTheNextSignIn()
+      throws Throwable {
+    var authContext = Mockito.spy(new CCloudOAuthContext());
+    authContext.createTokensFromAuthorizationCode(FAKE_AUTHORIZATION_CODE, null)
+        .toCompletionStage().toCompletableFuture().get(5, TimeUnit.SECONDS);
+    var firstFailure = Instant.now();
+    Mockito.doReturn(firstFailure).when(authContext).now();
+    failTokenExchanges();
+    awaitFailure(authContext.refresh(null));
+    assertFalse(authContext.hasNonTransientError());
+
+    Mockito.doReturn(
+        firstFailure.plus(CCloudOAuthConfig.TOKEN_REFRESH_FAILURE_BUDGET).plusSeconds(1)
+    ).when(authContext).now();
+    awaitFailure(authContext.refresh(null));
+
+    assertTrue(authContext.hasNonTransientError());
+    assertFalse(authContext.shouldAttemptTokenRefresh());
+    wireMock.removeMappings();
+    ccloudTestUtil.registerWireMockRoutesForCCloudOAuth(FAKE_AUTHORIZATION_CODE, null, null);
+    authContext.createTokensFromAuthorizationCode(FAKE_AUTHORIZATION_CODE, null)
+        .toCompletionStage().toCompletableFuture().get(5, TimeUnit.SECONDS);
+    assertFalse(authContext.hasNonTransientError());
+  }
+
+  @Test
+  void signInShouldResetFailedTokenRefreshAttempts() throws Throwable {
+    var authContext = new CCloudOAuthContext();
+    authContext.createTokensFromAuthorizationCode(FAKE_AUTHORIZATION_CODE, null)
+        .toCompletionStage().toCompletableFuture().get(5, TimeUnit.SECONDS);
+    failTokenExchanges();
+    awaitFailure(authContext.refresh(null));
+    assertEquals(1, authContext.getFailedTokenRefreshAttempts());
+    wireMock.removeMappings();
+    ccloudTestUtil.registerWireMockRoutesForCCloudOAuth(FAKE_AUTHORIZATION_CODE, null, null);
+
+    authContext.createTokensFromAuthorizationCode(FAKE_AUTHORIZATION_CODE, null)
+        .toCompletionStage().toCompletableFuture().get(5, TimeUnit.SECONDS);
+
+    assertEquals(0, authContext.getFailedTokenRefreshAttempts());
+    assertTrue(authContext.getNextTokenRefreshAttemptAt().isEmpty());
+  }
+
+  @Test
+  void refreshShouldKeepTheRefreshTokenWhenTheExchangeAnswersWithoutTokens() throws Throwable {
+    var authContext = new CCloudOAuthContext();
+    authContext.createTokensFromAuthorizationCode(FAKE_AUTHORIZATION_CODE, null)
+        .toCompletionStage().toCompletableFuture().get(5, TimeUnit.SECONDS);
+    var refreshToken = authContext.getRefreshToken().token();
+    // a 503 whose JSON body has no error field and no tokens
+    failTokenExchanges();
+
+    awaitFailure(authContext.refresh(null));
+
+    assertEquals(refreshToken, authContext.getRefreshToken().token());
+    assertEquals(1, authContext.getFailedTokenRefreshAttempts());
+  }
+
+  @Test
+  void refreshShouldKeepARotatedRefreshTokenWhenTheAnswerHasNoIdToken() throws Throwable {
+    var authContext = new CCloudOAuthContext();
+    authContext.createTokensFromAuthorizationCode(FAKE_AUTHORIZATION_CODE, null)
+        .toCompletionStage().toCompletableFuture().get(5, TimeUnit.SECONDS);
+    wireMock.register(
+        WireMock.post("/oauth/token")
+            .atPriority(1)
+            .willReturn(WireMock.aResponse().withStatus(201)
+                .withBody("{\"refresh_token\":\"rotated-refresh-token\"}"))
+    );
+
+    awaitFailure(authContext.refresh(null));
+
+    // CCloud already invalidated the old token, so the new one must be kept
+    assertEquals("rotated-refresh-token", authContext.getRefreshToken().token());
+  }
+
+  private void failTokenExchanges() {
+    wireMock.register(
+        WireMock.post("/oauth/token")
+            .atPriority(1)
+            .willReturn(WireMock.aResponse().withStatus(503).withBody("{}"))
+    );
+  }
+
+  private static void awaitFailure(Future<?> future) throws Exception {
+    var outcome = future
+        .map(result -> (Object) result)
+        .recover(Future::succeededFuture)
+        .toCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+    assertTrue(outcome instanceof Throwable, "expected a failure, got " + outcome);
+  }
+
+  private static CCloudOAuthContext.RefreshFailures failures(int attempts, Instant firstFailedAt) {
+    return new CCloudOAuthContext.RefreshFailures(attempts, firstFailedAt, firstFailedAt);
   }
 
   @Test
