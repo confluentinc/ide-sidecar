@@ -19,6 +19,8 @@ class RateLimitStateTest {
       "30, 30",
       "' 7 ', 7",
       "99999999999, 2147483647",
+      "00000000001, 1",
+      "000000000000, 0",
   })
   void shouldParseDelaySeconds(String header, int expected) {
     assertEquals(expected, RateLimitState.parseRetryAfter(header, NOW));
