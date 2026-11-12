@@ -1,6 +1,7 @@
 package io.confluent.idesidecar.restapi.util;
 
 import io.confluent.idesidecar.restapi.application.SidecarInfo;
+import io.confluent.idesidecar.restapi.auth.CCloudOAuthConfig;
 import io.confluent.idesidecar.restapi.models.Preferences;
 import io.confluent.idesidecar.restapi.models.Preferences.PreferencesSpec;
 import io.quarkus.arc.Arc;
@@ -87,7 +88,9 @@ public class WebClientFactory {
           secondsConfig("ide-sidecar.webclient.idle-timeout-seconds"),
           WEBCLIENT_REQUEST_TIMEOUT_SECONDS.plusSeconds(30),
           WEBCLIENT_CCLOUD_CONSUME_TIMEOUT_SECONDS.plusSeconds(30),
-          WEBCLIENT_CCLOUD_FLINK_TIMEOUT_SECONDS.plusSeconds(30))
+          WEBCLIENT_CCLOUD_FLINK_TIMEOUT_SECONDS.plusSeconds(30),
+          // the refresh-token exchange waits until the refresh deadline
+          CCloudOAuthConfig.TOKEN_REFRESH_DEADLINE.plusSeconds(30))
       .max(Duration::compareTo)
       .orElseThrow();
 
