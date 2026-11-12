@@ -11,6 +11,8 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.ext.web.client.HttpResponse;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import java.time.Instant;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 
 /**
@@ -42,14 +44,27 @@ public class CCloudHttpSender {
       String url,
       Supplier<Future<HttpResponse<Buffer>>> sender) {
     Promise<HttpResponse<Buffer>> promise = Promise.promise();
+    // through a method: retryPolicy is a CDI proxy, whose own fields aren't the bean's
+    var budget = retryPolicy.budget();
+    var sendBy = Instant.now().plus(budget);
     retryPolicy.applyRetryWithoutCutoff(url,
         rateLimiter.withPermit(
             url,
-            // record the response inside the attempt, so the bucket's state is updated before the
-            // permit is released and the next request reads it
-            () -> Uni.createFrom()
-                .completionStage(sender.get().toCompletionStage())
-                .invoke(response -> recordResponse(url, response))
+            () -> {
+              // a request already sent runs to its own timeout, but one that waited out the
+              // budget for a permit isn't sent at all
+              if (Instant.now().isAfter(sendBy)) {
+                var message = "Gave up on %s: its %s budget ran out before it could be sent"
+                    .formatted(url, TimeUtil.humanReadableDuration(budget));
+                Log.error(message);
+                return Uni.createFrom().failure(new TimeoutException(message));
+              }
+              // record the response inside the attempt, so the bucket's state is updated before
+              // the permit is released and the next request reads it
+              return Uni.createFrom()
+                  .completionStage(sender.get().toCompletionStage())
+                  .invoke(response -> recordResponse(url, response));
+            }
         )
     ).subscribe().with(promise::complete, promise::fail);
     return promise.future();
