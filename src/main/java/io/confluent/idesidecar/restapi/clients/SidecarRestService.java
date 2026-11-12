@@ -143,7 +143,7 @@ public class SidecarRestService extends RestService {
         var wait = retryAfter.isPresent() ? retryAfter.get() : backoff(retries);
         var stop = reasonToStop(retries, wait, retryAfter.isPresent());
         if (stop.isPresent()) {
-          warnGivingUp(method, path, stop.get(), e);
+          logGivingUp(method, path, stop.get(), e);
           if (retryAfter.isEmpty()) {
             throw e;
           }
@@ -158,7 +158,7 @@ public class SidecarRestService extends RestService {
         var wait = backoff(retries);
         var stop = reasonToStop(retries, wait, false);
         if (stop.isPresent()) {
-          warnGivingUp(method, path, stop.get(), e);
+          logGivingUp(method, path, stop.get(), e);
           throw e;
         }
         sleep(wait, path, e);
@@ -200,8 +200,9 @@ public class SidecarRestService extends RestService {
     return Optional.empty();
   }
 
-  private static void warnGivingUp(String method, String path, String reason, Exception failure) {
-    Log.warnf(
+  private static void logGivingUp(String method, String path, String reason, Exception failure) {
+    Log.errorf(
+        failure,
         "Giving up on Schema Registry request %s %s because %s: %s",
         method, path, reason, failure.getMessage()
     );

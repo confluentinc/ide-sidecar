@@ -29,6 +29,10 @@ import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
 import javax.net.ssl.SSLSocketFactory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -132,6 +136,49 @@ class SidecarRestServiceTest {
     assertEquals(Duration.ofSeconds(1), thrown.getRetryAfter());
     assertTrue(thrown.getMessage().contains("retries ran out"), thrown.getMessage());
     assertFalse(thrown.getMessage().contains("error code: 429; error code"), thrown.getMessage());
+  }
+
+  @Test
+  void shouldLogAGiveUpAtErrorWithItsCause() throws Exception {
+    var restService = startService(NO_BACKOFF, new Reply(429, "30"));
+    var logger = Logger.getLogger(SidecarRestService.class.getName());
+    var records = new CopyOnWriteArrayList<LogRecord>();
+    var capture = new Handler() {
+      @Override
+      public void publish(LogRecord record) {
+        records.add(record);
+      }
+
+      @Override
+      public void flush() {
+      }
+
+      @Override
+      public void close() {
+      }
+    };
+    logger.addHandler(capture);
+
+    try {
+      assertThrows(
+          RetryAfterException.class,
+          () -> SidecarRestService.withDeadline(
+              Instant.now().plusSeconds(5),
+              restService::getSchemaTypes
+          )
+      );
+    } finally {
+      logger.removeHandler(capture);
+    }
+
+    var giveUp = records.stream()
+        .filter(r -> r.getMessage() != null && r.getMessage().startsWith("Giving up"))
+        .findFirst()
+        .orElseThrow();
+    assertTrue(
+        giveUp.getLevel().intValue() >= Level.SEVERE.intValue(), "logged at " + giveUp.getLevel()
+    );
+    assertInstanceOf(RestClientException.class, giveUp.getThrown());
   }
 
   @Test
