@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -543,6 +544,31 @@ public class CCloudConnectionTest {
     awaitStatus(connectionState.refreshStatus());
 
     verify(connectionState.getOauthContext()).checkAuthenticationStatus(token);
+  }
+
+  @Test
+  void refreshStatusShouldKeepLastStatusIfTheCheckRejectsATokenReplacedWhileItRan()
+      throws Exception {
+    // arrange: healthy, then a check for a refreshed token that's still running when the token
+    // changes again
+    var connectionState = signedInConnectionState(Future.succeededFuture(true));
+    var authContext = connectionState.getOauthContext();
+    var healthy = awaitStatus(connectionState.refreshStatus());
+    var expiresAt = Instant.now().plusSeconds(300);
+    Promise<Boolean> check = Promise.promise();
+    var refreshedOnce = new Token("refreshed-once", expiresAt);
+    when(authContext.getControlPlaneToken()).thenReturn(refreshedOnce);
+    when(authContext.checkAuthenticationStatus(any())).thenReturn(check.future());
+    var pending = connectionState.refreshStatus();
+    verify(authContext, timeout(1_000)).checkAuthenticationStatus(refreshedOnce);
+    when(authContext.getControlPlaneToken()).thenReturn(new Token("refreshed-twice", expiresAt));
+
+    // act
+    check.complete(false);
+
+    // assert
+    assertEquals(ConnectedState.SUCCESS, healthy.ccloud().state());
+    assertEquals(ConnectedState.SUCCESS, awaitStatus(pending).ccloud().state());
   }
 
   @Test
