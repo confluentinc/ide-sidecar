@@ -821,6 +821,23 @@ class CCloudOAuthContextTest {
   }
 
   @Test
+  void refreshFailureMessageShouldLeaveOutTheTimeForAnImmediateRejection() {
+    var now = Instant.parse("2026-11-06T12:00:00Z");
+
+    var message = CCloudOAuthContext.refreshFailureMessage(
+        failures(1, now),
+        new RuntimeException("invalid_grant - Unknown or invalid refresh token."),
+        now
+    );
+
+    assertEquals(
+        "Gave up refreshing the Confluent Cloud tokens after 1 failed attempt; sign in again. "
+            + "Last error: invalid_grant - Unknown or invalid refresh token.",
+        message
+    );
+  }
+
+  @Test
   void refreshFailureMessageShouldPassOnAFailureThatWillBeRetried() {
     var now = Instant.parse("2026-11-06T12:00:00Z");
 
