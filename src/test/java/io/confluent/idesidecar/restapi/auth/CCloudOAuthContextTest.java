@@ -993,6 +993,21 @@ class CCloudOAuthContextTest {
   }
 
   @Test
+  void tokenLifetimeShouldFallBackWhenTheClaimsAreOutOfRange() {
+    var now = Instant.parse("2026-11-06T12:00:00Z");
+    var fallback = CCloudOAuthConfig.CCLOUD_CONTROL_PLANE_TOKEN_LIFE_TIME_SEC;
+    var expiryPastAnyInstant = jwt("{\"exp\":9223372036854775807}");
+    // exp - iat wraps around to 101s
+    var lifetimeThatOverflows = jwt("{\"iat\":9223372036854775807,\"exp\":-9223372036854775708}");
+
+    var withoutIssuedAt = CCloudOAuthContext.tokenLifetime(expiryPastAnyInstant, "test", now);
+    var withIssuedAt = CCloudOAuthContext.tokenLifetime(lifetimeThatOverflows, "test", now);
+
+    assertEquals(fallback, withoutIssuedAt);
+    assertEquals(fallback, withIssuedAt);
+  }
+
+  @Test
   void refreshShouldBeDueBetween70And90PercentOfTheShortestLifetime() {
     var now = Instant.parse("2026-11-06T12:00:00Z");
     var lifetime = Duration.ofSeconds(300);
