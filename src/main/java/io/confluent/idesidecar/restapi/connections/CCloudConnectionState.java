@@ -69,10 +69,13 @@ public class CCloudConnectionState extends ConnectionState {
   private final AtomicReference<HealthyCheck> lastHealthyCheck = new AtomicReference<>();
 
   /**
-   * The {@code check_jwt} running for this connection, or null.
+   * Guards {@link #runningCheck} and {@link #lastHealthyCheck} together.
    */
   private final Object checkLock = new Object();
 
+  /**
+   * The {@code check_jwt} running for this connection, or null.
+   */
   private final AtomicReference<RunningCheck> runningCheck = new AtomicReference<>();
 
   CCloudConnectionState() {
@@ -181,6 +184,11 @@ public class CCloudConnectionState extends ConnectionState {
                 ).build();
           })
           .recover(failure -> {
+            if (failure instanceof StaleCheckException
+                && lastStatus != null && lastStatus.ccloud() != null) {
+              Log.info(failure.getMessage());
+              return Future.succeededFuture(withCurrentErrors(lastStatus));
+            }
             // a check that stalled, couldn't connect in time, was rate limited, or got a server
             // error says nothing about the session, so don't report a healthy connection as
             // expired because of it
@@ -301,6 +309,12 @@ public class CCloudConnectionState extends ConnectionState {
               now.plusMillis(Math.round(checkJwtHealthyInterval().toMillis() * jitter))
           )
           : null);
+      var current = oauthContext.getControlPlaneToken();
+      if (!isHealthy && !Objects.equals(
+          current != null ? current.token() : null, mine.controlPlaneToken())) {
+        promise.fail(new StaleCheckException(getId()));
+        return;
+      }
       promise.handle(result);
     });
     return promise.future();
@@ -345,6 +359,18 @@ public class CCloudConnectionState extends ConnectionState {
   /**
    * The {@code check_jwt} running for the given control-plane token.
    */
+  /**
+   * A failed or rejected check for a token the connection has since replaced, which says nothing
+   * about its session.
+   */
+  private static final class StaleCheckException extends RuntimeException {
+
+    StaleCheckException(String connectionId) {
+      super(("Ignoring a CCloud session check for connection ID=%s: its token was replaced while "
+          + "it ran").formatted(connectionId), null, false, false);
+    }
+  }
+
   private record RunningCheck(String controlPlaneToken, Future<Boolean> future) {
 
   }
