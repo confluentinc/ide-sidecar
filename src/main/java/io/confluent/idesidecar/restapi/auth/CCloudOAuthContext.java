@@ -112,8 +112,16 @@ public class CCloudOAuthContext implements AuthContext {
           + " and 429 retry are disabled for this context. Expected only in non-CDI tests.");
       webClientFactory = new WebClientFactory();
       httpSender = null;
-      vertx = Vertx.vertx();
+      vertx = NonCdiVertx.INSTANCE;
     }
+  }
+
+  /**
+   * One Vert.x instance for every context built without CDI, created on first use.
+   */
+  private static final class NonCdiVertx {
+
+    private static final Vertx INSTANCE = Vertx.vertx();
   }
 
   /**
@@ -306,35 +314,33 @@ public class CCloudOAuthContext implements AuthContext {
     } finally {
       writeLock.unlock();
     }
-    // after the handlers above, so the backoff is recorded before another refresh can start;
-    // whichever of the caller's result and the refresh itself ends last frees the slot
+    // the deadline timer and the refresh can end on different threads, so this waits for both:
+    // the caller's handlers above have run, and the refresh itself has ended
     var forCaller = chain;
-    forCaller.onComplete(result -> {
-      if (bare.isComplete()) {
-        release.run();
+    Promise<Void> callerHandled = Promise.promise();
+    Future.join(callerHandled.future(), bare).onComplete(both -> {
+      if (bare.succeeded() && forCaller.failed()) {
+        // after the deadline's failure was counted, so this success clears it
+        Log.warn("A CCloud token refresh finished after its deadline; keeping its new tokens");
+        onSuccessfulTokenRefresh().handle(bare.result());
       }
-      promise.handle(result);
+      release.run();
     });
-    bare.onComplete(done -> {
-      if (forCaller.isComplete()) {
-        release.run();
-      }
+    forCaller.onComplete(result -> {
+      callerHandled.complete();
+      promise.handle(result);
     });
     return promise.future();
   }
 
   /**
-   * Fail {@code refresh} once {@link #refreshDeadline()} has passed, so it can't hold the
-   * single-flight slot forever. The refresh itself keeps going, and stores tokens as each step
-   * succeeds: CCloud may already have rotated the refresh token, so a late success is kept and
-   * clears the failure count, and a late failure is only logged, since the timeout already
-   * stood for it.
+   * Fail {@code refresh} once {@link #refreshDeadline()} has passed, so its caller isn't held
+   * forever. The refresh itself keeps going and stores tokens as each step succeeds; a late
+   * failure is only logged, since the timeout already stood for it.
    */
   private Future<AuthContext> withDeadline(Future<AuthContext> refresh) {
     Promise<AuthContext> bounded = Promise.promise();
     var deadline = refreshDeadline();
-    // on this thread's Vert.x context, where the refresh's own callbacks run too, so the timeout
-    // and a late result are handled one at a time
     var timerId = vertx.setTimer(deadline.toMillis(), id -> {
       var message = "The CCloud token refresh didn't finish within %s"
           .formatted(TimeUtil.humanReadableDuration(deadline));
@@ -347,13 +353,7 @@ public class CCloudOAuthContext implements AuthContext {
       var inTime = result.succeeded()
           ? bounded.tryComplete(result.result())
           : bounded.tryFail(result.cause());
-      if (inTime) {
-        return;
-      }
-      if (result.succeeded()) {
-        Log.warn("A CCloud token refresh finished after its deadline; keeping its new tokens");
-        onSuccessfulTokenRefresh().handle(result.result());
-      } else {
+      if (!inTime && result.failed()) {
         Log.errorf(
             result.cause(),
             "A CCloud token refresh failed after its deadline had passed"
