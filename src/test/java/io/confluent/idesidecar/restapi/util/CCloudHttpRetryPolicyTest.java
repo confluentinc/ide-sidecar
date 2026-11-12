@@ -241,6 +241,48 @@ class CCloudHttpRetryPolicyTest {
     return policy.nextDelay(retries, -1, NOW, FAR_DEADLINE, () -> 0.0).orElseThrow();
   }
 
+  @Test
+  void idempotentRetryShouldWaitAServerErrorsRetryAfterWithinTheBudget() {
+    shortenWaits();
+    var attempts = new AtomicInteger();
+    var source = Uni.createFrom().<String>deferred(() -> attempts.incrementAndGet() == 1
+        ? Uni.createFrom().failure(
+            new TransientServerErrorException(URL, 503, 1, new RuntimeException("503"))
+        )
+        : Uni.createFrom().item("ok"));
+    var started = System.nanoTime();
+
+    var result = policy.applyIdempotentRetry(URL, null, source)
+        .await().atMost(Duration.ofSeconds(5));
+
+    var elapsed = Duration.ofNanos(System.nanoTime() - started);
+    assertEquals("ok", result);
+    assertEquals(2, attempts.get());
+    assertTrue(elapsed.toMillis() >= 1_000, "retried after only " + elapsed);
+  }
+
+  @Test
+  void idempotentRetryShouldGiveUpAtOnceWhenAServerErrorsRetryAfterPassesTheBudget() {
+    shortenWaits();
+    var attempts = new AtomicInteger();
+    var source = Uni.createFrom().<String>deferred(() -> {
+      attempts.incrementAndGet();
+      return Uni.createFrom().failure(
+          new TransientServerErrorException(URL, 503, 30, new RuntimeException("503"))
+      );
+    });
+    var started = System.nanoTime();
+
+    assertThrows(
+        TransientServerErrorException.class,
+        () -> policy.applyIdempotentRetry(URL, null, source).await().atMost(Duration.ofSeconds(5))
+    );
+
+    var elapsed = Duration.ofNanos(System.nanoTime() - started);
+    assertEquals(1, attempts.get());
+    assertTrue(elapsed.toMillis() < 1_000, "waited " + elapsed);
+  }
+
   private void shortenWaits() {
     policy.initialBackoffMs = 1;
     policy.maxBackoffMs = 1;
