@@ -92,8 +92,10 @@ public class CCloudHttpRetryPolicy {
   public <T> Uni<T> applyRetry(String url, Instant startedAt, Uni<T> source) {
     // per subscription, so a resubscribed source starts over
     return Uni.createFrom().deferred(() -> {
-      var deadline = (startedAt != null ? startedAt : Instant.now()).plusMillis(maxTotalMs);
-      var left = Duration.between(Instant.now(), deadline);
+      // one reading of the clock, so a budget that starts now is exactly maxTotalMs
+      var now = Instant.now();
+      var deadline = (startedAt != null ? startedAt : now).plusMillis(maxTotalMs);
+      var left = Duration.between(now, deadline);
       var attempts = new Attempts();
       if (!left.isPositive()) {
         return Uni.createFrom().failure(budgetSpent(url, attempts));
