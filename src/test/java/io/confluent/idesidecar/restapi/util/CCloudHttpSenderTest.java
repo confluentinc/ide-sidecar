@@ -11,6 +11,7 @@ import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.ext.web.client.HttpResponse;
+import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -26,6 +27,8 @@ class CCloudHttpSenderTest {
     var sender = new CCloudHttpSender();
     sender.rateLimiter = new CCloudApiRateLimiter(true, 1000);
     sender.retryPolicy = mock(CCloudHttpRetryPolicy.class);
+    // a budget that hasn't run out, so the request is sent and then stalls
+    when(sender.retryPolicy.budget()).thenReturn(Duration.ofSeconds(40));
     when(sender.retryPolicy.applyRetryWithoutCutoff(eq(URL), any()))
         .thenAnswer(invocation -> invocation.getArgument(1));
 
@@ -38,6 +41,8 @@ class CCloudHttpSenderTest {
         .toCompletableFuture()
         .get(5, TimeUnit.SECONDS);
     assertInstanceOf(TimeoutException.class, failure);
+    // the request's own timeout, not a budget that ran out before it was sent
+    assertEquals("stalled", failure.getMessage());
     assertEquals(0, sender.rateLimiter.inflight(URL));
   }
 
