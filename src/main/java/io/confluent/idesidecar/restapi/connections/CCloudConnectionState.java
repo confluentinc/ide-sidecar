@@ -4,6 +4,7 @@ import static io.confluent.idesidecar.restapi.util.RequestHeadersConstants.TARGE
 
 import io.confluent.idesidecar.restapi.auth.AuthErrors;
 import io.confluent.idesidecar.restapi.auth.CCloudOAuthContext;
+import io.confluent.idesidecar.restapi.exceptions.TooManyRequestsException;
 import io.confluent.idesidecar.restapi.models.ConnectionMetadata;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
@@ -12,6 +13,7 @@ import io.confluent.idesidecar.restapi.models.ConnectionStatus.CCloudStatus;
 import io.confluent.idesidecar.restapi.models.ConnectionStatus.ConnectedState;
 import io.confluent.idesidecar.restapi.models.ConnectionStatusBuilder;
 import io.confluent.idesidecar.restapi.resources.ConnectionsResource;
+import io.confluent.idesidecar.restapi.util.ExceptionUtil;
 import io.quarkus.logging.Log;
 import io.smallrye.common.constraint.NotNull;
 import io.smallrye.common.constraint.Nullable;
@@ -68,7 +70,8 @@ public class CCloudConnectionState extends ConnectionState {
    *   </li>
    *   <li>
    *     {@link ConnectedState#EXPIRED}, if the connection holds all tokens but cannot perform API
-   *     requests against the CCloud API.
+   *     requests against the CCloud API. A check that times out, or can't connect in time, keeps a
+   *     previous {@link ConnectedState#SUCCESS} instead, since that says nothing about the session.
    *   </li>
    *   <li>
    *     {@link ConnectedState#FAILED}, if the connection experienced a non-transient error
@@ -121,41 +124,91 @@ public class CCloudConnectionState extends ConnectionState {
               .build()
       );
     } else {
+      var lastStatus = getStatus();
       return oauthContext
           .checkAuthenticationStatus()
-          // Consider token as invalid if any exception is thrown while we check the status
-          .recover(failure -> Future.succeededFuture(false))
           .map(canAuthenticateWithConfluentCloud -> {
+            if (!canAuthenticateWithConfluentCloud) {
+              return expiredStatus();
+            }
             // Need to re-read errors which might have been updated during the auth status check
             var errors = getAuthErrors(oauthContext);
-            if (canAuthenticateWithConfluentCloud) {
-              // Generate the updated status
-              var user = oauthContext.getUser();
-              return ConnectionStatusBuilder
-                  .builder()
-                  .ccloud(
-                      new CCloudStatus(
-                          ConnectedState.SUCCESS,
-                          oauthContext.getEndOfLifetime(),
-                          user != null ? user.asUserInfo() : null,
-                          errors
-                      )
-                  ).build();
-            } else {
-              // And return updated status
-              return ConnectionStatusBuilder
-                  .builder()
-                  .ccloud(
-                      new CCloudStatus(
-                          ConnectedState.EXPIRED,
-                          null,
-                          null,
-                          errors
-                      )
-                  ).build();
+            // Generate the updated status
+            var user = oauthContext.getUser();
+            return ConnectionStatusBuilder
+                .builder()
+                .ccloud(
+                    new CCloudStatus(
+                        ConnectedState.SUCCESS,
+                        oauthContext.getEndOfLifetime(),
+                        user != null ? user.asUserInfo() : null,
+                        errors
+                    )
+                ).build();
+          })
+          .recover(failure -> {
+            // a check that stalled, couldn't connect in time, or was rate limited says nothing
+            // about the session, so don't report a healthy connection as expired because of it
+            if (saysNothingAboutTheSession(failure) && isConnected(lastStatus)) {
+              Log.errorf(
+                  failure,
+                  "Couldn't check the CCloud session of connection ID=%s; keeping it connected: %s",
+                  getId(),
+                  failure.getMessage());
+              return Future.succeededFuture(withCurrentErrors(lastStatus));
             }
+            // Consider token as invalid if any other exception is thrown while we check the status
+            Log.errorf(
+                failure,
+                "Couldn't check the CCloud session of connection ID=%s: %s",
+                getId(),
+                failure.getMessage());
+            return Future.succeededFuture(expiredStatus());
           });
     }
+  }
+
+  private ConnectionStatus expiredStatus() {
+    // Need to re-read errors which might have been updated during the auth status check
+    return ConnectionStatusBuilder
+        .builder()
+        .ccloud(
+            new CCloudStatus(
+                ConnectedState.EXPIRED,
+                null,
+                null,
+                getAuthErrors(oauthContext)
+            )
+        ).build();
+  }
+
+  /**
+   * {@code status}, with the auth errors as they are now, so the error from a check that didn't
+   * change the status still shows.
+   */
+  private ConnectionStatus withCurrentErrors(ConnectionStatus status) {
+    var ccloud = status.ccloud();
+    return ConnectionStatusBuilder
+        .builder()
+        .ccloud(
+            new CCloudStatus(
+                ccloud.state(),
+                ccloud.requiresAuthenticationAt(),
+                ccloud.user(),
+                getAuthErrors(oauthContext)
+            )
+        ).build();
+  }
+
+  private static boolean saysNothingAboutTheSession(Throwable failure) {
+    return ExceptionUtil.isTimeout(failure)
+        || ExceptionUtil.findCause(failure, TooManyRequestsException.class) != null;
+  }
+
+  private static boolean isConnected(ConnectionStatus status) {
+    return status != null
+        && status.ccloud() != null
+        && status.ccloud().state() == ConnectedState.SUCCESS;
   }
 
   /**
