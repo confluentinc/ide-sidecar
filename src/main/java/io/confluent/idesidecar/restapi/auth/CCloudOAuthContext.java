@@ -262,21 +262,29 @@ public class CCloudOAuthContext implements AuthContext {
    * connection never runs two at once. CCloud rotates the refresh token on each use, so a second
    * refresh sent with the old token would fail. A refresh for a different organization starts
    * once the running one finishes, and reads the refresh token only then. Several such waiters
-   * race to start next, in no particular order.
+   * race to start next, in no particular order. A refresh past its deadline keeps the slot until
+   * it actually ends, so a second refresh can't send the token it may already have rotated.
    */
   private Future<AuthContext> refreshOnce(String organizationId, boolean countFailures) {
     Promise<AuthContext> promise = Promise.promise();
-    var mine = new InFlightRefresh(organizationId, promise.future());
+    Promise<Void> settled = Promise.promise();
+    var mine = new InFlightRefresh(organizationId, promise.future(), settled.future());
     var running = inFlightRefresh.compareAndExchange(null, mine);
     if (running != null) {
       return Objects.equals(running.organizationId(), organizationId)
           ? running.future()
-          : running.future().transform(done -> refreshOnce(organizationId, countFailures));
+          : running.settled().transform(done -> refreshOnce(organizationId, countFailures));
     }
+    Runnable release = () -> {
+      inFlightRefresh.compareAndSet(mine, null);
+      settled.tryComplete();
+    };
+    Future<AuthContext> bare;
     Future<AuthContext> chain;
     writeLock.lock();
     try {
-      chain = withDeadline(bareRefresh(organizationId))
+      bare = bareRefresh(organizationId);
+      chain = withDeadline(bare)
           // Reset any existing error related to token refresh flow
           .onSuccess(onSuccessfulTokenRefresh());
       if (countFailures) {
@@ -285,7 +293,7 @@ public class CCloudOAuthContext implements AuthContext {
       }
     } catch (RuntimeException e) {
       // don't leave a refresh that never started marked as running
-      inFlightRefresh.compareAndSet(mine, null);
+      release.run();
       Log.errorf(e, "Couldn't start the CCloud token refresh");
       if (countFailures) {
         // so it backs off, and counts toward giving up, like any other failed refresh
@@ -296,10 +304,19 @@ public class CCloudOAuthContext implements AuthContext {
     } finally {
       writeLock.unlock();
     }
-    // after the handlers above, so the backoff is recorded before another refresh can start
-    chain.onComplete(result -> {
-      inFlightRefresh.compareAndSet(mine, null);
+    // after the handlers above, so the backoff is recorded before another refresh can start;
+    // whichever of the caller's result and the refresh itself ends last frees the slot
+    var forCaller = chain;
+    forCaller.onComplete(result -> {
+      if (bare.isComplete()) {
+        release.run();
+      }
       promise.handle(result);
+    });
+    bare.onComplete(done -> {
+      if (forCaller.isComplete()) {
+        release.run();
+      }
     });
     return promise.future();
   }
@@ -348,7 +365,11 @@ public class CCloudOAuthContext implements AuthContext {
   /**
    * The refresh running for this connection, and the organization it's for.
    */
-  private record InFlightRefresh(String organizationId, Future<AuthContext> future) {
+  private record InFlightRefresh(
+      String organizationId,
+      Future<AuthContext> future,
+      Future<Void> settled
+  ) {
 
   }
 
