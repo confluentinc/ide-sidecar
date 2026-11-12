@@ -38,6 +38,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.time.DateTimeException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -639,9 +640,19 @@ public class CCloudOAuthContext implements AuthContext {
       Log.warnf("The %s token has no expiry; assuming it lasts %s", tokenName, fallback);
       return fallback;
     }
-    var lifetime = iat != null && iat.canConvertToLong()
-        ? Duration.ofSeconds(exp.asLong() - iat.asLong())
-        : Duration.between(now, Instant.ofEpochSecond(exp.asLong()));
+    Duration lifetime;
+    try {
+      lifetime = iat != null && iat.canConvertToLong()
+          ? Duration.ofSeconds(Math.subtractExact(exp.asLong(), iat.asLong()))
+          : Duration.between(now, Instant.ofEpochSecond(exp.asLong()));
+    } catch (ArithmeticException | DateTimeException e) {
+      // the exception's message can quote the claims, so log only its type
+      Log.errorf(
+          "The %s token's expiry is out of range (%s); assuming it lasts %s",
+          tokenName, e.getClass().getSimpleName(), fallback
+      );
+      return fallback;
+    }
     if (lifetime.isNegative()
         || lifetime.isZero()
         || lifetime.compareTo(CCloudOAuthConfig.CCLOUD_REFRESH_TOKEN_ABSOLUTE_LIFETIME) > 0) {
