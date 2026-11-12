@@ -644,6 +644,13 @@ public class CCloudOAuthContext implements AuthContext {
               idTokenExchangeResponse.error().asText(),
               idTokenExchangeResponse.errorDescription().asText()));
     }
+    var refreshToken = idTokenExchangeResponse.refreshToken();
+    if (refreshToken == null || refreshToken.isBlank()) {
+      // say, a 5xx with a JSON body that isn't an OAuth error: storing its missing refresh token
+      // would make every later refresh fail and force a new sign-in
+      throw new CCloudAuthenticationFailedException(
+          "Confluent Cloud's answer when retrieving the ID token had no refresh token.");
+    }
 
     final var now = Instant.now();
     // the refresh token lasts until the connection's end of lifetime, whatever expires_in says
@@ -656,6 +663,13 @@ public class CCloudOAuthContext implements AuthContext {
                     : now.plus(CCloudOAuthConfig.CCLOUD_REFRESH_TOKEN_ABSOLUTE_LIFETIME)
             )
         ));
+
+    // only after storing the refresh token: CCloud has already rotated the old one
+    var idToken = idTokenExchangeResponse.idToken();
+    if (idToken == null || idToken.isBlank()) {
+      throw new CCloudAuthenticationFailedException(
+          "Confluent Cloud's answer when retrieving the ID token had no ID token.");
+    }
 
     var request = new ExchangeControlPlaneTokenRequest(
         idTokenExchangeResponse.idToken(), ccloudOrganizationId);
