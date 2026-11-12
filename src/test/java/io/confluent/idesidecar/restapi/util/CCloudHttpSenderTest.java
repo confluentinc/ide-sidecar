@@ -14,6 +14,7 @@ import io.vertx.ext.web.client.HttpResponse;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 
 class CCloudHttpSenderTest {
@@ -58,5 +59,31 @@ class CCloudHttpSenderTest {
         .get(5, TimeUnit.SECONDS);
 
     assertEquals(200, response.statusCode());
+  }
+
+  @Test
+  void shouldNotSendARequestOnceItsBudgetHasRunOut() throws Exception {
+    var sender = new CCloudHttpSender();
+    sender.rateLimiter = new CCloudApiRateLimiter(true, 1000);
+    sender.retryPolicy = new CCloudHttpRetryPolicy();
+    sender.retryPolicy.maxTotalMs = 200;
+    // a 429 pauses the endpoint for 1s, past the 200ms budget
+    HttpResponse<Buffer> tooManyRequests = mock();
+    when(tooManyRequests.getHeader("Retry-After")).thenReturn("1");
+    sender.rateLimiter.recordRateLimitedResponse(URL, tooManyRequests);
+    var sent = new AtomicInteger();
+
+    var failure = sender.send(URL, () -> {
+          sent.incrementAndGet();
+          return Future.failedFuture(new AssertionError("sent past its budget"));
+        })
+        .map(response -> (Throwable) new AssertionError("expected a failure"))
+        .recover(Future::succeededFuture)
+        .toCompletionStage()
+        .toCompletableFuture()
+        .get(5, TimeUnit.SECONDS);
+
+    assertInstanceOf(TimeoutException.class, failure);
+    assertEquals(0, sent.get());
   }
 }
