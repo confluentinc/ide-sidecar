@@ -144,9 +144,16 @@ public class CCloudOAuthContext implements AuthContext {
    */
   @Override
   public Future<Boolean> checkAuthenticationStatus() {
+    return checkAuthenticationStatus(getControlPlaneToken());
+  }
+
+  /**
+   * Like {@link #checkAuthenticationStatus()}, sending {@code controlPlaneToken}, so a caller that
+   * keys the check by a token checks exactly that token even if the context gets a new one.
+   */
+  public Future<Boolean> checkAuthenticationStatus(Token controlPlaneToken) {
     writeLock.lock();
     try {
-      final var controlPlaneToken = tokens.get().controlPlaneToken;
       // This context can't be authenticated if it does not hold a control plane token
       if (isTokenMissing(controlPlaneToken)) {
         var errorMessage =
@@ -161,7 +168,7 @@ public class CCloudOAuthContext implements AuthContext {
       var uri = CCloudOAuthConfig.CCLOUD_CONTROL_PLANE_CHECK_JWT_URI;
       return send(uri, () -> webClientFactory.getWebClient()
           .getAbs(uri)
-          .putHeaders(getControlPlaneAuthenticationHeaders())
+          .putHeaders(getAuthenticationHeaders(controlPlaneToken))
           // Synchronously tries to DNS resolve the hostname before sending the request.
           // Calling threads beware!
           .send())
