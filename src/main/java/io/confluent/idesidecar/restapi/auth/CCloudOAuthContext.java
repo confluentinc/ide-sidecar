@@ -143,9 +143,16 @@ public class CCloudOAuthContext implements AuthContext {
    */
   @Override
   public Future<Boolean> checkAuthenticationStatus() {
+    return checkAuthenticationStatus(getControlPlaneToken());
+  }
+
+  /**
+   * Like {@link #checkAuthenticationStatus()}, sending {@code controlPlaneToken}, so a caller that
+   * keys the check by a token checks exactly that token even if the context gets a new one.
+   */
+  public Future<Boolean> checkAuthenticationStatus(Token controlPlaneToken) {
     writeLock.lock();
     try {
-      final var controlPlaneToken = tokens.get().controlPlaneToken;
       // This context can't be authenticated if it does not hold a control plane token
       if (isTokenMissing(controlPlaneToken)) {
         var errorMessage =
@@ -161,7 +168,7 @@ public class CCloudOAuthContext implements AuthContext {
       return send(uri, () -> webClientFactory.getWebClient()
           .getAbs(uri)
           .timeout(WebClientFactory.WEBCLIENT_REQUEST_TIMEOUT_MS)
-          .putHeaders(getControlPlaneAuthenticationHeaders())
+          .putHeaders(getAuthenticationHeaders(controlPlaneToken))
           // Synchronously tries to DNS resolve the hostname before sending the request.
           // Calling threads beware!
           .send())
@@ -201,20 +208,33 @@ public class CCloudOAuthContext implements AuthContext {
                       + "authentication status of this connection.", e);
             }
           })
-          .onSuccess(result ->
+          // an answer about a token this context has since replaced says nothing about its session
+          .onSuccess(result -> {
+            if (holdsControlPlaneToken(controlPlaneToken)) {
               // Reset any existing error related to auth status check
               tokens.updateAndGet(oldTokens ->
                   oldTokens.withErrors(
-                      oldTokens.errors.withoutAuthStatusCheck()))
-          )
-          .onFailure(failure ->
+                      oldTokens.errors.withoutAuthStatusCheck()));
+            }
+          })
+          .onFailure(failure -> {
+            if (holdsControlPlaneToken(controlPlaneToken)) {
               tokens.updateAndGet(oldTokens ->
                   oldTokens.withErrors(
-                      oldTokens.errors.withAuthStatusCheck(failure.getMessage())))
-          );
+                      oldTokens.errors.withAuthStatusCheck(failure.getMessage())));
+            }
+          });
     } finally {
       writeLock.unlock();
     }
+  }
+
+  /**
+   * Whether {@code token} is still this context's control-plane token.
+   */
+  private boolean holdsControlPlaneToken(Token token) {
+    var current = tokens.get().controlPlaneToken;
+    return current != null && Objects.equals(current.token(), token.token());
   }
 
   /**
