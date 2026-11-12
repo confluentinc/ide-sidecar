@@ -209,20 +209,33 @@ public class CCloudOAuthContext implements AuthContext {
                       + "authentication status of this connection.", e);
             }
           })
-          .onSuccess(result ->
+          // an answer about a token this context has since replaced says nothing about its session
+          .onSuccess(result -> {
+            if (holdsControlPlaneToken(controlPlaneToken)) {
               // Reset any existing error related to auth status check
               tokens.updateAndGet(oldTokens ->
                   oldTokens.withErrors(
-                      oldTokens.errors.withoutAuthStatusCheck()))
-          )
-          .onFailure(failure ->
+                      oldTokens.errors.withoutAuthStatusCheck()));
+            }
+          })
+          .onFailure(failure -> {
+            if (holdsControlPlaneToken(controlPlaneToken)) {
               tokens.updateAndGet(oldTokens ->
                   oldTokens.withErrors(
-                      oldTokens.errors.withAuthStatusCheck(failure.getMessage())))
-          );
+                      oldTokens.errors.withAuthStatusCheck(failure.getMessage())));
+            }
+          });
     } finally {
       writeLock.unlock();
     }
+  }
+
+  /**
+   * Whether {@code token} is still this context's control-plane token.
+   */
+  private boolean holdsControlPlaneToken(Token token) {
+    var current = tokens.get().controlPlaneToken;
+    return current != null && Objects.equals(current.token(), token.token());
   }
 
   /**
