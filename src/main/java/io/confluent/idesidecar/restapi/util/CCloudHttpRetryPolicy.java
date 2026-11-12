@@ -65,6 +65,13 @@ public class CCloudHttpRetryPolicy {
   long maxTotalMs;
 
   /**
+   * How long one call, with its retries, may take.
+   */
+  public Duration budget() {
+    return Duration.ofMillis(maxTotalMs);
+  }
+
+  /**
    * Retry {@code source} on 429s, with the time budget starting when it's subscribed.
    */
   public <T> Uni<T> applyRetry(String url, Uni<T> source) {
