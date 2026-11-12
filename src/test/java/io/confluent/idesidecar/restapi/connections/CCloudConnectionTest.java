@@ -4,6 +4,7 @@ import static io.confluent.idesidecar.restapi.connections.CCloudConnectionState.
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -289,7 +290,7 @@ public class CCloudConnectionTest {
     var connectionState = spyCCloudConnectionState(true, true, true, true, false, false);
     var authContext = ((CCloudConnectionState) connectionState).getOauthContext();
     var healthy = refreshStatus(connectionState);
-    when(authContext.checkAuthenticationStatus()).thenReturn(Future.failedFuture(
+    when(authContext.checkAuthenticationStatus(any())).thenReturn(Future.failedFuture(
         new CompletionException(new NoStackTraceTimeoutException(CHECK_JWT_TIMEOUT))
     ));
     when(authContext.getErrors())
@@ -310,7 +311,7 @@ public class CCloudConnectionTest {
     var connectionState = spyCCloudConnectionState(true, true, true, true, false, false);
     var authContext = ((CCloudConnectionState) connectionState).getOauthContext();
     refreshStatus(connectionState);
-    when(authContext.checkAuthenticationStatus()).thenReturn(Future.failedFuture(
+    when(authContext.checkAuthenticationStatus(any())).thenReturn(Future.failedFuture(
         new TransientServerErrorException(
             "https://confluent.cloud/api/check_jwt", 503, -1, new RuntimeException("503")
         )
@@ -326,7 +327,7 @@ public class CCloudConnectionTest {
     var connectionState = spyCCloudConnectionState(true, true, true, true, false, false);
     var authContext = ((CCloudConnectionState) connectionState).getOauthContext();
     refreshStatus(connectionState);
-    when(authContext.checkAuthenticationStatus()).thenReturn(Future.failedFuture(
+    when(authContext.checkAuthenticationStatus(any())).thenReturn(Future.failedFuture(
         new TooManyRequestsException("https://confluent.cloud/api/check_jwt", 30)
     ));
 
@@ -340,7 +341,7 @@ public class CCloudConnectionTest {
     var connectionState = spyCCloudConnectionState(true, true, true, true, false, false);
     var authContext = ((CCloudConnectionState) connectionState).getOauthContext();
     var healthy = refreshStatus(connectionState);
-    when(authContext.checkAuthenticationStatus()).thenReturn(Future.failedFuture(
+    when(authContext.checkAuthenticationStatus(any())).thenReturn(Future.failedFuture(
         // netty's message at production's 10s connect-timeout-seconds
         new ConnectTimeoutException("connection timed out after 10000 ms")
     ));
@@ -356,7 +357,7 @@ public class CCloudConnectionTest {
     var connectionState = spyCCloudConnectionState(true, true, true, true, false, false);
     var authContext = ((CCloudConnectionState) connectionState).getOauthContext();
     refreshStatus(connectionState);
-    when(authContext.checkAuthenticationStatus())
+    when(authContext.checkAuthenticationStatus(any()))
         .thenReturn(Future.failedFuture(new ConnectException("Connection refused")));
 
     var status = refreshStatus(connectionState);
@@ -368,7 +369,7 @@ public class CCloudConnectionTest {
   void refreshStatusShouldReturnExpiredIfFirstAuthStatusCheckTimesOut() throws Throwable {
     var connectionState = spyCCloudConnectionState(true, true, true, true, false, false);
     var authContext = ((CCloudConnectionState) connectionState).getOauthContext();
-    when(authContext.checkAuthenticationStatus())
+    when(authContext.checkAuthenticationStatus(any()))
         .thenReturn(Future.failedFuture(new NoStackTraceTimeoutException(CHECK_JWT_TIMEOUT)));
 
     var status = refreshStatus(connectionState);
@@ -381,7 +382,7 @@ public class CCloudConnectionTest {
     var connectionState = spyCCloudConnectionState(true, true, true, true, false, false);
     var authContext = ((CCloudConnectionState) connectionState).getOauthContext();
     refreshStatus(connectionState);
-    when(authContext.checkAuthenticationStatus())
+    when(authContext.checkAuthenticationStatus(any()))
         .thenReturn(Future.failedFuture(new IllegalStateException("connection reset")));
 
     var status = refreshStatus(connectionState);
@@ -418,7 +419,7 @@ public class CCloudConnectionTest {
 
     assertEquals(ConnectedState.SUCCESS, first.ccloud().state());
     assertEquals(ConnectedState.SUCCESS, second.ccloud().state());
-    verify(connectionState.getOauthContext(), times(1)).checkAuthenticationStatus();
+    verify(connectionState.getOauthContext(), times(1)).checkAuthenticationStatus(any());
   }
 
   @Test
@@ -435,7 +436,7 @@ public class CCloudConnectionTest {
     awaitStatus(connectionState.refreshStatus());
 
     // assert: the jitter only ever lengthens the interval
-    verify(connectionState.getOauthContext(), times(1)).checkAuthenticationStatus();
+    verify(connectionState.getOauthContext(), times(1)).checkAuthenticationStatus(any());
   }
 
   @Test
@@ -452,7 +453,7 @@ public class CCloudConnectionTest {
     awaitStatus(connectionState.refreshStatus());
 
     // assert
-    verify(connectionState.getOauthContext(), times(2)).checkAuthenticationStatus();
+    verify(connectionState.getOauthContext(), times(2)).checkAuthenticationStatus(any());
   }
 
   @Test
@@ -475,7 +476,7 @@ public class CCloudConnectionTest {
     awaitStatus(connectionState.refreshStatus());
 
     // assert
-    verify(connectionState.getOauthContext(), times(2)).checkAuthenticationStatus();
+    verify(connectionState.getOauthContext(), times(2)).checkAuthenticationStatus(any());
   }
 
   @Test
@@ -485,7 +486,7 @@ public class CCloudConnectionTest {
     var start = Instant.now();
     doReturn(start).when(connectionState).now();
     var healthy = awaitStatus(connectionState.refreshStatus());
-    when(connectionState.getOauthContext().checkAuthenticationStatus()).thenReturn(
+    when(connectionState.getOauthContext().checkAuthenticationStatus(any())).thenReturn(
         Future.failedFuture(new NoStackTraceTimeoutException(CHECK_JWT_TIMEOUT)),
         Future.succeededFuture(true)
     );
@@ -497,7 +498,7 @@ public class CCloudConnectionTest {
 
     // assert: a timeout isn't cached as healthy, so the next refresh checks again
     assertEquals(healthy, afterTimeout);
-    verify(connectionState.getOauthContext(), times(3)).checkAuthenticationStatus();
+    verify(connectionState.getOauthContext(), times(3)).checkAuthenticationStatus(any());
   }
 
   @Test
@@ -512,7 +513,7 @@ public class CCloudConnectionTest {
     awaitStatus(connectionState.refreshStatus());
 
     // assert
-    verify(connectionState.getOauthContext(), times(2)).checkAuthenticationStatus();
+    verify(connectionState.getOauthContext(), times(2)).checkAuthenticationStatus(any());
   }
 
   @Test
@@ -524,7 +525,7 @@ public class CCloudConnectionTest {
     awaitStatus(connectionState.refreshStatus());
     var later = start.plus(HEALTHY_INTERVAL.multipliedBy(2));
     doReturn(later).when(connectionState).now();
-    when(connectionState.getOauthContext().checkAuthenticationStatus())
+    when(connectionState.getOauthContext().checkAuthenticationStatus(any()))
         .thenReturn(Future.succeededFuture(false));
 
     // act
@@ -533,14 +534,24 @@ public class CCloudConnectionTest {
 
     // assert
     assertEquals(ConnectedState.EXPIRED, expired.ccloud().state());
-    verify(connectionState.getOauthContext(), times(3)).checkAuthenticationStatus();
+    verify(connectionState.getOauthContext(), times(3)).checkAuthenticationStatus(any());
+  }
+
+  @Test
+  void shouldSendTheCheckWithTheTokenItIsKeyedBy() throws Exception {
+    var connectionState = signedInConnectionState(Future.succeededFuture(true));
+    var token = connectionState.getOauthContext().getControlPlaneToken();
+
+    awaitStatus(connectionState.refreshStatus());
+
+    verify(connectionState.getOauthContext()).checkAuthenticationStatus(token);
   }
 
   @Test
   void shouldTreatACheckJwtThatThrowsAsExpired() throws Exception {
     // arrange
     var connectionState = signedInConnectionState(Future.succeededFuture(true));
-    when(connectionState.getOauthContext().checkAuthenticationStatus())
+    when(connectionState.getOauthContext().checkAuthenticationStatus(any()))
         .thenThrow(new IllegalStateException("boom"));
 
     // act
@@ -549,7 +560,7 @@ public class CCloudConnectionTest {
     // assert: and the next refresh can still check
     assertEquals(ConnectedState.EXPIRED, status.ccloud().state());
     awaitStatus(connectionState.refreshStatus());
-    verify(connectionState.getOauthContext(), times(2)).checkAuthenticationStatus();
+    verify(connectionState.getOauthContext(), times(2)).checkAuthenticationStatus(any());
   }
 
   @Test
@@ -560,7 +571,7 @@ public class CCloudConnectionTest {
     connectionState.refreshStatus();
     when(connectionState.getOauthContext().getControlPlaneToken())
         .thenReturn(new Token("signed-in-again", Instant.now().plusSeconds(300)));
-    when(connectionState.getOauthContext().checkAuthenticationStatus())
+    when(connectionState.getOauthContext().checkAuthenticationStatus(any()))
         .thenReturn(Future.succeededFuture(true));
 
     // act
@@ -578,7 +589,7 @@ public class CCloudConnectionTest {
     connectionState.refreshStatus();
     when(connectionState.getOauthContext().getControlPlaneToken())
         .thenReturn(new Token("refreshed", Instant.now().plusSeconds(300)));
-    when(connectionState.getOauthContext().checkAuthenticationStatus())
+    when(connectionState.getOauthContext().checkAuthenticationStatus(any()))
         .thenReturn(Future.succeededFuture(true));
     awaitStatus(connectionState.refreshStatus());
 
@@ -587,7 +598,7 @@ public class CCloudConnectionTest {
     awaitStatus(connectionState.refreshStatus());
 
     // assert: the newer token's healthy result is still reused
-    verify(connectionState.getOauthContext(), times(2)).checkAuthenticationStatus();
+    verify(connectionState.getOauthContext(), times(2)).checkAuthenticationStatus(any());
   }
 
   @Test
@@ -597,7 +608,7 @@ public class CCloudConnectionTest {
     awaitStatus(connectionState.refreshStatus());
     awaitStatus(connectionState.refreshStatus());
 
-    verify(connectionState.getOauthContext(), times(2)).checkAuthenticationStatus();
+    verify(connectionState.getOauthContext(), times(2)).checkAuthenticationStatus(any());
   }
 
   @Test
@@ -609,7 +620,7 @@ public class CCloudConnectionTest {
         .thenReturn(new Token("refreshed-control-plane-token", Instant.now().plusSeconds(300)));
     awaitStatus(connectionState.refreshStatus());
 
-    verify(connectionState.getOauthContext(), times(2)).checkAuthenticationStatus();
+    verify(connectionState.getOauthContext(), times(2)).checkAuthenticationStatus(any());
   }
 
   @Test
@@ -623,7 +634,7 @@ public class CCloudConnectionTest {
 
     assertEquals(ConnectedState.SUCCESS, awaitStatus(first).ccloud().state());
     assertEquals(ConnectedState.SUCCESS, awaitStatus(second).ccloud().state());
-    verify(connectionState.getOauthContext(), times(1)).checkAuthenticationStatus();
+    verify(connectionState.getOauthContext(), times(1)).checkAuthenticationStatus(any());
   }
 
   @Test
@@ -634,7 +645,7 @@ public class CCloudConnectionTest {
     doReturn(start).when(connectionState).now();
     var healthy = awaitStatus(connectionState.refreshStatus());
     Promise<Boolean> stillConnecting = Promise.promise();
-    when(connectionState.getOauthContext().checkAuthenticationStatus())
+    when(connectionState.getOauthContext().checkAuthenticationStatus(any()))
         .thenReturn(stillConnecting.future());
     doReturn(start.plus(HEALTHY_INTERVAL.multipliedBy(2))).when(connectionState).now();
 
@@ -646,7 +657,7 @@ public class CCloudConnectionTest {
     // assert
     assertEquals(healthy, awaitStatus(first));
     assertEquals(healthy, awaitStatus(second));
-    verify(connectionState.getOauthContext(), times(2)).checkAuthenticationStatus();
+    verify(connectionState.getOauthContext(), times(2)).checkAuthenticationStatus(any());
   }
 
   /**
@@ -659,7 +670,7 @@ public class CCloudConnectionTest {
     connectionState.setSpec(new ConnectionSpec("1", "foo", ConnectionType.CCLOUD));
     var authContext = mock(CCloudOAuthContext.class);
     var expiresAt = Instant.now().plusSeconds(300);
-    when(authContext.checkAuthenticationStatus()).thenReturn(checkResult);
+    when(authContext.checkAuthenticationStatus(any())).thenReturn(checkResult);
     when(authContext.getRefreshToken()).thenReturn(new Token("refresh-token", expiresAt));
     when(authContext.getControlPlaneToken())
         .thenReturn(new Token("control-plane-token", expiresAt));
@@ -689,7 +700,7 @@ public class CCloudConnectionTest {
     connectionState.setSpec(new ConnectionSpec("1", "foo", ConnectionType.CCLOUD));
 
     var authContext = mock(CCloudOAuthContext.class);
-    when(authContext.checkAuthenticationStatus())
+    when(authContext.checkAuthenticationStatus(any()))
         .thenReturn(Future.succeededFuture(authenticationStatus));
     if (withRefreshToken) {
       when(authContext.getRefreshToken())
