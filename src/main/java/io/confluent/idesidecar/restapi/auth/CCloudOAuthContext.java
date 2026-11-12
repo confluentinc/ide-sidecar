@@ -209,33 +209,32 @@ public class CCloudOAuthContext implements AuthContext {
                       + "authentication status of this connection.", e);
             }
           })
-          // an answer about a token this context has since replaced says nothing about its session
-          .onSuccess(result -> {
-            if (holdsControlPlaneToken(controlPlaneToken)) {
+          // an answer about a token this context has since replaced says nothing about its
+          // session; compared inside each update, so a token swapped in mid-update is seen too
+          .onSuccess(result ->
               // Reset any existing error related to auth status check
               tokens.updateAndGet(oldTokens ->
-                  oldTokens.withErrors(
-                      oldTokens.errors.withoutAuthStatusCheck()));
-            }
-          })
-          .onFailure(failure -> {
-            if (holdsControlPlaneToken(controlPlaneToken)) {
+                  isSameToken(oldTokens.controlPlaneToken, controlPlaneToken)
+                      ? oldTokens.withErrors(oldTokens.errors.withoutAuthStatusCheck())
+                      : oldTokens)
+          )
+          .onFailure(failure ->
               tokens.updateAndGet(oldTokens ->
-                  oldTokens.withErrors(
-                      oldTokens.errors.withAuthStatusCheck(failure.getMessage())));
-            }
-          });
+                  isSameToken(oldTokens.controlPlaneToken, controlPlaneToken)
+                      ? oldTokens.withErrors(
+                          oldTokens.errors.withAuthStatusCheck(failure.getMessage()))
+                      : oldTokens)
+          );
     } finally {
       writeLock.unlock();
     }
   }
 
   /**
-   * Whether {@code token} is still this context's control-plane token.
+   * Whether {@code held} and {@code checked} carry the same token value.
    */
-  private boolean holdsControlPlaneToken(Token token) {
-    var current = tokens.get().controlPlaneToken;
-    return current != null && Objects.equals(current.token(), token.token());
+  private static boolean isSameToken(Token held, Token checked) {
+    return held != null && Objects.equals(held.token(), checked.token());
   }
 
   /**
