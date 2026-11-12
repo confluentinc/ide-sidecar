@@ -4,6 +4,7 @@ import static io.confluent.idesidecar.restapi.util.RequestHeadersConstants.TARGE
 
 import io.confluent.idesidecar.restapi.auth.AuthErrors;
 import io.confluent.idesidecar.restapi.auth.CCloudOAuthContext;
+import io.confluent.idesidecar.restapi.auth.Token;
 import io.confluent.idesidecar.restapi.exceptions.TooManyRequestsException;
 import io.confluent.idesidecar.restapi.exceptions.TransientServerErrorException;
 import io.confluent.idesidecar.restapi.models.ConnectionMetadata;
@@ -252,24 +253,28 @@ public class CCloudConnectionState extends ConnectionState {
    * every time otherwise. A status refresh that comes while a check is running joins it.
    */
   private Future<Boolean> checkAuthenticationStatus() {
-    var token = oauthContext.getControlPlaneToken();
-    var tokenValue = token != null ? token.token() : null;
     var now = now();
     Promise<Boolean> promise = Promise.promise();
-    var mine = new RunningCheck(tokenValue, promise.future());
+    Token token;
+    RunningCheck mine;
     // under one lock with recording a result, so a check can't start between another check
-    // freeing the slot and recording what it found
+    // freeing the slot and recording what it found; the token is read here too, so a refresh
+    // that paused can't key its check by a token a newer sign-in already replaced
     synchronized (checkLock) {
+      token = oauthContext.getControlPlaneToken();
+      var tokenValue = token != null ? token.token() : null;
+      mine = new RunningCheck(tokenValue, promise.future());
       var healthy = lastHealthyCheck.get();
       if (healthy != null
           && token != null
-          && Objects.equals(healthy.controlPlaneToken(), tokenValue)
+          && Objects.equals(healthy.controlPlaneToken(), mine.controlPlaneToken())
           && now.isBefore(healthy.nextCheckAt())
           && token.expiresAt().isAfter(now)) {
         return Future.succeededFuture(true);
       }
       var running = runningCheck.get();
-      if (running != null && Objects.equals(running.controlPlaneToken(), tokenValue)) {
+      if (running != null
+          && Objects.equals(running.controlPlaneToken(), mine.controlPlaneToken())) {
         return running.future();
       }
       // a check for an older token (say, before a new sign-in) can't answer for this one
@@ -278,7 +283,7 @@ public class CCloudConnectionState extends ConnectionState {
     Future<Boolean> check;
     try {
       // a failure reaches every caller that joined, so each can tell a timeout from a rejection
-      check = oauthContext.checkAuthenticationStatus();
+      check = oauthContext.checkAuthenticationStatus(token);
     } catch (RuntimeException e) {
       finishCheck(mine, null);
       Log.errorf(e, "Couldn't check the CCloud session of connection %s", getId());
@@ -292,7 +297,7 @@ public class CCloudConnectionState extends ConnectionState {
       // counted from when the check was sent, so a slow answer doesn't stretch the interval
       finishCheck(mine, isHealthy
           ? new HealthyCheck(
-              tokenValue,
+              mine.controlPlaneToken(),
               now.plusMillis(Math.round(checkJwtHealthyInterval().toMillis() * jitter))
           )
           : null);
