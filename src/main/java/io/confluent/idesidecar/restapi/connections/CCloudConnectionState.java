@@ -70,6 +70,8 @@ public class CCloudConnectionState extends ConnectionState {
   /**
    * The {@code check_jwt} running for this connection, or null.
    */
+  private final Object checkLock = new Object();
+
   private final AtomicReference<RunningCheck> runningCheck = new AtomicReference<>();
 
   CCloudConnectionState() {
@@ -253,35 +255,32 @@ public class CCloudConnectionState extends ConnectionState {
     var token = oauthContext.getControlPlaneToken();
     var tokenValue = token != null ? token.token() : null;
     var now = now();
-    var healthy = lastHealthyCheck.get();
-    if (healthy != null
-        && token != null
-        && Objects.equals(healthy.controlPlaneToken(), tokenValue)
-        && now.isBefore(healthy.nextCheckAt())
-        && token.expiresAt().isAfter(now)) {
-      return Future.succeededFuture(true);
-    }
-
     Promise<Boolean> promise = Promise.promise();
     var mine = new RunningCheck(tokenValue, promise.future());
-    while (true) {
+    // under one lock with recording a result, so a check can't start between another check
+    // freeing the slot and recording what it found
+    synchronized (checkLock) {
+      var healthy = lastHealthyCheck.get();
+      if (healthy != null
+          && token != null
+          && Objects.equals(healthy.controlPlaneToken(), tokenValue)
+          && now.isBefore(healthy.nextCheckAt())
+          && token.expiresAt().isAfter(now)) {
+        return Future.succeededFuture(true);
+      }
       var running = runningCheck.get();
       if (running != null && Objects.equals(running.controlPlaneToken(), tokenValue)) {
         return running.future();
       }
       // a check for an older token (say, before a new sign-in) can't answer for this one
-      if (runningCheck.compareAndSet(running, mine)) {
-        break;
-      }
+      runningCheck.set(mine);
     }
     Future<Boolean> check;
     try {
       // a failure reaches every caller that joined, so each can tell a timeout from a rejection
       check = oauthContext.checkAuthenticationStatus();
     } catch (RuntimeException e) {
-      if (runningCheck.compareAndSet(mine, null)) {
-        lastHealthyCheck.set(null);
-      }
+      finishCheck(mine, null);
       Log.errorf(e, "Couldn't check the CCloud session of connection %s", getId());
       // fail, so a caller that joined sees the cause, as with any other failed check
       promise.fail(e);
@@ -290,19 +289,29 @@ public class CCloudConnectionState extends ConnectionState {
     var jitter = 1 + CHECK_JWT_JITTER_FACTOR * ThreadLocalRandom.current().nextDouble();
     check.onComplete(result -> {
       var isHealthy = result.succeeded() && Boolean.TRUE.equals(result.result());
-      // a check for a newer token replaced this one, so its result is the one to keep
-      if (runningCheck.compareAndSet(mine, null)) {
-        // counted from when the check was sent, so a slow answer doesn't stretch the interval
-        lastHealthyCheck.set(isHealthy
-            ? new HealthyCheck(
-                tokenValue,
-                now.plusMillis(Math.round(checkJwtHealthyInterval().toMillis() * jitter))
-            )
-            : null);
-      }
+      // counted from when the check was sent, so a slow answer doesn't stretch the interval
+      finishCheck(mine, isHealthy
+          ? new HealthyCheck(
+              tokenValue,
+              now.plusMillis(Math.round(checkJwtHealthyInterval().toMillis() * jitter))
+          )
+          : null);
       promise.handle(result);
     });
     return promise.future();
+  }
+
+  /**
+   * Free the slot {@code check} holds and record its result, unless a check for a newer token
+   * replaced it, whose result is the one to keep.
+   */
+  private void finishCheck(RunningCheck check, HealthyCheck healthy) {
+    synchronized (checkLock) {
+      if (runningCheck.get() == check) {
+        runningCheck.set(null);
+        lastHealthyCheck.set(healthy);
+      }
+    }
   }
 
   /**
