@@ -100,10 +100,12 @@ public record RateLimitState(
     }
     var value = header.trim();
     if (value.chars().allMatch(c -> c >= '0' && c <= '9')) {
+      // leading zeroes don't change the value
+      var digits = value.replaceFirst("^0+(?=.)", "");
       // more than 10 digits is past Integer.MAX_VALUE, and could overflow a long
-      return value.length() > 10
+      return digits.length() > 10
           ? Integer.MAX_VALUE
-          : (int) Math.min(Long.parseLong(value), Integer.MAX_VALUE);
+          : (int) Math.min(Long.parseLong(digits), Integer.MAX_VALUE);
     }
     try {
       var date = ZonedDateTime.parse(value, DateTimeFormatter.RFC_1123_DATE_TIME).toInstant();
