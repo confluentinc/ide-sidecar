@@ -921,6 +921,39 @@ class CCloudOAuthContextTest {
     assertTrue(authContext.getNextTokenRefreshAttemptAt().isEmpty());
   }
 
+  @Test
+  void refreshShouldKeepTheRefreshTokenWhenTheExchangeAnswersWithoutTokens() throws Throwable {
+    var authContext = new CCloudOAuthContext();
+    authContext.createTokensFromAuthorizationCode(FAKE_AUTHORIZATION_CODE, null)
+        .toCompletionStage().toCompletableFuture().get(5, TimeUnit.SECONDS);
+    var refreshToken = authContext.getRefreshToken().token();
+    // a 503 whose JSON body has no error field and no tokens
+    failTokenExchanges();
+
+    awaitFailure(authContext.refresh(null));
+
+    assertEquals(refreshToken, authContext.getRefreshToken().token());
+    assertEquals(1, authContext.getFailedTokenRefreshAttempts());
+  }
+
+  @Test
+  void refreshShouldKeepARotatedRefreshTokenWhenTheAnswerHasNoIdToken() throws Throwable {
+    var authContext = new CCloudOAuthContext();
+    authContext.createTokensFromAuthorizationCode(FAKE_AUTHORIZATION_CODE, null)
+        .toCompletionStage().toCompletableFuture().get(5, TimeUnit.SECONDS);
+    wireMock.register(
+        WireMock.post("/oauth/token")
+            .atPriority(1)
+            .willReturn(WireMock.aResponse().withStatus(201)
+                .withBody("{\"refresh_token\":\"rotated-refresh-token\"}"))
+    );
+
+    awaitFailure(authContext.refresh(null));
+
+    // CCloud already invalidated the old token, so the new one must be kept
+    assertEquals("rotated-refresh-token", authContext.getRefreshToken().token());
+  }
+
   private void failTokenExchanges() {
     wireMock.register(
         WireMock.post("/oauth/token")
