@@ -1085,8 +1085,10 @@ class CCloudOAuthContextTest {
 
     var elapsed = Duration.ofNanos(System.nanoTime() - started);
     assertTrue(elapsed.toMillis() < 900, "waited for the slow exchange: " + elapsed);
-    assertFalse(authContext.isRefreshInFlight());
     assertEquals(1, authContext.getFailedTokenRefreshAttempts());
+    // the exchange has its own timer, so it can end just after the caller's deadline
+    Awaitility.await().atMost(Duration.ofSeconds(5))
+        .until(() -> !authContext.isRefreshInFlight());
   }
 
   @Test
