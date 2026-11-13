@@ -186,16 +186,20 @@ class WebClientRequestTimeoutTest {
   }
 
   @Test
-  void tokenRefreshShouldCountAStalledExchangeAsAFailedAttempt() throws Exception {
+  void tokenRefreshShouldWaitPastTheRequestTimeoutForTheRefreshTokenExchange() throws Exception {
     var authContext = new CCloudOAuthContext();
     awaitResult(authContext.createTokensFromAuthorizationCode(FAKE_AUTHORIZATION_CODE, null));
-    stall(WireMock.post(WireMock.urlPathEqualTo("/oauth/token")).atPriority(1));
-    var started = System.nanoTime();
+    var testUtil = new CCloudTestUtil(wireMock, connectionStateManager);
+    var refreshed = testUtil.expectRefreshTokenExchangeRequest(
+        authContext.getRefreshToken().token(),
+        (int) ShortWebClientTimeoutProfile.REQUEST_TIMEOUT_MS + 500
+    );
+    testUtil.expectControlPlaneAndDataPlaneTokenExchangeRequest(refreshed.id_token(), null, null);
 
-    awaitFailure(authContext.refresh(null));
+    awaitResult(authContext.refresh(null));
 
-    assertGaveUpInTime(started);
-    assertEquals(1, authContext.getFailedTokenRefreshAttempts());
+    assertEquals(refreshed.refresh_token(), authContext.getRefreshToken().token());
+    assertEquals(0, authContext.getFailedTokenRefreshAttempts());
   }
 
   private void stall(MappingBuilder request) {
