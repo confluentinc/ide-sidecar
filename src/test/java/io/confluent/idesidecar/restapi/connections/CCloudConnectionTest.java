@@ -504,16 +504,20 @@ public class CCloudConnectionTest {
 
   @Test
   void shouldCheckJwtAgainOnceTheControlPlaneTokenExpires() throws Exception {
-    // arrange
+    // arrange: a healthy check for a token that expires before the healthy interval ends
     var connectionState = signedInConnectionState(Future.succeededFuture(true));
+    var start = Instant.now();
+    var expiresAt = start.plus(HEALTHY_INTERVAL.dividedBy(2));
+    when(connectionState.getOauthContext().getControlPlaneToken())
+        .thenReturn(new Token("control-plane-token", expiresAt));
+    doReturn(start).when(connectionState).now();
     awaitStatus(connectionState.refreshStatus());
-    var expiresAt = connectionState.getOauthContext().getControlPlaneToken().expiresAt();
     doReturn(expiresAt).when(connectionState).now();
 
     // act
     awaitStatus(connectionState.refreshStatus());
 
-    // assert
+    // assert: the cached result is still inside its interval, but the token has expired
     verify(connectionState.getOauthContext(), times(2)).checkAuthenticationStatus(any());
   }
 
