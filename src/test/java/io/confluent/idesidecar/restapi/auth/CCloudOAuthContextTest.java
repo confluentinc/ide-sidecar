@@ -642,6 +642,24 @@ class CCloudOAuthContextTest {
   }
 
   @Test
+  void checkAuthenticationStatusShouldNotRecordTheErrorOfATokenTheContextNoLongerHolds()
+      throws Throwable {
+    var authContext = new CCloudOAuthContext();
+    authContext.createTokensFromAuthorizationCode(FAKE_AUTHORIZATION_CODE, null)
+        .toCompletionStage().toCompletableFuture().get(5, TimeUnit.SECONDS);
+    wireMock.register(
+        WireMock.get("/api/check_jwt")
+            .willReturn(WireMock.aResponse().withStatus(200).withBody("{}"))
+            .atPriority(50)
+    );
+
+    awaitFailure(authContext.checkAuthenticationStatus(
+        new Token("replaced-token", Instant.now().plusSeconds(300))));
+
+    assertNull(authContext.getErrors().authStatusCheck());
+  }
+
+  @Test
   void checkAuthenticationStatusShouldReturnFailedFutureIfCCloudReturnsInvalidJson()
       throws Throwable {
     var testContext = new VertxTestContext();
