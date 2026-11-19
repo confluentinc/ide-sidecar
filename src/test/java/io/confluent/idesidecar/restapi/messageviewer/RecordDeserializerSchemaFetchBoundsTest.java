@@ -97,7 +97,7 @@ class RecordDeserializerSchemaFetchBoundsTest {
 
       var result = deserializer.deserialize(RECORD_WITH_SCHEMA_ID, client, context, false);
 
-      // only the client's own tries: 1 plus its max.retries
+      // 1 attempt x 4 sends (1 + the client's 3 retries), with no sidecar retries on top
       assertEquals(CLIENT_SENDS_PER_FETCH, requests.get());
       assertTrue(result.errorMessage().contains("gave up: "), result.errorMessage());
       assertLoggedAtErrorContaining("gave up: ");
@@ -155,6 +155,7 @@ class RecordDeserializerSchemaFetchBoundsTest {
 
       var elapsed = Duration.ofNanos(System.nanoTime() - started);
       assertTrue(elapsed.toMillis() < 5_000, "took " + elapsed);
+      // 1 send: waiting out the 15s Retry-After would pass the 5s deadline
       assertEquals(1, requests.get());
       assertTrue(
           result.errorMessage().contains("asked to retry after 15s"),
