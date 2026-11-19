@@ -138,6 +138,7 @@ public class CCloudOAuthContext implements AuthContext {
       var uri = CCloudOAuthConfig.CCLOUD_CONTROL_PLANE_CHECK_JWT_URI;
       return send(uri, () -> webClientFactory.getWebClient()
           .getAbs(uri)
+          .timeout(WebClientFactory.WEBCLIENT_REQUEST_TIMEOUT_MS)
           .putHeaders(getControlPlaneAuthenticationHeaders())
           // Synchronously tries to DNS resolve the hostname before sending the request.
           // Calling threads beware!
@@ -145,7 +146,13 @@ public class CCloudOAuthContext implements AuthContext {
           .map(result -> {
             try {
               var response = OBJECT_MAPPER.readValue(result.bodyAsString(), CheckJwtResponse.class);
-              if (response.error() != null && !response.error().isNull()) {
+              if (response.error() == null) {
+                throw new CCloudAuthenticationFailedException(
+                    "Confluent Cloud's response when verifying the authentication status of this "
+                        + "connection had no error field."
+                );
+              }
+              if (!response.error().isNull()) {
                 Log.errorf("Error in CCloud response while verifying the auth status "
                     + "of this connection: %s", response.error());
                 // depending on what kinds of errors we get from CCloud, we might want to
@@ -477,6 +484,7 @@ public class CCloudOAuthContext implements AuthContext {
     var uri = CCloudOAuthConfig.CCLOUD_OAUTH_TOKEN_URI;
     return send(uri, () -> webClientFactory.getWebClient()
         .postAbs(uri)
+        .timeout(WebClientFactory.WEBCLIENT_REQUEST_TIMEOUT_MS)
         .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED)
         .sendBuffer(Buffer.buffer(requestBody)))
         .map(response -> {
@@ -571,6 +579,7 @@ public class CCloudOAuthContext implements AuthContext {
     var uri = CCloudOAuthConfig.CCLOUD_CONTROL_PLANE_TOKEN_URI;
     return send(uri, () -> webClientFactory.getWebClient()
         .postAbs(uri)
+        .timeout(WebClientFactory.WEBCLIENT_REQUEST_TIMEOUT_MS)
         .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
         .sendBuffer(Buffer.buffer(request.toJsonString())))
         .map(response -> {
@@ -607,6 +616,7 @@ public class CCloudOAuthContext implements AuthContext {
     var uri = CCloudOAuthConfig.CCLOUD_DATA_PLANE_TOKEN_URI;
     return send(uri, () -> webClientFactory.getWebClient()
         .postAbs(uri)
+        .timeout(WebClientFactory.WEBCLIENT_REQUEST_TIMEOUT_MS)
         .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
         .putHeader(HttpHeaders.AUTHORIZATION, String.format("Bearer %s", controlPlaneToken))
         .sendBuffer(Buffer.buffer("{}")))

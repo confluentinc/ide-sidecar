@@ -248,6 +248,14 @@ ide-sidecar:
       - Accept-Encoding
   webclient:
     connect-timeout-seconds: 10
+    # How long a whole request may take, from getting a connection to the end of the response
+    request-timeout-seconds: 20
+    # Backstop that closes a connection after this long with a request in flight and no traffic;
+    # raised to 30s above the longest request timeout if set lower
+    idle-timeout-seconds: 90
+    # CCloud consume may hold the request open while there are no records; provisional, since how
+    # long it holds hasn't been measured yet
+    ccloud-consume-timeout-seconds: 60
   schema-fetch-error-ttl: 30
   schema-fetch-retry:
     timeout-ms: 10000
