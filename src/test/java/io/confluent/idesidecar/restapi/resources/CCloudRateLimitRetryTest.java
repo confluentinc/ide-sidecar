@@ -6,10 +6,12 @@ import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
+import com.github.tomakehurst.wiremock.matching.RequestPatternBuilder;
 import com.github.tomakehurst.wiremock.stubbing.Scenario;
 import io.confluent.idesidecar.restapi.models.ConnectionSpec.ConnectionType;
 import io.confluent.idesidecar.restapi.testutil.NoAccessFilterProfile;
@@ -32,6 +34,9 @@ import org.junit.jupiter.api.Test;
 @ConnectWireMock
 @TestProfile(NoAccessFilterProfile.class)
 public class CCloudRateLimitRetryTest extends ConfluentQueryResourceTestBase {
+
+  private static final String UNAVAILABLE_BODY =
+      "{\"errors\":[{\"status\":\"503\",\"detail\":\"Service Unavailable\"}]}";
 
   private static final String CONNECTION_ID = "ccloud-retry-test";
   private static final String ENVIRONMENTS_QUERY = """
@@ -174,10 +179,88 @@ public class CCloudRateLimitRetryTest extends ConfluentQueryResourceTestBase {
             )
     );
 
+    wireMock.resetRequests();
+
     // act + assert: query returns errors (no retry for 500)
     queryGraphQLRaw(ENVIRONMENTS_QUERY)
         .body("errors", notNullValue())
         .body("errors[0].message", notNullValue());
+    wireMock.verifyThat(1, envListRequests());
+  }
+
+  @Test
+  void shouldRetryOn503AndSucceed() {
+    // arrange: one 503, then success
+    wireMock.register(
+        WireMock
+            .get(uriUtil.getPath(envListUri))
+            .withHeader("Authorization", equalTo("Bearer %s".formatted(bearerToken)))
+            .inScenario("env-unavailable")
+            .whenScenarioStateIs(Scenario.STARTED)
+            .willReturn(WireMock.aResponse().withStatus(503).withBody(UNAVAILABLE_BODY))
+            .willSetStateTo("recovered")
+    );
+    wireMock.register(
+        WireMock
+            .get(uriUtil.getPath(envListUri))
+            .withHeader("Authorization", equalTo("Bearer %s".formatted(bearerToken)))
+            .inScenario("env-unavailable")
+            .whenScenarioStateIs("recovered")
+            .willReturn(WireMock.aResponse()
+                .withStatus(200)
+                .withBody(loadResource("ccloud-resources-mock-responses/list-environments.json")))
+    );
+    wireMock.resetRequests();
+
+    queryGraphQLRaw(ENVIRONMENTS_QUERY)
+        .body("data.ccloudConnectionById.environments", hasSize(2));
+
+    wireMock.verifyThat(2, envListRequests());
+  }
+
+  @Test
+  void shouldFailWithTheLast503AfterRetriesRunOut() {
+    // arrange: always 503
+    wireMock.register(
+        WireMock
+            .get(uriUtil.getPath(envListUri))
+            .withHeader("Authorization", equalTo("Bearer %s".formatted(bearerToken)))
+            .willReturn(WireMock.aResponse().withStatus(503).withBody(UNAVAILABLE_BODY))
+    );
+    wireMock.resetRequests();
+
+    // the same error as without retries, not the retry wrapper
+    queryGraphQLRaw(ENVIRONMENTS_QUERY)
+        .body("errors[0].message", containsString("Service Unavailable"))
+        .body("errors[0].message", not(containsString("retry-after")));
+
+    // 1 try and the test profile's 3 retries
+    wireMock.verifyThat(4, envListRequests());
+  }
+
+  @Test
+  void shouldNotRetryOn404() {
+    // arrange
+    wireMock.register(
+        WireMock
+            .get(uriUtil.getPath(envListUri))
+            .withHeader("Authorization", equalTo("Bearer %s".formatted(bearerToken)))
+            .willReturn(WireMock.aResponse()
+                .withStatus(404)
+                .withBody("{\"errors\":[{\"status\":\"404\",\"detail\":\"Not Found\"}]}"))
+    );
+    wireMock.resetRequests();
+
+    // act
+    var response = queryGraphQLRaw(ENVIRONMENTS_QUERY);
+
+    // assert
+    response.body("errors", notNullValue());
+    wireMock.verifyThat(1, envListRequests());
+  }
+
+  private RequestPatternBuilder envListRequests() {
+    return WireMock.getRequestedFor(WireMock.urlPathEqualTo(uriUtil.getPath(envListUri)));
   }
 
   /**
