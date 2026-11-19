@@ -3,9 +3,11 @@ package io.confluent.idesidecar.restapi.resources;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static io.confluent.idesidecar.restapi.testutil.QueryResourceUtil.queryGraphQLRaw;
 import static io.confluent.idesidecar.restapi.util.ResourceIOUtil.loadResource;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.stubbing.Scenario;
@@ -16,6 +18,7 @@ import io.quarkiverse.wiremock.devservice.ConnectWireMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 import jakarta.inject.Inject;
+import java.time.Duration;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -206,9 +209,8 @@ public class CCloudRateLimitRetryTest extends ConfluentQueryResourceTestBase {
   }
 
   /**
-   * Verifies that a persistent 429 is surfaced as a GraphQL DataFetchingException. The specific
-   * rate-limit message is logged server-side but SmallRye GraphQL only exposes allowed exception
-   * types to clients.
+   * Verifies that a persistent 429 is surfaced as a GraphQL DataFetchingException whose message
+   * says the request was rate limited.
    */
   @Test
   void shouldSurfaceRateLimitAsDataFetchingException() {
@@ -228,8 +230,68 @@ public class CCloudRateLimitRetryTest extends ConfluentQueryResourceTestBase {
             )
     );
 
+    wireMock.resetRequests();
+    var started = System.nanoTime();
+
     queryGraphQLRaw(ENVIRONMENTS_QUERY)
         .body("errors", notNullValue())
-        .body("errors[0].extensions.classification", is("DataFetchingException"));
+        .body("errors[0].extensions.classification", is("DataFetchingException"))
+        .body("errors[0].message", containsString("Too Many Requests (HTTP 429) from"))
+        .body("errors[0].message", containsString("retry-after: 30s"));
+
+    // Retry-After: 30 is past the test profile's 10s retry budget, so it fails without waiting
+    var elapsed = Duration.ofNanos(System.nanoTime() - started);
+    assertTrue(elapsed.toMillis() < 5_000, "waited " + elapsed);
+    wireMock.verifyThat(1, WireMock.getRequestedFor(WireMock.urlPathEqualTo(
+        uriUtil.getPath(envListUri)
+    )));
+  }
+
+  @Test
+  void shouldSurfaceASpentBudgetInGraphQLErrors() {
+    // arrange: the environments fetch stalls past the test profile's 10s retry budget
+    wireMock.register(
+        WireMock
+            .get(uriUtil.getPath(envListUri))
+            .withHeader("Authorization", equalTo("Bearer %s".formatted(bearerToken)))
+            .willReturn(WireMock.aResponse().withStatus(200).withFixedDelay(12_000))
+    );
+
+    // act and assert
+    queryGraphQLRaw(ENVIRONMENTS_QUERY)
+        .body("errors", notNullValue())
+        .body("errors[0].message", containsString("Gave up on "))
+        .body("errors[0].message", containsString(" after 10s (0 retries)"));
+  }
+
+  @Test
+  void shouldWaitRetryAfterBeforeRetrying() {
+    // arrange: one 429 asking for 2s, then success
+    wireMock.register(
+        WireMock
+            .get(uriUtil.getPath(envListUri))
+            .inScenario("retry-after-wait")
+            .withHeader("Authorization", equalTo("Bearer %s".formatted(bearerToken)))
+            .whenScenarioStateIs(Scenario.STARTED)
+            .willReturn(WireMock.aResponse().withStatus(429).withHeader("Retry-After", "2"))
+            .willSetStateTo("rate-limited")
+    );
+    wireMock.register(
+        WireMock
+            .get(uriUtil.getPath(envListUri))
+            .inScenario("retry-after-wait")
+            .withHeader("Authorization", equalTo("Bearer %s".formatted(bearerToken)))
+            .whenScenarioStateIs("rate-limited")
+            .willReturn(WireMock.aResponse()
+                .withStatus(200)
+                .withBody(loadResource("ccloud-resources-mock-responses/list-environments.json")))
+    );
+    var started = System.nanoTime();
+
+    queryGraphQLRaw(ENVIRONMENTS_QUERY)
+        .body("data.ccloudConnectionById.environments", hasSize(2));
+
+    var elapsed = Duration.ofNanos(System.nanoTime() - started);
+    assertTrue(elapsed.toMillis() >= 2_000, "retried after only " + elapsed);
   }
 }
