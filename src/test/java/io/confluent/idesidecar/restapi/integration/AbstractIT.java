@@ -162,6 +162,7 @@ public abstract class AbstractIT extends SidecarClient implements ITSuite {
         1,
         1,
         3,
+        10_000,
         new SchemaErrors()
     );
     CachedSchemaRegistryClient srClient = null;

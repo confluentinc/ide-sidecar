@@ -14,10 +14,14 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.avro.generic.GenericData;
@@ -48,12 +52,14 @@ import io.confluent.idesidecar.restapi.util.ByteArrayJsonUtil;
 import io.confluent.idesidecar.restapi.util.ConfigUtil;
 import static io.confluent.idesidecar.restapi.util.ExceptionUtil.unwrap;
 import io.confluent.idesidecar.restapi.util.ObjectMapperFactory;
+import io.confluent.idesidecar.restapi.util.TimeUtil;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 import io.confluent.kafka.serializers.KafkaAvroDeserializer;
 import io.confluent.kafka.serializers.json.KafkaJsonSchemaDeserializer;
 import io.confluent.kafka.serializers.protobuf.KafkaProtobufDeserializer;
 import io.quarkus.logging.Log;
+import io.smallrye.mutiny.TimeoutException;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.infrastructure.Infrastructure;
 import io.smallrye.mutiny.unchecked.Unchecked;
@@ -82,6 +88,7 @@ public class RecordDeserializer {
   private final SchemaErrors schemaErrors;
   private final Duration schemaFetchRetryInitialBackoff;
   private final Duration schemaFetchRetryMaxBackoff;
+  private final Duration schemaFetchTimeout;
 
   @Inject
   public RecordDeserializer(
@@ -91,11 +98,14 @@ public class RecordDeserializer {
       long schemaFetchRetryMaxBackoffMs,
       @ConfigProperty(name = "ide-sidecar.schema-fetch-retry.max-retries")
       int schemaFetchMaxRetries,
+      @ConfigProperty(name = "ide-sidecar.schema-fetch-retry.timeout-ms")
+      long schemaFetchTimeoutMs,
       SchemaErrors schemaErrors
   ) {
     this.schemaFetchRetryInitialBackoff = Duration.ofMillis(schemaFetchRetryInitialBackoffMs);
     this.schemaFetchRetryMaxBackoff = Duration.ofMillis(schemaFetchRetryMaxBackoffMs);
     this.schemaFetchMaxRetries = schemaFetchMaxRetries;
+    this.schemaFetchTimeout = Duration.ofMillis(schemaFetchTimeoutMs);
     this.schemaErrors = schemaErrors;
   }
 
@@ -366,9 +376,14 @@ public class RecordDeserializer {
       }
     }
 
+    var lastFetchFailure = new AtomicReference<Throwable>();
+    var schemaFetched = false;
     try {
-      // Attempt to get the schema from the schema registry
-      // and retry if the operation fails due to a retryable exception.
+      // Attempt to get the schema from the schema registry and retry if the operation fails due
+      // to a retryable exception. The Schema Registry client retries each attempt on its own
+      // (max.retries, default 3), so one schema ID can cost up to
+      // (1 + schemaFetchMaxRetries) * 4 requests. The timeout bounds how long we wait for all of
+      // them, and with the client's default waits between its retries it usually fires first.
       var parsedSchema = Uni
           .createFrom()
           .item(
@@ -378,14 +393,17 @@ public class RecordDeserializer {
                       : schemaRegistryClient.getSchemaById(schemaId.orElseThrow())
               )
           )
+          .onFailure().invoke(lastFetchFailure::set)
           .onFailure(this::isRetryableException)
           .retry()
           .withBackOff(schemaFetchRetryInitialBackoff, schemaFetchRetryMaxBackoff)
           .atMost(schemaFetchMaxRetries)
           .runSubscriptionOn(Infrastructure.getDefaultWorkerPool())
+          .ifNoItem().after(schemaFetchTimeout).fail()
           .subscribeAsCompletionStage()
           .toCompletableFuture()
           .join();
+      schemaFetched = true;
 
       var schemaType = SchemaFormat.fromSchemaType(parsedSchema.schemaType());
       var topicName = context.getTopicName();
@@ -407,16 +425,19 @@ public class RecordDeserializer {
           .build();
     } catch (Exception e) {
       var exc = unwrap(e);
-      if (exc instanceof RestClientException || isNetworkRelatedException(exc)) {
-        // IMPORTANT: We must cache RestClientException, and more importantly,
-        //            network-related IOExceptions, to prevent the sidecar from
-        //            bombarding the Schema Registry servers with requests for every
-        //            consumed message when we encounter a schema fetch error.
-        cacheSchemaFetchError(exc, schemaId, schemaGuid, context);
+      if (exc instanceof RestClientException
+          || isNetworkRelatedException(exc)
+          || exc instanceof TimeoutException) {
+        // IMPORTANT: We must cache RestClientException, network-related IOExceptions, and
+        //            timeouts, to prevent the sidecar from bombarding the Schema Registry
+        //            servers with requests for every consumed message when we encounter a
+        //            schema fetch error.
+        var reason = schemaFetched ? null : describeFetchFailure(exc, lastFetchFailure.get());
+        var error = cacheSchemaFetchError(exc, reason, schemaId, schemaGuid, context);
         var wrappedJson = onFailure(encoderOnFailure, bytes);
         return new DecodedResult(
             wrappedJson.data(),
-            e.getMessage(),
+            error.message(),
             new KeyOrValueMetadata(
                 schemaId.orElse(null),
                 schemaGuid.orElse(null),
@@ -513,8 +534,9 @@ public class RecordDeserializer {
     return deserialize(bytes, schemaRegistryClient, context, isKey, Optional.empty(), headers);
   }
 
-  private void cacheSchemaFetchError(
+  private SchemaErrors.Error cacheSchemaFetchError(
       Throwable e,
+      String reason,
       Optional<Integer> schemaId,
       Optional<UUID> schemaGuid,
       KafkaRestProxyContext
@@ -523,19 +545,24 @@ public class RecordDeserializer {
     var retryTime = Instant.now().plus(CACHE_FAILED_SCHEMA_ID_FETCH_DURATION);
     var timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
         .withZone(ZoneId.systemDefault());
+    // a timeout carries no message of its own, and other failures need no reason
+    var detail = Stream.of(reason, e.getMessage())
+        .filter(Objects::nonNull)
+        .collect(Collectors.joining(": "));
     Log.errorf(
-        "Failed to retrieve schema with ID %d. Will try again in %d seconds at %s. Error: %s",
-        schemaId,
+        e,
+        "Schema fetch for ID=%s GUID=%s failed: %s. Will try again in %d seconds at %s.",
+        schemaId.orElse(null),
+        schemaGuid.orElse(null),
+        detail,
         CACHE_FAILED_SCHEMA_ID_FETCH_DURATION.getSeconds(),
-        timeFormatter.format(retryTime),
-        e.getMessage(),
-        e
+        timeFormatter.format(retryTime)
     );
-    var errorMessage = new SchemaErrors.Error(
+    var error = new SchemaErrors.Error(
         "Failed to retrieve schema with ID=%d GUID=%s: %s".formatted(
             schemaId.orElse(null),
             schemaGuid.orElse(null),
-            e.getMessage()
+            detail
         )
     );
     schemaErrors.writeSchemaIdByConnectionId(
@@ -543,8 +570,28 @@ public class RecordDeserializer {
         schemaId,
         schemaGuid,
         context.getClusterId(),
-        errorMessage
+        error
     );
+    return error;
+  }
+
+  /**
+   * Say why the schema fetch stopped when it timed out or ran out of retries, or return null when
+   * it failed outright.
+   */
+  private String describeFetchFailure(Throwable e, Throwable lastFailure) {
+    if (e instanceof TimeoutException) {
+      var timedOut = "timed out after %s".formatted(
+          TimeUtil.humanReadableDuration(schemaFetchTimeout)
+      );
+      return lastFailure == null
+          ? timedOut
+          : "%s; last error: %s".formatted(timedOut, unwrap(lastFailure).getMessage());
+    }
+    if (isRetryableException(e)) {
+      return "gave up after %d attempts".formatted(1 + schemaFetchMaxRetries);
+    }
+    return null;
   }
 
   record WrappedJson(
