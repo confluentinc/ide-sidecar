@@ -4,7 +4,9 @@ import static io.confluent.idesidecar.restapi.util.ExceptionUtil.unwrap;
 
 import io.confluent.idesidecar.restapi.auth.AuthErrors;
 import io.confluent.idesidecar.restapi.clients.ClientConfigurator;
+import io.confluent.idesidecar.restapi.clients.RetryAfterException;
 import io.confluent.idesidecar.restapi.clients.SchemaRegistryClient;
+import io.confluent.idesidecar.restapi.clients.SidecarRestService;
 import io.confluent.idesidecar.restapi.clients.SidecarSchemaRegistryClient;
 import io.confluent.idesidecar.restapi.credentials.Credentials;
 import io.confluent.idesidecar.restapi.credentials.TLSConfig;
@@ -18,7 +20,6 @@ import io.confluent.idesidecar.restapi.models.ConnectionStatusBuilder;
 import io.confluent.idesidecar.restapi.models.ConnectionStatusKafkaClusterStatusBuilder;
 import io.confluent.idesidecar.restapi.models.ConnectionStatusSchemaRegistryStatusBuilder;
 import io.confluent.idesidecar.restapi.util.SchemaRegistryUtil;
-import io.confluent.kafka.schemaregistry.client.rest.RestService;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 import io.confluent.kafka.schemaregistry.client.security.SslFactory;
 import io.quarkus.logging.Log;
@@ -28,6 +29,7 @@ import io.vertx.core.Future;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -222,7 +224,7 @@ public class DirectConnectionState extends ConnectionState {
     return withSchemaRegistryClient(srClient -> {
       // There is a configuration, so validate the connection by creating a SchemaRegistryClient
       // and getting all schema types
-      srClient.getSchemaTypes();
+      SidecarRestService.withDeadline(Instant.now().plus(TIMEOUT), srClient::getSchemaTypes);
       return Future.succeededFuture(
           ConnectionStatusSchemaRegistryStatusBuilder
               .builder()
@@ -231,17 +233,10 @@ public class DirectConnectionState extends ConnectionState {
       );
     }, error -> {
       var cause = unwrap(error);
-      var message = "Failed to connect to Schema Registry: %s".formatted(cause.getMessage());
-      Log.error(message, cause);
-      if (cause instanceof UnknownHostException) {
-        message = "Unable to resolve the Schema Registry URL %s".formatted(
-            spec.schemaRegistryConfig().uri()
-        );
-      } else if (cause instanceof IOException || cause instanceof RestClientException) {
-        message = "Unable to reach the Schema Registry URL %s".formatted(
-            spec.schemaRegistryConfig().uri()
-        );
-      }
+      Log.error(
+          "Failed to connect to Schema Registry: %s".formatted(cause.getMessage()), cause
+      );
+      var message = schemaRegistryErrorMessage(cause, spec.schemaRegistryConfig().uri());
       // The connection failed, so successfully return the failed state
       return Future.succeededFuture(
           ConnectionStatusSchemaRegistryStatusBuilder
@@ -255,6 +250,21 @@ public class DirectConnectionState extends ConnectionState {
       // There is no Schema Registry configuration, so return no status for SR
       return Future.succeededFuture(null);
     });
+  }
+
+  /**
+   * The error a failed Schema Registry status check shows for {@code cause}.
+   */
+  static String schemaRegistryErrorMessage(Throwable cause, String uri) {
+    if (cause instanceof RetryAfterException) {
+      // Schema Registry was reached, and asked us to wait
+      return "%s (%s)".formatted(cause.getMessage(), uri);
+    } else if (cause instanceof UnknownHostException) {
+      return "Unable to resolve the Schema Registry URL %s".formatted(uri);
+    } else if (cause instanceof IOException || cause instanceof RestClientException) {
+      return "Unable to reach the Schema Registry URL %s".formatted(uri);
+    }
+    return "Failed to connect to Schema Registry: %s".formatted(cause.getMessage());
   }
 
   public interface ClientOperation<ClientT, T> {
@@ -386,7 +396,7 @@ public class DirectConnectionState extends ConnectionState {
         TIMEOUT
     );
 
-    var restService = new RestService(config.uri());
+    var restService = new SidecarRestService(config.uri());
     restService.configure(SchemaRegistryUtil.removeOAuthConfigs(srClientConfig));
     if (config.tlsConfig() != null && Boolean.FALSE.equals(config.tlsConfig().verifyHostname())) {
       // Disable hostname verification

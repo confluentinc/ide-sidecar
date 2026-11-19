@@ -117,7 +117,7 @@ public class SchemaRegistryClients extends Clients<SchemaRegistryClient> {
       Map<String, Object> configurationProperties,
       MultiMap headers
   ) {
-    var restService = new RestService(srClusterUri);
+    var restService = new SidecarRestService(srClusterUri);
     restService.configure(SchemaRegistryUtil.removeOAuthConfigs(configurationProperties));
     if ("".equals(configurationProperties.get("ssl.endpoint.identification.algorithm"))) {
       // Disable hostname verification

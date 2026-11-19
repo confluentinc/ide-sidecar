@@ -51,8 +51,6 @@
     flink-language-service-proxy:
       url-pattern: ws://127.0.0.1:${quarkus.http.test-port}/fls-mock
     schema-fetch-error-ttl: 30
-    schema-fetch-retry:
-      max-retries: 3
     flink:
       url-pattern: http://localhost:${quarkus.wiremock.devservices.port}
   quarkus:
@@ -252,10 +250,7 @@ ide-sidecar:
     connect-timeout-seconds: 10
   schema-fetch-error-ttl: 30
   schema-fetch-retry:
-    initial-backoff-ms: 250
-    max-backoff-ms: 5000
     timeout-ms: 10000
-    max-retries: 5
   integration-tests:
     # cp-demo configs used by Confluent Platform integration tests
     cp-demo:
