@@ -15,7 +15,7 @@ blocks:
       prologue:
         commands:
           - checkout
-          - sem-version java 21
+          - sem-version java 25
       jobs:
         - name: "Update Third Party Notices PR"
           commands:

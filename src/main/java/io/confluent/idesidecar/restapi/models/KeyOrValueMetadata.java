@@ -2,9 +2,11 @@ package io.confluent.idesidecar.restapi.models;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import java.util.UUID;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@RegisterForReflection
 public record KeyOrValueMetadata(
     @JsonProperty("schema_id")
     Integer schemaId,

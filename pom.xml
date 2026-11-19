@@ -31,16 +31,16 @@
     <compiler-plugin.version>3.12.1</compiler-plugin.version>
     <surefire-plugin.version>3.2.5</surefire-plugin.version>
     <jacoco-maven-plugin.version>0.8.11</jacoco-maven-plugin.version>
-    <maven.compiler.release>21</maven.compiler.release>
+    <maven.compiler.release>25</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
     <!-- Plugin versions required by this aggregate pom -->
     <jxr-maven-plugin.version>3.1.1</jxr-maven-plugin.version>
     <dependency.check.version>6.1.6</dependency.check.version>
-    <java.version>21</java.version>
-    <maven.compiler.source>21</maven.compiler.source>
-    <maven.compiler.target>21</maven.compiler.target>
+    <java.version>25</java.version>
+    <maven.compiler.source>25</maven.compiler.source>
+    <maven.compiler.target>25</maven.compiler.target>
     <maven.compiler.parameters>true</maven.compiler.parameters>
     <license.first.year>${project.inceptionYear}</license.first.year>
     <license.current.year>2024</license.current.year>
@@ -59,9 +59,9 @@
     -->
     <protobuf.version>4.31.1</protobuf.version>
     <build-tools.dir>${project.basedir}/build-tools</build-tools.dir>
-    <spotbugs.maven.plugin.version>4.8.5.0</spotbugs.maven.plugin.version>
-    <jacoco-maven-plugin.version>0.8.12</jacoco-maven-plugin.version>
-    <quarkus.platform.version>3.27.0</quarkus.platform.version>
+    <spotbugs.maven.plugin.version>4.9.4.0</spotbugs.maven.plugin.version>
+    <jacoco-maven-plugin.version>0.8.14</jacoco-maven-plugin.version>
+    <quarkus.platform.version>3.31.4</quarkus.platform.version>
     <io.confluent.common.version>8.0.3</io.confluent.common.version>
     <avro.version>1.12.0</avro.version>
     <jackson-dataformat.version>2.17.1</jackson-dataformat.version>

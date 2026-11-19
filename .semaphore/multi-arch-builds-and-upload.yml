@@ -131,12 +131,17 @@ blocks:
           - vault login -no-print token=$(vault write -field=token "auth/stag/semaphore/login" role="ide-sidecar" jwt="$Env:SEMAPHORE_OIDC_TOKEN")
           # Install GraalVM
           - |
-            if (-not (Test-Path graalvm-community-jdk-21.0.2_windows-x64_bin.zip)) {
-              Invoke-WebRequest -OutFile graalvm-community-jdk-21.0.2_windows-x64_bin.zip -Uri https://github.com/graalvm/graalvm-ce-builds/releases/download/jdk-21.0.2/graalvm-community-jdk-21.0.2_windows-x64_bin.zip
+            if (-not (Test-Path graalvm-community-jdk-25.0.2_windows-x64_bin.zip)) {
+              Invoke-WebRequest -OutFile graalvm-community-jdk-25.0.2_windows-x64_bin.zip -Uri https://github.com/graalvm/graalvm-ce-builds/releases/download/jdk-25.0.2/graalvm-community-jdk-25.0.2_windows-x64_bin.zip
             }
-          - expand-archive -path .\graalvm-community-jdk-21.0.2_windows-x64_bin.zip -destinationpath C:\semaphore-agent\graalvm
-          - $Env:JAVA_HOME = "C:\semaphore-agent\graalvm\graalvm-community-openjdk-21.0.2+13.1"
-          - $Env:PATH += ";C:\semaphore-agent\graalvm\graalvm-community-openjdk-21.0.2+13.1\bin"
+          - expand-archive -path .\graalvm-community-jdk-25.0.2_windows-x64_bin.zip -destinationpath C:\semaphore-agent\graalvm
+          # The archive's top-level folder name includes the JDK build number, so look it up.
+          - |
+            $graalvmHome = (Get-ChildItem C:\semaphore-agent\graalvm -Directory | Select-Object -First 1).FullName
+            Write-Host "Using GraalVM at $graalvmHome"
+            $Env:JAVA_HOME = $graalvmHome
+            $Env:PATH += ";$graalvmHome\bin"
+            java -version
           # Install VS 2022 build tools and VC++ tools, required by GraalVM native-image build
           - choco install visualstudio2022buildtools -y --package-parameters "--locale en-US --path install=C:\VS 2022 BT --path shared=C:\VS 2022 Shared --path cache=C:\VS 2022 Cache"
           - choco install visualstudio2022-workload-vctools -y
@@ -192,7 +197,7 @@ blocks:
               try {artifact push workflow $executable_with_os_arch --destination "native-executables/$(Split-Path -Leaf $executable_with_os_arch)" --force} catch {Write-Host "Artifact push failed"}
       epilogue:
         commands:
-          - cache store graal_download_zip graalvm-community-jdk-21.0.2_windows-x64_bin.zip
+          - cache store graal_download_zip graalvm-community-jdk-25.0.2_windows-x64_bin.zip
           - cache store choco_temp_dir "$Env:USERPROFILE\AppData\Local\Temp\chocolatey"
           - cache store windows_maven_cache "$Env:USERPROFILE\.m2\repository"
 
