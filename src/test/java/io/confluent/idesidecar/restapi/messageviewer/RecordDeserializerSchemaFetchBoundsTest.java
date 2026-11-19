@@ -94,11 +94,13 @@ class RecordDeserializerSchemaFetchBoundsTest {
 
   @Test
   void shouldCapRequestsForFailingSchemaIdInTestProfile() throws Exception {
+    // 4 attempts (1 + the test profile's 3 retries) x 4 sends each (1 + the client's 3 retries)
     assertRequestCap(testProfileMaxRetries, 16);
   }
 
   @Test
   void shouldCapRequestsForFailingSchemaIdWithProductionRetries() throws Exception {
+    // 6 attempts (1 + production's 5 retries) x 4 sends each
     assertRequestCap(PRODUCTION_MAX_RETRIES, 24);
   }
 
