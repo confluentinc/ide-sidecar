@@ -43,6 +43,7 @@ class CCloudHttpRetryPolicyTest {
   void shouldAddJitterOnTopOfRetryAfter() {
     var wait = policy.nextDelay(0, 30, NOW, FAR_DEADLINE, () -> 1.0);
 
+    // 30s plus the full 20% jitter
     assertEquals(Duration.ofSeconds(36), wait.orElseThrow());
   }
 
@@ -50,11 +51,13 @@ class CCloudHttpRetryPolicyTest {
   void shouldUseBackoffWhenRetryAfterIsZero() {
     var wait = policy.nextDelay(0, 0, NOW, FAR_DEADLINE, () -> 0.0);
 
+    // no Retry-After to wait out, so the 1s initial backoff
     assertEquals(Duration.ofSeconds(1), wait.orElseThrow());
   }
 
   @Test
   void shouldDoubleTheBackoffUpToTheMax() {
+    // 1s doubled per retry; retry 4 would be 16s, so it's capped at the 10s max
     assertEquals(Duration.ofSeconds(2), backoffWithoutRetryAfter(1));
     assertEquals(Duration.ofSeconds(8), backoffWithoutRetryAfter(3));
     assertEquals(Duration.ofSeconds(10), backoffWithoutRetryAfter(4));
@@ -69,6 +72,7 @@ class CCloudHttpRetryPolicyTest {
 
   @Test
   void shouldNotRetryAfterTheLastAttempt() {
+    // retry index 5 would be a sixth retry, one past max-retries
     var wait = policy.nextDelay(5, 1, NOW, FAR_DEADLINE, () -> 0.0);
 
     assertTrue(wait.isEmpty());
@@ -108,6 +112,7 @@ class CCloudHttpRetryPolicyTest {
     );
 
     assertInstanceOf(TimeoutException.class, thrown.getCause());
+    // 5s is the budget shortenWaits sets
     assertEquals("Gave up on " + URL + " after 5s (0 retries)", thrown.getCause().getMessage());
     assertEquals(0, attempts.get());
   }
@@ -126,6 +131,7 @@ class CCloudHttpRetryPolicyTest {
     var elapsed = Duration.ofNanos(System.nanoTime() - started);
     assertInstanceOf(TimeoutException.class, thrown.getCause());
     assertTrue(elapsed.toMillis() >= 200, "gave up before the budget: " + elapsed);
+    // 10x the budget, as slack for a slow machine
     assertTrue(elapsed.toMillis() < 2_000, "took " + elapsed);
   }
 
