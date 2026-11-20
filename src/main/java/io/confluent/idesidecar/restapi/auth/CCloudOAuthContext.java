@@ -520,7 +520,7 @@ public class CCloudOAuthContext implements AuthContext {
 
   private Handler<Throwable> onFailedTokenRefresh() {
     return failure -> {
-      // outside the update, which can run more than once
+      // outside the update, whose function AtomicReference may re-apply under contention
       var now = now();
       var random = ThreadLocalRandom.current().nextDouble();
       var before = new AtomicReference<Tokens>();
@@ -651,7 +651,7 @@ public class CCloudOAuthContext implements AuthContext {
     }
 
     final var now = Instant.now();
-    // the refresh token lasts until the connection's end of lifetime, whatever expires_in says
+    // expires_in is the access token's lifetime (RFC 6749 5.1); use the connection's end of life
     tokens.updateAndGet(oldTokens ->
         oldTokens.withRefreshToken(
             new Token(
@@ -662,7 +662,7 @@ public class CCloudOAuthContext implements AuthContext {
             )
         ));
 
-    // only after storing the refresh token: CCloud has already rotated the old one
+    // only after storing the refresh token: CCloud rotates them, so the old one may be dead
     var idToken = idTokenExchangeResponse.idToken();
     if (idToken == null || idToken.isBlank()) {
       throw new CCloudAuthenticationFailedException(
