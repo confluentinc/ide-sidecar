@@ -79,7 +79,11 @@ public class WebClientFactory {
   static final Duration WEBCLIENT_IDLE_TIMEOUT_SECONDS = Stream.of(
           secondsConfig("ide-sidecar.webclient.idle-timeout-seconds"),
           WEBCLIENT_REQUEST_TIMEOUT_SECONDS.plusSeconds(30),
-          WEBCLIENT_CCLOUD_CONSUME_TIMEOUT_SECONDS.plusSeconds(30))
+          WEBCLIENT_CCLOUD_CONSUME_TIMEOUT_SECONDS.plusSeconds(30),
+          // the refresh-token exchange waits until the refresh deadline; read here, not from
+          // CCloudOAuthConfig, so building a WebClient doesn't load every OAuth setting
+          secondsConfig("ide-sidecar.connections.ccloud.refresh-token.deadline-seconds")
+              .plusSeconds(30))
       .max(Duration::compareTo)
       .orElseThrow();
 
