@@ -741,6 +741,7 @@ class CCloudOAuthContextTest {
         .toList();
 
     assertEquals(
+        // application.yml's retry settings: 5s, x1.6 per failure, capped at 60s from the 7th wait
         List.of(5_000L, 8_000L, 12_800L, 20_480L, 32_768L, 52_429L, 60_000L, 60_000L, 60_000L),
         waits
     );
@@ -748,6 +749,7 @@ class CCloudOAuthContextTest {
 
   @Test
   void refreshBackoffShouldAddUpToTwentyPercentJitter() {
+    // random 1.0 adds the whole 0.2 jitter factor: 5s -> 6s, and the 60s cap -> 72s
     assertEquals(6_000L, CCloudOAuthContext.refreshBackoff(1, 1.0).toMillis());
     assertEquals(72_000L, CCloudOAuthContext.refreshBackoff(9, 1.0).toMillis());
   }
@@ -763,6 +765,7 @@ class CCloudOAuthContextTest {
 
     assertEquals(2, failures.attempts());
     assertEquals(first, failures.firstFailedAt());
+    // the 2nd failure's wait is 5s x 1.6, with no jitter
     assertEquals(second.plusSeconds(8), failures.nextAttemptAt());
   }
 
@@ -775,6 +778,7 @@ class CCloudOAuthContextTest {
     assertTrue(CCloudOAuthContext.isTransientRefreshFailure(failures(limit - 1, now), error, now));
     assertFalse(CCloudOAuthContext.isTransientRefreshFailure(failures(limit, now), error, now));
     assertFalse(CCloudOAuthContext.isTransientRefreshFailure(
+        // 2 attempts is under the limit, so only the budget makes this one final
         failures(2, now.minus(CCloudOAuthConfig.TOKEN_REFRESH_FAILURE_BUDGET)), error, now
     ));
     assertTrue(CCloudOAuthContext.isTransientRefreshFailure(
@@ -814,6 +818,7 @@ class CCloudOAuthContextTest {
     );
 
     assertEquals(
+        // 10 is application.yml's max-refresh-attempts
         "Gave up refreshing the Confluent Cloud tokens after 10 failed attempts over 6m; "
             + "sign in again. Last error: The timeout of 20000ms ran out",
         message
@@ -871,6 +876,7 @@ class CCloudOAuthContextTest {
     awaitFailure(authContext.refresh(null));
 
     var nextAttempt = authContext.getNextTokenRefreshAttemptAt().orElseThrow();
+    // the first wait is at least the 5s initial backoff; 4s leaves slack for the clock reads
     assertTrue(nextAttempt.isAfter(failedAt.plusSeconds(4)), "next attempt " + nextAttempt);
     assertFalse(authContext.shouldAttemptTokenRefresh());
     Mockito.doReturn(nextAttempt).when(authContext).now();
@@ -950,7 +956,7 @@ class CCloudOAuthContextTest {
 
     awaitFailure(authContext.refresh(null));
 
-    // CCloud already invalidated the old token, so the new one must be kept
+    // CCloud rotates refresh tokens, so the old one may already be invalid; keep the new one
     assertEquals("rotated-refresh-token", authContext.getRefreshToken().token());
   }
 
