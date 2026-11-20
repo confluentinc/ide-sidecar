@@ -179,6 +179,7 @@ class WebClientRequestTimeoutTest {
     assertGaveUpInTime(started);
     var elapsed = Duration.ofNanos(System.nanoTime() - started);
     assertTrue(
+        // the 1s timeout plus 1s of slack, well before the trickle ends, so the deadline ended it
         elapsed.toMillis() < ShortWebClientTimeoutProfile.REQUEST_TIMEOUT_MS + 1_000,
         "took " + elapsed
     );

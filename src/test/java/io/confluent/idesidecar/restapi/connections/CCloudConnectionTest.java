@@ -32,6 +32,7 @@ import org.junit.jupiter.api.Test;
 public class CCloudConnectionTest {
 
   private static final int AWAIT_COMPLETION_TIMEOUT_SEC = 5;
+  // vert.x's message when a request hits production's 20s request timeout
   private static final String CHECK_JWT_TIMEOUT = "The timeout period of 20000ms has been exceeded";
 
   @Test
@@ -317,6 +318,7 @@ public class CCloudConnectionTest {
     var authContext = ((CCloudConnectionState) connectionState).getOauthContext();
     var healthy = refreshStatus(connectionState);
     when(authContext.checkAuthenticationStatus()).thenReturn(Future.failedFuture(
+        // netty's message at production's 10s connect-timeout-seconds
         new ConnectTimeoutException("connection timed out after 10000 ms")
     ));
 

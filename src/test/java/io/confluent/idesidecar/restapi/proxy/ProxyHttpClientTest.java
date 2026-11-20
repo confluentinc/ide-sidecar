@@ -16,13 +16,19 @@ class ProxyHttpClientTest {
 
   private static final String HOST = "pkc-123.us-west-2.aws.confluent.cloud";
   private static final String URL = "https://" + HOST + "/kafka/v3/x";
+  // production's request-timeout-seconds default
   private static final Duration TIMEOUT = Duration.ofSeconds(20);
+  // vert.x's message at that timeout
+  private static final String REQUEST_TIMEOUT_MESSAGE =
+      "The timeout period of 20000ms has been exceeded";
+  // netty's message at production's 10s connect-timeout-seconds
+  private static final String CONNECT_TIMEOUT_MESSAGE = "connection timed out after 10000 ms";
 
   @Test
   void toFailureShouldReturnGatewayTimeoutWhenServerStalls() {
     var failure = ProxyHttpClient.toFailure(
         context(URL),
-        new NoStackTraceTimeoutException("The timeout period of 20000ms has been exceeded"),
+        new NoStackTraceTimeoutException(REQUEST_TIMEOUT_MESSAGE),
         TIMEOUT
     );
 
@@ -36,7 +42,7 @@ class ProxyHttpClientTest {
     var failure = ProxyHttpClient.toFailure(
         context(URL),
         new CompletionException(
-            new NoStackTraceTimeoutException("The timeout period of 20000ms has been exceeded")
+            new NoStackTraceTimeoutException(REQUEST_TIMEOUT_MESSAGE)
         ),
         TIMEOUT
     );
@@ -49,7 +55,7 @@ class ProxyHttpClientTest {
   void toFailureShouldReturnGatewayTimeoutWhenConnectTimesOut() {
     var failure = ProxyHttpClient.toFailure(
         context(URL),
-        new ConnectTimeoutException("connection timed out after 60000 ms"),
+        new ConnectTimeoutException(CONNECT_TIMEOUT_MESSAGE),
         TIMEOUT
     );
 
@@ -74,7 +80,7 @@ class ProxyHttpClientTest {
 
     var failure = ProxyHttpClient.toFailure(
         context(url),
-        new ConnectTimeoutException("connection timed out after 60000 ms"),
+        new ConnectTimeoutException(CONNECT_TIMEOUT_MESSAGE),
         TIMEOUT
     );
 
