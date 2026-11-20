@@ -149,6 +149,9 @@ public class CCloudHttpRetryPolicy {
   /**
    * Netty's connect timeout extends {@link ConnectException}, and its DNS timeout isn't a
    * {@link TimeoutException}, hence the name check.
+   *
+   * @see <a href="https://github.com/netty/netty/blob/netty-4.1.127.Final/transport/src/main/java/io/netty/channel/ConnectTimeoutException.java#L24">ConnectTimeoutException</a>
+   * @see <a href="https://github.com/netty/netty/blob/netty-4.1.127.Final/resolver-dns/src/main/java/io/netty/resolver/dns/DnsResolveContext.java#L1150-L1156">DNS timeout wrapped in UnknownHostException</a>
    */
   private static boolean isTimeoutOrTlsFailure(Throwable failure) {
     return failure instanceof TimeoutException
