@@ -42,7 +42,10 @@ public class CCloudConnectionTest {
   private static final int AWAIT_COMPLETION_TIMEOUT_SEC = 5;
   // vert.x's message when a request hits production's 20s request timeout
   private static final String CHECK_JWT_TIMEOUT = "The timeout period of 20000ms has been exceeded";
+  // production's default (application.yml); the test profile sets 0
   private static final Duration HEALTHY_INTERVAL = Duration.ofSeconds(60);
+  // past the longest jittered interval (60s x 1.2), with room to spare
+  private static final Duration WELL_PAST_THE_INTERVAL = HEALTHY_INTERVAL.multipliedBy(2);
 
   @Test
   void getStatusShouldReturnInitialStatusForNewConnections() {
@@ -430,8 +433,7 @@ public class CCloudConnectionTest {
     var start = Instant.now();
     doReturn(start).when(connectionState).now();
     awaitStatus(connectionState.refreshStatus());
-    var interval = HEALTHY_INTERVAL;
-    doReturn(start.plus(interval).minusMillis(1)).when(connectionState).now();
+    doReturn(start.plus(HEALTHY_INTERVAL).minusMillis(1)).when(connectionState).now();
 
     // act
     awaitStatus(connectionState.refreshStatus());
@@ -447,8 +449,7 @@ public class CCloudConnectionTest {
     var start = Instant.now();
     doReturn(start).when(connectionState).now();
     awaitStatus(connectionState.refreshStatus());
-    var longestInterval = HEALTHY_INTERVAL.multipliedBy(2);
-    doReturn(start.plus(longestInterval)).when(connectionState).now();
+    doReturn(start.plus(WELL_PAST_THE_INTERVAL)).when(connectionState).now();
 
     // act
     awaitStatus(connectionState.refreshStatus());
@@ -459,7 +460,8 @@ public class CCloudConnectionTest {
 
   @Test
   void shouldCountTheHealthyIntervalFromWhenTheCheckWasSent() throws Exception {
-    // arrange: a check sent at the start that answers 20s later
+    // arrange: a check sent at the start that answers 20s later (the request timeout), so an
+    // interval counted from the answer would still be running at the longest interval
     var slowCheck = Promise.<Boolean>promise();
     var connectionState = signedInConnectionState(slowCheck.future());
     var start = Instant.now();
@@ -491,13 +493,14 @@ public class CCloudConnectionTest {
         Future.failedFuture(new NoStackTraceTimeoutException(CHECK_JWT_TIMEOUT)),
         Future.succeededFuture(true)
     );
-    doReturn(start.plus(HEALTHY_INTERVAL.multipliedBy(2))).when(connectionState).now();
+    doReturn(start.plus(WELL_PAST_THE_INTERVAL)).when(connectionState).now();
 
     // act
     var afterTimeout = awaitStatus(connectionState.refreshStatus());
     awaitStatus(connectionState.refreshStatus());
 
-    // assert: a timeout isn't cached as healthy, so the next refresh checks again
+    // assert: a timeout isn't cached as healthy, so the next refresh checks again (healthy,
+    // timed out, then checked again)
     assertEquals(healthy, afterTimeout);
     verify(connectionState.getOauthContext(), times(3)).checkAuthenticationStatus(any());
   }
@@ -528,7 +531,7 @@ public class CCloudConnectionTest {
     var start = Instant.now();
     doReturn(start).when(connectionState).now();
     awaitStatus(connectionState.refreshStatus());
-    var later = start.plus(HEALTHY_INTERVAL.multipliedBy(2));
+    var later = start.plus(WELL_PAST_THE_INTERVAL);
     doReturn(later).when(connectionState).now();
     when(connectionState.getOauthContext().checkAuthenticationStatus(any()))
         .thenReturn(Future.succeededFuture(false));
@@ -537,7 +540,7 @@ public class CCloudConnectionTest {
     var expired = awaitStatus(connectionState.refreshStatus());
     awaitStatus(connectionState.refreshStatus());
 
-    // assert
+    // assert: healthy, then expired on both later refreshes
     assertEquals(ConnectedState.EXPIRED, expired.ccloud().state());
     verify(connectionState.getOauthContext(), times(3)).checkAuthenticationStatus(any());
   }
@@ -677,7 +680,7 @@ public class CCloudConnectionTest {
     Promise<Boolean> stillConnecting = Promise.promise();
     when(connectionState.getOauthContext().checkAuthenticationStatus(any()))
         .thenReturn(stillConnecting.future());
-    doReturn(start.plus(HEALTHY_INTERVAL.multipliedBy(2))).when(connectionState).now();
+    doReturn(start.plus(WELL_PAST_THE_INTERVAL)).when(connectionState).now();
 
     // act
     var first = connectionState.refreshStatus();
@@ -714,7 +717,8 @@ public class CCloudConnectionTest {
   }
 
   private static ConnectionStatus awaitStatus(Future<ConnectionStatus> status) throws Exception {
-    return status.toCompletionStage().toCompletableFuture().get(5, TimeUnit.SECONDS);
+    return status.toCompletionStage().toCompletableFuture()
+        .get(AWAIT_COMPLETION_TIMEOUT_SEC, TimeUnit.SECONDS);
   }
 
   ConnectionState spyCCloudConnectionState(
