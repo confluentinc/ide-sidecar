@@ -240,6 +240,7 @@ class CCloudHttpRetryPolicyTest {
     );
 
     assertEquals(3, attempts.get());
+    // 1 try and shortenWaits' 2 retries
     assertEquals("refused 3", thrown.getCause().getMessage());
   }
 
@@ -264,6 +265,7 @@ class CCloudHttpRetryPolicyTest {
     var elapsed = Duration.ofNanos(System.nanoTime() - started);
     assertEquals("ok", result);
     assertEquals(2, attempts.get());
+    // the 503's 1s Retry-After, not shortenWaits' 1ms backoff
     assertTrue(elapsed.toMillis() >= 1_000, "retried after only " + elapsed);
   }
 
@@ -274,6 +276,7 @@ class CCloudHttpRetryPolicyTest {
     var source = Uni.createFrom().<String>deferred(() -> {
       attempts.incrementAndGet();
       return Uni.createFrom().failure(
+          // a 30s Retry-After is past shortenWaits' 5s budget, so it gives up without waiting
           new TransientServerErrorException(URL, 503, 30, new RuntimeException("503"))
       );
     });
