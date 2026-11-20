@@ -241,6 +241,7 @@ public class CCloudRateLimitRetryTest extends ConfluentQueryResourceTestBase {
 
     // Retry-After: 30 is past the test profile's 10s retry budget, so it fails without waiting
     var elapsed = Duration.ofNanos(System.nanoTime() - started);
+    // 5s leaves slack for a slow machine and is still well short of the 30s wait
     assertTrue(elapsed.toMillis() < 5_000, "waited " + elapsed);
     wireMock.verifyThat(1, WireMock.getRequestedFor(WireMock.urlPathEqualTo(
         uriUtil.getPath(envListUri)
