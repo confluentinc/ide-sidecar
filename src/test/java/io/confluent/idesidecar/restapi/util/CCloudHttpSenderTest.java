@@ -55,6 +55,7 @@ class CCloudHttpSenderTest {
     HttpResponse<Buffer> ok = mock();
     when(ok.statusCode()).thenReturn(200);
     Promise<HttpResponse<Buffer>> slow = Promise.promise();
+    // answers at 500ms, past the 200ms budget
     CompletableFuture.delayedExecutor(500, TimeUnit.MILLISECONDS).execute(() -> slow.complete(ok));
 
     // a token exchange's answer can carry a rotated refresh token, so it mustn't be dropped

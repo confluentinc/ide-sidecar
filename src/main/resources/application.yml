@@ -28,6 +28,8 @@
             max-backoff-ms: 200
             max-retries: 3
             jitter-factor: 0.0
+            # longer than the 1-2s Retry-After waits the tests sit out, shorter than the 30s
+            # one they expect to fail fast on
             max-total-ms: 10000
       confluent-local:
         resources:
