@@ -357,9 +357,6 @@ public class CCloudConnectionState extends ConnectionState {
   }
 
   /**
-   * The {@code check_jwt} running for the given control-plane token.
-   */
-  /**
    * A failed or rejected check for a token the connection has since replaced, which says nothing
    * about its session.
    */
@@ -371,6 +368,9 @@ public class CCloudConnectionState extends ConnectionState {
     }
   }
 
+  /**
+   * The {@code check_jwt} running for the given control-plane token.
+   */
   private record RunningCheck(String controlPlaneToken, Future<Boolean> future) {
 
   }
