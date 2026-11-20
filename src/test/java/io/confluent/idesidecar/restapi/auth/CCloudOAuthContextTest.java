@@ -968,6 +968,7 @@ class CCloudOAuthContextTest {
   void tokenLifetimeShouldComeFromTheJwtsIssuedAtAndExpiry() {
     var now = Instant.parse("2026-11-06T12:00:00Z");
 
+    // both claims are long past, so only exp - iat (not exp - now) can give 900s
     var token = jwt("{\"iat\":1000,\"exp\":1900}");
 
     var lifetime = CCloudOAuthContext.tokenLifetime(token, "test", now);
@@ -1003,7 +1004,7 @@ class CCloudOAuthContextTest {
     var now = Instant.parse("2026-11-06T12:00:00Z");
     var fallback = CCloudOAuthConfig.CCLOUD_CONTROL_PLANE_TOKEN_LIFE_TIME_SEC;
     var expiryPastAnyInstant = jwt("{\"exp\":9223372036854775807}");
-    // exp - iat wraps around to 101s
+    // iat is Long.MAX_VALUE and exp is Long.MIN_VALUE + 100, so exp - iat wraps around to 101s
     var lifetimeThatOverflows = jwt("{\"iat\":9223372036854775807,\"exp\":-9223372036854775708}");
 
     var withoutIssuedAt = CCloudOAuthContext.tokenLifetime(expiryPastAnyInstant, "test", now);
@@ -1105,6 +1106,7 @@ class CCloudOAuthContextTest {
     awaitFailure(authContext.refresh(null));
 
     var elapsed = Duration.ofNanos(System.nanoTime() - started);
+    // the deadline is 200ms and the exchange answers after 1s, so the deadline ended it
     assertTrue(elapsed.toMillis() < 900, "waited for the slow exchange: " + elapsed);
     assertEquals(1, authContext.getFailedTokenRefreshAttempts());
     // the exchange has its own timer, so it can end just after the caller's deadline
@@ -1140,7 +1142,7 @@ class CCloudOAuthContextTest {
     awaitFailure(authContext.refresh(null));
     awaitFailure(authContext.refresh(null));
 
-    // CCloud rotated the refresh token, so a second refresh mustn't send the old one meanwhile
+    // CCloud rotates refresh tokens, so a second refresh mustn't send the old one meanwhile
     assertTrue(authContext.isRefreshInFlight());
     wireMock.verifyThat(1, WireMock.postRequestedFor(WireMock.urlPathEqualTo("/oauth/token")));
     Awaitility.await().atMost(Duration.ofSeconds(5))
@@ -1158,6 +1160,7 @@ class CCloudOAuthContextTest {
     );
 
     awaitFailure(authContext.refresh(null));
+    // the 503 lands 500ms in, after the 200ms deadline; wait past it so a second count would show
     Thread.sleep(1_000);
 
     assertEquals(1, authContext.getFailedTokenRefreshAttempts());
@@ -1192,6 +1195,7 @@ class CCloudOAuthContextTest {
             .atPriority(1)
             .willReturn(WireMock.aResponse()
                 .withStatus(201)
+                // well past signedInWithShortRefreshDeadline's 200ms
                 .withFixedDelay(1_000)
                 .withBody(new ObjectMapper().valueToTree(response).toString()))
     );

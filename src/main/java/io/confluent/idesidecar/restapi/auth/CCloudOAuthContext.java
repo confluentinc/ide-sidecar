@@ -270,8 +270,8 @@ public class CCloudOAuthContext implements AuthContext {
 
   /**
    * Start a refresh, or join the one already running for the same organization, so this
-   * connection never runs two at once. CCloud rotates the refresh token on each use, so a second
-   * refresh sent with the old token would fail. A refresh for a different organization starts
+   * connection never runs two at once. CCloud answers each refresh with a new refresh token, so
+   * a second refresh sent with the old one may be rejected. Another organization's refresh starts
    * once the running one finishes, and reads the refresh token only then. Several such waiters
    * race to start next, in no particular order. A refresh past its deadline keeps the slot until
    * it actually ends, so a second refresh can't send the token it may already have rotated.
@@ -432,7 +432,7 @@ public class CCloudOAuthContext implements AuthContext {
     writeLock.lock();
     try {
       return exchangeAuthorizationCode(authorizationCode)
-          // the refresh token's lifetime is still unmeasured; log it, never the tokens
+          // expires_in (the access token's lifetime, RFC 6749 5.1) is unmeasured; log only that
           .onSuccess(response -> {
             if (response.error() == null || response.error().isNull()) {
               Log.infof(
@@ -795,8 +795,8 @@ public class CCloudOAuthContext implements AuthContext {
         CCloudOAuthConfig.CCLOUD_OAUTH_REDIRECT_URI
     );
 
-    // CCloud rotates the refresh token as it answers, so give a slow answer until the refresh
-    // deadline rather than drop the new token at the usual request timeout
+    // the answer carries a new refresh token and the old one may stop working, so give a slow
+    // answer until the refresh deadline rather than drop the new token at the usual request timeout
     return performTokenExchange(requestBody, refreshDeadline());
   }
 
@@ -917,7 +917,7 @@ public class CCloudOAuthContext implements AuthContext {
               dataPlaneTokenValue,
               now.plus(tokenLifetime(dataPlaneTokenValue, "data plane", now))
           );
-          // outside the update, which can run more than once
+          // outside the update, whose function AtomicReference may re-apply under contention
           var random = ThreadLocalRandom.current().nextDouble();
           tokens.updateAndGet(oldTokens -> {
             var shortestExpiry = oldTokens.controlPlaneToken != null
