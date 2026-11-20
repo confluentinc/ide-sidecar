@@ -9,7 +9,6 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
-import org.eclipse.microprofile.config.ConfigProvider;
 
 /**
  * Bean that periodically checks the status of Confluent Cloud API tokens and refreshes them if they
@@ -17,9 +16,6 @@ import org.eclipse.microprofile.config.ConfigProvider;
  */
 @ApplicationScoped
 public class RefreshCCloudTokensBean {
-
-  private static final Integer MAX_TOKEN_REFRESH_ATTEMPTS = ConfigProvider.getConfig()
-      .getValue("ide-sidecar.connections.ccloud.refresh-token.max-refresh-attempts", Integer.class);
 
   final ConnectionStateManager connectionStateManager;
 
@@ -32,10 +28,9 @@ public class RefreshCCloudTokensBean {
    * Recurring job that gets executed every
    * <code>ide-sidecar.connections.ccloud.check-token-expiration.interval-seconds</code> seconds.
    * Refreshes {@link CCloudOAuthContext}s of {@link CCloudConnectionState}s that hold
-   * {@link Token}s that will expire before the next run of this recurring job. Resets
-   * {@link CCloudOAuthContext}s that have experienced more than
-   * <code>ide-sidecar.connections.ccloud.refresh-token.max-refresh-attempts</code>
-   * failed token refresh attempts.
+   * {@link Token}s that will expire before the next run of this recurring job, skipping those
+   * still backing off after a failed refresh (see
+   * {@link CCloudOAuthContext#shouldAttemptTokenRefresh()}).
    */
   @Scheduled(
       every = "${ide-sidecar.connections.ccloud.check-token-expiration.interval-seconds}s",
@@ -73,8 +68,10 @@ public class RefreshCCloudTokensBean {
         )
         .onFailure(failure ->
             Log.errorf(
-                "Refreshing tokens of connection with ID=%s failed: %s",
+                failure,
+                "Refreshing tokens of connection with ID=%s failed (%d in a row): %s",
                 connectionState.getSpec().id(),
+                connectionState.getOauthContext().getFailedTokenRefreshAttempts(),
                 failure.getMessage()
             )
         );
