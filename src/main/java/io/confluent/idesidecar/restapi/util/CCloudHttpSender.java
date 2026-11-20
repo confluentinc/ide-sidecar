@@ -44,7 +44,8 @@ public class CCloudHttpSender {
       String url,
       Supplier<Future<HttpResponse<Buffer>>> sender) {
     Promise<HttpResponse<Buffer>> promise = Promise.promise();
-    // through a method: retryPolicy is a CDI proxy, whose own fields aren't the bean's
+    // through a method: retryPolicy is a CDI client proxy, which only delegates method calls
+    // https://github.com/quarkusio/quarkus/blob/3.27.0/docs/src/main/asciidoc/cdi.adoc#L228
     var budget = retryPolicy.budget();
     var sendBy = Instant.now().plus(budget);
     retryPolicy.applyRetryWithoutCutoff(url,

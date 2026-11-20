@@ -315,6 +315,7 @@ class CCloudApiRateLimiterTest {
 
     var seconds = RateLimitState.parseRetryAfterHeader(response);
 
+    // an HTTP date drops sub-second precision; the lower bound is slack for a slow run
     assertTrue(seconds > 50 && seconds <= 60, "parsed as " + seconds);
   }
 
