@@ -233,6 +233,9 @@ ide-sidecar:
     # Disable the service loader mechanism to avoid issues in native mode
     "rule.service.loader.enable": "false"
   cluster-proxy:
+    # keep under the extension's per-request timeout for sidecar calls (30s), so the extension sees
+    # the sidecar's error; the extension may set it at startup
+    schema-registry-timeout-seconds: 20
     # Exclude these HTTP headers when proxying requests to the remote cluster (Kafka or Schema Registry)
     # It shouldn't really hurt if we _don't_ exclude these headers, but it's just cleaner to do so.
     http-header-exclusions:
