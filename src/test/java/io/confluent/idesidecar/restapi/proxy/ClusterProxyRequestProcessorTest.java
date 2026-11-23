@@ -47,6 +47,7 @@ class ClusterProxyRequestProcessorTest {
     processor.clients = mock(SchemaRegistryClients.class);
     when(processor.clients.getClient(CONNECTION_ID, CLUSTER_ID)).thenReturn(client);
     processor.httpHeaderExclusions = List.of();
+    processor.schemaRegistryTimeoutSeconds = 20;
     processor.setNext(new Processor<>() {
       @Override
       public Future<ClusterProxyContext> process(ClusterProxyContext context) {
@@ -72,11 +73,12 @@ class ClusterProxyRequestProcessorTest {
     var failure = ClusterProxyRequestProcessor.toFailure(
         directSchemaRegistryContext(),
         new SocketTimeoutException("Read timed out"),
-        Instant.now().minusMillis(1)
+        Instant.now().minusMillis(1),
+        Duration.ofSeconds(7)
     );
 
     assertEquals("504", failure.status());
-    assertEquals("Schema Registry didn't respond within 20s", failure.title());
+    assertEquals("Schema Registry didn't respond within 7s", failure.title());
   }
 
   @Test
