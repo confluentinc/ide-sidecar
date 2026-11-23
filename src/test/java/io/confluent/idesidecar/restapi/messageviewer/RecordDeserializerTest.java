@@ -524,8 +524,9 @@ public class RecordDeserializerTest {
     return Stream.of(
         Arguments.of(clientWithAuthError, true, 0),
         Arguments.of(clientWithAuthError, false, 0),
-        Arguments.of(clientWithNetworkError, true, 3),
-        Arguments.of(clientWithNetworkError, false, 3)
+        // the Schema Registry client retries network errors, not the deserializer
+        Arguments.of(clientWithNetworkError, true, 0),
+        Arguments.of(clientWithNetworkError, false, 0)
     );
   }
 
@@ -566,26 +567,25 @@ public class RecordDeserializerTest {
 
   @TestFactory
   public Stream<DynamicTest>
-  testDeserializeRetriesAndCachesSchemaFetchFailuresUponUnhappyStatusCodes() {
+  testDeserializeCachesSchemaFetchFailuresUponUnhappyStatusCodes() {
     record TestCase(
         int statusCode,
-        int maxRetries,
         int expectedTries,
         Boolean isKey
     ) {
 
       static TestCase nonRetryable(int statusCode) {
         // Expect only 1 try when the status code is non-retryable
-        return new TestCase(statusCode, 3, 1, null);
+        return new TestCase(statusCode, 1, null);
       }
 
       static TestCase retryable(int statusCode) {
-        // Expect 4 tries - 1 initial try + 3 retries
-        return new TestCase(statusCode, 3, 4, null);
+        // Expect only 1 try: the Schema Registry client retries these, not the deserializer
+        return new TestCase(statusCode, 1, null);
       }
 
       TestCase withIsKey(Boolean isKey) {
-        return new TestCase(statusCode, maxRetries, expectedTries, isKey);
+        return new TestCase(statusCode, expectedTries, isKey);
       }
 
       @Override
@@ -593,7 +593,6 @@ public class RecordDeserializerTest {
         var prefix = TestCase.this.expectedTries == 1 ? "Non" : "";
         return prefix + "RetryableTestCase{" +
             "statusCode=" + statusCode +
-            ", maxRetries=" + maxRetries +
             ", expectedTries=" + expectedTries +
             ", isKey=" + isKey +
             '}';
@@ -623,7 +622,6 @@ public class RecordDeserializerTest {
               .thenThrow(new RestClientException("Mock", input.statusCode, input.statusCode));
 
           assertSchemaFetchFailuresCached(
-              input.maxRetries,
               input.expectedTries,
               input.isKey,
               mockedSRClient
@@ -633,7 +631,7 @@ public class RecordDeserializerTest {
 
   @TestFactory
   public Stream<DynamicTest>
-  testDeserializeRetriesAndCachesSchemaFetchFailuresUponNetworkErrors() {
+  testDeserializeCachesSchemaFetchFailuresUponNetworkErrors() {
     return Stream.of(
             // Test a bunch of exceptions that are considered network errors (all extend IOException)
             ConnectException.class,
@@ -646,9 +644,9 @@ public class RecordDeserializerTest {
           when(mockedSRClient.getSchemaById(anyInt()))
               .thenThrow(input.getDeclaredConstructor().newInstance());
 
+          // the Schema Registry client retries network errors, not the deserializer
           assertSchemaFetchFailuresCached(
-              3,
-              4,
+              1,
               // We don't care about isKey
               false,
               mockedSRClient
@@ -657,7 +655,6 @@ public class RecordDeserializerTest {
   }
 
   private void assertSchemaFetchFailuresCached(
-      int maxRetries,
       int expectedTries,
       Boolean isKey,
       CachedSchemaRegistryClient mockedSRClient

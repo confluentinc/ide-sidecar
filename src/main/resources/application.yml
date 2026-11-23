@@ -51,8 +51,6 @@
     flink-language-service-proxy:
       url-pattern: ws://127.0.0.1:${quarkus.http.test-port}/fls-mock
     schema-fetch-error-ttl: 30
-    schema-fetch-retry:
-      max-retries: 3
     flink:
       url-pattern: http://localhost:${quarkus.wiremock.devservices.port}
   quarkus:
@@ -235,6 +233,9 @@ ide-sidecar:
     # Disable the service loader mechanism to avoid issues in native mode
     "rule.service.loader.enable": "false"
   cluster-proxy:
+    # keep under the extension's per-request timeout for sidecar calls (30s), so the extension sees
+    # the sidecar's error; the extension may set it at startup
+    schema-registry-timeout-seconds: 20
     # Exclude these HTTP headers when proxying requests to the remote cluster (Kafka or Schema Registry)
     # It shouldn't really hurt if we _don't_ exclude these headers, but it's just cleaner to do so.
     http-header-exclusions:
@@ -251,11 +252,7 @@ ide-sidecar:
   webclient:
     connect-timeout-seconds: 10
   schema-fetch-error-ttl: 30
-  schema-fetch-retry:
-    initial-backoff-ms: 250
-    max-backoff-ms: 5000
-    timeout-ms: 10000
-    max-retries: 5
+  schema-fetch-timeout-ms: 10000
   integration-tests:
     # cp-demo configs used by Confluent Platform integration tests
     cp-demo:
