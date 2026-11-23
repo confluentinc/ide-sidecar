@@ -90,7 +90,7 @@ public class RecordDeserializer {
 
   @Inject
   public RecordDeserializer(
-      @ConfigProperty(name = "ide-sidecar.schema-fetch-retry.timeout-ms")
+      @ConfigProperty(name = "ide-sidecar.schema-fetch-timeout-ms")
       long schemaFetchTimeoutMs,
       SchemaErrors schemaErrors
   ) {
