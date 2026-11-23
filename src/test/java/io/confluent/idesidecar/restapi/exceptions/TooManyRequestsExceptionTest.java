@@ -22,7 +22,10 @@ class TooManyRequestsExceptionTest {
     var ex = new TooManyRequestsException("https://api.confluent.cloud/api/org/v2/environments");
 
     assertEquals(-1, ex.getRetryAfterSeconds());
-    assertTrue(ex.getMessage().contains("-1s"));
+    assertEquals(
+        "Too Many Requests (HTTP 429) from https://api.confluent.cloud/api/org/v2/environments",
+        ex.getMessage()
+    );
   }
 
   @Test
