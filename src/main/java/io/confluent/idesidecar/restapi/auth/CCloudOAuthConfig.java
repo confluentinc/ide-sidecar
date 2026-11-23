@@ -47,6 +47,11 @@ public final class CCloudOAuthConfig {
   public static final double TOKEN_REFRESH_JITTER_FACTOR = ConfigProvider.getConfig()
       .getValue("ide-sidecar.connections.ccloud.refresh-token.retry.jitter-factor", Double.class);
 
+  public static final Duration TOKEN_REFRESH_DEADLINE = Duration.ofSeconds(
+      ConfigProvider
+          .getConfig()
+          .getValue("ide-sidecar.connections.ccloud.refresh-token.deadline-seconds", Long.class));
+
   public static final String CCLOUD_OAUTH_REDIRECT_URI = ConfigProvider.getConfig()
       .getValue("ide-sidecar.connections.ccloud.oauth.redirect-uri", String.class);
 
