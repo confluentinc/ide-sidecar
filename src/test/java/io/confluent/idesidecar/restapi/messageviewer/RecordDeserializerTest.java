@@ -571,23 +571,22 @@ public class RecordDeserializerTest {
   testDeserializeCachesSchemaFetchFailuresUponUnhappyStatusCodes() {
     record TestCase(
         int statusCode,
-        int maxRetries,
         int expectedTries,
         Boolean isKey
     ) {
 
       static TestCase nonRetryable(int statusCode) {
         // Expect only 1 try when the status code is non-retryable
-        return new TestCase(statusCode, 3, 1, null);
+        return new TestCase(statusCode, 1, null);
       }
 
       static TestCase retryable(int statusCode) {
         // Expect only 1 try: the Schema Registry client retries these, not the deserializer
-        return new TestCase(statusCode, 3, 1, null);
+        return new TestCase(statusCode, 1, null);
       }
 
       TestCase withIsKey(Boolean isKey) {
-        return new TestCase(statusCode, maxRetries, expectedTries, isKey);
+        return new TestCase(statusCode, expectedTries, isKey);
       }
 
       @Override
@@ -595,7 +594,6 @@ public class RecordDeserializerTest {
         var prefix = TestCase.this.expectedTries == 1 ? "Non" : "";
         return prefix + "RetryableTestCase{" +
             "statusCode=" + statusCode +
-            ", maxRetries=" + maxRetries +
             ", expectedTries=" + expectedTries +
             ", isKey=" + isKey +
             '}';
@@ -625,7 +623,6 @@ public class RecordDeserializerTest {
               .thenThrow(new RestClientException("Mock", input.statusCode, input.statusCode));
 
           assertSchemaFetchFailuresCached(
-              input.maxRetries,
               input.expectedTries,
               input.isKey,
               mockedSRClient
@@ -651,7 +648,6 @@ public class RecordDeserializerTest {
 
           // the Schema Registry client retries network errors, not the deserializer
           assertSchemaFetchFailuresCached(
-              3,
               1,
               // We don't care about isKey
               false,
@@ -670,7 +666,6 @@ public class RecordDeserializerTest {
   }
 
   private void assertSchemaFetchFailuresCached(
-      int maxRetries,
       int expectedTries,
       Boolean isKey,
       CachedSchemaRegistryClient mockedSRClient
