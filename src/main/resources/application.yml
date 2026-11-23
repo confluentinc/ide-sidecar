@@ -115,7 +115,6 @@ ide-sidecar:
           prod: https://login.confluent.io/oauth/token
           stag: https://login-stag.confluent-dev.io/oauth/token
           devel: https://login.confluent-dev.io/oauth/token
-        life-time-seconds: 60
       oauth:
         authorize-uri:
           prod: https://login.confluent.io/oauth/authorize
@@ -133,7 +132,17 @@ ide-sidecar:
       refresh-status-interval-seconds: 5
       refresh-token:
         absolute-lifetime-seconds: 28800
-        max-refresh-attempts: 50
+        # after this many consecutive failed refreshes, or this long since the first, the
+        # connection fails and the user signs in again
+        max-refresh-attempts: 10
+        failure-budget-seconds: 600
+        # wait between failed refreshes: initial, growing by the multiplier up to the max, plus
+        # up to the jitter factor on top
+        retry:
+          initial-backoff-seconds: 5
+          backoff-multiplier: 1.6
+          max-backoff-seconds: 60
+          jitter-factor: 0.2
       resources:
         homepage-uri: https://${ide-sidecar.connections.ccloud.base-path}/
         org-list-uri: https://${ide-sidecar.connections.ccloud.base-path}/api/org/v2/organizations
