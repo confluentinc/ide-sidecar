@@ -13,23 +13,29 @@ import java.util.concurrent.TimeoutException;
  * the TLS handshake, and the full response, however slowly it arrives. On its own, Vert.x applies
  * {@code t} to getting a connection and then again to each silence in the response, so a call can
  * run well past {@code t}. When the deadline passes, the request fails with a
- * {@link TimeoutException} and is reset, which closes its connection.
+ * {@link TimeoutException} and is reset, which closes its connection. A request that doesn't set
+ * a timeout gets the default one.
  */
 final class RequestDeadlineInterceptor implements Handler<HttpContext<?>> {
 
   private static final String DEADLINE = RequestDeadlineInterceptor.class.getName();
 
   private final Vertx vertx;
+  private final long defaultTimeoutMs;
 
-  private RequestDeadlineInterceptor(Vertx vertx) {
+  private RequestDeadlineInterceptor(Vertx vertx, long defaultTimeoutMs) {
     this.vertx = vertx;
+    this.defaultTimeoutMs = defaultTimeoutMs;
   }
 
   /**
-   * Add the deadline to every request {@code client} sends.
+   * Add the deadline to every request {@code client} sends, using {@code defaultTimeoutMs} for
+   * requests that don't set their own timeout.
    */
-  static WebClient install(WebClient client, Vertx vertx) {
-    ((WebClientInternal) client).addInterceptor(new RequestDeadlineInterceptor(vertx));
+  static WebClient install(WebClient client, Vertx vertx, long defaultTimeoutMs) {
+    ((WebClientInternal) client).addInterceptor(
+        new RequestDeadlineInterceptor(vertx, defaultTimeoutMs)
+    );
     return client;
   }
 
@@ -38,10 +44,14 @@ final class RequestDeadlineInterceptor implements Handler<HttpContext<?>> {
     Deadline deadline = context.get(DEADLINE);
     switch (context.phase()) {
       case CREATE_REQUEST -> {
-        var timeoutMs = context.requestOptions().getTimeout();
-        if (deadline == null && timeoutMs > 0) {
-          context.set(DEADLINE, new Deadline(context, timeoutMs));
-        } else if (deadline != null) {
+        var options = context.requestOptions();
+        if (options.getTimeout() <= 0) {
+          // before next(), so Vert.x also applies it to getting a connection and each silence
+          options.setTimeout(defaultTimeoutMs);
+        }
+        if (deadline == null) {
+          context.set(DEADLINE, new Deadline(context, options.getTimeout()));
+        } else {
           // a redirect, which stays under the first request's deadline
           deadline.forgetRequest();
         }

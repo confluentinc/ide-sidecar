@@ -37,6 +37,7 @@ When reviewing pull requests for the ide-sidecar project:
 - Documentation: Code changes should be documented in Javadocs.
 - API changes: User-facing changes of the API endpoints should be versioned if possible.
 - Complexity: Avoid unnecessary complexity to keep the code maintainable and testable.
+- HTTP timeouts: Every Vert.x `WebClient` must come from `WebClientFactory` (`getWebClient()` or `createWebClient(...)`), never from `WebClient.create(...)` elsewhere, so each request gets the default timeout over the whole exchange. A request should call `.timeout(...)` only when it needs a different limit, and a limit longer than the request and consume timeouts also needs `ide-sidecar.webclient.idle-timeout-seconds` raised above it.
 
 **Javadoc Preservation**
 - Never delete existing Javadocs unless they contain significant errors or gaps.

@@ -42,7 +42,6 @@ public class LoginRealmResource {
 
     var loginRealm = webClientFactory.getWebClient()
         .getAbs(CONFLUENT_CLOUD_LOGIN_REALM_URI.concat(queryParameters))
-        .timeout(WebClientFactory.WEBCLIENT_REQUEST_TIMEOUT_MS)
         .send()
         .map(response ->
             Response
