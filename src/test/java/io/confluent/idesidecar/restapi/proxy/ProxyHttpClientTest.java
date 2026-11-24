@@ -3,9 +3,15 @@ package io.confluent.idesidecar.restapi.proxy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.netty.channel.ConnectTimeoutException;
+import io.netty.handler.codec.dns.DefaultDnsQuestion;
+import io.netty.handler.codec.dns.DnsRecordType;
+import io.netty.resolver.dns.DnsNameResolverTimeoutException;
 import io.quarkus.test.junit.QuarkusTest;
 import io.vertx.core.impl.NoStackTraceTimeoutException;
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 import java.time.Duration;
 import java.util.concurrent.CompletionException;
 import org.junit.jupiter.api.Test;
@@ -62,6 +68,36 @@ class ProxyHttpClientTest {
     assertEquals("504", failure.status());
     assertEquals("proxy_timeout", failure.errors().get(0).code());
     assertEquals("Couldn't connect to " + HOST + " in time", failure.title());
+  }
+
+  @Test
+  void toFailureShouldReturnGatewayTimeoutWhenTheDnsLookupTimesOut() {
+    // how Netty reports it: the resolver's timeout under an UnknownHostException
+    var dnsTimeout = new UnknownHostException("Failed to resolve '" + HOST + "'");
+    dnsTimeout.initCause(new DnsNameResolverTimeoutException(
+        new InetSocketAddress("127.0.0.1", 53),
+        new DefaultDnsQuestion(HOST, DnsRecordType.A),
+        "query via UDP timed out after 5000 milliseconds"
+    ));
+
+    var failure = ProxyHttpClient.toFailure(
+        context(URL), new CompletionException(dnsTimeout), TIMEOUT
+    );
+
+    assertEquals("504", failure.status());
+    assertEquals("proxy_timeout", failure.errors().get(0).code());
+    assertEquals("Couldn't connect to " + HOST + " in time", failure.title());
+  }
+
+  @Test
+  void toFailureShouldReturnGatewayTimeoutForASocketTimeout() {
+    var failure = ProxyHttpClient.toFailure(
+        context(URL), new SocketTimeoutException("Read timed out"), TIMEOUT
+    );
+
+    assertEquals("504", failure.status());
+    assertEquals("proxy_timeout", failure.errors().get(0).code());
+    assertEquals(HOST + " didn't respond within 20s", failure.title());
   }
 
   @Test

@@ -5,7 +5,6 @@ import io.confluent.idesidecar.restapi.util.ExceptionUtil;
 import io.confluent.idesidecar.restapi.util.TimeUtil;
 import io.confluent.idesidecar.restapi.util.UriUtil;
 import io.confluent.idesidecar.restapi.util.WebClientFactory;
-import io.netty.channel.ConnectTimeoutException;
 import io.quarkus.logging.Log;
 import io.smallrye.mutiny.Uni;
 import jakarta.inject.Inject;
@@ -62,7 +61,7 @@ public class LoginRealmResource {
               (Exception) timeout,
               Status.GATEWAY_TIMEOUT,
               "login_realm_timeout",
-              ExceptionUtil.findCause(timeout, ConnectTimeoutException.class) != null
+              ExceptionUtil.isConnectTimeout(timeout)
                   ? "Couldn't connect to Confluent Cloud in time"
                   : "Confluent Cloud didn't respond within %s".formatted(
                       TimeUtil.humanReadableDuration(
