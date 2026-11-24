@@ -41,6 +41,24 @@ public class WebClientFactoryTest {
   }
 
   @Test
+  void getDefaultWebClientOptionsSetsIdleTimeout() {
+    var options = webClientFactory.getDefaultWebClientOptions();
+
+    assertEquals(
+        WebClientFactory.WEBCLIENT_IDLE_TIMEOUT_SECONDS.toSeconds(),
+        options.getIdleTimeout()
+    );
+    // a backstop: it must never cut off a request before that request's own timeout
+    assertTrue(
+        options.getIdleTimeout() > WebClientFactory.WEBCLIENT_REQUEST_TIMEOUT_SECONDS.toSeconds()
+    );
+    assertTrue(
+        options.getIdleTimeout()
+            > WebClientFactory.WEBCLIENT_CCLOUD_CONSUME_TIMEOUT_SECONDS.toSeconds()
+    );
+  }
+
+  @Test
   void getDefaultWebClientOptionsIncludesUserAgent() {
     var userAgent = webClientFactory.getDefaultWebClientOptions().getUserAgent();
     assertTrue(userAgent.contains("Confluent-for-VSCode/"));
