@@ -2,13 +2,11 @@ package io.confluent.idesidecar.restapi.util;
 
 import io.confluent.idesidecar.restapi.exceptions.TooManyRequestsException;
 import io.confluent.idesidecar.restapi.exceptions.TransientServerErrorException;
-import io.netty.channel.ConnectTimeoutException;
 import io.quarkus.logging.Log;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import java.net.ConnectException;
-import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.time.Duration;
 import java.time.Instant;
@@ -147,18 +145,10 @@ public class CCloudHttpRetryPolicy {
   }
 
   /**
-   * Netty's connect timeout extends {@link ConnectException}, and its DNS timeout isn't a
-   * {@link TimeoutException}, hence the name check.
-   *
-   * @see <a href="https://github.com/netty/netty/blob/netty-4.1.127.Final/transport/src/main/java/io/netty/channel/ConnectTimeoutException.java#L24">ConnectTimeoutException</a>
-   * @see <a href="https://github.com/netty/netty/blob/netty-4.1.127.Final/resolver-dns/src/main/java/io/netty/resolver/dns/DnsResolveContext.java#L1150-L1156">DNS timeout wrapped in UnknownHostException</a>
+   * A timeout as {@link ExceptionUtil#isTimeoutType} defines it, or any TLS failure.
    */
   private static boolean isTimeoutOrTlsFailure(Throwable failure) {
-    return failure instanceof TimeoutException
-        || failure instanceof SocketTimeoutException
-        || failure instanceof ConnectTimeoutException
-        || failure instanceof SSLException
-        || failure.getClass().getSimpleName().endsWith("TimeoutException");
+    return ExceptionUtil.isTimeoutType(failure) || failure instanceof SSLException;
   }
 
   private <T> Uni<T> retry(
