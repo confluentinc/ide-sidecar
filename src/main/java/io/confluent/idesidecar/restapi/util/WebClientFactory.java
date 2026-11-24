@@ -51,8 +51,8 @@ public class WebClientFactory {
 
   /**
    * How long a whole request may take, from getting a connection to the end of the response.
-   * Set it on each request with {@code HttpRequest.timeout(...)}, so a stalled server fails the
-   * send instead of hanging.
+   * Every request sent through a {@link #createWebClient} client gets it unless it sets its own
+   * with {@code HttpRequest.timeout(...)}, so a stalled server fails the send instead of hanging.
    */
   public static final Duration WEBCLIENT_REQUEST_TIMEOUT_SECONDS =
       secondsConfig("ide-sidecar.webclient.request-timeout-seconds");
@@ -114,7 +114,9 @@ public class WebClientFactory {
    * silence. Use it for every WebClient the sidecar sends requests through.
    */
   public static WebClient createWebClient(Vertx vertx, WebClientOptions options) {
-    return RequestDeadlineInterceptor.install(WebClient.create(vertx, options), vertx);
+    return RequestDeadlineInterceptor.install(
+        WebClient.create(vertx, options), vertx, WEBCLIENT_REQUEST_TIMEOUT_MS
+    );
   }
 
   /**

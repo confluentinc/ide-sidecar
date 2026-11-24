@@ -154,6 +154,7 @@ Scan the diff for these patterns:
 6. **Breaking API changes** - REST/GraphQL endpoint modifications without versioning
 7. **Security concerns** - Hardcoded secrets, command injection, OWASP Top 10 vulnerabilities
 8. **Null safety** - Missing null checks on external inputs
+9. **HTTP clients bypassing the default timeout** - `WebClient.create(...)` outside `WebClientFactory` (skips the default request timeout and the deadline over the whole exchange), a `.timeout(...)` that repeats the default (`ide-sidecar.webclient.request-timeout-seconds`), or a `.timeout(...)` longer than `ide-sidecar.webclient.ccloud-consume-timeout-seconds` without raising `ide-sidecar.webclient.idle-timeout-seconds` above it
 
 ### Step 5: Provide Structured Feedback
 

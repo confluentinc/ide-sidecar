@@ -32,6 +32,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -144,6 +145,18 @@ class WebClientDeadlineTest {
     var failure = awaitFailure(new ProxyHttpClient<>(webClientFactory, vertx).send(context));
 
     assertProxyTimeout(failure);
+    assertGaveUpAtTheTimeout(started);
+    await(serverConnectionClosed.future());
+  }
+
+  @Test
+  void requestWithoutItsOwnTimeoutShouldGiveUpAtTheDefaultTimeout() throws Exception {
+    var url = "http://localhost:%d/trickle".formatted(startTrickleServer());
+    var started = System.nanoTime();
+
+    var failure = awaitFailure(webClientFactory.getWebClient().getAbs(url).send());
+
+    assertInstanceOf(TimeoutException.class, failure);
     assertGaveUpAtTheTimeout(started);
     await(serverConnectionClosed.future());
   }
