@@ -29,11 +29,12 @@ public class ExceptionMappers {
   @ServerExceptionMapper
   public Response mapProcessorFailedException(ProcessorFailedException exception) {
     var failure = exception.getFailure();
-    return Response
+    var response = Response
         .status(extractStatus(failure))
         .entity(failure)
-        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-        .build();
+        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
+    exception.getResponseHeaders().forEach(response::header);
+    return response.build();
   }
 
   private int extractStatus(Failure failure) {
