@@ -2,7 +2,7 @@ package io.confluent.idesidecar.restapi.messageviewer;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.net.ConnectException;
+import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.net.UnknownServiceException;
@@ -479,8 +479,10 @@ public class RecordDeserializer {
 
   private boolean isNetworkRelatedException(Throwable throwable) {
     var e = (Exception) throwable;
+    // SocketException covers refused connections (ConnectException), resets, and a server that
+    // closes the connection before answering
     return (
-        e instanceof ConnectException
+        e instanceof SocketException
             || e instanceof SocketTimeoutException
             || e instanceof UnknownHostException
             || e instanceof UnknownServiceException
