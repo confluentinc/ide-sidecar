@@ -143,20 +143,7 @@ class WebClientRequestTimeoutTest {
         .withStatus(200)
         .withFixedDelay(ShortWebClientTimeoutProfile.FLINK_ANSWER_MS)
         .withBody("{}")));
-    var context = new ProxyContext(
-        "/slow-statement",
-        MultiMap.caseInsensitiveMultiMap(),
-        HttpMethod.POST,
-        null,
-        Map.of(),
-        null
-    );
-    context.setProxyRequestMethod(HttpMethod.POST);
-    context.setProxyRequestAbsoluteUrl(
-        "http://localhost:%d/slow-statement".formatted(wireMockPort)
-    );
-    context.setProxyRequestHeaders(MultiMap.caseInsensitiveMultiMap());
-    context.setProxyRequestBody(Buffer.buffer("{}"));
+    var context = flinkStatementPost("/slow-statement");
 
     var result = proxySender(flinkDataPlaneProxyProcessor)
         .process(context)
@@ -170,20 +157,7 @@ class WebClientRequestTimeoutTest {
   @Test
   void flinkProxyShouldFailAfterTheFlinkTimeout() throws Exception {
     stall(WireMock.post("/stalled-statement"));
-    var context = new ProxyContext(
-        "/stalled-statement",
-        MultiMap.caseInsensitiveMultiMap(),
-        HttpMethod.POST,
-        null,
-        Map.of(),
-        null
-    );
-    context.setProxyRequestMethod(HttpMethod.POST);
-    context.setProxyRequestAbsoluteUrl(
-        "http://localhost:%d/stalled-statement".formatted(wireMockPort)
-    );
-    context.setProxyRequestHeaders(MultiMap.caseInsensitiveMultiMap());
-    context.setProxyRequestBody(Buffer.buffer("{}"));
+    var context = flinkStatementPost("/stalled-statement");
     var started = System.nanoTime();
 
     var failure = awaitFailure(proxySender(flinkDataPlaneProxyProcessor).process(context));
@@ -269,6 +243,20 @@ class WebClientRequestTimeoutTest {
 
     assertGaveUpInTime(started);
     assertEquals(1, authContext.getFailedTokenRefreshAttempts());
+  }
+
+  /**
+   * A proxied POST of an empty statement to {@code path} on the test server.
+   */
+  private ProxyContext flinkStatementPost(String path) {
+    var context = new ProxyContext(
+        path, MultiMap.caseInsensitiveMultiMap(), HttpMethod.POST, null, Map.of(), null
+    );
+    context.setProxyRequestMethod(HttpMethod.POST);
+    context.setProxyRequestAbsoluteUrl("http://localhost:%d%s".formatted(wireMockPort, path));
+    context.setProxyRequestHeaders(MultiMap.caseInsensitiveMultiMap());
+    context.setProxyRequestBody(Buffer.buffer("{}"));
+    return context;
   }
 
   /**
