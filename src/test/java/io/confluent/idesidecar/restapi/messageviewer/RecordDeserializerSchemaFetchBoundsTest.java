@@ -77,6 +77,7 @@ class RecordDeserializerSchemaFetchBoundsTest {
     }
   };
   private final Logger deserializerLogger = Logger.getLogger(RecordDeserializer.class.getName());
+  private final Logger restServiceLogger = Logger.getLogger(SidecarRestService.class.getName());
   private final Logger mutinyLogger =
       Logger.getLogger("io.quarkus.mutiny.runtime.MutinyInfrastructure");
 
@@ -84,12 +85,14 @@ class RecordDeserializerSchemaFetchBoundsTest {
   void captureLogs() {
     schemaErrors.clearByConnectionId(CONNECTION_ID);
     deserializerLogger.addHandler(logCapture);
+    restServiceLogger.addHandler(logCapture);
     mutinyLogger.addHandler(logCapture);
   }
 
   @AfterEach
   void releaseLogs() {
     deserializerLogger.removeHandler(logCapture);
+    restServiceLogger.removeHandler(logCapture);
     mutinyLogger.removeHandler(logCapture);
     schemaErrors.clearByConnectionId(CONNECTION_ID);
   }
@@ -225,6 +228,36 @@ class RecordDeserializerSchemaFetchBoundsTest {
       Thread.sleep(20);
     }
     assertLoggedAtErrorContaining("failed after its 0.2s timeout: Schema not found");
+  }
+
+  @Test
+  void shouldLogALateFailureOnceWhenTheClientAlreadyGaveUpOnIt() throws Exception {
+    var timedOut = new CountDownLatch(1);
+    // nothing listens on port 1; the deadline has passed by the time this is called anyway
+    var restService = new SidecarRestService("http://localhost:1");
+    restService.configure(Map.of("max.retries", 0));
+    var client = mock(CachedSchemaRegistryClient.class);
+    when(client.getSchemaById(anyInt())).thenAnswer(invocation -> {
+      timedOut.await();
+      restService.getSchemaTypes();
+      return null;
+    });
+    var deserializer = new RecordDeserializer(200, schemaErrors);
+
+    deserializer.deserialize(RECORD_WITH_SCHEMA_ID, client, context, false);
+    timedOut.countDown();
+
+    var deadline = System.nanoTime() + Duration.ofSeconds(2).toNanos();
+    while (!loggedAtErrorContaining("/schemas/types") && System.nanoTime() < deadline) {
+      Thread.sleep(20);
+    }
+    Thread.sleep(200);
+    var entries = logRecords.stream()
+        .filter(r -> r.getLevel().intValue() >= Level.SEVERE.intValue())
+        .map(r -> r instanceof ExtLogRecord ext ? ext.getFormattedMessage() : r.getMessage())
+        .filter(message -> message != null && message.contains("/schemas/types"))
+        .toList();
+    assertEquals(1, entries.size(), String.valueOf(entries));
   }
 
   private static HttpServer alwaysTooManyRequests(AtomicInteger requests) throws Exception {

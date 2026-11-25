@@ -387,13 +387,15 @@ public class RecordDeserializer {
               ));
             } catch (Throwable e) {
               if (timedOut.get()) {
-                // the timeout below already ended the wait, so the emitter would ignore this
-                Log.errorf(
-                    e,
-                    "Schema fetch for connection %s failed after its %s timeout: %s",
-                    connectionId, TimeUtil.humanReadableDuration(schemaFetchTimeout),
-                    e.getMessage()
-                );
+                // the timeout below already ended the wait, so the emitter would ignore this; log
+                // it once, unless the Schema Registry client already logged it when giving up
+                var message = "Schema fetch for connection %s failed after its %s timeout: %s";
+                var timeout = TimeUtil.humanReadableDuration(schemaFetchTimeout);
+                if (SidecarRestService.loggedGivingUp(e)) {
+                  Log.debugf(e, message, connectionId, timeout, e.getMessage());
+                } else {
+                  Log.errorf(e, message, connectionId, timeout, e.getMessage());
+                }
               } else {
                 emitter.fail(e);
               }

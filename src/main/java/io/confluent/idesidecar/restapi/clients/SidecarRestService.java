@@ -13,7 +13,9 @@ import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
@@ -35,6 +37,11 @@ import java.util.concurrent.ThreadLocalRandom;
 public class SidecarRestService extends RestService {
 
   private static final ThreadLocal<Instant> DEADLINE = new ThreadLocal<>();
+
+  /**
+   * The last failure this thread gave up on and logged, so a caller can avoid logging it again.
+   */
+  private static final ThreadLocal<Throwable> LOGGED_GIVE_UP = new ThreadLocal<>();
 
   /**
    * The connection of the request in flight on this thread. Only the default
@@ -73,6 +80,9 @@ public class SidecarRestService extends RestService {
       throws IOException, RestClientException {
     var outer = DEADLINE.get();
     DEADLINE.set(outer != null && outer.isBefore(deadline) ? outer : deadline);
+    if (outer == null) {
+      LOGGED_GIVE_UP.remove();
+    }
     try {
       return call.call();
     } finally {
@@ -82,6 +92,24 @@ public class SidecarRestService extends RestService {
         DEADLINE.set(outer);
       }
     }
+  }
+
+  /**
+   * Whether this thread's last {@link #withDeadline} call already logged {@code failure} (or the
+   * failure it wraps, or wraps it) when giving up. Clears the record.
+   */
+  public static boolean loggedGivingUp(Throwable failure) {
+    var logged = LOGGED_GIVE_UP.get();
+    LOGGED_GIVE_UP.remove();
+    return logged != null && (causes(failure).contains(logged) || causes(logged).contains(failure));
+  }
+
+  private static List<Throwable> causes(Throwable t) {
+    var chain = new ArrayList<Throwable>();
+    for (; t != null && !chain.contains(t); t = t.getCause()) {
+      chain.add(t);
+    }
+    return chain;
   }
 
   @Override
@@ -216,6 +244,7 @@ public class SidecarRestService extends RestService {
   }
 
   private static void logGivingUp(String method, String path, String reason, Exception failure) {
+    LOGGED_GIVE_UP.set(failure);
     Log.errorf(
         failure,
         "Giving up on Schema Registry request %s %s because %s: %s",
