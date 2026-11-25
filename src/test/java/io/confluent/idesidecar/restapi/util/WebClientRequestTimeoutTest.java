@@ -143,7 +143,7 @@ class WebClientRequestTimeoutTest {
         .withStatus(200)
         .withFixedDelay(ShortWebClientTimeoutProfile.FLINK_ANSWER_MS)
         .withBody("{}")));
-    var context = flinkStatementPost("/slow-statement");
+    var context = proxiedPost("/slow-statement");
 
     var result = proxySender(flinkDataPlaneProxyProcessor)
         .process(context)
@@ -157,7 +157,7 @@ class WebClientRequestTimeoutTest {
   @Test
   void flinkProxyShouldFailAfterTheFlinkTimeout() throws Exception {
     stall(WireMock.post("/stalled-statement"));
-    var context = flinkStatementPost("/stalled-statement");
+    var context = proxiedPost("/stalled-statement");
     var started = System.nanoTime();
 
     var failure = awaitFailure(proxySender(flinkDataPlaneProxyProcessor).process(context));
@@ -171,6 +171,23 @@ class WebClientRequestTimeoutTest {
         elapsed.toMillis() < ShortWebClientTimeoutProfile.GIVE_UP_WITHIN_MS,
         "took " + elapsed
     );
+    var processorFailure = assertInstanceOf(ProcessorFailedException.class, failure);
+    assertEquals("504", processorFailure.getFailure().status());
+  }
+
+  @Test
+  void proxyRequestProcessorShouldKeepTheRequestTimeoutByDefault() throws Exception {
+    // the control-plane chain builds it this way; answers inside the Flink timeout, but too late
+    wireMock.register(WireMock.post("/slow-artifact").willReturn(WireMock.aResponse()
+        .withStatus(200)
+        .withFixedDelay(ShortWebClientTimeoutProfile.FLINK_ANSWER_MS)
+        .withBody("{}")));
+    var context = proxiedPost("/slow-artifact");
+    var started = System.nanoTime();
+
+    var failure = awaitFailure(new ProxyRequestProcessor(webClientFactory, vertx).process(context));
+
+    assertGaveUpInTime(started);
     var processorFailure = assertInstanceOf(ProcessorFailedException.class, failure);
     assertEquals("504", processorFailure.getFailure().status());
   }
@@ -246,9 +263,9 @@ class WebClientRequestTimeoutTest {
   }
 
   /**
-   * A proxied POST of an empty statement to {@code path} on the test server.
+   * A proxied POST with an empty JSON body to {@code path} on the test server.
    */
-  private ProxyContext flinkStatementPost(String path) {
+  private ProxyContext proxiedPost(String path) {
     var context = new ProxyContext(
         path, MultiMap.caseInsensitiveMultiMap(), HttpMethod.POST, null, Map.of(), null
     );

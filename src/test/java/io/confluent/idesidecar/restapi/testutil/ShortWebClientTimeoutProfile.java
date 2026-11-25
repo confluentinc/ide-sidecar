@@ -12,7 +12,7 @@ public class ShortWebClientTimeoutProfile extends NoAccessFilterProfile {
   public static final long REQUEST_TIMEOUT_MS = 1_000;
   /** Longer than the request timeout, so a test can tell the two apart. */
   public static final long CONSUME_TIMEOUT_MS = 2_000;
-  /** Longer than the request timeout, so a test can tell the two apart. */
+  /** Longer than the request and consume timeouts, so a test can tell the three apart. */
   public static final long FLINK_TIMEOUT_MS = 3_000;
   /** When a slow Flink test server answers: past the request timeout, inside the Flink one. */
   public static final int FLINK_ANSWER_MS = 2_000;

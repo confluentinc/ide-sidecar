@@ -259,8 +259,9 @@ ide-sidecar:
     # CCloud consume may hold the request open while there are no records; provisional, since how
     # long it holds hasn't been measured yet
     ccloud-consume-timeout-seconds: 60
-    # Flink gateway requests (statements, their results, workspaces); creating a statement on
-    # Confluent Cloud sometimes takes longer than 20s
+    # Flink gateway requests (statements, their results, workspaces): creating a statement hit the
+    # default request timeout in end-to-end runs. Provisional, since no successful creation has
+    # been timed. Keep the extension's own limit on these routes above this.
     ccloud-flink-timeout-seconds: 60
   schema-fetch-error-ttl: 30
   schema-fetch-timeout-ms: 10000
