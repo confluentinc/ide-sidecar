@@ -249,7 +249,7 @@ final class DeadlineHttpURLConnection extends HttpURLConnection {
 
     private final DeadlineError error;
 
-    private DeadlineInputStream(InputStream in, DeadlineError error) {
+    DeadlineInputStream(InputStream in, DeadlineError error) {
       super(in);
       this.error = error;
     }
