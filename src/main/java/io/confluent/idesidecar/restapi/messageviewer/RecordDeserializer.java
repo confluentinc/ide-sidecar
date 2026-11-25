@@ -31,6 +31,7 @@ import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.io.EncoderFactory;
 import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.errors.SerializationException;
+import org.apache.kafka.common.errors.ThrottlingQuotaExceededException;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -394,11 +395,17 @@ public class RecordDeserializer {
 
       var schemaType = SchemaFormat.fromSchemaType(parsedSchema.schemaType());
       var topicName = context.getTopicName();
-      var deserializedJsonNode = switch (schemaType) {
-        case AVRO -> handleAvro(bytes, topicName, schemaRegistryClient, isKey, headers);
-        case PROTOBUF -> handleProtobuf(bytes, topicName, schemaRegistryClient, isKey, headers);
-        case JSON -> handleJson(bytes, topicName, schemaRegistryClient, isKey, headers);
-      };
+      // decoding can look schemas up again (by subject, or for references), so it gets the same
+      // timeout, starting now: sharing the fetch's would fail a decode after a slow fetch
+      var deserializedJsonNode = SidecarRestService.withDeadline(
+          Instant.now().plus(schemaFetchTimeout),
+          () -> switch (schemaType) {
+            case AVRO -> handleAvro(bytes, topicName, schemaRegistryClient, isKey, headers);
+            case PROTOBUF ->
+                handleProtobuf(bytes, topicName, schemaRegistryClient, isKey, headers);
+            case JSON -> handleJson(bytes, topicName, schemaRegistryClient, isKey, headers);
+          }
+      );
       return RecordDeserializerDecodedResultBuilder
           .builder()
           .value(deserializedJsonNode)
@@ -413,6 +420,9 @@ public class RecordDeserializer {
     } catch (Exception e) {
       var exc = unwrap(e);
       if (exc instanceof RestClientException
+          // a 429 during decoding: the serde maps it to this, keeping no cause (other statuses keep
+          // the RestClientException as their cause)
+          || exc instanceof ThrottlingQuotaExceededException
           || isNetworkRelatedException(exc)
           || exc instanceof TimeoutException) {
         // IMPORTANT: We must cache RestClientException, network-related IOExceptions, and

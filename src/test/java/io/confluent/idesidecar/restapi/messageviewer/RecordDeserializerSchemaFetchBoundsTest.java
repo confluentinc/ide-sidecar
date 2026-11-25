@@ -3,6 +3,7 @@ package io.confluent.idesidecar.restapi.messageviewer;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -54,6 +55,8 @@ class RecordDeserializerSchemaFetchBoundsTest {
   private static final int SCHEMA_ID = 10008;
   // magic byte 0, then schema ID 10008
   private static final byte[] RECORD_WITH_SCHEMA_ID = new byte[]{0, 0, 0, 39, 24};
+  // the same schema ID, then the Avro string "a"
+  private static final byte[] AVRO_STRING_RECORD = new byte[]{0, 0, 0, 39, 24, 2, 'a'};
   // the sidecar doesn't override the Schema Registry client's max.retries
   private static final int CLIENT_SENDS_PER_FETCH =
       1 + SchemaRegistryClientConfig.MAX_RETRIES_DEFAULT;
@@ -289,6 +292,100 @@ class RecordDeserializerSchemaFetchBoundsTest {
       Thread.sleep(200);
       var entries = errorsContaining("Too Many Requests");
       assertEquals(1, entries.size(), String.valueOf(entries));
+    } finally {
+      server.stop(0);
+    }
+  }
+
+  @Test
+  void shouldBoundDecodeTimeSchemaLookupsByTheSameTimeout() throws Exception {
+    // the fetch gets the schema; decoding then looks it up again by subject, which is rate
+    // limited with a Retry-After that only the client's own retries would wait out
+    var subjectLookups = new AtomicInteger();
+    var server = HttpServer.create(new InetSocketAddress("localhost", 0), 0);
+    server.createContext("/", exchange -> {
+      var query = exchange.getRequestURI().getQuery();
+      exchange.getResponseHeaders().add("Content-Type", "application/json");
+      byte[] body;
+      if (query != null && query.contains("subject=topic-1")) {
+        subjectLookups.incrementAndGet();
+        exchange.getResponseHeaders().add("Retry-After", "5");
+        body = "{\"error_code\":429,\"message\":\"Too Many Requests\"}"
+            .getBytes(StandardCharsets.UTF_8);
+        exchange.sendResponseHeaders(429, body.length);
+      } else {
+        body = "{\"schema\":\"\\\"string\\\"\"}".getBytes(StandardCharsets.UTF_8);
+        exchange.sendResponseHeaders(200, body.length);
+      }
+      exchange.getResponseBody().write(body);
+      exchange.close();
+    });
+    server.start();
+    var deserializer = new RecordDeserializer(2_000, schemaErrors);
+
+    try {
+      var restService = new SidecarRestService(
+          "http://localhost:%d".formatted(server.getAddress().getPort())
+      );
+      restService.configure(Map.of());
+      var client = new SidecarSchemaRegistryClient(restService, 10, Map.of());
+      var started = System.nanoTime();
+
+      var result = deserializer.deserialize(AVRO_STRING_RECORD, client, context, false);
+
+      var elapsed = Duration.ofNanos(System.nanoTime() - started);
+      assertTrue(subjectLookups.get() > 0, "decoding didn't look the schema up again");
+      assertTrue(elapsed.toMillis() < 3_000, "took " + elapsed);
+      assertNotNull(result.errorMessage());
+      // cached like a fetch failure, so the next record sends nothing
+      var lookups = subjectLookups.get();
+      deserializer.deserialize(AVRO_STRING_RECORD, client, context, false);
+      assertEquals(lookups, subjectLookups.get());
+    } finally {
+      server.stop(0);
+    }
+  }
+
+  @Test
+  void shouldGiveDecodingItsOwnTimeoutAfterASlowFetch() throws Exception {
+    // the fetch and the decode-time lookup by subject each get one 429 with Retry-After: 1, so
+    // the fetch uses about half of the 2s timeout before decoding starts
+    var fetches = new AtomicInteger();
+    var subjectLookups = new AtomicInteger();
+    var server = HttpServer.create(new InetSocketAddress("localhost", 0), 0);
+    server.createContext("/", exchange -> {
+      var query = exchange.getRequestURI().getQuery();
+      var bySubject = query != null && query.contains("subject=topic-1");
+      var attempt = (bySubject ? subjectLookups : fetches).incrementAndGet();
+      exchange.getResponseHeaders().add("Content-Type", "application/json");
+      byte[] body;
+      if (attempt == 1) {
+        exchange.getResponseHeaders().add("Retry-After", "1");
+        body = "{\"error_code\":429,\"message\":\"Too Many Requests\"}"
+            .getBytes(StandardCharsets.UTF_8);
+        exchange.sendResponseHeaders(429, body.length);
+      } else {
+        body = "{\"schema\":\"\\\"string\\\"\"}".getBytes(StandardCharsets.UTF_8);
+        exchange.sendResponseHeaders(200, body.length);
+      }
+      exchange.getResponseBody().write(body);
+      exchange.close();
+    });
+    server.start();
+    var deserializer = new RecordDeserializer(2_000, schemaErrors);
+
+    try {
+      var restService = new SidecarRestService(
+          "http://localhost:%d".formatted(server.getAddress().getPort())
+      );
+      restService.configure(Map.of());
+      var client = new SidecarSchemaRegistryClient(restService, 10, Map.of());
+
+      var result = deserializer.deserialize(AVRO_STRING_RECORD, client, context, false);
+
+      assertNull(result.errorMessage(), result.errorMessage());
+      assertEquals("a", result.value().asText());
+      assertEquals(2, subjectLookups.get());
     } finally {
       server.stop(0);
     }
