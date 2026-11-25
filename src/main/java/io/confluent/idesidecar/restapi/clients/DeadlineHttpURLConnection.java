@@ -42,16 +42,52 @@ final class DeadlineHttpURLConnection extends HttpURLConnection {
 
   @Override
   public InputStream getInputStream() throws IOException {
-    return new DeadlineInputStream(delegate.getInputStream());
+    return new DeadlineInputStream(delegate.getInputStream(), () -> deadlinePassed(url.getPath()));
   }
 
   /**
-   * The error body, without the deadline check: it's small, and a timeout while reading it would
-   * hide the response's status (a 404 would look like a timeout).
+   * The error body, cut off at the deadline too. A cut-off or a read timeout throws
+   * {@link ErrorBodyCutOff}, which keeps the status already received, so a slow 404 doesn't read as
+   * a timeout.
    */
   @Override
   public InputStream getErrorStream() {
-    return delegate.getErrorStream();
+    var stream = delegate.getErrorStream();
+    return stream == null ? null : new ErrorBodyInputStream(stream);
+  }
+
+  /**
+   * The deadline passed while the body of an error response was still arriving.
+   */
+  static final class ErrorBodyCutOff extends SocketTimeoutException {
+
+    private static final long serialVersionUID = 1L;
+
+    private final int status;
+
+    ErrorBodyCutOff(String path, int status) {
+      super(
+          "Schema Registry answered %d to request %s, but the rest didn't arrive in time"
+              .formatted(status, path)
+      );
+      this.status = status;
+    }
+
+    /**
+     * The response's HTTP status.
+     */
+    int status() {
+      return status;
+    }
+  }
+
+  /**
+   * Builds the error a read throws once the deadline has passed.
+   */
+  @FunctionalInterface
+  private interface DeadlineError {
+
+    SocketTimeoutException create() throws IOException;
   }
 
   @Override
@@ -209,10 +245,13 @@ final class DeadlineHttpURLConnection extends HttpURLConnection {
     return delegate.getReadTimeout();
   }
 
-  private final class DeadlineInputStream extends FilterInputStream {
+  private class DeadlineInputStream extends FilterInputStream {
 
-    private DeadlineInputStream(InputStream in) {
+    private final DeadlineError error;
+
+    private DeadlineInputStream(InputStream in, DeadlineError error) {
       super(in);
+      this.error = error;
     }
 
     @Override
@@ -227,10 +266,47 @@ final class DeadlineHttpURLConnection extends HttpURLConnection {
       return super.read(b, off, len);
     }
 
-    private void checkDeadline() throws SocketTimeoutException {
+    private void checkDeadline() throws IOException {
       if (!Instant.now().isBefore(deadline)) {
-        throw deadlinePassed(url.getPath());
+        throw error.create();
       }
+    }
+  }
+
+  /**
+   * An error body, whose timeouts keep the response's status.
+   */
+  private final class ErrorBodyInputStream extends DeadlineInputStream {
+
+    private ErrorBodyInputStream(InputStream in) {
+      super(in, () -> new ErrorBodyCutOff(url.getPath(), delegate.getResponseCode()));
+    }
+
+    @Override
+    public int read() throws IOException {
+      try {
+        return super.read();
+      } catch (SocketTimeoutException e) {
+        throw keepingStatus(e);
+      }
+    }
+
+    @Override
+    public int read(byte[] b, int off, int len) throws IOException {
+      try {
+        return super.read(b, off, len);
+      } catch (SocketTimeoutException e) {
+        throw keepingStatus(e);
+      }
+    }
+
+    private ErrorBodyCutOff keepingStatus(SocketTimeoutException timeout) throws IOException {
+      if (timeout instanceof ErrorBodyCutOff cutOff) {
+        return cutOff;
+      }
+      var cutOff = new ErrorBodyCutOff(url.getPath(), delegate.getResponseCode());
+      cutOff.initCause(timeout);
+      return cutOff;
     }
   }
 }

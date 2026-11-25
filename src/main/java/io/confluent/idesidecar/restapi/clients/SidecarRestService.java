@@ -156,7 +156,7 @@ public class SidecarRestService extends RestService {
   ) throws IOException, RestClientException {
     for (int retries = 0; ; retries++) {
       try {
-        return super.httpRequest(path, method, requestBodyData, requestProperties, responseFormat);
+        return send(path, method, requestBodyData, requestProperties, responseFormat);
       } catch (RestClientException e) {
         if (!isRestClientExceptionRetriable(e)) {
           throw e;
@@ -199,6 +199,29 @@ public class SidecarRestService extends RestService {
       }
     }
     return e;
+  }
+
+  /**
+   * Send one request. An error response whose body was cut off at the deadline fails as that
+   * error, so its status and {@code Retry-After} still count.
+   */
+  private <T> T send(
+      String path,
+      String method,
+      byte[] requestBodyData,
+      Map<String, String> requestProperties,
+      TypeReference<T> responseFormat
+  ) throws IOException, RestClientException {
+    try {
+      return super.httpRequest(path, method, requestBodyData, requestProperties, responseFormat);
+    } catch (IOException e) {
+      for (Throwable t = e; t != null; t = t.getCause()) {
+        if (t instanceof DeadlineHttpURLConnection.ErrorBodyCutOff cutOff) {
+          throw new RestClientException(cutOff.getMessage(), cutOff.status(), cutOff.status());
+        }
+      }
+      throw e;
+    }
   }
 
   /**

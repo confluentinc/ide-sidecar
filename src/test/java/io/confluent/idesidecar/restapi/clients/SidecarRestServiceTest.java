@@ -337,29 +337,62 @@ class SidecarRestServiceTest {
     assertTrue(clientGone.await(1, TimeUnit.SECONDS), "kept reading after the deadline");
   }
 
-  @Test
+  @ParameterizedTest
+  @ValueSource(ints = {404, 429})
   @Timeout(10)
-  void shouldKeepTheStatusOfAnErrorBodyThatArrivesAfterTheDeadline() throws Exception {
+  void shouldEndATricklingErrorBodyAtTheDeadlineAndKeepItsStatus(int status) throws Exception {
+    // bytes keep arriving past the deadline, so no single read times out
     var restService = startService(NO_BACKOFF);
+    answerWithErrorBody(status, 30, Duration.ofMillis(100));
+
+    assertErrorKeptAtTheDeadline(status, restService);
+  }
+
+  @ParameterizedTest
+  @ValueSource(ints = {404, 429})
+  @Timeout(10)
+  void shouldEndAStalledErrorBodyAtTheDeadlineAndKeepItsStatus(int status) throws Exception {
+    // the read waiting for the rest of the body times out
+    var restService = startService(NO_BACKOFF);
+    answerWithErrorBody(status, 1, Duration.ofSeconds(3));
+
+    assertErrorKeptAtTheDeadline(status, restService);
+  }
+
+  /**
+   * Make the server answer with {@code status} and {@code Retry-After: 1}, then send the error body
+   * after {@code gaps} pauses of {@code gap} each.
+   */
+  private void answerWithErrorBody(int status, int gaps, Duration gap) {
     server.removeContext("/");
     server.createContext("/", exchange -> {
       requests.add(new Request(System.nanoTime(), null));
-      exchange.sendResponseHeaders(404, 0);
+      exchange.getResponseHeaders().add("Retry-After", "1");
+      exchange.sendResponseHeaders(status, 0);
       try (var body = exchange.getResponseBody()) {
         body.write('{');
         body.flush();
-        // bytes keep arriving past the deadline, so no single read times out
-        for (int i = 0; i < 8; i++) {
-          Thread.sleep(100);
+        for (int i = 0; i < gaps; i++) {
+          Thread.sleep(gap);
           body.write(' ');
           body.flush();
         }
-        body.write("\"error_code\":40403,\"message\":\"Schema not found\"}"
+        body.write("\"error_code\":%d,\"message\":\"status %d\"}".formatted(status, status)
             .getBytes(StandardCharsets.UTF_8));
+      } catch (IOException e) {
+        // the client stopped reading
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
       }
     });
+  }
+
+  /**
+   * A request with a 300ms deadline fails by about then with {@code status}, carrying the
+   * server's {@code Retry-After} only for a 429.
+   */
+  private void assertErrorKeptAtTheDeadline(int status, SidecarRestService restService) {
+    var started = System.nanoTime();
 
     var e = assertThrows(
         RestClientException.class,
@@ -369,7 +402,11 @@ class SidecarRestServiceTest {
         )
     );
 
-    assertEquals(404, e.getStatus());
+    var elapsed = Duration.ofNanos(System.nanoTime() - started);
+    assertTrue(elapsed.toMillis() < 1_500, "took " + elapsed);
+    assertEquals(status, e.getStatus());
+    assertEquals(status == 429, e instanceof RetryAfterException);
+    assertEquals(1, requests.size());
   }
 
   @Test
