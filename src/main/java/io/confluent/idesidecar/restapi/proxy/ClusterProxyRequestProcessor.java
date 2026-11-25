@@ -4,11 +4,18 @@ import static io.confluent.idesidecar.restapi.util.SanitizeHeadersUtil.sanitizeH
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import io.confluent.idesidecar.restapi.clients.RetryAfterException;
 import io.confluent.idesidecar.restapi.clients.SchemaRegistryClients;
+import io.confluent.idesidecar.restapi.clients.SidecarRestService;
+import io.confluent.idesidecar.restapi.exceptions.Failure;
+import io.confluent.idesidecar.restapi.exceptions.ProcessorFailedException;
 import io.confluent.idesidecar.restapi.processors.Processor;
 import io.confluent.idesidecar.restapi.proxy.clusters.ClusterProxyContext;
+import io.confluent.idesidecar.restapi.util.RateLimitState;
+import io.confluent.idesidecar.restapi.util.TimeUtil;
 import io.confluent.idesidecar.restapi.util.WebClientFactory;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
+import io.quarkus.logging.Log;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
@@ -18,7 +25,11 @@ import jakarta.inject.Inject;
 import jakarta.json.Json;
 import jakarta.ws.rs.core.Response;
 import java.io.IOException;
+import java.net.SocketTimeoutException;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
@@ -35,6 +46,14 @@ public class ClusterProxyRequestProcessor extends
 
   @ConfigProperty(name = "ide-sidecar.cluster-proxy.http-header-exclusions")
   List<String> httpHeaderExclusions;
+
+  /**
+   * How long one proxied Schema Registry request may take, including waits for
+   * {@code Retry-After}, kept under the extension's own timeout for sidecar calls so the extension
+   * sees our error.
+   */
+  @ConfigProperty(name = "ide-sidecar.cluster-proxy.schema-registry-timeout-seconds")
+  int schemaRegistryTimeoutSeconds;
 
   private final ProxyHttpClient<ClusterProxyContext> proxyHttpClient;
 
@@ -65,17 +84,22 @@ public class ClusterProxyRequestProcessor extends
 
   private Future<ClusterProxyContext> processSchemaRegistry(ClusterProxyContext context) {
     var client = clients.getClient(context.getConnectionId(), context.getClusterId());
+    var timeout = Duration.ofSeconds(schemaRegistryTimeoutSeconds);
+    var deadline = Instant.now().plus(timeout);
     try {
-      var resp = client.httpRequest(
-          context.getRequestUri(),
-          context.getProxyRequestMethod().toString(),
-          Optional
-              .ofNullable(context.getProxyRequestBody())
-              .map(Buffer::getBytes)
-              .orElse(null),
-          sanitizeHeaders(context.getProxyRequestHeaders(), httpHeaderExclusions),
-          new TypeReference<JsonNode>() {
-          }
+      var resp = SidecarRestService.withDeadline(
+          deadline,
+          () -> client.httpRequest(
+              context.getRequestUri(),
+              context.getProxyRequestMethod().toString(),
+              Optional
+                  .ofNullable(context.getProxyRequestBody())
+                  .map(Buffer::getBytes)
+                  .orElse(null),
+              sanitizeHeaders(context.getProxyRequestHeaders(), httpHeaderExclusions),
+              new TypeReference<JsonNode>() {
+              }
+          )
       );
 
       // If we get here, all went well
@@ -89,11 +113,18 @@ public class ClusterProxyRequestProcessor extends
           HttpHeaders.headers().add("Content-Type", "application/json")
       );
     } catch (IOException e) {
-      context.failf(
-          Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(),
-          "Failed to process Schema Registry request: %s", e.getMessage()
+      Log.errorf(
+          e, "Schema Registry request %s for connection %s failed",
+          context.getRequestUri(), context.getConnectionId()
       );
+      return Future.failedFuture(new ProcessorFailedException(toFailure(context, e, deadline, timeout)));
     } catch (RestClientException e) {
+      if (e instanceof RetryAfterException || e.getStatus() >= 500) {
+        Log.errorf(
+            e, "Schema Registry request %s for connection %s failed with %d",
+            context.getRequestUri(), context.getConnectionId(), e.getStatus()
+        );
+      }
       context.setProxyResponseStatusCode(
           e.getStatus()
       );
@@ -108,11 +139,47 @@ public class ClusterProxyRequestProcessor extends
           )
       );
 
-      context.setProxyResponseHeaders(
-          HttpHeaders.headers().add("Content-Type", "application/json")
-      );
+      var headers = HttpHeaders.headers().add("Content-Type", "application/json");
+      if (e instanceof RetryAfterException retryAfter) {
+        headers.add(
+            RateLimitState.HEADER_RETRY_AFTER,
+            Long.toString(retryAfter.getRetryAfter().toSeconds())
+        );
+      }
+      context.setProxyResponseHeaders(headers);
     }
 
     return Future.succeededFuture(context);
+  }
+
+  /**
+   * Map a request that got no answer to the response the caller sees: 504 with error code
+   * {@code proxy_timeout} when Schema Registry didn't answer in time, and 500 otherwise. Only a
+   * timeout that ended at {@code deadline} names {@code timeout}; an earlier one came from the
+   * client's own connect or read timeout.
+   */
+  static Failure toFailure(
+      ClusterProxyContext context, IOException e, Instant deadline, Duration timeout
+  ) {
+    var detail = Objects.requireNonNullElse(e.getMessage(), e.getClass().getSimpleName());
+    if (e instanceof SocketTimeoutException) {
+      var timedOut = context.error("proxy_timeout", detail);
+      return Instant.now().isBefore(deadline)
+          ? timedOut.failf(
+              Response.Status.GATEWAY_TIMEOUT.getStatusCode(),
+              "Schema Registry didn't respond in time"
+          )
+          : timedOut.failf(
+              Response.Status.GATEWAY_TIMEOUT.getStatusCode(),
+              "Schema Registry didn't respond within %s",
+              TimeUtil.humanReadableDuration(timeout)
+          );
+    }
+    return context
+        .error("proxy_error", detail)
+        .failf(
+            Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(),
+            "Failed to process Schema Registry request: %s", detail
+        );
   }
 }
