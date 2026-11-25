@@ -28,9 +28,9 @@ import java.util.concurrent.ThreadLocalRandom;
  * ({@code retries.wait.ms} doubling up to {@code retries.max.wait.ms}). On 429 or 503 with a
  * {@code Retry-After}, the wait is that value instead. A {@code Retry-After} longer than
  * {@code retries.max.wait.ms}, or a wait that would pass the caller's deadline (see
- * {@link #withDeadline}), fails right away instead of retrying early. Under a deadline, each
- * request's connect and read timeouts are also cut to the time left, on the default
- * {@link HttpURLConnection} path.
+ * {@link #withDeadline}), fails right away instead of retrying early. Under a deadline, on the
+ * default {@link HttpURLConnection} path, each request's connect and read timeouts are cut to the
+ * time left, and reading its response stops at the first read after the deadline.
  */
 public class SidecarRestService extends RestService {
 
@@ -105,13 +105,12 @@ public class SidecarRestService extends RestService {
     if (deadline != null) {
       var leftMs = Duration.between(Instant.now(), deadline).toMillis();
       if (leftMs <= 0) {
-        throw new SocketTimeoutException(
-            "The deadline for Schema Registry request %s has passed".formatted(url.getPath())
-        );
+        throw DeadlineHttpURLConnection.deadlinePassed(url.getPath());
       }
       // each connect and each read waits at most until the deadline (a read timeout is per read)
       built.setConnectTimeout(atMost(built.getConnectTimeout(), leftMs));
       built.setReadTimeout(atMost(built.getReadTimeout(), leftMs));
+      built = new DeadlineHttpURLConnection(built, deadline);
     }
     connection.set(built);
     return built;
@@ -159,13 +158,26 @@ public class SidecarRestService extends RestService {
         var stop = reasonToStop(retries, wait, false);
         if (stop.isPresent()) {
           logGivingUp(method, path, stop.get(), e);
-          throw e;
+          throw timeoutOr(e);
         }
         sleep(wait, path, e);
       } finally {
         connection.remove();
       }
     }
+  }
+
+  /**
+   * The timeout in {@code e} or its causes, or else {@code e}. The JSON parser wraps a timeout from
+   * a response read in its own exception, and callers check for the timeout's type.
+   */
+  private static IOException timeoutOr(IOException e) {
+    for (Throwable t = e; t != null; t = t.getCause()) {
+      if (t instanceof SocketTimeoutException timeout) {
+        return timeout;
+      }
+    }
+    return e;
   }
 
   /**
@@ -194,6 +206,9 @@ public class SidecarRestService extends RestService {
     }
     var deadline = DEADLINE.get();
     var left = deadline == null ? null : Duration.between(Instant.now(), deadline);
+    if (left != null && !left.isPositive()) {
+      return Optional.of("its deadline passed");
+    }
     if (left != null && wait.compareTo(left) > 0) {
       return Optional.of("only %s were left to wait".formatted(RetryAfterException.describe(left)));
     }

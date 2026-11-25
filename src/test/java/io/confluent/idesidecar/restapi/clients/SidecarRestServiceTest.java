@@ -15,6 +15,7 @@ import java.io.InterruptedIOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -27,6 +28,8 @@ import java.util.Deque;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Handler;
@@ -312,6 +315,29 @@ class SidecarRestServiceTest {
   }
 
   @Test
+  @Timeout(10)
+  void shouldEndATricklingResponseAtTheDeadline() throws Exception {
+    var restService = startService(NO_BACKOFF);
+    var clientGone = new CountDownLatch(1);
+    trickle(Duration.ofSeconds(3), clientGone);
+    var started = System.nanoTime();
+
+    var e = assertThrows(
+        SocketTimeoutException.class,
+        () -> SidecarRestService.withDeadline(
+            Instant.now().plusMillis(500),
+            restService::getSchemaTypes
+        )
+    );
+
+    var elapsed = Duration.ofNanos(System.nanoTime() - started);
+    assertTrue(elapsed.toMillis() < 1_500, "took " + elapsed);
+    assertTrue(e.getMessage().contains("deadline"), e.getMessage());
+    assertEquals(1, requests.size());
+    assertTrue(clientGone.await(1, TimeUnit.SECONDS), "kept reading after the deadline");
+  }
+
+  @Test
   void shouldNotSendWhenTheDeadlineHasPassed() throws Exception {
     var restService = startService(NO_BACKOFF, new Reply(200, null));
 
@@ -431,6 +457,34 @@ class SidecarRestServiceTest {
       exchange.sendResponseHeaders(200, body.length);
       exchange.getResponseBody().write(body);
       exchange.close();
+    });
+  }
+
+  /**
+   * Make the server answer every request with a 200 whose body arrives a byte at a time over
+   * {@code duration}, so no single read waits long. {@code clientGone} counts down when the
+   * client stops reading.
+   */
+  private void trickle(Duration duration, CountDownLatch clientGone) {
+    server.removeContext("/");
+    server.createContext("/", exchange -> {
+      requests.add(new Request(System.nanoTime(), null));
+      exchange.sendResponseHeaders(200, 0);
+      try (var body = exchange.getResponseBody()) {
+        body.write('[');
+        body.flush();
+        var end = System.nanoTime() + duration.toNanos();
+        while (System.nanoTime() < end) {
+          Thread.sleep(100);
+          body.write(' ');
+          body.flush();
+        }
+        body.write("\"AVRO\"]".getBytes(StandardCharsets.UTF_8));
+      } catch (IOException e) {
+        clientGone.countDown();
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
     });
   }
 

@@ -18,6 +18,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -54,6 +55,7 @@ import io.confluent.idesidecar.restapi.util.ConfigUtil;
 import static io.confluent.idesidecar.restapi.util.ExceptionUtil.unwrap;
 import io.confluent.idesidecar.restapi.util.ObjectMapperFactory;
 import io.confluent.idesidecar.restapi.util.TimeUtil;
+import io.confluent.kafka.schemaregistry.ParsedSchema;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 import io.confluent.kafka.serializers.KafkaAvroDeserializer;
@@ -63,7 +65,6 @@ import io.quarkus.logging.Log;
 import io.smallrye.mutiny.TimeoutException;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.infrastructure.Infrastructure;
-import io.smallrye.mutiny.unchecked.Unchecked;
 import io.soabase.recordbuilder.core.RecordBuilder;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -373,16 +374,31 @@ public class RecordDeserializer {
       var deadline = Instant.now().plus(schemaFetchTimeout);
       var parsedSchema = Uni
           .createFrom()
-          .item(
-              Unchecked.supplier(
-                  () -> SidecarRestService.withDeadline(
-                      deadline,
-                      () -> schemaGuid.isPresent()
-                          ? schemaRegistryClient.getSchemaByGuid(schemaGuid.get().toString(), null)
-                          : schemaRegistryClient.getSchemaById(schemaId.orElseThrow())
-                  )
-              )
-          )
+          .<ParsedSchema>emitter(emitter -> {
+            // until this calls complete or fail, only the timeout below can end the emitter
+            var timedOut = new AtomicBoolean();
+            emitter.onTermination(() -> timedOut.set(true));
+            try {
+              emitter.complete(SidecarRestService.withDeadline(
+                  deadline,
+                  () -> schemaGuid.isPresent()
+                      ? schemaRegistryClient.getSchemaByGuid(schemaGuid.get().toString(), null)
+                      : schemaRegistryClient.getSchemaById(schemaId.orElseThrow())
+              ));
+            } catch (Throwable e) {
+              if (timedOut.get()) {
+                // the timeout below already ended the wait, so the emitter would ignore this
+                Log.errorf(
+                    e,
+                    "Schema fetch for connection %s failed after its %s timeout: %s",
+                    connectionId, TimeUtil.humanReadableDuration(schemaFetchTimeout),
+                    e.getMessage()
+                );
+              } else {
+                emitter.fail(e);
+              }
+            }
+          })
           .runSubscriptionOn(Infrastructure.getDefaultWorkerPool())
           .ifNoItem().after(schemaFetchTimeout).fail()
           .subscribeAsCompletionStage()

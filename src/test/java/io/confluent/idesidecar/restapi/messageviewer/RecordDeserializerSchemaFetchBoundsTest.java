@@ -2,6 +2,7 @@ package io.confluent.idesidecar.restapi.messageviewer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -17,7 +18,9 @@ import io.confluent.idesidecar.restapi.clients.SidecarSchemaRegistryClient;
 import io.confluent.idesidecar.restapi.proxy.KafkaRestProxyContext;
 import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClientConfig;
+import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 import io.quarkus.test.junit.QuarkusTest;
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -25,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Handler;
 import java.util.logging.Level;
@@ -73,16 +77,20 @@ class RecordDeserializerSchemaFetchBoundsTest {
     }
   };
   private final Logger deserializerLogger = Logger.getLogger(RecordDeserializer.class.getName());
+  private final Logger mutinyLogger =
+      Logger.getLogger("io.quarkus.mutiny.runtime.MutinyInfrastructure");
 
   @BeforeEach
   void captureLogs() {
     schemaErrors.clearByConnectionId(CONNECTION_ID);
     deserializerLogger.addHandler(logCapture);
+    mutinyLogger.addHandler(logCapture);
   }
 
   @AfterEach
   void releaseLogs() {
     deserializerLogger.removeHandler(logCapture);
+    mutinyLogger.removeHandler(logCapture);
     schemaErrors.clearByConnectionId(CONNECTION_ID);
   }
 
@@ -168,6 +176,57 @@ class RecordDeserializerSchemaFetchBoundsTest {
     }
   }
 
+  @Test
+  void shouldEndATricklingSchemaFetchAtTheTimeout() throws Exception {
+    var clientGone = new CountDownLatch(1);
+    var server = tricklingSchema(Duration.ofSeconds(5), clientGone);
+    var deserializer = new RecordDeserializer(500, schemaErrors);
+
+    try {
+      var client = clientWithoutRetryWaits(server.getAddress().getPort());
+      var started = System.nanoTime();
+
+      var result = deserializer.deserialize(RECORD_WITH_SCHEMA_ID, client, context, false);
+
+      var elapsed = Duration.ofNanos(System.nanoTime() - started);
+      assertTrue(elapsed.toMillis() < 1_500, "took " + elapsed);
+      assertNotNull(result.errorMessage());
+      // the fetch itself stopped reading, not just the wait for it
+      assertTrue(
+          clientGone.await(1, TimeUnit.SECONDS),
+          "the schema fetch kept reading after the timeout"
+      );
+      // the fetch's own failure comes after the timeout, so it shouldn't be logged as dropped
+      Thread.sleep(300);
+      assertTrue(
+          logRecords.stream().noneMatch(r -> r.getLoggerName().equals(mutinyLogger.getName())),
+          "logged a dropped failure"
+      );
+    } finally {
+      server.stop(0);
+    }
+  }
+
+  @Test
+  void shouldLogAFetchFailureThatArrivesAfterTheTimeout() throws Exception {
+    var timedOut = new CountDownLatch(1);
+    var client = mock(CachedSchemaRegistryClient.class);
+    when(client.getSchemaById(anyInt())).thenAnswer(invocation -> {
+      timedOut.await();
+      throw new RestClientException("Schema not found", 404, 40403);
+    });
+    var deserializer = new RecordDeserializer(200, schemaErrors);
+
+    deserializer.deserialize(RECORD_WITH_SCHEMA_ID, client, context, false);
+    timedOut.countDown();
+
+    var deadline = System.nanoTime() + Duration.ofSeconds(2).toNanos();
+    while (!loggedAtErrorContaining("Schema not found") && System.nanoTime() < deadline) {
+      Thread.sleep(20);
+    }
+    assertLoggedAtErrorContaining("failed after its 0.2s timeout: Schema not found");
+  }
+
   private static HttpServer alwaysTooManyRequests(AtomicInteger requests) throws Exception {
     return alwaysTooManyRequests(requests, null);
   }
@@ -192,6 +251,36 @@ class RecordDeserializerSchemaFetchBoundsTest {
   }
 
   /**
+   * A Schema Registry whose schema responses arrive a byte at a time over {@code duration}.
+   * {@code clientGone} counts down when the client stops reading.
+   */
+  private static HttpServer tricklingSchema(Duration duration, CountDownLatch clientGone)
+      throws Exception {
+    var server = HttpServer.create(new InetSocketAddress("localhost", 0), 0);
+    server.createContext("/", exchange -> {
+      exchange.getResponseHeaders().add("Content-Type", "application/json");
+      exchange.sendResponseHeaders(200, 0);
+      try (var body = exchange.getResponseBody()) {
+        body.write('{');
+        body.flush();
+        var end = System.nanoTime() + duration.toNanos();
+        while (System.nanoTime() < end) {
+          Thread.sleep(100);
+          body.write(' ');
+          body.flush();
+        }
+        body.write("\"schema\":\"\\\"string\\\"\"}".getBytes(StandardCharsets.UTF_8));
+      } catch (IOException e) {
+        clientGone.countDown();
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
+    });
+    server.start();
+    return server;
+  }
+
+  /**
    * Build a client with the default retry count but no waits between retries, so the test counts
    * every request without waiting out the client's backoff.
    */
@@ -202,11 +291,17 @@ class RecordDeserializerSchemaFetchBoundsTest {
   }
 
   private void assertLoggedAtErrorContaining(String text) {
-    var matched = logRecords.stream()
+    assertTrue(
+        loggedAtErrorContaining(text),
+        "no ERROR log with a throwable containing '%s'".formatted(text)
+    );
+  }
+
+  private boolean loggedAtErrorContaining(String text) {
+    return logRecords.stream()
         .filter(r -> r.getLevel().intValue() >= Level.SEVERE.intValue())
         .filter(r -> r.getThrown() != null)
         .map(r -> r instanceof ExtLogRecord ext ? ext.getFormattedMessage() : r.getMessage())
         .anyMatch(message -> message != null && message.contains(text));
-    assertTrue(matched, "no ERROR log with a throwable containing '%s'".formatted(text));
   }
 }
