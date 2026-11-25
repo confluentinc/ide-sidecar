@@ -13,11 +13,12 @@ import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.WeakHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -39,9 +40,11 @@ public class SidecarRestService extends RestService {
   private static final ThreadLocal<Instant> DEADLINE = new ThreadLocal<>();
 
   /**
-   * The last failure this thread gave up on and logged, so a caller can avoid logging it again.
+   * The failures thrown after logging a give-up, so a caller can avoid logging them again. Weak and
+   * by identity ({@link Throwable} doesn't override {@code equals}).
    */
-  private static final ThreadLocal<Throwable> LOGGED_GIVE_UP = new ThreadLocal<>();
+  private static final Set<Throwable> LOGGED_GIVE_UPS =
+      Collections.synchronizedSet(Collections.newSetFromMap(new WeakHashMap<>()));
 
   /**
    * The connection of the request in flight on this thread. Only the default
@@ -80,9 +83,6 @@ public class SidecarRestService extends RestService {
       throws IOException, RestClientException {
     var outer = DEADLINE.get();
     DEADLINE.set(outer != null && outer.isBefore(deadline) ? outer : deadline);
-    if (outer == null) {
-      LOGGED_GIVE_UP.remove();
-    }
     try {
       return call.call();
     } finally {
@@ -95,21 +95,16 @@ public class SidecarRestService extends RestService {
   }
 
   /**
-   * Whether this thread's last {@link #withDeadline} call already logged {@code failure} (or the
-   * failure it wraps, or wraps it) when giving up. Clears the record.
+   * Whether {@code failure}, or one of its causes, is a failure this class threw after logging that
+   * it gave up.
    */
   public static boolean loggedGivingUp(Throwable failure) {
-    var logged = LOGGED_GIVE_UP.get();
-    LOGGED_GIVE_UP.remove();
-    return logged != null && (causes(failure).contains(logged) || causes(logged).contains(failure));
-  }
-
-  private static List<Throwable> causes(Throwable t) {
-    var chain = new ArrayList<Throwable>();
-    for (; t != null && !chain.contains(t); t = t.getCause()) {
-      chain.add(t);
+    for (int depth = 0; failure != null && depth < 32; failure = failure.getCause(), depth++) {
+      if (LOGGED_GIVE_UPS.contains(failure)) {
+        return true;
+      }
     }
-    return chain;
+    return false;
   }
 
   @Override
@@ -170,11 +165,10 @@ public class SidecarRestService extends RestService {
         var wait = retryAfter.isPresent() ? retryAfter.get() : backoff(retries);
         var stop = reasonToStop(retries, wait, retryAfter.isPresent());
         if (stop.isPresent()) {
-          logGivingUp(method, path, stop.get(), e);
-          if (retryAfter.isEmpty()) {
-            throw e;
-          }
-          throw new RetryAfterException(e, retryAfter.get(), stop.get());
+          throw givingUp(
+              method, path, stop.get(), e,
+              retryAfter.isEmpty() ? e : new RetryAfterException(e, retryAfter.get(), stop.get())
+          );
         }
         sleep(wait, path, e);
       } catch (IOException e) {
@@ -185,8 +179,7 @@ public class SidecarRestService extends RestService {
         var wait = backoff(retries);
         var stop = reasonToStop(retries, wait, false);
         if (stop.isPresent()) {
-          logGivingUp(method, path, stop.get(), e);
-          throw timeoutOr(e);
+          throw givingUp(method, path, stop.get(), e, timeoutOr(e));
         }
         sleep(wait, path, e);
       } finally {
@@ -243,13 +236,19 @@ public class SidecarRestService extends RestService {
     return Optional.empty();
   }
 
-  private static void logGivingUp(String method, String path, String reason, Exception failure) {
-    LOGGED_GIVE_UP.set(failure);
+  /**
+   * Log that the request gave up because of {@code failure}, and return {@code thrown} to throw.
+   */
+  private static <E extends Exception> E givingUp(
+      String method, String path, String reason, Exception failure, E thrown
+  ) {
     Log.errorf(
         failure,
         "Giving up on Schema Registry request %s %s because %s: %s",
         method, path, reason, failure.getMessage()
     );
+    LOGGED_GIVE_UPS.add(thrown);
+    return thrown;
   }
 
   private static void sleep(Duration wait, String path, Exception failure)

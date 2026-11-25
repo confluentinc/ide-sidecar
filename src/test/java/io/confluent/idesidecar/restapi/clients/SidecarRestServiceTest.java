@@ -338,6 +338,41 @@ class SidecarRestServiceTest {
   }
 
   @Test
+  @Timeout(10)
+  void shouldKeepTheStatusOfAnErrorBodyThatArrivesAfterTheDeadline() throws Exception {
+    var restService = startService(NO_BACKOFF);
+    server.removeContext("/");
+    server.createContext("/", exchange -> {
+      requests.add(new Request(System.nanoTime(), null));
+      exchange.sendResponseHeaders(404, 0);
+      try (var body = exchange.getResponseBody()) {
+        body.write('{');
+        body.flush();
+        // bytes keep arriving past the deadline, so no single read times out
+        for (int i = 0; i < 8; i++) {
+          Thread.sleep(100);
+          body.write(' ');
+          body.flush();
+        }
+        body.write("\"error_code\":40403,\"message\":\"Schema not found\"}"
+            .getBytes(StandardCharsets.UTF_8));
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
+    });
+
+    var e = assertThrows(
+        RestClientException.class,
+        () -> SidecarRestService.withDeadline(
+            Instant.now().plusMillis(300),
+            restService::getSchemaTypes
+        )
+    );
+
+    assertEquals(404, e.getStatus());
+  }
+
+  @Test
   void shouldNotSendWhenTheDeadlineHasPassed() throws Exception {
     var restService = startService(NO_BACKOFF, new Reply(200, null));
 

@@ -20,12 +20,15 @@ import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClientConfig;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 import io.quarkus.test.junit.QuarkusTest;
+import io.smallrye.mutiny.unchecked.Unchecked;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -252,12 +255,43 @@ class RecordDeserializerSchemaFetchBoundsTest {
       Thread.sleep(20);
     }
     Thread.sleep(200);
-    var entries = logRecords.stream()
-        .filter(r -> r.getLevel().intValue() >= Level.SEVERE.intValue())
-        .map(r -> r instanceof ExtLogRecord ext ? ext.getFormattedMessage() : r.getMessage())
-        .filter(message -> message != null && message.contains("/schemas/types"))
-        .toList();
-    assertEquals(1, entries.size(), String.valueOf(entries));
+    assertEquals(1, errorsContaining("/schemas/types").size());
+  }
+
+  @Test
+  void shouldLogALateRetryAfterGiveUpOnce() throws Exception {
+    var timedOut = new CountDownLatch(1);
+    var server = alwaysTooManyRequests(new AtomicInteger(), "30");
+    var restService = new SidecarRestService(
+        "http://localhost:%d".formatted(server.getAddress().getPort())
+    );
+    restService.configure(Map.of());
+    var client = mock(CachedSchemaRegistryClient.class);
+    when(client.getSchemaById(anyInt())).thenAnswer(invocation -> {
+      timedOut.await();
+      // on another thread, so this thread's expired deadline doesn't apply
+      try {
+        return CompletableFuture.supplyAsync(Unchecked.supplier(restService::getSchemaTypes)).join();
+      } catch (CompletionException e) {
+        throw e.getCause();
+      }
+    });
+    var deserializer = new RecordDeserializer(200, schemaErrors);
+
+    try {
+      deserializer.deserialize(RECORD_WITH_SCHEMA_ID, client, context, false);
+      timedOut.countDown();
+
+      var deadline = System.nanoTime() + Duration.ofSeconds(2).toNanos();
+      while (!loggedAtErrorContaining("Too Many Requests") && System.nanoTime() < deadline) {
+        Thread.sleep(20);
+      }
+      Thread.sleep(200);
+      var entries = errorsContaining("Too Many Requests");
+      assertEquals(1, entries.size(), String.valueOf(entries));
+    } finally {
+      server.stop(0);
+    }
   }
 
   private static HttpServer alwaysTooManyRequests(AtomicInteger requests) throws Exception {
@@ -328,6 +362,14 @@ class RecordDeserializerSchemaFetchBoundsTest {
         loggedAtErrorContaining(text),
         "no ERROR log with a throwable containing '%s'".formatted(text)
     );
+  }
+
+  private List<String> errorsContaining(String text) {
+    return logRecords.stream()
+        .filter(r -> r.getLevel().intValue() >= Level.SEVERE.intValue())
+        .map(r -> r instanceof ExtLogRecord ext ? ext.getFormattedMessage() : r.getMessage())
+        .filter(message -> message != null && message.contains(text))
+        .toList();
   }
 
   private boolean loggedAtErrorContaining(String text) {

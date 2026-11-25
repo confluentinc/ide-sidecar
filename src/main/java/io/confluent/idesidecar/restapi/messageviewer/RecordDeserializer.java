@@ -17,8 +17,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -62,8 +64,6 @@ import io.confluent.kafka.serializers.KafkaAvroDeserializer;
 import io.confluent.kafka.serializers.json.KafkaJsonSchemaDeserializer;
 import io.confluent.kafka.serializers.protobuf.KafkaProtobufDeserializer;
 import io.quarkus.logging.Log;
-import io.smallrye.mutiny.TimeoutException;
-import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.infrastructure.Infrastructure;
 import io.soabase.recordbuilder.core.RecordBuilder;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -372,39 +372,23 @@ public class RecordDeserializer {
       // Retry-After), so one schema ID costs at most 1 + max.retries requests. It also gets the
       // deadline, so neither a Retry-After wait nor a slow response outlasts the timeout here.
       var deadline = Instant.now().plus(schemaFetchTimeout);
-      var parsedSchema = Uni
-          .createFrom()
-          .<ParsedSchema>emitter(emitter -> {
-            // until this calls complete or fail, only the timeout below can end the emitter
-            var timedOut = new AtomicBoolean();
-            emitter.onTermination(() -> timedOut.set(true));
-            try {
-              emitter.complete(SidecarRestService.withDeadline(
-                  deadline,
-                  () -> schemaGuid.isPresent()
-                      ? schemaRegistryClient.getSchemaByGuid(schemaGuid.get().toString(), null)
-                      : schemaRegistryClient.getSchemaById(schemaId.orElseThrow())
-              ));
-            } catch (Throwable e) {
-              if (timedOut.get()) {
-                // the timeout below already ended the wait, so the emitter would ignore this; log
-                // it once, unless the Schema Registry client already logged it when giving up
-                var message = "Schema fetch for connection %s failed after its %s timeout: %s";
-                var timeout = TimeUtil.humanReadableDuration(schemaFetchTimeout);
-                if (SidecarRestService.loggedGivingUp(e)) {
-                  Log.debugf(e, message, connectionId, timeout, e.getMessage());
-                } else {
-                  Log.errorf(e, message, connectionId, timeout, e.getMessage());
-                }
-              } else {
-                emitter.fail(e);
-              }
-            }
-          })
-          .runSubscriptionOn(Infrastructure.getDefaultWorkerPool())
-          .ifNoItem().after(schemaFetchTimeout).fail()
-          .subscribeAsCompletionStage()
-          .toCompletableFuture()
+      var fetch = new CompletableFuture<ParsedSchema>();
+      Infrastructure.getDefaultWorkerPool().execute(() -> {
+        try {
+          fetch.complete(SidecarRestService.withDeadline(
+              deadline,
+              () -> schemaGuid.isPresent()
+                  ? schemaRegistryClient.getSchemaByGuid(schemaGuid.get().toString(), null)
+                  : schemaRegistryClient.getSchemaById(schemaId.orElseThrow())
+          ));
+        } catch (Throwable e) {
+          if (!fetch.completeExceptionally(e)) {
+            logLateFetchFailure(connectionId, e);
+          }
+        }
+      });
+      var parsedSchema = fetch
+          .orTimeout(schemaFetchTimeout.toMillis(), TimeUnit.MILLISECONDS)
           .join();
       schemaFetched = true;
 
@@ -582,6 +566,20 @@ public class RecordDeserializer {
         error
     );
     return error;
+  }
+
+  /**
+   * Log a schema fetch that failed after its timeout already ended the wait, once: the Schema
+   * Registry client may have logged it already when it gave up.
+   */
+  private void logLateFetchFailure(String connectionId, Throwable e) {
+    var message = "Schema fetch for connection %s failed after its %s timeout: %s";
+    var timeout = TimeUtil.humanReadableDuration(schemaFetchTimeout);
+    if (SidecarRestService.loggedGivingUp(e)) {
+      Log.debugf(e, message, connectionId, timeout, e.getMessage());
+    } else {
+      Log.errorf(e, message, connectionId, timeout, e.getMessage());
+    }
   }
 
   /**
