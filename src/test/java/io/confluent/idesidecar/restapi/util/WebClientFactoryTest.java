@@ -12,6 +12,7 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.matching.UrlPattern;
 import io.confluent.idesidecar.restapi.application.SidecarInfo;
+import io.confluent.idesidecar.restapi.auth.CCloudOAuthConfig;
 import io.confluent.idesidecar.restapi.testutil.FakeSideCarProfile;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
@@ -60,6 +61,8 @@ public class WebClientFactoryTest {
         options.getIdleTimeout()
             > WebClientFactory.WEBCLIENT_CCLOUD_FLINK_TIMEOUT_SECONDS.toSeconds()
     );
+    // the refresh-token exchange waits until the refresh deadline
+    assertTrue(options.getIdleTimeout() > CCloudOAuthConfig.TOKEN_REFRESH_DEADLINE.toSeconds());
   }
 
   @Test
