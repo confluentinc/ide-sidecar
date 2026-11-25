@@ -62,6 +62,8 @@ Each processor receives a context object (`ProxyContext`, `ClusterProxyContext`,
 
 REST endpoints return `Uni<Response>` (SmallRye Mutiny) for non-blocking I/O. Vert.x used for HTTP clients.
 
+Get every Vert.x `WebClient` from `WebClientFactory` (`getWebClient()` or `createWebClient(...)`), never from `WebClient.create(...)` elsewhere, so each request gets the default timeout over the whole exchange (see `WebClientFactory`'s Javadoc). Call `.timeout(...)` only when a request needs a different limit, and raise `ide-sidecar.webclient.idle-timeout-seconds` above any limit longer than the request, consume and Flink timeouts, since only those three raise it automatically.
+
 ### CDI / Dependency Injection
 
 `@ApplicationScoped` singletons, `@Inject` for field injection, `@Named("beanName")` for named beans. Bean factories live in `*BeanProducers` classes using `@Produces`.

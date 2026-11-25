@@ -113,7 +113,9 @@ public class ProxyProcessorBeanProducers {
         new ConnectionProcessor<>(connectionStateManager),
         dataPlaneProxyProcessor,
         flinkDataPlaneAuthenticationProcessor,
-        new ProxyRequestProcessor(webClientFactory, vertx),
+        new ProxyRequestProcessor(
+            webClientFactory, vertx, WebClientFactory.WEBCLIENT_CCLOUD_FLINK_TIMEOUT_SECONDS
+        ),
         emptyProcessorProxyContext
     );
   }
