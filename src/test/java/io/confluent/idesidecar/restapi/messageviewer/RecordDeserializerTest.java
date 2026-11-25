@@ -662,7 +662,8 @@ public class RecordDeserializerTest {
     when(mockedSRClient.getSchemaById(anyInt()))
         .thenThrow(new RuntimeException(new SocketException("Connection reset")));
 
-    assertSchemaFetchFailuresCached(3, 4, false, mockedSRClient);
+    // the Schema Registry client retries network errors, not the deserializer
+    assertSchemaFetchFailuresCached(1, false, mockedSRClient);
   }
 
   private void assertSchemaFetchFailuresCached(
