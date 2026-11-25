@@ -115,8 +115,10 @@ public class RestProxyResource {
             routingContext.response().end();
           }
         }).onFailure(throwable -> {
-          var failure = ((ProcessorFailedException) throwable).getFailure();
+          var failed = (ProcessorFailedException) throwable;
+          var failure = failed.getFailure();
           routingContext.response().setStatusCode(Integer.parseInt(failure.status()));
+          failed.getResponseHeaders().forEach(routingContext.response()::putHeader);
           routingContext.response()
               .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
           routingContext.response().send(failure.asJsonString());
