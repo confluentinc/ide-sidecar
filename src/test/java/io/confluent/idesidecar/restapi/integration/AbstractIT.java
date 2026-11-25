@@ -158,13 +158,7 @@ public abstract class AbstractIT extends SidecarClient implements ITSuite {
         new ByteArrayDeserializer(),
         new ByteArrayDeserializer()
     );
-    var deserializer = new RecordDeserializer(
-        1,
-        1,
-        3,
-        10_000,
-        new SchemaErrors()
-    );
+    var deserializer = new RecordDeserializer(10_000, new SchemaErrors());
     CachedSchemaRegistryClient srClient = null;
     if (sr != null) {
       srClient = new CachedSchemaRegistryClient(
