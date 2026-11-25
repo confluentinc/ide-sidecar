@@ -2,6 +2,7 @@ package io.confluent.idesidecar.restapi.messageviewer;
 
 import java.io.IOException;
 import java.net.ConnectException;
+import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.net.UnknownServiceException;
@@ -637,6 +638,7 @@ public class RecordDeserializerTest {
     return Stream.of(
             // Test a bunch of exceptions that are considered network errors (all extend IOException)
             ConnectException.class,
+            SocketException.class,
             SocketTimeoutException.class,
             UnknownHostException.class,
             UnknownServiceException.class
@@ -654,6 +656,15 @@ public class RecordDeserializerTest {
               mockedSRClient
           );
         }));
+  }
+
+  @Test
+  public void testDeserializeCachesWrappedConnectionResets() throws Exception {
+    var mockedSRClient = mock(CachedSchemaRegistryClient.class);
+    when(mockedSRClient.getSchemaById(anyInt()))
+        .thenThrow(new RuntimeException(new SocketException("Connection reset")));
+
+    assertSchemaFetchFailuresCached(3, 4, false, mockedSRClient);
   }
 
   private void assertSchemaFetchFailuresCached(
