@@ -56,6 +56,10 @@ public class WebClientFactoryTest {
         options.getIdleTimeout()
             > WebClientFactory.WEBCLIENT_CCLOUD_CONSUME_TIMEOUT_SECONDS.toSeconds()
     );
+    assertTrue(
+        options.getIdleTimeout()
+            > WebClientFactory.WEBCLIENT_CCLOUD_FLINK_TIMEOUT_SECONDS.toSeconds()
+    );
   }
 
   @Test

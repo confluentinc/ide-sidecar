@@ -12,9 +12,13 @@ public class ShortWebClientTimeoutProfile extends NoAccessFilterProfile {
   public static final long REQUEST_TIMEOUT_MS = 1_000;
   /** Longer than the request timeout, so a test can tell the two apart. */
   public static final long CONSUME_TIMEOUT_MS = 2_000;
+  /** Longer than the request timeout, so a test can tell the two apart. */
+  public static final long FLINK_TIMEOUT_MS = 3_000;
+  /** When a slow Flink test server answers: past the request timeout, inside the Flink one. */
+  public static final int FLINK_ANSWER_MS = 2_000;
   /** How long a stalled test server waits before answering, well past the request timeout. */
   public static final int STALL_MS = 4_500;
-  /** The consume timeout plus generous scheduling slack, still under the stall. */
+  /** The consume and Flink timeouts plus scheduling slack, still under the stall. */
   public static final long GIVE_UP_WITHIN_MS = 4_000;
 
   @Override
@@ -26,6 +30,10 @@ public class ShortWebClientTimeoutProfile extends NoAccessFilterProfile {
     overrides.put(
         "ide-sidecar.webclient.ccloud-consume-timeout-seconds",
         String.valueOf(CONSUME_TIMEOUT_MS / 1000)
+    );
+    overrides.put(
+        "ide-sidecar.webclient.ccloud-flink-timeout-seconds",
+        String.valueOf(FLINK_TIMEOUT_MS / 1000)
     );
     return overrides;
   }

@@ -10,8 +10,10 @@ import com.github.tomakehurst.wiremock.client.WireMock;
 import io.confluent.idesidecar.restapi.auth.CCloudOAuthContext;
 import io.confluent.idesidecar.restapi.connections.ConnectionStateManager;
 import io.confluent.idesidecar.restapi.exceptions.ProcessorFailedException;
+import io.confluent.idesidecar.restapi.processors.Processor;
 import io.confluent.idesidecar.restapi.proxy.ProxyContext;
 import io.confluent.idesidecar.restapi.proxy.ProxyHttpClient;
+import io.confluent.idesidecar.restapi.proxy.ProxyRequestProcessor;
 import io.confluent.idesidecar.restapi.testutil.ShortWebClientTimeoutProfile;
 import io.quarkiverse.wiremock.devservice.ConnectWireMock;
 import io.quarkus.test.junit.QuarkusTest;
@@ -22,6 +24,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
 import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -54,6 +57,10 @@ class WebClientRequestTimeoutTest {
 
   @Inject
   CCloudApiRateLimiter rateLimiter;
+
+  @Inject
+  @Named("flinkDataPlaneProxyProcessor")
+  Processor<ProxyContext, Future<ProxyContext>> flinkDataPlaneProxyProcessor;
 
   @ConfigProperty(name = "quarkus.wiremock.devservices.port")
   int wireMockPort;
@@ -130,6 +137,71 @@ class WebClientRequestTimeoutTest {
   }
 
   @Test
+  void flinkProxyShouldWaitForTheFlinkTimeout() throws Exception {
+    // past the request timeout, inside the Flink timeout
+    wireMock.register(WireMock.post("/slow-statement").willReturn(WireMock.aResponse()
+        .withStatus(200)
+        .withFixedDelay(ShortWebClientTimeoutProfile.FLINK_ANSWER_MS)
+        .withBody("{}")));
+    var context = new ProxyContext(
+        "/slow-statement",
+        MultiMap.caseInsensitiveMultiMap(),
+        HttpMethod.POST,
+        null,
+        Map.of(),
+        null
+    );
+    context.setProxyRequestMethod(HttpMethod.POST);
+    context.setProxyRequestAbsoluteUrl(
+        "http://localhost:%d/slow-statement".formatted(wireMockPort)
+    );
+    context.setProxyRequestHeaders(MultiMap.caseInsensitiveMultiMap());
+    context.setProxyRequestBody(Buffer.buffer("{}"));
+
+    var result = proxySender(flinkDataPlaneProxyProcessor)
+        .process(context)
+        .toCompletionStage()
+        .toCompletableFuture()
+        .get(10, TimeUnit.SECONDS);
+
+    assertEquals(200, result.getProxyResponseStatusCode());
+  }
+
+  @Test
+  void flinkProxyShouldFailAfterTheFlinkTimeout() throws Exception {
+    stall(WireMock.post("/stalled-statement"));
+    var context = new ProxyContext(
+        "/stalled-statement",
+        MultiMap.caseInsensitiveMultiMap(),
+        HttpMethod.POST,
+        null,
+        Map.of(),
+        null
+    );
+    context.setProxyRequestMethod(HttpMethod.POST);
+    context.setProxyRequestAbsoluteUrl(
+        "http://localhost:%d/stalled-statement".formatted(wireMockPort)
+    );
+    context.setProxyRequestHeaders(MultiMap.caseInsensitiveMultiMap());
+    context.setProxyRequestBody(Buffer.buffer("{}"));
+    var started = System.nanoTime();
+
+    var failure = awaitFailure(proxySender(flinkDataPlaneProxyProcessor).process(context));
+
+    var elapsed = Duration.ofNanos(System.nanoTime() - started);
+    assertTrue(
+        elapsed.toMillis() >= ShortWebClientTimeoutProfile.FLINK_TIMEOUT_MS,
+        "gave up before the Flink timeout: " + elapsed
+    );
+    assertTrue(
+        elapsed.toMillis() < ShortWebClientTimeoutProfile.GIVE_UP_WITHIN_MS,
+        "took " + elapsed
+    );
+    var processorFailure = assertInstanceOf(ProcessorFailedException.class, failure);
+    assertEquals("504", processorFailure.getFailure().status());
+  }
+
+  @Test
   void loginRealmShouldFailWhenCCloudStalls() {
     stall(WireMock.get(WireMock.urlPathEqualTo("/api/login/realm")));
     var started = System.nanoTime();
@@ -197,6 +269,20 @@ class WebClientRequestTimeoutTest {
 
     assertGaveUpInTime(started);
     assertEquals(1, authContext.getFailedTokenRefreshAttempts());
+  }
+
+  /**
+   * The processor in {@code chain} that sends the proxied request.
+   */
+  private static Processor<ProxyContext, Future<ProxyContext>> proxySender(
+      Processor<ProxyContext, Future<ProxyContext>> chain
+  ) {
+    for (var p = chain; p != null; p = p.next()) {
+      if (p instanceof ProxyRequestProcessor) {
+        return p;
+      }
+    }
+    throw new AssertionError("no ProxyRequestProcessor in the chain");
   }
 
   private void stall(MappingBuilder request) {

@@ -72,6 +72,13 @@ public class WebClientFactory {
       secondsConfig("ide-sidecar.webclient.ccloud-consume-timeout-seconds");
 
   /**
+   * The request timeout for proxied Confluent Cloud Flink gateway requests, since creating a
+   * statement can take longer than the default.
+   */
+  public static final Duration WEBCLIENT_CCLOUD_FLINK_TIMEOUT_SECONDS =
+      secondsConfig("ide-sidecar.webclient.ccloud-flink-timeout-seconds");
+
+  /**
    * Closes a connection that has a request in flight but no traffic for this long. It's a backstop
    * for requests without their own timeout, so it's kept at least 30s above the longest request
    * timeout and never cuts off a request before that request's own timeout fires.
@@ -79,7 +86,8 @@ public class WebClientFactory {
   static final Duration WEBCLIENT_IDLE_TIMEOUT_SECONDS = Stream.of(
           secondsConfig("ide-sidecar.webclient.idle-timeout-seconds"),
           WEBCLIENT_REQUEST_TIMEOUT_SECONDS.plusSeconds(30),
-          WEBCLIENT_CCLOUD_CONSUME_TIMEOUT_SECONDS.plusSeconds(30))
+          WEBCLIENT_CCLOUD_CONSUME_TIMEOUT_SECONDS.plusSeconds(30),
+          WEBCLIENT_CCLOUD_FLINK_TIMEOUT_SECONDS.plusSeconds(30))
       .max(Duration::compareTo)
       .orElseThrow();
 
